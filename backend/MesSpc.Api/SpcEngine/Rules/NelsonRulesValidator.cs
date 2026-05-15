@@ -80,7 +80,7 @@ public static class NelsonRulesValidator
             if (i >= 13)
             {
                 bool match = true;
-                for (int j = 0; j < 13; j++)
+                for (int j = 0; j < 12; j++)
                 {
                     var dir1 = Math.Sign(points[i - j].Value - points[i - j - 1].Value);
                     var dir2 = Math.Sign(points[i - j - 1].Value - points[i - j - 2].Value);

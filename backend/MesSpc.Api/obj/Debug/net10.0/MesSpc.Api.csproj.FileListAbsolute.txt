@@ -189,3 +189,7 @@ C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\MesSpc.Api.p
 C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\MesSpc.Api.genruntimeconfig.cache
 C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\ref\MesSpc.Api.dll
 C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\MesSpc.Api.sourcelink.json
+C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\bin\Debug\net10.0\ExtendedNumerics.BigDecimal.dll
+C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\bin\Debug\net10.0\NCalc.Core.dll
+C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\bin\Debug\net10.0\NCalc.Sync.dll
+C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\bin\Debug\net10.0\Parlot.dll

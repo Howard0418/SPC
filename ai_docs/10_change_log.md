@@ -1,5 +1,10 @@
 # 10 Change Log
 
+## [2026-05-15] - SPC Unit Testing (P4)
+- **測試防護網**: 建立 `MesSpc.Api.Tests` xUnit 測試專案。
+- **單元測試**: 為 `ImrChartCalculator`, `XbarRChartCalculator` 與 `NelsonRulesValidator` 撰寫完整的覆蓋測試，涵蓋極端案例與常規計算。
+- **配置優化**: 透過 `<InternalsVisibleTo>` 暴露內部模型供動態斷言，確保 API 設計乾淨。
+
 ## [2026-05-15] - SPC Engine Refactoring (P2)
 - **架構解耦**: 將 SPC 核心運算從 `SpcService` 抽離至獨立的 `SpcEngine` 模組，解除 Entity Framework 相依性。
 - **領域模型**: 建立 `SpcDataPoint` 與 `Subgroup` 模型，作為運算引擎的標準傳遞物件。

@@ -77,6 +77,10 @@
             "Microsoft.EntityFrameworkCore.Sqlite": {
               "target": "Package",
               "version": "[10.0.7, )"
+            },
+            "NCalcSync": {
+              "target": "Package",
+              "version": "[5.12.0, )"
             }
           },
           "imports": [
