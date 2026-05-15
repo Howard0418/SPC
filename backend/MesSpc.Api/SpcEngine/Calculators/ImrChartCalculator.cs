@@ -28,6 +28,12 @@ public static class ImrChartCalculator
         var mrUclStat = mrBar.HasValue ? D4 * mrBar.Value : (double?)null;
         var mrLclStat = mrBar.HasValue ? D3 * mrBar.Value : (double?)null;
 
+        if (iBar.HasValue && iUclStat.HasValue && iLclStat.HasValue)
+        {
+            var statLimits = new ControlLimits { CL = iBar, UCL = iUclStat, LCL = iLclStat };
+            MesSpc.Api.SpcEngine.Rules.NelsonRulesValidator.ApplyRules(rawData, statLimits);
+        }
+
         var iPoints = new List<object>();
         foreach (var p in rawData)
         {
@@ -42,8 +48,9 @@ public static class ImrChartCalculator
                 measuredAt = p.MeasuredAt,
                 value = v,
                 outOfSpec = oos,
-                outOfControl = oocConfigured,
-                outOfControlStat = (iUclStat.HasValue && v > iUclStat.Value) || (iLclStat.HasValue && v < iLclStat.Value)
+                outOfControl = oocConfigured || p.IsOutOfControl,
+                outOfControlStat = (iUclStat.HasValue && v > iUclStat.Value) || (iLclStat.HasValue && v < iLclStat.Value),
+                violatedRules = p.ViolatedRules
             });
         }
 

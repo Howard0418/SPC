@@ -4,8 +4,8 @@ public record SpcDataPoint
 {
     public DateTime MeasuredAt { get; init; }
     public double Value { get; init; }
-    public bool IsOutOfSpec { get; init; }
-    public bool IsOutOfControl { get; init; }
+    public bool IsOutOfSpec { get; set; }
+    public bool IsOutOfControl { get; set; }
     public List<string> ViolatedRules { get; init; } = new();
 }
 

@@ -49,15 +49,29 @@ public static class XbarRChartCalculator
             rControl = new { cl = rBar, ucl = uclRrange, lcl = lclRrange, n = nRef, d3, d4, rBar };
         }
 
+        var spcPoints = validSubgroups.Select(x => new SpcDataPoint
+        {
+            MeasuredAt = x.MeasuredAt,
+            Value = x.Mean
+        }).ToList();
+
+        if (uclXbar.HasValue && lclXbar.HasValue && nRef >= 2)
+        {
+            var statLimits = new ControlLimits { CL = validSubgroups.Average(x => x.Mean), UCL = uclXbar, LCL = lclXbar };
+            MesSpc.Api.SpcEngine.Rules.NelsonRulesValidator.ApplyRules(spcPoints, statLimits);
+        }
+
         var xbarPoints = new List<object>();
         var rPoints = new List<object>();
-        foreach (var x in validSubgroups)
+        for (int i = 0; i < validSubgroups.Count; i++)
         {
+            var x = validSubgroups[i];
+            var p = spcPoints[i];
             var xbar = x.Mean;
             var range = x.Range;
             var oos = (configuredLimits.USL.HasValue && xbar > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && xbar < configuredLimits.LSL.Value);
-            var oocStat = uclXbar.HasValue && lclXbar.HasValue && (xbar > uclXbar.Value || xbar < lclXbar.Value);
+            var oocStat = p.IsOutOfControl; // Provided by NelsonRulesValidator for Xbar
             var oocR = uclRrange.HasValue && lclRrange.HasValue && (range > uclRrange.Value || range < lclRrange.Value);
 
             xbarPoints.Add(new
@@ -69,7 +83,8 @@ public static class XbarRChartCalculator
                 outOfSpec = oos,
                 outOfControl = oocStat || oocR,
                 outOfControlXbar = oocStat,
-                outOfControlR = oocR
+                outOfControlR = oocR,
+                violatedRules = p.ViolatedRules
             });
             rPoints.Add(new { x.MeasuredAt, value = range, outOfControl = oocR });
         }
