@@ -115,7 +115,7 @@ public class InspectionItem : BaseEntity<int>
 {
     public string ItemCode { get; set; } = string.Empty;
     public string ItemName { get; set; } = string.Empty;
-    public DataType DataType { get; set; } = DataType.Numeric;
+    public MesSpc.Api.Domain.Enums.DataType DataType { get; set; } = MesSpc.Api.Domain.Enums.DataType.Numeric;
     public string? Unit { get; set; }
     public double? Usl { get; set; }
     public double? Lsl { get; set; }

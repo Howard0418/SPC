@@ -111,7 +111,7 @@ public class SpcV2Controller(AppDbContext db) : ControllerBase
     {
         var query = db.SpcCalculationResults.AsQueryable();
         if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
-        return Ok(await query.OrderByDescending(x => x.SpcResultId).Take(500).ToListAsync());
+        return Ok(await query.OrderByDescending(x => x.Id).Take(500).ToListAsync());
     }
 
     [HttpGet("chart")]
