@@ -6,12 +6,13 @@
 ## 已完成內容 (Completed Items)
 - 基礎統計計算 (Mean, StdDev, Range).
 - Xbar-R, I-MR 圖表資料產出 (已抽離為 `Calculators`).
+- Attribute 管制圖 (P, NP, C, U) 計算器實作。
 - 基礎規格界限 (USL/LSL) 判定.
 - 建立 `SpcEngine` 獨立模組 (`Models`, `Calculators`, `Rules`).
 - 實作 `NelsonRulesValidator` (支援 Rule 1, 2, 3, 4, 5, 6 等標準規則)。
 
 ## 待補強項目 (Pending Items)
-- **管制圖擴充**: P, NP, C, U, EWMA, CUSUM.
+- **管制圖擴充**: EWMA, CUSUM, Xbar-S.
 - **製程能力**: Cp, Cpk, Pp, Ppk, Sigma Level.
 - **常態性檢定**: Anderson-Darling, Shapiro-Wilk.
 - **規則擴充**: 支援讀取資料庫動態設定的自定義規則。
@@ -21,5 +22,5 @@
 - 所有傳入的資料必須先轉換為 `SpcDataPoint` 或 `Subgroup` 模型。
 
 ## 後續開發建議 (Development Roadmap)
-- 為 `ImrChartCalculator` 與 `XbarRChartCalculator` 補齊單元測試 (Unit Tests)。
-- 實作 Attribute (計數型) 管制圖的 Calculator。
+- 為所有 `Calculators` 補齊特殊案例或邊界值的單元測試。
+- 準備將 `SpcEngine` 透過 SignalR 事件發佈結果。
