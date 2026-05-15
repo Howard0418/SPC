@@ -1,0 +1,404 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using MesSpc.Api.Domain.Enums;
+
+namespace MesSpc.Api.Domain.Entities;
+
+public abstract class BaseEntity
+{
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
+    public bool IsDeleted { get; set; } = false;
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
+}
+
+public abstract class BaseEntity<T> : BaseEntity
+{
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public T Id { get; set; } = default!;
+}
+
+// --- Enterprise Master Data ---
+
+public class Plant : BaseEntity<int>
+{
+    public string PlantCode { get; set; } = string.Empty;
+    public string PlantName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class Factory : BaseEntity<int>
+{
+    public int PlantId { get; set; }
+    public string FactoryCode { get; set; } = string.Empty;
+    public string FactoryName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class ProductionLine : BaseEntity<int>
+{
+    public int FactoryId { get; set; }
+    public string LineCode { get; set; } = string.Empty;
+    public string LineName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class Unit : BaseEntity<int>
+{
+    public string UnitCode { get; set; } = string.Empty;
+    public string UnitName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class Shift : BaseEntity<int>
+{
+    public string ShiftCode { get; set; } = string.Empty;
+    public string ShiftName { get; set; } = string.Empty;
+    public TimeSpan StartTime { get; set; }
+    public TimeSpan EndTime { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class Operator : BaseEntity<int>
+{
+    public string OperatorCode { get; set; } = string.Empty;
+    public string OperatorName { get; set; } = string.Empty;
+    public string? Department { get; set; }
+    public string? Email { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class Customer : BaseEntity<int>
+{
+    public string CustomerCode { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string? ContactPerson { get; set; }
+    public string? ContactPhone { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class Supplier : BaseEntity<int>
+{
+    public string SupplierCode { get; set; } = string.Empty;
+    public string SupplierName { get; set; } = string.Empty;
+    public string? ContactPerson { get; set; }
+    public string? ContactPhone { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+// --- Existing SPC Master Data (Refactored) ---
+
+public class Product : BaseEntity<int>
+{
+    public string ProductCode { get; set; } = string.Empty;
+    public string ProductName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+}
+
+public class Station : BaseEntity<int>
+{
+    public string StationCode { get; set; } = string.Empty;
+    public string StationName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+}
+
+public class InspectionItem : BaseEntity<int>
+{
+    public string ItemCode { get; set; } = string.Empty;
+    public string ItemName { get; set; } = string.Empty;
+    public DataType DataType { get; set; } = DataType.Numeric;
+    public string? Unit { get; set; }
+    public double? Usl { get; set; }
+    public double? Lsl { get; set; }
+    public double? Ucl { get; set; }
+    public double? Lcl { get; set; }
+    public double? TargetValue { get; set; }
+    public bool IsSpcEnabled { get; set; } = true;
+}
+
+public class ProductStationItem : BaseEntity<int>
+{
+    public int ProductId { get; set; }
+    public int StationId { get; set; }
+    public int InspectionItemId { get; set; }
+    public int SampleSize { get; set; } = 1;
+    public bool IsActive { get; set; } = true;
+}
+
+public class MeasurementBatch : BaseEntity<int>
+{
+    public string BatchNo { get; set; } = string.Empty;
+    public int ProductId { get; set; }
+    public int StationId { get; set; }
+    public int? WorkOrderId { get; set; }
+    public int? StationOperationSessionId { get; set; }
+    public string? LotNo { get; set; }
+    public string? SerialNo { get; set; }
+    public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
+    public string? OperatorName { get; set; }
+    public SourceType SourceType { get; set; } = SourceType.Manual;
+    public List<MeasurementValue> Values { get; set; } = [];
+}
+
+public class MeasurementValue : BaseEntity<int>
+{
+    public int BatchId { get; set; }
+    public int InspectionItemId { get; set; }
+    public int SampleNo { get; set; } = 1;
+    public double? ValueNumeric { get; set; }
+    public string? ValueText { get; set; }
+    public bool? ValueBool { get; set; }
+}
+
+public class FormulaDefinition : BaseEntity<int>
+{
+    public string FormulaCode { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Expression { get; set; } = string.Empty;
+    public bool IsBuiltIn { get; set; } = true;
+    public bool IsActive { get; set; } = true;
+}
+
+public class AlertEvent : BaseEntity<int>
+{
+    public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
+    public int ProductId { get; set; }
+    public int StationId { get; set; }
+    public int InspectionItemId { get; set; }
+    public double? ActualValue { get; set; }
+    public AlertType AlertType { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public int? BatchId { get; set; }
+    public int? MeasurementValueId { get; set; }
+    public bool IsAcknowledged { get; set; } = false;
+    public string Status { get; set; } = "Open";
+    public string? RootCause { get; set; }
+    public string? CorrectiveAction { get; set; }
+    public string? ResponsibleUser { get; set; }
+    public DateTime? ClosedAt { get; set; }
+}
+
+public class WorkOrder : BaseEntity<int>
+{
+    public string WorkOrderNo { get; set; } = string.Empty;
+    public int ProductId { get; set; }
+    public int PlannedQty { get; set; }
+    public int ActualQty { get; set; } = 0;
+    public string Status { get; set; } = "Planned";
+    public DateTime? PlannedStartTime { get; set; }
+    public DateTime? PlannedEndTime { get; set; }
+    public DateTime? ActualStartTime { get; set; }
+    public DateTime? ActualEndTime { get; set; }
+}
+
+public class StationOperationSession : BaseEntity<int>
+{
+    public int WorkOrderId { get; set; }
+    public int StationId { get; set; }
+    public string? LotNo { get; set; }
+    public string? SerialNo { get; set; }
+    public string OperatorName { get; set; } = string.Empty;
+    public string Status { get; set; } = "Open";
+    public DateTime StartedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? EndedAt { get; set; }
+}
+
+public class Part : BaseEntity<int>
+{
+    public string PartNo { get; set; } = string.Empty;
+    public string PartName { get; set; } = string.Empty;
+    public string? Specification { get; set; }
+    public string? Customer { get; set; }
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class Process : BaseEntity<int>
+{
+    public string ProcessCode { get; set; } = string.Empty;
+    public string ProcessName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class Machine : BaseEntity<int>
+{
+    public string MachineCode { get; set; } = string.Empty;
+    public string MachineName { get; set; } = string.Empty;
+    public int ProcessId { get; set; }
+    public string? Location { get; set; }
+    public string? Status { get; set; }
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class QualityCharacteristic : BaseEntity<int>
+{
+    public string CharacteristicCode { get; set; } = string.Empty;
+    public string CharacteristicName { get; set; } = string.Empty;
+    public string DataCategory { get; set; } = "Variable";
+    public string? Unit { get; set; }
+    public int? DefaultChartTypeId { get; set; }
+    public bool IsSpcEnabled { get; set; } = true;
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class PartProcessCharacteristic : BaseEntity<int>
+{
+    public int PartId { get; set; }
+    public int ProcessId { get; set; }
+    public int CharacteristicId { get; set; }
+    public double? USL { get; set; }
+    public double? LSL { get; set; }
+    public double? UCL { get; set; }
+    public double? CL { get; set; }
+    public double? LCL { get; set; }
+    public double? TargetValue { get; set; }
+    public int SampleSize { get; set; } = 1;
+    public int? ChartTypeId { get; set; }
+    public int? RuleGroupId { get; set; }
+    public bool IsRequired { get; set; } = true;
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class ControlChartGroup : BaseEntity<int>
+{
+    public string GroupCode { get; set; } = string.Empty;
+    public string GroupName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class ControlChartCategory : BaseEntity<int>
+{
+    public int ChartGroupId { get; set; }
+    public string CategoryCode { get; set; } = string.Empty;
+    public string CategoryName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class ControlChartType : BaseEntity<int>
+{
+    public int ChartCategoryId { get; set; }
+    public string ChartTypeCode { get; set; } = string.Empty;
+    public string ChartTypeName { get; set; } = string.Empty;
+    public string DataCategory { get; set; } = "Variable";
+    public int? RequiredSampleSize { get; set; }
+    public string? Description { get; set; }
+    public string? FormulaConfigJson { get; set; }
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class UploadBatch : BaseEntity
+{
+    [Key]
+    public Guid UploadBatchId { get; set; } = Guid.NewGuid();
+    public string UploadType { get; set; } = "Variable";
+    public string SourceType { get; set; } = "Api";
+    public string ImportStatus { get; set; } = "Uploaded";
+    public string? OriginalFileName { get; set; }
+    public int TotalRows { get; set; }
+    public int ValidRows { get; set; }
+    public int ErrorRows { get; set; }
+    public DateTime? ConfirmedAt { get; set; }
+}
+
+public class UploadDetail : BaseEntity<long>
+{
+    public Guid UploadBatchId { get; set; }
+    public int RowNo { get; set; }
+    public string PayloadJson { get; set; } = string.Empty;
+    public bool IsValid { get; set; } = true;
+}
+
+public class UploadError : BaseEntity<long>
+{
+    public Guid UploadBatchId { get; set; }
+    public long? UploadDetailId { get; set; }
+    public int? RowNo { get; set; }
+    public string? FieldName { get; set; }
+    public string ErrorCode { get; set; } = string.Empty;
+    public string ErrorMessage { get; set; } = string.Empty;
+}
+
+public class VariableMeasurement : BaseEntity<long>
+{
+    public Guid UploadBatchId { get; set; }
+    public int PartId { get; set; }
+    public int ProcessId { get; set; }
+    public int MachineId { get; set; }
+    public int CharacteristicId { get; set; }
+    public int PartProcessCharacteristicId { get; set; }
+    public string? LotNo { get; set; }
+    public string? SerialNo { get; set; }
+    public int SampleNo { get; set; }
+    public double MeasuredValue { get; set; }
+    public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
+    public string? Operator { get; set; }
+}
+
+public class AttributeMeasurement : BaseEntity<long>
+{
+    public Guid UploadBatchId { get; set; }
+    public int PartId { get; set; }
+    public int ProcessId { get; set; }
+    public int MachineId { get; set; }
+    public int CharacteristicId { get; set; }
+    public int PartProcessCharacteristicId { get; set; }
+    public string? LotNo { get; set; }
+    public int SampleNo { get; set; }
+    public int? InspectedQty { get; set; }
+    public int? DefectQty { get; set; }
+    public int? DefectCount { get; set; }
+    public int? UnitCount { get; set; }
+    public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
+    public string? Operator { get; set; }
+}
+
+public class SpcRuleGroup : BaseEntity<int>
+{
+    public string RuleGroupCode { get; set; } = string.Empty;
+    public string RuleGroupName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class SpcRule : BaseEntity<int>
+{
+    public int RuleGroupId { get; set; }
+    public string RuleCode { get; set; } = string.Empty;
+    public string RuleName { get; set; } = string.Empty;
+    public string? RuleConfigJson { get; set; }
+    public int Priority { get; set; } = 100;
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class SpcCalculationResult : BaseEntity<long>
+{
+    public Guid UploadBatchId { get; set; }
+    public string DataCategory { get; set; } = "Variable";
+    public long? VariableMeasurementId { get; set; }
+    public long? AttributeMeasurementId { get; set; }
+    public int PartProcessCharacteristicId { get; set; }
+    public int ChartTypeId { get; set; }
+    public int? RuleGroupId { get; set; }
+    public string? StatisticName { get; set; }
+    public double? StatisticValue { get; set; }
+    public double? USL { get; set; }
+    public double? LSL { get; set; }
+    public double? UCL { get; set; }
+    public double? CL { get; set; }
+    public double? LCL { get; set; }
+    public bool IsOutOfSpec { get; set; }
+    public bool IsOutOfControl { get; set; }
+    public string? ViolatedRulesJson { get; set; }
+    public DateTime CalculatedAt { get; set; } = DateTime.UtcNow;
+}
