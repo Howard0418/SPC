@@ -1,5 +1,11 @@
 # 10 Change Log
 
+## [2026-05-15] - SPC Engine Refactoring (P2)
+- **架構解耦**: 將 SPC 核心運算從 `SpcService` 抽離至獨立的 `SpcEngine` 模組，解除 Entity Framework 相依性。
+- **領域模型**: 建立 `SpcDataPoint` 與 `Subgroup` 模型，作為運算引擎的標準傳遞物件。
+- **計算器模組**: 實作 `ImrChartCalculator` 與 `XbarRChartCalculator`。
+- **規則引擎**: 實作 `NelsonRulesValidator`，支援 Nelson Rule 1 至 Rule 6 的自動判定，並將結果附加至回傳資料點。
+
 ## [2026-05-15] - Core Architecture Refactoring
 - **核心架構重構**: 引入 `BaseEntity` 抽象類別，統一主鍵名為 `Id`。
 - **自動稽核系統**: 實作 `AppDbContext` 自動填充 `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy`。
