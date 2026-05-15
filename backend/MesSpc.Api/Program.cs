@@ -51,6 +51,8 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddScoped<FormulaEngineService>();
 builder.Services.AddScoped<SpcService>();
 builder.Services.AddScoped<UploadService>();
+builder.Services.AddScoped<ChemicalDailyReportParser>();
+builder.Services.AddScoped<ChemicalImportService>();
 builder.Services.AddScoped<FakeDataFactory>();
 builder.Services.AddScoped<SpcSampleGenerator>();
 builder.Services.AddScoped<MeasurementGenerator>();
