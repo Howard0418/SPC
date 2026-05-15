@@ -188,3 +188,4 @@ C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\refint\MesSp
 C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\MesSpc.Api.pdb
 C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\MesSpc.Api.genruntimeconfig.cache
 C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\ref\MesSpc.Api.dll
+C:\Users\ihao_ting\Desktop\MES\backend\MesSpc.Api\obj\Debug\net10.0\MesSpc.Api.sourcelink.json
