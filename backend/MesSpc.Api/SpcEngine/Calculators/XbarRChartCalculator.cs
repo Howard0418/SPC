@@ -1,5 +1,5 @@
 using MesSpc.Api.SpcEngine.Models;
-using MesSpc.Api.Domain.Enums; // For SpcConstants
+using MesSpc.Api.Services; // For SpcConstants
 
 namespace MesSpc.Api.SpcEngine.Calculators;
 

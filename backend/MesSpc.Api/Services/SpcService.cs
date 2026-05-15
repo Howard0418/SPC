@@ -1,6 +1,8 @@
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
 using MesSpc.Api.Infrastructure.Data;
+using MesSpc.Api.SpcEngine.Models;
+using MesSpc.Api.SpcEngine.Calculators;
 using Microsoft.EntityFrameworkCore;
 
 namespace MesSpc.Api.Services;
@@ -152,73 +154,17 @@ public class SpcService(AppDbContext db)
             .Take(500)
             .ToListAsync(ct);
 
-        var values = raw.Select(x => x.Value).ToList();
-
-        // I chart based on Individuals (I-MR). Here we compute the statistical control limits from MR.
-        // Constants for MR chart with subgroup size = 2:
-        //   d2 = 1.128, D3 = 0, D4 = 3.267
-        // Reference: common SPC constants table (Montgomery).
-        const double d2 = 1.128;
-        const double D3 = 0.0;
-        const double D4 = 3.267;
-
-        var iBar = values.Count > 0 ? values.Average() : (double?)null;
-        var mrValues = new List<double>();
-        for (var i = 1; i < values.Count; i++)
+        var spcPoints = raw.Select(x => new SpcDataPoint { MeasuredAt = x.MeasuredAt, Value = x.Value }).ToList();
+        var limits = new ControlLimits
         {
-            mrValues.Add(Math.Abs(values[i] - values[i - 1]));
-        }
-        var mrBar = mrValues.Count > 0 ? mrValues.Average() : (double?)null;
-
-        var sigma = (mrBar.HasValue && d2 > 0) ? (mrBar.Value / d2) : (double?)null;
-        var iUclStat = (iBar.HasValue && sigma.HasValue) ? (iBar.Value + 3 * sigma.Value) : (double?)null;
-        var iLclStat = (iBar.HasValue && sigma.HasValue) ? (iBar.Value - 3 * sigma.Value) : (double?)null;
-
-        var mrUclStat = (mrBar.HasValue) ? (D4 * mrBar.Value) : (double?)null;
-        var mrLclStat = (mrBar.HasValue) ? (D3 * mrBar.Value) : (double?)null;
-
-        var iPoints = new List<object>();
-        foreach (var p in raw)
-        {
-            var v = p.Value;
-            var oos = (item.Usl.HasValue && v > item.Usl.Value) || (item.Lsl.HasValue && v < item.Lsl.Value);
-            var oocConfigured = (item.Ucl.HasValue && v > item.Ucl.Value) || (item.Lcl.HasValue && v < item.Lcl.Value);
-
-            // Keep configured control limits for outOfControl so that AlertEvent generation matches.
-            iPoints.Add(new
-            {
-                measuredAt = p.MeasuredAt,
-                value = v,
-                outOfSpec = oos,
-                outOfControl = oocConfigured,
-                outOfControlStat = (iUclStat.HasValue && v > iUclStat.Value) || (iLclStat.HasValue && v < iLclStat.Value)
-            });
-        }
-
-        var mrPoints = new List<object>();
-        for (var i = 1; i < values.Count; i++)
-        {
-            var mr = Math.Abs(values[i] - values[i - 1]);
-            var outOfControl = (mrUclStat.HasValue && mr > mrUclStat.Value) || (mrLclStat.HasValue && mr < mrLclStat.Value);
-            mrPoints.Add(new { index = i + 1, value = mr, outOfControl });
-        }
-
-        var limits = new
-        {
-            usl = item.Usl,
-            lsl = item.Lsl,
-            ucl = item.Ucl,
-            lcl = item.Lcl,
-            target = item.TargetValue
+            USL = item.Usl,
+            LSL = item.Lsl,
+            UCL = item.Ucl,
+            LCL = item.Lcl,
+            Target = item.TargetValue
         };
 
-        var statControl = new
-        {
-            iControlLimitsStat = new { cl = iBar, ucl = iUclStat, lcl = iLclStat },
-            mrControlLimitsStat = new { cl = mrBar, ucl = mrUclStat, lcl = mrLclStat }
-        };
-
-        return new { chartType = "I-MR", limits, statControl, iChart = new { points = iPoints }, mrChart = new { points = mrPoints } };
+        return ImrChartCalculator.Calculate(spcPoints, limits);
     }
 
     public async Task<object?> GetXbarRChartAsync(int inspectionItemId, int productId, int stationId, CancellationToken ct = default)
@@ -244,97 +190,23 @@ public class SpcService(AppDbContext db)
             .Take(200)
             .ToListAsync(ct);
 
-        if (groupedRaw.Count == 0)
+        var expectedN = psi?.SampleSize ?? 0;
+        var subgroups = groupedRaw.Select(g => new Subgroup
         {
-            return new
-            {
-                chartType = "XBAR_R",
-                limits = new { usl = item.Usl, lsl = item.Lsl, ucl = item.Ucl, lcl = item.Lcl, target = item.TargetValue },
-                xbarControlLimits = (object?)null,
-                rControlLimits = (object?)null,
-                subgroupSize = 0,
-                subgroupSizeNote = (string?)null,
-                xbarChart = new { points = Array.Empty<object>() },
-                rChart = new { points = Array.Empty<object>() }
-            };
-        }
-
-        var nRef = psi?.SampleSize is > 0 and var psN ? psN : groupedRaw.FirstOrDefault()?.Values.Count ?? 0;
-        if (nRef < 2) nRef = groupedRaw.FirstOrDefault()?.Values.Count ?? 0;
-        var grouped = groupedRaw.Where(x => x.Values.Count == nRef).ToList();
-        if (grouped.Count == 0)
+            MeasuredAt = g.MeasuredAt,
+            Values = g.Values
+        }).ToList();
+        
+        var limits = new ControlLimits
         {
-            grouped = groupedRaw;
-            nRef = grouped.First().Values.Count;
-        }
-
-        object? xbarControl = null;
-        object? rControl = null;
-        double? uclXbar = null;
-        double? lclXbar = null;
-        double? uclRrange = null;
-        double? lclRrange = null;
-
-        if (nRef >= 2 && SpcConstants.TryGetFactors(nRef, out var a2, out var d3, out var d4))
-        {
-            var xbars = grouped.Select(x => x.Values.Average()).ToList();
-            var ranges = grouped.Select(x => x.Values.Max() - x.Values.Min()).ToList();
-            var meanOfXbar = xbars.Average();
-            var rBar = ranges.Average();
-            uclXbar = meanOfXbar + a2 * rBar;
-            lclXbar = meanOfXbar - a2 * rBar;
-            uclRrange = d4 * rBar;
-            lclRrange = d3 * rBar;
-            xbarControl = new { cl = meanOfXbar, ucl = uclXbar, lcl = lclXbar, n = nRef, a2, rBar, xDoubleBar = meanOfXbar };
-            rControl = new { cl = rBar, ucl = uclRrange, lcl = lclRrange, n = nRef, d3, d4, rBar };
-        }
-
-        var xbarPoints = new List<object>();
-        var rPoints = new List<object>();
-        foreach (var x in grouped)
-        {
-            var xbar = x.Values.Average();
-            var range = x.Values.Max() - x.Values.Min();
-            var oos = (item.Usl.HasValue && xbar > item.Usl.Value) || (item.Lsl.HasValue && xbar < item.Lsl.Value);
-            var oocStat = uclXbar.HasValue && lclXbar.HasValue && (xbar > uclXbar.Value || xbar < lclXbar.Value);
-            var oocR = uclRrange.HasValue && lclRrange.HasValue && (range > uclRrange.Value || range < lclRrange.Value);
-
-            xbarPoints.Add(new
-            {
-                x.MeasuredAt,
-                xbar,
-                range,
-                n = x.Values.Count,
-                outOfSpec = oos,
-                outOfControl = oocStat || oocR,
-                outOfControlXbar = oocStat,
-                outOfControlR = oocR
-            });
-            rPoints.Add(new { x.MeasuredAt, value = range, outOfControl = oocR });
-        }
-
-        var limits = new
-        {
-            usl = item.Usl,
-            lsl = item.Lsl,
-            ucl = item.Ucl,
-            lcl = item.Lcl,
-            target = item.TargetValue
+            USL = item.Usl,
+            LSL = item.Lsl,
+            UCL = item.Ucl,
+            LCL = item.Lcl,
+            Target = item.TargetValue
         };
 
-        return new
-        {
-            chartType = "XBAR_R",
-            limits,
-            xbarControlLimits = xbarControl,
-            rControlLimits = rControl,
-            subgroupSize = nRef,
-            subgroupSizeNote = groupedRaw.Any(x => x.Values.Count != nRef)
-                ? "部分批次子組大小與基準 n 不一致，已改用可解析之 n 或納入全部子組；建議每批同子組數。"
-                : null,
-            xbarChart = new { points = xbarPoints },
-            rChart = new { points = rPoints }
-        };
+        return XbarRChartCalculator.Calculate(subgroups, limits, expectedN);
     }
 
     private static AlertEvent NewAlert(MeasurementBatch batch, MeasurementValue value, InspectionItem item, double actual, AlertType type, string msg) =>
