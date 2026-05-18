@@ -60,16 +60,13 @@ public static class AttributeChartCalculator
             });
         }
 
-        // Nelson rules apply to standard deviation, which varies per point here. 
-        // For simplicity, if we use an average nBar for control limits, we could apply Nelson rules.
         double? staticUcl = pBar.HasValue && nBar.HasValue ? pBar.Value + 3 * Math.Sqrt(pBar.Value * (1 - pBar.Value) / nBar.Value) : null;
         double? staticLcl = pBar.HasValue && nBar.HasValue ? Math.Max(0, pBar.Value - 3 * Math.Sqrt(pBar.Value * (1 - pBar.Value) / nBar.Value)) : null;
 
         if (pBar.HasValue && staticUcl.HasValue && staticLcl.HasValue)
         {
-            NelsonRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = pBar, UCL = staticUcl, LCL = staticLcl });
+            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = pBar, UCL = staticUcl, LCL = staticLcl });
             
-            // Map rules back
             for (int i = 0; i < points.Count; i++)
             {
                 points[i]["violatedRules"] = spcPoints[i].ViolatedRules;
@@ -114,7 +111,7 @@ public static class AttributeChartCalculator
 
         if (npBar.HasValue && staticUcl.HasValue && staticLcl.HasValue)
         {
-            NelsonRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = npBar, UCL = staticUcl, LCL = staticLcl });
+            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = npBar, UCL = staticUcl, LCL = staticLcl });
         }
 
         for (int i = 0; i < validData.Count; i++)
@@ -160,7 +157,7 @@ public static class AttributeChartCalculator
 
         if (cBar.HasValue && ucl.HasValue && lcl.HasValue)
         {
-            NelsonRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = cBar, UCL = ucl, LCL = lcl });
+            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = cBar, UCL = ucl, LCL = lcl });
         }
 
         for (int i = 0; i < validData.Count; i++)
@@ -229,7 +226,7 @@ public static class AttributeChartCalculator
 
         if (uBar.HasValue && staticUcl.HasValue && staticLcl.HasValue)
         {
-            NelsonRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = uBar, UCL = staticUcl, LCL = staticLcl });
+            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = uBar, UCL = staticUcl, LCL = staticLcl });
             
             for (int i = 0; i < points.Count; i++)
             {

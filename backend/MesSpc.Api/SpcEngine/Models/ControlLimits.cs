@@ -12,6 +12,16 @@ public record ControlLimits
     public double? Target { get; init; }
 }
 
+public record CapabilityResult
+{
+    public double? Cp { get; init; }
+    public double? Cpk { get; init; }
+    public double? Pp { get; init; }
+    public double? Ppk { get; init; }
+    public double? SigmaWithin { get; init; }
+    public double? SigmaOverall { get; init; }
+}
+
 public record ControlChartResult
 {
     public string ChartType { get; init; } = string.Empty;
@@ -21,4 +31,5 @@ public record ControlChartResult
     public object? SecondaryChartData { get; init; }
     public int SubgroupSize { get; init; }
     public string? SubgroupSizeNote { get; init; }
+    public CapabilityResult? Capability { get; init; }
 }

@@ -95,7 +95,7 @@ public class UploadsController(UploadService uploadService)
 
 [ApiController]
 [Route("api/v2/spc")]
-public class SpcV2Controller(AppDbContext db) : ControllerBase
+public class SpcV2Controller(AppDbContext db, SpcService spcService) : ControllerBase
 {
     [HttpPost("calculate")]
     public async Task<IActionResult> Calculate([FromBody] CalculateReq req)
@@ -124,6 +124,13 @@ public class SpcV2Controller(AppDbContext db) : ControllerBase
             .Select(x => new { x.CalculatedAt, x.StatisticValue, x.UCL, x.CL, x.LCL, x.IsOutOfControl, x.IsOutOfSpec })
             .ToListAsync();
         return Ok(data);
+    }
+
+    [HttpGet("interactive-chart")]
+    public async Task<IActionResult> InteractiveChart([FromQuery] int partProcessCharacteristicId, [FromQuery] Guid? uploadBatchId)
+    {
+        var chart = await spcService.GetInteractiveChartAsync(partProcessCharacteristicId, uploadBatchId);
+        return chart is null ? NotFound("找不到該檢驗項目的管制圖資料或配置。") : Ok(chart);
     }
 
     [HttpGet("chart-types")]

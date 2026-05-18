@@ -1,6 +1,7 @@
 using System.Text;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
+using MesSpc.Api.Services.Parsers;
 using MesSpc.Api.Services.TestData;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -98,7 +99,7 @@ using (var scope = app.Services.CreateScope())
     }
     else
     {
-        EnsureSqlServerMigrationBaseline(db);
+        try { EnsureSqlServerMigrationBaseline(db); } catch { }
         db.Database.Migrate();
     }
     SeedData.Initialize(db);

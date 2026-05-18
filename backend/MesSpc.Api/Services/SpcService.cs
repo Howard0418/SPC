@@ -209,6 +209,70 @@ public class SpcService(AppDbContext db)
         return XbarRChartCalculator.Calculate(subgroups, limits, expectedN);
     }
 
+    public async Task<ControlChartResult?> GetInteractiveChartAsync(int partProcessCharacteristicId, Guid? uploadBatchId, CancellationToken ct = default)
+    {
+        var mapping = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
+        if (mapping is null || !mapping.ChartTypeId.HasValue) return null;
+
+        var chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
+        if (chartType is null) return null;
+
+        var limits = new ControlLimits
+        {
+            USL = mapping.USL,
+            LSL = mapping.LSL,
+            Target = mapping.TargetValue,
+            UCL = mapping.UCL,
+            CL = mapping.CL,
+            LCL = mapping.LCL
+        };
+
+        if (chartType.DataCategory == "Variable")
+        {
+            var query = db.VariableMeasurements.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
+            if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
+
+            var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
+            if (measurements.Count == 0) return null;
+
+            if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
+            {
+                var points = measurements.Select(x => new SpcDataPoint { MeasuredAt = x.MeasuredAt, Value = x.MeasuredValue }).ToList();
+                return ImrChartCalculator.Calculate(points, limits);
+            }
+            else // XBAR_R
+            {
+                var expectedSampleSizeVal = mapping.SampleSize > 0 ? mapping.SampleSize : (chartType.RequiredSampleSize ?? 0) > 0 ? chartType.RequiredSampleSize!.Value : 5;
+                var grouped = measurements.GroupBy(x => x.MeasuredAt).Select(g => new Subgroup
+                {
+                    MeasuredAt = g.Key,
+                    Values = g.Select(m => m.MeasuredValue).ToList()
+                }).ToList();
+
+                return XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal);
+            }
+        }
+        else // Attribute
+        {
+            var query = db.AttributeMeasurements.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
+            if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
+
+            var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
+            if (measurements.Count == 0) return null;
+
+            var points = measurements.Select(x => new AttributeDataPoint
+            {
+                MeasuredAt = x.MeasuredAt,
+                InspectedQty = x.InspectedQty,
+                DefectQty = x.DefectQty,
+                DefectCount = x.DefectCount,
+                UnitCount = x.UnitCount
+            }).ToList();
+
+            return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits);
+        }
+    }
+
     private static AlertEvent NewAlert(MeasurementBatch batch, MeasurementValue value, InspectionItem item, double actual, AlertType type, string msg) =>
         new()
         {

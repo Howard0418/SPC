@@ -31,7 +31,7 @@ public static class ImrChartCalculator
         if (iBar.HasValue && iUclStat.HasValue && iLclStat.HasValue)
         {
             var statLimits = new ControlLimits { CL = iBar, UCL = iUclStat, LCL = iLclStat };
-            MesSpc.Api.SpcEngine.Rules.NelsonRulesValidator.ApplyRules(rawData, statLimits);
+            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(rawData, statLimits);
         }
 
         var iPoints = new List<object>();
@@ -62,6 +62,9 @@ public static class ImrChartCalculator
             mrPoints.Add(new { index = i + 1, value = mr, outOfControl });
         }
 
+        var dummySubgroups = rawData.Select(x => new Subgroup { MeasuredAt = x.MeasuredAt, Values = [x.Value] }).ToList();
+        var capability = ProcessCapabilityCalculator.Calculate(dummySubgroups, configuredLimits.USL, configuredLimits.LSL);
+
         return new ControlChartResult
         {
             ChartType = "I-MR",
@@ -73,7 +76,8 @@ public static class ImrChartCalculator
             },
             ChartData = new { points = iPoints },
             SecondaryChartData = new { points = mrPoints },
-            SubgroupSize = 1
+            SubgroupSize = 1,
+            Capability = capability
         };
     }
 }

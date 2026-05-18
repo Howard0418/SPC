@@ -228,7 +228,32 @@ public class UploadService(AppDbContext db, SpcService spcService)
         return (part, process, machine, characteristic, mapping);
     }
 
-    private static string? Get(Dictionary<string, string?> row, string key) => row.TryGetValue(key, out var value) ? value : null;
+    private static string? Get(Dictionary<string, string?> row, string key)
+    {
+        if (row.TryGetValue(key, out var val) && !string.IsNullOrWhiteSpace(val)) return val;
+        var altKey = key.ToLowerInvariant() switch
+        {
+            "partno" => "料號",
+            "processcode" => "製程",
+            "machinecode" => "機台",
+            "characteristiccode" => "檢驗項目",
+            "measuredvalue" => "測量值",
+            "measuredat" => "日期",
+            "operator" => "作業員",
+            "lotno" => "lot",
+            "serialno" => "工單",
+            "sampleno" => "樣本編號",
+            "inspectedqty" => "總數",
+            "defectqty" => "不良數",
+            "defectcount" => "缺點數",
+            "unitcount" => "單位數",
+            _ => null
+        };
+        if (altKey != null && row.TryGetValue(altKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;
+        var matchedKey = row.Keys.FirstOrDefault(k => k.Equals(key, StringComparison.OrdinalIgnoreCase) || (altKey != null && k.Equals(altKey, StringComparison.OrdinalIgnoreCase)));
+        if (matchedKey != null && row.TryGetValue(matchedKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;
+        return null;
+    }
     private static int TryInt(string? raw, int fallback) => int.TryParse(raw, out var value) ? value : fallback;
     private static int? TryNullableInt(string? raw) => int.TryParse(raw, out var value) ? value : null;
     private static DateTime TryDateTime(string? raw, DateTime fallback) => DateTime.TryParse(raw, out var value) ? value : fallback;

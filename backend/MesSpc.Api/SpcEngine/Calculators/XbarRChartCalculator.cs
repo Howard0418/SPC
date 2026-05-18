@@ -58,7 +58,7 @@ public static class XbarRChartCalculator
         if (uclXbar.HasValue && lclXbar.HasValue && nRef >= 2)
         {
             var statLimits = new ControlLimits { CL = validSubgroups.Average(x => x.Mean), UCL = uclXbar, LCL = lclXbar };
-            MesSpc.Api.SpcEngine.Rules.NelsonRulesValidator.ApplyRules(spcPoints, statLimits);
+            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(spcPoints, statLimits);
         }
 
         var xbarPoints = new List<object>();
@@ -71,7 +71,7 @@ public static class XbarRChartCalculator
             var range = x.Range;
             var oos = (configuredLimits.USL.HasValue && xbar > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && xbar < configuredLimits.LSL.Value);
-            var oocStat = p.IsOutOfControl; // Provided by NelsonRulesValidator for Xbar
+            var oocStat = p.IsOutOfControl; // Provided by WesternElectricRulesValidator for Xbar
             var oocR = uclRrange.HasValue && lclRrange.HasValue && (range > uclRrange.Value || range < lclRrange.Value);
 
             xbarPoints.Add(new
@@ -89,6 +89,8 @@ public static class XbarRChartCalculator
             rPoints.Add(new { x.MeasuredAt, value = range, outOfControl = oocR });
         }
 
+        var capability = ProcessCapabilityCalculator.Calculate(subgroups, configuredLimits.USL, configuredLimits.LSL);
+
         return new ControlChartResult
         {
             ChartType = "XBAR_R",
@@ -99,7 +101,8 @@ public static class XbarRChartCalculator
                 ? "部分批次子組大小與基準 n 不一致，已改用可解析之 n 或納入全部子組；建議每批同子組數。"
                 : null,
             ChartData = new { points = xbarPoints },
-            SecondaryChartData = new { points = rPoints }
+            SecondaryChartData = new { points = rPoints },
+            Capability = capability
         };
     }
 }
