@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES + SPC 系統：專屬教學手冊 Prompt 提示詞工程指南 (Prompt Engineering Guide)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: { colors: { slate: { 950: '#030712', 900: '#0f172a', 800: '#1e293b' } } }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=Fira+Code:wght@400;600&display=swap');
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; }
+        code { font-family: 'Fira Code', monospace; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col transition-colors duration-300 select-none">
+
+    <header class="sticky top-0 z-50 glass px-6 py-4 flex items-center justify-between shadow-2xl">
+        <div class="flex items-center gap-4">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-500 via-indigo-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i data-lucide="terminal" class="w-6 h-6 text-white animate-pulse"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <h1 class="text-xl font-extrabold tracking-tight text-white">如何引導 Antigravity 產出完美系統操作手冊：提示詞工程指南</h1>
+                    <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold border border-purple-500/30">Prompt Master v1.0</span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">基於角色賦能、情境邊界與瀏覽器自動截圖的精確指令架構</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300 transition-all text-xs font-bold shadow-sm">
+                <i data-lucide="sun-dim" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+                <i data-lucide="moon" class="w-4 h-4 block dark:hidden text-indigo-400"></i>
+            </button>
+            <button onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>列印 / 存為 PDF</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-10 space-y-10 flex-1 w-full">
+
+        <section class="p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-purple-950/80 to-slate-900 border border-purple-800/50 shadow-2xl relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="max-w-3xl space-y-4 relative z-10">
+                <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 font-bold text-xs uppercase tracking-widest border border-purple-500/30">
+                    Prompt Engineering Methodology
+                </span>
+                <h2 class="text-3xl font-extrabold tracking-tight text-white">
+                    掌握「五段式提示詞架構」，讓 AI 產出世界級文件
+                </h2>
+                <p class="text-slate-300 text-sm leading-relaxed font-medium">
+                    Antigravity 是具備強大程式碼理解與自動化瀏覽器操作能力的高階 Agent 系統。要讓它為您的 SPC 網站產出無懈可擊的操作手冊，秘訣在於同時提供 **「角色定位、專案目錄結構、自動截圖指示、讀者層級與 HTML 互動輸出」**。
+                </p>
+            </div>
+        </section>
+
+        <!-- The 5 Core Elements -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-lg">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+                    <i data-lucide="compass" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold text-white text-base">1. 明確界定受眾角色</h3>
+                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                    在提示詞開頭指明這是寫給「產線作業員 (操作導向)」、「品管工程師 (數據追溯與公式切換)」，還是「IT 系統管理員 (主檔維護)」。
+                </p>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-lg">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
+                    <i data-lucide="camera" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold text-white text-base">2. 授權啟動自動截圖</h3>
+                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                    明確告訴 Antigravity 啟動 <code>browser_subagent</code>，前往本地端網址 `http://localhost:5173/spc/` 擷取各頁面最新真實截圖並嵌入。
+                </p>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-lg">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <i data-lucide="layout" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold text-white text-base">3. 要求豐富互動 HTML</h3>
+                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                    請 AI 依照 Anthropic 最先進的理念，產出帶有側邊欄目錄、全局快搜與一鍵列印按鈕的單頁式互動教學網頁。
+                </p>
+            </div>
+        </section>
+
+        <!-- Golden Copy-Paste Prompt Box -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="copy" class="w-5 h-5 text-purple-500"></i> 💡 推薦給 Antigravity 的黃金版提示詞範本 (可直接複製使用)
+                </h3>
+                <button onclick="copyGoldenPrompt()" id="btnCopyPrompt" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2">
+                    <i data-lucide="clipboard-copy" class="w-4 h-4"></i> <span>點擊複製完整 Prompt</span>
+                </button>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-950 border border-purple-500/40 font-mono text-xs text-indigo-300 leading-relaxed relative shadow-xl">
+<pre id="txtGoldenPrompt" class="whitespace-pre-wrap overflow-x-auto space-y-2">
+# 任務目標：為 MES + SPC 網站製作次世代全功能互動教學手冊 (Rich HTML User Manual)
+
+## 1. 角色設定
+請扮演頂級企業軟體架構師與使用者體驗專家 (UX Specialist)，為我們的 MES + SPC 智慧工業品質網站編寫一份給「產線主管、品管工程師 (QE) 與系統管理員」看的操作教學手冊。
+
+## 2. 專案背景與檔案位置參考
+- 前端專案位於：`C:\Users\ihao_ting.PMR.000\Desktop\MES\frontend\mes-spc-web\` (Vue 3 / Vite)
+- 請務必檢視路由定義檔與核心視圖 (如 `SpcChartView.vue`, `ControlChartTypesView.vue`, `Alerts.vue`)，以確保功能名稱與實際操作步驟完全契合。
+
+## 3. 核心功能涵蓋範圍 (請依序分章節撰寫)
+1. **基礎品質主檔維護**：如何設定產品、製程與料號特性關聯表 (USL / LSL / Target)。
+2. **管制圖種類與公式維護**：如何在系統中切換「標準全距法」與「平均值移動全距法 (MR-Method)」，以及 JSON 配置檔結構說明。
+3. **即時互動戰情室操作**：如何輸入批次 UUID 進行追溯、檢視紫色脈衝光澤徽章與解讀 UCL/LCL 統計界限。
+4. **異常通報與閉環處置**：如何查看 OOS/OOC 警報單號，並在 V2 工作流中更新 Open -> In Progress -> Closed 處理進度。
+
+## 4. 自動化截圖授權 (Browser Action Required)
+請先使用 `browser_subagent` 啟動並訪問本地端開發伺服器 (如 `http://localhost:5173/` 或對應路由)，依序進入各主檔頁面與戰情室，擷取高品質操作截圖，並將這些絕對路徑圖片完美嵌入教學文件中。
+
+## 5. 輸出格式標準 (Anthropic HTML Standard)
+請不要輸出冰冷的純文字 Markdown。請幫我產出一個單一的高級 HTML 檔案 (`spc_user_manual_portal.html`)，需具備：
+- 玻璃擬態 (Glassmorphism) 與深淺模式切換 UI。
+- 左側主題導覽列與頂部關鍵字即時快搜。
+- 內建一鍵列印轉存 PDF 按鈕與完美列印排版。
+- 內嵌 SPC 公式試算沙盒與異常狀態切換互動演練區。
+</pre>
+            </div>
+        </section>
+
+        <!-- Prompt Deconstruction Guide -->
+        <section class="p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-6 shadow-xl text-sm">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                <i data-lucide="lightbulb" class="w-6 h-6 text-amber-500"></i> 為什麼這段 Prompt 能發揮「神級效果」？（提示詞解密）
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                    <span class="text-indigo-400 font-bold uppercase tracking-wider block">🔒 鎖定檔案路徑 (Grounding)</span>
+                    <p class="text-slate-400 leading-relaxed">
+                        指明前端檔案位置 (`mes-spc-web`)，能引導 Antigravity 在回答前先去 `view_file` 或 `grep_search` 您的真實程式碼（例如查看 `SpcChartView.vue` 中的變數名稱），確保寫出來的操作按鈕名稱 100% 正確無誤。
+                    </p>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                    <span class="text-purple-400 font-bold uppercase tracking-wider block">🤖 授權 Browser Subagent</span>
+                    <p class="text-slate-400 leading-relaxed">
+                        明確要求使用 `browser_subagent`，這會啟動內部的自動化無頭瀏覽器，前往您的網站點擊按鈕並拍下真實畫面。這省去了您手動貼圖的繁瑣流程。
+                    </p>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                    <span class="text-emerald-400 font-bold uppercase tracking-wider block">📄 指定 Anthropic HTML 輸出</span>
+                    <p class="text-slate-400 leading-relaxed">
+                        要求輸出單頁式 HTML 搭配列印轉存按鈕，保證了最後產出的手冊不只好看，還能直接發給全廠員工在瀏覽器開啟，或是秒轉為精美的 PDF 報告。
+                    </p>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                    <span class="text-amber-400 font-bold uppercase tracking-wider block">📌 劃分清晰的四大模組</span>
+                    <p class="text-slate-400 leading-relaxed">
+                        將系統功能明確拆解為「主檔、公式、戰情室、異常處置」，能讓 AI 產出的結構井然有序，不會遺漏任何一個重點。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Copyright Footer -->
+        <footer class="pt-8 pb-16 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 font-medium">
+            <div>MES + SPC 系統提示詞工程中心 (Prompt Engineering Hub)</div>
+            <div>架構設計：Antigravity AI • 建立時間：2026/05/18</div>
+        </footer>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
+
+        function copyGoldenPrompt() {
+            const promptText = document.getElementById('txtGoldenPrompt').innerText;
+            navigator.clipboard.writeText(promptText);
+
+            const btn = document.getElementById('btnCopyPrompt');
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> <span>複製成功！可直接貼給 Antigravity</span>`;
+            lucide.createIcons();
+            setTimeout(() => { btn.innerHTML = origHtml; lucide.createIcons(); }, 2500);
+        }
+    </script>
+</body>
+</html>

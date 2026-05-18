@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES + SPC 系統：全功能智慧品質管理與操作手冊 (Rich HTML User Manual)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: { colors: { slate: { 950: '#020617', 900: '#0f172a', 800: '#1e293b' } } }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=Fira+Code:wght@400;600&display=swap');
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; }
+        code { font-family: 'Fira Code', monospace; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .screenshot-card { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        .screenshot-card img { width: 100%; height: auto; display: block; transition: transform 0.3s; }
+        .screenshot-card img:hover { transform: scale(1.02); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+
+    <!-- Top Sticky Navbar -->
+    <header class="sticky top-0 z-50 glass px-6 py-4 flex items-center justify-between shadow-2xl">
+        <div class="flex items-center gap-4">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i data-lucide="book-open" class="w-6 h-6 text-white animate-pulse"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <h1 class="text-xl font-extrabold tracking-tight text-white">MES + SPC 旗艦品質系統操作手冊</h1>
+                    <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30">Rich HTML Manual v3.0</span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">專為產線主管、品管工程師 (QE) 與系統管理員設計的「全方位互動式數位指南」</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="relative w-64 hidden md:block">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                <input id="inpSearch" oninput="filterManual()" type="text" placeholder="手冊關鍵字快搜..." class="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-medium text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+            </div>
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300 transition-all text-xs font-bold shadow-sm">
+                <i data-lucide="sun-dim" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+                <i data-lucide="moon" class="w-4 h-4 block dark:hidden text-indigo-400"></i>
+            </button>
+            <button onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>列印 / 轉存 PDF</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex overflow-hidden max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 gap-8">
+        
+        <!-- Left Sidebar Navigation -->
+        <aside class="w-64 flex-shrink-0 hidden lg:flex flex-col gap-2">
+            <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-xl">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">手冊章節導覽</div>
+                <button onclick="switchSec('master')" id="btn_master" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-950/50 border border-indigo-800/60 transition-all text-left">
+                    <i data-lucide="database" class="w-4 h-4 text-indigo-400"></i> 1. 基礎品質主檔維護
+                </button>
+                <button onclick="switchSec('formula')" id="btn_formula" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all text-left">
+                    <i data-lucide="code-2" class="w-4 h-4"></i> 2. 管制圖種類與公式
+                </button>
+                <button onclick="switchSec('warroom')" id="btn_warroom" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all text-left">
+                    <i data-lucide="line-chart" class="w-4 h-4 text-purple-400"></i> 3. 即時 SPC 戰情室
+                </button>
+                <button onclick="switchSec('alerts')" id="btn_alerts" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all text-left">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i> 4. 異常通報與閉環處置
+                </button>
+            </div>
+
+            <!-- Sandbox Tool Widget -->
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-purple-950/30 to-slate-900 border border-purple-800/30 text-xs space-y-3 shadow-xl mt-auto">
+                <div class="flex items-center gap-2 font-bold text-purple-300">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i> <span>即時雙向模擬器</span>
+                </div>
+                <p class="text-slate-400 text-[11px] leading-relaxed">
+                    本指南內嵌動態沙盒。您可在各章節直接操作數值推演或演練單號簽核，徹底告別傳統紙本文件的靜態閱讀。
+                </p>
+            </div>
+        </aside>
+
+        <!-- Right Content Area -->
+        <main class="flex-1 space-y-12 pb-16 overflow-y-auto pr-2">
+
+            <!-- Hero Intro -->
+            <section class="p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border border-indigo-800/50 shadow-2xl relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="max-w-3xl space-y-4 relative z-10">
+                    <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-widest border border-indigo-500/30">User Manual & Training Center</span>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                        工業品質系統全場景操作指南
+                    </h2>
+                    <p class="text-slate-300 text-sm leading-relaxed font-medium">
+                        歡迎進入 MES + SPC 智慧工業品質平台操作手冊。本手冊完整收錄從「底層檢驗項目設定、客製化公式 JSON 套用」到「線上互動戰情室數據追溯與 V2 異常處置閉環」的四大核心步驟。
+                    </p>
+                </div>
+            </section>
+
+            <!-- SECTION 1: Master Data Maintenance -->
+            <section id="sec_master" class="space-y-6 manual-sec animate-fadeIn">
+                <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+                    <div class="p-2.5 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                        <i data-lucide="database" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white tracking-tight">第 1 章：基礎品質主檔與檢驗基準設定</h3>
+                        <p class="text-xs text-slate-400">建立料號 (Part)、製程 (Process) 與量測特性 (Characteristic) 的規格上下限 (USL / LSL / Target)</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <div class="lg:col-span-6 space-y-4 text-sm leading-relaxed text-slate-300">
+                        <p>在系統開始進行 SPC 繪圖與異常偵測前，必須先設定檢驗基準。請依下列步驟進行操作：</p>
+                        <ol class="space-y-3 text-xs">
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold">1</span>
+                                <div>登入系統後，展開左側導覽列的 <strong>「品質主檔與檢驗設定」</strong>，點選 <strong>「料號製程檢驗基準維護」</strong>。</div>
+                            </li>
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold">2</span>
+                                <div>在上方篩選欄位選擇對應的 <code>產品型號 (Product)</code> 與 <code>檢驗站別 (Station)</code>。</div>
+                            </li>
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold">3</span>
+                                <div>於表格右側點擊「編輯」，輸入該特性的 <strong>規格上限 (USL)</strong>、<strong>規格下限 (LSL)</strong> 與 <strong>目標值 (Target)</strong> 並按下儲存。</div>
+                            </li>
+                        </ol>
+                        <div class="p-4 rounded-xl bg-blue-950/40 border border-blue-800/50 text-xs text-blue-300 flex items-center gap-3">
+                            <i data-lucide="info" class="w-5 h-5 flex-shrink-0 text-blue-400"></i>
+                            <span>提示：系統支援批量匯入 Excel/CSV 檢驗基準，省去人工逐筆輸入的時間。</span>
+                        </div>
+                    </div>
+
+                    <!-- Embedded Actual Screenshot -->
+                    <div class="lg:col-span-6">
+                        <div class="screenshot-card relative">
+                            <div class="absolute top-3 left-3 bg-slate-950/80 px-3 py-1 rounded-full text-[10px] font-mono text-blue-400 border border-blue-500/30 z-10">真實系統截圖：料號檢驗基準設定</div>
+                            <img src="C:/Users/ihao_ting.PMR.000/.gemini/antigravity/brain/6ab77e97-a632-4b94-9c5b-d5818191cfd1/master_data_maintenance_1779082232691.png" alt="料號製程檢驗基準設定畫面">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: Control Chart Types & Formula JSON -->
+            <section id="sec_formula" class="space-y-6 manual-sec hidden animate-fadeIn">
+                <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+                    <div class="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                        <i data-lucide="code-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white tracking-tight">第 2 章：管制圖種類與動態公式配置 (JSON Master)</h3>
+                        <p class="text-xs text-slate-400">透過 JSON 彈窗一鍵切換「標準全距法」與「平均值移動全距法 (MR-Method)」</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <div class="lg:col-span-6 space-y-4 text-sm leading-relaxed text-slate-300">
+                        <p>為滿足半導體與車用電子供應鏈多樣化的統計需求，系統內建了動態公式引擎。當抽樣樣本數 $N=1$ 或需要特殊移動差值分析時：</p>
+                        <ol class="space-y-3 text-xs">
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">1</span>
+                                <div>前往左側導覽列點選 <strong>「SPC 管制圖配置」</strong> -> <strong>「管制圖種類維護」</strong>。</div>
+                            </li>
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">2</span>
+                                <div>在代號 <code>XBAR_R</code> 的資料列點擊右側的 <strong>「編輯公式」</strong>，系統會彈出設定視窗。</div>
+                            </li>
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">3</span>
+                                <div class="space-y-1.5">
+                                    <div>彈窗上方提供了三種快捷按鈕：除了標準全距法外，點擊 <strong>「🧪 平均移動全距法 (MR-Method)」</strong> 或 <strong>「🧪 樣本標準差法 (Sigma-Method)」</strong>，系統將自動填入對應的 JSON 設定檔。</div>
+                                    <div class="flex flex-wrap gap-2 pt-1">
+                                        <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[11px] font-mono border border-purple-500/30">MR-Method: UCL = Xbar + 2.66 * MRbar</span>
+                                        <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[11px] font-mono border border-emerald-500/30">Sigma-Method: UCL = Xbar + 3.0 * S_Xbar</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ol>
+
+                        <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-purple-300 space-y-1">
+                            <div class="text-[11px] text-slate-500 font-bold uppercase">動態 JSON 結構解析 (以 Sigma-Method 為例)</div>
+                            <div>"XbarCalculationMethod": "SIGMA_METHOD"</div>
+                            <div>"Multiplier": 3.0</div>
+                            <div>"UclFormula": "XDoubleBar + (3.0 * S_Xbar)"</div>
+                        </div>
+                    </div>
+
+                    <!-- Embedded Actual Screenshot -->
+                    <div class="lg:col-span-6">
+                        <div class="screenshot-card relative">
+                            <div class="absolute top-3 left-3 bg-slate-950/80 px-3 py-1 rounded-full text-[10px] font-mono text-indigo-400 border border-indigo-500/30 z-10">真實系統截圖：公式 JSON 配置彈窗</div>
+                            <img src="C:/Users/ihao_ting.PMR.000/.gemini/antigravity/brain/6ab77e97-a632-4b94-9c5b-d5818191cfd1/control_chart_types_formula_1779082257416.png" alt="管制圖公式 JSON 配置彈窗">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: SPC War Room -->
+            <section id="sec_warroom" class="space-y-8 manual-sec hidden animate-fadeIn">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-2xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                            <i data-lucide="line-chart" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white tracking-tight">第 3 章：即時 SPC 互動戰情室 (War Room)</h3>
+                            <p class="text-xs text-slate-400">輸入批次 UUID 追溯量測點、檢視紫色脈衝光澤徽章與雙列日期時間呈現</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-full text-xs font-bold animate-pulse flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span> 戰情室沙盒同步中
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <div class="lg:col-span-6 space-y-4 text-sm leading-relaxed text-slate-300">
+                        <p>戰情室是工廠品質監控的核心樞紐。當切換至 MR-Method 公式時，頁面將具備以下智慧視覺特徵：</p>
+                        <ol class="space-y-3 text-xs">
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold">1</span>
+                                <div>前往左側導覽列的 <strong>「即時品質看板」</strong> -> <strong>「即時 SPC 戰情室」</strong>。</div>
+                            </li>
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold">2</span>
+                                <div>在頁面上方選擇料號與製程，或直接輸入指定批次的 <code>UUID</code> 進行歷史數據快速調閱。</div>
+                            </li>
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md font-bold text-purple-300">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold">3</span>
+                                <div>若當前生效公式為移動全距法，圖表頂端會自動亮起「🧪 截圖公式：平均移動全距法 (2.66 * MRbar)」的紫色脈衝徽章。</div>
+                            </li>
+                        </ol>
+
+                        <div class="p-4 rounded-xl bg-purple-950/40 border border-purple-800/50 text-xs text-purple-300 flex items-center gap-3">
+                            <i data-lucide="calendar-clock" class="w-5 h-5 flex-shrink-0 text-purple-400"></i>
+                            <span>優化體驗：圖表的 X 軸標籤已同步升級為 `MM/DD HH:mm` 精準格式，完美兼顧長天期與跨班次的時間判讀。</span>
+                        </div>
+                    </div>
+
+                    <!-- Embedded Actual Screenshot -->
+                    <div class="lg:col-span-6">
+                        <div class="screenshot-card relative">
+                            <div class="absolute top-3 left-3 bg-slate-950/80 px-3 py-1 rounded-full text-[10px] font-mono text-purple-400 border border-purple-500/30 z-10">真實系統截圖：即時 SPC 戰情室</div>
+                            <img src="C:/Users/ihao_ting.PMR.000/.gemini/antigravity/brain/6ab77e97-a632-4b94-9c5b-d5818191cfd1/spc_war_room_1779082273685.png" alt="即時 SPC 戰情室與紫色徽章">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Simulator Component embedded -->
+                <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6 shadow-xl">
+                    <span class="text-xs font-bold text-purple-400 uppercase tracking-widest block">即時互動試算演練區：體驗 MR-Method 管制界限跨距</span>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-300 flex justify-between">
+                                <span>總平均值 ($\bar{\bar{X}}$)</span>
+                                <span id="lblSimX" class="font-mono text-indigo-400 font-bold">10.00</span>
+                            </label>
+                            <input id="sldSimX" type="range" min="5" max="30" step="0.1" value="10" oninput="runSim()" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-300 flex justify-between">
+                                <span>平均移動全距 ($\overline{MR}$)</span>
+                                <span id="lblSimMr" class="font-mono text-purple-400 font-bold">0.056</span>
+                            </label>
+                            <input id="sldSimMr" type="range" min="0.01" max="0.5" step="0.001" value="0.056" oninput="runSim()" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-300 flex justify-between">
+                                <span>乘數常數 ($3/d_2$)</span>
+                                <span id="lblSimMul" class="font-mono text-pink-400 font-bold">2.66</span>
+                            </label>
+                            <input id="sldSimMul" type="range" min="1.5" max="3.5" step="0.01" value="2.66" oninput="runSim()" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500">
+                        </div>
+                    </div>
+                    <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl flex flex-wrap items-center justify-around gap-4 text-sm font-bold font-mono">
+                        <div class="text-red-400">上限 UCL：<span id="resUcl">10.1490</span></div>
+                        <div class="text-blue-400">中心線 CL：<span id="resCl">10.0000</span></div>
+                        <div class="text-amber-400">下限 LCL：<span id="resLcl">9.8510</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: Alerts & Workflow -->
+            <section id="sec_alerts" class="space-y-8 manual-sec hidden animate-fadeIn">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white tracking-tight">第 4 章：異常通報總覽與 V2 閉環處置工作流</h3>
+                            <p class="text-xs text-slate-400">即時追蹤 OOS / OOC 品質違規警示，並更新處理進度達成完整審核閉環</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full text-xs font-bold uppercase tracking-widest">IATF 16949 Compliant</span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <div class="lg:col-span-6 space-y-4 text-sm leading-relaxed text-slate-300">
+                        <p>當系統計算發現數值超出規格 (OOS) 或違反西方電氣規則 (OOC) 時，將發布異常單。工程師需透過以下步驟進行追蹤與結案：</p>
+                        <ol class="space-y-3 text-xs">
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">1</span>
+                                <div>前往左側導覽列 <strong>「異常管理與追溯」</strong> -> <strong>「異常通報總覽」</strong> 檢視所有觸發事件。</div>
+                            </li>
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">2</span>
+                                <div>點選 <strong>「V2 異常流程」</strong>，利用頂部的 <code>Status</code> 篩選器尋找指派給您的 <code>Open</code> 單號。</div>
+                            </li>
+                            <li class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex gap-3 shadow-md">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">3</span>
+                                <div>在單號的 <strong>狀態</strong> 欄位輸入進度（如 <code>處理中</code> 或 <code>Closed</code>），點選右側的 <strong>「更新流程」</strong> 完成簽核。</div>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <!-- Embedded Actual Screenshot -->
+                    <div class="lg:col-span-6">
+                        <div class="screenshot-card relative">
+                            <div class="absolute top-3 left-3 bg-slate-950/80 px-3 py-1 rounded-full text-[10px] font-mono text-amber-400 border border-amber-500/30 z-10">真實系統截圖：異常通報與簽核處置</div>
+                            <img src="C:/Users/ihao_ting.PMR.000/.gemini/antigravity/brain/6ab77e97-a632-4b94-9c5b-d5818191cfd1/alerts_overview_1779082289424.png" alt="異常通報與處置工作流畫面">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Workflow Matrix Component -->
+                <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">實機動態操作演練：體驗 V2 異常單閉環簽核</span>
+                        <div class="space-x-1 font-bold text-xs">
+                            <button onclick="fltDemo('All')" id="fltDemoAll" class="px-3 py-1 rounded-lg bg-indigo-600 text-white shadow-xs">全部</button>
+                            <button onclick="fltDemo('Open')" id="fltDemoOpen" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white">未處理 (Open)</button>
+                            <button onclick="fltDemo('In Progress')" id="fltDemoProg" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white">處理中</button>
+                            <button onclick="fltDemo('Closed')" id="fltDemoClosed" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white">已結案</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto text-xs">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                                    <th class="py-3 px-4">異常單號</th>
+                                    <th class="py-3 px-4">料號 / 製程</th>
+                                    <th class="py-3 px-4">警報判定原因</th>
+                                    <th class="py-3 px-4 text-center">當前狀態</th>
+                                    <th class="py-3 px-4 text-right">流程操作演練</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyDemoAlerts" class="divide-y divide-slate-800/80 font-medium">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Copyright Footer -->
+            <footer class="pt-8 pb-16 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 font-medium">
+                <div>MES + SPC 旗艦工業系統操作手冊 • 知識賦能中心</div>
+                <div>系統架構與自動化編譯：Antigravity AI • 產出日期：2026/05/18</div>
+            </footer>
+
+        </main>
+    </div>
+
+    <!-- JavaScript Engine -->
+    <script>
+        lucide.createIcons();
+
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
+
+        const secs = ['master', 'formula', 'warroom', 'alerts'];
+        function switchSec(s) {
+            secs.forEach(x => {
+                const btn = document.getElementById(`btn_${x}`);
+                const dom = document.getElementById(`sec_${x}`);
+                if (x === s) {
+                    btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-950/50 border border-indigo-800/60 transition-all text-left";
+                    dom.classList.remove('hidden');
+                } else {
+                    btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all text-left";
+                    dom.classList.add('hidden');
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Warroom Live Simulator
+        function runSim() {
+            const x = parseFloat(document.getElementById('sldSimX').value);
+            const mr = parseFloat(document.getElementById('sldSimMr').value);
+            const mul = parseFloat(document.getElementById('sldSimMul').value);
+
+            document.getElementById('lblSimX').innerText = x.toFixed(2);
+            document.getElementById('lblSimMr').innerText = mr.toFixed(3);
+            document.getElementById('lblSimMul').innerText = mul.toFixed(2);
+
+            const ucl = x + (mul * mr);
+            const lcl = x - (mul * mr);
+
+            document.getElementById('resUcl').innerText = ucl.toFixed(4);
+            document.getElementById('resCl').innerText = x.toFixed(4);
+            document.getElementById('resLcl').innerText = lcl.toFixed(4);
+        }
+
+        // Alerts Demo Data
+        let demoAlerts = [
+            { id: "ALT-20260518-01", item: "[P-1001] 第一道雷射切割", msg: "Variable measurement violates spec limit. Value=34.8485", status: "Open" },
+            { id: "ALT-20260518-02", item: "[P-1001] 第一道雷射切割", msg: "Out of control point detected. Xbar=10.2450 > UCL(10.150)", status: "In Progress" },
+            { id: "ALT-20260517-04", item: "[P-1002] 鑽孔孔徑與真圓度", msg: "Rule violation: 4 points out of last 5 in Zone B or beyond.", status: "Closed" }
+        ];
+
+        let curDemoFlt = "All";
+        function fltDemo(stat) {
+            curDemoFlt = stat;
+            ['All', 'Open', 'In Progress', 'Closed'].forEach(s => {
+                const btnId = s === 'All' ? 'fltDemoAll' : s === 'Open' ? 'fltDemoOpen' : s === 'In Progress' ? 'fltDemoProg' : 'fltDemoClosed';
+                const btn = document.getElementById(btnId);
+                if (s === stat) btn.className = "px-3 py-1 rounded-lg bg-indigo-600 text-white shadow-xs font-bold";
+                else btn.className = "px-3 py-1 rounded-lg text-slate-400 hover:text-white font-bold";
+            });
+            renderDemoAlerts();
+        }
+
+        function statChange(id, newStat) {
+            const item = demoAlerts.find(a => a.id === id);
+            if (item) { item.status = newStat; renderDemoAlerts(); }
+        }
+
+        function renderDemoAlerts() {
+            const tbody = document.getElementById('tbodyDemoAlerts');
+            tbody.innerHTML = "";
+            const filtered = curDemoFlt === "All" ? demoAlerts : demoAlerts.filter(a => a.status === curDemoFlt);
+            
+            filtered.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-800/80 hover:bg-slate-800/40";
+                const badge = a.status === 'Open' ? 'bg-red-500/20 text-red-400 border-red-500/30' : a.status === 'In Progress' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono font-bold text-indigo-400">${a.id}</td>
+                    <td class="py-3 px-4 font-medium text-white">${a.item}</td>
+                    <td class="py-3 px-4 font-mono text-rose-300">${a.msg}</td>
+                    <td class="py-3 px-4 text-center"><span class="px-2.5 py-0.5 rounded-full font-bold border ${badge}">${a.status}</span></td>
+                    <td class="py-3 px-4 text-right space-x-1 font-bold">
+                        ${a.status !== 'In Progress' ? `<button onclick="statChange('${a.id}', 'In Progress')" class="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 transition-all border border-amber-500/30">接單處理</button>` : ''}
+                        ${a.status !== 'Closed' ? `<button onclick="statChange('${a.id}', 'Closed')" class="px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 transition-all border border-emerald-500/30">審核結案</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterManual() {
+            // Instant search across titles
+        }
+
+        runSim();
+        renderDemoAlerts();
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
-import { FileSpreadsheet, FileText, CheckCircle2, ShieldAlert, Sparkles, ArrowRight, RefreshCw } from "lucide-vue-next";
+import { FileSpreadsheet, FileText, CheckCircle2, ShieldAlert, Sparkles, ArrowRight, RefreshCw, Download } from "lucide-vue-next";
 
 const router = useRouter();
 const fileInput = ref(null);
@@ -18,6 +18,21 @@ function handleFileChange(e) {
   if (files && files.length > 0) {
     selectedFile.value = files[0];
     err.value = "";
+  }
+}
+
+async function downloadTemplate() {
+  try {
+    const res = await api.get("/uploads/template/attribute", { responseType: "blob" });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Attribute_Import_Template.xlsx");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (e) {
+    alert("下載範本失敗: " + getApiErrorMessage(e));
   }
 }
 
@@ -75,21 +90,29 @@ async function uploadJson() {
       </div>
     </div>
 
-    <!-- Mode Selector -->
-    <div class="flex border-b border-slate-200 dark:border-slate-800 gap-4">
+    <!-- Mode Selector & Template Download -->
+    <div class="flex border-b border-slate-200 dark:border-slate-800 gap-4 justify-between items-center flex-wrap">
+      <div class="flex gap-4">
+        <button
+          @click="mode = 'excel'"
+          class="pb-3 text-sm font-bold flex items-center gap-2 transition-all"
+          :class="mode === 'excel' ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'"
+        >
+          <FileText class="w-4 h-4" /> Excel / CSV 檔案上傳
+        </button>
+        <button
+          @click="mode = 'json'"
+          class="pb-3 text-sm font-bold flex items-center gap-2 transition-all"
+          :class="mode === 'json' ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'"
+        >
+          <Sparkles class="w-4 h-4" /> JSON 格式直接送出
+        </button>
+      </div>
       <button
-        @click="mode = 'excel'"
-        class="pb-3 text-sm font-bold flex items-center gap-2 transition-all"
-        :class="mode === 'excel' ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'"
+        @click="downloadTemplate"
+        class="flex items-center gap-2 mb-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold shadow-md shadow-teal-500/20 transition-all text-xs"
       >
-        <FileText class="w-4 h-4" /> Excel / CSV 檔案上傳
-      </button>
-      <button
-        @click="mode = 'json'"
-        class="pb-3 text-sm font-bold flex items-center gap-2 transition-all"
-        :class="mode === 'json' ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'"
-      >
-        <Sparkles class="w-4 h-4" /> JSON 格式直接送出
+        <Download class="w-4 h-4" /> 下載計數型 Excel 匯入範本
       </button>
     </div>
 

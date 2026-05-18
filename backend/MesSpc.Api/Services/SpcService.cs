@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MesSpc.Api.Services;
 
-public class SpcService(AppDbContext db)
+public class SpcService(AppDbContext db, IEmailNotificationService emailService, IConfiguration config)
 {
     public async Task<SpcCalculationResult?> CalculateVariableAsync(VariableMeasurement measurement, CancellationToken ct = default)
     {
@@ -44,7 +44,7 @@ public class SpcService(AppDbContext db)
 
         if (isOutOfSpec || isOutOfControl)
         {
-            db.AlertEvents.Add(new AlertEvent
+            var alert = new AlertEvent
             {
                 OccurredAt = DateTime.UtcNow,
                 ProductId = measurement.PartId,
@@ -55,8 +55,12 @@ public class SpcService(AppDbContext db)
                 Message = isOutOfSpec
                     ? $"Variable measurement violates spec limit. Value={measurement.MeasuredValue}"
                     : $"Variable measurement violates control limit. Value={measurement.MeasuredValue}"
-            });
+            };
+            db.AlertEvents.Add(alert);
             await db.SaveChangesAsync(ct);
+
+            var defaultEmail = config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw";
+            await emailService.SendAlertEmailAsync(alert, defaultEmail, "品管工程師");
         }
 
         return result;
@@ -96,7 +100,7 @@ public class SpcService(AppDbContext db)
 
         if (isOutOfControl)
         {
-            db.AlertEvents.Add(new AlertEvent
+            var alert = new AlertEvent
             {
                 OccurredAt = DateTime.UtcNow,
                 ProductId = measurement.PartId,
@@ -105,8 +109,12 @@ public class SpcService(AppDbContext db)
                 ActualValue = statisticValue,
                 AlertType = AlertType.OutOfControl,
                 Message = $"Attribute measurement violates control limit. Chart={chartType.ChartTypeCode}, Value={statisticValue}"
-            });
+            };
+            db.AlertEvents.Add(alert);
             await db.SaveChangesAsync(ct);
+
+            var defaultEmail = config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw";
+            await emailService.SendAlertEmailAsync(alert, defaultEmail, "品管工程師");
         }
 
         return result;
@@ -137,6 +145,12 @@ public class SpcService(AppDbContext db)
         {
             await db.AlertEvents.AddRangeAsync(alerts, ct);
             await db.SaveChangesAsync(ct);
+
+            var defaultEmail = config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw";
+            foreach (var alert in alerts)
+            {
+                await emailService.SendAlertEmailAsync(alert, defaultEmail, "品管工程師");
+            }
         }
         return alerts;
     }
@@ -249,7 +263,7 @@ public class SpcService(AppDbContext db)
                     Values = g.Select(m => m.MeasuredValue).ToList()
                 }).ToList();
 
-                return XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal);
+                return XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, chartType.FormulaConfigJson);
             }
         }
         else // Attribute

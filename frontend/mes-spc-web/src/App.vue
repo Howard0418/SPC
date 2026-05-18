@@ -91,6 +91,12 @@ const menuCategories = [
       { to: "/v2/traceability", text: "批次歷史追溯查詢", icon: Search },
       { to: "/v2/alerts-workflow", text: "異常單簽核處置", icon: Activity }
     ]
+  },
+  {
+    title: "系統管理與通報設定",
+    items: [
+      { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders }
+    ]
   }
 ];
 

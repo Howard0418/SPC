@@ -153,7 +153,11 @@ function renderECharts() {
   const pointsBottom = data.secondaryChartData?.points || [];
 
   const labels = pointsTop.map((p, i) => {
-    if (p.measuredAt) return new Date(p.measuredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    if (p.measuredAt) {
+      return new Date(p.measuredAt).toLocaleString('zh-TW', { 
+        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false 
+      });
+    }
     return `P#${i + 1}`;
   });
 
@@ -349,6 +353,15 @@ onBeforeUnmount(() => {
             </span>
             <span class="text-sm font-bold text-slate-600 dark:text-slate-300">
               子組大小 (Subgroup N) = {{ chartResult.subgroupSize }}
+            </span>
+            <span v-if="chartResult.statControlLimits?.xbarControl?.calculationMethod === 'MR_METHOD'" class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300 dark:border-purple-800 text-xs font-bold tracking-wide flex items-center gap-1.5 animate-pulse shadow-sm">
+              🧪 截圖公式：平均值移動全距法 (UCL = Xbar + 2.66 * MRbar)
+            </span>
+            <span v-else-if="chartResult.statControlLimits?.xbarControl?.calculationMethod === 'SIGMA_METHOD'" class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs font-bold tracking-wide flex items-center gap-1.5 animate-pulse shadow-sm">
+              🧪 樣本標準差法 (UCL = Xbar + 3 * S_Xbar)
+            </span>
+            <span v-else class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-sm">
+              ✨ 預設公式：標準全距法 (UCL = Xbar + A2 * Rbar)
             </span>
           </div>
 

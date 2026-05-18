@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using CsvHelper;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
@@ -28,10 +29,10 @@ public class UploadsController(UploadService uploadService)
     }
 
     [HttpPost("variable/excel")]
-    public async Task<IActionResult> UploadVariableExcel(IFormFile file) => await UploadCsvLike(file, true);
+    public async Task<IActionResult> UploadVariableExcel(IFormFile file) => await UploadExcelFileAsync(file, true);
 
     [HttpPost("attribute/excel")]
-    public async Task<IActionResult> UploadAttributeExcel(IFormFile file) => await UploadCsvLike(file, false);
+    public async Task<IActionResult> UploadAttributeExcel(IFormFile file) => await UploadExcelFileAsync(file, false);
 
     [HttpPost("variable/csv")]
     public async Task<IActionResult> UploadVariableCsv(IFormFile file) => await UploadCsvLike(file, true);
@@ -58,6 +59,131 @@ public class UploadsController(UploadService uploadService)
     {
         var deleted = await uploadService.DeleteBatchAsync(uploadBatchId);
         return deleted ? NoContent() : NotFound();
+    }
+
+    private async Task<IActionResult> UploadExcelFileAsync(IFormFile file, bool isVariable)
+    {
+        if (file.Length == 0) return BadRequest("File is empty.");
+        using var stream = file.OpenReadStream();
+        using var wb = new XLWorkbook(stream);
+        var ws = wb.Worksheets.First();
+
+        var rows = new List<Dictionary<string, string?>>();
+        var firstCellStr = ws.Cell(1, 1).GetString();
+        var c3Str = ws.Cell(3, 3).GetString();
+        var c7Str = ws.Cell(7, 3).GetString();
+        var isChemicalMatrix = firstCellStr.Contains("藥液分析") || c3Str.Contains("線別") || c7Str.Contains("USL") || ws.Cell(8, 3).GetString().Contains("LSL");
+
+        if (isChemicalMatrix)
+        {
+            var maxCol = ws.LastColumnUsed().ColumnNumber();
+            var maxRow = ws.LastRowUsed().RowNumber();
+
+            var colMeta = new Dictionary<int, (string PartNo, string ProcessCode, string CharCode, string CharName, string USL, string LSL)>();
+            string currLine = "CN_LINE";
+            string currProc = "PROC_01";
+
+            for (int c = 4; c <= maxCol; c++)
+            {
+                var l = ws.Cell(3, c).GetString().Trim();
+                if (!string.IsNullOrEmpty(l)) currLine = l;
+
+                var p = ws.Cell(4, c).GetString().Trim();
+                if (!string.IsNullOrEmpty(p)) currProc = p;
+
+                var code = ws.Cell(6, c).GetString().Trim();
+                var name = ws.Cell(9, c).GetString().Trim().Replace("\r", "").Replace("\n", " ");
+                if (string.IsNullOrEmpty(name)) continue;
+
+                if (string.IsNullOrEmpty(code))
+                {
+                    var clean = new string(name.Where(ch => char.IsLetterOrDigit(ch) || ch == '_' || ch == '-').ToArray()).Trim('_', '-').ToUpperInvariant();
+                    code = clean.Length > 30 ? clean[..30] : clean;
+                    if (string.IsNullOrEmpty(code)) code = $"C{c:D2}";
+                }
+
+                var usl = ws.Cell(7, c).GetString().Trim();
+                var lsl = ws.Cell(8, c).GetString().Trim();
+
+                colMeta[c] = (currLine, currProc, code, name, usl, lsl);
+            }
+
+            for (int r = 10; r <= maxRow; r++)
+            {
+                var dateCell = ws.Cell(r, 1);
+                var dateStr = dateCell.GetString().Trim();
+                if (string.IsNullOrEmpty(dateStr)) continue;
+
+                DateTime measuredAt = DateTime.UtcNow;
+                if (dateCell.DataType == XLDataType.DateTime) measuredAt = dateCell.GetDateTime();
+                else if (DateTime.TryParse(dateStr, out var dt)) measuredAt = dt;
+
+                var shiftStr = ws.Cell(r, 2).GetString().Trim();
+                var timeStr = ws.Cell(r, 3).GetString().Trim();
+                var lotNo = !string.IsNullOrEmpty(timeStr) ? $"{shiftStr}-{timeStr}" : shiftStr;
+
+                foreach (var kvp in colMeta)
+                {
+                    int c = kvp.Key;
+                    var meta = kvp.Value;
+                    var valStr = ws.Cell(r, c).GetString().Trim();
+
+                    if (string.IsNullOrEmpty(valStr) || valStr == "-" || valStr == "NA" || valStr == "N/A") continue;
+                    if (!double.TryParse(valStr, out var valNum)) continue;
+
+                    var dict = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["PartNo"] = meta.PartNo,
+                        ["ProcessCode"] = meta.ProcessCode,
+                        ["MachineCode"] = $"{meta.ProcessCode}-M01",
+                        ["CharacteristicCode"] = meta.CharCode,
+                        ["CharacteristicName"] = meta.CharName,
+                        ["USL"] = meta.USL,
+                        ["LSL"] = meta.LSL,
+                        ["MeasuredValue"] = valNum.ToString(),
+                        ["MeasuredAt"] = measuredAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                        ["Operator"] = shiftStr,
+                        ["LotNo"] = lotNo,
+                        ["SampleNo"] = "1"
+                    };
+                    rows.Add(dict);
+                }
+            }
+        }
+        else
+        {
+            var headerRow = ws.Row(1);
+            var lastCol = ws.LastColumnUsed().ColumnNumber();
+            var headers = new List<string>();
+            for (int c = 1; c <= lastCol; c++)
+            {
+                headers.Add(headerRow.Cell(c).GetString().Trim());
+            }
+
+            var lastRow = ws.LastRowUsed().RowNumber();
+            for (int r = 2; r <= lastRow; r++)
+            {
+                var dict = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+                bool hasData = false;
+                for (int c = 1; c <= lastCol; c++)
+                {
+                    var val = ws.Cell(r, c).GetString().Trim();
+                    if (!string.IsNullOrEmpty(val)) hasData = true;
+                    if (c - 1 < headers.Count)
+                    {
+                        dict[headers[c - 1]] = val;
+                    }
+                }
+                if (hasData) rows.Add(dict);
+            }
+        }
+
+        if (rows.Count == 0) return BadRequest("No data rows found in Excel.");
+
+        var batch = isVariable
+            ? await uploadService.CreateVariableBatchAsync(rows, "File", "excel-user", file.FileName)
+            : await uploadService.CreateAttributeBatchAsync(rows, "File", "excel-user", file.FileName);
+        return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
     }
 
     private async Task<IActionResult> UploadCsvLike(IFormFile file, bool isVariable)
@@ -90,6 +216,117 @@ public class UploadsController(UploadService uploadService)
             rows.Add(row);
         }
         return rows;
+    }
+
+    [HttpGet("template/variable")]
+    public IActionResult GetVariableTemplate()
+    {
+        using var wb = new XLWorkbook();
+        var ws = wb.Worksheets.Add("計量型資料匯入範本");
+
+        var headers = new string[]
+        {
+            "料號", "製程", "機台", "檢驗項目", "檢驗項目名稱", "上限", "下限", "測量值", "日期", "作業員", "lot", "樣本編號", "工單"
+        };
+
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x1E, 0x3A, 0x8A); // Deep Blue
+            cell.Style.Font.FontColor = XLColor.White;
+            cell.Style.Font.Bold = true;
+            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        }
+
+        // Add 3 sample rows
+        var samples = new object[][]
+        {
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", "總長度檢驗", 100.5, 99.5, 100.12, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", "總長度檢驗", 100.5, 99.5, 100.08, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 2, "WO-101" },
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "WIDTH", "寬度檢驗", 50.2, 49.8, 50.05, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-02", "L20260518-2", 1, "WO-102" }
+        };
+
+        for (int r = 0; r < samples.Length; r++)
+        {
+            for (int c = 0; c < samples[r].Length; c++)
+            {
+                var cell = ws.Cell(r + 2, c + 1);
+                cell.Value = samples[r][c].ToString();
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            }
+        }
+
+        ws.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        wb.SaveAs(stream);
+        return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Variable_Import_Template.xlsx");
+    }
+
+    [HttpGet("template/attribute")]
+    public IActionResult GetAttributeTemplate()
+    {
+        using var wb = new XLWorkbook();
+        var ws = wb.Worksheets.Add("計數型資料匯入範本");
+
+        var headers = new string[]
+        {
+            "料號", "製程", "機台", "檢驗項目", "檢驗項目名稱", "總數", "不良數", "缺點數", "單位數", "日期", "作業員", "lot", "樣本編號"
+        };
+
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x0D, 0x94, 0x88); // Teal
+            cell.Style.Font.FontColor = XLColor.White;
+            cell.Style.Font.Bold = true;
+            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        }
+
+        // Add 2 sample rows
+        ws.Cell(2, 1).Value = "PART-B001";
+        ws.Cell(2, 2).Value = "ST-02";
+        ws.Cell(2, 3).Value = "ST-02-M01";
+        ws.Cell(2, 4).Value = "DEFECT_RATE";
+        ws.Cell(2, 5).Value = "外觀不良檢驗";
+        ws.Cell(2, 6).Value = 500;
+        ws.Cell(2, 7).Value = 12;
+        ws.Cell(2, 8).Value = 15;
+        ws.Cell(2, 9).Value = 500;
+        ws.Cell(2, 10).Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        ws.Cell(2, 11).Value = "OP-02";
+        ws.Cell(2, 12).Value = "L20260518-A";
+        ws.Cell(2, 13).Value = 1;
+
+        ws.Cell(3, 1).Value = "PART-B001";
+        ws.Cell(3, 2).Value = "ST-02";
+        ws.Cell(3, 3).Value = "ST-02-M01";
+        ws.Cell(3, 4).Value = "DEFECT_RATE";
+        ws.Cell(3, 5).Value = "外觀不良檢驗";
+        ws.Cell(3, 6).Value = 500;
+        ws.Cell(3, 7).Value = 8;
+        ws.Cell(3, 8).Value = 9;
+        ws.Cell(3, 9).Value = 500;
+        ws.Cell(3, 10).Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        ws.Cell(3, 11).Value = "OP-03";
+        ws.Cell(3, 12).Value = "L20260518-B";
+        ws.Cell(3, 13).Value = 1;
+
+        for (int r = 2; r <= 3; r++)
+        {
+            for (int c = 1; c <= 13; c++)
+            {
+                ws.Cell(r, c).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            }
+        }
+
+        ws.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        wb.SaveAs(stream);
+        return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Attribute_Import_Template.xlsx");
     }
 }
 

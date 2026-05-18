@@ -152,8 +152,99 @@ public class UploadService(AppDbContext db, SpcService spcService)
         return true;
     }
 
+    private async Task EnsureMasterDataAsync(IEnumerable<Dictionary<string, string?>> rows, string expectedDataCategory, CancellationToken ct)
+    {
+        var chartTypeMeta = await db.ControlChartTypes.FirstOrDefaultAsync(x => x.ChartTypeCode == "XBAR_R" || x.ChartTypeCode == "I_MR" || x.DataCategory == expectedDataCategory, ct);
+        var ruleGroupMeta = await db.SpcRuleGroups.FirstOrDefaultAsync(ct);
+
+        foreach (var r in rows)
+        {
+            var partNo = Get(r, "PartNo");
+            var procCode = Get(r, "ProcessCode");
+            var machCode = Get(r, "MachineCode");
+            var charCode = Get(r, "CharacteristicCode");
+            var charName = Get(r, "CharacteristicName") ?? charCode;
+
+            if (string.IsNullOrWhiteSpace(partNo) || string.IsNullOrWhiteSpace(procCode) || string.IsNullOrWhiteSpace(charCode)) continue;
+
+            if (string.IsNullOrWhiteSpace(machCode)) machCode = $"{procCode}-M01";
+
+            var part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == partNo, ct);
+            if (part is null)
+            {
+                part = new Part { PartNo = partNo, PartName = partNo, IsEnabled = true };
+                db.Parts.Add(part);
+                await db.SaveChangesAsync(ct);
+            }
+
+            var proc = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == procCode, ct);
+            if (proc is null)
+            {
+                proc = new Process { ProcessCode = procCode, ProcessName = procCode, IsEnabled = true };
+                db.Processes.Add(proc);
+                await db.SaveChangesAsync(ct);
+            }
+
+            var mach = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == machCode, ct);
+            if (mach is null)
+            {
+                mach = new Machine { MachineCode = machCode, MachineName = machCode, ProcessId = proc.Id, IsEnabled = true };
+                db.Machines.Add(mach);
+                await db.SaveChangesAsync(ct);
+            }
+
+            var chr = await db.QualityCharacteristics.FirstOrDefaultAsync(x => x.CharacteristicCode == charCode, ct);
+            if (chr is null)
+            {
+                chr = new QualityCharacteristic
+                {
+                    CharacteristicCode = charCode,
+                    CharacteristicName = charName,
+                    DataCategory = expectedDataCategory,
+                    DefaultChartTypeId = chartTypeMeta?.Id,
+                    IsEnabled = true,
+                    IsSpcEnabled = true
+                };
+                db.QualityCharacteristics.Add(chr);
+                await db.SaveChangesAsync(ct);
+            }
+
+            var map = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.PartId == part.Id && x.ProcessId == proc.Id && x.CharacteristicId == chr.Id, ct);
+            double.TryParse(Get(r, "USL"), out var uslVal);
+            double.TryParse(Get(r, "LSL"), out var lslVal);
+
+            if (map is null)
+            {
+                map = new PartProcessCharacteristic
+                {
+                    PartId = part.Id,
+                    ProcessId = proc.Id,
+                    CharacteristicId = chr.Id,
+                    USL = uslVal > 0 || lslVal > 0 ? uslVal : null,
+                    LSL = uslVal > 0 || lslVal > 0 ? lslVal : null,
+                    SampleSize = expectedDataCategory == "Variable" ? 1 : 1,
+                    ChartTypeId = chartTypeMeta?.Id,
+                    RuleGroupId = ruleGroupMeta?.Id,
+                    IsRequired = true,
+                    IsEnabled = true
+                };
+                db.PartProcessCharacteristics.Add(map);
+                await db.SaveChangesAsync(ct);
+            }
+            else
+            {
+                bool changed = false;
+                if ((uslVal > 0 || lslVal > 0) && map.USL != uslVal) { map.USL = uslVal; changed = true; }
+                if ((uslVal > 0 || lslVal > 0) && map.LSL != lslVal) { map.LSL = lslVal; changed = true; }
+                if (changed) await db.SaveChangesAsync(ct);
+            }
+        }
+    }
+
     private async Task BuildStagingAsync(UploadBatch batch, IEnumerable<Dictionary<string, string?>> rows, string expectedDataCategory, CancellationToken ct)
     {
+        await EnsureMasterDataAsync(rows, expectedDataCategory, ct);
+
         var rowNo = 0;
         foreach (var row in rows)
         {
@@ -237,6 +328,9 @@ public class UploadService(AppDbContext db, SpcService spcService)
             "processcode" => "製程",
             "machinecode" => "機台",
             "characteristiccode" => "檢驗項目",
+            "characteristicname" => "檢驗項目名稱",
+            "usl" => "上限",
+            "lsl" => "下限",
             "measuredvalue" => "測量值",
             "measuredat" => "日期",
             "operator" => "作業員",
