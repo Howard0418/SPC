@@ -266,6 +266,13 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public int? RuleGroupId { get; set; }
     public bool IsRequired { get; set; } = true;
     public bool IsEnabled { get; set; } = true;
+
+    [ForeignKey("PartId")]
+    public virtual Part? Part { get; set; }
+    [ForeignKey("ProcessId")]
+    public virtual Process? Process { get; set; }
+    [ForeignKey("CharacteristicId")]
+    public virtual QualityCharacteristic? Characteristic { get; set; }
 }
 
 public class ControlChartGroup : BaseEntity<int>

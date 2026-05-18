@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
@@ -68,6 +68,8 @@ async function loadInteractiveChart() {
 
     const res = await api.get("/v2/spc/interactive-chart", { params });
     chartResult.value = res.data;
+    loading.value = false;
+    await nextTick();
     renderECharts();
   } catch (e) {
     if (e?.response?.status === 404) {

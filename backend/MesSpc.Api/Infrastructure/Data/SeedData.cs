@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace MesSpc.Api.Infrastructure.Data;
 
@@ -172,6 +173,70 @@ public static class SeedData
                     SampleSize = 1, ChartTypeId = pType.Id, RuleGroupId = weRuleGrp.Id, IsRequired = true, IsEnabled = true
                 }
             );
+            db.SaveChanges();
+        }
+
+        if (!db.VariableMeasurements.Any() && db.PartProcessCharacteristics.Any(x => x.Part!.PartNo == "P-1001"))
+        {
+            var ppc1 = db.PartProcessCharacteristics.Include(x => x.Part).First(x => x.Part!.PartNo == "P-1001");
+            var batchId = Guid.NewGuid();
+            db.UploadBatches.Add(new UploadBatch
+            {
+                UploadBatchId = batchId, UploadType = "Variable", SourceType = "Api", ImportStatus = "Confirmed", ConfirmedAt = DateTime.UtcNow, TotalRows = 25, ValidRows = 25, ErrorRows = 0
+            });
+            db.SaveChanges();
+
+            var rand = new Random(42);
+            var startTime = DateTime.UtcNow.AddDays(-5);
+            var varList = new List<VariableMeasurement>();
+            for (int i = 0; i < 25; i++)
+            {
+                var subgroupIdx = i / 5;
+                var time = startTime.AddHours(subgroupIdx * 4).AddMinutes((i % 5) * 10);
+                var val = 10.0 + (rand.NextDouble() * 0.25 - 0.12);
+                if (i == 18) val = 10.25; // Intentional Out of Spec & Control point
+                varList.Add(new VariableMeasurement
+                {
+                    UploadBatchId = batchId,
+                    PartId = ppc1.PartId, ProcessId = ppc1.ProcessId, MachineId = db.Machines.First(m => m.ProcessId == ppc1.ProcessId).Id,
+                    CharacteristicId = ppc1.CharacteristicId, PartProcessCharacteristicId = ppc1.Id,
+                    LotNo = "L-2026-001", SerialNo = $"SN-{i:D4}", SampleNo = (i % 5) + 1,
+                    MeasuredValue = Math.Round(val, 3), MeasuredAt = time, Operator = "OP-01"
+                });
+            }
+            db.VariableMeasurements.AddRange(varList);
+            db.SaveChanges();
+        }
+
+        if (!db.AttributeMeasurements.Any() && db.PartProcessCharacteristics.Any(x => x.Part!.PartNo == "P-1002"))
+        {
+            var ppc2 = db.PartProcessCharacteristics.Include(x => x.Part).First(x => x.Part!.PartNo == "P-1002");
+            var batchId = Guid.NewGuid();
+            db.UploadBatches.Add(new UploadBatch
+            {
+                UploadBatchId = batchId, UploadType = "Attribute", SourceType = "Api", ImportStatus = "Confirmed", ConfirmedAt = DateTime.UtcNow, TotalRows = 15, ValidRows = 15, ErrorRows = 0
+            });
+            db.SaveChanges();
+
+            var rand = new Random(101);
+            var startTime = DateTime.UtcNow.AddDays(-5);
+            var attrList = new List<AttributeMeasurement>();
+            for (int i = 0; i < 15; i++)
+            {
+                var time = startTime.AddHours(i * 6);
+                var inspected = 500;
+                var defects = rand.Next(1, 10);
+                if (i == 12) defects = 22; // Intentional Out of Control point
+                attrList.Add(new AttributeMeasurement
+                {
+                    UploadBatchId = batchId,
+                    PartId = ppc2.PartId, ProcessId = ppc2.ProcessId, MachineId = db.Machines.First(m => m.ProcessId == ppc2.ProcessId).Id,
+                    CharacteristicId = ppc2.CharacteristicId, PartProcessCharacteristicId = ppc2.Id,
+                    LotNo = "L-2026-002", SampleNo = i + 1, InspectedQty = inspected, DefectQty = defects,
+                    DefectCount = defects, UnitCount = inspected, MeasuredAt = time, Operator = "OP-02"
+                });
+            }
+            db.AttributeMeasurements.AddRange(attrList);
             db.SaveChanges();
         }
     }

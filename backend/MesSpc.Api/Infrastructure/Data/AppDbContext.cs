@@ -122,17 +122,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(x => x.DefaultChartTypeId)
             .OnDelete(DeleteBehavior.SetNull);
         modelBuilder.Entity<PartProcessCharacteristic>()
-            .HasOne<Part>()
+            .HasOne(x => x.Part)
             .WithMany()
             .HasForeignKey(x => x.PartId)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<PartProcessCharacteristic>()
-            .HasOne<Process>()
+            .HasOne(x => x.Process)
             .WithMany()
             .HasForeignKey(x => x.ProcessId)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<PartProcessCharacteristic>()
-            .HasOne<QualityCharacteristic>()
+            .HasOne(x => x.Characteristic)
             .WithMany()
             .HasForeignKey(x => x.CharacteristicId)
             .OnDelete(DeleteBehavior.Restrict);

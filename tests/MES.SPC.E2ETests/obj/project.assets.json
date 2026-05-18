@@ -1901,24 +1901,31 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ihao_ting\\.nuget\\packages\\": {}
+    "C:\\Users\\ihao_ting.PMR.000\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ihao_ting\\Desktop\\MES\\tests\\MES.SPC.E2ETests\\MES.SPC.E2ETests.csproj",
+      "projectUniqueName": "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\tests\\MES.SPC.E2ETests\\MES.SPC.E2ETests.csproj",
       "projectName": "MES.SPC.E2ETests",
-      "projectPath": "C:\\Users\\ihao_ting\\Desktop\\MES\\tests\\MES.SPC.E2ETests\\MES.SPC.E2ETests.csproj",
-      "packagesPath": "C:\\Users\\ihao_ting\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ihao_ting\\Desktop\\MES\\tests\\MES.SPC.E2ETests\\obj\\",
+      "projectPath": "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\tests\\MES.SPC.E2ETests\\MES.SPC.E2ETests.csproj",
+      "packagesPath": "C:\\Users\\ihao_ting.PMR.000\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\tests\\MES.SPC.E2ETests\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\ihao_ting\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\ihao_ting.PMR.000\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

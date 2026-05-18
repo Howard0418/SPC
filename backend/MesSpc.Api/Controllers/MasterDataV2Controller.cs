@@ -78,7 +78,7 @@ public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
 [Route("api/v1/part-process-characteristics")]
 public class PartProcessCharacteristicsController(AppDbContext db) : ControllerBase
 {
-    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.PartProcessCharacteristics.OrderBy(x => x.Id).ToListAsync());
+    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.PartProcessCharacteristics.Include(x => x.Part).Include(x => x.Process).Include(x => x.Characteristic).OrderBy(x => x.Id).ToListAsync());
     [HttpPost] public async Task<IActionResult> Create(PartProcessCharacteristic req) { db.PartProcessCharacteristics.Add(req); await db.SaveChangesAsync(); return Ok(req); }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, PartProcessCharacteristic req)
