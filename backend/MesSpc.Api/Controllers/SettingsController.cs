@@ -137,6 +137,28 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
         var folder = req.Settings?.LocalDiskFolder ?? config["SmtpSettings:LocalDiskFolder"] ?? @"C:\Users\ihao_ting.PMR.000\Desktop\MES\EmailOutbox";
         return Ok(new { success, recipient = targetEmail, host = activeHost, port = activePort, outboxFolder = folder });
     }
+
+    [HttpGet("inspect-excel")]
+    public IActionResult InspectExcel([FromQuery] string path = @"C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\SPC管制項目.xlsx")
+    {
+        if (!System.IO.File.Exists(path)) return NotFound($"File not found at {path}");
+        using var stream = System.IO.File.OpenRead(path);
+        using var wb = new ClosedXML.Excel.XLWorkbook(stream);
+        var sheets = new List<object>();
+        foreach (var ws in wb.Worksheets)
+        {
+            var rows = new List<object>();
+            var rCount = 0;
+            foreach (var r in ws.RowsUsed())
+            {
+                if (rCount++ > 100) break;
+                var cells = r.CellsUsed().Select(c => c.GetString()).ToList();
+                rows.Add(new { row = r.RowNumber(), cells });
+            }
+            sheets.Add(new { name = ws.Name, rows });
+        }
+        return Ok(sheets);
+    }
 }
 
 public class SmtpSettingsDto
