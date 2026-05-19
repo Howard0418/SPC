@@ -48,6 +48,14 @@ async function loadMappings() {
   }
 }
 
+onMounted(() => {
+  if (route.query.batchId) {
+    batchId.value = route.query.batchId;
+  }
+  loadMappings();
+  window.addEventListener("resize", handleResize);
+});
+
 watch(selectedMappingId, (newVal) => {
   if (newVal) loadInteractiveChart();
 });
@@ -242,11 +250,6 @@ function renderECharts() {
 function handleResize() {
   chartInstance?.resize();
 }
-
-onMounted(() => {
-  loadMappings();
-  window.addEventListener("resize", handleResize);
-});
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);

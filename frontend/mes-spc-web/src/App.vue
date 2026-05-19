@@ -19,7 +19,8 @@ import {
   Moon,
   LogOut,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Users
 } from "lucide-vue-next";
 
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
@@ -95,6 +96,7 @@ const menuCategories = [
   {
     title: "系統管理與通報設定",
     items: [
+      { to: "/operators", text: "作業工程師與權限", icon: Users },
       { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders }
     ]
   }

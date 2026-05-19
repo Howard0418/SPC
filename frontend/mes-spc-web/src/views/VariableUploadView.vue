@@ -59,6 +59,20 @@ async function uploadExcel() {
   }
 }
 
+async function testUploadDemoExcel() {
+  loading.value = true;
+  err.value = "";
+  try {
+    const res = await api.get("/uploads/template/variable", { responseType: "blob" });
+    const file = new File([res.data], "Variable_Demo_Template.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    selectedFile.value = file;
+    await uploadExcel();
+  } catch (e) {
+    err.value = "自動載入範本失敗：" + getApiErrorMessage(e);
+    loading.value = false;
+  }
+}
+
 async function uploadJson() {
   loading.value = true;
   err.value = "";
@@ -139,7 +153,15 @@ async function uploadJson() {
         </div>
       </div>
 
-      <div class="flex justify-end">
+      <div class="flex flex-wrap items-center justify-end gap-3">
+        <button
+          @click="testUploadDemoExcel"
+          :disabled="loading"
+          class="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold shadow-md transition-all text-sm border border-cyan-500/30"
+        >
+          <Sparkles class="w-4 h-4 text-cyan-400 animate-pulse" />
+          ⚡ 自動載入標準 Excel 範本測試上傳
+        </button>
         <button
           @click="uploadExcel"
           :disabled="loading || !selectedFile"

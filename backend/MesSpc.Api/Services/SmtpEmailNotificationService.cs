@@ -7,11 +7,11 @@ namespace MesSpc.Api.Services;
 
 public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEmailNotificationService> logger) : IEmailNotificationService
 {
-    public async Task<bool> SendAlertEmailAsync(AlertEvent alert, string recipientEmail, string recipientName)
+    public async Task<bool> SendAlertEmailAsync(AlertEvent alert, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null)
     {
         var subject = $"【品質異常警報 {alert.AlertType}】料號/站別 {alert.ProductId}-{alert.StationId} 數值異常";
         var body = GetHtmlBody(alert, recipientName);
-        return await SendEmailInternalAsync(recipientEmail, recipientName, subject, body);
+        return await SendEmailInternalAsync(recipientEmail, recipientName, subject, body, overrideSettings);
     }
 
     public async Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null)

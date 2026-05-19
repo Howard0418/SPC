@@ -18,7 +18,23 @@ async function load() {
   try {
     const { data } = await api.get(`/uploads/${batchId.value}/preview`);
     batch.value = data.batch;
-    details.value = data.details || [];
+    details.value = (data.details || []).map(d => {
+      let p = {};
+      try { p = JSON.parse(d.payloadJson || "{}"); } catch(e){}
+      return {
+        id: d.id,
+        rowNo: d.rowNo,
+        isValid: d.isValid,
+        partNo: p.PartNo || p["料號"] || "",
+        processCode: p.ProcessCode || p["製程"] || "",
+        characteristicCode: p.CharacteristicCode || p["檢驗項目"] || "",
+        measuredValue: p.MeasuredValue !== undefined ? p.MeasuredValue : (p["測量值"] !== undefined ? p["測量值"] : null),
+        defectQty: p.DefectQty !== undefined ? p.DefectQty : (p["不良數"] !== undefined ? p["不良數"] : null),
+        inspectedQty: p.InspectedQty !== undefined ? p.InspectedQty : (p["總數"] !== undefined ? p["總數"] : null),
+        measuredAt: p.MeasuredAt || p["日期"] || "",
+        operator: p.Operator || p["作業員"] || ""
+      };
+    });
     errors.value = data.errors || [];
   } catch (e) {
     err.value = getApiErrorMessage(e);

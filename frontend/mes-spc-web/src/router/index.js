@@ -26,6 +26,7 @@ import UploadPreviewView from "../views/UploadPreviewView.vue";
 import SpcQueryView from "../views/SpcQueryView.vue";
 import SpcAlertsView from "../views/SpcAlertsView.vue";
 import SmtpSettingsView from "../views/SmtpSettingsView.vue";
+import OperatorsView from "../views/OperatorsView.vue";
 
 const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
 
@@ -56,7 +57,8 @@ const routes = [
   { path: "/uploads/:batchId/preview", component: UploadPreviewView },
   { path: "/spc/query", component: SpcQueryView },
   { path: "/spc/alerts", component: SpcAlertsView },
-  { path: "/settings/smtp", component: SmtpSettingsView }
+  { path: "/settings/smtp", component: SmtpSettingsView },
+  { path: "/operators", component: OperatorsView }
 ];
 
 const router = createRouter({

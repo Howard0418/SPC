@@ -142,3 +142,21 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     }
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.ControlChartTypes.FindAsync(id); if (x is null) return NotFound(); db.ControlChartTypes.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
 }
+
+[ApiController]
+[Route("api/operators")]
+[Route("api/v1/operators")]
+public class OperatorsController(AppDbContext db) : ControllerBase
+{
+    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.Operators.OrderBy(x => x.Id).ToListAsync());
+    [HttpPost] public async Task<IActionResult> Create(Operator req) { db.Operators.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, Operator req)
+    {
+        var x = await db.Operators.FindAsync(id); if (x is null) return NotFound();
+        x.OperatorCode = req.OperatorCode; x.OperatorName = req.OperatorName; x.Department = req.Department; x.Email = req.Email; x.IsActive = req.IsActive;
+        await db.SaveChangesAsync(); return Ok(x);
+    }
+    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.Operators.FindAsync(id); if (x is null) return NotFound(); db.Operators.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+}
+

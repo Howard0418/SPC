@@ -98,6 +98,45 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
         var folder = req.Settings?.LocalDiskFolder ?? config["SmtpSettings:LocalDiskFolder"] ?? @"C:\Users\ihao_ting.PMR.000\Desktop\MES\EmailOutbox";
         return Ok(new { success, recipient = targetEmail, host = activeHost, port = activePort, outboxFolder = folder });
     }
+
+    [HttpPost("smtp/test-alert")]
+    public async Task<IActionResult> TestAlertSmtp([FromBody] TestSmtpReq req)
+    {
+        var targetEmail = string.IsNullOrWhiteSpace(req.RecipientEmail) 
+            ? config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw" 
+            : req.RecipientEmail.Trim();
+
+        var overrideSettings = req.Settings != null 
+            ? new SmtpSettingsOverride(
+                req.Settings.Host, 
+                req.Settings.Port, 
+                req.Settings.Username, 
+                req.Settings.Password, 
+                req.Settings.SenderEmail, 
+                req.Settings.EnableSsl, 
+                req.Settings.SaveToLocalDisk, 
+                req.Settings.LocalDiskFolder)
+            : null;
+
+        var activeHost = overrideSettings?.Host ?? config["SmtpSettings:Host"] ?? "localhost";
+        var activePort = overrideSettings != null ? overrideSettings.Port : int.TryParse(config["SmtpSettings:Port"], out var p) ? p : 25;
+
+        var dummyAlert = new MesSpc.Api.Domain.Entities.AlertEvent
+        {
+            Id = 8888,
+            AlertType = MesSpc.Api.Domain.Enums.AlertType.OutOfSpec,
+            ProductId = 101,
+            StationId = 201,
+            ActualValue = 105.85,
+            Message = "測量值 105.85 超出規格上限 USL (100.00)",
+            OccurredAt = DateTime.UtcNow,
+            Status = "Open"
+        };
+
+        var success = await emailService.SendAlertEmailAsync(dummyAlert, targetEmail, "品管主管", overrideSettings);
+        var folder = req.Settings?.LocalDiskFolder ?? config["SmtpSettings:LocalDiskFolder"] ?? @"C:\Users\ihao_ting.PMR.000\Desktop\MES\EmailOutbox";
+        return Ok(new { success, recipient = targetEmail, host = activeHost, port = activePort, outboxFolder = folder });
+    }
 }
 
 public class SmtpSettingsDto

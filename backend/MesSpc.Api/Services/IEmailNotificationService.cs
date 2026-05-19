@@ -4,7 +4,7 @@ namespace MesSpc.Api.Services;
 
 public interface IEmailNotificationService
 {
-    Task<bool> SendAlertEmailAsync(AlertEvent alertEvent, string recipientEmail, string recipientName);
+    Task<bool> SendAlertEmailAsync(AlertEvent alertEvent, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null);
     Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null);
 }
 

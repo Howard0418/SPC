@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
-import { Sliders, Mail, Save, CheckCircle2, ShieldAlert, RefreshCw, Send, HardDrive, Server, Key, User } from "lucide-vue-next";
+import { Sliders, Mail, Save, CheckCircle2, ShieldAlert, RefreshCw, Send, HardDrive, Server, Key, User, AlertTriangle } from "lucide-vue-next";
 
 const form = ref({
   host: "localhost",
@@ -112,6 +112,49 @@ async function sendTestEmail() {
     };
   } catch (e) {
     errorMsg.value = "測試郵件發送失敗：" + getApiErrorMessage(e);
+  } finally {
+    testLoading.value = false;
+  }
+}
+
+async function sendTestAlertEmail() {
+  testLoading.value = true;
+  testResult.value = null;
+  errorMsg.value = "";
+
+  // Parse 's' or 'ssl' suffix in port
+  const rawPort = String(form.value.port).trim().toLowerCase();
+  if (rawPort.includes("s") || rawPort.includes("ssl")) {
+    form.value.enableSsl = true;
+  }
+  const cleanPort = parseInt(rawPort.replace(/\D/g, "")) || 25;
+  form.value.port = cleanPort;
+
+  try {
+    const payload = {
+      recipientEmail: testEmail.value,
+      settings: {
+        host: form.value.host,
+        port: cleanPort,
+        username: form.value.username,
+        password: form.value.password,
+        senderEmail: form.value.senderEmail,
+        defaultRecipientEmail: form.value.defaultRecipientEmail,
+        enableSsl: form.value.enableSsl,
+        saveToLocalDisk: form.value.saveToLocalDisk,
+        localDiskFolder: form.value.localDiskFolder
+      }
+    };
+    const res = await api.post("/settings/smtp/test-alert", payload);
+    testResult.value = {
+      success: res.data.success,
+      recipient: res.data.recipient,
+      host: res.data.host,
+      port: res.data.port,
+      outboxFolder: res.data.outboxFolder
+    };
+  } catch (e) {
+    errorMsg.value = "品質異常通報測試發送失敗：" + getApiErrorMessage(e);
   } finally {
     testLoading.value = false;
   }
@@ -262,7 +305,16 @@ onMounted(() => {
             >
               <RefreshCw v-if="testLoading" class="w-4 h-4 animate-spin" />
               <Send v-else class="w-4 h-4" />
-              {{ testLoading ? '正在傳送測試郵件...' : '立即發送測試郵件' }}
+              {{ testLoading ? '正在傳送連線測試郵件...' : '發送標準連線測試信' }}
+            </button>
+            <button
+              @click="sendTestAlertEmail"
+              :disabled="testLoading || !testEmail"
+              class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow-lg shadow-rose-500/20 disabled:opacity-50 transition-all text-sm"
+            >
+              <RefreshCw v-if="testLoading" class="w-4 h-4 animate-spin" />
+              <AlertTriangle v-else class="w-4 h-4" />
+              {{ testLoading ? '正在派發異常警報單...' : '模擬發送即時 OOS 品質異常通報單' }}
             </button>
           </div>
 
