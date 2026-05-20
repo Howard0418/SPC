@@ -208,6 +208,94 @@ onMounted(load);
       <div class="text-sm font-semibold">{{ successMsg }}</div>
     </div>
 
+    <!-- 🌟 新增：高質感品質維度互動結構柱 (Visual Quality Dimension Cards) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- 1. 製程管制項目 PROC -->
+      <div 
+        @click="groupFilter = groupFilter === 1 ? 'all' : 1"
+        :class="[
+          'relative p-6 rounded-3xl border cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group shadow-md',
+          groupFilter === 1 
+            ? 'bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 border-blue-500 shadow-blue-500/20 text-white' 
+            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 hover:border-blue-400'
+        ]"
+      >
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all pointer-events-none"></div>
+        <div class="flex items-start justify-between">
+          <div class="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500">
+            <Layers class="w-6 h-6" />
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-500 border border-blue-500/25">XBAR-S / XBAR-R</span>
+        </div>
+        <h3 class="text-lg font-black mt-4">製程管制項目 (PROC)</h3>
+        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+          針對產線即時製程參數（如咬蝕量、溫度、壓力）進行高頻監控，防止製程失控。
+        </p>
+        <div class="mt-6 flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400">目前類別</span>
+          <span class="text-2xl font-black text-blue-500">{{ rows.filter(x => x.chartGroupId === 1).length }} 筆</span>
+        </div>
+        <!-- Active indicator -->
+        <div v-if="groupFilter === 1" class="absolute bottom-0 inset-x-0 h-1 bg-blue-500"></div>
+      </div>
+
+      <!-- 2. 藥液管制項目 CHEM -->
+      <div 
+        @click="groupFilter = groupFilter === 2 ? 'all' : 2"
+        :class="[
+          'relative p-6 rounded-3xl border cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group shadow-md',
+          groupFilter === 2 
+            ? 'bg-gradient-to-br from-teal-900 via-emerald-900 to-slate-900 border-teal-500 shadow-teal-500/20 text-white' 
+            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 hover:border-teal-400'
+        ]"
+      >
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl group-hover:bg-teal-500/20 transition-all pointer-events-none"></div>
+        <div class="flex items-start justify-between">
+          <div class="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-500">
+            <RefreshCw class="w-6 h-6" />
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-500 border border-teal-500/25">IX-MR</span>
+        </div>
+        <h3 class="text-lg font-black mt-4">藥液管制項目 (CHEM)</h3>
+        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+          監控化驗室槽液分析濃度趨勢（如酸鹼度、金屬離子濃度），採低頻率精準分析。
+        </p>
+        <div class="mt-6 flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400">目前類別</span>
+          <span class="text-2xl font-black text-teal-500">{{ rows.filter(x => x.chartGroupId === 2).length }} 筆</span>
+        </div>
+        <div v-if="groupFilter === 2" class="absolute bottom-0 inset-x-0 h-1 bg-teal-500"></div>
+      </div>
+
+      <!-- 3. 產品管制項目 PROD -->
+      <div 
+        @click="groupFilter = groupFilter === 3 ? 'all' : 3"
+        :class="[
+          'relative p-6 rounded-3xl border cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group shadow-md',
+          groupFilter === 3 
+            ? 'bg-gradient-to-br from-purple-900 via-fuchsia-900 to-slate-900 border-purple-500 shadow-purple-500/20 text-white' 
+            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 hover:border-purple-400'
+        ]"
+      >
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all pointer-events-none"></div>
+        <div class="flex items-start justify-between">
+          <div class="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-500">
+            <FolderTree class="w-6 h-6" />
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-500 border border-purple-500/25">規格綁定</span>
+        </div>
+        <h3 class="text-lg font-black mt-4">產品管制項目 (PROD)</h3>
+        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+          針對實體料號在特定工站的出貨檢驗（如外觀、成品尺寸），直接與工單 Lot 連結。
+        </p>
+        <div class="mt-6 flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400">目前類別</span>
+          <span class="text-2xl font-black text-purple-500">{{ rows.filter(x => x.chartGroupId === 3).length }} 筆</span>
+        </div>
+        <div v-if="groupFilter === 3" class="absolute bottom-0 inset-x-0 h-1 bg-purple-500"></div>
+      </div>
+    </div>
+
     <!-- Filters & Search Bar -->
     <div class="flex flex-col lg:flex-row gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 items-center justify-between">
       <div class="relative w-full lg:w-80">

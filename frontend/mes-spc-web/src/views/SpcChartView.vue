@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
@@ -15,7 +15,11 @@ import {
   Info,
   CheckCircle2,
   AlertTriangle,
-  Download
+  Download,
+  User,
+  Calendar,
+  Hash,
+  Clock
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -27,9 +31,134 @@ const batchId = ref("");
 const loading = ref(false);
 const error = ref("");
 
+// Cascading Selectors State
+const selectedPartId = ref("");
+const selectedProcessId = ref("");
+const selectedCharacteristicId = ref("");
+const updatingCascades = ref(false);
+
+// Autocomplete Search State
+const searchQuery = ref("");
+const showSearchResults = ref(false);
+
 const chartResult = ref(null);
 let chartInstance = null;
 const chartEl = ref(null);
+
+// Click Drill-down State
+const selectedPoint = ref(null);
+const selectedPointIndex = ref(-1);
+
+// Unique Parts for selection
+const uniqueParts = computed(() => {
+  const seen = new Set();
+  const list = [];
+  mappings.value.forEach(m => {
+    if (m.part && !seen.has(m.part.id)) {
+      seen.add(m.part.id);
+      list.push({ id: m.partId, partNo: m.part.partNo, partName: m.part.partName });
+    }
+  });
+  return list;
+});
+
+// Processes available for selected Part
+const availableProcesses = computed(() => {
+  if (!selectedPartId.value) return [];
+  const seen = new Set();
+  const list = [];
+  mappings.value.forEach(m => {
+    if (m.partId === Number(selectedPartId.value) && m.process && !seen.has(m.process.id)) {
+      seen.add(m.process.id);
+      list.push({ id: m.processId, processCode: m.process.processCode, processName: m.process.processName });
+    }
+  });
+  return list;
+});
+
+// Characteristics available for selected Part + Process
+const availableCharacteristics = computed(() => {
+  if (!selectedPartId.value || !selectedProcessId.value) return [];
+  const seen = new Set();
+  const list = [];
+  mappings.value.forEach(m => {
+    if (m.partId === Number(selectedPartId.value) && m.processId === Number(selectedProcessId.value) && m.characteristic && !seen.has(m.characteristic.id)) {
+      seen.add(m.characteristic.id);
+      list.push({ id: m.characteristicId, characteristicCode: m.characteristic.characteristicCode, characteristicName: m.characteristic.characteristicName });
+    }
+  });
+  return list;
+});
+
+// Autocomplete search filtering
+const filteredMappings = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  if (!query) return [];
+  return mappings.value.filter(m => {
+    return (
+      (m.part?.partNo || "").toLowerCase().includes(query) ||
+      (m.part?.partName || "").toLowerCase().includes(query) ||
+      (m.process?.processName || "").toLowerCase().includes(query) ||
+      (m.characteristic?.characteristicName || "").toLowerCase().includes(query)
+    );
+  }).slice(0, 15);
+});
+
+// Sync cascading dropdown selectors with selected mapping ID
+function syncCascadingDropdowns(mappingId) {
+  const m = mappings.value.find(x => x.id === mappingId);
+  if (m) {
+    updatingCascades.value = true;
+    selectedPartId.value = m.partId;
+    selectedProcessId.value = m.processId;
+    selectedCharacteristicId.value = m.characteristicId;
+    selectedMappingId.value = m.id;
+    searchQuery.value = `[${m.part?.partNo}] ${m.process?.processName} - ${m.characteristic?.characteristicName}`;
+    updatingCascades.value = false;
+  }
+}
+
+// Watchers for cascading select workflow
+watch(selectedPartId, () => {
+  if (updatingCascades.value) return;
+  selectedProcessId.value = "";
+  selectedCharacteristicId.value = "";
+  selectedMappingId.value = "";
+});
+
+watch(selectedProcessId, () => {
+  if (updatingCascades.value) return;
+  selectedCharacteristicId.value = "";
+  selectedMappingId.value = "";
+});
+
+watch(selectedCharacteristicId, (newVal) => {
+  if (updatingCascades.value) return;
+  if (newVal) {
+    const match = mappings.value.find(m => 
+      m.partId === Number(selectedPartId.value) &&
+      m.processId === Number(selectedProcessId.value) &&
+      m.characteristicId === Number(selectedCharacteristicId.value)
+    );
+    if (match) {
+      selectedMappingId.value = match.id;
+      searchQuery.value = `[${match.part?.partNo}] ${match.process?.processName} - ${match.characteristic?.characteristicName}`;
+    }
+  } else {
+    selectedMappingId.value = "";
+  }
+});
+
+function selectMappingFromSearch(m) {
+  syncCascadingDropdowns(m.id);
+  showSearchResults.value = false;
+}
+
+function hideSearchResults() {
+  setTimeout(() => {
+    showSearchResults.value = false;
+  }, 200);
+}
 
 async function loadMappings() {
   try {
@@ -39,9 +168,9 @@ async function loadMappings() {
     // Auto-select from query or first item
     const qId = Number(route.query.partProcessCharacteristicId);
     if (qId && mappings.value.some(m => m.id === qId)) {
-      selectedMappingId.value = qId;
+      syncCascadingDropdowns(qId);
     } else if (mappings.value.length > 0) {
-      selectedMappingId.value = mappings.value[0].id;
+      syncCascadingDropdowns(mappings.value[0].id);
     }
   } catch (e) {
     error.value = "無法載入檢驗項目基準列表：" + getApiErrorMessage(e);
@@ -69,6 +198,8 @@ async function loadInteractiveChart() {
   loading.value = true;
   error.value = "";
   chartResult.value = null;
+  selectedPoint.value = null;
+  selectedPointIndex.value = -1;
 
   try {
     const params = { partProcessCharacteristicId: selectedMappingId.value };
@@ -104,6 +235,59 @@ function renderECharts() {
   const type = data.chartType?.toUpperCase() || "";
   const limits = data.limits || {};
   const isDual = type === "XBAR_R" || type === "I-MR" || type === "I_MR";
+
+  // Calculate standard deviation (sigma) based on control limits
+  const cl = limits.cl;
+  const ucl = limits.ucl;
+  const lcl = limits.lcl;
+  const sigma = (cl != null && ucl != null && ucl > cl) ? (ucl - cl) / 3 : null;
+
+  // Build Zone A/B/C markArea bands
+  let markAreaTop = undefined;
+  if (cl != null && sigma != null && sigma > 0) {
+    const areaStyle = (colorName, labelName) => {
+      return {
+        itemStyle: { color: colorName },
+        label: {
+          show: true,
+          position: 'insideLeft',
+          formatter: labelName,
+          color: 'rgba(100, 116, 139, 0.45)',
+          fontSize: 9,
+          fontWeight: 'bold'
+        }
+      };
+    };
+    markAreaTop = {
+      silent: true,
+      data: [
+        [
+          Object.assign({ yAxis: cl + 2 * sigma }, areaStyle('rgba(239, 68, 68, 0.035)', 'Zone A (3σ)')),
+          { yAxis: ucl || (cl + 3 * sigma) }
+        ],
+        [
+          Object.assign({ yAxis: cl + 1 * sigma }, areaStyle('rgba(245, 158, 11, 0.035)', 'Zone B (2σ)')),
+          { yAxis: cl + 2 * sigma }
+        ],
+        [
+          Object.assign({ yAxis: cl }, areaStyle('rgba(16, 185, 129, 0.025)', 'Zone C (1σ)')),
+          { yAxis: cl + 1 * sigma }
+        ],
+        [
+          Object.assign({ yAxis: cl - 1 * sigma }, areaStyle('rgba(16, 185, 129, 0.025)', 'Zone C (1σ)')),
+          { yAxis: cl }
+        ],
+        [
+          Object.assign({ yAxis: cl - 2 * sigma }, areaStyle('rgba(245, 158, 11, 0.035)', 'Zone B (2σ)')),
+          { yAxis: cl - 1 * sigma }
+        ],
+        [
+          Object.assign({ yAxis: lcl || (cl - 3 * sigma) }, areaStyle('rgba(239, 68, 68, 0.035)', 'Zone A (3σ)')),
+          { yAxis: cl - 2 * sigma }
+        ]
+      ]
+    };
+  }
 
   // Build spec & control marklines
   const markLinesTop = [];
@@ -238,13 +422,43 @@ function renderECharts() {
       : [{ type: "value", name: `${type} 數值`, splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true }],
     series: isDual
       ? [
-          { name: type === "XBAR_R" ? "Xbar" : "Individual", type: "line", xAxisIndex: 0, yAxisIndex: 0, data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, smooth: true },
+          { name: type === "XBAR_R" ? "Xbar" : "Individual", type: "line", xAxisIndex: 0, yAxisIndex: 0, data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: markAreaTop, smooth: true },
           { name: type === "XBAR_R" ? "Range" : "Moving Range", type: "line", xAxisIndex: 1, yAxisIndex: 1, data: seriesBottomData, showSymbol: true, markLine: bottomMarkLineObj, smooth: true }
         ]
-      : [{ name: type, type: "line", data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, smooth: true }]
+      : [{ name: type, type: "line", data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: markAreaTop, smooth: true }]
   };
 
   chartInstance.setOption(option);
+
+  // Attach Point Click listener for Drill-down cards
+  chartInstance.on("click", (params) => {
+    if (params.componentType === "series") {
+      const idx = params.dataIndex;
+      selectedPointIndex.value = idx;
+      if (params.seriesIndex === 0) {
+        selectedPoint.value = pointsTop[idx];
+      } else {
+        selectedPoint.value = pointsBottom[idx];
+      }
+    }
+  });
+
+  // Auto highlight point matching batchId / lotNo
+  if (route.query.batchId || batchId.value) {
+    const targetLot = route.query.batchId || batchId.value;
+    const matchIdx = pointsTop.findIndex(p => p.lotNo === targetLot);
+    if (matchIdx !== -1) {
+      setTimeout(() => {
+        chartInstance.dispatchAction({
+          type: "showTip",
+          seriesIndex: 0,
+          dataIndex: matchIdx
+        });
+        selectedPoint.value = pointsTop[matchIdx];
+        selectedPointIndex.value = matchIdx;
+      }, 300);
+    }
+  }
 }
 
 function handleResize() {
@@ -269,14 +483,47 @@ onBeforeUnmount(() => {
         <h1 class="text-2xl font-black text-slate-800 dark:text-white">SPC 即時互動管制圖戰情室</h1>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="w-72">
-          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">選擇料號製程檢驗項目</label>
-          <select v-model="selectedMappingId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-            <option v-for="m in mappings" :key="m.id" :value="m.id">
-              [{{ m.part?.partNo }}] {{ m.process?.processName }} - {{ m.characteristic?.characteristicName }}
-            </option>
-          </select>
+      <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto">
+        <!-- Fuzzy Autocomplete Search Box -->
+        <div class="relative w-full md:w-72">
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">🔍 快速搜尋檢驗基準</label>
+          <div class="relative">
+            <input v-model="searchQuery" @focus="showSearchResults = true" @blur="hideSearchResults" placeholder="輸入料號、工站、關鍵字..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          </div>
+          <!-- Search Dropdown list -->
+          <div v-if="showSearchResults && filteredMappings.length > 0" class="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 py-1">
+            <button v-for="m in filteredMappings" :key="m.id" @mousedown="selectMappingFromSearch(m)" class="w-full text-left px-4 py-2 hover:bg-blue-50 dark:hover:bg-slate-700 text-xs text-slate-700 dark:text-slate-200 font-semibold border-b border-slate-100 dark:border-slate-700 last:border-0">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">[{{ m.part?.partNo }}]</span> {{ m.process?.processName }} - <span class="text-indigo-600 dark:text-indigo-400">{{ m.characteristic?.characteristicName }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-Level Cascading selectors -->
+        <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
+          <div class="w-40">
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">料號 (Part)</label>
+            <select v-model="selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+              <option value="">選擇產品...</option>
+              <option v-for="p in uniqueParts" :key="p.id" :value="p.id">[{{ p.partNo }}] {{ p.partName }}</option>
+            </select>
+          </div>
+
+          <div class="w-40">
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">工站 (Process)</label>
+            <select v-model="selectedProcessId" :disabled="!selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+              <option value="">選擇工站...</option>
+              <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.processName }}</option>
+            </select>
+          </div>
+
+          <div class="w-44">
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">特性項目 (Characteristic)</label>
+            <select v-model="selectedCharacteristicId" :disabled="!selectedProcessId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+              <option value="">選擇檢驗項目...</option>
+              <option v-for="c in availableCharacteristics" :key="c.id" :value="c.id">{{ c.characteristicName }}</option>
+            </select>
+          </div>
         </div>
 
         <div class="w-48">
@@ -379,6 +626,87 @@ onBeforeUnmount(() => {
         </div>
 
         <div ref="chartEl" class="h-[600px] w-full min-h-[450px]"></div>
+
+        <!-- Point Detail Drilldown Card -->
+        <div v-if="selectedPoint" class="mt-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 shadow-inner transition-all duration-300">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+              點位品質追溯詳細資料 (點位 #{{ selectedPointIndex + 1 }})
+            </h4>
+            <div class="flex gap-2">
+              <span v-if="selectedPoint.outOfSpec" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400 border border-red-200 dark:border-red-900/50">
+                OOS 超出規格
+              </span>
+              <span v-if="selectedPoint.outOfControl" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
+                OOC 管制失控
+              </span>
+              <span v-if="!selectedPoint.outOfSpec && !selectedPoint.outOfControl" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
+                正常 (In Control)
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="flex items-start gap-2.5">
+              <Hash class="w-4 h-4 text-slate-400 mt-1" />
+              <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">生產批號 (Lot No)</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200 select-all">{{ selectedPoint.lotNo || '無批號資料' }}</p>
+              </div>
+            </div>
+
+            <div v-if="selectedPoint.serialNo" class="flex items-start gap-2.5">
+              <Sparkles class="w-4 h-4 text-slate-400 mt-1" />
+              <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">序號 (Serial No)</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200 select-all">{{ selectedPoint.serialNo || '無序號資料' }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2.5">
+              <User class="w-4 h-4 text-slate-400 mt-1" />
+              <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">作業人員 (Operator)</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ selectedPoint.operator || selectedPoint.Operator || '系統自動匯入' }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2.5">
+              <Clock class="w-4 h-4 text-slate-400 mt-1" />
+              <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">量測時間 (Measured At)</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  {{ selectedPoint.measuredAt ? new Date(selectedPoint.measuredAt).toLocaleString('zh-TW', { hour12: false }) : '無時間資料' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom detailed measurements & violation rules -->
+          <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">量測數據 (Measured Value)</p>
+              <h3 class="text-xl font-black text-slate-800 dark:text-white">
+                {{ selectedPoint.value !== undefined ? Number(selectedPoint.value).toFixed(4) : (selectedPoint.xbar !== undefined ? Number(selectedPoint.xbar).toFixed(4) : 'N/A') }}
+                <span v-if="selectedPoint.range !== undefined" class="text-sm text-slate-400 font-semibold ml-3">
+                  (子組全距 R = {{ Number(selectedPoint.range).toFixed(4) }}, 子組大小 n = {{ selectedPoint.n }})
+                </span>
+              </h3>
+            </div>
+
+            <div v-if="selectedPoint.violatedRules?.length > 0" class="w-full md:w-auto">
+              <p class="text-[10px] font-bold text-red-500 uppercase mb-1 flex items-center gap-1">
+                <AlertTriangle class="w-3.5 h-3.5" /> 觸發西方電氣判讀規則
+              </p>
+              <div class="flex flex-wrap gap-1.5">
+                <span v-for="(rule, rIdx) in selectedPoint.violatedRules" :key="rIdx" class="px-2.5 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 text-[11px] font-bold">
+                  {{ rule }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

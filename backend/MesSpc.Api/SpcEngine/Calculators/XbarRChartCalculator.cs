@@ -157,7 +157,10 @@ public static class XbarRChartCalculator
                 outOfControl = oocStat || oocR,
                 outOfControlXbar = oocStat,
                 outOfControlR = oocR,
-                violatedRules = p.ViolatedRules
+                violatedRules = p.ViolatedRules,
+                lotNo = x.LotNo,
+                serialNo = x.SerialNo,
+                @operator = x.Operator
             });
             rPoints.Add(new { x.MeasuredAt, value = range, outOfControl = oocR });
         }

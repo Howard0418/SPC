@@ -251,16 +251,30 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                var points = measurements.Select(x => new SpcDataPoint { MeasuredAt = x.MeasuredAt, Value = x.MeasuredValue }).ToList();
+                var points = measurements.Select(x => new SpcDataPoint
+                {
+                    MeasuredAt = x.MeasuredAt,
+                    Value = x.MeasuredValue,
+                    LotNo = x.LotNo,
+                    SerialNo = x.SerialNo,
+                    Operator = x.Operator
+                }).ToList();
                 return ImrChartCalculator.Calculate(points, limits);
             }
             else // XBAR_R
             {
                 var expectedSampleSizeVal = mapping.SampleSize > 0 ? mapping.SampleSize : (chartType.RequiredSampleSize ?? 0) > 0 ? chartType.RequiredSampleSize!.Value : 5;
-                var grouped = measurements.GroupBy(x => x.MeasuredAt).Select(g => new Subgroup
+                var grouped = measurements.GroupBy(x => x.MeasuredAt).Select(g =>
                 {
-                    MeasuredAt = g.Key,
-                    Values = g.Select(m => m.MeasuredValue).ToList()
+                    var first = g.First();
+                    return new Subgroup
+                    {
+                        MeasuredAt = g.Key,
+                        Values = g.Select(m => m.MeasuredValue).ToList(),
+                        LotNo = first.LotNo,
+                        SerialNo = first.SerialNo,
+                        Operator = first.Operator
+                    };
                 }).ToList();
 
                 return XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, chartType.FormulaConfigJson);
@@ -280,7 +294,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 InspectedQty = x.InspectedQty,
                 DefectQty = x.DefectQty,
                 DefectCount = x.DefectCount,
-                UnitCount = x.UnitCount
+                UnitCount = x.UnitCount,
+                LotNo = x.LotNo,
+                Operator = x.Operator
             }).ToList();
 
             return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits);

@@ -56,7 +56,9 @@ public static class AttributeChartCalculator
                 { "n", n },
                 { "uclStat", ucl },
                 { "lclStat", lcl },
-                { "outOfControl", outOfControl }
+                { "outOfControl", outOfControl },
+                { "lotNo", d.LotNo },
+                { "operator", d.Operator }
             });
         }
 
@@ -124,7 +126,9 @@ public static class AttributeChartCalculator
                 { "value", p.Value },
                 { "n", d.InspectedQty },
                 { "outOfControl", p.IsOutOfControl },
-                { "violatedRules", p.ViolatedRules }
+                { "violatedRules", p.ViolatedRules },
+                { "lotNo", d.LotNo },
+                { "operator", d.Operator }
             });
         }
 
@@ -169,7 +173,9 @@ public static class AttributeChartCalculator
                 { "measuredAt", d.MeasuredAt },
                 { "value", p.Value },
                 { "outOfControl", p.IsOutOfControl },
-                { "violatedRules", p.ViolatedRules }
+                { "violatedRules", p.ViolatedRules },
+                { "lotNo", d.LotNo },
+                { "operator", d.Operator }
             });
         }
 
@@ -217,7 +223,9 @@ public static class AttributeChartCalculator
                 { "n", n },
                 { "uclStat", ucl },
                 { "lclStat", lcl },
-                { "outOfControl", outOfControl }
+                { "outOfControl", outOfControl },
+                { "lotNo", d.LotNo },
+                { "operator", d.Operator }
             });
         }
 

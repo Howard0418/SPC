@@ -82,6 +82,7 @@ const menuCategories = [
     title: "管制圖與西方電氣規則",
     items: [
       { to: "/control-chart-groups", text: "管制圖分類總管", icon: Layers },
+      { to: "/control-chart-categories", text: "管制圖分類維護", icon: FolderTree },
       { to: "/control-chart-types", text: "SPC 管制圖配置", icon: Activity }
     ]
   },
@@ -89,7 +90,7 @@ const menuCategories = [
     title: "異常管理與追溯",
     items: [
       { to: "/alerts", text: "異常通報總覽", icon: AlertTriangle },
-      { to: "/v2/traceability", text: "批次歷史追溯查詢", icon: Search },
+      { to: "/spc/query", text: "多維度品質履歷與查詢", icon: Search },
       { to: "/v2/alerts-workflow", text: "異常單簽核處置", icon: Activity }
     ]
   },

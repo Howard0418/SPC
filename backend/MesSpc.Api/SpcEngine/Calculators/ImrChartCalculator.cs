@@ -50,7 +50,10 @@ public static class ImrChartCalculator
                 outOfSpec = oos,
                 outOfControl = oocConfigured || p.IsOutOfControl,
                 outOfControlStat = (iUclStat.HasValue && v > iUclStat.Value) || (iLclStat.HasValue && v < iLclStat.Value),
-                violatedRules = p.ViolatedRules
+                violatedRules = p.ViolatedRules,
+                lotNo = p.LotNo,
+                serialNo = p.SerialNo,
+                @operator = p.Operator
             });
         }
 

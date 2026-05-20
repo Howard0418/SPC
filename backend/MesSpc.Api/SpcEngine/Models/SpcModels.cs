@@ -7,6 +7,9 @@ public record SpcDataPoint
     public bool IsOutOfSpec { get; set; }
     public bool IsOutOfControl { get; set; }
     public List<string> ViolatedRules { get; init; } = new();
+    public string? LotNo { get; init; }
+    public string? SerialNo { get; init; }
+    public string? Operator { get; init; }
 }
 
 public record Subgroup
@@ -17,6 +20,9 @@ public record Subgroup
     public int N => Values.Count;
     public double Mean => Values.Count > 0 ? Values.Average() : 0;
     public double Range => Values.Count > 0 ? Values.Max() - Values.Min() : 0;
+    public string? LotNo { get; init; }
+    public string? SerialNo { get; init; }
+    public string? Operator { get; init; }
 }
 
 public record AttributeDataPoint
@@ -29,4 +35,6 @@ public record AttributeDataPoint
     
     public bool IsOutOfControl { get; set; }
     public List<string> ViolatedRules { get; init; } = new();
+    public string? LotNo { get; init; }
+    public string? Operator { get; init; }
 }

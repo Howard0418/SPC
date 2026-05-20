@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   BarChart2,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-vue-next";
 
 const router = useRouter();
@@ -29,6 +30,13 @@ const loading = ref(false);
 const err = ref("");
 const batches = ref([]);
 const alertsMap = ref({});
+const exportMonth = ref(new Date().toISOString().slice(0, 7));
+
+function exportCpkMaster() {
+  const baseUrl = api.defaults?.baseURL || "http://localhost:5243";
+  const url = `${baseUrl}/api/v2/reports/cpk-summary?month=${exportMonth.value}`;
+  window.open(url, "_blank");
+}
 
 async function executeQuery() {
   err.value = "";
@@ -47,7 +55,6 @@ async function executeQuery() {
     
     batches.value = data.batches || [];
     
-    // 建立 Alert 快速查找表
     if (data.alerts) {
       data.alerts.forEach(a => {
         if (!alertsMap.value[a.batchId]) {
@@ -69,7 +76,6 @@ function goToSpcChart(batchId) {
 }
 
 onMounted(() => {
-  // 自動載入預設查詢
   executeQuery();
 });
 </script>
@@ -95,6 +101,17 @@ onMounted(() => {
             透過工單、批號 (Lot)、序號 (SN) 或時間區間進行複合式條件篩選。快速鎖定特定批次的量測紀錄並一鍵轉入 SPC 戰情室檢視 CPK 指標與管制圖。
           </p>
         </div>
+      </div>
+
+      <!-- Export Action Block -->
+      <div class="flex items-center gap-3 z-10 bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80 backdrop-blur shadow-xl">
+        <div class="flex flex-col">
+          <label class="text-[10px] font-bold text-slate-400 uppercase mb-1">選擇月份</label>
+          <input v-model="exportMonth" type="month" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-bold focus:outline-none focus:border-indigo-500" />
+        </div>
+        <button @click="exportCpkMaster" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all self-end">
+          <Download class="w-4 h-4" /> 📥 匯出廠級 CPK 總表 (Excel)
+        </button>
       </div>
     </div>
 
