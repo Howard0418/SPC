@@ -161,6 +161,10 @@ function successAlert(msg) {
   setTimeout(() => { successMsg.value = ""; }, 3000);
 }
 
+const procGroupId = computed(() => chartGroups.value.find(g => g.groupCode === "PROC")?.id || 1);
+const chemGroupId = computed(() => chartGroups.value.find(g => g.groupCode === "CHEM")?.id || 2);
+const prodGroupId = computed(() => chartGroups.value.find(g => g.groupCode === "PROD")?.id || 3);
+
 onMounted(load);
 </script>
 
@@ -212,10 +216,10 @@ onMounted(load);
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <!-- 1. 製程管制項目 PROC -->
       <div 
-        @click="groupFilter = groupFilter === 1 ? 'all' : 1"
+        @click="groupFilter = groupFilter === procGroupId ? 'all' : procGroupId"
         :class="[
           'relative p-6 rounded-3xl border cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group shadow-md',
-          groupFilter === 1 
+          groupFilter === procGroupId 
             ? 'bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 border-blue-500 shadow-blue-500/20 text-white' 
             : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 hover:border-blue-400'
         ]"
@@ -233,18 +237,18 @@ onMounted(load);
         </p>
         <div class="mt-6 flex items-center justify-between">
           <span class="text-xs font-semibold text-slate-400">目前類別</span>
-          <span class="text-2xl font-black text-blue-500">{{ rows.filter(x => x.chartGroupId === 1).length }} 筆</span>
+          <span class="text-2xl font-black text-blue-500">{{ rows.filter(x => x.chartGroupId === procGroupId).length }} 筆</span>
         </div>
         <!-- Active indicator -->
-        <div v-if="groupFilter === 1" class="absolute bottom-0 inset-x-0 h-1 bg-blue-500"></div>
+        <div v-if="groupFilter === procGroupId" class="absolute bottom-0 inset-x-0 h-1 bg-blue-500"></div>
       </div>
 
       <!-- 2. 藥液管制項目 CHEM -->
       <div 
-        @click="groupFilter = groupFilter === 2 ? 'all' : 2"
+        @click="groupFilter = groupFilter === chemGroupId ? 'all' : chemGroupId"
         :class="[
           'relative p-6 rounded-3xl border cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group shadow-md',
-          groupFilter === 2 
+          groupFilter === chemGroupId 
             ? 'bg-gradient-to-br from-teal-900 via-emerald-900 to-slate-900 border-teal-500 shadow-teal-500/20 text-white' 
             : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 hover:border-teal-400'
         ]"
@@ -262,17 +266,17 @@ onMounted(load);
         </p>
         <div class="mt-6 flex items-center justify-between">
           <span class="text-xs font-semibold text-slate-400">目前類別</span>
-          <span class="text-2xl font-black text-teal-500">{{ rows.filter(x => x.chartGroupId === 2).length }} 筆</span>
+          <span class="text-2xl font-black text-teal-500">{{ rows.filter(x => x.chartGroupId === chemGroupId).length }} 筆</span>
         </div>
-        <div v-if="groupFilter === 2" class="absolute bottom-0 inset-x-0 h-1 bg-teal-500"></div>
+        <div v-if="groupFilter === chemGroupId" class="absolute bottom-0 inset-x-0 h-1 bg-teal-500"></div>
       </div>
 
       <!-- 3. 產品管制項目 PROD -->
       <div 
-        @click="groupFilter = groupFilter === 3 ? 'all' : 3"
+        @click="groupFilter = groupFilter === prodGroupId ? 'all' : prodGroupId"
         :class="[
           'relative p-6 rounded-3xl border cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group shadow-md',
-          groupFilter === 3 
+          groupFilter === prodGroupId 
             ? 'bg-gradient-to-br from-purple-900 via-fuchsia-900 to-slate-900 border-purple-500 shadow-purple-500/20 text-white' 
             : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 hover:border-purple-400'
         ]"
@@ -290,9 +294,9 @@ onMounted(load);
         </p>
         <div class="mt-6 flex items-center justify-between">
           <span class="text-xs font-semibold text-slate-400">目前類別</span>
-          <span class="text-2xl font-black text-purple-500">{{ rows.filter(x => x.chartGroupId === 3).length }} 筆</span>
+          <span class="text-2xl font-black text-purple-500">{{ rows.filter(x => x.chartGroupId === prodGroupId).length }} 筆</span>
         </div>
-        <div v-if="groupFilter === 3" class="absolute bottom-0 inset-x-0 h-1 bg-purple-500"></div>
+        <div v-if="groupFilter === prodGroupId" class="absolute bottom-0 inset-x-0 h-1 bg-purple-500"></div>
       </div>
     </div>
 

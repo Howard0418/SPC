@@ -115,11 +115,25 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
 public class ControlChartCategoriesController(AppDbContext db) : ControllerBase
 {
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.ControlChartCategories.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(ControlChartCategory req) { db.ControlChartCategories.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPost]
+    public async Task<IActionResult> Create(ControlChartCategory req)
+    {
+        if (await db.ControlChartCategories.IgnoreQueryFilters().AnyAsync(c => c.ChartGroupId == req.ChartGroupId && c.CategoryCode == req.CategoryCode))
+        {
+            return BadRequest(new { message = $"在大群組下已存在相同類別代號 '{req.CategoryCode}' 的中分類。" });
+        }
+        db.ControlChartCategories.Add(req);
+        await db.SaveChangesAsync();
+        return Ok(req);
+    }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, ControlChartCategory req)
     {
         var x = await db.ControlChartCategories.FindAsync(id); if (x is null) return NotFound();
+        if (await db.ControlChartCategories.IgnoreQueryFilters().AnyAsync(c => c.Id != id && c.ChartGroupId == req.ChartGroupId && c.CategoryCode == req.CategoryCode))
+        {
+            return BadRequest(new { message = $"在大群組下已存在相同類別代號 '{req.CategoryCode}' 的中分類。" });
+        }
         x.ChartGroupId = req.ChartGroupId; x.CategoryCode = req.CategoryCode; x.CategoryName = req.CategoryName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }

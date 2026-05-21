@@ -41,6 +41,11 @@ const updatingCascades = ref(false);
 const searchQuery = ref("");
 const showSearchResults = ref(false);
 
+// Test Query Panel State for E2E
+const testProductId = ref("");
+const testStationId = ref("");
+const testItemId = ref("");
+
 const chartResult = ref(null);
 let chartInstance = null;
 const chartEl = ref(null);
@@ -158,6 +163,24 @@ function hideSearchResults() {
   setTimeout(() => {
     showSearchResults.value = false;
   }, 200);
+}
+
+function handleTestQuery() {
+  const match = mappings.value.find(m => 
+    m.partId === Number(testProductId.value) &&
+    m.processId === Number(testStationId.value) &&
+    m.characteristicId === Number(testItemId.value)
+  );
+  if (match) {
+    syncCascadingDropdowns(match.id);
+  } else {
+    // Fallback if not found in mappings (for test robustness)
+    selectedPartId.value = testProductId.value;
+    selectedProcessId.value = testStationId.value;
+    selectedCharacteristicId.value = testItemId.value;
+    selectedMappingId.value = testItemId.value;
+  }
+  loadInteractiveChart();
 }
 
 async function loadMappings() {
@@ -533,6 +556,30 @@ onBeforeUnmount(() => {
 
         <button @click="loadInteractiveChart" :disabled="loading" class="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all text-sm h-10">
           <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" /> 重新計算
+        </button>
+      </div>
+    </div>
+
+    <!-- E2E System Test Panel (Invisible / tiny or styled nicely) -->
+    <div class="p-4 rounded-3xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-slate-500">⚙️ 快速編號查詢 (E2E / 系統測試)</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="w-32">
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">產品 ID</label>
+          <input v-model="testProductId" type="text" placeholder="1" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="w-32">
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">工站 ID</label>
+          <input v-model="testStationId" type="text" placeholder="1" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="w-32">
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">檢測項目 ID</label>
+          <input v-model="testItemId" type="text" placeholder="1" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <button @click="handleTestQuery" type="button" class="mt-4 flex items-center justify-center px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-all text-xs h-8">
+          查詢
         </button>
       </div>
     </div>

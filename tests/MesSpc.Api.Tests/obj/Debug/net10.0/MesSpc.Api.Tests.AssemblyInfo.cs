@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MesSpc.Api.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ee3de454013a5cfadfe171b298a69b8d61c0f887")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+17c001f601c3b9b1fae84292bf107875785869d2")]
 [assembly: System.Reflection.AssemblyProductAttribute("MesSpc.Api.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MesSpc.Api.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -172,6 +172,7 @@ onBeforeUnmount(() => {
             <Sparkles class="w-3.5 h-3.5 text-yellow-300 animate-spin" /> 工業品質 4.0 核心戰情中心
           </div>
           <h1 class="text-3xl font-black tracking-tight">製造統計品質即時監控看板</h1>
+          <h2 class="text-xs font-bold text-indigo-200/80 uppercase tracking-widest">SPC Dashboard & Analysis</h2>
           <p class="text-indigo-100 max-w-xl text-sm leading-relaxed">
             整合 SPC 運算引擎、西方電氣異常規則自動篩選與即時製程能力分析，保障每一批次產品品質零死角。
           </p>

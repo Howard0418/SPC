@@ -1,24 +1,49 @@
-# 01 Current Architecture
+# 01 系統架構 (Current Architecture)
 
-## 目前狀態 (Current Status)
-採用前後端分離架構。
+## 系統架構圖 (System Architecture)
 
-## 已完成內容 (Completed Items)
-- **Frontend**: Vue 3 + Vite + TailwindCSS. 使用 Vue Router 進行導覽。
-- **Backend**: .NET 10.0 Web API. 採用分層架構 (Controller -> Service -> Data).
-- **ORM**: Entity Framework Core.
-- **Calculations**: 使用 `MathNet.Numerics` 進行統計計算。
+本系統採用前後端分離的企業級架構，前端負責互動呈現與報表繪製，後端負責業務邏輯、Excel 解析與統計運算。
 
-## 待補強項目 (Pending Items)
-- 統一的 `BaseEntity` 與 `BaseService`。
-- 獨立的 `SpcEngine` 領域模型。
-- SignalR 即時推播。
-- 分離的 Test Project。
+```
++-----------------------------------------------------------+
+|                        前端瀏覽器                          |
+|         (Vue 3 + Vite + Tailwind CSS + ECharts)           |
++-----------------------------------------------------------+
+                              |
+                     HTTPS / JSON / Form-Data
+                              |
+                              v
++-----------------------------------------------------------+
+|                       後端 API 服務                       |
+|           (ASP.NET Core Web API / .NET 10.0)              |
++-----------------------------------------------------------+
+|   Controllers   |  雙重路由與 Swagger API 提供            |
+|   Services      |  業務邏輯處理、上傳解析與統計計算呼叫   |
+|   SpcEngine     |  獨立運算模組 (Xbar-R/I-MR 計算器等)    |
+|   EF Core ORM   |  資料存取、軟刪除過濾、Audit 稽核       |
++-----------------------------------------------------------+
+                              |
+                           ADO.NET
+                              |
+                              v
++-----------------------------------------------------------+
+|                       關聯式資料庫                        |
+|                  (SQL Server 實體資料庫)                  |
++-----------------------------------------------------------+
+```
 
-## 注意事項 (Notes)
-- 需注意 .NET 10 的新特性相容性。
-- 前端 ECharts 組件需封裝以提高複用性。
+## 已完成的架構要點
 
-## 後續開發建議 (Development Roadmap)
-- 引入 Repository Pattern (選配) 或強化 Service 層。
-- 實作全域異常處理 (Global Exception Handling)。
+### 1. 前端架構
+- **框架**：Vue 3 + Vite + Tailwind CSS。
+- **圖表繪製**：封裝 ECharts，實現支援多管制圖、規格界限、管制界限與異常點動態重繪的 `SpcChartView`。
+- **狀態管理與路由**：使用 Vue Router，選單導覽配置適配 E2E 測試選擇器。
+
+### 2. 後端架構
+- **框架**：.NET 10.0 Web API，支援 Swagger API 線上文件。
+- **雙重路由相容性**：API 控制器支援 `/api/<resource>` 與 `/api/v1/<resource>` 雙路由，消除前端請求 404 衝突。
+- **解耦的運算引擎**：`SpcEngine` 獨立於資料生存期之外，純粹進行統計常數運算與規則檢驗，非常便於單元測試。
+
+### 3. ORM 與資料庫防護
+- 統一繼承 `BaseEntity` 提供軟刪除 `IsDeleted` 全域過濾器。
+- 資料庫儲存變更時利用 EF Core 的 ChangeTracker 進行記憶體中實體衝突校驗，防止寫入未 Save 實體觸發的重複唯一鍵錯誤。

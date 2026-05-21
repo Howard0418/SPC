@@ -1,22 +1,32 @@
-# 03 Backend API
+# 03 後端 API 規格說明 (Backend API)
 
-## 目前狀態 (Current Status)
-標準 ASP.NET Core Web API，整合 Swagger。
+## 基礎資訊
+- **API 基底路由**：支援舊版 `/api/` 與標準 `/api/v1/` 雙路由模式。
+- **認證機制**：可配置的 JWT Bearer Token 驗證，需於 HTTP Header 中附加 `Authorization: Bearer <Token>`。
+- **文件工具**：整合 Swagger UI，開發時可於 `http://localhost:5243/swagger` 進行直接調試。
 
-## 已完成內容 (Completed Items)
-- **Controllers**: CRUD APIs for all entities.
-- **Special APIs**: `/api/Spc/Chart` (計算圖表資料), `/api/Upload/Variable` (匯入).
-- **Security**: JWT Bearer token authentication.
+## 關鍵 API 端點定義
 
-## 待補強項目 (Pending Items)
-- **Pagination**: 實作統一的分頁、搜尋與排序 (QueryBuilder)。
-- **Excel Export**: 補齊主檔匯出 Excel 功能。
-- **SignalR**: 異常警報即時通知。
-- **Validators**: 引入 `FluentValidation` 強化輸入驗證。
+### 1. SPC 系統遷移與資料初始化 (Migration)
+- **`POST /api/v2/migration/import-custom-spc`**：
+  - **功能**：客製化 SPC 管制項目增量匯入端點。
+  - **參數**：傳入上傳之 Excel 檔案（格式為 `IFormFile file`）。
+  - **作業流程**：
+    1. 解析 Excel 中的三個工作表（製程管制項目、藥液管制項目、產品管制項目）。
+    2. 自動確保大分類（Group：`PROC`, `CHEM`, `PROD`）與中分類（Category：`VAR_PROC`, `VAR_CHEM`, `VAR_PROD`）存在。
+    3. 自動關聯或建立缺失的 `Part`（料號，化學與製程項目預設為 `COMMON`）、`Process`（工站）、`Machine`（機台）與 `QualityCharacteristic`（特徵項目）。
+    4. 自動新增或更新 `PartProcessCharacteristic`（規格上限/目標/下限、管制圖類型等），實現高可重複性 (Idempotent) 的 UPSERT 匯入。
 
-## 注意事項 (Notes)
-- 確保 API 回傳格式統一 (`ApiResponse<T>`)。
+### 2. 量測數據上傳 (Uploads)
+- **`POST /api/v1/uploads/variable/excel`**：上傳計量型量測數據 Excel 進行第一階段格式與第二階段主檔校驗。
+- **`POST /api/v1/uploads/attribute/excel`**：上傳計數型量測數據 Excel 進行校驗。
+- **`GET /api/v1/uploads/{uploadBatchId}/preview`**：取得暫存批次的預覽資料與錯誤校驗報告。
+- **`POST /api/v1/uploads/{uploadBatchId}/confirm`**：確認將校驗無誤的資料正式寫入量測歷史表，並觸發 `SpcEngine` 即時警報判定。
 
-## 後續開發建議 (Development Roadmap)
-- 建立 API 版本的概念 (如 `/api/v1/...`)。
-- 實作 API 權限控制 (Role-based / Policy-based)。
+### 3. 主數據管理 (Master Data CRUD)
+- 提供對 `Products`, `Parts`, `Processes`, `Machines` 以及 `ControlChartCategories` 的標準 CRUD 端點（同時支援雙路由）。
+
+### 4. SPC 數據查詢 (SPC Analysis)
+- **`GET /api/v1/Spc/Chart`**：
+  - 根據產品 ID、工站 ID、檢驗項目 ID 拉取最近 N 筆數據。
+  - 呼叫後端 `SpcEngine` 計算管制界限、製程能力指標，並回傳標記有異常點與觸犯規則清單的資料點。

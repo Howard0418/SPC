@@ -1,26 +1,39 @@
-# 05 SPC Engine Design
+# 05 SPC 運算與規則引擎設計 (SPC Engine Design)
 
-## 目前狀態 (Current Status)
-已將核心運算邏輯從 `SpcService` 抽離，建立獨立的 `SpcEngine` 模組，解除對 Entity Framework 的相依性，使其可進行單元測試。
+## 核心設計原則
+- **模組解耦**：`SpcEngine` 是一個高內聚的純 C# 統計運算庫，不依賴於 Entity Framework Core 或資料庫。
+- **輸入模型**：所有資料必須先轉換為 `SpcDataPoint` 或 `Subgroup` 模型，再傳入計算器。
+- **統計基礎**：使用 `MathNet.Numerics` 進行平均值、標準差與全距的精確計算。
 
-## 已完成內容 (Completed Items)
-- 基礎統計計算 (Mean, StdDev, Range).
-- Xbar-R, I-MR 圖表資料產出 (已抽離為 `Calculators`).
-- Attribute 管制圖 (P, NP, C, U) 計算器實作。
-- 基礎規格界限 (USL/LSL) 判定.
-- 建立 `SpcEngine` 獨立模組 (`Models`, `Calculators`, `Rules`).
-- 實作 `NelsonRulesValidator` (支援 Rule 1, 2, 3, 4, 5, 6 等標準規則)。
+## 管制圖計算器 (Calculators)
+系統根據檢驗特性的設定與樣本數自動套用對應的計算器：
+1. **Xbar-R (平均數-全距圖)**：
+   - 用於子群樣本數 $n \le 10$ 的計量型資料。
+   - 管制界限計算公式：
+     - $\text{CL} = \bar{\bar{X}}$
+     - $\text{UCL/LCL} = \bar{\bar{X}} \pm A_2 \bar{R}$
+     - 區間標準差估算使用：$\hat{\sigma}_{within} = \bar{R} / d_2$
+2. **Xbar-S (平均數-標準差圖)**：
+   - 用於子群樣本數 $n > 10$ 的計量型資料。
+   - 管制界限計算公式：
+     - $\text{CL} = \bar{\bar{X}}$
+     - $\text{UCL/LCL} = \bar{\bar{X}} \pm A_3 \bar{S}$
+3. **I-MR (單值-移動全距圖)**：
+   - 用於單值抽樣（子群數 = 1）的計量型資料。
+   - 區間標準差估算使用：$\hat{\sigma}_{within} = \overline{MR} / d_2$
+4. **計數型管制圖 (P, NP, C, U)**：
+   - 分別針對固定/變動樣本數的不良數與缺點數進行管制界限計算。
 
-## 待補強項目 (Pending Items)
-- **管制圖擴充**: EWMA, CUSUM, Xbar-S.
-- **製程能力**: Cp, Cpk, Pp, Ppk, Sigma Level.
-- **常態性檢定**: Anderson-Darling, Shapiro-Wilk.
-- **規則擴充**: 支援讀取資料庫動態設定的自定義規則。
+## 異常判定引擎 (Western Electric Rules)
+在 `SpcEngine` 產出計算點後，會將其傳入 `WesternElectricRulesValidator` 進行統計失控判定，支援以下黃金四大規則：
+- **Rule 1**：任一點落在管制界限（$\pm 3\sigma$）之外。
+- **Rule 2**：連續 3 點中有 2 點落在同側的 Zone A ($\pm 2\sigma \sim \pm 3\sigma$) 或之外。
+- **Rule 3**：連續 5 點中有 4 點落在同側的 Zone B ($\pm 1\sigma \sim \pm 3\sigma$) 或之外。
+- **Rule 4**：連續 8 點落在中心線的同一側（Zone C 或之外）。
 
-## 注意事項 (Notes)
-- `SpcEngine` 內部不可直接呼叫 `AppDbContext`。
-- 所有傳入的資料必須先轉換為 `SpcDataPoint` 或 `Subgroup` 模型。
-
-## 後續開發建議 (Development Roadmap)
-- 為所有 `Calculators` 補齊特殊案例或邊界值的單元測試。
-- 準備將 `SpcEngine` 透過 SignalR 事件發佈結果。
+## 製程能力指數 (Capability Indices)
+系統在返回 SPC 資料時會自動計算：
+- **$C_p$ / $C_{pk}$**：基於組內標準差（Within Sigma）計算短期製程能力。
+- **$P_p$ / $P_{pk}$**：基於全體標準差（Overall Sigma）計算長期製程能力。
+- **$\hat{\sigma}_{within}$ (組內標準差)**：依據圖表類型（如 $\bar{R}/d_2$）估算。
+- **$\sigma_{overall}$ (整體標準差)**：全體樣本數的樣本標準差。

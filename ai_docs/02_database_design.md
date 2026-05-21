@@ -1,33 +1,43 @@
-# 02 Database Design
+# 02 資料庫設計 (Database Design)
 
-## 核心架構 (Core Architecture)
+## 核心設計模式
+所有資料表實體均繼承自 `BaseEntity`，保證企業級品質系統所需的稽核追蹤與安全性：
+- **Id** (int PK)：自增主鍵。
+- **CreatedAt / CreatedBy**：建立時間與人員。
+- **UpdatedAt / UpdatedBy**：最後更新時間與人員。
+- **IsDeleted** (bool)：軟刪除標記，系統在 `OnModelCreating` 中設定了 Global Query Filter，查詢時會自動過濾已刪除資料。
+- **RowVersion** (byte[])：時間戳記，用於防範多人併發衝突。
 
-所有實體現在均繼承自 `BaseEntity`，提供統一的稽核與併發控制：
-- **Id**: 主鍵 (int/long/Guid)
-- **CreatedAt / CreatedBy**: 建立資訊
-- **UpdatedAt / UpdatedBy**: 修改資訊
-- **IsDeleted**: 軟刪除支援 (已套用 Global Query Filter)
-- **RowVersion**: 樂觀併發控制 ([Timestamp])
+## 關鍵實體模組與資料表對應
 
-## 目前狀態 (Current Status)
+### 1. 組織架構主檔 (Org Structure)
+- **Plant**：工廠
+- **Factory**：車間
+- **ProductionLine**：生產線
+- **Unit**：設備單元
 
-支持 SQLite 與 SQL Server。目前 schema 包含約 40 張資料表，涵蓋以下模組：
+### 2. 生產與品質主檔 (Master Data)
+- **Part** (產品料號)：存儲產品資料 (如 `PartNo` 必須唯一)。對於製程與藥液等非產品專屬項目，系統會將其關聯至 `"COMMON"` 共用產品。
+- **Process** (工站製程)：如 `ProcessCode` 必須唯一。
+- **Machine** (生產機台)：存儲各機台與工作站主檔。
+- **QualityCharacteristic** (檢測特性)：定義被測量的物理量 (如膜厚、電壓等)。
 
-- **組織架構 (Org Structure)**: Plant, Factory, ProductionLine, Unit.
-- **主檔數據 (Master Data)**: Products, Parts, Processes, Machines, Stations, QualityCharacteristics, Shift, Operator, Customer, Supplier.
-- **設定配置 (Configuration)**: PartProcessCharacteristic (規格與管制界限), ControlChartTypes, SpcRules.
-- **交易數據 (Transactions)**: MeasurementBatches, MeasurementValues, VariableMeasurements, AttributeMeasurements.
-- **運算邏輯 (Logic)**: FormulaDefinitions, SpcCalculationResults.
-- **流程控制 (Workflow)**: AlertEvents, WorkOrders, StationOperationSessions, UploadBatches.
+### 3. 管制圖設定主檔 (SPC Configuration)
+- **ControlChartGroup** (管制圖大分類)：如 `GroupCode` 必須唯一，包含 `PROC` (製程)、`CHEM` (藥液)、`PROD` (產品)。
+- **ControlChartCategory** (管制圖中分類)：與大分類關聯，如 `CategoryCode` 必須唯一，包含 `VAR_PROC` (計量_製程) 等。
+- **ControlChartType** (管制圖小分類/圖表類型)：管制圖計算配置，包括 `ChartTypeCode` 全局唯一索引，包含 `XBAR_R` (平均數-全距圖)、`XBAR_S` (平均數-標準差圖)、`I_MR` (單值-移動全距圖)。
+- **PartProcessCharacteristic** (管制特性設定主檔)：
+  - 連接產品、工站、特徵與圖表類型。
+  - 儲存產品規格界限：`Lsl` (規格下限)、`Target` (目標值)、`Usl` (規格上限)。
+  - 儲存統計管制界限：`Lcl`、`Cl`、`Ucl`（若採用計算界限則動態運算）。
 
-## 核心設計原則
+### 4. 交易資料與檢驗數據 (Transactional Data)
+- **MeasurementBatch**：每批次上傳/登錄之總表。
+- **VariableMeasurement**：計量型實際測量數值紀錄。
+- **AttributeMeasurement**：計數型不良數/總數紀錄。
+- **UploadBatch** / **UploadDetail**：供兩階段上傳校驗用的暫存資料表。
 
-1. **軟刪除**: `IsDeleted` 為 true 的資料不會被查詢出，除非明確使用 `.IgnoreQueryFilters()`。
-2. **自動稽核**: `AppDbContext` 已覆寫 `SaveChangesAsync`，自動填充建立與修改者資訊。
-3. **資料一致性**: 關鍵表均設有 Unique Index (例如 Code/No 欄位)。
-4. **效能優化**: 已針對 `MeasuredAt` 與關聯 ID 建立複合索引。
-
-## 後續優化建議 (Development Roadmap)
-
-- **SQL Server 腳本**: 補齊正式環境部署用的備份與恢復自動化腳本。
-- **資料清理**: 實作歷史數據封存邏輯 (Archiving Policy)。
+## 資料庫優化與索引
+- **IX_ControlChartTypes_ChartTypeCode**：唯一索引，防止全系統重複登錄圖表代碼。
+- **IX_ControlChartCategories_ChartGroupId_CategoryCode**：複合唯一索引，限制同群組下不可有重複類別。
+- **複合索引**：針對 `PartProcessCharacteristic` 的 FK 關聯與數據表的 `MeasuredAt` 時間欄位建立複合索引，提升 SPC 圖表拉取歷史數據時的效能。

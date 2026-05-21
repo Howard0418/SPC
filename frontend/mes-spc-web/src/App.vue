@@ -57,7 +57,7 @@ const menuCategories = [
     title: "高階戰情與分析",
     items: [
       { to: "/", text: "戰情儀表板", icon: LayoutDashboard },
-      { to: "/spc", text: "即時 SPC 戰情室", icon: LineChart }
+      { to: "/spc", text: "SPC 管制圖", icon: LineChart }
     ]
   },
   {
@@ -71,6 +71,7 @@ const menuCategories = [
   {
     title: "企業品質主檔設定",
     items: [
+      { to: "/products", text: "產品管理", icon: Package },
       { to: "/parts", text: "產品料號主檔", icon: Package },
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/machines", text: "生產機台主檔", icon: Cpu },
@@ -83,7 +84,7 @@ const menuCategories = [
     items: [
       { to: "/control-chart-groups", text: "管制圖分類總管", icon: Layers },
       { to: "/control-chart-categories", text: "管制圖分類維護", icon: FolderTree },
-      { to: "/control-chart-types", text: "SPC 管制圖配置", icon: Activity }
+      { to: "/control-chart-types", text: "管制圖參數配置", icon: Activity }
     ]
   },
   {

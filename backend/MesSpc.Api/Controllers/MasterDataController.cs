@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MesSpc.Api.Controllers;
 
 [ApiController]
+[Route("api/products")]
 [Route("api/v1/products")]
 public class ProductsController(AppDbContext db) : ControllerBase
 {
@@ -16,6 +17,7 @@ public class ProductsController(AppDbContext db) : ControllerBase
 }
 
 [ApiController]
+[Route("api/stations")]
 [Route("api/v1/stations")]
 public class StationsController(AppDbContext db) : ControllerBase
 {
@@ -26,6 +28,7 @@ public class StationsController(AppDbContext db) : ControllerBase
 }
 
 [ApiController]
+[Route("api/inspection-items")]
 [Route("api/v1/inspection-items")]
 public class InspectionItemsController(AppDbContext db) : ControllerBase
 {
@@ -42,6 +45,7 @@ public class InspectionItemsController(AppDbContext db) : ControllerBase
 }
 
 [ApiController]
+[Route("api/product-station-items")]
 [Route("api/v1/product-station-items")]
 public class ProductStationItemsController(AppDbContext db) : ControllerBase
 {

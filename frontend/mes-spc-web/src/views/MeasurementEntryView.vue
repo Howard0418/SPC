@@ -314,15 +314,15 @@ const submitBatch = async () => {
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">生產批號 (Lot No)</p>
+            <label class="block text-[11px] font-bold text-slate-400 mb-1">生產批號 (Lot No)</label>
             <input v-model="payload.lotNo" placeholder="如: LOT-2026A" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">零件序號 (Serial No)</p>
+            <label class="block text-[11px] font-bold text-slate-400 mb-1">零件序號 (Serial No)</label>
             <input v-model="payload.serialNo" placeholder="如: SN-0988" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">量測時間</p>
+            <label class="block text-[11px] font-bold text-slate-400 mb-1">量測時間</label>
             <input type="datetime-local" v-model="payload.measuredAt" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
           </div>
         </div>

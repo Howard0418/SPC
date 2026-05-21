@@ -13,6 +13,7 @@ public record MeasurementValueDto(int InspectionItemId, int SampleNo, double? Va
 public record CreateBatchDto(string BatchNo, int ProductId, int StationId, DateTime MeasuredAt, string? OperatorName, List<MeasurementValueDto> Values);
 
 [ApiController]
+[Route("api/measurement-batches")]
 [Route("api/v1/measurement-batches")]
 public class MeasurementBatchesController(AppDbContext db, SpcService spcService) : ControllerBase
 {
@@ -56,6 +57,7 @@ public class MeasurementBatchesController(AppDbContext db, SpcService spcService
 }
 
 [ApiController]
+[Route("api/measurements")]
 [Route("api/v1/measurements")]
 public class MeasurementImportController(AppDbContext db, SpcService spcService) : ControllerBase
 {
