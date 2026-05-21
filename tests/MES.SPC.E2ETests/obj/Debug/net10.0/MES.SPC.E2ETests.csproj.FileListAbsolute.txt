@@ -1167,3 +1167,12 @@ C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\obj\Debug\net10.0\
 C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\obj\Debug\net10.0\MES.SPC.E2ETests.pdb
 C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\obj\Debug\net10.0\MES.SPC.E2ETests.genruntimeconfig.cache
 C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\obj\Debug\net10.0\ref\MES.SPC.E2ETests.dll
+c:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\Fixtures\variable_upload_mixed.csv
+C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\ClosedXML.dll
+C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\ClosedXML.Parser.dll
+C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\DocumentFormat.OpenXml.dll
+C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\DocumentFormat.OpenXml.Framework.dll
+C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\ExcelNumberFormat.dll
+C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\RBush.dll
+C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\SixLabors.Fonts.dll
+C:\Users\ihao_ting.PMR.000\Desktop\MES\tests\MES.SPC.E2ETests\bin\Debug\net10.0\System.IO.Packaging.dll

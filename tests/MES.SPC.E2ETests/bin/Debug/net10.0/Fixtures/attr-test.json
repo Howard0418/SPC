@@ -1,0 +1,15 @@
+[
+  {
+    "PartNo": "P-1002",
+    "ProcessCode": "ST-02",
+    "MachineCode": "M-03",
+    "CharacteristicCode": "DEF-001",
+    "InspectedQty": "500",
+    "DefectQty": "12",
+    "DefectCount": "15",
+    "UnitCount": "500",
+    "MeasuredAt": "2026-05-21 08:00:00",
+    "Operator": "E2E-OP-A",
+    "LotNo": "L-E2E-ATTR-001"
+  }
+]

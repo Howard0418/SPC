@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <!-- 每個 Playwright 操作間隔（毫秒），方便肉眼觀察 UI -->
+      <SlowMo>1500</SlowMo>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>

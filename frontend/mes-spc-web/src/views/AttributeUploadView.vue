@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
+import { parseUploadSpreadsheet } from "../utils/parseUploadSpreadsheet";
 import {
   UploadCloud,
   FileSpreadsheet,
@@ -46,21 +47,6 @@ const systemFields = [
   { key: "Operator", label: "作業人員 (Operator)", required: false, altNames: ["作業員", "人員", "operator", "op", "user"] }
 ];
 
-// Load SheetJS dynamically from CDN
-function loadXlsxLib() {
-  return new Promise((resolve, reject) => {
-    if (window.XLSX) {
-      resolve(window.XLSX);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
-    script.onload = () => resolve(window.XLSX);
-    script.onerror = () => reject(new Error("無法載入 Excel 解析程式庫。請檢查您的網路連線。"));
-    document.head.appendChild(script);
-  });
-}
-
 async function handleFileChange(e) {
   const files = e.target.files;
   if (!files || files.length === 0) return;
@@ -75,46 +61,15 @@ async function handleFileChange(e) {
 
   loading.value = true;
   try {
-    const XLSX = await loadXlsxLib();
-    const reader = new FileReader();
-
-    reader.onload = (evt) => {
-      try {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        if (workbook.SheetNames.length === 0) {
-          throw new Error("Excel 檔案中找不到任何工作表。");
-        }
-        const ws = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(ws, { defval: "" });
-
-        if (jsonData.length === 0) {
-          throw new Error("工作表中沒有任何數據列。");
-        }
-
-        // Get Headers from keys of all items
-        const headersSet = new Set();
-        jsonData.forEach(row => {
-          Object.keys(row).forEach(k => headersSet.add(k));
-        });
-        fileHeaders.value = Array.from(headersSet);
-        rawRowsData.value = jsonData;
-
-        // Perform smart fuzzy auto-mapping
-        runFuzzyAutoMapping();
-        isMappingMode.value = true;
-      } catch (ex) {
-        err.value = "解析 Excel 失敗：" + ex.message;
-        selectedFile.value = null;
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    reader.readAsArrayBuffer(file);
+    const parsed = await parseUploadSpreadsheet(file);
+    fileHeaders.value = parsed.headers;
+    rawRowsData.value = parsed.rows;
+    runFuzzyAutoMapping();
+    isMappingMode.value = true;
   } catch (ex) {
-    err.value = ex.message;
+    err.value = ex?.message || String(ex);
     selectedFile.value = null;
+  } finally {
     loading.value = false;
   }
 }
