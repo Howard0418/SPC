@@ -1,0 +1,6 @@
+You are an expert AI agent working on the MES+SPC MVP project.
+Stack: Vue 3 (Composition API, Tailwind, ECharts) + .NET 8 Web API + SQL Server/EF Core.
+Always follow the rules defined in the /ai_docs, /backend_rules, /frontend_rules, and /database_rules folders.
+Always use async/await in C#. Always use script setup in Vue.
+Before modifying architecture, check /ai_docs/architecture/clean_architecture_flow.md.
+Before modifying SPC logic, check /ai_docs/spc_domain_knowledge.md (XBar-R, Cpk, WE Rules).

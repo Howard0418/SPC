@@ -73,26 +73,32 @@ function renderCharts() {
   if (!trendChart) trendChart = echarts.init(trendChartEl.value);
   trendChart.setOption({
     backgroundColor: "transparent",
-    tooltip: { trigger: "axis", backgroundColor: "rgba(15, 23, 42, 0.9)", borderColor: "#334155", textStyle: { color: "#fff" } },
+    tooltip: { trigger: "axis", backgroundColor: "rgba(15, 23, 42, 0.8)", borderColor: "rgba(51, 65, 85, 0.5)", padding: 12, textStyle: { color: "#e2e8f0", fontFamily: "Inter" }, backdropFilter: "blur(10px)", shadowBlur: 15, shadowColor: "rgba(0,0,0,0.5)" },
+    tooltip: { trigger: "axis", backgroundColor: "rgba(255, 255, 255, 0.9)", borderColor: "rgba(200, 200, 200, 0.5)", padding: 12, textStyle: { color: "#1e293b", fontFamily: "Inter" } },
     grid: { left: 40, right: 20, top: 40, bottom: 30 },
     xAxis: {
       type: "category",
       boundaryGap: false,
       data: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"],
-      axisLine: { lineStyle: { color: "#64748b" } }
+      axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.3)" } },
+      axisLabel: { color: "#ffffff", fontFamily: "Inter" },
+      splitLine: { show: false }
     },
-    yAxis: { type: "value", splitLine: { lineStyle: { color: "rgba(100, 116, 139, 0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } } },
+    yAxis: { type: "value", splitLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)", type: "dashed" } }, axisLine: { show: false }, axisLabel: { color: "#ffffff", fontFamily: "Inter" } },
     series: [
       {
         name: "檢驗數",
         type: "line",
         smooth: true,
+        symbolSize: 0,
+        showSymbol: false,
         data: [120, 240, 310, 180, 420, 510, 290],
-        itemStyle: { color: "#3b82f6" },
+        itemStyle: { color: "#38bdf8" },
+        lineStyle: { width: 3, shadowColor: "rgba(56, 189, 248, 0.5)", shadowBlur: 10 },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: "rgba(59, 130, 246, 0.4)" },
-            { offset: 1, color: "rgba(59, 130, 246, 0)" }
+            { offset: 0, color: "rgba(56, 189, 248, 0.3)" },
+            { offset: 1, color: "rgba(56, 189, 248, 0.02)" }
           ])
         }
       },
@@ -100,12 +106,14 @@ function renderCharts() {
         name: "異常告警",
         type: "line",
         smooth: true,
+        symbolSize: 6,
         data: [2, 5, 1, 0, 4, 8, 3],
-        itemStyle: { color: "#ef4444" },
+        itemStyle: { color: "#f43f5e" },
+        lineStyle: { width: 3, shadowColor: "rgba(244, 63, 94, 0.6)", shadowBlur: 12 },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: "rgba(239, 68, 68, 0.4)" },
-            { offset: 1, color: "rgba(239, 68, 68, 0)" }
+            { offset: 0, color: "rgba(244, 63, 94, 0.35)" },
+            { offset: 1, color: "rgba(244, 63, 94, 0.02)" }
           ])
         }
       }
@@ -116,26 +124,27 @@ function renderCharts() {
   if (!cpkChart) cpkChart = echarts.init(cpkChartEl.value);
   cpkChart.setOption({
     backgroundColor: "transparent",
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, backgroundColor: "rgba(15, 23, 42, 0.9)", borderColor: "#334155", textStyle: { color: "#fff" } },
-    grid: { left: 80, right: 30, top: 30, bottom: 30 },
-    xAxis: { type: "value", max: 2.5, splitLine: { lineStyle: { color: "rgba(100, 116, 139, 0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } } },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: "rgba(255,255,255,0.05)" } }, backgroundColor: "rgba(15, 23, 42, 0.8)", borderColor: "rgba(51, 65, 85, 0.5)", padding: 12, textStyle: { color: "#e2e8f0", fontFamily: "Inter" } },
+    grid: { left: 85, right: 30, top: 30, bottom: 30 },
+    xAxis: { type: "value", max: 2.5, splitLine: { lineStyle: { color: "rgba(148, 163, 184, 0.08)", type: "dashed" } }, axisLabel: { color: "#94a3b8", fontFamily: "Inter" } },
     yAxis: {
       type: "category",
       data: ["M-03 厚度", "M-01 直徑", "ST-02 黏度", "M-02 壓力", "ST-01 溫度"],
-      axisLine: { lineStyle: { color: "#64748b" } }
+      axisLine: { lineStyle: { color: "rgba(148, 163, 184, 0.3)" } },
+      axisLabel: { color: "#cbd5e1", fontFamily: "Inter", fontWeight: 500 }
     },
     series: [
       {
         name: "Cpk 指標",
         type: "bar",
-        barWidth: 16,
+        barWidth: 14,
         itemStyle: {
-          borderRadius: [0, 8, 8, 0],
+          borderRadius: [0, 6, 6, 0],
           color: (params) => {
             const v = params.value;
-            if (v < 1.0) return "#ef4444"; // Red
-            if (v < 1.33) return "#f59e0b"; // Amber
-            return "#10b981"; // Green
+            if (v < 1.0) return new echarts.graphic.LinearGradient(1, 0, 0, 0, [{offset:0, color:"#f43f5e"}, {offset:1, color:"#9f1239"}]);
+            if (v < 1.33) return new echarts.graphic.LinearGradient(1, 0, 0, 0, [{offset:0, color:"#fb923c"}, {offset:1, color:"#c2410c"}]);
+            return new echarts.graphic.LinearGradient(1, 0, 0, 0, [{offset:0, color:"#34d399"}, {offset:1, color:"#059669"}]);
           }
         },
         data: [0.85, 1.12, 1.45, 1.68, 1.95]
@@ -195,64 +204,64 @@ onBeforeUnmount(() => {
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-blue-500/50 transition-all">
+      <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl relative overflow-hidden group hover:border-blue-500/50 transition-all">
         <div class="absolute right-4 top-4 p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
           <Layers class="w-6 h-6" />
         </div>
-        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">本週總檢驗批次數</p>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">本週總檢驗批次數</p>
         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ stats.totalBatches }} <span class="text-xs font-semibold text-emerald-500 ml-1">+12.4%</span></h3>
         <p class="text-[11px] text-slate-400 mt-2">來自各站即時量測與自動化匯入</p>
       </div>
 
-      <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-red-500/50 transition-all">
+      <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl relative overflow-hidden group hover:border-red-500/50 transition-all">
         <div class="absolute right-4 top-4 p-3 rounded-2xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 animate-pulse">
           <AlertTriangle class="w-6 h-6" />
         </div>
-        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">今日觸發品質警報</p>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">今日觸發品質警報</p>
         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ stats.todayAlerts }} <span class="text-xs font-semibold text-red-500 ml-1">待處置</span></h3>
         <p class="text-[11px] text-slate-400 mt-2">西方電氣規則與規格上下限攔截</p>
       </div>
 
-      <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-amber-500/50 transition-all">
+      <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl relative overflow-hidden group hover:border-amber-500/50 transition-all">
         <div class="absolute right-4 top-4 p-3 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
           <TrendingUp class="w-6 h-6" />
         </div>
-        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">即時異常警報率</p>
-        <h3 class="text-3xl font-black text-amber-500">{{ stats.alertRate }}%</h3>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">即時異常警報率</p>
+        <h3 class="text-3xl font-black text-amber-600 dark:text-amber-500">{{ stats.alertRate }}%</h3>
         <p class="text-[11px] text-slate-400 mt-2">目標基準：低於 1.5%</p>
       </div>
 
-      <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-emerald-500/50 transition-all">
+      <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all">
         <div class="absolute right-4 top-4 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 class="w-6 h-6" />
         </div>
-        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">監控中檢測項目基準</p>
-        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ stats.activeCharacteristics }} <span class="text-xs font-semibold text-slate-500 ml-1">項</span></h3>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">監控中檢測項目基準</p>
+        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ stats.activeCharacteristics }} <span class="text-xs font-semibold text-slate-400 ml-1">項</span></h3>
         <p class="text-[11px] text-slate-400 mt-2">已佈署基準線與抽樣計畫</p>
       </div>
     </div>
 
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+      <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl flex flex-col">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <Activity class="w-5 h-5 text-blue-500" /> 當日抽樣檢驗與異常走勢趨勢圖
             </h3>
-            <p class="text-xs text-slate-400">各時段自動匯入與即時攔截數據對比</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">各時段自動匯入與即時攔截數據對比</p>
           </div>
         </div>
         <div ref="trendChartEl" class="h-80 w-full"></div>
       </div>
 
-      <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+      <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl flex flex-col">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <TrendingUp class="w-5 h-5 text-emerald-500" /> 製程能力後段班排行 (Cpk TOP 5 警示)
             </h3>
-            <p class="text-xs text-slate-400">紅條代表 Cpk < 1.0，需重點關注改善</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">紅條代表 Cpk < 1.0，需重點關注改善</p>
           </div>
         </div>
         <div ref="cpkChartEl" class="h-80 w-full"></div>
@@ -260,13 +269,13 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Recent Alerts Card -->
-    <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+    <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl space-y-4">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <ShieldAlert class="w-5 h-5 text-red-500" /> 即時品質異常與失控通報日誌
           </h3>
-          <p class="text-xs text-slate-400">觸發規格或西方電氣異常之最新紀錄</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">觸發規格或西方電氣異常之最新紀錄</p>
         </div>
         <button @click="router.push('/alerts')" class="text-xs font-bold text-blue-600 hover:text-blue-500 flex items-center gap-1">
           檢視全部異常 <ArrowUpRight class="w-3.5 h-3.5" />
@@ -275,7 +284,7 @@ onBeforeUnmount(() => {
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200 dark:border-slate-700">
             <tr>
               <th class="py-3 px-4 rounded-l-xl">發生時間</th>
               <th class="py-3 px-4">產品/料號 ID</th>
@@ -285,8 +294,8 @@ onBeforeUnmount(() => {
               <th class="py-3 px-4 rounded-r-xl text-right">操作</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
-            <tr v-for="a in recentAlerts" :key="a.id" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-600 dark:text-slate-300">
+            <tr v-for="a in recentAlerts" :key="a.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
               <td class="py-3 px-4 font-mono text-xs">{{ new Date(a.occurredAt).toLocaleString() }}</td>
               <td class="py-3 px-4 font-bold text-slate-800 dark:text-white">Part #{{ a.productId }}</td>
               <td class="py-3 px-4">Station #{{ a.stationId }}</td>
@@ -310,7 +319,7 @@ onBeforeUnmount(() => {
               </td>
             </tr>
             <tr v-if="recentAlerts.length === 0">
-              <td colspan="6" class="py-8 text-center text-slate-400 text-sm">目前無任何未處理之品質警報紀錄，生產狀態優良 ✨</td>
+              <td colspan="6" class="py-8 text-center text-slate-500 dark:text-slate-400 text-sm">目前無任何未處理之品質警報紀錄，生產狀態優良 ✨</td>
             </tr>
           </tbody>
         </table>
