@@ -376,5 +376,57 @@ public class SpcV2Controller(AppDbContext db, SpcService spcService) : Controlle
     [HttpGet("alerts")]
     public async Task<IActionResult> Alerts() => Ok(await db.AlertEvents.OrderByDescending(x => x.OccurredAt).Take(500).ToListAsync());
 
+    [HttpGet("dashboard-stats")]
+    public async Task<IActionResult> DashboardStats()
+    {
+        var today = DateTime.UtcNow.Date;
+        var trendData = await db.VariableMeasurements
+            .Where(x => x.MeasuredAt >= today)
+            .GroupBy(x => x.MeasuredAt.Hour)
+            .Select(g => new { Hour = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var characteristics = await db.PartProcessCharacteristics
+            .Include(x => x.Process)
+            .Include(x => x.Characteristic)
+            .Where(x => x.IsEnabled)
+            .ToListAsync();
+
+        var cpkList = new List<object>();
+        foreach (var ppc in characteristics)
+        {
+            var measurements = await db.VariableMeasurements
+                .Where(x => x.PartProcessCharacteristicId == ppc.Id)
+                .Select(x => x.MeasuredValue)
+                .ToListAsync();
+
+            if (measurements.Count > 1)
+            {
+                double mean = measurements.Average();
+                double sumOfSquares = measurements.Sum(val => Math.Pow(val - mean, 2));
+                double stdev = Math.Sqrt(sumOfSquares / (measurements.Count - 1));
+
+                double usl = ppc.USL ?? (mean + 3 * stdev);
+                double lsl = ppc.LSL ?? (mean - 3 * stdev);
+
+                if (stdev > 0)
+                {
+                    double cpu = (usl - mean) / (3 * stdev);
+                    double cpl = (mean - lsl) / (3 * stdev);
+                    double cpk = Math.Round(Math.Min(cpu, cpl), 2);
+                    
+                    cpkList.Add(new {
+                        Name = $"{ppc.Process?.ProcessName} {ppc.Characteristic?.CharacteristicName}",
+                        Cpk = cpk
+                    });
+                }
+            }
+        }
+        
+        var bottom5Cpk = cpkList.OrderBy(x => ((dynamic)x).Cpk).Take(5).ToList();
+        
+        return Ok(new { Trend = trendData, BottomCpk = bottom5Cpk });
+    }
+
     public record CalculateReq(Guid? UploadBatchId);
 }

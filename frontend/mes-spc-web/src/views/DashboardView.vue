@@ -35,6 +35,10 @@ const trendChartEl = ref(null);
 let cpkChart = null;
 const cpkChartEl = ref(null);
 
+let pollTimer = null;
+const trendData = ref({ hours: ["08:00", "10:00", "12:00", "14:00", "16:00"], counts: [0, 0, 0, 0, 0], alerts: [0, 0, 0, 0, 0] });
+const cpkData = ref({ names: ["尚無資料"], values: [0] });
+
 async function loadData() {
   loading.value = true;
   error.value = "";
@@ -58,6 +62,41 @@ async function loadData() {
       stats.value.activeCharacteristics = 12;
     }
 
+    // Load Dashboard Stats
+    try {
+      const statsRes = await api.get("/v2/spc/dashboard-stats");
+      const dData = statsRes.data;
+      if (dData && dData.trend) {
+         let hours = dData.trend.map(t => `${t.hour.toString().padStart(2, '0')}:00`);
+         let counts = dData.trend.map(t => t.count);
+         if(hours.length === 0) {
+            hours = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
+            counts = [0, 0, 0, 0, 0, 0, 0];
+         }
+         trendData.value.hours = hours;
+         trendData.value.counts = counts;
+         
+         const alertsPerHour = new Array(24).fill(0);
+         alerts.forEach(a => {
+           if (a.occurredAt?.startsWith(today)) {
+             const h = new Date(a.occurredAt).getHours();
+             alertsPerHour[h]++;
+           }
+         });
+         trendData.value.alerts = hours.map(h => alertsPerHour[parseInt(h.split(':')[0])] || 0);
+
+         if (dData.bottomCpk && dData.bottomCpk.length > 0) {
+           cpkData.value.names = dData.bottomCpk.map(c => c.name);
+           cpkData.value.values = dData.bottomCpk.map(c => c.cpk);
+         } else {
+           cpkData.value.names = ["暫無資料"];
+           cpkData.value.values = [0];
+         }
+      }
+    } catch (e) {
+      console.error("Failed to load dashboard stats", e);
+    }
+
     renderCharts();
   } catch (e) {
     error.value = getApiErrorMessage(e);
@@ -73,18 +112,17 @@ function renderCharts() {
   if (!trendChart) trendChart = echarts.init(trendChartEl.value);
   trendChart.setOption({
     backgroundColor: "transparent",
-    tooltip: { trigger: "axis", backgroundColor: "rgba(15, 23, 42, 0.8)", borderColor: "rgba(51, 65, 85, 0.5)", padding: 12, textStyle: { color: "#e2e8f0", fontFamily: "Inter" }, backdropFilter: "blur(10px)", shadowBlur: 15, shadowColor: "rgba(0,0,0,0.5)" },
-    tooltip: { trigger: "axis", backgroundColor: "rgba(255, 255, 255, 0.9)", borderColor: "rgba(200, 200, 200, 0.5)", padding: 12, textStyle: { color: "#1e293b", fontFamily: "Inter" } },
+    tooltip: { trigger: "axis", backgroundColor: "rgba(255, 255, 255, 0.9)", borderColor: "rgba(200, 200, 200, 0.5)", padding: 12, textStyle: { color: "#1e293b", fontFamily: "Inter" }, backdropFilter: "blur(10px)", shadowBlur: 15, shadowColor: "rgba(0,0,0,0.1)" },
     grid: { left: 40, right: 20, top: 40, bottom: 30 },
     xAxis: {
       type: "category",
       boundaryGap: false,
-      data: ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"],
-      axisLine: { lineStyle: { color: "rgba(255, 255, 255, 0.3)" } },
-      axisLabel: { color: "#ffffff", fontFamily: "Inter" },
+      data: trendData.value.hours,
+      axisLine: { lineStyle: { color: "rgba(148, 163, 184, 0.3)" } },
+      axisLabel: { color: "#64748b", fontFamily: "Inter" },
       splitLine: { show: false }
     },
-    yAxis: { type: "value", splitLine: { lineStyle: { color: "rgba(255, 255, 255, 0.1)", type: "dashed" } }, axisLine: { show: false }, axisLabel: { color: "#ffffff", fontFamily: "Inter" } },
+    yAxis: { type: "value", splitLine: { lineStyle: { color: "rgba(100, 116, 139, 0.1)", type: "dashed" } }, axisLine: { show: false }, axisLabel: { color: "#64748b", fontFamily: "Inter" } },
     series: [
       {
         name: "檢驗數",
@@ -92,7 +130,7 @@ function renderCharts() {
         smooth: true,
         symbolSize: 0,
         showSymbol: false,
-        data: [120, 240, 310, 180, 420, 510, 290],
+        data: trendData.value.counts,
         itemStyle: { color: "#38bdf8" },
         lineStyle: { width: 3, shadowColor: "rgba(56, 189, 248, 0.5)", shadowBlur: 10 },
         areaStyle: {
@@ -107,7 +145,7 @@ function renderCharts() {
         type: "line",
         smooth: true,
         symbolSize: 6,
-        data: [2, 5, 1, 0, 4, 8, 3],
+        data: trendData.value.alerts,
         itemStyle: { color: "#f43f5e" },
         lineStyle: { width: 3, shadowColor: "rgba(244, 63, 94, 0.6)", shadowBlur: 12 },
         areaStyle: {
@@ -124,14 +162,14 @@ function renderCharts() {
   if (!cpkChart) cpkChart = echarts.init(cpkChartEl.value);
   cpkChart.setOption({
     backgroundColor: "transparent",
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: "rgba(255,255,255,0.05)" } }, backgroundColor: "rgba(15, 23, 42, 0.8)", borderColor: "rgba(51, 65, 85, 0.5)", padding: 12, textStyle: { color: "#e2e8f0", fontFamily: "Inter" } },
-    grid: { left: 85, right: 30, top: 30, bottom: 30 },
-    xAxis: { type: "value", max: 2.5, splitLine: { lineStyle: { color: "rgba(148, 163, 184, 0.08)", type: "dashed" } }, axisLabel: { color: "#94a3b8", fontFamily: "Inter" } },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: "rgba(0,0,0,0.05)" } }, backgroundColor: "rgba(255, 255, 255, 0.9)", borderColor: "rgba(200, 200, 200, 0.5)", padding: 12, textStyle: { color: "#1e293b", fontFamily: "Inter" } },
+    grid: { left: 120, right: 30, top: 30, bottom: 30 },
+    xAxis: { type: "value", max: 'dataMax', splitLine: { lineStyle: { color: "rgba(100, 116, 139, 0.1)", type: "dashed" } }, axisLabel: { color: "#64748b", fontFamily: "Inter" } },
     yAxis: {
       type: "category",
-      data: ["M-03 厚度", "M-01 直徑", "ST-02 黏度", "M-02 壓力", "ST-01 溫度"],
+      data: cpkData.value.names,
       axisLine: { lineStyle: { color: "rgba(148, 163, 184, 0.3)" } },
-      axisLabel: { color: "#cbd5e1", fontFamily: "Inter", fontWeight: 500 }
+      axisLabel: { color: "#475569", fontFamily: "Inter", fontWeight: 500, width: 100, overflow: "truncate" }
     },
     series: [
       {
@@ -147,7 +185,7 @@ function renderCharts() {
             return new echarts.graphic.LinearGradient(1, 0, 0, 0, [{offset:0, color:"#34d399"}, {offset:1, color:"#059669"}]);
           }
         },
-        data: [0.85, 1.12, 1.45, 1.68, 1.95]
+        data: cpkData.value.values
       }
     ]
   });
@@ -160,10 +198,12 @@ function handleResize() {
 
 onMounted(() => {
   loadData();
+  pollTimer = setInterval(loadData, 30000);
   window.addEventListener("resize", handleResize);
 });
 
 onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer);
   window.removeEventListener("resize", handleResize);
   trendChart?.dispose();
   cpkChart?.dispose();
