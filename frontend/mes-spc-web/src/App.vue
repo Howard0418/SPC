@@ -74,7 +74,8 @@ const menuCategories = [
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/machines", text: "生產機台主檔", icon: Cpu },
       { to: "/characteristics", text: "品質特性項目", icon: Sliders },
-      { to: "/part-process-characteristics", text: "料號檢驗基準設定", icon: FolderTree }
+      { to: "/part-process-characteristics", text: "料號檢驗基準設定", icon: FolderTree },
+      { to: "/traceability-master", text: "產線槽位追溯設定", icon: Layers }
     ]
   },
   {

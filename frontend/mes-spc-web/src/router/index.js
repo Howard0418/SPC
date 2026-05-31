@@ -29,6 +29,7 @@ import SmtpSettingsView from "../views/SmtpSettingsView.vue";
 import OperatorsView from "../views/OperatorsView.vue";
 
 import GenealogyView from "../views/GenealogyView.vue";
+import TraceabilityMasterView from "../views/TraceabilityMasterView.vue";
 
 const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
 
@@ -61,7 +62,8 @@ const routes = [
   { path: "/spc/alerts", component: SpcAlertsView },
   { path: "/settings/smtp", component: SmtpSettingsView },
   { path: "/operators", component: OperatorsView },
-  { path: "/genealogy", component: GenealogyView }
+  { path: "/genealogy", component: GenealogyView },
+  { path: "/traceability-master", component: TraceabilityMasterView }
 ];
 
 const router = createRouter({

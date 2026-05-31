@@ -35,9 +35,13 @@ const trendChartEl = ref(null);
 let cpkChart = null;
 const cpkChartEl = ref(null);
 
+let paretoChart = null;
+const paretoChartEl = ref(null);
+
 let pollTimer = null;
 const trendData = ref({ hours: ["08:00", "10:00", "12:00", "14:00", "16:00"], counts: [0, 0, 0, 0, 0], alerts: [0, 0, 0, 0, 0] });
 const cpkData = ref({ names: ["尚無資料"], values: [0] });
+const paretoData = ref({ names: ["尚無資料"], counts: [0], pcts: [0] });
 
 async function loadData() {
   loading.value = true;
@@ -91,6 +95,16 @@ async function loadData() {
          } else {
            cpkData.value.names = ["暫無資料"];
            cpkData.value.values = [0];
+         }
+         
+         if (dData.pareto && dData.pareto.length > 0) {
+           paretoData.value.names = dData.pareto.map(p => p.name);
+           paretoData.value.counts = dData.pareto.map(p => p.count);
+           paretoData.value.pcts = dData.pareto.map(p => p.cumulativePercentage);
+         } else {
+           paretoData.value.names = ["暫無資料"];
+           paretoData.value.counts = [0];
+           paretoData.value.pcts = [0];
          }
       }
     } catch (e) {
@@ -189,11 +203,66 @@ function renderCharts() {
       }
     ]
   });
+
+  // 3. Pareto Chart
+  if (!paretoChart) paretoChart = echarts.init(paretoChartEl.value);
+  paretoChart.setOption({
+    backgroundColor: "transparent",
+    tooltip: { trigger: "axis", axisPointer: { type: "cross", crossStyle: { color: "#999" } }, backgroundColor: "rgba(255, 255, 255, 0.9)", padding: 12, textStyle: { color: "#1e293b", fontFamily: "Inter" } },
+    grid: { left: 50, right: 50, top: 40, bottom: 40 },
+    xAxis: [
+      {
+        type: "category",
+        data: paretoData.value.names,
+        axisPointer: { type: "shadow" },
+        axisLabel: { color: "#64748b", fontFamily: "Inter", interval: 0, rotate: 15 }
+      }
+    ],
+    yAxis: [
+      {
+        type: "value",
+        name: "異常次數",
+        axisLabel: { color: "#64748b", fontFamily: "Inter" },
+        splitLine: { lineStyle: { color: "rgba(100, 116, 139, 0.1)", type: "dashed" } }
+      },
+      {
+        type: "value",
+        name: "累積佔比",
+        min: 0,
+        max: 100,
+        axisLabel: { formatter: "{value} %", color: "#64748b", fontFamily: "Inter" },
+        splitLine: { show: false }
+      }
+    ],
+    series: [
+      {
+        name: "異常次數",
+        type: "bar",
+        barWidth: 24,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset:0, color:"#f97316"}, {offset:1, color:"#ea580c"}])
+        },
+        data: paretoData.value.counts
+      },
+      {
+        name: "累積佔比 (%)",
+        type: "line",
+        yAxisIndex: 1,
+        smooth: true,
+        symbolSize: 8,
+        itemStyle: { color: "#3b82f6" },
+        lineStyle: { width: 3, shadowColor: "rgba(59, 130, 246, 0.5)", shadowBlur: 8 },
+        data: paretoData.value.pcts
+      }
+    ]
+  });
 }
 
 function handleResize() {
   trendChart?.resize();
   cpkChart?.resize();
+  paretoChart?.resize();
 }
 
 onMounted(() => {
@@ -207,6 +276,7 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
   trendChart?.dispose();
   cpkChart?.dispose();
+  paretoChart?.dispose();
 });
 </script>
 
@@ -306,6 +376,19 @@ onBeforeUnmount(() => {
         </div>
         <div ref="cpkChartEl" class="h-80 w-full"></div>
       </div>
+    </div>
+
+    <!-- Pareto Chart Section -->
+    <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <Layers class="w-5 h-5 text-amber-500" /> 近 30 日異常排行柏拉圖 (Pareto Chart)
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">符合 80/20 法則的真因優先處置建議區段</p>
+        </div>
+      </div>
+      <div ref="paretoChartEl" class="h-80 w-full"></div>
     </div>
 
     <!-- Recent Alerts Card -->

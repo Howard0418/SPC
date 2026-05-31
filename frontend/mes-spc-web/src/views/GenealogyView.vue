@@ -1,10 +1,9 @@
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import * as echarts from "echarts";
-import axios from "axios";
-import { Search, Info, MapPin, AlertTriangle, Layers, X } from "lucide-vue-next";
+import { api } from "../api/client.js";
+import { Search, Info, MapPin, AlertTriangle, Layers, X, FolderTree } from "lucide-vue-next";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://localhost:7165";
 const searchType = ref("lot"); // 'lot' or 'workorder'
 const searchQuery = ref("");
 const isLoading = ref(false);
@@ -69,7 +68,7 @@ async function performSearch(queryStr = null) {
   try {
     let treeData;
     if (searchType.value === "lot") {
-      const { data } = await axios.get(`${API_BASE}/api/genealogy/lot/${query}`);
+      const { data } = await api.get(`/genealogy/lot/${query}`);
       treeData = buildTreeDataFromLotResponse(data);
       // Automatically show panel for the searched lot
       activeNode.value = data.currentLot;
@@ -79,7 +78,7 @@ async function performSearch(queryStr = null) {
       };
       showPanel.value = true;
     } else {
-      const { data } = await axios.get(`${API_BASE}/api/genealogy/workorder/${query}`);
+      const { data } = await api.get(`/genealogy/workorder/${query}`);
       treeData = buildTreeDataFromWorkOrder(data);
     }
     renderChart(treeData);

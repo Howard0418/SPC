@@ -425,7 +425,32 @@ public class SpcV2Controller(AppDbContext db, SpcService spcService) : Controlle
         
         var bottom5Cpk = cpkList.OrderBy(x => ((dynamic)x).Cpk).Take(5).ToList();
         
-        return Ok(new { Trend = trendData, BottomCpk = bottom5Cpk });
+        // Pareto Chart Data (Top Alerts by Process/Characteristic)
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+        var allAlertGroups = await db.AlertEvents
+            .Where(x => x.OccurredAt >= thirtyDaysAgo && x.ProcessId > 0 && x.CharacteristicId > 0)
+            .GroupBy(x => new { x.ProcessId, x.CharacteristicId })
+            .Select(g => new { g.Key.ProcessId, g.Key.CharacteristicId, Count = g.Count() })
+            .ToListAsync();
+            
+        var totalAlerts = allAlertGroups.Sum(x => x.Count);
+        var topAlertGroups = allAlertGroups.OrderByDescending(x => x.Count).Take(10).ToList();
+
+        var paretoData = new List<object>();
+        double cumPct = 0;
+        
+        foreach (var item in topAlertGroups)
+        {
+            var proc = await db.Processes.FindAsync(item.ProcessId);
+            var ch = await db.Characteristics.FindAsync(item.CharacteristicId);
+            var name = $"{proc?.ProcessName ?? $"P-{item.ProcessId}"} - {ch?.CharacteristicName ?? $"C-{item.CharacteristicId}"}";
+            
+            var pct = totalAlerts > 0 ? (double)item.Count / totalAlerts * 100 : 0;
+            cumPct += pct;
+            paretoData.Add(new { Name = name, Count = item.Count, CumulativePercentage = Math.Round(cumPct, 1) });
+        }
+        
+        return Ok(new { Trend = trendData, BottomCpk = bottom5Cpk, Pareto = paretoData });
     }
 
     public record CalculateReq(Guid? UploadBatchId);
