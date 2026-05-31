@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "vz2G0Z1lin4=",
+  "dgSpecHash": "5nKTwJTBGj8=",
   "success": true,
-  "projectFilePath": "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\backend\\MesSpc.Api\\MesSpc.Api.csproj",
+  "projectFilePath": "D:\\SPC\\backend\\MesSpc.Api\\MesSpc.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ihao_ting.PMR.000\\.nuget\\packages\\azure.core\\1.47.1\\azure.core.1.47.1.nupkg.sha512",
     "C:\\Users\\ihao_ting.PMR.000\\.nuget\\packages\\azure.identity\\1.14.2\\azure.identity.1.14.2.nupkg.sha512",

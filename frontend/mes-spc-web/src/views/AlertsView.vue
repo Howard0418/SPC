@@ -30,8 +30,8 @@ const outboxPath = ref("");
 // 模擬警報表單
 const showSimulateModal = ref(false);
 const simulateForm = ref({
-  productId: 101,
-  stationId: 201,
+  partId: 101,
+  processId: 201,
   actualValue: 105.85,
   alertType: "OOS",
   message: "量測數值超出規格上限 USL (100.0)",
@@ -46,7 +46,7 @@ const filteredRows = computed(() => {
   return rows.value.filter(r => {
     const matchesSearch = !searchQuery.value || 
       r.message?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      r.productId?.toString().includes(searchQuery.value) ||
+      r.partId?.toString().includes(searchQuery.value) ||
       r.id?.toString().includes(searchQuery.value);
     
     if (!matchesSearch) return false;
@@ -392,8 +392,8 @@ onMounted(load);
 
               <!-- Part / Station -->
               <td class="py-3.5 px-4">
-                <div class="font-bold text-slate-800 dark:text-white">Part ID: {{ r.productId || 'N/A' }}</div>
-                <div class="text-xs text-slate-400 font-mono">Station: {{ r.stationId || 'N/A' }}</div>
+                <div class="font-bold text-slate-800 dark:text-white">Part ID: {{ r.partId || 'N/A' }}</div>
+                <div class="text-xs text-slate-400 font-mono">Process ID: {{ r.processId || 'N/A' }}</div>
               </td>
 
               <!-- Value -->
@@ -472,12 +472,12 @@ onMounted(load);
         <div class="p-6 space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">產品料號 ID</label>
-              <input v-model="simulateForm.productId" type="number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">產品料號 ID (PartId)</label>
+              <input v-model="simulateForm.partId" type="number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">量測工站 ID</label>
-              <input v-model="simulateForm.stationId" type="number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">量測工站 ID (ProcessId)</label>
+              <input v-model="simulateForm.processId" type="number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
             </div>
           </div>
 

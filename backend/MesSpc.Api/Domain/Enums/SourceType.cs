@@ -4,5 +4,7 @@ public enum SourceType
 {
     Manual = 1,
     Csv = 2,
-    Excel = 3
+    Excel = 3,
+    Mes = 4,
+    Api = 5
 }

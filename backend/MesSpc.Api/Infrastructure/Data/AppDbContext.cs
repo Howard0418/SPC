@@ -42,6 +42,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Operator> Operators => Set<Operator>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<Chemical> Chemicals => Set<Chemical>();
+    public DbSet<MesSyncMessage> MesSyncMessages => Set<MesSyncMessage>();
+    public DbSet<LotMaster> LotMasters => Set<LotMaster>();
+    public DbSet<LotSplitHistory> LotSplitHistories => Set<LotSplitHistory>();
+    public DbSet<Tank> Tanks => Set<Tank>();
+    public DbSet<Slot> Slots => Set<Slot>();
+    public DbSet<SlotParameter> SlotParameters => Set<SlotParameter>();
+    public DbSet<LotSlotHistory> LotSlotHistories => Set<LotSlotHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,6 +117,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Operator>().HasIndex(x => x.OperatorCode).IsUnique();
         modelBuilder.Entity<Customer>().HasIndex(x => x.CustomerCode).IsUnique();
         modelBuilder.Entity<Supplier>().HasIndex(x => x.SupplierCode).IsUnique();
+        modelBuilder.Entity<Chemical>().HasIndex(x => x.ChemicalCode).IsUnique();
+
+        // Traceability Indexes
+        modelBuilder.Entity<LotMaster>().HasIndex(x => x.LotNo).IsUnique();
+        modelBuilder.Entity<LotSplitHistory>().HasIndex(x => x.TargetLotId).IsUnique();
+        modelBuilder.Entity<Tank>().HasIndex(x => x.TankCode).IsUnique();
+        modelBuilder.Entity<Slot>().HasIndex(x => x.SlotCode).IsUnique();
 
         // Foreign Key Constraints
         modelBuilder.Entity<Machine>()
@@ -210,6 +225,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne<ControlChartType>()
             .WithMany()
             .HasForeignKey(x => x.ChartTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<LotSplitHistory>()
+            .HasOne(x => x.TargetLot)
+            .WithMany()
+            .HasForeignKey(x => x.TargetLotId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<LotSplitHistory>()
+            .HasOne(x => x.SourceLot)
+            .WithMany()
+            .HasForeignKey(x => x.SourceLotId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<LotSlotHistory>()
+            .HasOne(x => x.Lot)
+            .WithMany()
+            .HasForeignKey(x => x.LotId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<LotSlotHistory>()
+            .HasOne(x => x.Slot)
+            .WithMany()
+            .HasForeignKey(x => x.SlotId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Global Query Filter for Soft Delete

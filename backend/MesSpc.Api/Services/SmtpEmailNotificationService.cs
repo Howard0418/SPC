@@ -9,7 +9,7 @@ public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEma
 {
     public async Task<bool> SendAlertEmailAsync(AlertEvent alert, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null)
     {
-        var subject = $"【品質異常警報 {alert.AlertType}】料號/站別 {alert.ProductId}-{alert.StationId} 數值異常";
+        var subject = $"【品質異常警報 {alert.AlertType}】料號/站別 {alert.PartId}-{alert.ProcessId} 數值異常";
         var body = GetHtmlBody(alert, recipientName);
         return await SendEmailInternalAsync(recipientEmail, recipientName, subject, body, overrideSettings);
     }
@@ -126,7 +126,7 @@ public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEma
                     </tr>
                     <tr style='background-color: #f8fafc;'>
                         <td style='padding: 12px; border: 1px solid #e2e8f0; color: #64748b; font-weight: bold;'>產品料號 / 站別</td>
-                        <td style='padding: 12px; border: 1px solid #e2e8f0; font-weight: bold;'>Part ID: {alert.ProductId} / Station ID: {alert.StationId}</td>
+                        <td style='padding: 12px; border: 1px solid #e2e8f0; font-weight: bold;'>Part ID: {alert.PartId} / Process ID: {alert.ProcessId}</td>
                     </tr>
                     <tr>
                         <td style='padding: 12px; border: 1px solid #e2e8f0; color: #64748b; font-weight: bold;'>實際量測值</td>

@@ -125,7 +125,11 @@ public static class SeedData
                 new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule1_Over3Sigma", RuleName = "單點超出 3 Sigma 界限", Priority = 10 },
                 new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule2_9SameSide", RuleName = "連續 9 點同側", Priority = 20 },
                 new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule3_6Trend", RuleName = "連續 6 點穩定上升或下降", Priority = 30 },
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule4_14Alternating", RuleName = "連續 14 點上下交替", Priority = 40 }
+                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule4_14Alternating", RuleName = "連續 14 點上下交替", Priority = 40 },
+                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule5_2Of3Over2Sigma", RuleName = "連續 3 點中有 2 點超出 2 Sigma (同側)", Priority = 50 },
+                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule6_4Of5Over1Sigma", RuleName = "連續 5 點中有 4 點超出 1 Sigma (同側)", Priority = 60 },
+                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule7_15Within1Sigma", RuleName = "連續 15 點在 1 Sigma 內", Priority = 70 },
+                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule8_8Outside1Sigma", RuleName = "連續 8 點在 1 Sigma 外", Priority = 80 }
             );
             db.SaveChanges();
         }
@@ -239,6 +243,56 @@ public static class SeedData
             db.AttributeMeasurements.AddRange(attrList);
             db.SaveChanges();
         }
+
+        SeedTraceabilityData(db);
+    }
+
+    private static void SeedTraceabilityData(AppDbContext db)
+    {
+        if (db.LotMasters.Any(x => x.LotNo == "L-2026-001")) return;
+
+        var wo = new WorkOrder { WorkOrderNo = "WO-2026-001", ProductId = db.Products.First().Id, PlannedQty = 1000, Status = "Active", PlannedStartTime = DateTime.UtcNow };
+        db.WorkOrders.Add(wo);
+        db.SaveChanges();
+
+        var rootLot1 = new LotMaster { LotNo = "L-2026-001", SubLotNo = "00", WorkOrderId = wo.Id, CurrentQty = 300, Status = "Active" };
+        var rootLot2 = new LotMaster { LotNo = "L-2026-002", SubLotNo = "00", WorkOrderId = wo.Id, CurrentQty = 500, Status = "Active" };
+        db.LotMasters.AddRange(rootLot1, rootLot2);
+        db.SaveChanges();
+
+        var childLot1A = new LotMaster { LotNo = "L-2026-001-A", SubLotNo = "01", WorkOrderId = wo.Id, ParentLotId = rootLot1.Id, CurrentQty = 200, Status = "Active" };
+        db.LotMasters.Add(childLot1A);
+        db.SaveChanges();
+
+        db.LotSplitHistories.Add(new LotSplitHistory { SourceLotId = rootLot1.Id, TargetLotId = childLot1A.Id, SplitQty = 200, SplitTime = DateTime.UtcNow.AddDays(-3), SplitOperator = "OP-01", SplitReason = "Quality Rework" });
+        db.SaveChanges();
+
+        var line = new ProductionLine { LineCode = "LINE-A", LineName = "FPC 鍍銅產線 A" };
+        db.ProductionLines.Add(line);
+        db.SaveChanges();
+
+        var tank1 = new Tank { TankCode = "T-01", TankName = "預浸槽", LineId = line.Id };
+        var tank2 = new Tank { TankCode = "T-02", TankName = "鍍銅主槽", LineId = line.Id };
+        db.Tanks.AddRange(tank1, tank2);
+        db.SaveChanges();
+
+        var slot1 = new Slot { SlotCode = "S-01-A", TankId = tank1.Id, SequenceNo = 1 };
+        var slot2 = new Slot { SlotCode = "S-02-A", TankId = tank2.Id, SequenceNo = 2 };
+        db.Slots.AddRange(slot1, slot2);
+        db.SaveChanges();
+
+        var entry1 = DateTime.UtcNow.AddDays(-4);
+        db.LotSlotHistories.AddRange(
+            new LotSlotHistory { LotId = rootLot1.Id, SlotId = slot1.Id, EntryTime = entry1, ExitTime = entry1.AddMinutes(30), Operator = "Auto" },
+            new LotSlotHistory { LotId = rootLot1.Id, SlotId = slot2.Id, EntryTime = entry1.AddMinutes(35), ExitTime = entry1.AddMinutes(120), Operator = "Auto" },
+            new LotSlotHistory { LotId = childLot1A.Id, SlotId = slot2.Id, EntryTime = entry1.AddDays(1), ExitTime = entry1.AddDays(1).AddMinutes(60), Operator = "OP-02" }
+        );
+        db.SaveChanges();
+
+        // Update existing measurements with Traceability metadata
+        var vars = db.VariableMeasurements.Where(v => v.LotNo == "L-2026-001").ToList();
+        foreach (var v in vars) { v.LineId = line.Id; v.TankId = tank2.Id; v.SlotId = slot2.Id; }
+        db.SaveChanges();
     }
 
     private static FormulaDefinition New(string code, string name, string expr) =>

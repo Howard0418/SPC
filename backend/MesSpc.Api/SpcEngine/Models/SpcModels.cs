@@ -10,6 +10,10 @@ public record SpcDataPoint
     public string? LotNo { get; init; }
     public string? SerialNo { get; init; }
     public string? Operator { get; init; }
+    public int? LineId { get; init; }
+    public int? TankId { get; init; }
+    public int? SlotId { get; init; }
+    public string? SideCode { get; init; }
 }
 
 public record Subgroup
@@ -23,6 +27,10 @@ public record Subgroup
     public string? LotNo { get; init; }
     public string? SerialNo { get; init; }
     public string? Operator { get; init; }
+    public int? LineId { get; init; }
+    public int? TankId { get; init; }
+    public int? SlotId { get; init; }
+    public string? SideCode { get; init; }
 }
 
 public record AttributeDataPoint
@@ -37,4 +45,8 @@ public record AttributeDataPoint
     public List<string> ViolatedRules { get; init; } = new();
     public string? LotNo { get; init; }
     public string? Operator { get; init; }
+    public int? LineId { get; init; }
+    public int? TankId { get; init; }
+    public int? SlotId { get; init; }
+    public string? SideCode { get; init; }
 }

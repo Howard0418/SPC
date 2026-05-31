@@ -47,9 +47,9 @@ public class AlertsController(AppDbContext db, IEmailNotificationService emailSe
         var alert = new AlertEvent
         {
             OccurredAt = DateTime.UtcNow,
-            ProductId = req.ProductId > 0 ? req.ProductId : 101,
-            StationId = req.StationId > 0 ? req.StationId : 201,
-            InspectionItemId = 301,
+            PartId = req.PartId > 0 ? req.PartId : 101,
+            ProcessId = req.ProcessId > 0 ? req.ProcessId : 201,
+            CharacteristicId = 301,
             ActualValue = req.ActualValue > 0 ? req.ActualValue : 105.85,
             AlertType = req.AlertType == "OOS" ? AlertType.OutOfSpec : AlertType.OutOfControl,
             Message = req.Message ?? (req.AlertType == "OOS" ? "【模擬測試】量測數值超出規格上限 USL (100.0)" : "【模擬測試】量測數值違反 3-Sigma 管制上限 (102.5)")
@@ -65,7 +65,7 @@ public class AlertsController(AppDbContext db, IEmailNotificationService emailSe
     }
 }
 
-public record SimulateAlertReq(int ProductId, int StationId, double ActualValue, string AlertType, string? Message, string? TargetEmail);
+public record SimulateAlertReq(int PartId, int ProcessId, double ActualValue, string AlertType, string? Message, string? TargetEmail);
 
 [ApiController]
 [Route("api/v1/dashboard")]

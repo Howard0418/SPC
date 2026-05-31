@@ -174,3 +174,20 @@ public class OperatorsController(AppDbContext db) : ControllerBase
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.Operators.FindAsync(id); if (x is null) return NotFound(); db.Operators.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
 }
 
+[ApiController]
+[Route("api/spc-rule-groups")]
+[Route("api/v1/spc-rule-groups")]
+public class SpcRuleGroupsController(AppDbContext db) : ControllerBase
+{
+    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.SpcRuleGroups.OrderBy(x => x.Id).ToListAsync());
+    [HttpPost] public async Task<IActionResult> Create(SpcRuleGroup req) { db.SpcRuleGroups.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, SpcRuleGroup req)
+    {
+        var x = await db.SpcRuleGroups.FindAsync(id); if (x is null) return NotFound();
+        x.RuleGroupCode = req.RuleGroupCode; x.RuleGroupName = req.RuleGroupName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
+        await db.SaveChangesAsync(); return Ok(x);
+    }
+    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.SpcRuleGroups.FindAsync(id); if (x is null) return NotFound(); db.SpcRuleGroups.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+}
+

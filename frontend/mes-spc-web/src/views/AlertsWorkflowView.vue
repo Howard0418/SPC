@@ -255,7 +255,7 @@ onMounted(load);
                   {{ r.message }}
                 </div>
                 <div class="mt-1 text-[11px] text-slate-500 font-mono">
-                  Part: {{ r.productId || '-' }} | Station: {{ r.stationId || '-' }} | Value: {{ r.actualValue != null ? Number(r.actualValue).toFixed(3) : '-' }}
+                  Part: {{ r.partId || '-' }} | Process: {{ r.processId || '-' }} | Value: {{ r.actualValue != null ? Number(r.actualValue).toFixed(3) : '-' }}
                 </div>
               </td>
 

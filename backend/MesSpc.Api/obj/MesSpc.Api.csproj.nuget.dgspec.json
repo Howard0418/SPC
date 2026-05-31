@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\backend\\MesSpc.Api\\MesSpc.Api.csproj": {}
+    "D:\\SPC\\backend\\MesSpc.Api\\MesSpc.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\backend\\MesSpc.Api\\MesSpc.Api.csproj": {
+    "D:\\SPC\\backend\\MesSpc.Api\\MesSpc.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\backend\\MesSpc.Api\\MesSpc.Api.csproj",
+        "projectUniqueName": "D:\\SPC\\backend\\MesSpc.Api\\MesSpc.Api.csproj",
         "projectName": "MesSpc.Api",
-        "projectPath": "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\backend\\MesSpc.Api\\MesSpc.Api.csproj",
+        "projectPath": "D:\\SPC\\backend\\MesSpc.Api\\MesSpc.Api.csproj",
         "packagesPath": "C:\\Users\\ihao_ting.PMR.000\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\backend\\MesSpc.Api\\obj\\",
+        "outputPath": "D:\\SPC\\backend\\MesSpc.Api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

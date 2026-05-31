@@ -95,6 +95,25 @@ public class Supplier : BaseEntity<int>
     public bool IsActive { get; set; } = true;
 }
 
+public class Chemical : BaseEntity<int>
+{
+    public string ChemicalCode { get; set; } = string.Empty;
+    public string ChemicalName { get; set; } = string.Empty;
+    public string? ChemicalType { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class MesSyncMessage : BaseEntity
+{
+    [Key]
+    public Guid MessageId { get; set; } = Guid.NewGuid();
+    public string MessageType { get; set; } = string.Empty;
+    public string PayloadJson { get; set; } = string.Empty;
+    public string SyncStatus { get; set; } = "Pending";
+    public DateTime? ProcessedAt { get; set; }
+    public string? ErrorMessage { get; set; }
+}
+
 // --- Existing SPC Master Data (Refactored) ---
 
 public class Product : BaseEntity<int>
@@ -171,14 +190,15 @@ public class FormulaDefinition : BaseEntity<int>
 public class AlertEvent : BaseEntity<int>
 {
     public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
-    public int ProductId { get; set; }
-    public int StationId { get; set; }
-    public int InspectionItemId { get; set; }
+    public int PartId { get; set; }
+    public int ProcessId { get; set; }
+    public int CharacteristicId { get; set; }
     public double? ActualValue { get; set; }
     public AlertType AlertType { get; set; }
     public string Message { get; set; } = string.Empty;
-    public int? BatchId { get; set; }
-    public int? MeasurementValueId { get; set; }
+    public Guid? UploadBatchId { get; set; }
+    public long? VariableMeasurementId { get; set; }
+    public long? AttributeMeasurementId { get; set; }
     public bool IsAcknowledged { get; set; } = false;
     public string Status { get; set; } = "Open";
     public string? RootCause { get; set; }
@@ -344,12 +364,32 @@ public class VariableMeasurement : BaseEntity<long>
     public int MachineId { get; set; }
     public int CharacteristicId { get; set; }
     public int PartProcessCharacteristicId { get; set; }
+    public string? WorkOrderNo { get; set; }
     public string? LotNo { get; set; }
+    public string? SubLotNo { get; set; }
+    public string? ParentLotNo { get; set; }
     public string? SerialNo { get; set; }
+    public int? LineId { get; set; }
+    public int? TankId { get; set; }
+    public int? SlotId { get; set; }
     public int SampleNo { get; set; }
     public double MeasuredValue { get; set; }
     public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
     public string? Operator { get; set; }
+    
+    public SourceType SourceType { get; set; } = SourceType.Manual;
+    public string? SourceReference { get; set; }
+    public SideCode SideCode { get; set; } = SideCode.None;
+    public int? ChemicalId { get; set; }
+    
+    [ForeignKey("ChemicalId")]
+    public virtual Chemical? Chemical { get; set; }
+    [ForeignKey("LineId")]
+    public virtual ProductionLine? Line { get; set; }
+    [ForeignKey("TankId")]
+    public virtual Tank? Tank { get; set; }
+    [ForeignKey("SlotId")]
+    public virtual Slot? Slot { get; set; }
 }
 
 public class AttributeMeasurement : BaseEntity<long>
@@ -360,7 +400,13 @@ public class AttributeMeasurement : BaseEntity<long>
     public int MachineId { get; set; }
     public int CharacteristicId { get; set; }
     public int PartProcessCharacteristicId { get; set; }
+    public string? WorkOrderNo { get; set; }
     public string? LotNo { get; set; }
+    public string? SubLotNo { get; set; }
+    public string? ParentLotNo { get; set; }
+    public int? LineId { get; set; }
+    public int? TankId { get; set; }
+    public int? SlotId { get; set; }
     public int SampleNo { get; set; }
     public int? InspectedQty { get; set; }
     public int? DefectQty { get; set; }
@@ -368,6 +414,20 @@ public class AttributeMeasurement : BaseEntity<long>
     public int? UnitCount { get; set; }
     public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
     public string? Operator { get; set; }
+    
+    public SourceType SourceType { get; set; } = SourceType.Manual;
+    public string? SourceReference { get; set; }
+    public SideCode SideCode { get; set; } = SideCode.None;
+    public int? ChemicalId { get; set; }
+    
+    [ForeignKey("ChemicalId")]
+    public virtual Chemical? Chemical { get; set; }
+    [ForeignKey("LineId")]
+    public virtual ProductionLine? Line { get; set; }
+    [ForeignKey("TankId")]
+    public virtual Tank? Tank { get; set; }
+    [ForeignKey("SlotId")]
+    public virtual Slot? Slot { get; set; }
 }
 
 public class SpcRuleGroup : BaseEntity<int>
@@ -408,4 +468,88 @@ public class SpcCalculationResult : BaseEntity<long>
     public bool IsOutOfControl { get; set; }
     public string? ViolatedRulesJson { get; set; }
     public DateTime CalculatedAt { get; set; } = DateTime.UtcNow;
+}
+
+// --- Traceability ---
+
+public class LotMaster : BaseEntity<long>
+{
+    public string LotNo { get; set; } = string.Empty;
+    public string? SubLotNo { get; set; }
+    public long? ParentLotId { get; set; }
+    public int? WorkOrderId { get; set; }
+    public int? PartId { get; set; }
+    public int CurrentQty { get; set; }
+    public string Status { get; set; } = "Active";
+
+    [ForeignKey("ParentLotId")]
+    public virtual LotMaster? ParentLot { get; set; }
+}
+
+public class LotSplitHistory : BaseEntity<long>
+{
+    public long SourceLotId { get; set; }
+    public long TargetLotId { get; set; }
+    public DateTime SplitTime { get; set; } = DateTime.UtcNow;
+    public int SplitQty { get; set; }
+    public string? SplitReason { get; set; }
+    public string? SplitOperator { get; set; }
+
+    [ForeignKey("SourceLotId")]
+    public virtual LotMaster? SourceLot { get; set; }
+
+    [ForeignKey("TargetLotId")]
+    public virtual LotMaster? TargetLot { get; set; }
+}
+
+public class Tank : BaseEntity<int>
+{
+    public int LineId { get; set; }
+    public string TankCode { get; set; } = string.Empty;
+    public string TankName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+
+    [ForeignKey("LineId")]
+    public virtual ProductionLine? Line { get; set; }
+}
+
+public class Slot : BaseEntity<int>
+{
+    public int TankId { get; set; }
+    public string SlotCode { get; set; } = string.Empty;
+    public string SlotName { get; set; } = string.Empty;
+    public int SequenceNo { get; set; }
+    public bool IsActive { get; set; } = true;
+
+    [ForeignKey("TankId")]
+    public virtual Tank? Tank { get; set; }
+}
+
+public class SlotParameter : BaseEntity<int>
+{
+    public int SlotId { get; set; }
+    public string ParameterCode { get; set; } = string.Empty;
+    public string ParameterName { get; set; } = string.Empty;
+    public double? TargetValue { get; set; }
+    public double? Usl { get; set; }
+    public double? Lsl { get; set; }
+
+    [ForeignKey("SlotId")]
+    public virtual Slot? Slot { get; set; }
+}
+
+public class LotSlotHistory : BaseEntity<long>
+{
+    public long LotId { get; set; }
+    public int SlotId { get; set; }
+    public DateTime EntryTime { get; set; }
+    public DateTime? ExitTime { get; set; }
+    public string? Operator { get; set; }
+
+    [ForeignKey("LotId")]
+    public virtual LotMaster? Lot { get; set; }
+
+    [ForeignKey("SlotId")]
+    public virtual Slot? Slot { get; set; }
 }

@@ -36,7 +36,10 @@ namespace MesSpc.Api.Migrations
                     b.Property<int>("AlertType")
                         .HasColumnType("int");
 
-                    b.Property<int?>("BatchId")
+                    b.Property<long?>("AttributeMeasurementId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("CharacteristicId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("ClosedAt")
@@ -51,17 +54,11 @@ namespace MesSpc.Api.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("InspectionItemId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsAcknowledged")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<int?>("MeasurementValueId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -70,7 +67,10 @@ namespace MesSpc.Api.Migrations
                     b.Property<DateTime>("OccurredAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int>("PartId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProcessId")
                         .HasColumnType("int");
 
                     b.Property<string>("ResponsibleUser")
@@ -84,9 +84,6 @@ namespace MesSpc.Api.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<int>("StationId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -97,9 +94,15 @@ namespace MesSpc.Api.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("UploadBatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("VariableMeasurementId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
-                    b.ToTable("AlertEvents", (string)null);
+                    b.ToTable("AlertEvents");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.AttributeMeasurement", b =>
@@ -111,6 +114,9 @@ namespace MesSpc.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<int>("CharacteristicId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ChemicalId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -131,6 +137,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("LineId")
+                        .HasColumnType("int");
+
                     b.Property<string>("LotNo")
                         .HasColumnType("nvarchar(max)");
 
@@ -141,6 +150,9 @@ namespace MesSpc.Api.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Operator")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ParentLotNo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PartId")
@@ -160,6 +172,24 @@ namespace MesSpc.Api.Migrations
                     b.Property<int>("SampleNo")
                         .HasColumnType("int");
 
+                    b.Property<int>("SideCode")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SlotId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SourceType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubLotNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TankId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UnitCount")
                         .HasColumnType("int");
 
@@ -172,15 +202,76 @@ namespace MesSpc.Api.Migrations
                     b.Property<Guid>("UploadBatchId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("WorkOrderNo")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("ChemicalId");
+
+                    b.HasIndex("LineId");
+
                     b.HasIndex("PartProcessCharacteristicId");
+
+                    b.HasIndex("SlotId");
+
+                    b.HasIndex("TankId");
 
                     b.HasIndex("UploadBatchId");
 
                     b.HasIndex("PartId", "ProcessId", "CharacteristicId", "MeasuredAt");
 
-                    b.ToTable("AttributeMeasurements", (string)null);
+                    b.ToTable("AttributeMeasurements");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.Chemical", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChemicalCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ChemicalName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ChemicalType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChemicalCode")
+                        .IsUnique();
+
+                    b.ToTable("Chemicals");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ControlChartCategory", b =>
@@ -233,7 +324,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("ChartGroupId", "CategoryCode")
                         .IsUnique();
 
-                    b.ToTable("ControlChartCategories", (string)null);
+                    b.ToTable("ControlChartCategories");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ControlChartGroup", b =>
@@ -283,7 +374,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("GroupCode")
                         .IsUnique();
 
-                    b.ToTable("ControlChartGroups", (string)null);
+                    b.ToTable("ControlChartGroups");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ControlChartType", b =>
@@ -348,7 +439,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("ChartTypeCode")
                         .IsUnique();
 
-                    b.ToTable("ControlChartTypes", (string)null);
+                    b.ToTable("ControlChartTypes");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Customer", b =>
@@ -401,7 +492,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("CustomerCode")
                         .IsUnique();
 
-                    b.ToTable("Customers", (string)null);
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Factory", b =>
@@ -454,7 +545,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("FactoryCode")
                         .IsUnique();
 
-                    b.ToTable("Factories", (string)null);
+                    b.ToTable("Factories");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.FormulaDefinition", b =>
@@ -508,7 +599,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("FormulaCode")
                         .IsUnique();
 
-                    b.ToTable("FormulaDefinitions", (string)null);
+                    b.ToTable("FormulaDefinitions");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.InspectionItem", b =>
@@ -576,7 +667,176 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("ItemCode")
                         .IsUnique();
 
-                    b.ToTable("InspectionItems", (string)null);
+                    b.ToTable("InspectionItems");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotMaster", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CurrentQty")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LotNo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<long?>("ParentLotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("PartId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SubLotNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("WorkOrderId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LotNo")
+                        .IsUnique();
+
+                    b.HasIndex("ParentLotId");
+
+                    b.ToTable("LotMasters");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotSlotHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EntryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExitTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("LotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Operator")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SlotId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LotId");
+
+                    b.HasIndex("SlotId");
+
+                    b.ToTable("LotSlotHistories");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotSplitHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<long>("SourceLotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SplitOperator")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SplitQty")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SplitReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SplitTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("TargetLotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceLotId");
+
+                    b.HasIndex("TargetLotId")
+                        .IsUnique();
+
+                    b.ToTable("LotSplitHistories");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Machine", b =>
@@ -634,7 +894,7 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("ProcessId");
 
-                    b.ToTable("Machines", (string)null);
+                    b.ToTable("Machines");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.MeasurementBatch", b =>
@@ -704,7 +964,7 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("WorkOrderId");
 
-                    b.ToTable("MeasurementBatches", (string)null);
+                    b.ToTable("MeasurementBatches");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.MeasurementValue", b =>
@@ -757,7 +1017,56 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("BatchId");
 
-                    b.ToTable("MeasurementValues", (string)null);
+                    b.ToTable("MeasurementValues");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.MesSyncMessage", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SyncStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MessageId");
+
+                    b.ToTable("MesSyncMessages");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Operator", b =>
@@ -810,7 +1119,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("OperatorCode")
                         .IsUnique();
 
-                    b.ToTable("Operators", (string)null);
+                    b.ToTable("Operators");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Part", b =>
@@ -863,7 +1172,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("PartNo")
                         .IsUnique();
 
-                    b.ToTable("Parts", (string)null);
+                    b.ToTable("Parts");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.PartProcessCharacteristic", b =>
@@ -949,7 +1258,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("PartId", "ProcessId", "CharacteristicId")
                         .IsUnique();
 
-                    b.ToTable("PartProcessCharacteristics", (string)null);
+                    b.ToTable("PartProcessCharacteristics");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Plant", b =>
@@ -999,7 +1308,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("PlantCode")
                         .IsUnique();
 
-                    b.ToTable("Plants", (string)null);
+                    b.ToTable("Plants");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Process", b =>
@@ -1049,7 +1358,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("ProcessCode")
                         .IsUnique();
 
-                    b.ToTable("Processes", (string)null);
+                    b.ToTable("Processes");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Product", b =>
@@ -1096,7 +1405,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("ProductCode")
                         .IsUnique();
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ProductStationItem", b =>
@@ -1147,7 +1456,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("ProductId", "StationId", "InspectionItemId")
                         .IsUnique();
 
-                    b.ToTable("ProductStationItems", (string)null);
+                    b.ToTable("ProductStationItems");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ProductionLine", b =>
@@ -1200,7 +1509,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("LineCode")
                         .IsUnique();
 
-                    b.ToTable("ProductionLines", (string)null);
+                    b.ToTable("ProductionLines");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.QualityCharacteristic", b =>
@@ -1262,7 +1571,7 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("DefaultChartTypeId");
 
-                    b.ToTable("QualityCharacteristics", (string)null);
+                    b.ToTable("QualityCharacteristics");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Shift", b =>
@@ -1315,7 +1624,117 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("ShiftCode")
                         .IsUnique();
 
-                    b.ToTable("Shifts", (string)null);
+                    b.ToTable("Shifts");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.Slot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SequenceNo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SlotCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SlotName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TankId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SlotCode")
+                        .IsUnique();
+
+                    b.HasIndex("TankId");
+
+                    b.ToTable("Slots");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.SlotParameter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<double?>("Lsl")
+                        .HasColumnType("float");
+
+                    b.Property<string>("ParameterCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ParameterName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SlotId")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("TargetValue")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Usl")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SlotId");
+
+                    b.ToTable("SlotParameters");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpcCalculationResult", b =>
@@ -1409,7 +1828,7 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("PartProcessCharacteristicId", "CalculatedAt");
 
-                    b.ToTable("SpcCalculationResults", (string)null);
+                    b.ToTable("SpcCalculationResults");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpcRule", b =>
@@ -1465,7 +1884,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("RuleGroupId", "RuleCode")
                         .IsUnique();
 
-                    b.ToTable("SpcRules", (string)null);
+                    b.ToTable("SpcRules");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpcRuleGroup", b =>
@@ -1515,7 +1934,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("RuleGroupCode")
                         .IsUnique();
 
-                    b.ToTable("SpcRuleGroups", (string)null);
+                    b.ToTable("SpcRuleGroups");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Station", b =>
@@ -1562,7 +1981,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("StationCode")
                         .IsUnique();
 
-                    b.ToTable("Stations", (string)null);
+                    b.ToTable("Stations");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.StationOperationSession", b =>
@@ -1627,7 +2046,7 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("WorkOrderId");
 
-                    b.ToTable("StationOperationSessions", (string)null);
+                    b.ToTable("StationOperationSessions");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Supplier", b =>
@@ -1680,7 +2099,62 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("SupplierCode")
                         .IsUnique();
 
-                    b.ToTable("Suppliers", (string)null);
+                    b.ToTable("Suppliers");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.Tank", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LineId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("TankCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TankName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LineId");
+
+                    b.HasIndex("TankCode")
+                        .IsUnique();
+
+                    b.ToTable("Tanks");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Unit", b =>
@@ -1730,7 +2204,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("UnitCode")
                         .IsUnique();
 
-                    b.ToTable("Units", (string)null);
+                    b.ToTable("Units");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.UploadBatch", b =>
@@ -1788,7 +2262,7 @@ namespace MesSpc.Api.Migrations
 
                     b.HasKey("UploadBatchId");
 
-                    b.ToTable("UploadBatches", (string)null);
+                    b.ToTable("UploadBatches");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.UploadDetail", b =>
@@ -1837,7 +2311,7 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("UploadBatchId", "RowNo")
                         .IsUnique();
 
-                    b.ToTable("UploadDetails", (string)null);
+                    b.ToTable("UploadDetails");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.UploadError", b =>
@@ -1894,7 +2368,7 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("UploadDetailId");
 
-                    b.ToTable("UploadErrors", (string)null);
+                    b.ToTable("UploadErrors");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.VariableMeasurement", b =>
@@ -1908,6 +2382,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<int>("CharacteristicId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ChemicalId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1916,6 +2393,9 @@ namespace MesSpc.Api.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("LineId")
+                        .HasColumnType("int");
 
                     b.Property<string>("LotNo")
                         .HasColumnType("nvarchar(max)");
@@ -1930,6 +2410,9 @@ namespace MesSpc.Api.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Operator")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ParentLotNo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PartId")
@@ -1952,6 +2435,24 @@ namespace MesSpc.Api.Migrations
                     b.Property<string>("SerialNo")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("SideCode")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SlotId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SourceType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubLotNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TankId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -1961,15 +2462,26 @@ namespace MesSpc.Api.Migrations
                     b.Property<Guid>("UploadBatchId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("WorkOrderNo")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("ChemicalId");
+
+                    b.HasIndex("LineId");
+
                     b.HasIndex("PartProcessCharacteristicId");
+
+                    b.HasIndex("SlotId");
+
+                    b.HasIndex("TankId");
 
                     b.HasIndex("UploadBatchId");
 
                     b.HasIndex("PartId", "ProcessId", "CharacteristicId", "MeasuredAt");
 
-                    b.ToTable("VariableMeasurements", (string)null);
+                    b.ToTable("VariableMeasurements");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.WorkOrder", b =>
@@ -2034,22 +2546,46 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("WorkOrderNo")
                         .IsUnique();
 
-                    b.ToTable("WorkOrders", (string)null);
+                    b.ToTable("WorkOrders");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.AttributeMeasurement", b =>
                 {
+                    b.HasOne("MesSpc.Api.Domain.Entities.Chemical", "Chemical")
+                        .WithMany()
+                        .HasForeignKey("ChemicalId");
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.ProductionLine", "Line")
+                        .WithMany()
+                        .HasForeignKey("LineId");
+
                     b.HasOne("MesSpc.Api.Domain.Entities.PartProcessCharacteristic", null)
                         .WithMany()
                         .HasForeignKey("PartProcessCharacteristicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("MesSpc.Api.Domain.Entities.Slot", "Slot")
+                        .WithMany()
+                        .HasForeignKey("SlotId");
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.Tank", "Tank")
+                        .WithMany()
+                        .HasForeignKey("TankId");
+
                     b.HasOne("MesSpc.Api.Domain.Entities.UploadBatch", null)
                         .WithMany()
                         .HasForeignKey("UploadBatchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Chemical");
+
+                    b.Navigation("Line");
+
+                    b.Navigation("Slot");
+
+                    b.Navigation("Tank");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ControlChartCategory", b =>
@@ -2068,6 +2604,53 @@ namespace MesSpc.Api.Migrations
                         .HasForeignKey("ChartCategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotMaster", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.LotMaster", "ParentLot")
+                        .WithMany()
+                        .HasForeignKey("ParentLotId");
+
+                    b.Navigation("ParentLot");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotSlotHistory", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.LotMaster", "Lot")
+                        .WithMany()
+                        .HasForeignKey("LotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.Slot", "Slot")
+                        .WithMany()
+                        .HasForeignKey("SlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lot");
+
+                    b.Navigation("Slot");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotSplitHistory", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.LotMaster", "SourceLot")
+                        .WithMany()
+                        .HasForeignKey("SourceLotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.LotMaster", "TargetLot")
+                        .WithMany()
+                        .HasForeignKey("TargetLotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SourceLot");
+
+                    b.Navigation("TargetLot");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Machine", b =>
@@ -2090,7 +2673,7 @@ namespace MesSpc.Api.Migrations
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.PartProcessCharacteristic", b =>
                 {
-                    b.HasOne("MesSpc.Api.Domain.Entities.QualityCharacteristic", null)
+                    b.HasOne("MesSpc.Api.Domain.Entities.QualityCharacteristic", "Characteristic")
                         .WithMany()
                         .HasForeignKey("CharacteristicId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2101,13 +2684,13 @@ namespace MesSpc.Api.Migrations
                         .HasForeignKey("ChartTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("MesSpc.Api.Domain.Entities.Part", null)
+                    b.HasOne("MesSpc.Api.Domain.Entities.Part", "Part")
                         .WithMany()
                         .HasForeignKey("PartId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MesSpc.Api.Domain.Entities.Process", null)
+                    b.HasOne("MesSpc.Api.Domain.Entities.Process", "Process")
                         .WithMany()
                         .HasForeignKey("ProcessId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2117,6 +2700,12 @@ namespace MesSpc.Api.Migrations
                         .WithMany()
                         .HasForeignKey("RuleGroupId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Characteristic");
+
+                    b.Navigation("Part");
+
+                    b.Navigation("Process");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.QualityCharacteristic", b =>
@@ -2125,6 +2714,28 @@ namespace MesSpc.Api.Migrations
                         .WithMany()
                         .HasForeignKey("DefaultChartTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.Slot", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.Tank", "Tank")
+                        .WithMany()
+                        .HasForeignKey("TankId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tank");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.SlotParameter", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.Slot", "Slot")
+                        .WithMany()
+                        .HasForeignKey("SlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Slot");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpcCalculationResult", b =>
@@ -2157,6 +2768,17 @@ namespace MesSpc.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.Tank", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.ProductionLine", "Line")
+                        .WithMany()
+                        .HasForeignKey("LineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Line");
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.UploadDetail", b =>
                 {
                     b.HasOne("MesSpc.Api.Domain.Entities.UploadBatch", null)
@@ -2182,17 +2804,41 @@ namespace MesSpc.Api.Migrations
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.VariableMeasurement", b =>
                 {
+                    b.HasOne("MesSpc.Api.Domain.Entities.Chemical", "Chemical")
+                        .WithMany()
+                        .HasForeignKey("ChemicalId");
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.ProductionLine", "Line")
+                        .WithMany()
+                        .HasForeignKey("LineId");
+
                     b.HasOne("MesSpc.Api.Domain.Entities.PartProcessCharacteristic", null)
                         .WithMany()
                         .HasForeignKey("PartProcessCharacteristicId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("MesSpc.Api.Domain.Entities.Slot", "Slot")
+                        .WithMany()
+                        .HasForeignKey("SlotId");
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.Tank", "Tank")
+                        .WithMany()
+                        .HasForeignKey("TankId");
+
                     b.HasOne("MesSpc.Api.Domain.Entities.UploadBatch", null)
                         .WithMany()
                         .HasForeignKey("UploadBatchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Chemical");
+
+                    b.Navigation("Line");
+
+                    b.Navigation("Slot");
+
+                    b.Navigation("Tank");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.MeasurementBatch", b =>

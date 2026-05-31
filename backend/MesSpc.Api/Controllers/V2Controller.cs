@@ -187,8 +187,7 @@ public class TraceabilityV2Controller(AppDbContext db) : ControllerBase
 
         var batches = await q.OrderByDescending(x => x.MeasuredAt).Take(200).ToListAsync();
         var batchIds = batches.Select(x => x.Id).ToList();
-        var alerts = await db.AlertEvents.Where(x => x.BatchId.HasValue && batchIds.Contains(x.BatchId.Value))
-            .OrderByDescending(x => x.OccurredAt).ToListAsync();
+        var alerts = new List<AlertEvent>(); // Legacy link to AlertEvent removed
         return Ok(new { batches, alerts });
     }
 }

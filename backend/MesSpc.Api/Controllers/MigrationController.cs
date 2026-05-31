@@ -266,9 +266,9 @@ public class MigrationController(AppDbContext dbContext) : ControllerBase
                     var alert = new AlertEvent
                     {
                         OccurredAt = measuredTime,
-                        ProductId = ppc.PartId,
-                        StationId = ppc.ProcessId,
-                        InspectionItemId = ppc.CharacteristicId,
+                        PartId = ppc.PartId,
+                        ProcessId = ppc.ProcessId,
+                        CharacteristicId = ppc.CharacteristicId,
                         ActualValue = val,
                         AlertType = Domain.Enums.AlertType.OutOfSpec,
                         Message = $"[舊版 OOCalarm 轉移] 測量值 {val} 超出規格管制界限 ({ppc.LSL}~{ppc.USL})",

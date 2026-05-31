@@ -10,22 +10,11 @@ namespace MesSpc.Api.Controllers;
 public class SpcController(SpcService spcService) : ControllerBase
 {
     [HttpGet("chart")]
-    public async Task<IActionResult> GetChart([FromQuery] int inspectionItemId, [FromQuery] int productId, [FromQuery] int stationId, [FromQuery] string chartType = "IMR")
+    public async Task<IActionResult> GetChart([FromQuery] int ppcId, [FromQuery] Guid? uploadBatchId)
     {
-        var ct = chartType.ToUpperInvariant();
-        if (ct is "IMR" or "I-MR")
-        {
-            var imr = await spcService.GetImrChartAsync(inspectionItemId, productId, stationId);
-            return imr is null ? NotFound() : Ok(imr);
-        }
-
-        if (ct is "XBAR_R" or "XBAR-R")
-        {
-            var xr = await spcService.GetXbarRChartAsync(inspectionItemId, productId, stationId);
-            return xr is null ? NotFound() : Ok(xr);
-        }
-
-        return BadRequest("chartType must be IMR or XBAR_R");
+        var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId);
+        if (chart is null) return NotFound("Chart data not found or invalid part process characteristic.");
+        return Ok(chart);
     }
 }
 

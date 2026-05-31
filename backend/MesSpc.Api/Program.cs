@@ -60,6 +60,8 @@ builder.Services.AddScoped<SpcSampleGenerator>();
 builder.Services.AddScoped<MeasurementGenerator>();
 builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddScoped<TestDataSeeder>();
+builder.Services.AddScoped<GenealogyService>();
+builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("dev", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());

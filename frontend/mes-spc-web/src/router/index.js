@@ -28,6 +28,8 @@ import SpcAlertsView from "../views/SpcAlertsView.vue";
 import SmtpSettingsView from "../views/SmtpSettingsView.vue";
 import OperatorsView from "../views/OperatorsView.vue";
 
+import GenealogyView from "../views/GenealogyView.vue";
+
 const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
 
 const routes = [
@@ -58,7 +60,8 @@ const routes = [
   { path: "/spc/query", component: SpcQueryView },
   { path: "/spc/alerts", component: SpcAlertsView },
   { path: "/settings/smtp", component: SmtpSettingsView },
-  { path: "/operators", component: OperatorsView }
+  { path: "/operators", component: OperatorsView },
+  { path: "/genealogy", component: GenealogyView }
 ];
 
 const router = createRouter({

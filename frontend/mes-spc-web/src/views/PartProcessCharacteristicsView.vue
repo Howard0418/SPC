@@ -66,7 +66,7 @@ async function load() {
       api.get("/processes"),
       api.get("/characteristics"),
       api.get("/control-chart-types"),
-      api.get("/control-chart-groups")
+      api.get("/spc-rule-groups")
     ]);
     rows.value = resMain.data || [];
     parts.value = resParts.data || [];
@@ -89,7 +89,7 @@ const chartTypeMap = computed(() => {
 
 const ruleGroupMap = computed(() => {
   const m = {};
-  ruleGroups.value.forEach(rg => { m[rg.id] = `${rg.groupCode} (${rg.groupName})`; });
+  ruleGroups.value.forEach(rg => { m[rg.id] = `${rg.ruleGroupCode} (${rg.ruleGroupName})`; });
   return m;
 });
 
@@ -581,7 +581,7 @@ onMounted(load);
                 class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
               >
                 <option :value="null">-- 無指定 (全廠預設 Western Electric 規則) --</option>
-                <option v-for="rg in ruleGroups" :key="rg.id" :value="rg.id">{{ rg.groupCode }} - {{ rg.groupName }}</option>
+                <option v-for="rg in ruleGroups" :key="rg.id" :value="rg.id">{{ rg.ruleGroupCode }} - {{ rg.ruleGroupName }}</option>
               </select>
             </div>
           </div>

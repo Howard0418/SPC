@@ -21,6 +21,32 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var isOutOfControl = (mapping.UCL.HasValue && measurement.MeasuredValue > mapping.UCL.Value)
                              || (mapping.LCL.HasValue && measurement.MeasuredValue < mapping.LCL.Value);
 
+        List<SpcRuleViolation>? violations = null;
+        if (mapping.RuleGroupId.HasValue && mapping.CL.HasValue && mapping.UCL.HasValue && mapping.LCL.HasValue)
+        {
+            var rules = await db.SpcRules.AsNoTracking().Where(x => x.RuleGroupId == mapping.RuleGroupId.Value && x.IsEnabled).ToListAsync(ct);
+            if (rules.Count > 0)
+            {
+                var lastMeasurements = await db.VariableMeasurements.AsNoTracking()
+                    .Where(x => x.PartProcessCharacteristicId == mapping.Id)
+                    .OrderByDescending(x => x.MeasuredAt)
+                    .Take(30)
+                    .Select(x => x.MeasuredValue)
+                    .ToListAsync(ct);
+                
+                lastMeasurements.Insert(0, measurement.MeasuredValue);
+                lastMeasurements.Reverse();
+
+                violations = SpcRuleEngine.EvaluateRules(lastMeasurements, rules, mapping.CL.Value, mapping.UCL.Value, mapping.LCL.Value);
+                if (violations.Count > 0)
+                {
+                    isOutOfControl = true;
+                }
+            }
+        }
+        
+        string? violatedRulesJson = violations?.Count > 0 ? System.Text.Json.JsonSerializer.Serialize(violations) : null;
+
         var result = new SpcCalculationResult
         {
             UploadBatchId = measurement.UploadBatchId,
@@ -37,24 +63,34 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             CL = mapping.CL,
             LCL = mapping.LCL,
             IsOutOfSpec = isOutOfSpec,
-            IsOutOfControl = isOutOfControl
+            IsOutOfControl = isOutOfControl,
+            ViolatedRulesJson = violatedRulesJson
         };
         db.SpcCalculationResults.Add(result);
         await db.SaveChangesAsync(ct);
 
         if (isOutOfSpec || isOutOfControl)
         {
+            var alertMessage = isOutOfSpec
+                ? $"Variable measurement violates spec limit. Value={measurement.MeasuredValue}"
+                : $"Variable measurement violates control limit. Value={measurement.MeasuredValue}";
+
+            if (violations?.Count > 0)
+            {
+                alertMessage = "SPC Rules Violated: " + string.Join(", ", violations.Select(x => x.RuleName));
+            }
+
             var alert = new AlertEvent
             {
                 OccurredAt = DateTime.UtcNow,
-                ProductId = measurement.PartId,
-                StationId = measurement.ProcessId,
-                InspectionItemId = measurement.CharacteristicId,
+                PartId = measurement.PartId,
+                ProcessId = measurement.ProcessId,
+                CharacteristicId = measurement.CharacteristicId,
+                UploadBatchId = measurement.UploadBatchId,
+                VariableMeasurementId = measurement.Id,
                 ActualValue = measurement.MeasuredValue,
                 AlertType = isOutOfSpec ? AlertType.OutOfSpec : AlertType.OutOfControl,
-                Message = isOutOfSpec
-                    ? $"Variable measurement violates spec limit. Value={measurement.MeasuredValue}"
-                    : $"Variable measurement violates control limit. Value={measurement.MeasuredValue}"
+                Message = alertMessage
             };
             db.AlertEvents.Add(alert);
             await db.SaveChangesAsync(ct);
@@ -103,9 +139,11 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             var alert = new AlertEvent
             {
                 OccurredAt = DateTime.UtcNow,
-                ProductId = measurement.PartId,
-                StationId = measurement.ProcessId,
-                InspectionItemId = measurement.CharacteristicId,
+                PartId = measurement.PartId,
+                ProcessId = measurement.ProcessId,
+                CharacteristicId = measurement.CharacteristicId,
+                UploadBatchId = measurement.UploadBatchId,
+                AttributeMeasurementId = measurement.Id,
                 ActualValue = statisticValue,
                 AlertType = AlertType.OutOfControl,
                 Message = $"Attribute measurement violates control limit. Chart={chartType.ChartTypeCode}, Value={statisticValue}"
@@ -257,7 +295,11 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     Value = x.MeasuredValue,
                     LotNo = x.LotNo,
                     SerialNo = x.SerialNo,
-                    Operator = x.Operator
+                    Operator = x.Operator,
+                    LineId = x.LineId,
+                    TankId = x.TankId,
+                    SlotId = x.SlotId,
+                    SideCode = x.SideCode.ToString()
                 }).ToList();
                 return ImrChartCalculator.Calculate(points, limits);
             }
@@ -273,7 +315,11 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                         Values = g.Select(m => m.MeasuredValue).ToList(),
                         LotNo = first.LotNo,
                         SerialNo = first.SerialNo,
-                        Operator = first.Operator
+                        Operator = first.Operator,
+                        LineId = first.LineId,
+                        TankId = first.TankId,
+                        SlotId = first.SlotId,
+                        SideCode = first.SideCode.ToString()
                     };
                 }).ToList();
 
@@ -296,7 +342,11 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 DefectCount = x.DefectCount,
                 UnitCount = x.UnitCount,
                 LotNo = x.LotNo,
-                Operator = x.Operator
+                Operator = x.Operator,
+                LineId = x.LineId,
+                TankId = x.TankId,
+                SlotId = x.SlotId,
+                SideCode = x.SideCode.ToString()
             }).ToList();
 
             return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits);
@@ -307,14 +357,12 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         new()
         {
             OccurredAt = DateTime.UtcNow,
-            ProductId = batch.ProductId,
-            StationId = batch.StationId,
-            InspectionItemId = item.Id,
+            PartId = batch.ProductId,
+            ProcessId = batch.StationId,
+            CharacteristicId = item.Id,
             ActualValue = actual,
             AlertType = type,
-            Message = msg,
-            BatchId = batch.Id,
-            MeasurementValueId = value.Id
+            Message = msg
         };
 
     private static double? CalculateAttributeStatistic(string chartTypeCode, AttributeMeasurement measurement)

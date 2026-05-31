@@ -64,14 +64,12 @@ const menuCategories = [
     title: "自動化匯入與採樣",
     items: [
       { to: "/uploads/variable", text: "計量型資料匯入", icon: UploadCloud },
-      { to: "/uploads/attribute", text: "計數型資料匯入", icon: FileSpreadsheet },
-      { to: "/measurements", text: "單筆量測資料輸入", icon: PlusCircle }
+      { to: "/uploads/attribute", text: "計數型資料匯入", icon: FileSpreadsheet }
     ]
   },
   {
     title: "企業品質主檔設定",
     items: [
-      { to: "/products", text: "產品管理", icon: Package },
       { to: "/parts", text: "產品料號主檔", icon: Package },
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/machines", text: "生產機台主檔", icon: Cpu },
@@ -92,7 +90,8 @@ const menuCategories = [
     items: [
       { to: "/alerts", text: "異常通報總覽", icon: AlertTriangle },
       { to: "/spc/query", text: "多維度品質履歷與查詢", icon: Search },
-      { to: "/v2/alerts-workflow", text: "異常單簽核處置", icon: Activity }
+      { to: "/v2/alerts-workflow", text: "異常單簽核處置", icon: Activity },
+      { to: "/genealogy", text: "產品系譜圖 (Genealogy)", icon: FolderTree }
     ]
   },
   {

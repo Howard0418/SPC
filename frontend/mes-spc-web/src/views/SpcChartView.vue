@@ -225,10 +225,10 @@ async function loadInteractiveChart() {
   selectedPointIndex.value = -1;
 
   try {
-    const params = { partProcessCharacteristicId: selectedMappingId.value };
+    const params = { ppcId: selectedMappingId.value };
     if (batchId.value) params.uploadBatchId = batchId.value;
 
-    const res = await api.get("/v2/spc/interactive-chart", { params });
+    const res = await api.get("/v1/spc/chart", { params });
     chartResult.value = res.data;
     loading.value = false;
     await nextTick();
@@ -382,7 +382,8 @@ function renderECharts() {
       value: p.value !== undefined ? p.value : p.xbar !== undefined ? p.xbar : null,
       itemStyle: { color: isErr ? "#ef4444" : "#3b82f6", borderColor: isErr ? "#991b1b" : "#2563eb", borderWidth: 2 },
       symbolSize: isErr ? 12 : 8,
-      violatedRules: p.violatedRules
+      violatedRules: p.violatedRules,
+      meta: p
     };
   });
 
@@ -391,7 +392,8 @@ function renderECharts() {
     return {
       value: p.value !== undefined ? p.value : null,
       itemStyle: { color: isErr ? "#ef4444" : "#64748b" },
-      symbolSize: isErr ? 10 : 6
+      symbolSize: isErr ? 10 : 6,
+      meta: p
     };
   });
 
@@ -404,6 +406,16 @@ function renderECharts() {
       textStyle: { color: "#fff", fontSize: 12 },
       formatter: (params) => {
         let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${params[0].axisValue}</div>`;
+        const meta = params[0].data?.meta;
+        if (meta) {
+          res += `<div class="text-[10px] text-slate-400 mb-2">`;
+          if (meta.lotNo) res += `<div>批號: <span class="text-slate-200">${meta.lotNo}</span></div>`;
+          if (meta.sideCode && meta.sideCode !== "0") res += `<div>板面: <span class="text-blue-300 font-bold">${meta.sideCode === "1" ? "S1 (Top)" : "S2 (Bottom)"}</span></div>`;
+          if (meta.lineId) res += `<div>產線: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
+          if (meta.tankId) res += `<div>槽體: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
+          if (meta.slotId) res += `<div>槽位: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
+          res += `</div>`;
+        }
         params.forEach(p => {
           res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> ${p.seriesName}: <strong>${Number(p.data?.value).toFixed(4)}</strong></div>`;
           if (p.data?.violatedRules?.length > 0) {
