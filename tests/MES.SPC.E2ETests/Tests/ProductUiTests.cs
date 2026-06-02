@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 using MES.SPC.E2ETests.Utilities;
 
@@ -31,17 +32,17 @@ public class ProductUiTests : PageTest
         await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/$"));
         await Expect(Page.Locator("h2")).ToContainTextAsync("Dashboard");
 
-        // 4. 點擊「產品管理」
-        await Page.ClickAsync("a:has-text('產品管理')");
+        // 4. 點擊「產品料號主檔」
+        await Page.GetByRole(AriaRole.Link, new() { NameRegex = new System.Text.RegularExpressions.Regex("產品料號主檔") }).First.ClickAsync();
 
         // 5. 驗證進入產品管理頁面
-        await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/products$"));
-        await Expect(Page.Locator("h2")).ToContainTextAsync("產品管理");
+        await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/parts"));
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { NameRegex = new System.Text.RegularExpressions.Regex("產品料號主檔維護") })).ToBeVisibleAsync();
 
-        // 6. 點擊「新增產品」展開表單
-        await Page.ClickAsync("button:has-text('新增產品')");
+        // 6. 點擊「新增料號」展開表單
+        await Page.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("新增料號") }).ClickAsync();
         
         // 7. 驗證表單元素存在
-        await Expect(Page.Locator("input[placeholder='Product Code']")).ToBeVisibleAsync();
+        await Expect(Page.GetByPlaceholder("例如：P-1001")).ToBeVisibleAsync();
     }
 }

@@ -17,15 +17,37 @@ public class UploadsController(UploadService uploadService)
     [HttpPost("variable")]
     public async Task<IActionResult> UploadVariable([FromBody] List<Dictionary<string, string?>> rows)
     {
-        var batch = await uploadService.CreateVariableBatchAsync(rows, "Api", "api-user", null);
-        return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
+        var jsonStr = System.Text.Json.JsonSerializer.Serialize(rows);
+        var hashBytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(jsonStr));
+        var hashStr = Convert.ToHexString(hashBytes);
+
+        try
+        {
+            var batch = await uploadService.CreateVariableBatchAsync(rows, "Api", "api-user", null, hashStr);
+            return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
+        {
+            return Conflict(new { message = "檔案已重複上傳" });
+        }
     }
 
     [HttpPost("attribute")]
     public async Task<IActionResult> UploadAttribute([FromBody] List<Dictionary<string, string?>> rows)
     {
-        var batch = await uploadService.CreateAttributeBatchAsync(rows, "Api", "api-user", null);
-        return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
+        var jsonStr = System.Text.Json.JsonSerializer.Serialize(rows);
+        var hashBytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(jsonStr));
+        var hashStr = Convert.ToHexString(hashBytes);
+
+        try
+        {
+            var batch = await uploadService.CreateAttributeBatchAsync(rows, "Api", "api-user", null, hashStr);
+            return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
+        {
+            return Conflict(new { message = "檔案已重複上傳" });
+        }
     }
 
     [HttpPost("variable/excel")]
@@ -64,6 +86,14 @@ public class UploadsController(UploadService uploadService)
     private async Task<IActionResult> UploadExcelFileAsync(IFormFile file, bool isVariable)
     {
         if (file.Length == 0) return BadRequest("File is empty.");
+        
+        string fileHash;
+        using (var hashStream = file.OpenReadStream())
+        {
+            var hashBytes = await System.Security.Cryptography.MD5.HashDataAsync(hashStream);
+            fileHash = Convert.ToHexString(hashBytes);
+        }
+
         using var stream = file.OpenReadStream();
         using var wb = new XLWorkbook(stream);
         var ws = wb.Worksheets.First();
@@ -76,8 +106,8 @@ public class UploadsController(UploadService uploadService)
 
         if (isChemicalMatrix)
         {
-            var maxCol = ws.LastColumnUsed().ColumnNumber();
-            var maxRow = ws.LastRowUsed().RowNumber();
+            var maxCol = ws.LastColumnUsed()?.ColumnNumber() ?? 0;
+            var maxRow = ws.LastRowUsed()?.RowNumber() ?? 0;
 
             var colMeta = new Dictionary<int, (string PartNo, string ProcessCode, string CharCode, string CharName, string USL, string LSL)>();
             string currLine = "CN_LINE";
@@ -153,14 +183,14 @@ public class UploadsController(UploadService uploadService)
         else
         {
             var headerRow = ws.Row(1);
-            var lastCol = ws.LastColumnUsed().ColumnNumber();
+            var lastCol = ws.LastColumnUsed()?.ColumnNumber() ?? 0;
             var headers = new List<string>();
             for (int c = 1; c <= lastCol; c++)
             {
                 headers.Add(headerRow.Cell(c).GetString().Trim());
             }
 
-            var lastRow = ws.LastRowUsed().RowNumber();
+            var lastRow = ws.LastRowUsed()?.RowNumber() ?? 0;
             for (int r = 2; r <= lastRow; r++)
             {
                 var dict = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
@@ -180,24 +210,46 @@ public class UploadsController(UploadService uploadService)
 
         if (rows.Count == 0) return BadRequest("No data rows found in Excel.");
 
-        var batch = isVariable
-            ? await uploadService.CreateVariableBatchAsync(rows, "File", "excel-user", file.FileName)
-            : await uploadService.CreateAttributeBatchAsync(rows, "File", "excel-user", file.FileName);
-        return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
+        try
+        {
+            var batch = isVariable
+                ? await uploadService.CreateVariableBatchAsync(rows, "File", "excel-user", file.FileName, fileHash)
+                : await uploadService.CreateAttributeBatchAsync(rows, "File", "excel-user", file.FileName, fileHash);
+            return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
+        {
+            return Conflict(new { message = "檔案已重複上傳" });
+        }
     }
 
     private async Task<IActionResult> UploadCsvLike(IFormFile file, bool isVariable)
     {
         if (file.Length == 0) return BadRequest("File is empty.");
+        
+        string fileHash;
+        using (var hashStream = file.OpenReadStream())
+        {
+            var hashBytes = await System.Security.Cryptography.MD5.HashDataAsync(hashStream);
+            fileHash = Convert.ToHexString(hashBytes);
+        }
+
         using var reader = new StreamReader(file.OpenReadStream());
         using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
         var rows = ReadDictionaryRows(csv);
         if (rows.Count == 0) return BadRequest("No data rows found.");
 
-        var batch = isVariable
-            ? await uploadService.CreateVariableBatchAsync(rows, "File", "file-user", file.FileName)
-            : await uploadService.CreateAttributeBatchAsync(rows, "File", "file-user", file.FileName);
-        return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
+        try
+        {
+            var batch = isVariable
+                ? await uploadService.CreateVariableBatchAsync(rows, "File", "file-user", file.FileName, fileHash)
+                : await uploadService.CreateAttributeBatchAsync(rows, "File", "file-user", file.FileName, fileHash);
+            return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
+        {
+            return Conflict(new { message = "檔案已重複上傳" });
+        }
     }
 
     private static List<Dictionary<string, string?>> ReadDictionaryRows(CsvReader csv)
@@ -442,7 +494,7 @@ public class SpcV2Controller(AppDbContext db, SpcService spcService) : Controlle
         foreach (var item in topAlertGroups)
         {
             var proc = await db.Processes.FindAsync(item.ProcessId);
-            var ch = await db.Characteristics.FindAsync(item.CharacteristicId);
+            var ch = await db.QualityCharacteristics.FindAsync(item.CharacteristicId);
             var name = $"{proc?.ProcessName ?? $"P-{item.ProcessId}"} - {ch?.CharacteristicName ?? $"C-{item.CharacteristicId}"}";
             
             var pct = totalAlerts > 0 ? (double)item.Count / totalAlerts * 100 : 0;

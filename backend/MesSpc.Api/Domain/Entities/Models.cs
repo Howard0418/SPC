@@ -332,6 +332,7 @@ public class UploadBatch : BaseEntity
     public string SourceType { get; set; } = "Api";
     public string ImportStatus { get; set; } = "Uploaded";
     public string? OriginalFileName { get; set; }
+    public string? FileHash { get; set; }
     public int TotalRows { get; set; }
     public int ValidRows { get; set; }
     public int ErrorRows { get; set; }

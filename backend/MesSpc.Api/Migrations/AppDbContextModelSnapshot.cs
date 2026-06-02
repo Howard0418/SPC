@@ -2225,6 +2225,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<int>("ErrorRows")
                         .HasColumnType("int");
 
+                    b.Property<string>("FileHash")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ImportStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

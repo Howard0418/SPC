@@ -152,7 +152,11 @@ async function uploadMappedData() {
     successBatchId.value = res.data.uploadBatchId;
     router.push(`/uploads/${successBatchId.value}/preview`);
   } catch (e) {
-    err.value = "送出映射數據失敗：" + getApiErrorMessage(e);
+    if (e?.response?.status === 409) {
+      err.value = "系統防呆：這個檔案之前已經匯入過了，為保護 SPC 資料準確度，請勿重複匯入相同的檔案！";
+    } else {
+      err.value = "送出映射數據失敗：" + getApiErrorMessage(e);
+    }
   } finally {
     loading.value = false;
   }
@@ -183,7 +187,11 @@ async function uploadJson() {
     successBatchId.value = res.data.uploadBatchId;
     router.push(`/uploads/${successBatchId.value}/preview`);
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    if (e?.response?.status === 409) {
+      err.value = "系統防呆：這個 JSON 之前已經匯入過了，請勿重複匯入相同的資料！";
+    } else {
+      err.value = getApiErrorMessage(e);
+    }
   } finally {
     loading.value = false;
   }

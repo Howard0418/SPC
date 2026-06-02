@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MesSpc.Api.Services;
 
-public class GenealogyService(AppDbContext dbContext, ILogger<GenealogyService> logger)
+public class GenealogyService(AppDbContext dbContext)
 {
     public async Task<LotGenealogyResponse?> GetLotGenealogyAsync(string lotNo)
     {
@@ -20,8 +20,8 @@ public class GenealogyService(AppDbContext dbContext, ILogger<GenealogyService> 
 
         var routing = await dbContext.LotSlotHistories
             .Include(h => h.Slot)
-                .ThenInclude(s => s.Tank)
-                    .ThenInclude(t => t.Line)
+                .ThenInclude(s => s!.Tank)
+                    .ThenInclude(t => t!.Line)
             .Where(h => h.LotId == lot.Id)
             .OrderBy(h => h.EntryTime)
             .ToListAsync();

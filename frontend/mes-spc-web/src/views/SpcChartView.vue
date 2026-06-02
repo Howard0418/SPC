@@ -329,10 +329,16 @@ function renderECharts() {
   addLine(limits.lsl, "LSL", "#ef4444", "dashed", 2);
   addLine(limits.target, "Target", "#10b981", "solid", 2);
 
-  // Control limits
-  addLine(limits.ucl, "UCL", "#f59e0b", "solid", 1.5);
-  addLine(limits.cl, "CL", "#3b82f6", "solid", 1.5);
-  addLine(limits.lcl, "LCL", "#f59e0b", "solid", 1.5);
+  // Control limits (Static, for Variables)
+  const hasDynamicLimits = (data.chartData?.points || []).some(p => p.uclStat != null || p.lclStat != null);
+  if (!hasDynamicLimits) {
+    addLine(limits.ucl, "UCL", "#f59e0b", "solid", 1.5);
+    addLine(limits.cl, "CL", "#3b82f6", "solid", 1.5);
+    addLine(limits.lcl, "LCL", "#f59e0b", "solid", 1.5);
+  } else {
+    // If it has dynamic limits, we still might want a static CL if pBar/cBar is constant
+    addLine(limits.cl, "CL", "#3b82f6", "solid", 1.5);
+  }
 
   const topMarkLineObj = markLinesTop.length > 0 ? { symbol: "none", data: markLinesTop, animation: false } : undefined;
 
@@ -397,6 +403,31 @@ function renderECharts() {
     };
   });
 
+  const seriesTopList = [
+    { name: type === "XBAR_R" ? "Xbar" : (isDual ? "Individual" : type), type: "line", xAxisIndex: 0, yAxisIndex: 0, data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: hasDynamicLimits ? undefined : markAreaTop, smooth: true }
+  ];
+
+  if (hasDynamicLimits) {
+    seriesTopList.push({
+      name: "UCL",
+      type: "line",
+      step: "middle",
+      symbol: "none",
+      xAxisIndex: 0, yAxisIndex: 0,
+      lineStyle: { color: "#f59e0b", width: 1.5, type: "solid" },
+      data: pointsTop.map(p => p.uclStat != null ? Number(p.uclStat.toFixed(4)) : null)
+    });
+    seriesTopList.push({
+      name: "LCL",
+      type: "line",
+      step: "middle",
+      symbol: "none",
+      xAxisIndex: 0, yAxisIndex: 0,
+      lineStyle: { color: "#f59e0b", width: 1.5, type: "solid" },
+      data: pointsTop.map(p => p.lclStat != null ? Math.max(0, Number(p.lclStat.toFixed(4))) : null)
+    });
+  }
+
   const option = {
     backgroundColor: "transparent",
     tooltip: {
@@ -417,11 +448,14 @@ function renderECharts() {
           res += `</div>`;
         }
         params.forEach(p => {
-          res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> ${p.seriesName}: <strong>${Number(p.data?.value).toFixed(4)}</strong></div>`;
+          res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> ${p.seriesName}: <strong>${p.data?.value !== undefined ? Number(p.data?.value).toFixed(4) : Number(p.value).toFixed(4)}</strong></div>`;
           if (p.data?.violatedRules?.length > 0) {
             res += `<div class="mt-1.5 px-2 py-0.5 rounded bg-red-900/50 border border-red-500/50 text-red-300 text-[11px] font-bold">⚠️ 西方電氣規則違規：<br>${p.data.violatedRules.join("<br>")}</div>`;
           }
         });
+        if (hasDynamicLimits && meta) {
+          if (meta.n != null) res += `<div class="text-[10px] text-slate-400 mt-2">樣本數 (n): <strong class="text-slate-200">${meta.n}</strong></div>`;
+        }
         return res;
       }
     },
@@ -457,10 +491,10 @@ function renderECharts() {
       : [{ type: "value", name: `${type} 數值`, splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true }],
     series: isDual
       ? [
-          { name: type === "XBAR_R" ? "Xbar" : "Individual", type: "line", xAxisIndex: 0, yAxisIndex: 0, data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: markAreaTop, smooth: true },
+          ...seriesTopList,
           { name: type === "XBAR_R" ? "Range" : "Moving Range", type: "line", xAxisIndex: 1, yAxisIndex: 1, data: seriesBottomData, showSymbol: true, markLine: bottomMarkLineObj, smooth: true }
         ]
-      : [{ name: type, type: "line", data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: markAreaTop, smooth: true }]
+      : seriesTopList
   };
 
   chartInstance.setOption(option);

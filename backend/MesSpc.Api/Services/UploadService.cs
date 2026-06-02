@@ -7,15 +7,22 @@ namespace MesSpc.Api.Services;
 
 public class UploadService(AppDbContext db, SpcService spcService)
 {
-    public async Task<UploadBatch> CreateVariableBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, CancellationToken ct = default)
+    public async Task<UploadBatch> CreateVariableBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, string? fileHash = null, CancellationToken ct = default)
     {
+        if (!string.IsNullOrEmpty(fileHash))
+        {
+            var isDuplicate = await db.UploadBatches.AnyAsync(x => x.FileHash == fileHash && x.ImportStatus != "Failed" && x.ImportStatus != "Rejected", ct);
+            if (isDuplicate) throw new InvalidOperationException("DUPLICATE_FILE");
+        }
+
         var batch = new UploadBatch
         {
             UploadType = "Variable",
             SourceType = sourceType,
             ImportStatus = "PreviewReady",
             CreatedBy = createdBy,
-            OriginalFileName = fileName
+            OriginalFileName = fileName,
+            FileHash = fileHash
         };
         db.UploadBatches.Add(batch);
         await db.SaveChangesAsync(ct);
@@ -24,15 +31,22 @@ public class UploadService(AppDbContext db, SpcService spcService)
         return batch;
     }
 
-    public async Task<UploadBatch> CreateAttributeBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, CancellationToken ct = default)
+    public async Task<UploadBatch> CreateAttributeBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, string? fileHash = null, CancellationToken ct = default)
     {
+        if (!string.IsNullOrEmpty(fileHash))
+        {
+            var isDuplicate = await db.UploadBatches.AnyAsync(x => x.FileHash == fileHash && x.ImportStatus != "Failed" && x.ImportStatus != "Rejected", ct);
+            if (isDuplicate) throw new InvalidOperationException("DUPLICATE_FILE");
+        }
+
         var batch = new UploadBatch
         {
             UploadType = "Attribute",
             SourceType = sourceType,
             ImportStatus = "PreviewReady",
             CreatedBy = createdBy,
-            OriginalFileName = fileName
+            OriginalFileName = fileName,
+            FileHash = fileHash
         };
         db.UploadBatches.Add(batch);
         await db.SaveChangesAsync(ct);
@@ -199,7 +213,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 chr = new QualityCharacteristic
                 {
                     CharacteristicCode = charCode,
-                    CharacteristicName = charName,
+                    CharacteristicName = charName ?? "",
                     DataCategory = expectedDataCategory,
                     DefaultChartTypeId = chartTypeMeta?.Id,
                     IsEnabled = true,
