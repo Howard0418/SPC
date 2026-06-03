@@ -599,3 +599,10 @@ D:\SPC\backend\MesSpc.Api\obj\Debug\net10.0\refint\MesSpc.Api.dll
 D:\SPC\backend\MesSpc.Api\obj\Debug\net10.0\MesSpc.Api.pdb
 D:\SPC\backend\MesSpc.Api\obj\Debug\net10.0\MesSpc.Api.genruntimeconfig.cache
 D:\SPC\backend\MesSpc.Api\obj\Debug\net10.0\ref\MesSpc.Api.dll
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\web.config
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\appsettings.Development.json
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\appsettings.json
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\MesSpc.Api.deps.json
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\MesSpc.Api.runtimeconfig.json
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\MesSpc.Api.staticwebassets.endpoints.json
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\Scalar.AspNetCore.dll

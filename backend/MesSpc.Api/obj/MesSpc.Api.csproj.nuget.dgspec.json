@@ -10,7 +10,7 @@
         "projectUniqueName": "D:\\SPC\\backend\\MesSpc.Api\\MesSpc.Api.csproj",
         "projectName": "MesSpc.Api",
         "projectPath": "D:\\SPC\\backend\\MesSpc.Api\\MesSpc.Api.csproj",
-        "packagesPath": "d:\\SPC\\backend\\MesSpc.Api\\.dotnet\\.nuget\\packages\\",
+        "packagesPath": "C:\\Users\\ihao_ting.PMR.000\\.nuget\\packages\\",
         "outputPath": "D:\\SPC\\backend\\MesSpc.Api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
@@ -91,6 +91,10 @@
             "NCalcSync": {
               "target": "Package",
               "version": "[5.12.0, )"
+            },
+            "Scalar.AspNetCore": {
+              "target": "Package",
+              "version": "[1.2.*, )"
             }
           },
           "imports": [

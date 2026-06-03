@@ -1,4 +1,5 @@
 using System.Text;
+using Scalar.AspNetCore;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
 using MesSpc.Api.Services.Parsers;
@@ -69,10 +70,8 @@ builder.Services.AddCors(opt =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi().AllowAnonymous();
-}
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.UseCors("dev");
 if (!app.Environment.IsDevelopment())
