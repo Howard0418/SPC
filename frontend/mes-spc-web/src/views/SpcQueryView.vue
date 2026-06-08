@@ -98,7 +98,7 @@ onMounted(() => {
             多維度品質履歷與 SPC 查詢大廳
           </h1>
           <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            透過工單、批號 (Lot)、序號 (SN) 或時間區間進行複合式條件篩選。快速鎖定特定批次的量測紀錄並一鍵轉入 SPC 戰情室檢視 CPK 指標與管制圖。
+            透過工單、批號 (Lot)、序號 (SN) 或時間區間進行複合式條件篩選。快速鎖定特定批次的量測紀錄並一鍵轉入 SPC 管制圖檢視 CPK 指標與管制圖。
           </p>
         </div>
       </div>

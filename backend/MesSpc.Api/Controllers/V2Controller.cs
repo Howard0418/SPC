@@ -18,11 +18,12 @@ public record UpdateAlertWorkflowReq(string Status, string? RootCause, string? C
 public class WorkOrdersV2Controller(AppDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] string? status, [FromQuery] int? productId)
+    public async Task<IActionResult> Get([FromQuery] string? status, [FromQuery] int? productId, [FromQuery] string? workOrderNo)
     {
         var query = db.WorkOrders.AsQueryable();
         if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
         if (productId.HasValue) query = query.Where(x => x.ProductId == productId.Value);
+        if (!string.IsNullOrWhiteSpace(workOrderNo)) query = query.Where(x => x.WorkOrderNo == workOrderNo);
         return Ok(await query.OrderByDescending(x => x.Id).Take(300).ToListAsync());
     }
 

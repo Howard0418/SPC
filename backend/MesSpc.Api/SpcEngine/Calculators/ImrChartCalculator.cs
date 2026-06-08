@@ -11,7 +11,8 @@ public static class ImrChartCalculator
 
     public static ControlChartResult Calculate(List<SpcDataPoint> rawData, ControlLimits configuredLimits)
     {
-        var values = rawData.Select(x => x.Value).ToList();
+        var validData = rawData.Where(x => !x.IsExcluded).ToList();
+        var values = validData.Select(x => x.Value).ToList();
         
         var iBar = values.Count > 0 ? values.Average() : (double?)null;
         var mrValues = new List<double>();
@@ -28,44 +29,54 @@ public static class ImrChartCalculator
         var mrUclStat = mrBar.HasValue ? D4 * mrBar.Value : (double?)null;
         var mrLclStat = mrBar.HasValue ? D3 * mrBar.Value : (double?)null;
 
-        if (iBar.HasValue && iUclStat.HasValue && iLclStat.HasValue)
+        if (iBar.HasValue && iUclStat.HasValue && iLclStat.HasValue && validData.Count > 0)
         {
             var statLimits = new ControlLimits { CL = iBar, UCL = iUclStat, LCL = iLclStat };
-            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(rawData, statLimits);
+            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(validData, statLimits);
         }
+        var evalDict = validData.ToDictionary(x => x.MeasuredAt);
 
         var iPoints = new List<object>();
         foreach (var p in rawData)
         {
+            var evalP = evalDict.GetValueOrDefault(p.MeasuredAt);
             var v = p.Value;
             var oos = (configuredLimits.USL.HasValue && v > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && v < configuredLimits.LSL.Value);
             var oocConfigured = (configuredLimits.UCL.HasValue && v > configuredLimits.UCL.Value) || 
                                 (configuredLimits.LCL.HasValue && v < configuredLimits.LCL.Value);
+            var oocStat = evalP?.IsOutOfControl ?? false;
+            var outOfSpec = !p.IsExcluded && (p.IsOutOfSpec || oos);
+            var outOfControl = !p.IsExcluded && (p.IsOutOfControl || oocConfigured || oocStat);
 
             iPoints.Add(new
             {
                 measuredAt = p.MeasuredAt,
                 value = v,
-                outOfSpec = oos,
-                outOfControl = oocConfigured || p.IsOutOfControl,
-                outOfControlStat = (iUclStat.HasValue && v > iUclStat.Value) || (iLclStat.HasValue && v < iLclStat.Value),
-                violatedRules = p.ViolatedRules,
+                outOfSpec,
+                outOfControl,
+                outOfControlStat = oocStat,
+                violatedRules = evalP?.ViolatedRules ?? new List<string>(),
                 lotNo = p.LotNo,
                 serialNo = p.SerialNo,
-                @operator = p.Operator
+                @operator = p.Operator,
+                isExcluded = p.IsExcluded,
+                rootCause = p.RootCause,
+                correctiveAction = p.CorrectiveAction,
+                measurementBatchId = p.MeasurementBatchId
             });
         }
 
         var mrPoints = new List<object>();
-        for (var i = 1; i < values.Count; i++)
+        for (var i = 1; i < rawData.Count; i++)
         {
-            var mr = Math.Abs(values[i] - values[i - 1]);
-            var outOfControl = (mrUclStat.HasValue && mr > mrUclStat.Value) || (mrLclStat.HasValue && mr < mrLclStat.Value);
-            mrPoints.Add(new { index = i + 1, value = mr, outOfControl });
+            var mr = Math.Abs(rawData[i].Value - rawData[i - 1].Value);
+            var isExcluded = rawData[i].IsExcluded || rawData[i - 1].IsExcluded;
+            var outOfControl = !isExcluded && ((mrUclStat.HasValue && mr > mrUclStat.Value) || (mrLclStat.HasValue && mr < mrLclStat.Value));
+            mrPoints.Add(new { index = i + 1, value = mr, outOfControl, isExcluded = rawData[i].IsExcluded });
         }
 
-        var dummySubgroups = rawData.Select(x => new Subgroup { MeasuredAt = x.MeasuredAt, Values = [x.Value] }).ToList();
+        var dummySubgroups = validData.Select(x => new Subgroup { MeasuredAt = x.MeasuredAt, Values = [x.Value] }).ToList();
         var capability = ProcessCapabilityCalculator.Calculate(dummySubgroups, configuredLimits.USL, configuredLimits.LSL);
 
         return new ControlChartResult

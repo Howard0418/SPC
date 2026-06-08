@@ -13,7 +13,8 @@ import {
   XCircle,
   AlertTriangle,
   RefreshCw,
-  Activity
+  Activity,
+  Info
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -216,6 +217,20 @@ onMounted(load);
       </div>
     </div>
 
+    <!-- Guide / Wizard Tip -->
+    <div class="p-5 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-900/20 border border-purple-100 dark:border-purple-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-xl text-purple-600 dark:text-purple-400 mt-0.5">
+        <Info class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-purple-900 dark:text-purple-300">模組指南：生產機台主檔 (Machines)</h4>
+        <p class="text-xs text-purple-700 dark:text-purple-400/80 mt-1.5 leading-relaxed">
+          此模組用於建檔廠內所有生產設備，並將其綁定至特定的「製程工站」。您可以在此檢視機台目前的運轉狀態。<br/>
+          💡 <strong>功能說明：</strong> 在收集檢驗數據時，系統會記錄該批次數據是由哪一台機台生產的，方便未來利用管制圖進行「單一機台」的品質追溯。
+        </p>
+      </div>
+    </div>
+
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">
       <AlertTriangle class="w-6 h-6 flex-shrink-0 text-red-500" />
@@ -287,28 +302,28 @@ onMounted(load);
               :key="item.id"
               class="hover:bg-purple-50/50 dark:hover:bg-slate-800/50 transition-colors group"
             >
-              <td class="py-4 px-6 font-mono text-xs text-slate-400 dark:text-slate-500">#{{ item.id }}</td>
-              <td class="py-4 px-6">
-                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <td class="py-6 px-6 font-mono text-xs text-slate-400 dark:text-slate-500">#{{ item.id }}</td>
+              <td class="py-6 px-6">
+                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
                   <Cpu class="w-4 h-4 text-purple-500" /> {{ item.machineCode }}
                 </div>
                 <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ item.machineName }}</div>
               </td>
-              <td class="py-4 px-6">
+              <td class="py-6 px-6">
                 <span v-if="item.processId" class="text-slate-800 dark:text-slate-200 font-semibold text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                   {{ processMap[item.processId] || `製程 #${item.processId}` }}
                 </span>
                 <span v-else class="text-slate-400 text-xs">-</span>
               </td>
-              <td class="py-4 px-6 text-slate-600 dark:text-slate-300 text-xs font-semibold">
+              <td class="py-6 px-6 text-slate-600 dark:text-slate-300 text-xs font-semibold">
                 {{ item.location || '-' }}
               </td>
-              <td class="py-4 px-6 text-center">
+              <td class="py-6 px-6 text-center">
                 <span :class="['px-3 py-1 rounded-full text-xs font-bold border tracking-wide inline-flex items-center gap-1.5', getStatusClass(item.status)]">
                   <Activity class="w-3 h-3" /> {{ getStatusText(item.status) }}
                 </span>
               </td>
-              <td class="py-4 px-6 text-center">
+              <td class="py-6 px-6 text-center">
                 <span
                   :class="[
                     'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border tracking-wide',
@@ -321,7 +336,7 @@ onMounted(load);
                   {{ item.isEnabled ? '啟用中' : '已停用' }}
                 </span>
               </td>
-              <td class="py-4 px-6 text-right space-x-2">
+              <td class="py-6 px-6 text-right space-x-2">
                 <button
                   @click="openEditModal(item)"
                   type="button"
@@ -349,10 +364,19 @@ onMounted(load);
       </div>
     </div>
 
-    <!-- Modal Dialog (Add / Edit) -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
-        <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80">
+    <!-- Slide-over Panel (Add / Edit) -->
+    <transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-x-full"
+      enter-to-class="opacity-100 translate-x-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-x-0"
+      leave-to-class="opacity-0 translate-x-full"
+    >
+      <div v-if="showModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
+        <div class="absolute inset-0 cursor-pointer" @click="showModal = false"></div>
+        <div class="relative w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+          <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-purple-600 text-white rounded-xl shadow-md shadow-purple-500/20">
               <Cpu class="w-5 h-5" />
@@ -370,7 +394,8 @@ onMounted(load);
           </button>
         </div>
 
-        <form @submit.prevent="save" class="p-6 space-y-5">
+        <form @submit.prevent="save" class="flex flex-col h-full overflow-hidden">
+          <div class="flex-1 overflow-y-auto p-6 space-y-5">
           <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
             <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
           </div>
@@ -447,7 +472,8 @@ onMounted(load);
             </label>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          </div>
+          <div class="shrink-0 p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
             <button
               @click="showModal = false"
               type="button"
@@ -465,6 +491,7 @@ onMounted(load);
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </transition>
   </section>
 </template>

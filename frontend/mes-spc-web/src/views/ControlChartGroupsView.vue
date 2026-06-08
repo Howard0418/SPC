@@ -12,7 +12,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Info
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -166,6 +167,19 @@ onMounted(load);
         >
           <Plus class="w-4 h-4" /> 新增群組
         </button>
+      </div>
+    </div>
+
+    <!-- Guide / Wizard Tip -->
+    <div class="p-5 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-900/20 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl text-indigo-600 dark:text-indigo-400 mt-0.5">
+        <Info class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">模組指南：管制圖大群組主檔 (Control Chart Groups)</h4>
+        <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
+          此模組用於設定 SPC 系統中最頂層的分類結構，幫助您有效管理全廠各類型的管制圖設定與判讀規則。
+        </p>
       </div>
     </div>
 

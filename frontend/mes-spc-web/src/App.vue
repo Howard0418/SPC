@@ -6,6 +6,7 @@ import {
   LineChart,
   UploadCloud,
   FileSpreadsheet,
+  BookOpen,
   PlusCircle,
   Package,
   Cpu,
@@ -20,7 +21,8 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  Users
+  Users,
+  Map
 } from "lucide-vue-next";
 
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
@@ -56,13 +58,14 @@ const menuCategories = [
   {
     title: "高階戰情與分析",
     items: [
-      { to: "/", text: "戰情儀表板", icon: LayoutDashboard },
+      { to: "/", text: "儀表板", icon: LayoutDashboard },
       { to: "/spc", text: "SPC 管制圖", icon: LineChart }
     ]
   },
   {
     title: "自動化匯入與採樣",
     items: [
+      { to: "/measurements", text: "現場量測數據錄入", icon: Activity },
       { to: "/uploads/variable", text: "計量型資料匯入", icon: UploadCloud },
       { to: "/uploads/attribute", text: "計數型資料匯入", icon: FileSpreadsheet }
     ]
@@ -83,7 +86,8 @@ const menuCategories = [
     items: [
       { to: "/control-chart-groups", text: "管制圖分類總管", icon: Layers },
       { to: "/control-chart-categories", text: "管制圖分類維護", icon: FolderTree },
-      { to: "/control-chart-types", text: "管制圖參數配置", icon: Activity }
+      { to: "/control-chart-types", text: "管制圖參數配置", icon: Activity },
+      { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity }
     ]
   },
   {
@@ -98,6 +102,8 @@ const menuCategories = [
   {
     title: "系統管理與通報設定",
     items: [
+      { to: "/sitemap", text: "全系統功能地圖", icon: Map },
+      { to: "/guide", text: "系統操作手冊", icon: BookOpen },
       { to: "/operators", text: "作業工程師與權限", icon: Users },
       { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders }
     ]
@@ -185,7 +191,7 @@ function logout() {
 
       <!-- Main Workspace -->
       <main class="flex-1 p-6 overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors">
-        <div class="max-w-7xl mx-auto space-y-6">
+        <div class="max-w-[1800px] w-full mx-auto space-y-6">
           <router-view />
         </div>
       </main>

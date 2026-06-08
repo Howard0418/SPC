@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   RefreshCw,
   FolderTree,
-  Code2
+  Code2,
+  Info
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -237,6 +238,19 @@ onMounted(load);
         >
           <Plus class="w-4 h-4" /> 新增管制圖種類
         </button>
+      </div>
+    </div>
+
+    <!-- Guide / Wizard Tip -->
+    <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5">
+        <Info class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：管制圖種類配置 (Control Chart Types)</h4>
+        <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
+          此模組用於設定具體的 SPC 管制圖公式（如 Xbar-R、I-MR 等），包含管制界限之算法常數與所需抽樣數。
+        </p>
       </div>
     </div>
 

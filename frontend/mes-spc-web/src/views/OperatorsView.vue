@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Mail,
   Building2,
-  UserCheck
+  UserCheck,
+  Info
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -180,6 +181,19 @@ onMounted(load);
       </div>
     </div>
 
+    <!-- Guide / Wizard Tip -->
+    <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5">
+        <Info class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：作業人員主檔 (Operators)</h4>
+        <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
+          此模組用於設定現場量測人員的基本資料。當 SPC 數據發生異常時，系統會將告警信件發送至這裡設定的電子郵件信箱。
+        </p>
+      </div>
+    </div>
+
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">
       <AlertTriangle class="w-6 h-6 flex-shrink-0 text-red-500" />
@@ -308,10 +322,19 @@ onMounted(load);
       </div>
     </div>
 
-    <!-- Modal Dialog (Add / Edit) -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
-        <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80">
+    <!-- Slide-over Panel (Add / Edit) -->
+    <transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-x-full"
+      enter-to-class="opacity-100 translate-x-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-x-0"
+      leave-to-class="opacity-0 translate-x-full"
+    >
+      <div v-if="showModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
+        <div class="absolute inset-0 cursor-pointer" @click="showModal = false"></div>
+        <div class="relative w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+          <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/20">
               <Users class="w-5 h-5" />
@@ -329,7 +352,8 @@ onMounted(load);
           </button>
         </div>
 
-        <form @submit.prevent="save" class="p-6 space-y-5">
+        <form @submit.prevent="save" class="flex flex-col h-full overflow-hidden">
+          <div class="flex-1 overflow-y-auto p-6 space-y-5">
           <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
             <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
           </div>
@@ -389,7 +413,8 @@ onMounted(load);
             </label>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          </div>
+          <div class="shrink-0 p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
             <button
               @click="showModal = false"
               type="button"
@@ -407,6 +432,7 @@ onMounted(load);
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </transition>
   </section>
 </template>

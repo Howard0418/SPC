@@ -21,22 +21,24 @@ public static class AttributeChartCalculator
 
     private static ControlChartResult CalculatePChart(List<AttributeDataPoint> data, ControlLimits configuredLimits)
     {
-        var validData = data.Where(d => d.InspectedQty.HasValue && d.InspectedQty > 0 && d.DefectQty.HasValue).ToList();
+        var chartData = data.Where(d => d.InspectedQty.HasValue && d.InspectedQty > 0 && d.DefectQty.HasValue).ToList();
+        var includedData = chartData.Where(d => !d.IsExcluded).ToList();
         
         double? pBar = null;
         double? nBar = null;
-        if (validData.Count > 0)
+        if (includedData.Count > 0)
         {
-            double totalDefects = validData.Sum(d => d.DefectQty!.Value);
-            double totalInspected = validData.Sum(d => d.InspectedQty!.Value);
+            double totalDefects = includedData.Sum(d => d.DefectQty!.Value);
+            double totalInspected = includedData.Sum(d => d.InspectedQty!.Value);
             pBar = totalDefects / totalInspected;
-            nBar = totalInspected / validData.Count;
+            nBar = totalInspected / includedData.Count;
         }
 
         var points = new List<Dictionary<string, object?>>();
         var spcPoints = new List<SpcDataPoint>();
+        var spcPointIndexes = new List<int>();
         
-        foreach (var d in validData)
+        foreach (var d in chartData)
         {
             double n = d.InspectedQty!.Value;
             double p = (double)d.DefectQty!.Value / n;
@@ -44,10 +46,14 @@ public static class AttributeChartCalculator
             double? ucl = pBar.HasValue ? pBar.Value + 3 * Math.Sqrt(pBar.Value * (1 - pBar.Value) / n) : null;
             double? lcl = pBar.HasValue ? Math.Max(0, pBar.Value - 3 * Math.Sqrt(pBar.Value * (1 - pBar.Value) / n)) : null;
 
-            var outOfControl = (ucl.HasValue && p > ucl.Value) || (lcl.HasValue && p < lcl.Value);
+            var outOfControl = !d.IsExcluded && ((ucl.HasValue && p > ucl.Value) || (lcl.HasValue && p < lcl.Value));
             
-            var spcPoint = new SpcDataPoint { MeasuredAt = d.MeasuredAt, Value = p, IsOutOfControl = outOfControl };
-            spcPoints.Add(spcPoint);
+            if (!d.IsExcluded)
+            {
+                var spcPoint = new SpcDataPoint { MeasuredAt = d.MeasuredAt, Value = p, IsOutOfControl = outOfControl };
+                spcPoints.Add(spcPoint);
+                spcPointIndexes.Add(points.Count);
+            }
             
             points.Add(new Dictionary<string, object?>
             {
@@ -58,7 +64,8 @@ public static class AttributeChartCalculator
                 { "lclStat", lcl },
                 { "outOfControl", outOfControl },
                 { "lotNo", d.LotNo },
-                { "operator", d.Operator }
+                { "operator", d.Operator },
+                { "isExcluded", d.IsExcluded }
             });
         }
 
@@ -69,10 +76,11 @@ public static class AttributeChartCalculator
         {
             WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = pBar, UCL = staticUcl, LCL = staticLcl });
             
-            for (int i = 0; i < points.Count; i++)
+            for (int i = 0; i < spcPoints.Count; i++)
             {
-                points[i]["violatedRules"] = spcPoints[i].ViolatedRules;
-                points[i]["outOfControl"] = spcPoints[i].IsOutOfControl;
+                var pointIndex = spcPointIndexes[i];
+                points[pointIndex]["violatedRules"] = spcPoints[i].ViolatedRules;
+                points[pointIndex]["outOfControl"] = spcPoints[i].IsOutOfControl;
             }
         }
 
@@ -87,14 +95,15 @@ public static class AttributeChartCalculator
 
     private static ControlChartResult CalculateNpChart(List<AttributeDataPoint> data, ControlLimits configuredLimits)
     {
-        var validData = data.Where(d => d.InspectedQty.HasValue && d.InspectedQty > 0 && d.DefectQty.HasValue).ToList();
+        var chartData = data.Where(d => d.InspectedQty.HasValue && d.InspectedQty > 0 && d.DefectQty.HasValue).ToList();
+        var includedData = chartData.Where(d => !d.IsExcluded).ToList();
         
         double? npBar = null;
         double? nBar = null;
-        if (validData.Count > 0)
+        if (includedData.Count > 0)
         {
-            npBar = validData.Average(d => d.DefectQty!.Value);
-            nBar = validData.Average(d => d.InspectedQty!.Value);
+            npBar = includedData.Average(d => d.DefectQty!.Value);
+            nBar = includedData.Average(d => d.InspectedQty!.Value);
         }
 
         double? pBar = nBar > 0 ? npBar / nBar : null;
@@ -104,7 +113,7 @@ public static class AttributeChartCalculator
         var spcPoints = new List<SpcDataPoint>();
         var points = new List<Dictionary<string, object?>>();
 
-        foreach (var d in validData)
+        foreach (var d in includedData)
         {
             double np = d.DefectQty!.Value;
             var outOfControl = (staticUcl.HasValue && np > staticUcl.Value) || (staticLcl.HasValue && np < staticLcl.Value);
@@ -116,19 +125,20 @@ public static class AttributeChartCalculator
             WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = npBar, UCL = staticUcl, LCL = staticLcl });
         }
 
-        for (int i = 0; i < validData.Count; i++)
+        var spcByMeasuredAt = spcPoints.ToDictionary(x => x.MeasuredAt);
+        foreach (var d in chartData)
         {
-            var d = validData[i];
-            var p = spcPoints[i];
+            var p = spcByMeasuredAt.GetValueOrDefault(d.MeasuredAt);
             points.Add(new Dictionary<string, object?>
             {
                 { "measuredAt", d.MeasuredAt },
-                { "value", p.Value },
+                { "value", d.DefectQty!.Value },
                 { "n", d.InspectedQty },
-                { "outOfControl", p.IsOutOfControl },
-                { "violatedRules", p.ViolatedRules },
+                { "outOfControl", p?.IsOutOfControl ?? false },
+                { "violatedRules", p?.ViolatedRules ?? new List<string>() },
                 { "lotNo", d.LotNo },
-                { "operator", d.Operator }
+                { "operator", d.Operator },
+                { "isExcluded", d.IsExcluded }
             });
         }
 
@@ -143,16 +153,17 @@ public static class AttributeChartCalculator
 
     private static ControlChartResult CalculateCChart(List<AttributeDataPoint> data, ControlLimits configuredLimits)
     {
-        var validData = data.Where(d => d.DefectCount.HasValue).ToList();
+        var chartData = data.Where(d => d.DefectCount.HasValue).ToList();
+        var includedData = chartData.Where(d => !d.IsExcluded).ToList();
         
-        double? cBar = validData.Count > 0 ? validData.Average(d => d.DefectCount!.Value) : null;
+        double? cBar = includedData.Count > 0 ? includedData.Average(d => d.DefectCount!.Value) : null;
         double? ucl = cBar.HasValue ? cBar.Value + 3 * Math.Sqrt(cBar.Value) : null;
         double? lcl = cBar.HasValue ? Math.Max(0, cBar.Value - 3 * Math.Sqrt(cBar.Value)) : null;
 
         var spcPoints = new List<SpcDataPoint>();
         var points = new List<Dictionary<string, object?>>();
 
-        foreach (var d in validData)
+        foreach (var d in includedData)
         {
             double c = d.DefectCount!.Value;
             var outOfControl = (ucl.HasValue && c > ucl.Value) || (lcl.HasValue && c < lcl.Value);
@@ -164,18 +175,19 @@ public static class AttributeChartCalculator
             WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = cBar, UCL = ucl, LCL = lcl });
         }
 
-        for (int i = 0; i < validData.Count; i++)
+        var spcByMeasuredAt = spcPoints.ToDictionary(x => x.MeasuredAt);
+        foreach (var d in chartData)
         {
-            var d = validData[i];
-            var p = spcPoints[i];
+            var p = spcByMeasuredAt.GetValueOrDefault(d.MeasuredAt);
             points.Add(new Dictionary<string, object?>
             {
                 { "measuredAt", d.MeasuredAt },
-                { "value", p.Value },
-                { "outOfControl", p.IsOutOfControl },
-                { "violatedRules", p.ViolatedRules },
+                { "value", d.DefectCount!.Value },
+                { "outOfControl", p?.IsOutOfControl ?? false },
+                { "violatedRules", p?.ViolatedRules ?? new List<string>() },
                 { "lotNo", d.LotNo },
-                { "operator", d.Operator }
+                { "operator", d.Operator },
+                { "isExcluded", d.IsExcluded }
             });
         }
 
@@ -190,22 +202,24 @@ public static class AttributeChartCalculator
 
     private static ControlChartResult CalculateUChart(List<AttributeDataPoint> data, ControlLimits configuredLimits)
     {
-        var validData = data.Where(d => d.UnitCount.HasValue && d.UnitCount > 0 && d.DefectCount.HasValue).ToList();
+        var chartData = data.Where(d => d.UnitCount.HasValue && d.UnitCount > 0 && d.DefectCount.HasValue).ToList();
+        var includedData = chartData.Where(d => !d.IsExcluded).ToList();
         
         double? uBar = null;
         double? nBar = null;
-        if (validData.Count > 0)
+        if (includedData.Count > 0)
         {
-            double totalDefects = validData.Sum(d => d.DefectCount!.Value);
-            double totalUnits = validData.Sum(d => d.UnitCount!.Value);
+            double totalDefects = includedData.Sum(d => d.DefectCount!.Value);
+            double totalUnits = includedData.Sum(d => d.UnitCount!.Value);
             uBar = totalDefects / totalUnits;
-            nBar = totalUnits / validData.Count;
+            nBar = totalUnits / includedData.Count;
         }
 
         var points = new List<Dictionary<string, object?>>();
         var spcPoints = new List<SpcDataPoint>();
+        var spcPointIndexes = new List<int>();
         
-        foreach (var d in validData)
+        foreach (var d in chartData)
         {
             double n = d.UnitCount!.Value;
             double u = (double)d.DefectCount!.Value / n;
@@ -213,8 +227,12 @@ public static class AttributeChartCalculator
             double? ucl = uBar.HasValue ? uBar.Value + 3 * Math.Sqrt(uBar.Value / n) : null;
             double? lcl = uBar.HasValue ? Math.Max(0, uBar.Value - 3 * Math.Sqrt(uBar.Value / n)) : null;
 
-            var outOfControl = (ucl.HasValue && u > ucl.Value) || (lcl.HasValue && u < lcl.Value);
-            spcPoints.Add(new SpcDataPoint { MeasuredAt = d.MeasuredAt, Value = u, IsOutOfControl = outOfControl });
+            var outOfControl = !d.IsExcluded && ((ucl.HasValue && u > ucl.Value) || (lcl.HasValue && u < lcl.Value));
+            if (!d.IsExcluded)
+            {
+                spcPoints.Add(new SpcDataPoint { MeasuredAt = d.MeasuredAt, Value = u, IsOutOfControl = outOfControl });
+                spcPointIndexes.Add(points.Count);
+            }
             
             points.Add(new Dictionary<string, object?>
             {
@@ -225,7 +243,8 @@ public static class AttributeChartCalculator
                 { "lclStat", lcl },
                 { "outOfControl", outOfControl },
                 { "lotNo", d.LotNo },
-                { "operator", d.Operator }
+                { "operator", d.Operator },
+                { "isExcluded", d.IsExcluded }
             });
         }
 
@@ -236,10 +255,11 @@ public static class AttributeChartCalculator
         {
             WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = uBar, UCL = staticUcl, LCL = staticLcl });
             
-            for (int i = 0; i < points.Count; i++)
+            for (int i = 0; i < spcPoints.Count; i++)
             {
-                points[i]["violatedRules"] = spcPoints[i].ViolatedRules;
-                points[i]["outOfControl"] = spcPoints[i].IsOutOfControl;
+                var pointIndex = spcPointIndexes[i];
+                points[pointIndex]["violatedRules"] = spcPoints[i].ViolatedRules;
+                points[pointIndex]["outOfControl"] = spcPoints[i].IsOutOfControl;
             }
         }
 

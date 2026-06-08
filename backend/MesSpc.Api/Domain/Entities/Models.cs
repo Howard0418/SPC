@@ -165,6 +165,7 @@ public class MeasurementBatch : BaseEntity<int>
     public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
     public string? OperatorName { get; set; }
     public SourceType SourceType { get; set; } = SourceType.Manual;
+    public bool IsExcluded { get; set; } = false;
     public List<MeasurementValue> Values { get; set; } = [];
 }
 
@@ -197,6 +198,7 @@ public class AlertEvent : BaseEntity<int>
     public AlertType AlertType { get; set; }
     public string Message { get; set; } = string.Empty;
     public Guid? UploadBatchId { get; set; }
+    public int? MeasurementBatchId { get; set; }
     public long? VariableMeasurementId { get; set; }
     public long? AttributeMeasurementId { get; set; }
     public bool IsAcknowledged { get; set; } = false;
@@ -336,6 +338,7 @@ public class UploadBatch : BaseEntity
     public int TotalRows { get; set; }
     public int ValidRows { get; set; }
     public int ErrorRows { get; set; }
+    public bool IsExcluded { get; set; } = false;
     public DateTime? ConfirmedAt { get; set; }
 }
 

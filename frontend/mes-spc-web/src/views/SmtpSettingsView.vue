@@ -166,7 +166,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto space-y-8">
+  <div class="w-full max-w-7xl mx-auto space-y-8">
     <!-- Header Banner -->
     <div class="p-8 rounded-3xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-700 text-white shadow-xl relative overflow-hidden">
       <div class="absolute right-0 top-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>

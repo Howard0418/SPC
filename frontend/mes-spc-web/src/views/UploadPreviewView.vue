@@ -285,7 +285,7 @@ onMounted(load);
       <!-- Back redirect button -->
       <div v-if="batch?.isConfirmed" class="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
         <router-link to="/spc" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold transition-all text-xs border border-cyan-500/20">
-          <ArrowLeft class="w-4 h-4" /> 返回 SPC 戰情室首頁
+          <ArrowLeft class="w-4 h-4" /> 返回 SPC 管制圖首頁
         </router-link>
       </div>
     </div>

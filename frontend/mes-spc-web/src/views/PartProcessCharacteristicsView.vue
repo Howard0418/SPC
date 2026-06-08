@@ -16,7 +16,8 @@ import {
   Sliders,
   Package,
   Layers,
-  Activity
+  Activity,
+  Info
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -257,6 +258,20 @@ onMounted(load);
       </div>
     </div>
 
+    <!-- Guide / Wizard Tip -->
+    <div class="p-5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-600 dark:text-amber-400 mt-0.5">
+        <Info class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-amber-900 dark:text-amber-300">模組指南：料號檢驗基準設定 (Part-Process Characteristics)</h4>
+        <p class="text-xs text-amber-700 dark:text-amber-400/80 mt-1.5 leading-relaxed">
+          這是整個 SPC 系統中最核心的設定。在此處，您將定義「哪一個產品料號」在「哪一站製程」時，必須檢驗「什麼項目」，並設定其專屬的「規格上下限 (USL/LSL)」。<br/>
+          💡 <strong>功能說明：</strong> 檢驗數據上傳時，系統會比對這裡設定的規格界限。若未在此處建立基準，該料號將無法進行 SPC 運算與判圖。
+        </p>
+      </div>
+    </div>
+
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">
       <AlertTriangle class="w-6 h-6 flex-shrink-0 text-red-500" />
@@ -320,23 +335,20 @@ onMounted(load);
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-              <th class="py-4 px-6">ID</th>
-              <th class="py-4 px-6">產品料號</th>
-              <th class="py-4 px-6">工站製程</th>
-              <th class="py-4 px-6">檢驗特性 (單位)</th>
-              <th class="py-4 px-6 text-center">規格界限 (LSL ~ USL)</th>
-              <th class="py-4 px-6 text-center">抽樣(N)</th>
-              <th class="py-4 px-6">套用管制圖 / 判定規則</th>
+              <th class="py-4 px-6 w-16 text-center">ID</th>
+              <th class="py-4 px-6">檢驗站點 (Part & Process)</th>
+              <th class="py-4 px-6">檢驗項目與規格界限</th>
+              <th class="py-4 px-6">套用管制規則</th>
               <th class="py-4 px-6 text-center">狀態</th>
               <th class="py-4 px-6 text-right">操作</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="9" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
+              <td colspan="6" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="9" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
+              <td colspan="6" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
             </tr>
             <tr
               v-else
@@ -344,45 +356,58 @@ onMounted(load);
               :key="item.id"
               class="hover:bg-amber-50/50 dark:hover:bg-slate-800/50 transition-colors group"
             >
-              <td class="py-4 px-6 font-mono text-xs text-slate-400 dark:text-slate-500">#{{ item.id }}</td>
-              <td class="py-4 px-6 font-bold text-slate-900 dark:text-white">
-                <div class="flex items-center gap-1.5">
-                  <Package class="w-4 h-4 text-blue-500 flex-shrink-0" />
-                  <span>{{ item.part?.partNo || `Part #${item.partId}` }}</span>
+              <td class="py-5 px-6 font-mono text-xs text-slate-400 dark:text-slate-500 text-center">#{{ item.id }}</td>
+              <td class="py-5 px-6">
+                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                  <Package class="w-4 h-4 text-blue-500" />
+                  {{ item.part?.partNo || `Part #${item.partId}` }}
+                  <span class="text-slate-500 text-xs font-normal ml-1">{{ item.part?.partName }}</span>
                 </div>
-                <div class="text-xs text-slate-500 font-normal mt-0.5">{{ item.part?.partName }}</div>
-              </td>
-              <td class="py-4 px-6 font-semibold text-slate-800 dark:text-slate-200 text-xs">
-                <div class="flex items-center gap-1.5">
-                  <Layers class="w-3.5 h-3.5 text-cyan-500 flex-shrink-0" />
-                  <span>{{ item.process?.processCode || `Proc #${item.processId}` }}</span>
+                <div class="flex items-center gap-2 mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <Layers class="w-3.5 h-3.5 text-cyan-500" />
+                  {{ item.process?.processCode || `Proc #${item.processId}` }}
+                  <span class="text-slate-400 font-normal">- {{ item.process?.processName }}</span>
                 </div>
-                <div class="text-xs text-slate-500 font-normal mt-0.5">{{ item.process?.processName }}</div>
               </td>
-              <td class="py-4 px-6">
-                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Sliders class="w-3.5 h-3.5 text-pink-500 flex-shrink-0" />
+              <td class="py-5 px-6">
+                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-sm">
+                  <Sliders class="w-4 h-4 text-pink-500 flex-shrink-0" />
                   <span>{{ item.characteristic?.characteristicName || `Char #${item.characteristicId}` }}</span>
+                  <span class="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">[{{ item.characteristic?.characteristicCode }}]</span>
+                  <span v-if="item.characteristic?.unit" class="text-xs text-slate-400 font-normal">({{ item.characteristic?.unit }})</span>
+                  <span v-if="item.isRequired" class="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800 ml-1 tracking-wider">必檢</span>
                 </div>
-                <div class="text-xs text-slate-500 font-mono mt-0.5">代號: {{ item.characteristic?.characteristicCode }} ({{ item.characteristic?.unit || '無單位' }})</div>
-              </td>
-              <td class="py-4 px-6 text-center font-mono text-xs font-bold">
-                <span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700">
-                  {{ item.lsl !== null ? item.lsl : '-∞' }} ~ {{ item.usl !== null ? item.usl : '+∞' }}
-                </span>
-              </td>
-              <td class="py-4 px-6 text-center font-mono font-bold text-amber-600 dark:text-amber-400 text-xs">
-                N = {{ item.sampleSize || 1 }}
-              </td>
-              <td class="py-4 px-6 text-xs space-y-1">
-                <div v-if="item.chartTypeId" class="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                  <Activity class="w-3.5 h-3.5 flex-shrink-0" /> {{ chartTypeMap[item.chartTypeId] || `Chart #${item.chartTypeId}` }}
+                <div class="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                  <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm">
+                    <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold border-r border-slate-200 dark:border-slate-700">LSL</span>
+                    <span class="px-2 py-1 text-slate-700 dark:text-slate-300 font-bold">{{ item.lsl !== null ? item.lsl : '-∞' }}</span>
+                  </div>
+                  <div v-if="item.targetValue !== null" class="flex items-center bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-md overflow-hidden shadow-sm">
+                    <span class="px-2 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-500 font-bold border-r border-amber-200 dark:border-amber-800">TARGET</span>
+                    <span class="px-2 py-1 text-amber-700 dark:text-amber-400 font-bold">{{ item.targetValue }}</span>
+                  </div>
+                  <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm">
+                    <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold border-r border-slate-200 dark:border-slate-700">USL</span>
+                    <span class="px-2 py-1 text-slate-700 dark:text-slate-300 font-bold">{{ item.usl !== null ? item.usl : '+∞' }}</span>
+                  </div>
+                  <span class="px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-bold shadow-sm">
+                    N={{ item.sampleSize || 1 }}
+                  </span>
                 </div>
-                <div v-if="item.ruleGroupId" class="text-slate-500 dark:text-slate-400">
-                  規則組: {{ ruleGroupMap[item.ruleGroupId] || `Rule #${item.ruleGroupId}` }}
+              </td>
+              <td class="py-5 px-6 text-xs space-y-2">
+                <div class="flex items-center gap-1.5">
+                  <Activity class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+                  <span v-if="item.chartTypeId" class="font-bold text-indigo-600 dark:text-indigo-400">{{ chartTypeMap[item.chartTypeId] || `Chart #${item.chartTypeId}` }}</span>
+                  <span v-else class="text-slate-400 italic">自動判斷管制圖</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                  <AlertTriangle class="w-3 h-3 flex-shrink-0 opacity-70" />
+                  <span v-if="item.ruleGroupId" class="font-semibold">{{ ruleGroupMap[item.ruleGroupId] || `Rule #${item.ruleGroupId}` }}</span>
+                  <span v-else class="italic opacity-80">預設判定規則</span>
                 </div>
               </td>
-              <td class="py-4 px-6 text-center">
+              <td class="py-5 px-6 text-center">
                 <span
                   :class="[
                     'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border tracking-wide',
@@ -395,7 +420,7 @@ onMounted(load);
                   {{ item.isEnabled ? '啟用中' : '已停用' }}
                 </span>
               </td>
-              <td class="py-4 px-6 text-right space-x-2">
+              <td class="py-5 px-6 text-right space-x-2">
                 <button
                   @click="openEditModal(item)"
                   type="button"
@@ -423,10 +448,19 @@ onMounted(load);
       </div>
     </div>
 
-    <!-- Modal Dialog (Add / Edit) -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all my-8">
-        <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80">
+    <!-- Slide-over Panel (Add / Edit) -->
+    <transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-x-full"
+      enter-to-class="opacity-100 translate-x-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-x-0"
+      leave-to-class="opacity-0 translate-x-full"
+    >
+      <div v-if="showModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
+        <div class="absolute inset-0 cursor-pointer" @click="showModal = false"></div>
+        <div class="relative w-full max-w-2xl h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+          <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-amber-600 text-white rounded-xl shadow-md shadow-amber-500/20">
               <FolderTree class="w-5 h-5" />
@@ -444,7 +478,8 @@ onMounted(load);
           </button>
         </div>
 
-        <form @submit.prevent="save" class="p-6 space-y-5">
+        <form @submit.prevent="save" class="flex flex-col h-full overflow-hidden">
+          <div class="flex-1 overflow-y-auto p-6 space-y-5">
           <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
             <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
           </div>
@@ -607,7 +642,8 @@ onMounted(load);
             </div>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          </div>
+          <div class="shrink-0 p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
             <button
               @click="showModal = false"
               type="button"
@@ -625,6 +661,7 @@ onMounted(load);
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </transition>
   </section>
 </template>

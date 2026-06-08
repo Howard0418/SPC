@@ -33,6 +33,21 @@ public class AlertsController(AppDbContext db, IEmailNotificationService emailSe
         return Ok(alert);
     }
 
+    [HttpPost("{id:int}/handle")]
+    public async Task<IActionResult> Handle(int id, [FromBody] HandleAlertReq req)
+    {
+        var alert = await db.AlertEvents.FindAsync(id);
+        if (alert is null) return NotFound();
+        
+        alert.IsAcknowledged = true;
+        alert.Status = "Closed";
+        alert.RootCause = req.RootCause;
+        alert.CorrectiveAction = req.CorrectiveAction;
+        
+        await db.SaveChangesAsync();
+        return Ok(alert);
+    }
+
     [HttpPost("test-email")]
     public async Task<IActionResult> TestEmail([FromQuery] string? email)
     {
@@ -66,6 +81,7 @@ public class AlertsController(AppDbContext db, IEmailNotificationService emailSe
 }
 
 public record SimulateAlertReq(int PartId, int ProcessId, double ActualValue, string AlertType, string? Message, string? TargetEmail);
+public record HandleAlertReq(string RootCause, string CorrectiveAction);
 
 [ApiController]
 [Route("api/v1/dashboard")]

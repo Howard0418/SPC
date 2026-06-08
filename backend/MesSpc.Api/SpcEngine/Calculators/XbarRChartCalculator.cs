@@ -21,11 +21,54 @@ public static class XbarRChartCalculator
         var nRef = expectedSampleSize > 0 ? expectedSampleSize : subgroups.First().N;
         if (nRef < 2) nRef = subgroups.First().N;
         
-        var validSubgroups = subgroups.Where(x => x.N == nRef).ToList();
+        var includedSubgroups = subgroups.Where(x => !x.IsExcluded).ToList();
+        var validSubgroups = includedSubgroups.Where(x => x.N == nRef).ToList();
+        if (validSubgroups.Count == 0 && includedSubgroups.Count > 0)
+        {
+            validSubgroups = includedSubgroups;
+            nRef = validSubgroups.First().N;
+        }
         if (validSubgroups.Count == 0)
         {
-            validSubgroups = subgroups;
-            nRef = validSubgroups.First().N;
+            var xbarPointsEmpty = subgroups.Select(x => new
+            {
+                x.MeasuredAt,
+                xbar = x.Mean,
+                range = x.Range,
+                n = x.N,
+                outOfSpec = false,
+                outOfControl = false,
+                outOfControlXbar = false,
+                outOfControlR = false,
+                violatedRules = new List<string>(),
+                lotNo = x.LotNo,
+                serialNo = x.SerialNo,
+                @operator = x.Operator,
+                isExcluded = x.IsExcluded,
+                rootCause = x.RootCause,
+                correctiveAction = x.CorrectiveAction,
+                measurementBatchId = x.MeasurementBatchId
+            }).ToList();
+
+            var rPointsEmpty = subgroups.Select(x => new
+            {
+                x.MeasuredAt,
+                value = x.Range,
+                outOfControl = false,
+                isExcluded = x.IsExcluded
+            }).ToList();
+
+            return new ControlChartResult
+            {
+                ChartType = "XBAR_R",
+                Limits = configuredLimits,
+                StatControlLimits = new { xbarControl = (object?)null, rControl = (object?)null },
+                SubgroupSize = nRef,
+                SubgroupSizeNote = "全部子組皆已標記為不列入計算，管制線未重新估算。",
+                ChartData = new { points = xbarPointsEmpty },
+                SecondaryChartData = new { points = rPointsEmpty },
+                Capability = null
+            };
         }
 
         bool useMrMethod = false;
@@ -122,30 +165,31 @@ public static class XbarRChartCalculator
             rControl = new { cl = rBar, ucl = uclRrange, lcl = lclRrange, n = nRef, d3, d4, rBar };
         }
 
-        var spcPoints = validSubgroups.Select(x => new SpcDataPoint
-        {
-            MeasuredAt = x.MeasuredAt,
-            Value = x.Mean
-        }).ToList();
-
-        if (uclXbar.HasValue && lclXbar.HasValue && nRef >= 2)
+        // Only evaluate rules on non-excluded points
+        var evalPoints = subgroups.Where(x => !x.IsExcluded).Select(x => new SpcDataPoint { MeasuredAt = x.MeasuredAt, Value = x.Mean }).ToList();
+        if (uclXbar.HasValue && lclXbar.HasValue && nRef >= 2 && validSubgroups.Count > 0)
         {
             var statLimits = new ControlLimits { CL = validSubgroups.Average(x => x.Mean), UCL = uclXbar, LCL = lclXbar };
-            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(spcPoints, statLimits);
+            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(evalPoints, statLimits);
         }
+        
+        // Merge rules back
+        var evalDict = evalPoints.ToDictionary(x => x.MeasuredAt);
 
         var xbarPoints = new List<object>();
         var rPoints = new List<object>();
-        for (int i = 0; i < validSubgroups.Count; i++)
+        for (int i = 0; i < subgroups.Count; i++)
         {
-            var x = validSubgroups[i];
-            var p = spcPoints[i];
+            var x = subgroups[i];
+            var p = evalDict.GetValueOrDefault(x.MeasuredAt);
             var xbar = x.Mean;
             var range = x.Range;
             var oos = (configuredLimits.USL.HasValue && xbar > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && xbar < configuredLimits.LSL.Value);
-            var oocStat = p.IsOutOfControl; // Provided by WesternElectricRulesValidator for Xbar
+            var oocStat = p?.IsOutOfControl ?? false; 
             var oocR = uclRrange.HasValue && lclRrange.HasValue && (range > uclRrange.Value || range < lclRrange.Value);
+            var outOfSpec = !x.IsExcluded && (x.OutOfSpec || oos);
+            var outOfControl = !x.IsExcluded && (x.OutOfControl || oocStat || oocR);
 
             xbarPoints.Add(new
             {
@@ -153,19 +197,23 @@ public static class XbarRChartCalculator
                 xbar,
                 range,
                 n = x.N,
-                outOfSpec = oos,
-                outOfControl = oocStat || oocR,
+                outOfSpec,
+                outOfControl,
                 outOfControlXbar = oocStat,
-                outOfControlR = oocR,
-                violatedRules = p.ViolatedRules,
+                outOfControlR = !x.IsExcluded && oocR,
+                violatedRules = p?.ViolatedRules ?? new List<string>(),
                 lotNo = x.LotNo,
                 serialNo = x.SerialNo,
-                @operator = x.Operator
+                @operator = x.Operator,
+                isExcluded = x.IsExcluded,
+                rootCause = x.RootCause,
+                correctiveAction = x.CorrectiveAction,
+                measurementBatchId = x.MeasurementBatchId
             });
-            rPoints.Add(new { x.MeasuredAt, value = range, outOfControl = oocR });
+            rPoints.Add(new { x.MeasuredAt, value = range, outOfControl = oocR, isExcluded = x.IsExcluded });
         }
 
-        var capability = ProcessCapabilityCalculator.Calculate(subgroups, configuredLimits.USL, configuredLimits.LSL);
+        var capability = ProcessCapabilityCalculator.Calculate(validSubgroups, configuredLimits.USL, configuredLimits.LSL);
 
         return new ControlChartResult
         {

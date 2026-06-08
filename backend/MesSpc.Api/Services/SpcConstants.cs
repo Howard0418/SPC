@@ -52,4 +52,17 @@ public static class SpcConstants
         c4 = row.c4;
         return true;
     }
+
+    public static bool TryGetXbarSFactors(int subgroupSize, out double a3, out double b3, out double b4)
+    {
+        a3 = b3 = b4 = 0;
+        if (subgroupSize < 2 || !Table.TryGetValue(subgroupSize, out var row) || row.c4 <= 0) return false;
+
+        var c4 = row.c4;
+        var factor = 3 * Math.Sqrt(1 - c4 * c4) / c4;
+        a3 = 3 / (c4 * Math.Sqrt(subgroupSize));
+        b3 = Math.Max(0, 1 - factor);
+        b4 = 1 + factor;
+        return true;
+    }
 }

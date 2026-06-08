@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { api, getApiErrorMessage } from '../api/client.js';
-import { Plus, Edit2, Trash2, Save, X, Server, Layers, Box } from 'lucide-vue-next';
+import { Plus, Edit2, Trash2, Save, X, Server, Layers, Box, Info } from 'lucide-vue-next';
 
 const lines = ref([]);
 const tanks = ref([]);
@@ -131,6 +131,20 @@ const cancelEdit = (list, item, index) => {
       <div v-if="errorMsg" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-bold border border-red-200">{{ errorMsg }}</div>
       <div v-if="successMsg" class="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg text-sm font-bold border border-emerald-200">{{ successMsg }}</div>
     </header>
+
+    <!-- Guide / Wizard Tip -->
+    <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5">
+        <Info class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：追溯主檔設定 (Traceability Master)</h4>
+        <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
+          此模組用於設定工廠內部的「產線結構與追溯階層」。在自動化匯入 SPC 數據時，系統會根據這裡設定的「產線 (Line) -> 槽體 (Tank) -> 槽位 (Slot)」來將檢驗數據精準歸類到具體的生產位置。<br/>
+          💡 <strong>操作建議：</strong> 請由左至右依序建立資料，先點選左側的「產線」，再於中間建立該產線下的「槽體」，最後在右側建立對應的「槽位」。
+        </p>
+      </div>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-[500px]">
       

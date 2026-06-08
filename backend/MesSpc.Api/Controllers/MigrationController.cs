@@ -8,8 +8,15 @@ namespace MesSpc.Api.Controllers;
 
 [ApiController]
 [Route("api/v2/migration")]
-public class MigrationController(AppDbContext dbContext) : ControllerBase
+public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env) : ControllerBase
 {
+    private IActionResult? RequireDevelopment()
+    {
+        return env.IsDevelopment()
+            ? null
+            : StatusCode(StatusCodes.Status403Forbidden, new { message = "Migration endpoints only allowed in Development." });
+    }
+
     /// <summary>
     /// 清除大中小分類（ControlChartGroups/Categories/Types）
     /// 以及對應的 PartProcessCharacteristics / QualityCharacteristics / Machines / Processes / Parts
@@ -18,6 +25,9 @@ public class MigrationController(AppDbContext dbContext) : ControllerBase
     [HttpDelete("reset-chart-hierarchy")]
     public async Task<IActionResult> ResetChartHierarchy()
     {
+        var devOnly = RequireDevelopment();
+        if (devOnly is not null) return devOnly;
+
         // 1. 清除 SPC 計算結果
         var spcResults = dbContext.SpcCalculationResults.ToList();
         dbContext.SpcCalculationResults.RemoveRange(spcResults);
@@ -96,6 +106,9 @@ public class MigrationController(AppDbContext dbContext) : ControllerBase
     [HttpPost("seed-sample-measurements")]
     public async Task<IActionResult> SeedSampleMeasurements([FromQuery] int ppcId, [FromQuery] int count = 25)
     {
+        var devOnly = RequireDevelopment();
+        if (devOnly is not null) return devOnly;
+
         var ppc = await dbContext.PartProcessCharacteristics
             .Include(x => x.Characteristic)
             .FirstOrDefaultAsync(x => x.Id == ppcId);
@@ -183,6 +196,9 @@ public class MigrationController(AppDbContext dbContext) : ControllerBase
     [HttpDelete("seed-sample-measurements")]
     public async Task<IActionResult> ClearSeedMeasurements([FromQuery] string batchId)
     {
+        var devOnly = RequireDevelopment();
+        if (devOnly is not null) return devOnly;
+
         if (!Guid.TryParse(batchId, out var batchGuid))
             return BadRequest(new { success = false, message = "batchId 格式不正確，應為 GUID" });
 
@@ -203,6 +219,9 @@ public class MigrationController(AppDbContext dbContext) : ControllerBase
     public async Task<IActionResult> SyncLegacySpcData([FromQuery] string sourceHost = "172.16.110.15", [FromQuery] string sourceDb = "pmr1")
 
     {
+        var devOnly = RequireDevelopment();
+        if (devOnly is not null) return devOnly;
+
         var ppcList = await dbContext.PartProcessCharacteristics
             .Include(x => x.Part)
             .Include(x => x.Process)
@@ -303,6 +322,9 @@ public class MigrationController(AppDbContext dbContext) : ControllerBase
     [HttpPost("import-custom-spc")]
     public async Task<IActionResult> ImportCustomSpc(IFormFile file)
     {
+        var devOnly = RequireDevelopment();
+        if (devOnly is not null) return devOnly;
+
         if (file == null || file.Length == 0)
         {
             return BadRequest(new { success = false, message = "請提供上傳的 Excel 檔案" });

@@ -410,3 +410,4 @@ D:\SPC\backend\MesSpc.Api\bin\Release\net10.0\publish\appsettings.json
 D:\SPC\backend\MesSpc.Api\bin\Release\net10.0\publish\MesSpc.Api.deps.json
 D:\SPC\backend\MesSpc.Api\bin\Release\net10.0\publish\MesSpc.Api.runtimeconfig.json
 D:\SPC\backend\MesSpc.Api\bin\Release\net10.0\publish\MesSpc.Api.staticwebassets.endpoints.json
+D:\SPC\backend\MesSpc.Api\bin\Release\net10.0\Scalar.AspNetCore.dll

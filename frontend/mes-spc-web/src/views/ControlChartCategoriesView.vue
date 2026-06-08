@@ -13,7 +13,8 @@ import {
   XCircle,
   AlertTriangle,
   RefreshCw,
-  FolderTree
+  FolderTree,
+  Info
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -198,6 +199,19 @@ onMounted(load);
         >
           <Plus class="w-4 h-4" /> 新增類別
         </button>
+      </div>
+    </div>
+
+    <!-- Guide / Wizard Tip -->
+    <div class="p-5 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-900/20 border border-cyan-100 dark:border-cyan-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-cyan-100 dark:bg-cyan-900/50 rounded-xl text-cyan-600 dark:text-cyan-400 mt-0.5">
+        <Info class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-cyan-900 dark:text-cyan-300">模組指南：管制圖類別主檔 (Control Chart Categories)</h4>
+        <p class="text-xs text-cyan-700 dark:text-cyan-400/80 mt-1.5 leading-relaxed">
+          此模組用於設定 SPC 系統的「中分類」資料，歸屬於「大群組」之下。
+        </p>
       </div>
     </div>
 

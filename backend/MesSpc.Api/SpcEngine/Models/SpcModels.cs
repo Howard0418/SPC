@@ -14,6 +14,10 @@ public record SpcDataPoint
     public int? TankId { get; init; }
     public int? SlotId { get; init; }
     public string? SideCode { get; init; }
+    public bool IsExcluded { get; init; }
+    public string? RootCause { get; init; }
+    public string? CorrectiveAction { get; init; }
+    public int? MeasurementBatchId { get; init; }
 }
 
 public record Subgroup
@@ -31,6 +35,12 @@ public record Subgroup
     public int? TankId { get; init; }
     public int? SlotId { get; init; }
     public string? SideCode { get; init; }
+    public bool IsExcluded { get; init; }
+    public bool OutOfSpec { get; init; }
+    public bool OutOfControl { get; init; }
+    public string? RootCause { get; init; }
+    public string? CorrectiveAction { get; init; }
+    public int? MeasurementBatchId { get; init; }
 }
 
 public record AttributeDataPoint
@@ -49,4 +59,5 @@ public record AttributeDataPoint
     public int? TankId { get; init; }
     public int? SlotId { get; init; }
     public string? SideCode { get; init; }
+    public bool IsExcluded { get; init; }
 }

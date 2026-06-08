@@ -20,6 +20,7 @@ import PartProcessCharacteristicsView from "../views/PartProcessCharacteristicsV
 import ControlChartGroupsView from "../views/ControlChartGroupsView.vue";
 import ControlChartCategoriesView from "../views/ControlChartCategoriesView.vue";
 import ControlChartTypesView from "../views/ControlChartTypesView.vue";
+import SpcRuleGroupsView from "../views/SpcRuleGroupsView.vue";
 import VariableUploadView from "../views/VariableUploadView.vue";
 import AttributeUploadView from "../views/AttributeUploadView.vue";
 import UploadPreviewView from "../views/UploadPreviewView.vue";
@@ -55,6 +56,7 @@ const routes = [
   { path: "/control-chart-groups", component: ControlChartGroupsView },
   { path: "/control-chart-categories", component: ControlChartCategoriesView },
   { path: "/control-chart-types", component: ControlChartTypesView },
+  { path: "/spc-rule-groups", component: SpcRuleGroupsView },
   { path: "/uploads/variable", component: VariableUploadView },
   { path: "/uploads/attribute", component: AttributeUploadView },
   { path: "/uploads/:batchId/preview", component: UploadPreviewView },
@@ -63,7 +65,9 @@ const routes = [
   { path: "/settings/smtp", component: SmtpSettingsView },
   { path: "/operators", component: OperatorsView },
   { path: "/genealogy", component: GenealogyView },
-  { path: "/traceability-master", component: TraceabilityMasterView }
+  { path: "/traceability-master", component: TraceabilityMasterView },
+  { path: "/guide", component: () => import("../views/SystemGuideView.vue") },
+  { path: "/sitemap", component: () => import("../views/SiteMapView.vue") }
 ];
 
 const router = createRouter({

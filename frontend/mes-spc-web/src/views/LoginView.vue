@@ -1,19 +1,18 @@
 <script setup>
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "axios";
+import { api } from "../api/client";
 
 const route = useRoute();
 const router = useRouter();
 const username = ref("demo");
 const password = ref("demo123");
 const err = ref("");
-const baseURL = import.meta.env.DEV ? "/api/v1" : import.meta.env.VITE_API_BASE || "http://localhost:5243/api/v1";
 
 const submit = async () => {
   err.value = "";
   try {
-    const { data } = await axios.post(`${baseURL}/auth/login`, {
+    const { data } = await api.post("/v1/auth/login", {
       username: username.value,
       password: password.value
     });

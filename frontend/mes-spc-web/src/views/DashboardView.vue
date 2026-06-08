@@ -301,7 +301,7 @@ onBeforeUnmount(() => {
             <Zap class="w-4 h-4 text-blue-600" /> 快速匯入計量數據
           </button>
           <button @click="router.push('/spc')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500/40 text-white font-bold hover:bg-indigo-500/60 border border-white/20 transition-all text-sm backdrop-blur-md">
-            <Activity class="w-4 h-4" /> 開啟 SPC 戰情室
+            <Activity class="w-4 h-4" /> 開啟 SPC 管制圖
           </button>
         </div>
       </div>

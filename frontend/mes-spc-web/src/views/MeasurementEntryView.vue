@@ -6,23 +6,33 @@ import {
   CheckCircle2,
   AlertTriangle,
   User,
-  Calendar,
-  Hash,
-  ArrowRight,
+  Info,
   RefreshCw,
-  Info
+  Scan,
+  MonitorCheck,
+  ArrowRight,
+  Settings
 } from "lucide-vue-next";
 
-// Form State
+// Master Data
 const products = ref([]);
 const stations = ref([]);
 const inspectionItems = ref([]);
 const mappings = ref([]);
 
-const selectedProductId = ref("");
-const selectedStationId = ref("");
-const selectedItemId = ref("");
+// Local Binding State
+const boundStationId = ref(null);
+const showBindModal = ref(false);
 
+// Work Order & Part State
+const inputWoNo = ref("");
+const selectedWorkOrder = ref(null);
+const selectedProductId = ref(null);
+const selectedProductName = ref("");
+const woLoading = ref(false);
+
+// Measurement Entry State
+const selectedItemId = ref("");
 const payload = ref({
   batchNo: "",
   productId: null,
@@ -40,21 +50,64 @@ const submitting = ref(false);
 const error = ref("");
 const successResult = ref(null);
 
+// Soft Hold State
+const softHoldActive = ref(false);
+const activeAlerts = ref([]);
+const handleForm = ref({ rootCause: "", correctiveAction: "" });
+const handlingAlerts = ref(false);
+
 // Inputs refs for Enter tabbing
 const inputRefs = ref([]);
-
-// Set input element ref dynamically
-const setInputRef = (el, index) => {
-  if (el) {
-    inputRefs.value[index] = el;
-  }
-};
+const setInputRef = (el, index) => { if (el) inputRefs.value[index] = el; };
 
 onMounted(async () => {
-  // Initialize date & auto batch no
   resetForm();
   await loadMetadata();
+  checkBinding();
 });
+
+function checkBinding() {
+  const saved = localStorage.getItem("spc_bound_station_id");
+  if (saved) {
+    boundStationId.value = Number(saved);
+  } else {
+    showBindModal.value = true;
+  }
+}
+
+function saveBinding() {
+  if (boundStationId.value) {
+    localStorage.setItem("spc_bound_station_id", boundStationId.value);
+    showBindModal.value = false;
+  }
+}
+
+const boundStationName = computed(() => {
+  if (!boundStationId.value || stations.value.length === 0) return "尚未綁定";
+  const st = stations.value.find(s => s.id === boundStationId.value);
+  return st ? st.stationName : "未知工站";
+});
+
+async function loadMetadata() {
+  loading.value = true;
+  error.value = "";
+  try {
+    const [resProducts, resStations, resItems, resMappings] = await Promise.all([
+      api.get("/products"),
+      api.get("/stations"),
+      api.get("/inspection-items"),
+      api.get("/product-station-items")
+    ]);
+    products.value = resProducts.data || [];
+    stations.value = resStations.data || [];
+    inspectionItems.value = resItems.data || [];
+    mappings.value = resMappings.data || [];
+  } catch (e) {
+    error.value = "載入主檔資料失敗：" + getApiErrorMessage(e);
+  } finally {
+    loading.value = false;
+  }
+}
 
 function resetForm() {
   const now = new Date();
@@ -72,64 +125,73 @@ function resetForm() {
     workOrderId: null,
     lotNo: "",
     serialNo: "",
-    measuredAt: new Date().toISOString().substring(0, 16), // datetime-local format
-    operatorName: payload.value.operatorName || "", // retain operator name for ease
+    measuredAt: new Date().toISOString().substring(0, 16),
+    operatorName: payload.value.operatorName || "", 
     values: []
   };
   
-  selectedProductId.value = "";
-  selectedStationId.value = "";
+  inputWoNo.value = "";
+  selectedWorkOrder.value = null;
+  selectedProductId.value = null;
+  selectedProductName.value = "";
   selectedItemId.value = "";
   successResult.value = null;
   error.value = "";
 }
 
-async function loadMetadata() {
-  loading.value = true;
+async function fetchWorkOrder() {
+  if (!inputWoNo.value.trim() || !boundStationId.value) return;
+  woLoading.value = true;
   error.value = "";
+  successResult.value = null;
   try {
-    const [resProducts, resStations, resItems, resMappings] = await Promise.all([
-      api.get("/products"),
-      api.get("/stations"),
-      api.get("/inspection-items"),
-      api.get("/product-station-items")
-    ]);
-
-    products.value = resProducts.data || [];
-    stations.value = resStations.data || [];
-    inspectionItems.value = resItems.data || [];
-    mappings.value = resMappings.data || [];
+    const res = await api.get(`/v2/work-orders?workOrderNo=${encodeURIComponent(inputWoNo.value.trim())}`);
+    const wos = res.data;
+    if (wos && wos.length > 0) {
+      selectedWorkOrder.value = wos[0];
+      selectedProductId.value = wos[0].productId;
+      
+      const p = products.value.find(x => x.id === selectedProductId.value);
+      selectedProductName.value = p ? `[${p.productCode}] ${p.productName}` : "未知料號";
+      
+      payload.value.workOrderId = selectedWorkOrder.value.id;
+      payload.value.productId = selectedProductId.value;
+      payload.value.stationId = boundStationId.value;
+      payload.value.lotNo = selectedWorkOrder.value.workOrderNo;
+      
+      // Auto-select item if only one
+      if (filteredItems.value.length === 1) {
+        selectedItemId.value = filteredItems.value[0].id;
+      } else {
+        selectedItemId.value = "";
+      }
+    } else {
+      error.value = `找不到工單號碼: ${inputWoNo.value}`;
+      selectedWorkOrder.value = null;
+      selectedProductId.value = null;
+    }
   } catch (e) {
-    error.value = "載入主檔資料失敗：" + getApiErrorMessage(e);
+    error.value = "查詢工單失敗：" + getApiErrorMessage(e);
   } finally {
-    loading.value = false;
+    woLoading.value = false;
   }
 }
 
-// Cascading computed properties
-const filteredStations = computed(() => {
-  if (!selectedProductId.value) return [];
-  const activeStationIds = mappings.value
-    .filter(m => m.productId === Number(selectedProductId.value) && m.isActive)
-    .map(m => m.stationId);
-  return stations.value.filter(s => activeStationIds.includes(s.id) && s.isActive);
-});
-
 const filteredItems = computed(() => {
-  if (!selectedProductId.value || !selectedStationId.value) return [];
+  if (!selectedProductId.value || !boundStationId.value) return [];
   const activeItemIds = mappings.value
     .filter(m => m.productId === Number(selectedProductId.value) && 
-                 m.stationId === Number(selectedStationId.value) && 
+                 m.stationId === Number(boundStationId.value) && 
                  m.isActive)
     .map(m => m.inspectionItemId);
   return inspectionItems.value.filter(i => activeItemIds.includes(i.id) && i.isActive);
 });
 
 const selectedMapping = computed(() => {
-  if (!selectedProductId.value || !selectedStationId.value || !selectedItemId.value) return null;
+  if (!selectedProductId.value || !boundStationId.value || !selectedItemId.value) return null;
   return mappings.value.find(m => 
     m.productId === Number(selectedProductId.value) && 
-    m.stationId === Number(selectedStationId.value) && 
+    m.stationId === Number(boundStationId.value) && 
     m.inspectionItemId === Number(selectedItemId.value)
   );
 });
@@ -139,15 +201,9 @@ const selectedItemDetails = computed(() => {
   return inspectionItems.value.find(i => i.id === Number(selectedItemId.value));
 });
 
-const sampleSize = computed(() => {
-  return selectedMapping.value ? selectedMapping.value.sampleSize : 1;
-});
+const sampleSize = computed(() => selectedMapping.value ? selectedMapping.value.sampleSize : 1);
 
-// Watch cascading dropdowns and build payload values list
-watch([selectedProductId, selectedStationId, selectedItemId], () => {
-  payload.value.productId = selectedProductId.value ? Number(selectedProductId.value) : null;
-  payload.value.stationId = selectedStationId.value ? Number(selectedStationId.value) : null;
-
+watch(selectedItemId, () => {
   if (selectedItemId.value) {
     inputRefs.value = [];
     payload.value.values = Array.from({ length: sampleSize.value }, (_, i) => ({
@@ -160,7 +216,6 @@ watch([selectedProductId, selectedStationId, selectedItemId], () => {
   }
 });
 
-// Real-time specs checker
 function checkOutOfSpec(value) {
   if (value === null || value === undefined || value === "") return false;
   const numVal = Number(value);
@@ -174,24 +229,18 @@ function checkOutOfSpec(value) {
   return oosUpper || oosLower;
 }
 
-// Enter-key navigation
 function handleEnter(index) {
   if (index < payload.value.values.length - 1) {
-    // Focus next input box
     const nextEl = inputRefs.value[index + 1];
-    if (nextEl) {
-      nextEl.focus();
-      nextEl.select();
-    }
+    if (nextEl) { nextEl.focus(); nextEl.select(); }
   } else {
-    // Last input box, submit form!
     submitBatch();
   }
 }
 
 const submitBatch = async () => {
-  if (!selectedProductId.value || !selectedStationId.value || !selectedItemId.value) {
-    error.value = "請先完整選擇產品、工站與檢驗項目。";
+  if (!selectedProductId.value || !boundStationId.value || !selectedItemId.value) {
+    error.value = "請確認檢驗項目已選擇。";
     return;
   }
   if (!payload.value.operatorName.trim()) {
@@ -199,7 +248,6 @@ const submitBatch = async () => {
     return;
   }
   
-  // Validate that all fields are filled
   const hasEmptyVal = payload.value.values.some(v => v.valueNumeric === null || v.valueNumeric === undefined || v.valueNumeric === "");
   if (hasEmptyVal) {
     error.value = "請完整輸入所有樣本之量測值。";
@@ -211,41 +259,94 @@ const submitBatch = async () => {
   successResult.value = null;
 
   try {
-    // Convert inputs to numbers
     const finalPayload = JSON.parse(JSON.stringify(payload.value));
     finalPayload.measuredAt = new Date(finalPayload.measuredAt).toISOString();
-    finalPayload.values.forEach(v => {
-      v.valueNumeric = Number(v.valueNumeric);
-    });
+    finalPayload.values.forEach(v => { v.valueNumeric = Number(v.valueNumeric); });
 
     const res = await api.post("/measurement-batches", finalPayload);
-    successResult.value = res.data;
     
-    // Quick success animation reset
+    successResult.value = res.data.batch || res.data;
+    
+    if (res.data.alerts && res.data.alerts.length > 0) {
+      activeAlerts.value = res.data.alerts;
+      softHoldActive.value = true;
+      handleForm.value = { rootCause: "", correctiveAction: "" };
+      return; 
+    }
+    
     const operator = payload.value.operatorName;
     resetForm();
-    payload.value.operatorName = operator; // Retain operator name
+    payload.value.operatorName = operator;
   } catch (e) {
     error.value = "儲存量測資料失敗：" + getApiErrorMessage(e);
   } finally {
     submitting.value = false;
   }
 };
+
+async function submitHandleAlerts() {
+  if (!handleForm.value.rootCause.trim() || !handleForm.value.correctiveAction.trim()) {
+    alert("發生原因與初步對策為必填欄位！");
+    return;
+  }
+  
+  handlingAlerts.value = true;
+  try {
+    for (const alertObj of activeAlerts.value) {
+      await api.post(`/alerts/${alertObj.id}/handle`, handleForm.value);
+    }
+    softHoldActive.value = false;
+    activeAlerts.value = [];
+    
+    const operator = payload.value.operatorName;
+    resetForm();
+    payload.value.operatorName = operator; 
+  } catch (e) {
+    alert("提交失敗：" + getApiErrorMessage(e));
+  } finally {
+    handlingAlerts.value = false;
+  }
+}
 </script>
 
 <template>
   <div class="max-w-3xl mx-auto space-y-6">
+    <!-- Local Station Binding Info -->
+    <div class="flex items-center justify-between px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-xl shadow-sm">
+      <div class="flex items-center gap-2">
+        <MonitorCheck class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        <span class="text-sm font-bold text-indigo-900 dark:text-indigo-300">本機預設綁定工站：</span>
+        <span class="text-sm font-black text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 px-3 py-1 rounded-md border border-indigo-100 dark:border-indigo-700">{{ boundStationName }}</span>
+      </div>
+      <button @click="showBindModal = true" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1 bg-white/50 dark:bg-black/20 px-2 py-1.5 rounded-lg transition-colors">
+        <Settings class="w-3.5 h-3.5" /> 變更綁定設定
+      </button>
+    </div>
+
     <!-- Header -->
     <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
       <div>
         <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">
-          <Activity class="w-4 h-4" /> 零失誤手動錄入工作區
+          <Activity class="w-4 h-4" /> 掃描驅動零失誤錄入
         </div>
         <h1 class="text-2xl font-black text-slate-800 dark:text-white">現場量測數據錄入系統</h1>
       </div>
       <button @click="resetForm" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="重設表單">
         <RefreshCw class="w-5 h-5" />
       </button>
+    </div>
+
+    <!-- Guide / Wizard Tip -->
+    <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5">
+        <Info class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：現場量測數據錄入系統 (Measurement Entry)</h4>
+        <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
+          此模組用於產線現場人員以手動或掃碼方式輸入即時量測檢驗數據。系統將自動比對檢驗基準配置與西方電氣規則，並於異常時即時彈出警報單填寫畫面。
+        </p>
+      </div>
     </div>
 
     <!-- Alert / Messages -->
@@ -267,66 +368,73 @@ const submitBatch = async () => {
 
     <!-- Main Entry Panel -->
     <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Part Selection -->
-        <div>
-          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">1. 選擇產品料號 (Part No) *</label>
-          <select v-model="selectedProductId" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-            <option value="">-- 請選擇 --</option>
-            <option v-for="p in products" :key="p.id" :value="p.id">[{{ p.productCode }}] {{ p.productName }}</option>
-          </select>
+      
+      <!-- Scan Work Order Section -->
+      <div class="space-y-2 relative">
+        <label class="block text-sm font-black text-slate-700 dark:text-slate-300">請掃描或輸入工單號碼 (Work Order No) *</label>
+        <div class="relative flex items-center">
+          <Scan class="absolute left-4 w-6 h-6 text-indigo-400" />
+          <input
+            v-model="inputWoNo"
+            @keydown.enter.prevent="fetchWorkOrder"
+            :disabled="!boundStationId"
+            placeholder="使用掃描槍讀取條碼或手動輸入..."
+            class="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-slate-800/80 text-xl font-bold text-indigo-900 dark:text-indigo-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all disabled:opacity-50"
+          />
+          <button 
+            @click="fetchWorkOrder"
+            :disabled="!inputWoNo || !boundStationId"
+            class="absolute right-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50"
+          >
+            <RefreshCw v-if="woLoading" class="w-4 h-4 animate-spin" />
+            <span v-else>查詢帶入</span>
+          </button>
         </div>
-
-        <!-- Station Selection -->
-        <div>
-          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">2. 選擇工站 (Station) *</label>
-          <select v-model="selectedStationId" :disabled="!selectedProductId" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-            <option value="">-- 請選擇 --</option>
-            <option v-for="s in filteredStations" :key="s.id" :value="s.id">{{ s.stationName }}</option>
-          </select>
-        </div>
+        <p class="text-xs font-bold text-slate-500 mt-1 pl-2">💡 輸入完成請按下 Enter 鍵，系統將自動解析料號並帶出檢驗項目。</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Characteristic / Inspection Item -->
-        <div>
-          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">3. 檢驗項目 (Inspection Item) *</label>
-          <select v-model="selectedItemId" :disabled="!selectedStationId" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-            <option value="">-- 請選擇 --</option>
-            <option v-for="i in filteredItems" :key="i.id" :value="i.id">{{ i.itemName }}</option>
-          </select>
-        </div>
+      <transition enter-active-class="transition-all duration-300" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0">
+        <div v-if="selectedWorkOrder" class="space-y-6 border-t border-slate-200 dark:border-slate-800 pt-6">
+          
+          <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5">系統已自動鎖定料號</div>
+              <div class="text-sm font-bold text-slate-800 dark:text-slate-200">{{ selectedProductName }}</div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">作業人員 (Operator) *</label>
+              <div class="relative">
+                <input v-model="payload.operatorName" placeholder="輸入人員名稱或工號..." class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+                <User class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+              </div>
+            </div>
+          </div>
 
-        <!-- Operator Name -->
-        <div>
-          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">作業人員 (Operator) *</label>
-          <div class="relative">
-            <input v-model="payload.operatorName" placeholder="輸入人員名稱或工號..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
-            <User class="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+          <div>
+            <label class="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2">請選擇檢驗項目 (Inspection Item) *</label>
+            <select v-model="selectedItemId" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+              <option value="">-- 請選擇 --</option>
+              <option v-for="i in filteredItems" :key="i.id" :value="i.id">{{ i.itemName }}</option>
+            </select>
           </div>
-        </div>
-      </div>
 
-      <!-- Traceability Details (Accordion-style or simplified) -->
-      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-4">
-        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
-          <Info class="w-4 h-4 text-blue-500" /> 批次追溯欄位配置 (可選)
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">生產批號 (Lot No)</label>
-            <input v-model="payload.lotNo" placeholder="如: LOT-2026A" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">零件序號 (Serial No)</label>
-            <input v-model="payload.serialNo" placeholder="如: SN-0988" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">量測時間</label>
-            <input type="datetime-local" v-model="payload.measuredAt" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+          <!-- Traceability Details (Accordion-style or simplified) -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">生產批號 (Lot No)</label>
+              <input v-model="payload.lotNo" placeholder="如: LOT-2026A" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">零件序號 (Serial No)</label>
+              <input v-model="payload.serialNo" placeholder="如: SN-0988" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">量測時間</label>
+              <input type="datetime-local" v-model="payload.measuredAt" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            </div>
           </div>
         </div>
-      </div>
+      </transition>
 
       <!-- Dynamic Samples Grid -->
       <div v-if="selectedItemId" class="space-y-4 border-t border-slate-200 dark:border-slate-800 pt-6">
@@ -376,5 +484,94 @@ const submitBatch = async () => {
         </button>
       </div>
     </div>
+
+    <!-- Soft Hold Interlock Overlay (Modal) -->
+    <transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="softHoldActive" class="fixed inset-0 z-50 flex items-center justify-center bg-red-950/80 backdrop-blur-md p-4">
+        <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-red-200 dark:border-red-900 overflow-hidden flex flex-col max-h-[90vh]">
+          <!-- Danger Header -->
+          <div class="bg-red-600 px-6 py-5 flex items-center gap-4 shrink-0">
+            <div class="p-3 bg-white/20 rounded-full animate-pulse">
+              <AlertTriangle class="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2 class="text-xl font-black text-white tracking-wide">品質異常強制卡控 (Soft Hold)</h2>
+              <p class="text-red-100 text-sm font-medium mt-0.5">系統偵測到剛輸入的數據違反品質管制規則，請立刻填寫處置對策解鎖畫面。</p>
+            </div>
+          </div>
+
+          <div class="p-6 overflow-y-auto flex-1 space-y-6">
+            <!-- Alert Details List -->
+            <div class="space-y-3">
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">觸發異常清單</h3>
+              <div v-for="al in activeAlerts" :key="al.id" class="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-xl">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <div class="font-bold text-red-800 dark:text-red-300 text-sm mb-1">{{ al.message }}</div>
+                    <div class="text-xs text-red-600 dark:text-red-400 font-mono">觸發數值: {{ al.actualValue }}</div>
+                  </div>
+                  <span class="px-2 py-1 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 text-[10px] font-black rounded">{{ al.alertType }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mandatory Action Form -->
+            <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle2 class="w-4 h-4 text-emerald-500" /> 強制處置紀錄 (必填)
+              </h3>
+              <div class="space-y-2">
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-200">初步發生原因 (Root Cause)</label>
+                <textarea v-model="handleForm.rootCause" rows="2" placeholder="請描述機台狀況、人員操作或材料問題..." class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"></textarea>
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-200">緊急處置對策 (Corrective Action)</label>
+                <textarea v-model="handleForm.correctiveAction" rows="2" placeholder="例如：已停機隔離該批產品、重新校正刀具等..." class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="px-6 py-5 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shrink-0 flex justify-end">
+            <button type="button" @click="submitHandleAlerts" :disabled="handlingAlerts" class="flex items-center gap-2 px-8 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold shadow-lg shadow-red-500/30 disabled:opacity-50 transition-all text-sm">
+              <RefreshCw v-if="handlingAlerts" class="w-4 h-4 animate-spin" />
+              {{ handlingAlerts ? '正在提交...' : '確認提交處置並解除卡控' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Station Binding Modal -->
+    <transition enter-active-class="transition-all duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100">
+      <div v-if="showBindModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 space-y-6">
+          <div class="text-center space-y-2">
+            <div class="mx-auto w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-4">
+              <MonitorCheck class="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 dark:text-white">設定本機所屬工站</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">請設定這台電腦或平版，目前固定擺放在哪一個生產工站？系統將以此為基準自動帶出檢驗條件。</p>
+          </div>
+          <div>
+            <select v-model="boundStationId" class="w-full px-4 py-3 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+              <option :value="null">-- 請選擇固定工站 --</option>
+              <option v-for="s in stations" :key="s.id" :value="s.id">{{ s.stationName }}</option>
+            </select>
+          </div>
+          <button @click="saveBinding" :disabled="!boundStationId" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-50">
+            確認綁定設定
+          </button>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>

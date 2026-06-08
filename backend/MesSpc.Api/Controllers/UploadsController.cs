@@ -278,7 +278,7 @@ public class UploadsController(UploadService uploadService)
 
         var headers = new string[]
         {
-            "料號", "製程", "機台", "檢驗項目", "檢驗項目名稱", "上限", "下限", "測量值", "日期", "作業員", "lot", "樣本編號", "工單"
+            "料號", "製程", "機台", "檢驗項目", "測量值", "日期", "作業員", "批號", "樣本編號", "序號"
         };
 
         for (int i = 0; i < headers.Length; i++)
@@ -294,9 +294,9 @@ public class UploadsController(UploadService uploadService)
         // Add 3 sample rows
         var samples = new object[][]
         {
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", "總長度檢驗", 100.5, 99.5, 100.12, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", "總長度檢驗", 100.5, 99.5, 100.08, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 2, "WO-101" },
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "WIDTH", "寬度檢驗", 50.2, 49.8, 50.05, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-02", "L20260518-2", 1, "WO-102" }
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", 100.12, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", 100.08, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 2, "WO-101" },
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "WIDTH", 50.05, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-02", "L20260518-2", 1, "WO-102" }
         };
 
         for (int r = 0; r < samples.Length; r++)
@@ -324,7 +324,7 @@ public class UploadsController(UploadService uploadService)
 
         var headers = new string[]
         {
-            "料號", "製程", "機台", "檢驗項目", "檢驗項目名稱", "總數", "不良數", "缺點數", "單位數", "日期", "作業員", "lot", "樣本編號"
+            "料號", "製程", "機台", "檢驗項目", "總數", "不良數", "缺點數", "單位數", "日期", "作業員", "批號", "樣本編號"
         };
 
         for (int i = 0; i < headers.Length; i++)
@@ -342,33 +342,31 @@ public class UploadsController(UploadService uploadService)
         ws.Cell(2, 2).Value = "ST-02";
         ws.Cell(2, 3).Value = "ST-02-M01";
         ws.Cell(2, 4).Value = "DEFECT_RATE";
-        ws.Cell(2, 5).Value = "外觀不良檢驗";
-        ws.Cell(2, 6).Value = 500;
-        ws.Cell(2, 7).Value = 12;
-        ws.Cell(2, 8).Value = 15;
-        ws.Cell(2, 9).Value = 500;
-        ws.Cell(2, 10).Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        ws.Cell(2, 11).Value = "OP-02";
-        ws.Cell(2, 12).Value = "L20260518-A";
-        ws.Cell(2, 13).Value = 1;
+        ws.Cell(2, 5).Value = 500;
+        ws.Cell(2, 6).Value = 12;
+        ws.Cell(2, 7).Value = 15;
+        ws.Cell(2, 8).Value = 500;
+        ws.Cell(2, 9).Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        ws.Cell(2, 10).Value = "OP-02";
+        ws.Cell(2, 11).Value = "L20260518-A";
+        ws.Cell(2, 12).Value = 1;
 
         ws.Cell(3, 1).Value = "PART-B001";
         ws.Cell(3, 2).Value = "ST-02";
         ws.Cell(3, 3).Value = "ST-02-M01";
         ws.Cell(3, 4).Value = "DEFECT_RATE";
-        ws.Cell(3, 5).Value = "外觀不良檢驗";
-        ws.Cell(3, 6).Value = 500;
-        ws.Cell(3, 7).Value = 8;
-        ws.Cell(3, 8).Value = 9;
-        ws.Cell(3, 9).Value = 500;
-        ws.Cell(3, 10).Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        ws.Cell(3, 11).Value = "OP-03";
-        ws.Cell(3, 12).Value = "L20260518-B";
-        ws.Cell(3, 13).Value = 1;
+        ws.Cell(3, 5).Value = 500;
+        ws.Cell(3, 6).Value = 8;
+        ws.Cell(3, 7).Value = 9;
+        ws.Cell(3, 8).Value = 500;
+        ws.Cell(3, 9).Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        ws.Cell(3, 10).Value = "OP-03";
+        ws.Cell(3, 11).Value = "L20260518-B";
+        ws.Cell(3, 12).Value = 1;
 
         for (int r = 2; r <= 3; r++)
         {
-            for (int c = 1; c <= 13; c++)
+            for (int c = 1; c <= 12; c++)
             {
                 ws.Cell(r, c).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             }
@@ -416,10 +414,39 @@ public class SpcV2Controller(AppDbContext db, SpcService spcService) : Controlle
     }
 
     [HttpGet("interactive-chart")]
-    public async Task<IActionResult> InteractiveChart([FromQuery] int partProcessCharacteristicId, [FromQuery] Guid? uploadBatchId)
+    public async Task<IActionResult> InteractiveChart(
+        [FromQuery] int productId, 
+        [FromQuery] int stationId, 
+        [FromQuery] int inspectionItemId, 
+        [FromQuery] string? batchNo = null,
+        CancellationToken ct = default)
     {
-        var chart = await spcService.GetInteractiveChartAsync(partProcessCharacteristicId, uploadBatchId);
-        return chart is null ? NotFound("找不到該檢驗項目的管制圖資料或配置。") : Ok(chart);
+        var chart = await spcService.GetInteractiveChartV2Async(productId, stationId, inspectionItemId, batchNo, ct);
+        return chart is null ? NotFound("Chart data not found or invalid inspection item.") : Ok(chart);
+    }
+
+    [HttpPost("exclude-batch/{uploadBatchId:guid}")]
+    public async Task<IActionResult> ToggleExcludeUploadBatch(Guid uploadBatchId, CancellationToken ct = default)
+    {
+        var batch = await db.UploadBatches.FindAsync([uploadBatchId], ct);
+        if (batch is null) return NotFound("Upload batch not found.");
+
+        batch.IsExcluded = !batch.IsExcluded;
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new { batch.UploadBatchId, batch.IsExcluded });
+    }
+
+    [HttpPost("exclude-batch/{batchId:int}")]
+    public async Task<IActionResult> ToggleExcludeBatch(int batchId, CancellationToken ct = default)
+    {
+        var batch = await db.MeasurementBatches.FindAsync([batchId], ct);
+        if (batch is null) return NotFound("Measurement batch not found.");
+
+        batch.IsExcluded = !batch.IsExcluded; // Toggle state
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new { batch.Id, batch.IsExcluded });
     }
 
     [HttpGet("chart-types")]

@@ -60,6 +60,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("MeasurementBatchId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -916,6 +919,9 @@ namespace MesSpc.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsExcluded")
                         .HasColumnType("bit");
 
                     b.Property<string>("LotNo")
@@ -2233,6 +2239,9 @@ namespace MesSpc.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsExcluded")
                         .HasColumnType("bit");
 
                     b.Property<string>("OriginalFileName")

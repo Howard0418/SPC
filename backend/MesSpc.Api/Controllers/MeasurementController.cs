@@ -10,7 +10,7 @@ using System.Globalization;
 namespace MesSpc.Api.Controllers;
 
 public record MeasurementValueDto(int InspectionItemId, int SampleNo, double? ValueNumeric, string? ValueText, bool? ValueBool);
-public record CreateBatchDto(string BatchNo, int ProductId, int StationId, DateTime MeasuredAt, string? OperatorName, List<MeasurementValueDto> Values);
+public record CreateBatchDto(string BatchNo, int ProductId, int StationId, DateTime MeasuredAt, string? OperatorName, int? WorkOrderId, List<MeasurementValueDto> Values);
 
 [ApiController]
 [Route("api/measurement-batches")]
@@ -36,6 +36,7 @@ public class MeasurementBatchesController(AppDbContext db, SpcService spcService
             BatchNo = req.BatchNo,
             ProductId = req.ProductId,
             StationId = req.StationId,
+            WorkOrderId = req.WorkOrderId,
             MeasuredAt = req.MeasuredAt,
             OperatorName = req.OperatorName,
             SourceType = SourceType.Manual,

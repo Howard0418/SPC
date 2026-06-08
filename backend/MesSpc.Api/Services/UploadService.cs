@@ -245,13 +245,6 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 db.PartProcessCharacteristics.Add(map);
                 await db.SaveChangesAsync(ct);
             }
-            else
-            {
-                bool changed = false;
-                if ((uslVal > 0 || lslVal > 0) && map.USL != uslVal) { map.USL = uslVal; changed = true; }
-                if ((uslVal > 0 || lslVal > 0) && map.LSL != lslVal) { map.LSL = lslVal; changed = true; }
-                if (changed) await db.SaveChangesAsync(ct);
-            }
         }
     }
 

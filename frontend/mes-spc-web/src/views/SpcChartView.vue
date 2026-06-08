@@ -25,8 +25,11 @@ import {
 const route = useRoute();
 const router = useRouter();
 
+// V2 Master Data State
+const products = ref([]);
+const stations = ref([]);
+const inspectionItems = ref([]);
 const mappings = ref([]);
-const selectedMappingId = ref("");
 const batchId = ref("");
 const loading = ref(false);
 const error = ref("");
@@ -56,43 +59,26 @@ const selectedPointIndex = ref(-1);
 
 // Unique Parts for selection
 const uniqueParts = computed(() => {
-  const seen = new Set();
-  const list = [];
-  mappings.value.forEach(m => {
-    if (m.part && !seen.has(m.part.id)) {
-      seen.add(m.part.id);
-      list.push({ id: m.partId, partNo: m.part.partNo, partName: m.part.partName });
-    }
-  });
-  return list;
+  const uniquePartIds = [...new Set(mappings.value.filter(m => m.isActive).map(m => m.productId))];
+  return products.value.filter(p => uniquePartIds.includes(p.id) && p.isActive);
 });
 
-// Processes available for selected Part
+// Processes available for selected Part (Station)
 const availableProcesses = computed(() => {
   if (!selectedPartId.value) return [];
-  const seen = new Set();
-  const list = [];
-  mappings.value.forEach(m => {
-    if (m.partId === Number(selectedPartId.value) && m.process && !seen.has(m.process.id)) {
-      seen.add(m.process.id);
-      list.push({ id: m.processId, processCode: m.process.processCode, processName: m.process.processName });
-    }
-  });
-  return list;
+  const validStationIds = mappings.value
+    .filter(m => m.productId === Number(selectedPartId.value) && m.isActive)
+    .map(m => m.stationId);
+  return stations.value.filter(s => validStationIds.includes(s.id) && s.isActive);
 });
 
-// Characteristics available for selected Part + Process
+// Characteristics available for selected Part + Process (Inspection Items)
 const availableCharacteristics = computed(() => {
   if (!selectedPartId.value || !selectedProcessId.value) return [];
-  const seen = new Set();
-  const list = [];
-  mappings.value.forEach(m => {
-    if (m.partId === Number(selectedPartId.value) && m.processId === Number(selectedProcessId.value) && m.characteristic && !seen.has(m.characteristic.id)) {
-      seen.add(m.characteristic.id);
-      list.push({ id: m.characteristicId, characteristicCode: m.characteristic.characteristicCode, characteristicName: m.characteristic.characteristicName });
-    }
-  });
-  return list;
+  const validItemIds = mappings.value
+    .filter(m => m.productId === Number(selectedPartId.value) && m.stationId === Number(selectedProcessId.value) && m.isActive)
+    .map(m => m.inspectionItemId);
+  return inspectionItems.value.filter(i => validItemIds.includes(i.id) && i.isSpcEnabled);
 });
 
 // Autocomplete search filtering
@@ -110,17 +96,12 @@ const filteredMappings = computed(() => {
 });
 
 // Sync cascading dropdown selectors with selected mapping ID
-function syncCascadingDropdowns(mappingId) {
-  const m = mappings.value.find(x => x.id === mappingId);
-  if (m) {
-    updatingCascades.value = true;
-    selectedPartId.value = m.partId;
-    selectedProcessId.value = m.processId;
-    selectedCharacteristicId.value = m.characteristicId;
-    selectedMappingId.value = m.id;
-    searchQuery.value = `[${m.part?.partNo}] ${m.process?.processName} - ${m.characteristic?.characteristicName}`;
-    updatingCascades.value = false;
-  }
+function syncCascadingDropdowns(productId, stationId, inspectionItemId) {
+  updatingCascades.value = true;
+  selectedPartId.value = productId;
+  selectedProcessId.value = stationId;
+  selectedCharacteristicId.value = inspectionItemId;
+  updatingCascades.value = false;
 }
 
 // Watchers for cascading select workflow
@@ -128,35 +109,21 @@ watch(selectedPartId, () => {
   if (updatingCascades.value) return;
   selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
-  selectedMappingId.value = "";
 });
 
 watch(selectedProcessId, () => {
   if (updatingCascades.value) return;
   selectedCharacteristicId.value = "";
-  selectedMappingId.value = "";
 });
 
 watch(selectedCharacteristicId, (newVal) => {
   if (updatingCascades.value) return;
-  if (newVal) {
-    const match = mappings.value.find(m => 
-      m.partId === Number(selectedPartId.value) &&
-      m.processId === Number(selectedProcessId.value) &&
-      m.characteristicId === Number(selectedCharacteristicId.value)
-    );
-    if (match) {
-      selectedMappingId.value = match.id;
-      searchQuery.value = `[${match.part?.partNo}] ${match.process?.processName} - ${match.characteristic?.characteristicName}`;
-    }
-  } else {
-    selectedMappingId.value = "";
-  }
 });
 
 function selectMappingFromSearch(m) {
-  syncCascadingDropdowns(m.id);
+  syncCascadingDropdowns(m.productId, m.stationId, m.inspectionItemId);
   showSearchResults.value = false;
+  loadInteractiveChart();
 }
 
 function hideSearchResults() {
@@ -178,22 +145,32 @@ function handleTestQuery() {
     selectedPartId.value = testProductId.value;
     selectedProcessId.value = testStationId.value;
     selectedCharacteristicId.value = testItemId.value;
-    selectedMappingId.value = testItemId.value;
+    selectedCharacteristicId.value = testItemId.value;
   }
   loadInteractiveChart();
 }
 
 async function loadMappings() {
   try {
-    const res = await api.get("/part-process-characteristics");
-    mappings.value = res.data || [];
+    const [prodRes, stnRes, itemRes, mapRes] = await Promise.all([
+      api.get("/products"),
+      api.get("/stations"),
+      api.get("/inspection-items"),
+      api.get("/product-station-items")
+    ]);
+    products.value = prodRes.data || [];
+    stations.value = stnRes.data || [];
+    inspectionItems.value = itemRes.data || [];
+    mappings.value = mapRes.data || [];
     
-    // Auto-select from query or first item
-    const qId = Number(route.query.partProcessCharacteristicId);
-    if (qId && mappings.value.some(m => m.id === qId)) {
-      syncCascadingDropdowns(qId);
-    } else if (mappings.value.length > 0) {
-      syncCascadingDropdowns(mappings.value[0].id);
+    // Auto-select from query
+    const qProd = Number(route.query.productId);
+    const qStn = Number(route.query.stationId);
+    const qItem = Number(route.query.inspectionItemId);
+    
+    if (qProd && qStn && qItem) {
+      syncCascadingDropdowns(qProd, qStn, qItem);
+      loadInteractiveChart();
     }
   } catch (e) {
     error.value = "無法載入檢驗項目基準列表：" + getApiErrorMessage(e);
@@ -208,16 +185,14 @@ onMounted(() => {
   window.addEventListener("resize", handleResize);
 });
 
-watch(selectedMappingId, (newVal) => {
-  if (newVal) loadInteractiveChart();
-});
-
 watch(batchId, () => {
-  if (selectedMappingId.value) loadInteractiveChart();
+  if (selectedPartId.value && selectedProcessId.value && selectedCharacteristicId.value) {
+    loadInteractiveChart();
+  }
 });
 
 async function loadInteractiveChart() {
-  if (!selectedMappingId.value) return;
+  if (!selectedPartId.value || !selectedProcessId.value || !selectedCharacteristicId.value) return;
   loading.value = true;
   error.value = "";
   chartResult.value = null;
@@ -225,10 +200,14 @@ async function loadInteractiveChart() {
   selectedPointIndex.value = -1;
 
   try {
-    const params = { ppcId: selectedMappingId.value };
-    if (batchId.value) params.uploadBatchId = batchId.value;
+    const params = { 
+      productId: selectedPartId.value,
+      stationId: selectedProcessId.value,
+      inspectionItemId: selectedCharacteristicId.value
+    };
+    if (batchId.value) params.batchNo = batchId.value;
 
-    const res = await api.get("/v1/spc/chart", { params });
+    const res = await api.get("/v2/spc/interactive-chart", { params });
     chartResult.value = res.data;
     loading.value = false;
     await nextTick();
@@ -241,6 +220,18 @@ async function loadInteractiveChart() {
     }
   } finally {
     loading.value = false;
+  }
+}
+
+async function toggleExcludeBatch() {
+  if (!selectedPoint.value || !selectedPoint.value.measurementBatchId) return;
+  try {
+    const batchId = selectedPoint.value.measurementBatchId;
+    await api.post(`/v2/spc/exclude-batch/${batchId}`);
+    // Reload chart after toggling
+    await loadInteractiveChart();
+  } catch (e) {
+    alert("剔除狀態更新失敗：" + getApiErrorMessage(e));
   }
 }
 
@@ -257,7 +248,7 @@ function renderECharts() {
   const data = chartResult.value;
   const type = data.chartType?.toUpperCase() || "";
   const limits = data.limits || {};
-  const isDual = type === "XBAR_R" || type === "I-MR" || type === "I_MR";
+  const isDual = type === "XBAR_R" || type === "XBAR_S" || type === "I-MR" || type === "I_MR";
 
   // Calculate standard deviation (sigma) based on control limits
   const cl = limits.cl;
@@ -350,6 +341,10 @@ function renderECharts() {
     bottomUcl = stat.rControl?.ucl;
     bottomCl = stat.rControl?.cl;
     bottomLcl = stat.rControl?.lcl;
+  } else if (type === "XBAR_S") {
+    bottomUcl = stat.sControl?.ucl;
+    bottomCl = stat.sControl?.cl;
+    bottomLcl = stat.sControl?.lcl;
   } else if (type === "I-MR" || type === "I_MR") {
     bottomUcl = stat.mrControlLimitsStat?.ucl;
     bottomCl = stat.mrControlLimitsStat?.cl;
@@ -382,12 +377,27 @@ function renderECharts() {
     return `P#${i + 1}`;
   });
 
-  const seriesTopData = pointsTop.map(p => {
+  const seriesTopData = pointsTop.map((p, i) => {
     const isErr = p.outOfSpec || p.outOfControl || (p.violatedRules && p.violatedRules.length > 0);
+    const isExcluded = p.isExcluded;
+    
+    let color = isErr ? "#ef4444" : "#3b82f6";
+    let borderColor = isErr ? "#991b1b" : "#2563eb";
+    let symbol = "circle";
+    let symbolSize = isErr ? 12 : 8;
+    
+    if (isExcluded) {
+      color = "#94a3b8";
+      borderColor = "#64748b";
+      symbol = "path://M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z";
+      symbolSize = 14;
+    }
+
     return {
       value: p.value !== undefined ? p.value : p.xbar !== undefined ? p.xbar : null,
-      itemStyle: { color: isErr ? "#ef4444" : "#3b82f6", borderColor: isErr ? "#991b1b" : "#2563eb", borderWidth: 2 },
-      symbolSize: isErr ? 12 : 8,
+      itemStyle: { color, borderColor, borderWidth: 2 },
+      symbol,
+      symbolSize,
       violatedRules: p.violatedRules,
       meta: p
     };
@@ -395,16 +405,29 @@ function renderECharts() {
 
   const seriesBottomData = pointsBottom.map(p => {
     const isErr = p.outOfControl;
+    const isExcluded = p.isExcluded;
+    
+    let color = isErr ? "#ef4444" : "#64748b";
+    let symbol = "circle";
+    let symbolSize = isErr ? 10 : 6;
+    
+    if (isExcluded) {
+      color = "#cbd5e1";
+      symbol = "path://M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z";
+      symbolSize = 12;
+    }
+
     return {
       value: p.value !== undefined ? p.value : null,
-      itemStyle: { color: isErr ? "#ef4444" : "#64748b" },
-      symbolSize: isErr ? 10 : 6,
+      itemStyle: { color },
+      symbol,
+      symbolSize,
       meta: p
     };
   });
 
   const seriesTopList = [
-    { name: type === "XBAR_R" ? "Xbar" : (isDual ? "Individual" : type), type: "line", xAxisIndex: 0, yAxisIndex: 0, data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: hasDynamicLimits ? undefined : markAreaTop, smooth: true }
+    { name: type === "XBAR_R" || type === "XBAR_S" ? "Xbar" : (isDual ? "Individual" : type), type: "line", xAxisIndex: 0, yAxisIndex: 0, data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: hasDynamicLimits ? undefined : markAreaTop, smooth: true }
   ];
 
   if (hasDynamicLimits) {
@@ -485,14 +508,14 @@ function renderECharts() {
       : [{ type: "category", data: labels, boundaryGap: false, axisLine: { lineStyle: { color: "#64748b" } } }],
     yAxis: isDual
       ? [
-          { type: "value", gridIndex: 0, name: type === "XBAR_R" ? "Xbar 平均值" : "單值 (I)", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true },
-          { type: "value", gridIndex: 1, name: type === "XBAR_R" ? "全距 (R)" : "移動全距 (MR)", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true }
+          { type: "value", gridIndex: 0, name: type === "XBAR_R" || type === "XBAR_S" ? "Xbar 平均值" : "單值 (I)", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true },
+          { type: "value", gridIndex: 1, name: type === "XBAR_R" ? "全距 (R)" : type === "XBAR_S" ? "標準差 (S)" : "移動全距 (MR)", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true }
         ]
       : [{ type: "value", name: `${type} 數值`, splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true }],
     series: isDual
       ? [
           ...seriesTopList,
-          { name: type === "XBAR_R" ? "Range" : "Moving Range", type: "line", xAxisIndex: 1, yAxisIndex: 1, data: seriesBottomData, showSymbol: true, markLine: bottomMarkLineObj, smooth: true }
+          { name: type === "XBAR_R" ? "Range" : type === "XBAR_S" ? "Std Dev" : "Moving Range", type: "line", xAxisIndex: 1, yAxisIndex: 1, data: seriesBottomData, showSymbol: true, markLine: bottomMarkLineObj, smooth: true }
         ]
       : seriesTopList
   };
@@ -549,7 +572,7 @@ onBeforeUnmount(() => {
         <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">
           <Activity class="w-4 h-4 animate-spin" /> 工業品質分析空間
         </div>
-        <h1 class="text-2xl font-black text-slate-800 dark:text-white">SPC 即時互動管制圖戰情室</h1>
+        <h1 class="text-2xl font-black text-slate-800 dark:text-white">SPC 即時互動管制圖</h1>
       </div>
 
       <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto">
@@ -557,47 +580,41 @@ onBeforeUnmount(() => {
         <div class="relative w-full md:w-72">
           <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">🔍 快速搜尋檢驗基準</label>
           <div class="relative">
-            <input v-model="searchQuery" @focus="showSearchResults = true" @blur="hideSearchResults" placeholder="輸入料號、工站、關鍵字..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <input v-model="searchQuery" @focus="showSearchResults = true" @blur="hideSearchResults" placeholder="已切換為層聯下拉選擇" class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" disabled />
             <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          </div>
-          <!-- Search Dropdown list -->
-          <div v-if="showSearchResults && filteredMappings.length > 0" class="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 py-1">
-            <button v-for="m in filteredMappings" :key="m.id" @mousedown="selectMappingFromSearch(m)" class="w-full text-left px-4 py-2 hover:bg-blue-50 dark:hover:bg-slate-700 text-xs text-slate-700 dark:text-slate-200 font-semibold border-b border-slate-100 dark:border-slate-700 last:border-0">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">[{{ m.part?.partNo }}]</span> {{ m.process?.processName }} - <span class="text-indigo-600 dark:text-indigo-400">{{ m.characteristic?.characteristicName }}</span>
-            </button>
           </div>
         </div>
 
         <!-- 3-Level Cascading selectors -->
         <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
           <div class="w-40">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">料號 (Part)</label>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">料號 (Product)</label>
             <select v-model="selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
               <option value="">選擇產品...</option>
-              <option v-for="p in uniqueParts" :key="p.id" :value="p.id">[{{ p.partNo }}] {{ p.partName }}</option>
+              <option v-for="p in uniqueParts" :key="p.id" :value="p.id">[{{ p.productCode }}] {{ p.productName }}</option>
             </select>
           </div>
 
           <div class="w-40">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">工站 (Process)</label>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">工站 (Station)</label>
             <select v-model="selectedProcessId" :disabled="!selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
               <option value="">選擇工站...</option>
-              <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.processName }}</option>
+              <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.stationName }}</option>
             </select>
           </div>
 
           <div class="w-44">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">特性項目 (Characteristic)</label>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">檢驗項目 (Inspection Item)</label>
             <select v-model="selectedCharacteristicId" :disabled="!selectedProcessId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
               <option value="">選擇檢驗項目...</option>
-              <option v-for="c in availableCharacteristics" :key="c.id" :value="c.id">{{ c.characteristicName }}</option>
+              <option v-for="c in availableCharacteristics" :key="c.id" :value="c.id">{{ c.itemName }}</option>
             </select>
           </div>
         </div>
 
         <div class="w-48">
-          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">指定匯入批次過濾 (可選)</label>
-          <input v-model="batchId" placeholder="輸入 Batch UUID..." class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">工單 / 批號過濾</label>
+          <input v-model="batchId" placeholder="輸入 Lot No..." class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <button @click="loadInteractiveChart" :disabled="loading" class="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all text-sm h-10">
@@ -728,15 +745,23 @@ onBeforeUnmount(() => {
               點位品質追溯詳細資料 (點位 #{{ selectedPointIndex + 1 }})
             </h4>
             <div class="flex gap-2">
-              <span v-if="selectedPoint.outOfSpec" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400 border border-red-200 dark:border-red-900/50">
+              <span v-if="selectedPoint.isExcluded" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
+                ✖ 已剔除不計 (Excluded)
+              </span>
+              <span v-else-if="selectedPoint.outOfSpec" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400 border border-red-200 dark:border-red-900/50">
                 OOS 超出規格
               </span>
-              <span v-if="selectedPoint.outOfControl" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
+              <span v-else-if="selectedPoint.outOfControl" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
                 OOC 管制失控
               </span>
-              <span v-if="!selectedPoint.outOfSpec && !selectedPoint.outOfControl" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
+              <span v-else class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
                 正常 (In Control)
               </span>
+              
+              <!-- Toggle Exclude Button -->
+              <button @click="toggleExcludeBatch" v-if="selectedPoint.measurementBatchId" class="ml-2 px-3 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border transition-colors focus:outline-none" :class="selectedPoint.isExcluded ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'">
+                {{ selectedPoint.isExcluded ? '↺ 恢復此數據' : '✖ 剔除此數據' }}
+              </button>
             </div>
           </div>
 
@@ -780,12 +805,29 @@ onBeforeUnmount(() => {
           <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">量測數據 (Measured Value)</p>
-              <h3 class="text-xl font-black text-slate-800 dark:text-white">
+              <h3 class="text-xl font-black" :class="selectedPoint.isExcluded ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-white'">
                 {{ selectedPoint.value !== undefined ? Number(selectedPoint.value).toFixed(4) : (selectedPoint.xbar !== undefined ? Number(selectedPoint.xbar).toFixed(4) : 'N/A') }}
-                <span v-if="selectedPoint.range !== undefined" class="text-sm text-slate-400 font-semibold ml-3">
+                <span v-if="selectedPoint.range !== undefined" class="text-sm text-slate-400 font-semibold ml-3 no-underline">
                   (子組全距 R = {{ Number(selectedPoint.range).toFixed(4) }}, 子組大小 n = {{ selectedPoint.n }})
                 </span>
               </h3>
+            </div>
+
+            <!-- Action trace panel (Root Cause & Corrective Action) -->
+            <div v-if="selectedPoint.rootCause || selectedPoint.correctiveAction" class="w-full md:flex-1 md:ml-6 p-3 rounded-xl bg-blue-50 dark:bg-slate-900 border border-blue-100 dark:border-slate-700">
+              <p class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-2 flex items-center gap-1">
+                <Info class="w-3.5 h-3.5" /> 處置追溯紀錄
+              </p>
+              <div class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                <div v-if="selectedPoint.rootCause" class="flex gap-2">
+                  <span class="font-bold shrink-0">發生原因：</span>
+                  <span>{{ selectedPoint.rootCause }}</span>
+                </div>
+                <div v-if="selectedPoint.correctiveAction" class="flex gap-2">
+                  <span class="font-bold shrink-0">初步對策：</span>
+                  <span>{{ selectedPoint.correctiveAction }}</span>
+                </div>
+              </div>
             </div>
 
             <div v-if="selectedPoint.violatedRules?.length > 0" class="w-full md:w-auto">

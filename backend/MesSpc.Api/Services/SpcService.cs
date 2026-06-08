@@ -286,6 +286,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return null;
+            var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
 
             if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
@@ -299,11 +300,12 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     LineId = x.LineId,
                     TankId = x.TankId,
                     SlotId = x.SlotId,
-                    SideCode = x.SideCode.ToString()
+                    SideCode = x.SideCode.ToString(),
+                    IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
                 }).ToList();
                 return ImrChartCalculator.Calculate(points, limits);
             }
-            else // XBAR_R
+            else // XBAR_R / XBAR_S
             {
                 var expectedSampleSizeVal = mapping.SampleSize > 0 ? mapping.SampleSize : (chartType.RequiredSampleSize ?? 0) > 0 ? chartType.RequiredSampleSize!.Value : 5;
                 var grouped = measurements.GroupBy(x => x.MeasuredAt).Select(g =>
@@ -319,9 +321,15 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                         LineId = first.LineId,
                         TankId = first.TankId,
                         SlotId = first.SlotId,
-                        SideCode = first.SideCode.ToString()
+                        SideCode = first.SideCode.ToString(),
+                        IsExcluded = g.Any(m => excludedUploadBatchIds.Contains(m.UploadBatchId))
                     };
                 }).ToList();
+
+                if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
+                {
+                    return XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal);
+                }
 
                 return XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, chartType.FormulaConfigJson);
             }
@@ -333,6 +341,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return null;
+            var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
 
             var points = measurements.Select(x => new AttributeDataPoint
             {
@@ -346,11 +355,23 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 LineId = x.LineId,
                 TankId = x.TankId,
                 SlotId = x.SlotId,
-                SideCode = x.SideCode.ToString()
+                SideCode = x.SideCode.ToString(),
+                IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
             }).ToList();
 
             return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits);
         }
+    }
+
+    private async Task<HashSet<Guid>> GetExcludedUploadBatchIdsAsync(IEnumerable<Guid> uploadBatchIds, CancellationToken ct)
+    {
+        var ids = uploadBatchIds.Distinct().ToList();
+        if (ids.Count == 0) return [];
+
+        return await db.UploadBatches.AsNoTracking()
+            .Where(x => ids.Contains(x.UploadBatchId) && x.IsExcluded)
+            .Select(x => x.UploadBatchId)
+            .ToHashSetAsync(ct);
     }
 
     private static AlertEvent NewAlert(MeasurementBatch batch, MeasurementValue value, InspectionItem item, double actual, AlertType type, string msg) =>
@@ -360,6 +381,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             PartId = batch.ProductId,
             ProcessId = batch.StationId,
             CharacteristicId = item.Id,
+            MeasurementBatchId = batch.Id,
             ActualValue = actual,
             AlertType = type,
             Message = msg
@@ -380,5 +402,105 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 : null,
             _ => null
         };
+    }
+
+    public async Task<ControlChartResult?> GetInteractiveChartV2Async(int productId, int stationId, int inspectionItemId, string? batchNo = null, CancellationToken ct = default)
+    {
+        var item = await db.InspectionItems.AsNoTracking().FirstOrDefaultAsync(i => i.Id == inspectionItemId, ct);
+        if (item is null) return null;
+
+        var psi = await db.ProductStationItems.AsNoTracking()
+            .Where(x => x.ProductId == productId && x.StationId == stationId && x.InspectionItemId == inspectionItemId && x.IsActive)
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync(ct);
+
+        var query = db.MeasurementBatches.Include(x => x.Values).Where(b => b.ProductId == productId && b.StationId == stationId);
+        if (!string.IsNullOrWhiteSpace(batchNo)) query = query.Where(x => x.BatchNo == batchNo || x.LotNo == batchNo);
+
+        var groupedRaw = await query
+            .OrderBy(x => x.MeasuredAt)
+            .Take(1000)
+            .Select(b => new
+            {
+                b.Id,
+                b.BatchNo,
+                b.MeasuredAt,
+                b.LotNo,
+                b.SerialNo,
+                b.OperatorName,
+                b.IsExcluded,
+                Values = b.Values.Where(v => v.InspectionItemId == inspectionItemId && v.ValueNumeric.HasValue).Select(v => v.ValueNumeric!.Value).ToList()
+            })
+            .Where(x => x.Values.Count > 0)
+            .ToListAsync(ct);
+
+        if (groupedRaw.Count == 0) return null;
+
+        var batchIds = groupedRaw.Select(x => x.Id).ToList();
+        
+        // Fetch alerts for these batches to attach RootCause/CorrectiveAction
+        var alerts = await db.AlertEvents.AsNoTracking()
+            .Where(a => a.MeasurementBatchId.HasValue && batchIds.Contains(a.MeasurementBatchId.Value) && a.CharacteristicId == inspectionItemId)
+            .ToListAsync(ct);
+
+        var alertLookup = alerts.GroupBy(a => a.MeasurementBatchId!.Value).ToDictionary(g => g.Key, g => g.ToList());
+
+        var subgroups = groupedRaw.Select(g => 
+        {
+            var batchAlerts = alertLookup.GetValueOrDefault(g.Id) ?? [];
+            var outOfSpec = batchAlerts.Any(a => a.AlertType == AlertType.OutOfSpec);
+            var outOfControl = batchAlerts.Any(a => a.AlertType == AlertType.OutOfControl);
+            var rootCause = batchAlerts.FirstOrDefault(a => !string.IsNullOrEmpty(a.RootCause))?.RootCause;
+            var correctiveAction = batchAlerts.FirstOrDefault(a => !string.IsNullOrEmpty(a.CorrectiveAction))?.CorrectiveAction;
+
+            return new Subgroup
+            {
+                MeasuredAt = g.MeasuredAt,
+                Values = g.Values,
+                LotNo = g.LotNo ?? g.BatchNo,
+                SerialNo = g.SerialNo,
+                Operator = g.OperatorName,
+                IsExcluded = g.IsExcluded,
+                OutOfSpec = outOfSpec,
+                OutOfControl = outOfControl,
+                RootCause = rootCause,
+                CorrectiveAction = correctiveAction,
+                MeasurementBatchId = g.Id
+            };
+        }).ToList();
+        
+        var limits = new ControlLimits
+        {
+            USL = item.Usl,
+            LSL = item.Lsl,
+            UCL = item.Ucl,
+            LCL = item.Lcl,
+            Target = item.TargetValue
+        };
+
+        var expectedN = psi?.SampleSize ?? 5; // Default to 5 if not set
+
+        if (expectedN == 1)
+        {
+            var points = subgroups.Select(x => new SpcDataPoint
+            {
+                MeasuredAt = x.MeasuredAt,
+                Value = x.Values.First(),
+                LotNo = x.LotNo,
+                SerialNo = x.SerialNo,
+                Operator = x.Operator,
+                IsExcluded = x.IsExcluded,
+                IsOutOfSpec = x.OutOfSpec,
+                IsOutOfControl = x.OutOfControl,
+                RootCause = x.RootCause,
+                CorrectiveAction = x.CorrectiveAction,
+                MeasurementBatchId = x.MeasurementBatchId
+            }).ToList();
+            return ImrChartCalculator.Calculate(points, limits);
+        }
+        else
+        {
+            return XbarRChartCalculator.Calculate(subgroups, limits, expectedN);
+        }
     }
 }

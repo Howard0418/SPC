@@ -2,7 +2,7 @@ import axios from "axios";
 
 const baseURL = import.meta.env.DEV
   ? "/api"
-  : import.meta.env.VITE_API_BASE || "http://localhost:5243/api";
+  : import.meta.env.VITE_API_BASE || "http://172.16.110.27:8082/api";
 
 export const api = axios.create({ baseURL });
 
@@ -45,7 +45,7 @@ export function getApiErrorMessage(err) {
   const msg = err?.message || "";
   const code = err?.code || "";
   if (!err?.response && (code === "ERR_NETWORK" || code === "ECONNREFUSED" || /Network Error/i.test(msg))) {
-    return "無法連線到後端 API。請先在同一台電腦於專案根目錄執行：dotnet run --project backend/MesSpc.Api/MesSpc.Api.csproj（預設 http://localhost:5243），再重新整理此頁。";
+    return `無法連線到後端 API。請確認後端服務已在 ${baseURL} 啟動，再重新整理此頁。`;
   }
   if (err?.response?.status === 401) {
     return "未授權（401）。若已啟用登入，請先至登入頁取得 Token。";
