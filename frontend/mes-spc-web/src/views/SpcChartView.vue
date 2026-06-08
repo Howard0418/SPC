@@ -25,12 +25,11 @@ import {
 const route = useRoute();
 const router = useRouter();
 
-// V2 Master Data State
-const products = ref([]);
-const stations = ref([]);
-const inspectionItems = ref([]);
+// SPC master data source: PartProcessCharacteristics
 const mappings = ref([]);
 const batchId = ref("");
+const ppcId = ref("");
+const uploadBatchId = ref("");
 const loading = ref(false);
 const error = ref("");
 
@@ -45,9 +44,7 @@ const searchQuery = ref("");
 const showSearchResults = ref(false);
 
 // Test Query Panel State for E2E
-const testProductId = ref("");
-const testStationId = ref("");
-const testItemId = ref("");
+const testPpcId = ref("");
 
 const chartResult = ref(null);
 let chartInstance = null;
@@ -59,26 +56,54 @@ const selectedPointIndex = ref(-1);
 
 // Unique Parts for selection
 const uniqueParts = computed(() => {
-  const uniquePartIds = [...new Set(mappings.value.filter(m => m.isActive).map(m => m.productId))];
-  return products.value.filter(p => uniquePartIds.includes(p.id) && p.isActive);
+  const byId = new Map();
+  mappings.value
+    .filter(m => m.isEnabled && m.part?.isEnabled !== false)
+    .forEach(m => {
+      if (!byId.has(m.partId)) byId.set(m.partId, m.part);
+    });
+  return [...byId.entries()]
+    .map(([id, part]) => ({ ...part, id }))
+    .sort((a, b) => (a.partNo || "").localeCompare(b.partNo || ""));
 });
 
 // Processes available for selected Part (Station)
 const availableProcesses = computed(() => {
   if (!selectedPartId.value) return [];
-  const validStationIds = mappings.value
-    .filter(m => m.productId === Number(selectedPartId.value) && m.isActive)
-    .map(m => m.stationId);
-  return stations.value.filter(s => validStationIds.includes(s.id) && s.isActive);
+  const byId = new Map();
+  mappings.value
+    .filter(m => m.partId === Number(selectedPartId.value) && m.isEnabled && m.process?.isEnabled !== false)
+    .forEach(m => {
+      if (!byId.has(m.processId)) byId.set(m.processId, m.process);
+    });
+  return [...byId.entries()]
+    .map(([id, process]) => ({ ...process, id }))
+    .sort((a, b) => (a.processCode || "").localeCompare(b.processCode || ""));
 });
 
 // Characteristics available for selected Part + Process (Inspection Items)
 const availableCharacteristics = computed(() => {
   if (!selectedPartId.value || !selectedProcessId.value) return [];
-  const validItemIds = mappings.value
-    .filter(m => m.productId === Number(selectedPartId.value) && m.stationId === Number(selectedProcessId.value) && m.isActive)
-    .map(m => m.inspectionItemId);
-  return inspectionItems.value.filter(i => validItemIds.includes(i.id) && i.isSpcEnabled);
+  return mappings.value
+    .filter(m =>
+      m.partId === Number(selectedPartId.value) &&
+      m.processId === Number(selectedProcessId.value) &&
+      m.isEnabled &&
+      m.characteristic?.isEnabled !== false &&
+      m.characteristic?.isSpcEnabled !== false
+    )
+    .map(m => ({ ...m.characteristic, id: m.characteristicId, mappingId: m.id }))
+    .sort((a, b) => (a.characteristicCode || "").localeCompare(b.characteristicCode || ""));
+});
+
+const selectedMapping = computed(() => {
+  if (!selectedPartId.value || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
+  return mappings.value.find(m =>
+    m.partId === Number(selectedPartId.value) &&
+    m.processId === Number(selectedProcessId.value) &&
+    m.characteristicId === Number(selectedCharacteristicId.value) &&
+    m.isEnabled
+  ) || null;
 });
 
 // Autocomplete search filtering
@@ -107,23 +132,29 @@ function syncCascadingDropdowns(productId, stationId, inspectionItemId) {
 // Watchers for cascading select workflow
 watch(selectedPartId, () => {
   if (updatingCascades.value) return;
+  ppcId.value = "";
+  uploadBatchId.value = "";
   selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
 });
 
 watch(selectedProcessId, () => {
   if (updatingCascades.value) return;
+  ppcId.value = "";
+  uploadBatchId.value = "";
   selectedCharacteristicId.value = "";
 });
 
 watch(selectedCharacteristicId, (newVal) => {
   if (updatingCascades.value) return;
+  ppcId.value = "";
+  uploadBatchId.value = "";
 });
 
 function selectMappingFromSearch(m) {
-  syncCascadingDropdowns(m.productId, m.stationId, m.inspectionItemId);
+  syncCascadingDropdowns(m.partId, m.processId, m.characteristicId);
   showSearchResults.value = false;
-  loadInteractiveChart();
+  loadActiveChart();
 }
 
 function hideSearchResults() {
@@ -133,44 +164,32 @@ function hideSearchResults() {
 }
 
 function handleTestQuery() {
-  const match = mappings.value.find(m => 
-    m.partId === Number(testProductId.value) &&
-    m.processId === Number(testStationId.value) &&
-    m.characteristicId === Number(testItemId.value)
-  );
+  const match = mappings.value.find(m => m.id === Number(testPpcId.value));
   if (match) {
-    syncCascadingDropdowns(match.id);
-  } else {
-    // Fallback if not found in mappings (for test robustness)
-    selectedPartId.value = testProductId.value;
-    selectedProcessId.value = testStationId.value;
-    selectedCharacteristicId.value = testItemId.value;
-    selectedCharacteristicId.value = testItemId.value;
+    syncCascadingDropdowns(match.partId, match.processId, match.characteristicId);
+    ppcId.value = String(match.id);
+    loadActiveChart();
+    return;
   }
-  loadInteractiveChart();
+  ppcId.value = testPpcId.value;
+  loadActiveChart();
 }
 
 async function loadMappings() {
   try {
-    const [prodRes, stnRes, itemRes, mapRes] = await Promise.all([
-      api.get("/products"),
-      api.get("/stations"),
-      api.get("/inspection-items"),
-      api.get("/product-station-items")
-    ]);
-    products.value = prodRes.data || [];
-    stations.value = stnRes.data || [];
-    inspectionItems.value = itemRes.data || [];
+    const mapRes = await api.get("/part-process-characteristics");
     mappings.value = mapRes.data || [];
     
     // Auto-select from query
-    const qProd = Number(route.query.productId);
-    const qStn = Number(route.query.stationId);
-    const qItem = Number(route.query.inspectionItemId);
+    const qPpc = Number(route.query.ppcId || route.query.partProcessCharacteristicId);
     
-    if (qProd && qStn && qItem) {
-      syncCascadingDropdowns(qProd, qStn, qItem);
-      loadInteractiveChart();
+    if (qPpc) {
+      const match = mappings.value.find(m => m.id === qPpc);
+      if (match) {
+        syncCascadingDropdowns(match.partId, match.processId, match.characteristicId);
+      }
+      ppcId.value = String(qPpc);
+      loadActiveChart();
     }
   } catch (e) {
     error.value = "無法載入檢驗項目基準列表：" + getApiErrorMessage(e);
@@ -178,21 +197,37 @@ async function loadMappings() {
 }
 
 onMounted(() => {
+  if (route.query.ppcId || route.query.partProcessCharacteristicId) {
+    ppcId.value = route.query.ppcId || route.query.partProcessCharacteristicId;
+  }
+  if (route.query.uploadBatchId) {
+    uploadBatchId.value = route.query.uploadBatchId;
+  }
   if (route.query.batchId) {
     batchId.value = route.query.batchId;
   }
-  loadMappings();
+  if (ppcId.value && uploadBatchId.value) {
+    loadUploadBatchChart();
+  } else {
+    loadMappings();
+  }
   window.addEventListener("resize", handleResize);
 });
 
 watch(batchId, () => {
-  if (selectedPartId.value && selectedProcessId.value && selectedCharacteristicId.value) {
-    loadInteractiveChart();
-  }
+  loadActiveChart();
 });
 
-async function loadInteractiveChart() {
-  if (!selectedPartId.value || !selectedProcessId.value || !selectedCharacteristicId.value) return;
+async function loadActiveChart() {
+  if (ppcId.value && uploadBatchId.value) {
+    await loadUploadBatchChart();
+  } else {
+    await loadInteractiveChart();
+  }
+}
+
+async function loadUploadBatchChart() {
+  if (!ppcId.value || !uploadBatchId.value) return;
   loading.value = true;
   error.value = "";
   chartResult.value = null;
@@ -200,14 +235,42 @@ async function loadInteractiveChart() {
   selectedPointIndex.value = -1;
 
   try {
-    const params = { 
-      productId: selectedPartId.value,
-      stationId: selectedProcessId.value,
-      inspectionItemId: selectedCharacteristicId.value
-    };
-    if (batchId.value) params.batchNo = batchId.value;
+    const res = await api.get("/v1/spc/chart", {
+      params: {
+        ppcId: ppcId.value,
+        uploadBatchId: uploadBatchId.value
+      }
+    });
+    chartResult.value = res.data;
+    loading.value = false;
+    await nextTick();
+    renderECharts();
+  } catch (e) {
+    if (e?.response?.status === 404) {
+      error.value = "找不到該 Excel/匯入批次的管制圖資料，可能尚未確認匯入或檢驗基準不存在。";
+    } else {
+      error.value = getApiErrorMessage(e);
+    }
+  } finally {
+    loading.value = false;
+  }
+}
 
-    const res = await api.get("/v2/spc/interactive-chart", { params });
+async function loadInteractiveChart() {
+  const mapping = selectedMapping.value;
+  if (!mapping && !ppcId.value) return;
+  loading.value = true;
+  error.value = "";
+  chartResult.value = null;
+  selectedPoint.value = null;
+  selectedPointIndex.value = -1;
+
+  try {
+    const activePpcId = ppcId.value || mapping.id;
+    ppcId.value = String(activePpcId);
+    const res = await api.get("/v1/spc/chart", {
+      params: { ppcId: activePpcId }
+    });
     chartResult.value = res.data;
     loading.value = false;
     await nextTick();
@@ -224,12 +287,11 @@ async function loadInteractiveChart() {
 }
 
 async function toggleExcludeBatch() {
-  if (!selectedPoint.value || !selectedPoint.value.measurementBatchId) return;
+  if (!selectedPoint.value && !uploadBatchId.value) return;
   try {
-    const batchId = selectedPoint.value.measurementBatchId;
-    await api.post(`/v2/spc/exclude-batch/${batchId}`);
-    // Reload chart after toggling
-    await loadInteractiveChart();
+    const batchIdToToggle = selectedPoint.value?.measurementBatchId || uploadBatchId.value;
+    await api.post(`/v1/spc/exclude-batch/${batchIdToToggle}`);
+    await loadActiveChart();
   } catch (e) {
     alert("剔除狀態更新失敗：" + getApiErrorMessage(e));
   }
@@ -591,7 +653,7 @@ onBeforeUnmount(() => {
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">料號 (Product)</label>
             <select v-model="selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
               <option value="">選擇產品...</option>
-              <option v-for="p in uniqueParts" :key="p.id" :value="p.id">[{{ p.productCode }}] {{ p.productName }}</option>
+              <option v-for="p in uniqueParts" :key="p.id" :value="p.id">[{{ p.partNo }}] {{ p.partName }}</option>
             </select>
           </div>
 
@@ -599,7 +661,7 @@ onBeforeUnmount(() => {
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">工站 (Station)</label>
             <select v-model="selectedProcessId" :disabled="!selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
               <option value="">選擇工站...</option>
-              <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.stationName }}</option>
+              <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">[{{ pr.processCode }}] {{ pr.processName }}</option>
             </select>
           </div>
 
@@ -607,7 +669,7 @@ onBeforeUnmount(() => {
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">檢驗項目 (Inspection Item)</label>
             <select v-model="selectedCharacteristicId" :disabled="!selectedProcessId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
               <option value="">選擇檢驗項目...</option>
-              <option v-for="c in availableCharacteristics" :key="c.id" :value="c.id">{{ c.itemName }}</option>
+              <option v-for="c in availableCharacteristics" :key="c.id" :value="c.id">[{{ c.characteristicCode }}] {{ c.characteristicName }}</option>
             </select>
           </div>
         </div>
@@ -617,7 +679,7 @@ onBeforeUnmount(() => {
           <input v-model="batchId" placeholder="輸入 Lot No..." class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
         </div>
 
-        <button @click="loadInteractiveChart" :disabled="loading" class="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all text-sm h-10">
+        <button @click="loadActiveChart" :disabled="loading" class="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all text-sm h-10">
           <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" /> 重新計算
         </button>
       </div>
@@ -626,20 +688,12 @@ onBeforeUnmount(() => {
     <!-- E2E System Test Panel (Invisible / tiny or styled nicely) -->
     <div class="p-4 rounded-3xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <span class="text-xs font-bold text-slate-500">⚙️ 快速編號查詢 (E2E / 系統測試)</span>
+        <span class="text-xs font-bold text-slate-500">⚙️ 快速 ppcId 查詢 (E2E / 系統測試)</span>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <div class="w-32">
-          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">產品 ID</label>
-          <input v-model="testProductId" type="text" placeholder="1" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div class="w-32">
-          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">工站 ID</label>
-          <input v-model="testStationId" type="text" placeholder="1" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div class="w-32">
-          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">檢測項目 ID</label>
-          <input v-model="testItemId" type="text" placeholder="1" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">ppcId</label>
+          <input v-model="testPpcId" type="text" placeholder="501" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
         </div>
         <button @click="handleTestQuery" type="button" class="mt-4 flex items-center justify-center px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-all text-xs h-8">
           查詢
@@ -759,7 +813,7 @@ onBeforeUnmount(() => {
               </span>
               
               <!-- Toggle Exclude Button -->
-              <button @click="toggleExcludeBatch" v-if="selectedPoint.measurementBatchId" class="ml-2 px-3 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border transition-colors focus:outline-none" :class="selectedPoint.isExcluded ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'">
+              <button @click="toggleExcludeBatch" v-if="selectedPoint.measurementBatchId || uploadBatchId" class="ml-2 px-3 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border transition-colors focus:outline-none" :class="selectedPoint.isExcluded ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'">
                 {{ selectedPoint.isExcluded ? '↺ 恢復此數據' : '✖ 剔除此數據' }}
               </button>
             </div>

@@ -34,7 +34,7 @@ const exportMonth = ref(new Date().toISOString().slice(0, 7));
 
 function exportCpkMaster() {
   const baseUrl = api.defaults?.baseURL || "http://localhost:5243";
-  const url = `${baseUrl}/api/v2/reports/cpk-summary?month=${exportMonth.value}`;
+  const url = `${baseUrl}/api/v1/reports/cpk-summary?month=${exportMonth.value}`;
   window.open(url, "_blank");
 }
 
@@ -45,7 +45,7 @@ async function executeQuery() {
   alertsMap.value = {};
 
   try {
-    const { data } = await api.get("/v2/traceability", { 
+    const { data } = await api.get("/v1/traceability", { 
       params: {
         workOrderNo: queryParams.value.workOrderNo || undefined,
         lotNo: queryParams.value.lotNo || undefined,
@@ -71,8 +71,21 @@ async function executeQuery() {
   }
 }
 
-function goToSpcChart(batchId) {
-  router.push({ path: "/spc", query: { batchId } });
+function goToSpcChart(batch) {
+  const traceKey = batch.lotNo || batch.batchNo;
+
+  if (!batch.ppcId) {
+    err.value = "此批資料缺少料號檢驗基準 ppcId，無法自動轉入 SPC 管制圖。";
+    return;
+  }
+
+  router.push({
+    path: "/spc",
+    query: {
+      ppcId: batch.ppcId,
+      ...(traceKey ? { batchId: traceKey } : {})
+    }
+  });
 }
 
 onMounted(() => {
@@ -112,6 +125,26 @@ onMounted(() => {
         <button @click="exportCpkMaster" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all self-end">
           <Download class="w-4 h-4" /> 📥 匯出廠級 CPK 總表 (Excel)
         </button>
+      </div>
+    </div>
+
+    <!-- Guide / Operation Tip -->
+    <div class="p-5 bg-gradient-to-r from-indigo-50 to-sky-50 dark:from-indigo-950/30 dark:to-sky-900/20 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl text-indigo-600 dark:text-indigo-400 mt-0.5">
+        <Search class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">模組指南：多維度品質履歷與查詢 (SPC Query)</h4>
+        <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
+          此頁面用於依工單、批號與序號查詢品質履歷，並可從查詢結果快速轉入 SPC 管制圖或匯出廠級 CPK 總表。
+        </p>
+        <div class="mt-3 space-y-1.5 text-xs text-indigo-700 dark:text-indigo-400/80 leading-relaxed">
+          <div class="font-black text-indigo-900 dark:text-indigo-300">多維度品質履歷與查詢頁面操作說明</div>
+          <p><strong>輸入條件：</strong>可輸入生產工單、批號 Lot No 或產品序號 SN，條件可單獨或組合使用。</p>
+          <p><strong>執行查詢：</strong>按查詢後，系統會列出符合條件的量測批次與相關異常紀錄。</p>
+          <p><strong>查看管制圖：</strong>在查詢結果中點選 SPC 圖表入口，可直接跳到對應批次的管制圖。</p>
+          <p><strong>匯出報表：</strong>選擇月份後按「匯出廠級 CPK 總表」，下載該月份統計報表。</p>
+        </div>
       </div>
     </div>
 
@@ -207,9 +240,11 @@ onMounted(() => {
               <!-- Part / Station -->
               <td class="py-4 px-5">
                 <div class="font-bold text-indigo-600 dark:text-indigo-400 text-xs bg-indigo-50 dark:bg-indigo-950/40 inline-block px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/50">
-                  Part: {{ b.productId }}
+                  {{ b.partNo || `Part #${b.partId}` }}
                 </div>
-                <div class="text-xs text-slate-500 mt-1 font-mono">Station: {{ b.stationId }}</div>
+                <div class="text-xs text-slate-500 mt-1 font-mono">
+                  {{ b.processCode || `Process #${b.processId}` }} / {{ b.characteristicCode || `Item #${b.characteristicId}` }}
+                </div>
               </td>
 
               <!-- Lot / SN -->
@@ -245,7 +280,7 @@ onMounted(() => {
               <!-- Action -->
               <td class="py-4 px-5 text-right">
                 <button
-                  @click="goToSpcChart(b.id)"
+                  @click="goToSpcChart(b)"
                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 shadow-sm"
                 >
                   <BarChart2 class="w-4 h-4" /> 轉入 SPC 管制圖

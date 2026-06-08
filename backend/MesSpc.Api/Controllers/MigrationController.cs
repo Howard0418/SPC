@@ -7,11 +7,15 @@ using ClosedXML.Excel;
 namespace MesSpc.Api.Controllers;
 
 [ApiController]
+[Route("api/v1/migration")]
 [Route("api/v2/migration")]
 public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env) : ControllerBase
 {
     private IActionResult? RequireDevelopment()
     {
+        if (Request.Path.StartsWithSegments("/api/v2", StringComparison.OrdinalIgnoreCase))
+            return LegacyV2Api.Gone("/api/v1/migration");
+
         return env.IsDevelopment()
             ? null
             : StatusCode(StatusCodes.Status403Forbidden, new { message = "Migration endpoints only allowed in Development." });

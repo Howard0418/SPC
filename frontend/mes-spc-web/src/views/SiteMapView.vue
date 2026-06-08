@@ -50,7 +50,7 @@ const siteMapCategories = [
     items: [
       { to: "/alerts", text: "異常通報總覽", icon: AlertTriangle },
       { to: "/spc/query", text: "多維度品質履歷與查詢", icon: Search },
-      { to: "/v2/alerts-workflow", text: "異常單簽核處置", icon: Activity },
+      { to: "/alerts-workflow", text: "異常單簽核處置", icon: Activity },
       { to: "/genealogy", text: "產品系譜圖 (Genealogy)", icon: FolderTree }
     ]
   },

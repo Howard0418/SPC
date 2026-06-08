@@ -14,10 +14,9 @@ import {
   Settings
 } from "lucide-vue-next";
 
-// Master Data
+// V1 Master Data
 const products = ref([]);
 const stations = ref([]);
-const inspectionItems = ref([]);
 const mappings = ref([]);
 
 // Local Binding State
@@ -35,9 +34,7 @@ const woLoading = ref(false);
 const selectedItemId = ref("");
 const payload = ref({
   batchNo: "",
-  productId: null,
-  stationId: null,
-  workOrderId: null,
+  workOrderNo: "",
   lotNo: "",
   serialNo: "",
   measuredAt: "",
@@ -49,6 +46,7 @@ const loading = ref(false);
 const submitting = ref(false);
 const error = ref("");
 const successResult = ref(null);
+const successPpcId = ref(null);
 
 // Soft Hold State
 const softHoldActive = ref(false);
@@ -85,23 +83,24 @@ function saveBinding() {
 const boundStationName = computed(() => {
   if (!boundStationId.value || stations.value.length === 0) return "尚未綁定";
   const st = stations.value.find(s => s.id === boundStationId.value);
-  return st ? st.stationName : "未知工站";
+  return st ? `[${st.processCode}] ${st.processName}` : "未知製程";
 });
 
 async function loadMetadata() {
   loading.value = true;
   error.value = "";
   try {
-    const [resProducts, resStations, resItems, resMappings] = await Promise.all([
-      api.get("/products"),
-      api.get("/stations"),
-      api.get("/inspection-items"),
-      api.get("/product-station-items")
-    ]);
-    products.value = resProducts.data || [];
-    stations.value = resStations.data || [];
-    inspectionItems.value = resItems.data || [];
-    mappings.value = resMappings.data || [];
+    const { data } = await api.get("/part-process-characteristics");
+    mappings.value = data || [];
+
+    const partMap = new Map();
+    const processMap = new Map();
+    mappings.value.forEach(m => {
+      if (m.isEnabled && m.part && !partMap.has(m.partId)) partMap.set(m.partId, { ...m.part, id: m.partId });
+      if (m.isEnabled && m.process && !processMap.has(m.processId)) processMap.set(m.processId, { ...m.process, id: m.processId });
+    });
+    products.value = [...partMap.values()].sort((a, b) => (a.partNo || "").localeCompare(b.partNo || ""));
+    stations.value = [...processMap.values()].sort((a, b) => (a.processCode || "").localeCompare(b.processCode || ""));
   } catch (e) {
     error.value = "載入主檔資料失敗：" + getApiErrorMessage(e);
   } finally {
@@ -120,9 +119,7 @@ function resetForm() {
   
   payload.value = {
     batchNo: `MANUAL-${dateStr}-${timeStr}`,
-    productId: null,
-    stationId: null,
-    workOrderId: null,
+    workOrderNo: "",
     lotNo: "",
     serialNo: "",
     measuredAt: new Date().toISOString().substring(0, 16),
@@ -136,69 +133,50 @@ function resetForm() {
   selectedProductName.value = "";
   selectedItemId.value = "";
   successResult.value = null;
+  successPpcId.value = null;
   error.value = "";
 }
 
 async function fetchWorkOrder() {
-  if (!inputWoNo.value.trim() || !boundStationId.value) return;
-  woLoading.value = true;
+  if (!inputWoNo.value.trim()) return;
   error.value = "";
   successResult.value = null;
-  try {
-    const res = await api.get(`/v2/work-orders?workOrderNo=${encodeURIComponent(inputWoNo.value.trim())}`);
-    const wos = res.data;
-    if (wos && wos.length > 0) {
-      selectedWorkOrder.value = wos[0];
-      selectedProductId.value = wos[0].productId;
-      
-      const p = products.value.find(x => x.id === selectedProductId.value);
-      selectedProductName.value = p ? `[${p.productCode}] ${p.productName}` : "未知料號";
-      
-      payload.value.workOrderId = selectedWorkOrder.value.id;
-      payload.value.productId = selectedProductId.value;
-      payload.value.stationId = boundStationId.value;
-      payload.value.lotNo = selectedWorkOrder.value.workOrderNo;
-      
-      // Auto-select item if only one
-      if (filteredItems.value.length === 1) {
-        selectedItemId.value = filteredItems.value[0].id;
-      } else {
-        selectedItemId.value = "";
-      }
-    } else {
-      error.value = `找不到工單號碼: ${inputWoNo.value}`;
-      selectedWorkOrder.value = null;
-      selectedProductId.value = null;
-    }
-  } catch (e) {
-    error.value = "查詢工單失敗：" + getApiErrorMessage(e);
-  } finally {
-    woLoading.value = false;
-  }
+  payload.value.workOrderNo = inputWoNo.value.trim();
+  payload.value.lotNo = payload.value.lotNo || inputWoNo.value.trim();
+  selectedWorkOrder.value = { workOrderNo: inputWoNo.value.trim() };
 }
 
 const filteredItems = computed(() => {
   if (!selectedProductId.value || !boundStationId.value) return [];
-  const activeItemIds = mappings.value
-    .filter(m => m.productId === Number(selectedProductId.value) && 
-                 m.stationId === Number(boundStationId.value) && 
-                 m.isActive)
-    .map(m => m.inspectionItemId);
-  return inspectionItems.value.filter(i => activeItemIds.includes(i.id) && i.isActive);
+  return mappings.value
+    .filter(m =>
+      m.partId === Number(selectedProductId.value) &&
+      m.processId === Number(boundStationId.value) &&
+      m.isEnabled &&
+      m.characteristic?.isEnabled !== false &&
+      m.characteristic?.isSpcEnabled !== false
+    )
+    .map(m => ({ ...m.characteristic, id: m.characteristicId, mappingId: m.id }))
+    .sort((a, b) => (a.characteristicCode || "").localeCompare(b.characteristicCode || ""));
 });
 
 const selectedMapping = computed(() => {
   if (!selectedProductId.value || !boundStationId.value || !selectedItemId.value) return null;
   return mappings.value.find(m => 
-    m.productId === Number(selectedProductId.value) && 
-    m.stationId === Number(boundStationId.value) && 
-    m.inspectionItemId === Number(selectedItemId.value)
+    m.partId === Number(selectedProductId.value) &&
+    m.processId === Number(boundStationId.value) &&
+    m.characteristicId === Number(selectedItemId.value) &&
+    m.isEnabled
   );
 });
 
 const selectedItemDetails = computed(() => {
-  if (!selectedItemId.value) return null;
-  return inspectionItems.value.find(i => i.id === Number(selectedItemId.value));
+  if (!selectedMapping.value) return null;
+  return {
+    ...selectedMapping.value.characteristic,
+    lsl: selectedMapping.value.lsl,
+    usl: selectedMapping.value.usl
+  };
 });
 
 const sampleSize = computed(() => selectedMapping.value ? selectedMapping.value.sampleSize : 1);
@@ -207,7 +185,6 @@ watch(selectedItemId, () => {
   if (selectedItemId.value) {
     inputRefs.value = [];
     payload.value.values = Array.from({ length: sampleSize.value }, (_, i) => ({
-      inspectionItemId: Number(selectedItemId.value),
       sampleNo: i + 1,
       valueNumeric: null
     }));
@@ -239,7 +216,7 @@ function handleEnter(index) {
 }
 
 const submitBatch = async () => {
-  if (!selectedProductId.value || !boundStationId.value || !selectedItemId.value) {
+  if (!selectedMapping.value) {
     error.value = "請確認檢驗項目已選擇。";
     return;
   }
@@ -259,13 +236,24 @@ const submitBatch = async () => {
   successResult.value = null;
 
   try {
-    const finalPayload = JSON.parse(JSON.stringify(payload.value));
-    finalPayload.measuredAt = new Date(finalPayload.measuredAt).toISOString();
-    finalPayload.values.forEach(v => { v.valueNumeric = Number(v.valueNumeric); });
+    const finalPayload = {
+      partProcessCharacteristicId: selectedMapping.value.id,
+      batchNo: payload.value.batchNo,
+      measuredAt: new Date(payload.value.measuredAt).toISOString(),
+      operatorName: payload.value.operatorName,
+      workOrderNo: payload.value.workOrderNo || inputWoNo.value.trim() || null,
+      lotNo: payload.value.lotNo || payload.value.batchNo,
+      serialNo: payload.value.serialNo || null,
+      values: payload.value.values.map(v => ({
+        sampleNo: v.sampleNo,
+        valueNumeric: Number(v.valueNumeric)
+      }))
+    };
 
-    const res = await api.post("/measurement-batches", finalPayload);
+    const res = await api.post("/v1/manual-measurements", finalPayload);
     
     successResult.value = res.data.batch || res.data;
+    successPpcId.value = selectedMapping.value.id;
     
     if (res.data.alerts && res.data.alerts.length > 0) {
       activeAlerts.value = res.data.alerts;
@@ -274,9 +262,6 @@ const submitBatch = async () => {
       return; 
     }
     
-    const operator = payload.value.operatorName;
-    resetForm();
-    payload.value.operatorName = operator;
   } catch (e) {
     error.value = "儲存量測資料失敗：" + getApiErrorMessage(e);
   } finally {
@@ -293,7 +278,12 @@ async function submitHandleAlerts() {
   handlingAlerts.value = true;
   try {
     for (const alertObj of activeAlerts.value) {
-      await api.post(`/alerts/${alertObj.id}/handle`, handleForm.value);
+      await api.put(`/v1/alerts/${alertObj.id}/workflow`, {
+        status: "Closed",
+        rootCause: handleForm.value.rootCause,
+        correctiveAction: handleForm.value.correctiveAction,
+        responsibleUser: payload.value.operatorName
+      });
     }
     softHoldActive.value = false;
     activeAlerts.value = [];
@@ -315,7 +305,7 @@ async function submitHandleAlerts() {
     <div class="flex items-center justify-between px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-xl shadow-sm">
       <div class="flex items-center gap-2">
         <MonitorCheck class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-        <span class="text-sm font-bold text-indigo-900 dark:text-indigo-300">本機預設綁定工站：</span>
+        <span class="text-sm font-bold text-indigo-900 dark:text-indigo-300">本機預設綁定製程：</span>
         <span class="text-sm font-black text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 px-3 py-1 rounded-md border border-indigo-100 dark:border-indigo-700">{{ boundStationName }}</span>
       </div>
       <button @click="showBindModal = true" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1 bg-white/50 dark:bg-black/20 px-2 py-1.5 rounded-lg transition-colors">
@@ -346,6 +336,14 @@ async function submitHandleAlerts() {
         <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
           此模組用於產線現場人員以手動或掃碼方式輸入即時量測檢驗數據。系統將自動比對檢驗基準配置與西方電氣規則，並於異常時即時彈出警報單填寫畫面。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
+          <div class="font-black text-blue-900 dark:text-blue-300">現場量測數據錄入頁面操作說明</div>
+          <p><strong>輸入工單：</strong>掃描或輸入工單號碼，作為本次量測資料的來源識別。</p>
+          <p><strong>選擇檢驗基準：</strong>依產品、製程與檢驗項目選擇正確的料號檢驗基準。</p>
+          <p><strong>輸入量測值：</strong>依樣本數填入各筆量測值，確認單位與檢驗項目相符。</p>
+          <p><strong>送出資料：</strong>送出後系統會建立檢驗批號，並立即執行 SPC 判定。</p>
+          <p><strong>查看結果：</strong>上傳成功後可點「前往 SPC 管制圖查看趨勢」確認圖表與異常狀態。</p>
+        </div>
       </div>
     </div>
 
@@ -358,9 +356,9 @@ async function submitHandleAlerts() {
       <div class="flex items-center gap-2 font-bold">
         <CheckCircle2 class="w-5 h-5" /> 量測數據上傳成功！
       </div>
-      <p class="text-xs">系統已自動建立檢驗批號 <strong>{{ successResult.batchNo }}</strong>，共計錄入 {{ successResult.values?.length }} 筆量測點。點位已進入即時 SPC 管制引擎分析。</p>
+      <p class="text-xs">系統已自動建立檢驗批號 <strong>{{ successResult.batchNo }}</strong>，共計錄入 {{ successResult.values?.length }} 筆量測點。點位已進入 V1 SPC 管制引擎分析。</p>
       <div class="pt-2">
-        <router-link :to="`/spc/?partProcessCharacteristicId=${selectedMapping?.id}&batchId=${successResult.lotNo || successResult.batchNo}`" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm">
+        <router-link :to="`/spc/?ppcId=${successPpcId}&batchId=${successResult.lotNo || successResult.batchNo}`" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm">
           前往 SPC 管制圖查看趨勢 <ArrowRight class="w-3.5 h-3.5" />
         </router-link>
       </div>
@@ -369,9 +367,9 @@ async function submitHandleAlerts() {
     <!-- Main Entry Panel -->
     <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
       
-      <!-- Scan Work Order Section -->
+      <!-- Work Order Section -->
       <div class="space-y-2 relative">
-        <label class="block text-sm font-black text-slate-700 dark:text-slate-300">請掃描或輸入工單號碼 (Work Order No) *</label>
+        <label class="block text-sm font-black text-slate-700 dark:text-slate-300">請掃描或輸入工單號碼 (Work Order No)</label>
         <div class="relative flex items-center">
           <Scan class="absolute left-4 w-6 h-6 text-indigo-400" />
           <input
@@ -387,19 +385,22 @@ async function submitHandleAlerts() {
             class="absolute right-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50"
           >
             <RefreshCw v-if="woLoading" class="w-4 h-4 animate-spin" />
-            <span v-else>查詢帶入</span>
+            <span v-else>帶入工單</span>
           </button>
         </div>
-        <p class="text-xs font-bold text-slate-500 mt-1 pl-2">💡 輸入完成請按下 Enter 鍵，系統將自動解析料號並帶出檢驗項目。</p>
+        <p class="text-xs font-bold text-slate-500 mt-1 pl-2">提示：工單可留空；量測資料會以 V1 料號檢驗基準 ppcId 建立。</p>
       </div>
 
       <transition enter-active-class="transition-all duration-300" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0">
-        <div v-if="selectedWorkOrder" class="space-y-6 border-t border-slate-200 dark:border-slate-800 pt-6">
+        <div class="space-y-6 border-t border-slate-200 dark:border-slate-800 pt-6">
           
           <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <div class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5">系統已自動鎖定料號</div>
-              <div class="text-sm font-bold text-slate-800 dark:text-slate-200">{{ selectedProductName }}</div>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">產品料號 (Part)</label>
+              <select v-model="selectedProductId" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option :value="null">-- 請選擇料號 --</option>
+                <option v-for="p in products" :key="p.id" :value="p.id">[{{ p.partNo }}] {{ p.partName }}</option>
+              </select>
             </div>
             <div>
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">作業人員 (Operator) *</label>
@@ -414,7 +415,7 @@ async function submitHandleAlerts() {
             <label class="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2">請選擇檢驗項目 (Inspection Item) *</label>
             <select v-model="selectedItemId" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
               <option value="">-- 請選擇 --</option>
-              <option v-for="i in filteredItems" :key="i.id" :value="i.id">{{ i.itemName }}</option>
+              <option v-for="i in filteredItems" :key="i.id" :value="i.id">[{{ i.characteristicCode }}] {{ i.characteristicName }}</option>
             </select>
           </div>
 
@@ -558,12 +559,12 @@ async function submitHandleAlerts() {
               <MonitorCheck class="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             </div>
             <h2 class="text-2xl font-black text-slate-800 dark:text-white">設定本機所屬工站</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400">請設定這台電腦或平版，目前固定擺放在哪一個生產工站？系統將以此為基準自動帶出檢驗條件。</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">請設定這台電腦或平版，目前固定擺放在哪一個製程？系統將以此為基準帶出 V1 料號檢驗基準。</p>
           </div>
           <div>
             <select v-model="boundStationId" class="w-full px-4 py-3 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition-all">
-              <option :value="null">-- 請選擇固定工站 --</option>
-              <option v-for="s in stations" :key="s.id" :value="s.id">{{ s.stationName }}</option>
+              <option :value="null">-- 請選擇固定製程 --</option>
+              <option v-for="s in stations" :key="s.id" :value="s.id">[{{ s.processCode }}] {{ s.processName }}</option>
             </select>
           </div>
           <button @click="saveBinding" :disabled="!boundStationId" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-50">

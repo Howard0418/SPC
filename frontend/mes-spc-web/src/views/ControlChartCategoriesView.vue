@@ -212,6 +212,13 @@ onMounted(load);
         <p class="text-xs text-cyan-700 dark:text-cyan-400/80 mt-1.5 leading-relaxed">
           此模組用於設定 SPC 系統的「中分類」資料，歸屬於「大群組」之下。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-cyan-700 dark:text-cyan-400/80 leading-relaxed">
+          <div class="font-black text-cyan-900 dark:text-cyan-300">管制圖類別主檔頁面操作說明</div>
+          <p><strong>選擇群組：</strong>先確認類別要歸屬的管制圖大群組。</p>
+          <p><strong>新增類別：</strong>按「新增類別」，填入類別代號、類別名稱與排序。</p>
+          <p><strong>切換檢視：</strong>可透過畫面上的分類卡或篩選條件查看不同大群組下的類別。</p>
+          <p><strong>後續設定：</strong>類別建立後，請到「管制圖種類配置」設定實際管制圖種類。</p>
+        </div>
       </div>
     </div>
 

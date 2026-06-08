@@ -1,16 +1,9 @@
 import { createRouter, createWebHistory } from "vue-router";
 import DashboardView from "../views/DashboardView.vue";
-import ProductsView from "../views/ProductsView.vue";
-import StationsView from "../views/StationsView.vue";
-import InspectionItemsView from "../views/InspectionItemsView.vue";
 import MeasurementEntryView from "../views/MeasurementEntryView.vue";
-import CsvImportView from "../views/CsvImportView.vue";
 import SpcChartView from "../views/SpcChartView.vue";
 import AlertsView from "../views/AlertsView.vue";
 import LoginView from "../views/LoginView.vue";
-import WorkOrdersView from "../views/WorkOrdersView.vue";
-import StationOpsView from "../views/StationOpsView.vue";
-import TraceabilityView from "../views/TraceabilityView.vue";
 import AlertsWorkflowView from "../views/AlertsWorkflowView.vue";
 import PartsView from "../views/PartsView.vue";
 import ProcessesView from "../views/ProcessesView.vue";
@@ -37,17 +30,18 @@ const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
 const routes = [
   { path: "/login", component: LoginView },
   { path: "/", component: DashboardView },
-  { path: "/products", component: ProductsView },
-  { path: "/stations", component: StationsView },
-  { path: "/inspection-items", component: InspectionItemsView },
+  { path: "/products", redirect: "/parts" },
+  { path: "/stations", redirect: "/processes" },
+  { path: "/inspection-items", redirect: "/characteristics" },
   { path: "/measurements", component: MeasurementEntryView },
-  { path: "/csv-import", component: CsvImportView },
+  { path: "/csv-import", redirect: "/uploads/variable" },
   { path: "/spc", component: SpcChartView },
   { path: "/alerts", component: AlertsView },
-  { path: "/v2/work-orders", component: WorkOrdersView },
-  { path: "/v2/station-ops", component: StationOpsView },
-  { path: "/v2/traceability", component: TraceabilityView },
-  { path: "/v2/alerts-workflow", component: AlertsWorkflowView },
+  { path: "/v2/work-orders", redirect: "/measurements" },
+  { path: "/v2/station-ops", redirect: "/measurements" },
+  { path: "/v2/traceability", redirect: "/spc/query" },
+  { path: "/alerts-workflow", component: AlertsWorkflowView },
+  { path: "/v2/alerts-workflow", redirect: "/alerts-workflow" },
   { path: "/parts", component: PartsView },
   { path: "/processes", component: ProcessesView },
   { path: "/machines", component: MachinesView },

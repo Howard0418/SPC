@@ -7,7 +7,7 @@ namespace MesSpc.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/spc")]
-public class SpcController(SpcService spcService) : ControllerBase
+public class SpcController(SpcService spcService, AppDbContext db) : ControllerBase
 {
     [HttpGet("chart")]
     public async Task<IActionResult> GetChart([FromQuery] int ppcId, [FromQuery] Guid? uploadBatchId)
@@ -15,6 +15,18 @@ public class SpcController(SpcService spcService) : ControllerBase
         var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId);
         if (chart is null) return NotFound("Chart data not found or invalid part process characteristic.");
         return Ok(chart);
+    }
+
+    [HttpPost("exclude-batch/{uploadBatchId:guid}")]
+    public async Task<IActionResult> ToggleExcludeUploadBatch(Guid uploadBatchId, CancellationToken ct = default)
+    {
+        var batch = await db.UploadBatches.FindAsync([uploadBatchId], ct);
+        if (batch is null) return NotFound("Upload batch not found.");
+
+        batch.IsExcluded = !batch.IsExcluded;
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new { batch.UploadBatchId, batch.IsExcluded });
     }
 }
 

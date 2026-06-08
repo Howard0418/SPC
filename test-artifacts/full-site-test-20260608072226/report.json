@@ -1,0 +1,881 @@
+{
+  "prefix": "FULL-E2E-20260608072226",
+  "outDir": "D:\\SPC\\test-artifacts\\full-site-test-20260608072226",
+  "total": 49,
+  "passed": 39,
+  "failed": 10,
+  "results": [
+    {
+      "name": "I_MR 主檔/PPC 新增與修改儲存",
+      "ok": true,
+      "ppcId": 503
+    },
+    {
+      "name": "I_MR Excel 匯入/預覽/確認",
+      "ok": true,
+      "uploadBatchId": "2fcdadc2-f6e0-4d39-9bb7-47d3c7bf1218"
+    },
+    {
+      "name": "I_MR 流程",
+      "ok": false,
+      "error": "I_MR chart has no points"
+    },
+    {
+      "name": "XBAR_R 主檔/PPC 新增與修改儲存",
+      "ok": true,
+      "ppcId": 504
+    },
+    {
+      "name": "XBAR_R Excel 匯入/預覽/確認",
+      "ok": true,
+      "uploadBatchId": "d8150cd9-6492-452e-b8b5-cf2e0abfaefa"
+    },
+    {
+      "name": "XBAR_R 流程",
+      "ok": false,
+      "error": "XBAR_R chart has no points"
+    },
+    {
+      "name": "XBAR_S 主檔/PPC 新增與修改儲存",
+      "ok": true,
+      "ppcId": 505
+    },
+    {
+      "name": "XBAR_S Excel 匯入/預覽/確認",
+      "ok": true,
+      "uploadBatchId": "bbc8ca76-68ba-4fc8-a35f-34dc1a0e6da1"
+    },
+    {
+      "name": "XBAR_S 流程",
+      "ok": false,
+      "error": "XBAR_S chart has no points"
+    },
+    {
+      "name": "P 主檔/PPC 新增與修改儲存",
+      "ok": true,
+      "ppcId": 506
+    },
+    {
+      "name": "P Excel 匯入/預覽/確認",
+      "ok": true,
+      "uploadBatchId": "844f7b13-3f5a-4df2-a0b5-532d0a0be6c3"
+    },
+    {
+      "name": "P 流程",
+      "ok": false,
+      "error": "P chart has no points"
+    },
+    {
+      "name": "NP 主檔/PPC 新增與修改儲存",
+      "ok": true,
+      "ppcId": 507
+    },
+    {
+      "name": "NP Excel 匯入/預覽/確認",
+      "ok": true,
+      "uploadBatchId": "2bd1842d-90c0-451b-a650-a96917e6c905"
+    },
+    {
+      "name": "NP 流程",
+      "ok": false,
+      "error": "NP chart has no points"
+    },
+    {
+      "name": "C 主檔/PPC 新增與修改儲存",
+      "ok": true,
+      "ppcId": 508
+    },
+    {
+      "name": "C Excel 匯入/預覽/確認",
+      "ok": true,
+      "uploadBatchId": "08ec94dd-bb73-43b3-9bbb-6bd00c2f8613"
+    },
+    {
+      "name": "C 流程",
+      "ok": false,
+      "error": "C chart has no points"
+    },
+    {
+      "name": "U 主檔/PPC 新增與修改儲存",
+      "ok": true,
+      "ppcId": 509
+    },
+    {
+      "name": "U Excel 匯入/預覽/確認",
+      "ok": true,
+      "uploadBatchId": "f1d141ae-35a9-4b69-8705-c5ed16533e83"
+    },
+    {
+      "name": "U 流程",
+      "ok": false,
+      "error": "U chart has no points"
+    },
+    {
+      "name": "現場量測儲存與異常觸發",
+      "ok": true,
+      "alerts": 1
+    },
+    {
+      "name": "異常處置儲存/結案",
+      "ok": true,
+      "alertId": 1082
+    },
+    {
+      "name": "多維度品質履歷查詢",
+      "ok": true
+    },
+    {
+      "name": "報表匯出 V1 與 V2 封存",
+      "ok": true,
+      "reportStatus": 200,
+      "v2ReportStatus": 410
+    },
+    {
+      "name": "V2 寫入 API 全部封存",
+      "ok": true,
+      "workOrder": 410,
+      "stationOps": 410,
+      "spcExclude": 410
+    },
+    {
+      "name": "頁面可開啟：儀表板",
+      "ok": true,
+      "url": "/"
+    },
+    {
+      "name": "頁面可開啟：產品料號主檔",
+      "ok": true,
+      "url": "/parts"
+    },
+    {
+      "name": "頁面可開啟：製程主檔",
+      "ok": true,
+      "url": "/processes"
+    },
+    {
+      "name": "頁面可開啟：機台主檔",
+      "ok": true,
+      "url": "/machines"
+    },
+    {
+      "name": "頁面可開啟：品質特性主檔",
+      "ok": false,
+      "url": "/characteristics"
+    },
+    {
+      "name": "頁面可開啟：PPC 基準",
+      "ok": false,
+      "url": "/part-process-characteristics"
+    },
+    {
+      "name": "頁面可開啟：計量匯入",
+      "ok": true,
+      "url": "/uploads/variable"
+    },
+    {
+      "name": "頁面可開啟：計數匯入",
+      "ok": true,
+      "url": "/uploads/attribute"
+    },
+    {
+      "name": "頁面可開啟：SPC 管制圖",
+      "ok": true,
+      "url": "/spc"
+    },
+    {
+      "name": "頁面可開啟：SPC 查詢",
+      "ok": true,
+      "url": "/spc/query"
+    },
+    {
+      "name": "頁面可開啟：異常總覽",
+      "ok": true,
+      "url": "/alerts"
+    },
+    {
+      "name": "頁面可開啟：異常處置",
+      "ok": true,
+      "url": "/alerts-workflow"
+    },
+    {
+      "name": "頁面可開啟：SMTP 設定",
+      "ok": true,
+      "url": "/settings/smtp"
+    },
+    {
+      "name": "頁面可開啟：系統操作手冊",
+      "ok": false,
+      "url": "/guide"
+    },
+    {
+      "name": "頁面可開啟：網站地圖",
+      "ok": true,
+      "url": "/sitemap"
+    },
+    {
+      "name": "畫面圖表產生：I_MR",
+      "ok": true,
+      "canvasCount": 1,
+      "url": "http://172.16.110.27:8083/spc?ppcId=503&uploadBatchId=2fcdadc2-f6e0-4d39-9bb7-47d3c7bf1218"
+    },
+    {
+      "name": "畫面圖表產生：XBAR_R",
+      "ok": true,
+      "canvasCount": 1,
+      "url": "http://172.16.110.27:8083/spc?ppcId=504&uploadBatchId=d8150cd9-6492-452e-b8b5-cf2e0abfaefa"
+    },
+    {
+      "name": "畫面圖表產生：XBAR_S",
+      "ok": true,
+      "canvasCount": 1,
+      "url": "http://172.16.110.27:8083/spc?ppcId=505&uploadBatchId=bbc8ca76-68ba-4fc8-a35f-34dc1a0e6da1"
+    },
+    {
+      "name": "畫面圖表產生：P",
+      "ok": true,
+      "canvasCount": 1,
+      "url": "http://172.16.110.27:8083/spc?ppcId=506&uploadBatchId=844f7b13-3f5a-4df2-a0b5-532d0a0be6c3"
+    },
+    {
+      "name": "畫面圖表產生：NP",
+      "ok": true,
+      "canvasCount": 1,
+      "url": "http://172.16.110.27:8083/spc?ppcId=507&uploadBatchId=2bd1842d-90c0-451b-a650-a96917e6c905"
+    },
+    {
+      "name": "畫面圖表產生：C",
+      "ok": true,
+      "canvasCount": 1,
+      "url": "http://172.16.110.27:8083/spc?ppcId=508&uploadBatchId=08ec94dd-bb73-43b3-9bbb-6bd00c2f8613"
+    },
+    {
+      "name": "畫面圖表產生：U",
+      "ok": true,
+      "canvasCount": 1,
+      "url": "http://172.16.110.27:8083/spc?ppcId=509&uploadBatchId=f1d141ae-35a9-4b69-8705-c5ed16533e83"
+    },
+    {
+      "name": "舊 V2 畫面路由 redirect",
+      "ok": true,
+      "url": "http://172.16.110.27:8083/alerts-workflow"
+    }
+  ],
+  "created": {
+    "ppcs": {
+      "I_MR": {
+        "part": {
+          "partNo": "FULL-E2E-20260608072226-I_MR-PART",
+          "partName": "FULL-E2E-20260608072226 I_MR 中文料號",
+          "specification": null,
+          "customer": null,
+          "isEnabled": true,
+          "id": 88,
+          "createdAt": "2026-06-08T07:22:28.3471576Z",
+          "createdBy": "System",
+          "updatedAt": "2026-06-08T07:22:28.2375319Z",
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbi4="
+        },
+        "process": {
+          "processCode": "FULL-E2E-20260608072226-I_MR-PROC",
+          "processName": "FULL-E2E-20260608072226 I_MR 中文製程",
+          "description": null,
+          "isEnabled": true,
+          "id": 124,
+          "createdAt": "2026-06-08T07:22:28.4594573Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbi8="
+        },
+        "machine": {
+          "machineCode": "FULL-E2E-20260608072226-I_MR-M01",
+          "machineName": "FULL-E2E-20260608072226 I_MR 中文機台",
+          "processId": 124,
+          "location": null,
+          "status": "Active",
+          "isEnabled": true,
+          "id": 123,
+          "createdAt": "2026-06-08T07:22:28.4932268Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbjA="
+        },
+        "characteristic": {
+          "characteristicCode": "FULL-E2E-20260608072226-I_MR-CHAR",
+          "characteristicName": "FULL-E2E-20260608072226 I_MR 中文特性",
+          "dataCategory": "Variable",
+          "unit": "mm",
+          "defaultChartTypeId": 14,
+          "isSpcEnabled": true,
+          "isEnabled": true,
+          "id": 495,
+          "createdAt": "2026-06-08T07:22:28.5688595Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbjE="
+        },
+        "ppc": {
+          "partId": 88,
+          "processId": 124,
+          "characteristicId": 495,
+          "usl": 11,
+          "lsl": 9,
+          "ucl": 10.8,
+          "cl": 10,
+          "lcl": 9.2,
+          "targetValue": null,
+          "sampleSize": 1,
+          "chartTypeId": 14,
+          "ruleGroupId": null,
+          "isRequired": true,
+          "isEnabled": true,
+          "part": null,
+          "process": null,
+          "characteristic": null,
+          "id": 503,
+          "createdAt": "2026-06-08T07:22:28.6258198Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbjI="
+        }
+      },
+      "XBAR_R": {
+        "part": {
+          "partNo": "FULL-E2E-20260608072226-XBAR_R-PART",
+          "partName": "FULL-E2E-20260608072226 XBAR_R 中文料號",
+          "specification": null,
+          "customer": null,
+          "isEnabled": true,
+          "id": 89,
+          "createdAt": "2026-06-08T07:22:31.0414313Z",
+          "createdBy": "System",
+          "updatedAt": "2026-06-08T07:22:31.0406823Z",
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbnQ="
+        },
+        "process": {
+          "processCode": "FULL-E2E-20260608072226-XBAR_R-PROC",
+          "processName": "FULL-E2E-20260608072226 XBAR_R 中文製程",
+          "description": null,
+          "isEnabled": true,
+          "id": 125,
+          "createdAt": "2026-06-08T07:22:31.0485028Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbnU="
+        },
+        "machine": {
+          "machineCode": "FULL-E2E-20260608072226-XBAR_R-M01",
+          "machineName": "FULL-E2E-20260608072226 XBAR_R 中文機台",
+          "processId": 125,
+          "location": null,
+          "status": "Active",
+          "isEnabled": true,
+          "id": 124,
+          "createdAt": "2026-06-08T07:22:31.0542854Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbnY="
+        },
+        "characteristic": {
+          "characteristicCode": "FULL-E2E-20260608072226-XBAR_R-CHAR",
+          "characteristicName": "FULL-E2E-20260608072226 XBAR_R 中文特性",
+          "dataCategory": "Variable",
+          "unit": "mm",
+          "defaultChartTypeId": 12,
+          "isSpcEnabled": true,
+          "isEnabled": true,
+          "id": 496,
+          "createdAt": "2026-06-08T07:22:31.0640302Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbnc="
+        },
+        "ppc": {
+          "partId": 89,
+          "processId": 125,
+          "characteristicId": 496,
+          "usl": 11,
+          "lsl": 9,
+          "ucl": 10.8,
+          "cl": 10,
+          "lcl": 9.2,
+          "targetValue": null,
+          "sampleSize": 5,
+          "chartTypeId": 12,
+          "ruleGroupId": null,
+          "isRequired": true,
+          "isEnabled": true,
+          "part": null,
+          "process": null,
+          "characteristic": null,
+          "id": 504,
+          "createdAt": "2026-06-08T07:22:31.0698258Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAbng="
+        }
+      },
+      "XBAR_S": {
+        "part": {
+          "partNo": "FULL-E2E-20260608072226-XBAR_S-PART",
+          "partName": "FULL-E2E-20260608072226 XBAR_S 中文料號",
+          "specification": null,
+          "customer": null,
+          "isEnabled": true,
+          "id": 90,
+          "createdAt": "2026-06-08T07:22:35.3253009Z",
+          "createdBy": "System",
+          "updatedAt": "2026-06-08T07:22:35.3247862Z",
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAb1k="
+        },
+        "process": {
+          "processCode": "FULL-E2E-20260608072226-XBAR_S-PROC",
+          "processName": "FULL-E2E-20260608072226 XBAR_S 中文製程",
+          "description": null,
+          "isEnabled": true,
+          "id": 126,
+          "createdAt": "2026-06-08T07:22:35.3311124Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAb1o="
+        },
+        "machine": {
+          "machineCode": "FULL-E2E-20260608072226-XBAR_S-M01",
+          "machineName": "FULL-E2E-20260608072226 XBAR_S 中文機台",
+          "processId": 126,
+          "location": null,
+          "status": "Active",
+          "isEnabled": true,
+          "id": 125,
+          "createdAt": "2026-06-08T07:22:35.3368048Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAb1s="
+        },
+        "characteristic": {
+          "characteristicCode": "FULL-E2E-20260608072226-XBAR_S-CHAR",
+          "characteristicName": "FULL-E2E-20260608072226 XBAR_S 中文特性",
+          "dataCategory": "Variable",
+          "unit": "mm",
+          "defaultChartTypeId": 13,
+          "isSpcEnabled": true,
+          "isEnabled": true,
+          "id": 497,
+          "createdAt": "2026-06-08T07:22:35.3449099Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAb1w="
+        },
+        "ppc": {
+          "partId": 90,
+          "processId": 126,
+          "characteristicId": 497,
+          "usl": 11,
+          "lsl": 9,
+          "ucl": 10.8,
+          "cl": 10,
+          "lcl": 9.2,
+          "targetValue": null,
+          "sampleSize": 5,
+          "chartTypeId": 13,
+          "ruleGroupId": null,
+          "isRequired": true,
+          "isEnabled": true,
+          "part": null,
+          "process": null,
+          "characteristic": null,
+          "id": 505,
+          "createdAt": "2026-06-08T07:22:35.3504613Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAb10="
+        }
+      },
+      "P": {
+        "part": {
+          "partNo": "FULL-E2E-20260608072226-P-PART",
+          "partName": "FULL-E2E-20260608072226 P 中文料號",
+          "specification": null,
+          "customer": null,
+          "isEnabled": true,
+          "id": 91,
+          "createdAt": "2026-06-08T07:22:37.948362Z",
+          "createdBy": "System",
+          "updatedAt": "2026-06-08T07:22:37.9479906Z",
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcD4="
+        },
+        "process": {
+          "processCode": "FULL-E2E-20260608072226-P-PROC",
+          "processName": "FULL-E2E-20260608072226 P 中文製程",
+          "description": null,
+          "isEnabled": true,
+          "id": 127,
+          "createdAt": "2026-06-08T07:22:37.954408Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcD8="
+        },
+        "machine": {
+          "machineCode": "FULL-E2E-20260608072226-P-M01",
+          "machineName": "FULL-E2E-20260608072226 P 中文機台",
+          "processId": 127,
+          "location": null,
+          "status": "Active",
+          "isEnabled": true,
+          "id": 126,
+          "createdAt": "2026-06-08T07:22:37.9597703Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcEA="
+        },
+        "characteristic": {
+          "characteristicCode": "FULL-E2E-20260608072226-P-CHAR",
+          "characteristicName": "FULL-E2E-20260608072226 P 中文特性",
+          "dataCategory": "Attribute",
+          "unit": "pcs",
+          "defaultChartTypeId": 29,
+          "isSpcEnabled": true,
+          "isEnabled": true,
+          "id": 498,
+          "createdAt": "2026-06-08T07:22:37.9681716Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcEE="
+        },
+        "ppc": {
+          "partId": 91,
+          "processId": 127,
+          "characteristicId": 498,
+          "usl": null,
+          "lsl": null,
+          "ucl": null,
+          "cl": null,
+          "lcl": null,
+          "targetValue": null,
+          "sampleSize": 1,
+          "chartTypeId": 29,
+          "ruleGroupId": null,
+          "isRequired": true,
+          "isEnabled": true,
+          "part": null,
+          "process": null,
+          "characteristic": null,
+          "id": 506,
+          "createdAt": "2026-06-08T07:22:37.973421Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcEI="
+        }
+      },
+      "NP": {
+        "part": {
+          "partNo": "FULL-E2E-20260608072226-NP-PART",
+          "partName": "FULL-E2E-20260608072226 NP 中文料號",
+          "specification": null,
+          "customer": null,
+          "isEnabled": true,
+          "id": 92,
+          "createdAt": "2026-06-08T07:22:38.8556595Z",
+          "createdBy": "System",
+          "updatedAt": "2026-06-08T07:22:38.8553071Z",
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcIE="
+        },
+        "process": {
+          "processCode": "FULL-E2E-20260608072226-NP-PROC",
+          "processName": "FULL-E2E-20260608072226 NP 中文製程",
+          "description": null,
+          "isEnabled": true,
+          "id": 128,
+          "createdAt": "2026-06-08T07:22:38.8653152Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcII="
+        },
+        "machine": {
+          "machineCode": "FULL-E2E-20260608072226-NP-M01",
+          "machineName": "FULL-E2E-20260608072226 NP 中文機台",
+          "processId": 128,
+          "location": null,
+          "status": "Active",
+          "isEnabled": true,
+          "id": 127,
+          "createdAt": "2026-06-08T07:22:38.8762658Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcIM="
+        },
+        "characteristic": {
+          "characteristicCode": "FULL-E2E-20260608072226-NP-CHAR",
+          "characteristicName": "FULL-E2E-20260608072226 NP 中文特性",
+          "dataCategory": "Attribute",
+          "unit": "pcs",
+          "defaultChartTypeId": 30,
+          "isSpcEnabled": true,
+          "isEnabled": true,
+          "id": 499,
+          "createdAt": "2026-06-08T07:22:38.8911956Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcIQ="
+        },
+        "ppc": {
+          "partId": 92,
+          "processId": 128,
+          "characteristicId": 499,
+          "usl": null,
+          "lsl": null,
+          "ucl": null,
+          "cl": null,
+          "lcl": null,
+          "targetValue": null,
+          "sampleSize": 1,
+          "chartTypeId": 30,
+          "ruleGroupId": null,
+          "isRequired": true,
+          "isEnabled": true,
+          "part": null,
+          "process": null,
+          "characteristic": null,
+          "id": 507,
+          "createdAt": "2026-06-08T07:22:38.9002Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcIU="
+        }
+      },
+      "C": {
+        "part": {
+          "partNo": "FULL-E2E-20260608072226-C-PART",
+          "partName": "FULL-E2E-20260608072226 C 中文料號",
+          "specification": null,
+          "customer": null,
+          "isEnabled": true,
+          "id": 93,
+          "createdAt": "2026-06-08T07:22:39.4447454Z",
+          "createdBy": "System",
+          "updatedAt": "2026-06-08T07:22:39.4444464Z",
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcMQ="
+        },
+        "process": {
+          "processCode": "FULL-E2E-20260608072226-C-PROC",
+          "processName": "FULL-E2E-20260608072226 C 中文製程",
+          "description": null,
+          "isEnabled": true,
+          "id": 129,
+          "createdAt": "2026-06-08T07:22:39.4501885Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcMU="
+        },
+        "machine": {
+          "machineCode": "FULL-E2E-20260608072226-C-M01",
+          "machineName": "FULL-E2E-20260608072226 C 中文機台",
+          "processId": 129,
+          "location": null,
+          "status": "Active",
+          "isEnabled": true,
+          "id": 128,
+          "createdAt": "2026-06-08T07:22:39.4584307Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcMY="
+        },
+        "characteristic": {
+          "characteristicCode": "FULL-E2E-20260608072226-C-CHAR",
+          "characteristicName": "FULL-E2E-20260608072226 C 中文特性",
+          "dataCategory": "Attribute",
+          "unit": "pcs",
+          "defaultChartTypeId": 31,
+          "isSpcEnabled": true,
+          "isEnabled": true,
+          "id": 500,
+          "createdAt": "2026-06-08T07:22:39.4669514Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcMc="
+        },
+        "ppc": {
+          "partId": 93,
+          "processId": 129,
+          "characteristicId": 500,
+          "usl": null,
+          "lsl": null,
+          "ucl": null,
+          "cl": null,
+          "lcl": null,
+          "targetValue": null,
+          "sampleSize": 1,
+          "chartTypeId": 31,
+          "ruleGroupId": null,
+          "isRequired": true,
+          "isEnabled": true,
+          "part": null,
+          "process": null,
+          "characteristic": null,
+          "id": 508,
+          "createdAt": "2026-06-08T07:22:39.4714714Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcMg="
+        }
+      },
+      "U": {
+        "part": {
+          "partNo": "FULL-E2E-20260608072226-U-PART",
+          "partName": "FULL-E2E-20260608072226 U 中文料號",
+          "specification": null,
+          "customer": null,
+          "isEnabled": true,
+          "id": 94,
+          "createdAt": "2026-06-08T07:22:39.9646973Z",
+          "createdBy": "System",
+          "updatedAt": "2026-06-08T07:22:39.9644003Z",
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcQg="
+        },
+        "process": {
+          "processCode": "FULL-E2E-20260608072226-U-PROC",
+          "processName": "FULL-E2E-20260608072226 U 中文製程",
+          "description": null,
+          "isEnabled": true,
+          "id": 130,
+          "createdAt": "2026-06-08T07:22:39.9687777Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcQk="
+        },
+        "machine": {
+          "machineCode": "FULL-E2E-20260608072226-U-M01",
+          "machineName": "FULL-E2E-20260608072226 U 中文機台",
+          "processId": 130,
+          "location": null,
+          "status": "Active",
+          "isEnabled": true,
+          "id": 129,
+          "createdAt": "2026-06-08T07:22:39.9722662Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcQo="
+        },
+        "characteristic": {
+          "characteristicCode": "FULL-E2E-20260608072226-U-CHAR",
+          "characteristicName": "FULL-E2E-20260608072226 U 中文特性",
+          "dataCategory": "Attribute",
+          "unit": "pcs",
+          "defaultChartTypeId": 32,
+          "isSpcEnabled": true,
+          "isEnabled": true,
+          "id": 501,
+          "createdAt": "2026-06-08T07:22:39.9789884Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcQs="
+        },
+        "ppc": {
+          "partId": 94,
+          "processId": 130,
+          "characteristicId": 501,
+          "usl": null,
+          "lsl": null,
+          "ucl": null,
+          "cl": null,
+          "lcl": null,
+          "targetValue": null,
+          "sampleSize": 1,
+          "chartTypeId": 32,
+          "ruleGroupId": null,
+          "isRequired": true,
+          "isEnabled": true,
+          "part": null,
+          "process": null,
+          "characteristic": null,
+          "id": 509,
+          "createdAt": "2026-06-08T07:22:39.9828603Z",
+          "createdBy": "System",
+          "updatedAt": null,
+          "updatedBy": null,
+          "isDeleted": false,
+          "rowVersion": "AAAAAAAAcQw="
+        }
+      }
+    },
+    "batches": {
+      "I_MR": "2fcdadc2-f6e0-4d39-9bb7-47d3c7bf1218",
+      "XBAR_R": "d8150cd9-6492-452e-b8b5-cf2e0abfaefa",
+      "XBAR_S": "bbc8ca76-68ba-4fc8-a35f-34dc1a0e6da1",
+      "P": "844f7b13-3f5a-4df2-a0b5-532d0a0be6c3",
+      "NP": "2bd1842d-90c0-451b-a650-a96917e6c905",
+      "C": "08ec94dd-bb73-43b3-9bbb-6bd00c2f8613",
+      "U": "f1d141ae-35a9-4b69-8705-c5ed16533e83"
+    },
+    "alerts": [
+      1082
+    ]
+  }
+}

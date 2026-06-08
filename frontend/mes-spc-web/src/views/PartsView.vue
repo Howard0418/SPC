@@ -185,6 +185,13 @@ onMounted(load);
           此模組用於建檔全廠的生產料號。在 SPC 系統中，所有的抽樣檢驗數據都必須關聯到特定的產品料號。<br/>
           💡 <strong>下一步建議：</strong> 在此處建立料號後，請前往「料號檢驗基準設定」頁面，為該料號配置專屬的上下限 (USL/LSL) 規格。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
+          <div class="font-black text-blue-900 dark:text-blue-300">產品料號主檔頁面操作說明</div>
+          <p><strong>查詢料號：</strong>在搜尋框輸入產品料號或名稱，即可篩選列表資料。</p>
+          <p><strong>新增料號：</strong>按「新增料號」，填入產品料號、產品名稱與必要資訊後儲存。</p>
+          <p><strong>編輯資料：</strong>在列表點選編輯按鈕，調整名稱、描述或啟用狀態。</p>
+          <p><strong>後續設定：</strong>料號建立完成後，請到「料號檢驗基準設定」綁定製程、檢驗特性與規格上下限。</p>
+        </div>
       </div>
     </div>
 

@@ -23,6 +23,11 @@ const errors = ref([]);
 const err = ref("");
 const loading = ref(false);
 const batchId = computed(() => route.params.batchId);
+const chartPpcId = ref(null);
+
+const isImported = computed(() => {
+  return batch.value?.importStatus === "Imported" || batch.value?.isConfirmed === true;
+});
 
 async function load() {
   err.value = "";
@@ -52,9 +57,44 @@ async function load() {
         errorsList: rowErrors
       };
     });
+    chartPpcId.value = await resolveChartPpcId();
   } catch (e) {
     err.value = getApiErrorMessage(e);
   }
+}
+
+async function resolveChartPpcId() {
+  const firstValid = details.value.find(d => d.isValid && d.partNo && d.processCode && d.characteristicCode);
+  if (!firstValid) return null;
+
+  try {
+    const { data } = await api.get("/v1/part-process-characteristics");
+    const match = (data || []).find(x => {
+      const partNo = x.part?.partNo || x.Part?.partNo || x.Part?.PartNo;
+      const processCode = x.process?.processCode || x.Process?.processCode || x.Process?.ProcessCode;
+      const characteristicCode = x.characteristic?.characteristicCode || x.Characteristic?.characteristicCode || x.Characteristic?.CharacteristicCode;
+      return partNo === firstValid.partNo &&
+        processCode === firstValid.processCode &&
+        characteristicCode === firstValid.characteristicCode;
+    });
+    return match?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+function goToChart() {
+  if (!chartPpcId.value) {
+    err.value = "找不到此匯入批次對應的料號檢驗基準，無法開啟管制圖。";
+    return;
+  }
+  router.push({
+    path: "/spc",
+    query: {
+      ppcId: chartPpcId.value,
+      uploadBatchId: batchId.value
+    }
+  });
 }
 
 async function confirmImport() {
@@ -67,14 +107,8 @@ async function confirmImport() {
   try {
     await api.post(`/uploads/${batchId.value}/confirm`);
     await load();
-    if (batch.value?.isConfirmed) {
-      // Find dynamic mapping redirect if valid details exist
-      const firstVal = details.value.find(d => d.isValid);
-      if (firstVal) {
-        router.push(`/spc?batchId=${batchId.value}`);
-      } else {
-        router.push(`/spc`);
-      }
+    if (isImported.value) {
+      goToChart();
     }
   } catch (e) {
     err.value = getApiErrorMessage(e);
@@ -115,16 +149,16 @@ onMounted(load);
         <div v-if="batch" class="flex flex-wrap items-center gap-3">
           <span
             class="px-4 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg"
-            :class="batch.isConfirmed ? 'bg-emerald-500 text-white' : errors.length > 0 ? 'bg-amber-500 text-white border border-amber-400/30' : 'bg-blue-600 text-white'"
+            :class="isImported ? 'bg-emerald-500 text-white' : errors.length > 0 ? 'bg-amber-500 text-white border border-amber-400/30' : 'bg-blue-600 text-white'"
           >
-            <CheckCircle2 v-if="batch.isConfirmed" class="w-4 h-4" />
+            <CheckCircle2 v-if="isImported" class="w-4 h-4" />
             <AlertTriangle v-else-if="errors.length > 0" class="w-4 h-4 animate-bounce" />
             <Sparkles v-else class="w-4 h-4" />
-            {{ batch.isConfirmed ? '已成功匯入正式資料表' : errors.length > 0 ? '含有格式/主檔異常' : ' Stage 2 檢驗通過' }}
+            {{ isImported ? '已成功匯入正式資料表' : errors.length > 0 ? '含有格式/主檔異常' : ' Stage 2 檢驗通過' }}
           </span>
 
           <button
-            v-if="!batch.isConfirmed"
+            v-if="!isImported"
             @click="confirmImport"
             :disabled="loading || details.filter(d => d.isValid).length === 0"
             class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-indigo-650 hover:bg-indigo-50 font-black shadow-xl shadow-black/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
@@ -132,6 +166,16 @@ onMounted(load);
             <RefreshCw v-if="loading" class="w-4 h-4 animate-spin text-indigo-600" />
             <ArrowRight v-else class="w-4 h-4 text-indigo-600" />
             確認轉入正式 SPC 運算
+          </button>
+
+          <button
+            v-if="isImported"
+            @click="goToChart"
+            :disabled="!chartPpcId"
+            class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black shadow-xl shadow-black/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
+          >
+            <ArrowRight class="w-4 h-4" />
+            查看管制圖
           </button>
         </div>
       </div>
@@ -283,7 +327,7 @@ onMounted(load);
       </div>
 
       <!-- Back redirect button -->
-      <div v-if="batch?.isConfirmed" class="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+      <div v-if="isImported" class="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
         <router-link to="/spc" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold transition-all text-xs border border-cyan-500/20">
           <ArrowLeft class="w-4 h-4" /> 返回 SPC 管制圖首頁
         </router-link>

@@ -180,6 +180,13 @@ onMounted(load);
         <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
           此模組用於設定 SPC 系統中最頂層的分類結構，幫助您有效管理全廠各類型的管制圖設定與判讀規則。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-indigo-700 dark:text-indigo-400/80 leading-relaxed">
+          <div class="font-black text-indigo-900 dark:text-indigo-300">管制圖大群組主檔頁面操作說明</div>
+          <p><strong>查詢群組：</strong>使用搜尋框輸入群組代號或名稱，找到要維護的大分類。</p>
+          <p><strong>新增群組：</strong>按「新增群組」，填入群組代號、名稱、排序與描述。</p>
+          <p><strong>維護啟用：</strong>不再使用的群組可停用，避免新管制圖分類誤選。</p>
+          <p><strong>後續設定：</strong>建立大群組後，請到「管制圖類別主檔」建立中分類。</p>
+        </div>
       </div>
     </div>
 

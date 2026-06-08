@@ -214,6 +214,26 @@ onMounted(() => {
       <div v-if="errorMsg" class="text-sm text-red-500 font-semibold ml-4 bg-red-50 px-3 py-1 rounded-md">{{ errorMsg }}</div>
     </div>
 
+    <!-- Guide / Operation Tip -->
+    <div class="px-5 py-3 border-b border-blue-100 dark:border-blue-900/50 bg-blue-50/80 dark:bg-blue-950/20 text-xs text-blue-700 dark:text-blue-300">
+      <div class="flex items-start gap-3">
+        <div class="p-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-blue-600 dark:text-blue-400 mt-0.5">
+          <Info class="w-4 h-4" />
+        </div>
+        <div class="space-y-1.5 leading-relaxed">
+          <h4 class="font-black text-blue-900 dark:text-blue-200">模組指南：產品系譜圖 (Genealogy)</h4>
+          <p>此頁面用於依批號或工單查詢上下游生產關係，並以樹狀圖呈現父批、目標批與子批的追溯脈絡。</p>
+          <div class="space-y-1">
+            <div class="font-black text-blue-900 dark:text-blue-200">產品系譜圖頁面操作說明</div>
+            <p><strong>選擇查詢方式：</strong>可切換「批號查詢」或「工單查詢」。</p>
+            <p><strong>執行查詢：</strong>輸入 LotNo 或 WorkOrderNo 後按「查詢樹狀圖」。</p>
+            <p><strong>查看節點：</strong>點選圖上的批號節點，右側會顯示生產軌跡與品質事件。</p>
+            <p><strong>追溯上下游：</strong>點選不同節點可重新置中查看父批、子批與相關批次關係。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Canvas Area -->
     <div class="flex-1 relative bg-slate-50/50 dark:bg-slate-900/20">
       <div ref="chartRef" class="w-full h-full"></div>

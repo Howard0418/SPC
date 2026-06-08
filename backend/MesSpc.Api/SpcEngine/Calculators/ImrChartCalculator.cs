@@ -34,18 +34,15 @@ public static class ImrChartCalculator
             var statLimits = new ControlLimits { CL = iBar, UCL = iUclStat, LCL = iLclStat };
             MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(validData, statLimits);
         }
-        var evalDict = validData.ToDictionary(x => x.MeasuredAt);
-
         var iPoints = new List<object>();
         foreach (var p in rawData)
         {
-            var evalP = evalDict.GetValueOrDefault(p.MeasuredAt);
             var v = p.Value;
             var oos = (configuredLimits.USL.HasValue && v > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && v < configuredLimits.LSL.Value);
             var oocConfigured = (configuredLimits.UCL.HasValue && v > configuredLimits.UCL.Value) || 
                                 (configuredLimits.LCL.HasValue && v < configuredLimits.LCL.Value);
-            var oocStat = evalP?.IsOutOfControl ?? false;
+            var oocStat = !p.IsExcluded && p.IsOutOfControl;
             var outOfSpec = !p.IsExcluded && (p.IsOutOfSpec || oos);
             var outOfControl = !p.IsExcluded && (p.IsOutOfControl || oocConfigured || oocStat);
 
@@ -56,7 +53,7 @@ public static class ImrChartCalculator
                 outOfSpec,
                 outOfControl,
                 outOfControlStat = oocStat,
-                violatedRules = evalP?.ViolatedRules ?? new List<string>(),
+                violatedRules = p.ViolatedRules ?? new List<string>(),
                 lotNo = p.LotNo,
                 serialNo = p.SerialNo,
                 @operator = p.Operator,

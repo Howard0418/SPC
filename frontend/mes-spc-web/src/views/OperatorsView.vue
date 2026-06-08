@@ -191,6 +191,13 @@ onMounted(load);
         <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
           此模組用於設定現場量測人員的基本資料。當 SPC 數據發生異常時，系統會將告警信件發送至這裡設定的電子郵件信箱。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
+          <div class="font-black text-blue-900 dark:text-blue-300">作業人員主檔頁面操作說明</div>
+          <p><strong>查詢人員：</strong>可依工號、姓名、部門或 Email 搜尋。</p>
+          <p><strong>新增人員：</strong>按「新增人員」，填入工號、姓名、部門、職稱與電子郵件。</p>
+          <p><strong>設定通知：</strong>確認 Email 正確，異常通知與處置提醒才可送達。</p>
+          <p><strong>維護狀態：</strong>離職或不需通知的人員可停用，保留歷史資料但不再作為通知對象。</p>
+        </div>
       </div>
     </div>
 

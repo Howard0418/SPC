@@ -181,6 +181,13 @@ onMounted(load);
           此模組用於建檔廠內所有生產流程的「工站與製程」。在 SPC 系統中，您可以分析同一個料號在不同製程工段下的品質變異。<br/>
           💡 <strong>下一步建議：</strong> 建立製程後，您可以前往「生產機台主檔維護」，將設備與機台綁定至對應的製程下。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-cyan-700 dark:text-cyan-400/80 leading-relaxed">
+          <div class="font-black text-cyan-900 dark:text-cyan-300">工站製程主檔頁面操作說明</div>
+          <p><strong>查詢製程：</strong>使用搜尋框輸入製程代號、名稱或描述，快速找到目標製程。</p>
+          <p><strong>新增製程：</strong>按「新增製程」，填入製程代號、製程名稱與描述後儲存。</p>
+          <p><strong>維護狀態：</strong>需要停用時可編輯製程資料，避免後續檢驗基準誤選。</p>
+          <p><strong>後續設定：</strong>製程建立後，可到「生產機台主檔」建立對應設備，或到「料號檢驗基準設定」綁定檢驗項目。</p>
+        </div>
       </div>
     </div>
 

@@ -46,6 +46,9 @@ const filteredRows = computed(() => {
   return rows.value.filter(r => {
     const matchesSearch = !searchQuery.value || 
       r.message?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      r.partNo?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      r.processCode?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      r.characteristicCode?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       r.partId?.toString().includes(searchQuery.value) ||
       r.id?.toString().includes(searchQuery.value);
     
@@ -170,6 +173,27 @@ onMounted(load);
         >
           <RefreshCw :class="{ 'animate-spin': loading }" class="w-4 h-4 text-blue-400" /> {{ loading ? '同步中...' : '重新整理' }}
         </button>
+      </div>
+    </div>
+
+    <!-- Guide / Operation Tip -->
+    <div class="p-5 bg-gradient-to-r from-red-50 to-indigo-50 dark:from-red-950/30 dark:to-indigo-900/20 border border-red-100 dark:border-red-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
+      <div class="p-2 bg-red-100 dark:bg-red-900/50 rounded-xl text-red-600 dark:text-red-400 mt-0.5">
+        <ShieldAlert class="w-5 h-5" />
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-red-900 dark:text-red-300">模組指南：異常通報總覽 (Alerts)</h4>
+        <p class="text-xs text-red-700 dark:text-red-400/80 mt-1.5 leading-relaxed">
+          此頁面集中顯示由 SPC 判定產生的 OOS、OOC 異常通報，協助品管人員快速掌握待處理警報、已簽收案件與通知狀態。
+        </p>
+        <div class="mt-3 space-y-1.5 text-xs text-red-700 dark:text-red-400/80 leading-relaxed">
+          <div class="font-black text-red-900 dark:text-red-300">異常通報總覽頁面操作說明</div>
+          <p><strong>查看統計：</strong>上方卡片可快速查看總警報、待簽收、已簽收、OOS 與 OOC 數量。</p>
+          <p><strong>篩選異常：</strong>使用搜尋框與類型篩選，依異常單號、訊息、OOS/OOC 或簽收狀態查詢。</p>
+          <p><strong>簽收處理：</strong>確認異常後可執行簽收，表示該異常已被人員接手確認。</p>
+          <p><strong>前往處置：</strong>需要填寫真因與對策時，點選處置入口前往「異常單簽核處置」。</p>
+          <p><strong>測試通知：</strong>可使用模擬警報或 SMTP 測試區確認異常通知與郵件流程。</p>
+        </div>
       </div>
     </div>
 
@@ -392,8 +416,8 @@ onMounted(load);
 
               <!-- Part / Station -->
               <td class="py-3.5 px-4">
-                <div class="font-bold text-slate-800 dark:text-white">Part ID: {{ r.partId || 'N/A' }}</div>
-                <div class="text-xs text-slate-400 font-mono">Process ID: {{ r.processId || 'N/A' }}</div>
+                <div class="font-bold text-slate-800 dark:text-white">{{ r.partNo || `Part ID: ${r.partId || 'N/A'}` }}</div>
+                <div class="text-xs text-slate-400 font-mono">{{ r.processCode || `Process ID: ${r.processId || 'N/A'}` }} / {{ r.characteristicCode || `Characteristic ID: ${r.characteristicId || 'N/A'}` }}</div>
               </td>
 
               <!-- Value -->
@@ -441,7 +465,15 @@ onMounted(load);
                     <Check class="w-3.5 h-3.5" /> 立即簽收
                   </button>
                   <router-link
-                    to="/v2/alerts-workflow"
+                    v-if="r.ppcId"
+                    :to="`/spc?ppcId=${r.ppcId}`"
+                    class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition-colors"
+                    title="查看 V1 SPC 管制圖"
+                  >
+                    <ExternalLink class="w-4 h-4" />
+                  </router-link>
+                  <router-link
+                    to="/alerts-workflow"
                     class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
                     title="前往異常單 V2 閉環處置"
                   >

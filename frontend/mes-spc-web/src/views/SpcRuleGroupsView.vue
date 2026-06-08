@@ -228,6 +228,13 @@ onMounted(loadGroups);
           這裡是管理管制圖如何判定製程出現「非隨機變異」的規則核心。系統預設內建了著名的西方電氣規則 (Western Electric Rules)。<br/>
           💡 <strong>注意事項：</strong> 後端引擎高度依賴規則代號 (RuleCode，如 WECO-1)，建議您僅修改其啟用狀態、權重或描述，除非您熟悉引擎邏輯，否則請勿隨意修改代號。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-indigo-700 dark:text-indigo-400/80 leading-relaxed">
+          <div class="font-black text-indigo-900 dark:text-indigo-300">SPC 異常判定規則頁面操作說明</div>
+          <p><strong>查詢規則組：</strong>輸入規則組代號或名稱，快速找到要維護的判定規則。</p>
+          <p><strong>新增規則組：</strong>按「新增規則組」，設定規則組名稱、描述與啟用狀態。</p>
+          <p><strong>維護規則：</strong>依需要調整規則啟用狀態、權重或說明文字。</p>
+          <p><strong>使用提醒：</strong>規則代號會被 SPC 引擎引用，除非確認影響範圍，請避免任意更改代號。</p>
+        </div>
       </div>
     </div>
 

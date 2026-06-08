@@ -143,6 +143,13 @@ const cancelEdit = (list, item, index) => {
           此模組用於設定工廠內部的「產線結構與追溯階層」。在自動化匯入 SPC 數據時，系統會根據這裡設定的「產線 (Line) -> 槽體 (Tank) -> 槽位 (Slot)」來將檢驗數據精準歸類到具體的生產位置。<br/>
           💡 <strong>操作建議：</strong> 請由左至右依序建立資料，先點選左側的「產線」，再於中間建立該產線下的「槽體」，最後在右側建立對應的「槽位」。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
+          <div class="font-black text-blue-900 dark:text-blue-300">追溯主檔設定頁面操作說明</div>
+          <p><strong>建立產線：</strong>在左側「產線」區塊按新增，填入 Line Code 與 Line Name 後儲存。</p>
+          <p><strong>建立槽體：</strong>先點選產線，再於中間「槽體」區塊新增 Tank 資料。</p>
+          <p><strong>建立槽位：</strong>先點選槽體，再於右側「槽位」區塊新增 Slot 資料。</p>
+          <p><strong>維護順序：</strong>請依產線、槽體、槽位由左至右設定，確保追溯階層完整。</p>
+        </div>
       </div>
     </div>
 

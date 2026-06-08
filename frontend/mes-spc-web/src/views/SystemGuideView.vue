@@ -117,9 +117,140 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
             
             <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/50">
               <div class="font-bold text-sm text-purple-800 dark:text-purple-300 mb-1">進階功能：切換「不列入計算」</div>
-              <p class="text-xs text-purple-600 dark:text-purple-400/80 leading-relaxed">
-                在觀看 SPC 管制圖時，若發現某點位是因為已知特殊原因（如暖機誤差、治具損壞等）造成的極端異常值，品保人員可直接點擊圖表上的該點位，並將其設定為「不列入計算」。系統會將該點位改以空心透明樣式顯示，並自動重新運算管制界線 (CL/UCL/LCL)，避免單一異常值影響整體判斷。
-              </p>
+              <div class="space-y-3 text-xs text-purple-600 dark:text-purple-400/80 leading-relaxed">
+                <div>
+                  <div class="font-black text-purple-800 dark:text-purple-300">進入管制圖畫面</div>
+                  <p>到「SPC 查詢 / 管制圖」，選產品、製程、檢驗項目後產生管制圖。</p>
+                </div>
+                <div>
+                  <div class="font-black text-purple-800 dark:text-purple-300">點圖上的資料點</div>
+                  <p>在管制圖上直接點某一個點。下方會展開「點位品質追溯詳細資料」。</p>
+                </div>
+                <div>
+                  <div class="font-black text-purple-800 dark:text-purple-300">按「剔除此數據」</div>
+                  <p>在點位明細右上方會看到「✖ 剔除此數據」按鈕。按下後，系統會把該點所屬的資料批次設為「不列入計算」，然後自動重新載入管制圖。</p>
+                </div>
+                <div>
+                  <div class="font-black text-purple-800 dark:text-purple-300">看結果</div>
+                  <p>被排除的點會顯示成「已剔除不計 (Excluded)」，而且不再參與 CL / UCL / LCL 重新計算，也不再算 OOC。</p>
+                </div>
+                <div>
+                  <div class="font-black text-purple-800 dark:text-purple-300">要恢復</div>
+                  <p>再點同一個已排除的點，按「↺ 恢復此數據」即可還原。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Operation Guide -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+        <h2 class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+          <BookOpen class="w-5 h-5 text-indigo-500" /> 各功能頁面操作說明
+        </h2>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="font-black text-sm text-slate-800 dark:text-white">產品料號主檔</div>
+            <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 產品料號主檔」。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">查詢資料：</span>使用搜尋框輸入料號或產品名稱，快速找到既有產品。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">新增料號：</span>按「新增」，填入產品料號、產品名稱與必要資訊。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">啟用設定：</span>確認產品為啟用狀態，後續檢驗基準與匯入資料才能正常選用。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">儲存結果：</span>按「確認儲存」，回到列表確認資料已出現。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="font-black text-sm text-slate-800 dark:text-white">工站製程主檔</div>
+            <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 工站製程主檔」。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">建立製程：</span>按「新增」，填入製程代號與製程名稱，例如 OQC、IQC 或製程站別。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">確認用途：</span>製程會用在機台主檔與料號檢驗基準設定，是 SPC 資料歸屬的重要條件。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">啟用設定：</span>確認製程為啟用狀態，避免後續下拉選單找不到資料。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="font-black text-sm text-slate-800 dark:text-white">生產機台主檔</div>
+            <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 生產機台主檔」。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">新增機台：</span>按「新增機台」，填入機台編號、機台名稱與廠房位置。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">指定製程：</span>選擇該機台所屬的工站製程，讓後續量測資料能追溯到正確站別。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">設定狀態：</span>依現場狀態選擇運轉、閒置、停機或保養，並確認是否啟用。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="font-black text-sm text-slate-800 dark:text-white">品質特性項目</div>
+            <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 品質特性項目」。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">新增檢驗項目：</span>填入特性代號與特性名稱，例如厚度、尺寸、缺點數或不良率。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">選資料類型：</span>計量型適用連續數值，計數型適用不良數、缺點數或比例資料。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">指定管制圖：</span>選擇預設管制圖類型，後續料號檢驗基準可帶入或調整。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">料號檢驗基準設定</div>
+            <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「基礎主檔設定 / 料號檢驗基準設定」。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">建立綁定：</span>選擇產品料號、工站製程與品質特性項目，建立 PPC 檢驗基準。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">設定規格：</span>輸入 USL、LSL、目標值、樣本數與是否必檢。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">選管制圖：</span>依資料類型選擇 I-MR、XBAR-R、XBAR-S、P、NP、C 或 U 管制圖。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">確認啟用：</span>儲存後確認該基準為啟用，資料匯入與管制圖查詢才會套用。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">計量型資料匯入</div>
+            <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「資料匯入與量測 / 計量型資料匯入」。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">準備檔案：</span>檔案需包含產品料號、製程代號、機台代號、特性代號、量測值、量測時間與樣本號。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">上傳預覽：</span>選擇檔案後先看預覽結果，確認有效筆數與錯誤筆數。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">確認匯入：</span>預覽無誤後按「確認匯入」，系統會寫入量測資料並觸發 SPC 運算。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">計數型資料匯入</div>
+            <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「資料匯入與量測 / 計數型資料匯入」。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">準備欄位：</span>P/NP 圖常用檢驗數與不良數，C/U 圖常用缺點數與單位數。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">上傳預覽：</span>匯入後先檢查資料是否對應到正確產品、製程與品質特性。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">確認匯入：</span>確認後系統會產生計數型量測資料，並更新對應管制圖與異常判定。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">SPC 查詢 / 管制圖</div>
+            <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「資料匯入與量測 / SPC 查詢 / 管制圖」。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">選擇條件：</span>選產品、製程與檢驗項目後產生管制圖。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">查看判定：</span>紅色或警示點代表 OOS、OOC 或符合異常規則，需要進一步追蹤。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">查看明細：</span>點選圖上的資料點，下方會展開「點位品質追溯詳細資料」。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">不列入計算：</span>在點位明細按「剔除此數據」，系統會重新計算管制線並標示 Excluded。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/50 space-y-3">
+            <div class="font-black text-sm text-amber-800 dark:text-amber-300">異常通報與處置</div>
+            <div class="space-y-2 text-xs text-amber-600 dark:text-amber-400/80 leading-relaxed">
+              <p><span class="font-bold text-amber-800 dark:text-amber-300">進入總覽：</span>到「異常管理與追溯 / 異常通報總覽」查看系統產生的異常。</p>
+              <p><span class="font-bold text-amber-800 dark:text-amber-300">查看異常：</span>確認異常類型、產品、製程、檢驗項目與發生時間。</p>
+              <p><span class="font-bold text-amber-800 dark:text-amber-300">處置簽核：</span>到「異常單簽核處置」填寫原因分析、改善對策與處理結果。</p>
+              <p><span class="font-bold text-amber-800 dark:text-amber-300">結案追蹤：</span>處理完成後更新狀態，讓異常形成可追蹤的閉環紀錄。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50 space-y-3">
+            <div class="font-black text-sm text-emerald-800 dark:text-emerald-300">SMTP 郵件與預警設定</div>
+            <div class="space-y-2 text-xs text-emerald-600 dark:text-emerald-400/80 leading-relaxed">
+              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">進入畫面：</span>到「系統管理與通報設定 / SMTP 郵件與預警設定」。</p>
+              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">設定主機：</span>填入 SMTP 主機、連接埠、帳號、密碼、寄件者與 SSL 設定。</p>
+              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">儲存設定：</span>確認資料後儲存，讓異常通知可以使用此設定寄信。</p>
+              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">測試發信：</span>使用測試收件者寄出測試信，確認郵件伺服器與帳密正確。</p>
             </div>
           </div>
         </div>

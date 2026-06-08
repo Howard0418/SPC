@@ -269,6 +269,14 @@ onMounted(load);
           這是整個 SPC 系統中最核心的設定。在此處，您將定義「哪一個產品料號」在「哪一站製程」時，必須檢驗「什麼項目」，並設定其專屬的「規格上下限 (USL/LSL)」。<br/>
           💡 <strong>功能說明：</strong> 檢驗數據上傳時，系統會比對這裡設定的規格界限。若未在此處建立基準，該料號將無法進行 SPC 運算與判圖。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-amber-700 dark:text-amber-400/80 leading-relaxed">
+          <div class="font-black text-amber-900 dark:text-amber-300">料號檢驗基準設定頁面操作說明</div>
+          <p><strong>查詢基準：</strong>可用料號、製程或檢驗特性搜尋既有檢驗基準。</p>
+          <p><strong>新增基準：</strong>按「新增檢驗基準」，選擇產品料號、工站製程與品質特性。</p>
+          <p><strong>設定規格：</strong>輸入 USL、LSL、目標值、樣本數與是否必檢。</p>
+          <p><strong>指定管制圖：</strong>依資料類型選擇 I-MR、XBAR-R、XBAR-S、P、NP、C 或 U 管制圖。</p>
+          <p><strong>啟用後使用：</strong>儲存並啟用後，資料匯入、現場量測與管制圖查詢才會套用此基準。</p>
+        </div>
       </div>
     </div>
 

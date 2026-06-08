@@ -47,16 +47,17 @@ async function loadData() {
   loading.value = true;
   error.value = "";
   try {
-    // Load alerts
-    const alertsRes = await api.get("/v2/spc/alerts");
-    const alerts = alertsRes.data || [];
+    const summaryRes = await api.get("/v1/dashboard/summary");
+    const dData = summaryRes.data || {};
+    const alerts = dData.recentAlerts || [];
     recentAlerts.value = alerts.slice(0, 8);
     
     // Stats
     const today = new Date().toISOString().slice(0, 10);
-    const todayAlerts = alerts.filter(a => a.occurredAt?.startsWith(today)).length;
+    const todayAlerts = dData.todayAlertCount ?? alerts.filter(a => a.occurredAt?.startsWith(today)).length;
+    stats.value.totalBatches = dData.todayBatchCount ?? stats.value.totalBatches;
     stats.value.todayAlerts = todayAlerts;
-    stats.value.alertRate = alerts.length > 0 ? (todayAlerts / (todayAlerts + 150) * 100).toFixed(1) : "0.0";
+    stats.value.alertRate = dData.alertRate != null ? (Number(dData.alertRate) * 100).toFixed(1) : "0.0";
     
     // Load PPC mapping count
     try {
@@ -68,8 +69,6 @@ async function loadData() {
 
     // Load Dashboard Stats
     try {
-      const statsRes = await api.get("/v2/spc/dashboard-stats");
-      const dData = statsRes.data;
       if (dData && dData.trend) {
          let hours = dData.trend.map(t => `${t.hour.toString().padStart(2, '0')}:00`);
          let counts = dData.trend.map(t => t.count);
@@ -410,8 +409,8 @@ onBeforeUnmount(() => {
           <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200 dark:border-slate-700">
             <tr>
               <th class="py-3 px-4 rounded-l-xl">發生時間</th>
-              <th class="py-3 px-4">產品/料號 ID</th>
-              <th class="py-3 px-4">工站/製程 ID</th>
+              <th class="py-3 px-4">產品料號</th>
+              <th class="py-3 px-4">製程 / 特性</th>
               <th class="py-3 px-4">警報類型</th>
               <th class="py-3 px-4">實測值 / 狀態說明</th>
               <th class="py-3 px-4 rounded-r-xl text-right">操作</th>
@@ -420,8 +419,14 @@ onBeforeUnmount(() => {
           <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-600 dark:text-slate-300">
             <tr v-for="a in recentAlerts" :key="a.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
               <td class="py-3 px-4 font-mono text-xs">{{ new Date(a.occurredAt).toLocaleString() }}</td>
-              <td class="py-3 px-4 font-bold text-slate-800 dark:text-white">Part #{{ a.productId }}</td>
-              <td class="py-3 px-4">Station #{{ a.stationId }}</td>
+              <td class="py-3 px-4 font-bold text-slate-800 dark:text-white">
+                {{ a.partNo || `Part #${a.partId}` }}
+                <div class="text-[11px] text-slate-400 font-mono">{{ a.partName || '' }}</div>
+              </td>
+              <td class="py-3 px-4">
+                {{ a.processCode || `Process #${a.processId}` }}
+                <div class="text-[11px] text-slate-400 font-mono">{{ a.characteristicCode || `Characteristic #${a.characteristicId}` }}</div>
+              </td>
               <td class="py-3 px-4">
                 <span
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold tracking-wide"
@@ -434,7 +439,8 @@ onBeforeUnmount(() => {
               <td class="py-3 px-4 text-xs font-medium">{{ a.message }}</td>
               <td class="py-3 px-4 text-right">
                 <button
-                  @click="router.push(`/spc?partProcessCharacteristicId=${a.inspectionItemId}`)"
+                  @click="a.ppcId ? router.push(`/spc?ppcId=${a.ppcId}`) : null"
+                  :disabled="!a.ppcId"
                   class="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center gap-1 ml-auto transition-all"
                 >
                   看圖 <ArrowUpRight class="w-3.5 h-3.5" />

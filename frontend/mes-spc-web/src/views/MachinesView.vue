@@ -228,6 +228,13 @@ onMounted(load);
           此模組用於建檔廠內所有生產設備，並將其綁定至特定的「製程工站」。您可以在此檢視機台目前的運轉狀態。<br/>
           💡 <strong>功能說明：</strong> 在收集檢驗數據時，系統會記錄該批次數據是由哪一台機台生產的，方便未來利用管制圖進行「單一機台」的品質追溯。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-purple-700 dark:text-purple-400/80 leading-relaxed">
+          <div class="font-black text-purple-900 dark:text-purple-300">生產機台主檔頁面操作說明</div>
+          <p><strong>查詢機台：</strong>可依機台代號、名稱、所屬製程或廠置位置搜尋。</p>
+          <p><strong>新增機台：</strong>按「新增機台」，填入機台編號、機台名稱、所屬製程與位置。</p>
+          <p><strong>設定狀態：</strong>依現場狀況選擇運轉、閒置、停機或保養，並確認是否啟用。</p>
+          <p><strong>資料追溯：</strong>量測資料匯入或錄入後，管制圖可依機台資訊追溯異常來源。</p>
+        </div>
       </div>
     </div>
 

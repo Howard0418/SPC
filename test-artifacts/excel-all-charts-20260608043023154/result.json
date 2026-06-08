@@ -1,0 +1,376 @@
+{
+  "webBase": "http://172.16.110.27:8083",
+  "apiBase": "http://172.16.110.27:8082/api",
+  "outDir": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154",
+  "stamp": "20260608043023154",
+  "charts": [
+    {
+      "chartCode": "I_MR",
+      "expectedChart": "I-MR",
+      "dataCategory": "Variable",
+      "excelFile": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\01-I_MR.xlsx",
+      "screenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\01-I_MR-spc-page.png",
+      "master": {
+        "ppcId": 496,
+        "partNo": "E2E-XLS-20260608043023154-I_MR-PART",
+        "processCode": "E2E-XLS-20260608043023154-I_MR-PROC",
+        "machineCode": "E2E-XLS-20260608043023154-I_MR-M01",
+        "characteristicCode": "E2E-XLS-20260608043023154-I_MR-CHAR"
+      },
+      "query": {
+        "apiUrl": "http://172.16.110.27:8082/api/v1/spc/chart?ppcId=496&uploadBatchId=22801951-07c4-4130-8380-fbb5f10c9d2f",
+        "uiInstruction": "SPC 查詢 / 管制圖：選產品 E2E-XLS-20260608043023154-I_MR-PART，製程 E2E-XLS-20260608043023154-I_MR-PROC，檢驗項目 E2E-XLS-20260608043023154-I_MR-CHAR"
+      },
+      "upload": {
+        "status": 200,
+        "batchId": "22801951-07c4-4130-8380-fbb5f10c9d2f",
+        "importStatusBeforeConfirm": "PreviewReady",
+        "totalRows": 8,
+        "validRows": 8,
+        "errorRows": 0,
+        "previewStatus": 200,
+        "confirmStatus": 200,
+        "confirmedStatus": "Imported",
+        "imported": 8,
+        "alertCount": 1
+      },
+      "chart": {
+        "status": 200,
+        "returnedChartType": "I-MR",
+        "pointCount": 8,
+        "outOfControlCount": 1,
+        "firstPoint": {
+          "measuredAt": "2026-06-08T19:00:00",
+          "value": 5.1,
+          "outOfSpec": false,
+          "outOfControl": false,
+          "outOfControlStat": false,
+          "violatedRules": [],
+          "lotNo": "E2E-XLS-20260608043023154-I_MR-LOT-01",
+          "serialNo": null,
+          "operator": "excel-user",
+          "isExcluded": false,
+          "rootCause": null,
+          "correctiveAction": null,
+          "measurementBatchId": null
+        }
+      },
+      "renderedChartScreenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\01-I_MR-rendered-chart.png"
+    },
+    {
+      "chartCode": "XBAR_R",
+      "expectedChart": "XBAR_R",
+      "dataCategory": "Variable",
+      "excelFile": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\02-XBAR_R.xlsx",
+      "screenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\02-XBAR_R-spc-page.png",
+      "master": {
+        "ppcId": 497,
+        "partNo": "E2E-XLS-20260608043023154-XBAR_R-PART",
+        "processCode": "E2E-XLS-20260608043023154-XBAR_R-PROC",
+        "machineCode": "E2E-XLS-20260608043023154-XBAR_R-M01",
+        "characteristicCode": "E2E-XLS-20260608043023154-XBAR_R-CHAR"
+      },
+      "query": {
+        "apiUrl": "http://172.16.110.27:8082/api/v1/spc/chart?ppcId=497&uploadBatchId=dfdbcb7e-c3db-4923-82a8-66751408ee15",
+        "uiInstruction": "SPC 查詢 / 管制圖：選產品 E2E-XLS-20260608043023154-XBAR_R-PART，製程 E2E-XLS-20260608043023154-XBAR_R-PROC，檢驗項目 E2E-XLS-20260608043023154-XBAR_R-CHAR"
+      },
+      "upload": {
+        "status": 200,
+        "batchId": "dfdbcb7e-c3db-4923-82a8-66751408ee15",
+        "importStatusBeforeConfirm": "PreviewReady",
+        "totalRows": 15,
+        "validRows": 15,
+        "errorRows": 0,
+        "previewStatus": 200,
+        "confirmStatus": 200,
+        "confirmedStatus": "Imported",
+        "imported": 15,
+        "alertCount": 5
+      },
+      "chart": {
+        "status": 200,
+        "returnedChartType": "XBAR_R",
+        "pointCount": 3,
+        "outOfControlCount": 3,
+        "firstPoint": {
+          "measuredAt": "2026-06-08T19:00:00",
+          "xbar": 10.059999999999999,
+          "range": 0.29999999999999893,
+          "n": 5,
+          "outOfSpec": false,
+          "outOfControl": true,
+          "outOfControlXbar": true,
+          "outOfControlR": false,
+          "violatedRules": [
+            "Rule1_Over3Sigma"
+          ],
+          "lotNo": "E2E-XLS-20260608043023154-XBAR_R-LOT-01",
+          "serialNo": null,
+          "operator": "excel-user",
+          "isExcluded": false,
+          "rootCause": null,
+          "correctiveAction": null,
+          "measurementBatchId": null
+        }
+      },
+      "renderedChartScreenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\02-XBAR_R-rendered-chart.png"
+    },
+    {
+      "chartCode": "XBAR_S",
+      "expectedChart": "XBAR_S",
+      "dataCategory": "Variable",
+      "excelFile": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\03-XBAR_S.xlsx",
+      "screenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\03-XBAR_S-spc-page.png",
+      "master": {
+        "ppcId": 498,
+        "partNo": "E2E-XLS-20260608043023154-XBAR_S-PART",
+        "processCode": "E2E-XLS-20260608043023154-XBAR_S-PROC",
+        "machineCode": "E2E-XLS-20260608043023154-XBAR_S-M01",
+        "characteristicCode": "E2E-XLS-20260608043023154-XBAR_S-CHAR"
+      },
+      "query": {
+        "apiUrl": "http://172.16.110.27:8082/api/v1/spc/chart?ppcId=498&uploadBatchId=d62c8584-e85b-4699-8547-b80b0b442ace",
+        "uiInstruction": "SPC 查詢 / 管制圖：選產品 E2E-XLS-20260608043023154-XBAR_S-PART，製程 E2E-XLS-20260608043023154-XBAR_S-PROC，檢驗項目 E2E-XLS-20260608043023154-XBAR_S-CHAR"
+      },
+      "upload": {
+        "status": 200,
+        "batchId": "d62c8584-e85b-4699-8547-b80b0b442ace",
+        "importStatusBeforeConfirm": "PreviewReady",
+        "totalRows": 15,
+        "validRows": 15,
+        "errorRows": 0,
+        "previewStatus": 200,
+        "confirmStatus": 200,
+        "confirmedStatus": "Imported",
+        "imported": 15,
+        "alertCount": 4
+      },
+      "chart": {
+        "status": 200,
+        "returnedChartType": "XBAR_S",
+        "pointCount": 3,
+        "outOfControlCount": 3,
+        "firstPoint": {
+          "measuredAt": "2026-06-08T19:00:00",
+          "xbar": 10.02,
+          "stdDev": 0.14832396974191275,
+          "n": 5,
+          "outOfSpec": false,
+          "outOfControl": true,
+          "outOfControlXbar": true,
+          "outOfControlS": false,
+          "violatedRules": [
+            "Rule1_Over3Sigma"
+          ],
+          "lotNo": "E2E-XLS-20260608043023154-XBAR_S-LOT-01",
+          "serialNo": null,
+          "operator": "excel-user",
+          "isExcluded": false,
+          "rootCause": null,
+          "correctiveAction": null,
+          "measurementBatchId": null
+        }
+      },
+      "renderedChartScreenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\03-XBAR_S-rendered-chart.png"
+    },
+    {
+      "chartCode": "P",
+      "expectedChart": "P_CHART",
+      "dataCategory": "Attribute",
+      "excelFile": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\04-P.xlsx",
+      "screenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\04-P-spc-page.png",
+      "master": {
+        "ppcId": 499,
+        "partNo": "E2E-XLS-20260608043023154-P-PART",
+        "processCode": "E2E-XLS-20260608043023154-P-PROC",
+        "machineCode": "E2E-XLS-20260608043023154-P-M01",
+        "characteristicCode": "E2E-XLS-20260608043023154-P-CHAR"
+      },
+      "query": {
+        "apiUrl": "http://172.16.110.27:8082/api/v1/spc/chart?ppcId=499&uploadBatchId=053dd9e1-f73f-4f69-b0da-c1fd07054227",
+        "uiInstruction": "SPC 查詢 / 管制圖：選產品 E2E-XLS-20260608043023154-P-PART，製程 E2E-XLS-20260608043023154-P-PROC，檢驗項目 E2E-XLS-20260608043023154-P-CHAR"
+      },
+      "upload": {
+        "status": 200,
+        "batchId": "053dd9e1-f73f-4f69-b0da-c1fd07054227",
+        "importStatusBeforeConfirm": "PreviewReady",
+        "totalRows": 4,
+        "validRows": 4,
+        "errorRows": 0,
+        "previewStatus": 200,
+        "confirmStatus": 200,
+        "confirmedStatus": "Imported",
+        "imported": 4,
+        "alertCount": 1
+      },
+      "chart": {
+        "status": 200,
+        "returnedChartType": "P_CHART",
+        "pointCount": 4,
+        "outOfControlCount": 1,
+        "firstPoint": {
+          "measuredAt": "2026-06-08T20:00:00",
+          "value": 0.02,
+          "n": 100,
+          "uclStat": 0.12896317706643493,
+          "lclStat": 0,
+          "outOfControl": false,
+          "lotNo": "E2E-XLS-20260608043023154-P-LOT-01",
+          "operator": "excel-user",
+          "isExcluded": false,
+          "violatedRules": []
+        }
+      },
+      "renderedChartScreenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\04-P-rendered-chart.png"
+    },
+    {
+      "chartCode": "NP",
+      "expectedChart": "NP_CHART",
+      "dataCategory": "Attribute",
+      "excelFile": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\05-NP.xlsx",
+      "screenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\05-NP-spc-page.png",
+      "master": {
+        "ppcId": 500,
+        "partNo": "E2E-XLS-20260608043023154-NP-PART",
+        "processCode": "E2E-XLS-20260608043023154-NP-PROC",
+        "machineCode": "E2E-XLS-20260608043023154-NP-M01",
+        "characteristicCode": "E2E-XLS-20260608043023154-NP-CHAR"
+      },
+      "query": {
+        "apiUrl": "http://172.16.110.27:8082/api/v1/spc/chart?ppcId=500&uploadBatchId=f5f66c15-ad90-4e64-9746-50d0a314c49d",
+        "uiInstruction": "SPC 查詢 / 管制圖：選產品 E2E-XLS-20260608043023154-NP-PART，製程 E2E-XLS-20260608043023154-NP-PROC，檢驗項目 E2E-XLS-20260608043023154-NP-CHAR"
+      },
+      "upload": {
+        "status": 200,
+        "batchId": "f5f66c15-ad90-4e64-9746-50d0a314c49d",
+        "importStatusBeforeConfirm": "PreviewReady",
+        "totalRows": 4,
+        "validRows": 4,
+        "errorRows": 0,
+        "previewStatus": 200,
+        "confirmStatus": 200,
+        "confirmedStatus": "Imported",
+        "imported": 4,
+        "alertCount": 1
+      },
+      "chart": {
+        "status": 200,
+        "returnedChartType": "NP_CHART",
+        "pointCount": 4,
+        "outOfControlCount": 1,
+        "firstPoint": {
+          "measuredAt": "2026-06-08T20:00:00",
+          "value": 2,
+          "n": 100,
+          "outOfControl": false,
+          "violatedRules": [],
+          "lotNo": "E2E-XLS-20260608043023154-NP-LOT-01",
+          "operator": "excel-user",
+          "isExcluded": false
+        }
+      },
+      "renderedChartScreenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\05-NP-rendered-chart.png"
+    },
+    {
+      "chartCode": "C",
+      "expectedChart": "C_CHART",
+      "dataCategory": "Attribute",
+      "excelFile": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\06-C.xlsx",
+      "screenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\06-C-spc-page.png",
+      "master": {
+        "ppcId": 501,
+        "partNo": "E2E-XLS-20260608043023154-C-PART",
+        "processCode": "E2E-XLS-20260608043023154-C-PROC",
+        "machineCode": "E2E-XLS-20260608043023154-C-M01",
+        "characteristicCode": "E2E-XLS-20260608043023154-C-CHAR"
+      },
+      "query": {
+        "apiUrl": "http://172.16.110.27:8082/api/v1/spc/chart?ppcId=501&uploadBatchId=679ba4ed-6d4c-4f35-b0e7-123eddcf3eca",
+        "uiInstruction": "SPC 查詢 / 管制圖：選產品 E2E-XLS-20260608043023154-C-PART，製程 E2E-XLS-20260608043023154-C-PROC，檢驗項目 E2E-XLS-20260608043023154-C-CHAR"
+      },
+      "upload": {
+        "status": 200,
+        "batchId": "679ba4ed-6d4c-4f35-b0e7-123eddcf3eca",
+        "importStatusBeforeConfirm": "PreviewReady",
+        "totalRows": 4,
+        "validRows": 4,
+        "errorRows": 0,
+        "previewStatus": 200,
+        "confirmStatus": 200,
+        "confirmedStatus": "Imported",
+        "imported": 4,
+        "alertCount": 1
+      },
+      "chart": {
+        "status": 200,
+        "returnedChartType": "C_CHART",
+        "pointCount": 4,
+        "outOfControlCount": 1,
+        "firstPoint": {
+          "measuredAt": "2026-06-08T20:00:00",
+          "value": 3,
+          "outOfControl": false,
+          "violatedRules": [],
+          "lotNo": "E2E-XLS-20260608043023154-C-LOT-01",
+          "operator": "excel-user",
+          "isExcluded": false
+        }
+      },
+      "renderedChartScreenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\06-C-rendered-chart.png"
+    },
+    {
+      "chartCode": "U",
+      "expectedChart": "U_CHART",
+      "dataCategory": "Attribute",
+      "excelFile": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\07-U.xlsx",
+      "screenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\07-U-spc-page.png",
+      "master": {
+        "ppcId": 502,
+        "partNo": "E2E-XLS-20260608043023154-U-PART",
+        "processCode": "E2E-XLS-20260608043023154-U-PROC",
+        "machineCode": "E2E-XLS-20260608043023154-U-M01",
+        "characteristicCode": "E2E-XLS-20260608043023154-U-CHAR"
+      },
+      "query": {
+        "apiUrl": "http://172.16.110.27:8082/api/v1/spc/chart?ppcId=502&uploadBatchId=e43e55f8-d1cb-4d34-a3f4-12e81441deae",
+        "uiInstruction": "SPC 查詢 / 管制圖：選產品 E2E-XLS-20260608043023154-U-PART，製程 E2E-XLS-20260608043023154-U-PROC，檢驗項目 E2E-XLS-20260608043023154-U-CHAR"
+      },
+      "upload": {
+        "status": 200,
+        "batchId": "e43e55f8-d1cb-4d34-a3f4-12e81441deae",
+        "importStatusBeforeConfirm": "PreviewReady",
+        "totalRows": 4,
+        "validRows": 4,
+        "errorRows": 0,
+        "previewStatus": 200,
+        "confirmStatus": 200,
+        "confirmedStatus": "Imported",
+        "imported": 4,
+        "alertCount": 1
+      },
+      "chart": {
+        "status": 200,
+        "returnedChartType": "U_CHART",
+        "pointCount": 4,
+        "outOfControlCount": 4,
+        "firstPoint": {
+          "measuredAt": "2026-06-08T20:00:00",
+          "value": 0.05,
+          "n": 100,
+          "uclStat": 0.38696938456699065,
+          "lclStat": 0.09303061543300933,
+          "outOfControl": true,
+          "lotNo": "E2E-XLS-20260608043023154-U-LOT-01",
+          "operator": "excel-user",
+          "isExcluded": false,
+          "violatedRules": [
+            "Rule1_Over3Sigma"
+          ]
+        }
+      },
+      "renderedChartScreenshot": "D:\\SPC\\test-artifacts\\excel-all-charts-20260608043023154\\07-U-rendered-chart.png"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": []
+}

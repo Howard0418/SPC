@@ -251,6 +251,13 @@ onMounted(load);
         <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
           此模組用於設定具體的 SPC 管制圖公式（如 Xbar-R、I-MR 等），包含管制界限之算法常數與所需抽樣數。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
+          <div class="font-black text-blue-900 dark:text-blue-300">管制圖種類配置頁面操作說明</div>
+          <p><strong>查詢種類：</strong>可依管制圖代號、名稱或描述搜尋，例如 I-MR、XBAR-R、P、U。</p>
+          <p><strong>新增種類：</strong>按「新增管制圖種類」，填入代號、名稱、資料類型與所屬分類。</p>
+          <p><strong>設定參數：</strong>依管制圖需求設定樣本數、公式設定與是否啟用。</p>
+          <p><strong>套用位置：</strong>管制圖種類會在「品質特性項目」與「料號檢驗基準設定」中被選用。</p>
+        </div>
       </div>
     </div>
 

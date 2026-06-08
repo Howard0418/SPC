@@ -6,12 +6,16 @@ using Microsoft.EntityFrameworkCore;
 namespace MesSpc.Api.Controllers;
 
 [ApiController]
+[Route("api/v1/reports")]
 [Route("api/v2/reports")]
 public class ReportsController(AppDbContext dbContext) : ControllerBase
 {
     [HttpGet("cpk-summary")]
     public async Task<IActionResult> ExportCpkSummary([FromQuery] string? month)
     {
+        if (Request.Path.StartsWithSegments("/api/v2", StringComparison.OrdinalIgnoreCase))
+            return LegacyV2Api.Gone("/api/v1/reports/cpk-summary");
+
         var targetMonth = string.IsNullOrEmpty(month) ? DateTime.UtcNow.ToString("yyyy-MM") : month;
         
         var characteristics = await dbContext.PartProcessCharacteristics

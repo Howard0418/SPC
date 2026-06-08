@@ -382,7 +382,7 @@ public class UploadsController(UploadService uploadService)
 
 [ApiController]
 [Route("api/v2/spc")]
-public class SpcV2Controller(AppDbContext db, SpcService spcService) : ControllerBase
+public class SpcV2Controller(AppDbContext db) : ControllerBase
 {
     [HttpPost("calculate")]
     public async Task<IActionResult> Calculate([FromBody] CalculateReq req)
@@ -421,33 +421,16 @@ public class SpcV2Controller(AppDbContext db, SpcService spcService) : Controlle
         [FromQuery] string? batchNo = null,
         CancellationToken ct = default)
     {
-        var chart = await spcService.GetInteractiveChartV2Async(productId, stationId, inspectionItemId, batchNo, ct);
-        return chart is null ? NotFound("Chart data not found or invalid inspection item.") : Ok(chart);
+        return LegacyV2Api.Gone("/api/v1/spc/chart?ppcId={ppcId}");
     }
 
     [HttpPost("exclude-batch/{uploadBatchId:guid}")]
-    public async Task<IActionResult> ToggleExcludeUploadBatch(Guid uploadBatchId, CancellationToken ct = default)
-    {
-        var batch = await db.UploadBatches.FindAsync([uploadBatchId], ct);
-        if (batch is null) return NotFound("Upload batch not found.");
-
-        batch.IsExcluded = !batch.IsExcluded;
-        await db.SaveChangesAsync(ct);
-
-        return Ok(new { batch.UploadBatchId, batch.IsExcluded });
-    }
+    public IActionResult ToggleExcludeUploadBatch(Guid uploadBatchId, CancellationToken ct = default) =>
+        LegacyV2Api.Gone("/api/v1/spc/exclude-batch/{uploadBatchId}");
 
     [HttpPost("exclude-batch/{batchId:int}")]
-    public async Task<IActionResult> ToggleExcludeBatch(int batchId, CancellationToken ct = default)
-    {
-        var batch = await db.MeasurementBatches.FindAsync([batchId], ct);
-        if (batch is null) return NotFound("Measurement batch not found.");
-
-        batch.IsExcluded = !batch.IsExcluded; // Toggle state
-        await db.SaveChangesAsync(ct);
-
-        return Ok(new { batch.Id, batch.IsExcluded });
-    }
+    public IActionResult ToggleExcludeBatch(int batchId, CancellationToken ct = default) =>
+        LegacyV2Api.Gone("/api/v1/spc/exclude-batch/{uploadBatchId}");
 
     [HttpGet("chart-types")]
     public async Task<IActionResult> ChartTypes() => Ok(await db.ControlChartTypes.Where(x => x.IsEnabled).OrderBy(x => x.ChartTypeCode).ToListAsync());

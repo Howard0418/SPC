@@ -219,6 +219,13 @@ onMounted(load);
           - <strong>計量 (Variable)：</strong>可以量測出具體數值的特性 (如：長度 10.5 mm)，通常對應 X-bar 管制圖。<br/>
           - <strong>計數 (Attribute)：</strong>以不良數或不良率表示的特性 (如：外觀不良件數)，通常對應 P 或 C 管制圖。
         </p>
+        <div class="mt-3 space-y-1.5 text-xs text-pink-700 dark:text-pink-400/80 leading-relaxed">
+          <div class="font-black text-pink-900 dark:text-pink-300">品質檢驗特性主檔頁面操作說明</div>
+          <p><strong>查詢特性：</strong>輸入特性代號、名稱或單位，快速篩選檢驗項目。</p>
+          <p><strong>新增特性：</strong>按「新增特性」，填入特性代號、名稱、資料類型與量測單位。</p>
+          <p><strong>選擇類型：</strong>連續數值請選計量型；不良數、缺點數或比例資料請選計數型。</p>
+          <p><strong>指定預設圖：</strong>依資料類型設定預設管制圖，後續檢驗基準可沿用或調整。</p>
+        </div>
       </div>
     </div>
 
