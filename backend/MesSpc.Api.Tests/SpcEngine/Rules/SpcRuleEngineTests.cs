@@ -186,4 +186,29 @@ public class SpcRuleEngineTests
         Assert.Single(violations);
         Assert.Equal("Rule8_8Outside1Sigma", violations[0].RuleCode);
     }
+
+    [Fact]
+    public void EvaluateRules_Rule2_CustomRequiredPoints_ReturnsViolation()
+    {
+        // Arrange
+        var rules = new List<SpcRule> 
+        { 
+            new SpcRule 
+            { 
+                RuleCode = "Rule2_9SameSide", 
+                RuleName = "Rule2_9SameSide", 
+                IsEnabled = true,
+                RuleConfigJson = "{\"RequiredPoints\": 7}"
+            } 
+        };
+        // 7 points above CL (100)
+        var values = new List<double> { 105, 102, 103, 104, 101, 106, 102 };
+
+        // Act
+        var violations = SpcRuleEngine.EvaluateRules(values, rules, _cl, _ucl, _lcl);
+
+        // Assert
+        Assert.Single(violations);
+        Assert.Equal("Rule2_9SameSide", violations[0].RuleCode);
+    }
 }

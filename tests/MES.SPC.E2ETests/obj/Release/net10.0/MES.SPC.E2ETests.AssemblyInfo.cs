@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MES.SPC.E2ETests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0c22a0be4e239ee56c040e4317d66a5932b39167")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0b260ecb0675401a896d171ad2dcca64414a5644")]
 [assembly: System.Reflection.AssemblyProductAttribute("MES.SPC.E2ETests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MES.SPC.E2ETests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

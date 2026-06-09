@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MesSpc.Api.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cfc0ca8072d6d0b3af0f2f62e677b5572c4ec0f1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0b260ecb0675401a896d171ad2dcca64414a5644")]
 [assembly: System.Reflection.AssemblyProductAttribute("MesSpc.Api.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MesSpc.Api.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

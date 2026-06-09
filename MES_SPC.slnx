@@ -1,2 +1,5 @@
-<Solution>
+﻿<Solution>
+  <Project Path="backend/MesSpc.Api/MesSpc.Api.csproj" />
+  <Project Path="tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj" />
+  <Project Path="tests/MES.SPC.E2ETests/MES.SPC.E2ETests.csproj" />
 </Solution>

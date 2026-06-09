@@ -34,6 +34,12 @@ public static class E2EExcelFixtures
         }
     }
 
+    public static void WriteTemplatesTo(string variablePath, string attributePath)
+    {
+        WriteVariableValid(variablePath, rowCount: 100);
+        WriteAttributeValid(attributePath, "P-1001", "ST-01", "M-01", "DEF-001", rowCount: 30);
+    }
+
     /// <summary>計量型：含空料號錯誤列 + 計數型項目誤用 + 一筆有效列。</summary>
     private static void WriteVariableMixed(string path)
     {
@@ -75,16 +81,25 @@ public static class E2EExcelFixtures
             ctx.CharacteristicCode);
     }
 
-    private static void WriteAttributeValid(string path, string partNo, string processCode, string machineCode, string charCode)
+    private static void WriteAttributeValid(string path, string partNo, string processCode, string machineCode, string charCode, int rowCount = 2)
     {
         var headers = new[] { "料號", "製程", "機台", "檢驗項目", "總數", "不良數", "缺點數", "單位數", "日期", "作業員", "lot", "樣本編號" };
-        var lot = $"L-E2E-ATTR-{DateTime.UtcNow:yyyyMMddHHmmss}";
-        var rows = new object?[][]
+        var rows = new List<object?[]>();
+        for (var i = 0; i < rowCount; i++)
         {
-            new object?[] { partNo, processCode, machineCode, charCode, 500, 12, 15, 500, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), "E2E-OP-A", lot, 1 },
-            new object?[] { partNo, processCode, machineCode, charCode, 500, 8, 9, 500, DateTime.UtcNow.AddMinutes(-10).ToString("yyyy-MM-dd HH:mm:ss"), "E2E-OP-B", lot + "-2", 1 }
-        };
-        WriteSheet(path, "計數型資料匯入", headers, rows);
+            var lot = $"L-E2E-ATTR-{DateTime.UtcNow.AddMinutes(-rowCount + i):yyyyMMddHHmmss}";
+            var inspected = 500 + (i % 3) * 50;
+            var defectQty = 5 + (i % 7);
+            var defectCount = defectQty + 3;
+            rows.Add(new object?[]
+            {
+                partNo, processCode, machineCode, charCode,
+                inspected, defectQty, defectCount, inspected,
+                DateTime.UtcNow.AddMinutes(-rowCount + i).ToString("yyyy-MM-dd HH:mm:ss"),
+                $"E2E-OP-{(char)('A' + (i % 3))}", lot, 1
+            });
+        }
+        WriteSheet(path, "計數型資料匯入", headers, rows.ToArray());
     }
 
     private static void WriteSheet(string path, string sheetName, string[] headers, object?[][] rows)
