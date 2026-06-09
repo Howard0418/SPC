@@ -21,6 +21,7 @@ import SpcQueryView from "../views/SpcQueryView.vue";
 import SpcAlertsView from "../views/SpcAlertsView.vue";
 import SmtpSettingsView from "../views/SmtpSettingsView.vue";
 import OperatorsView from "../views/OperatorsView.vue";
+import TrendChartView from "../views/TrendChartView.vue";
 
 import GenealogyView from "../views/GenealogyView.vue";
 import TraceabilityMasterView from "../views/TraceabilityMasterView.vue";
@@ -36,6 +37,7 @@ const routes = [
   { path: "/measurements", component: MeasurementEntryView },
   { path: "/csv-import", redirect: "/uploads/variable" },
   { path: "/spc", component: SpcChartView },
+  { path: "/trend-chart", component: TrendChartView },
   { path: "/alerts", component: AlertsView },
   { path: "/v2/work-orders", redirect: "/measurements" },
   { path: "/v2/station-ops", redirect: "/measurements" },
@@ -60,8 +62,7 @@ const routes = [
   { path: "/operators", component: OperatorsView },
   { path: "/genealogy", component: GenealogyView },
   { path: "/traceability-master", component: TraceabilityMasterView },
-  { path: "/guide", component: () => import("../views/SystemGuideView.vue") },
-  { path: "/sitemap", component: () => import("../views/SiteMapView.vue") }
+  { path: "/guide", component: () => import("../views/SystemGuideView.vue") }
 ];
 
 const router = createRouter({

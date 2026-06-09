@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import {
   LayoutDashboard,
   LineChart,
+  TrendingUp,
   UploadCloud,
   FileSpreadsheet,
   BookOpen,
@@ -59,7 +60,8 @@ const menuCategories = [
     title: "高階戰情與分析",
     items: [
       { to: "/", text: "儀表板", icon: LayoutDashboard },
-      { to: "/spc", text: "SPC 管制圖", icon: LineChart }
+      { to: "/spc", text: "SPC 管制圖", icon: LineChart },
+      { to: "/trend-chart", text: "量測值趨勢圖", icon: TrendingUp }
     ]
   },
   {
@@ -73,20 +75,18 @@ const menuCategories = [
   {
     title: "企業品質主檔設定",
     items: [
-      { to: "/parts", text: "產品料號主檔", icon: Package },
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/machines", text: "生產機台主檔", icon: Cpu },
-      { to: "/characteristics", text: "品質特性項目", icon: Sliders },
+      { to: "/parts", text: "產品料號主檔", icon: Package },
       { to: "/part-process-characteristics", text: "料號檢驗基準設定", icon: FolderTree },
-      { to: "/traceability-master", text: "產線槽位追溯設定", icon: Layers }
+      { to: "/characteristics", text: "品質特性項目", icon: Sliders },
+      { to: "/traceability-master", text: "產線槽位追溯設定", icon: Layers },
     ]
   },
   {
     title: "管制圖與西方電氣規則",
     items: [
       { to: "/control-chart-groups", text: "管制圖分類總管", icon: Layers },
-      { to: "/control-chart-categories", text: "管制圖分類維護", icon: FolderTree },
-      { to: "/control-chart-types", text: "管制圖參數配置", icon: Activity },
       { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity }
     ]
   },
@@ -94,18 +94,17 @@ const menuCategories = [
     title: "異常管理與追溯",
     items: [
       { to: "/alerts", text: "異常通報總覽", icon: AlertTriangle },
-      { to: "/spc/query", text: "多維度品質履歷與查詢", icon: Search },
       { to: "/alerts-workflow", text: "異常單簽核處置", icon: Activity },
-      { to: "/genealogy", text: "產品系譜圖 (Genealogy)", icon: FolderTree }
+      { to: "/genealogy", text: "產品系譜圖 (Genealogy)", icon: FolderTree },
+      { to: "/spc/query", text: "多維度品質履歷查詢", icon: Search }
     ]
   },
   {
     title: "系統管理與通報設定",
     items: [
-      { to: "/sitemap", text: "全系統功能地圖", icon: Map },
       { to: "/guide", text: "系統操作手冊", icon: BookOpen },
-      { to: "/operators", text: "作業工程師與權限", icon: Users },
-      { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders }
+      { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders },
+      { to: "/operators", text: "系統使用者管理", icon: Users }
     ]
   }
 ];

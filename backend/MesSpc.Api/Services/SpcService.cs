@@ -288,22 +288,23 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             if (measurements.Count == 0) return null;
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
 
+            var rawPoints = measurements.Select(x => new SpcDataPoint
+            {
+                MeasuredAt = x.MeasuredAt,
+                Value = x.MeasuredValue,
+                LotNo = x.LotNo,
+                SerialNo = x.SerialNo,
+                Operator = x.Operator,
+                LineId = x.LineId,
+                TankId = x.TankId,
+                SlotId = x.SlotId,
+                SideCode = x.SideCode.ToString(),
+                IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
+            }).ToList();
+
             if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                var points = measurements.Select(x => new SpcDataPoint
-                {
-                    MeasuredAt = x.MeasuredAt,
-                    Value = x.MeasuredValue,
-                    LotNo = x.LotNo,
-                    SerialNo = x.SerialNo,
-                    Operator = x.Operator,
-                    LineId = x.LineId,
-                    TankId = x.TankId,
-                    SlotId = x.SlotId,
-                    SideCode = x.SideCode.ToString(),
-                    IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
-                }).ToList();
-                return ImrChartCalculator.Calculate(points, limits);
+                return ImrChartCalculator.Calculate(rawPoints, limits) with { RawDataPoints = rawPoints };
             }
             else // XBAR_R / XBAR_S
             {
@@ -328,10 +329,10 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
                 if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
                 {
-                    return XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal);
+                    return XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal) with { RawDataPoints = rawPoints };
                 }
 
-                return XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, chartType.FormulaConfigJson);
+                return XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, chartType.FormulaConfigJson) with { RawDataPoints = rawPoints };
             }
         }
         else // Attribute
@@ -359,7 +360,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
             }).ToList();
 
-            return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits);
+            return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits) with { RawDataPoints = points };
         }
     }
 
@@ -496,11 +497,25 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 CorrectiveAction = x.CorrectiveAction,
                 MeasurementBatchId = x.MeasurementBatchId
             }).ToList();
-            return ImrChartCalculator.Calculate(points, limits);
+            return ImrChartCalculator.Calculate(points, limits) with { RawDataPoints = points };
         }
         else
         {
-            return XbarRChartCalculator.Calculate(subgroups, limits, expectedN);
+            var rawPoints = subgroups.SelectMany(x => x.Values.Select((val, idx) => new SpcDataPoint
+            {
+                MeasuredAt = x.MeasuredAt,
+                Value = val,
+                LotNo = x.LotNo,
+                SerialNo = x.SerialNo,
+                Operator = x.Operator,
+                IsExcluded = x.IsExcluded,
+                IsOutOfSpec = x.OutOfSpec,
+                IsOutOfControl = x.OutOfControl,
+                RootCause = x.RootCause,
+                CorrectiveAction = x.CorrectiveAction,
+                MeasurementBatchId = x.MeasurementBatchId
+            })).ToList();
+            return XbarRChartCalculator.Calculate(subgroups, limits, expectedN) with { RawDataPoints = rawPoints };
         }
     }
 }

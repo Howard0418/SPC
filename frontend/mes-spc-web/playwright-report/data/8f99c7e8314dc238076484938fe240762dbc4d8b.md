@@ -32,20 +32,18 @@ Call log:
   - button "切換深色模式"
 - complementary:
   - heading "高階戰情與分析" [level=3]
-  - link "戰情儀表板":
+  - link "儀表板":
     - /url: /
   - link "SPC 管制圖":
     - /url: /spc
   - heading "自動化匯入與採樣" [level=3]
+  - link "現場量測數據錄入":
+    - /url: /measurements
   - link "計量型資料匯入":
     - /url: /uploads/variable
   - link "計數型資料匯入":
     - /url: /uploads/attribute
-  - link "單筆量測資料輸入":
-    - /url: /measurements
   - heading "企業品質主檔設定" [level=3]
-  - link "產品管理":
-    - /url: /products
   - link "產品料號主檔":
     - /url: /parts
   - link "工站製程主檔":
@@ -56,6 +54,8 @@ Call log:
     - /url: /characteristics
   - link "料號檢驗基準設定":
     - /url: /part-process-characteristics
+  - link "產線槽位追溯設定":
+    - /url: /traceability-master
   - heading "管制圖與西方電氣規則" [level=3]
   - link "管制圖分類總管":
     - /url: /control-chart-groups
@@ -63,14 +63,20 @@ Call log:
     - /url: /control-chart-categories
   - link "管制圖參數配置":
     - /url: /control-chart-types
+  - link "SPC 異常規則維護":
+    - /url: /spc-rule-groups
   - heading "異常管理與追溯" [level=3]
   - link "異常通報總覽":
     - /url: /alerts
   - link "多維度品質履歷與查詢":
     - /url: /spc/query
   - link "異常單簽核處置":
-    - /url: /v2/alerts-workflow
+    - /url: /alerts-workflow
+  - link "產品系譜圖 (Genealogy)":
+    - /url: /genealogy
   - heading "系統管理與通報設定" [level=3]
+  - link "系統操作手冊":
+    - /url: /guide
   - link "作業工程師與權限":
     - /url: /operators
   - link "SMTP 郵件與預警設定":

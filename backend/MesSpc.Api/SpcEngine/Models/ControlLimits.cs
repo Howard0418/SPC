@@ -32,4 +32,5 @@ public record ControlChartResult
     public int SubgroupSize { get; init; }
     public string? SubgroupSizeNote { get; init; }
     public CapabilityResult? Capability { get; init; }
+    public object? RawDataPoints { get; init; }
 }

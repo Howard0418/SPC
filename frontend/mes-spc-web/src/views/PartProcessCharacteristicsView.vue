@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
 import {
   FolderTree,
@@ -17,7 +18,8 @@ import {
   Package,
   Layers,
   Activity,
-  Info
+  Info,
+  Cpu
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -26,6 +28,12 @@ const processes = ref([]);
 const characteristics = ref([]);
 const chartTypes = ref([]);
 const ruleGroups = ref([]);
+const categories = ref([]);
+const groups = ref([]);
+const machines = ref([]);
+
+const route = useRoute();
+const router = useRouter();
 
 const err = ref("");
 const successMsg = ref("");
@@ -61,13 +69,16 @@ async function load() {
   err.value = "";
   loading.value = true;
   try {
-    const [resMain, resParts, resProc, resChar, resTypes, resRules] = await Promise.all([
+    const [resMain, resParts, resProc, resChar, resTypes, resRules, resCats, resGroups, resMachines] = await Promise.all([
       api.get("/part-process-characteristics"),
       api.get("/parts"),
       api.get("/processes"),
       api.get("/characteristics"),
       api.get("/control-chart-types"),
-      api.get("/spc-rule-groups")
+      api.get("/spc-rule-groups"),
+      api.get("/control-chart-categories"),
+      api.get("/control-chart-groups"),
+      api.get("/machines")
     ]);
     rows.value = resMain.data || [];
     parts.value = resParts.data || [];
@@ -75,6 +86,9 @@ async function load() {
     characteristics.value = resChar.data || [];
     chartTypes.value = resTypes.data || [];
     ruleGroups.value = resRules.data || [];
+    categories.value = resCats.data || [];
+    groups.value = resGroups.data || [];
+    machines.value = resMachines.data || [];
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -92,6 +106,38 @@ const ruleGroupMap = computed(() => {
   const m = {};
   ruleGroups.value.forEach(rg => { m[rg.id] = `${rg.ruleGroupCode} (${rg.ruleGroupName})`; });
   return m;
+});
+
+const selectedChartTypeDimension = computed(() => {
+  if (!form.value.chartTypeId) return null;
+  const type = chartTypes.value.find(t => t.id === Number(form.value.chartTypeId));
+  if (!type) return null;
+  const cat = categories.value.find(c => c.id === type.chartCategoryId);
+  if (!cat) return null;
+  const group = groups.value.find(g => g.id === cat.chartGroupId);
+  return group ? group.groupCode : null;
+});
+
+watch(() => form.value.chartTypeId, (newTypeId) => {
+  if (!newTypeId) return;
+  const type = chartTypes.value.find(t => t.id === Number(newTypeId));
+  if (!type) return;
+  const cat = categories.value.find(c => c.id === type.chartCategoryId);
+  if (!cat) return;
+  const group = groups.value.find(g => g.id === cat.chartGroupId);
+  const newDim = group ? group.groupCode : null;
+  
+  if (newDim === "PROC" || newDim === "CHEM") {
+    const commonPart = parts.value.find(p => p.partNo === "COMMON");
+    if (commonPart) {
+      form.value.partId = commonPart.id;
+    }
+  } else if (newDim === "PROD") {
+    const commonPart = parts.value.find(p => p.partNo === "COMMON");
+    if (commonPart && form.value.partId === commonPart.id) {
+      form.value.partId = null;
+    }
+  }
 });
 
 const filteredRows = computed(() => {
@@ -222,7 +268,16 @@ function successAlert(msg) {
   setTimeout(() => { successMsg.value = ""; }, 3000);
 }
 
-onMounted(load);
+onMounted(async () => {
+  await load();
+  const editId = Number(route.query.editId);
+  if (editId) {
+    const item = rows.value.find(r => r.id === editId);
+    if (item) {
+      openEditModal(item);
+    }
+  }
+});
 </script>
 
 <template>
@@ -344,8 +399,9 @@ onMounted(load);
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               <th class="py-4 px-6 w-16 text-center">ID</th>
-              <th class="py-4 px-6">檢驗站點 (Part & Process)</th>
-              <th class="py-4 px-6">檢驗項目與規格界限</th>
+              <th class="py-4 px-6">工站製程與生產機台 (Process & Machines)</th>
+              <th class="py-4 px-6">生產產品與檢驗特性 (Part & Characteristic)</th>
+              <th class="py-4 px-6">規格限值與抽樣配置 (Limits & Sample Size)</th>
               <th class="py-4 px-6">套用管制規則</th>
               <th class="py-4 px-6 text-center">狀態</th>
               <th class="py-4 px-6 text-right">操作</th>
@@ -353,10 +409,10 @@ onMounted(load);
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="6" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
+              <td colspan="7" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="6" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
+              <td colspan="7" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
             </tr>
             <tr
               v-else
@@ -366,39 +422,58 @@ onMounted(load);
             >
               <td class="py-5 px-6 font-mono text-xs text-slate-400 dark:text-slate-500 text-center">#{{ item.id }}</td>
               <td class="py-5 px-6">
+                <div class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+                  <Layers class="w-4 h-4 text-cyan-500" />
+                  {{ item.process?.processCode || `Proc #${item.processId}` }}
+                  <span class="text-slate-500 text-xs font-normal ml-1">{{ item.process?.processName }}</span>
+                </div>
+                <!-- Associated Machines List -->
+                <div class="mt-2 flex flex-wrap gap-1 items-center">
+                  <span class="text-[10px] text-slate-400 font-bold mr-1">配置機台:</span>
+                  <span v-if="machines.filter(m => m.processId === item.processId).length === 0" class="text-[10px] text-slate-400 italic">無配置機台</span>
+                  <span
+                    v-for="mach in machines.filter(m => m.processId === item.processId)"
+                    :key="mach.id"
+                    class="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono font-bold border border-slate-200 dark:border-slate-700"
+                  >
+                    {{ mach.machineCode }}
+                  </span>
+                </div>
+              </td>
+              <td class="py-5 px-6">
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
                   <Package class="w-4 h-4 text-blue-500" />
                   {{ item.part?.partNo || `Part #${item.partId}` }}
                   <span class="text-slate-500 text-xs font-normal ml-1">{{ item.part?.partName }}</span>
                 </div>
-                <div class="flex items-center gap-2 mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  <Layers class="w-3.5 h-3.5 text-cyan-500" />
-                  {{ item.process?.processCode || `Proc #${item.processId}` }}
-                  <span class="text-slate-400 font-normal">- {{ item.process?.processName }}</span>
-                </div>
-              </td>
-              <td class="py-5 px-6">
-                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-sm">
-                  <Sliders class="w-4 h-4 text-pink-500 flex-shrink-0" />
+                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs mt-2">
+                  <Sliders class="w-3.5 h-3.5 text-pink-500 flex-shrink-0" />
                   <span>{{ item.characteristic?.characteristicName || `Char #${item.characteristicId}` }}</span>
                   <span class="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">[{{ item.characteristic?.characteristicCode }}]</span>
                   <span v-if="item.characteristic?.unit" class="text-xs text-slate-400 font-normal">({{ item.characteristic?.unit }})</span>
                   <span v-if="item.isRequired" class="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800 ml-1 tracking-wider">必檢</span>
                 </div>
-                <div class="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] font-mono">
+              </td>
+              <td class="py-5 px-6">
+                <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
                   <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm">
                     <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold border-r border-slate-200 dark:border-slate-700">LSL</span>
                     <span class="px-2 py-1 text-slate-700 dark:text-slate-300 font-bold">{{ item.lsl !== null ? item.lsl : '-∞' }}</span>
                   </div>
                   <div v-if="item.targetValue !== null" class="flex items-center bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-md overflow-hidden shadow-sm">
-                    <span class="px-2 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-500 font-bold border-r border-amber-200 dark:border-amber-800">TARGET</span>
+                    <span class="px-2 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-500 font-bold border-r border-amber-200 dark:border-amber-800">TGT</span>
                     <span class="px-2 py-1 text-amber-700 dark:text-amber-400 font-bold">{{ item.targetValue }}</span>
                   </div>
                   <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm">
                     <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold border-r border-slate-200 dark:border-slate-700">USL</span>
                     <span class="px-2 py-1 text-slate-700 dark:text-slate-300 font-bold">{{ item.usl !== null ? item.usl : '+∞' }}</span>
                   </div>
-                  <span class="px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-bold shadow-sm">
+                </div>
+                <div class="mt-2.5 flex flex-wrap items-center gap-2 text-[10px] font-mono text-slate-500">
+                  <span>UCL: {{ item.ucl !== null ? item.ucl : '自動' }}</span> |
+                  <span>CL: {{ item.cl !== null ? item.cl : '自動' }}</span> |
+                  <span>LCL: {{ item.lcl !== null ? item.lcl : '自動' }}</span> |
+                  <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800">
                     N={{ item.sampleSize || 1 }}
                   </span>
                 </div>
@@ -429,6 +504,14 @@ onMounted(load);
                 </span>
               </td>
               <td class="py-5 px-6 text-right space-x-2">
+                <button
+                  @click="router.push({ path: '/spc', query: { ppcId: item.id } })"
+                  type="button"
+                  class="inline-flex items-center justify-center p-2 rounded-xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-600 dark:text-amber-400 transition-all border border-amber-200 dark:border-slate-700"
+                  title="查看管制圖與趨勢圖"
+                >
+                  <Activity class="w-4 h-4" />
+                </button>
                 <button
                   @click="openEditModal(item)"
                   type="button"
@@ -492,30 +575,65 @@ onMounted(load);
             <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
           </div>
 
-          <!-- Product, Process, Characteristic -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Process Selector (置於最上方) -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">工站製程 (Process) <span class="text-red-500">*</span></label>
+            <select
+              v-model="form.processId"
+              required
+              class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+            >
+              <option disabled value="null">-- 選擇製程 --</option>
+              <option v-for="pr in processes" :key="pr.id" :value="pr.id">{{ pr.processCode }} - {{ pr.processName }}</option>
+            </select>
+          </div>
+
+          <!-- Machines associated with the selected Process -->
+          <div v-if="form.processId" class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-2">
+              <Cpu class="w-4 h-4 text-purple-500" />
+              <span>此工站配置生產設備機台：</span>
+            </div>
+            <div v-if="machines.filter(m => m.processId === Number(form.processId)).length === 0" class="text-slate-400 dark:text-slate-500 italic">
+              目前無配置任何機台設備。
+            </div>
+            <div v-else class="flex flex-wrap gap-2">
+              <span
+                v-for="mach in machines.filter(m => m.processId === Number(form.processId))"
+                :key="mach.id"
+                class="px-2 py-1 rounded bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-mono text-[11px]"
+              >
+                {{ mach.machineCode }} - {{ mach.machineName }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Product (Part) & Characteristic (Characteristic) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">產品料號 (Part) <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>產品料號 (Part) <span class="text-red-500">*</span></span>
+                <span v-if="selectedChartTypeDimension" :class="[
+                  'px-1.5 py-0.5 rounded text-[10px] font-black',
+                  selectedChartTypeDimension === 'PROC' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                  selectedChartTypeDimension === 'CHEM' ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400' :
+                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                ]">
+                  {{ selectedChartTypeDimension === 'PROC' ? '製程管制' : selectedChartTypeDimension === 'CHEM' ? '藥液管制' : '產品管制' }}
+                </span>
+              </label>
               <select
                 v-model="form.partId"
                 required
-                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                :disabled="selectedChartTypeDimension === 'PROC' || selectedChartTypeDimension === 'CHEM'"
+                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800"
               >
                 <option disabled value="null">-- 選擇料號 --</option>
                 <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.partNo }} - {{ p.partName }}</option>
               </select>
-            </div>
-            
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">工站製程 (Process) <span class="text-red-500">*</span></label>
-              <select
-                v-model="form.processId"
-                required
-                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-              >
-                <option disabled value="null">-- 選擇製程 --</option>
-                <option v-for="pr in processes" :key="pr.id" :value="pr.id">{{ pr.processCode }} - {{ pr.processName }}</option>
-              </select>
+              <p v-if="selectedChartTypeDimension === 'PROC' || selectedChartTypeDimension === 'CHEM'" class="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1">
+                ⚠️ 製程/藥液管制項目已自動鎖定為 COMMON 共用料號。
+              </p>
             </div>
 
             <div class="space-y-1.5">

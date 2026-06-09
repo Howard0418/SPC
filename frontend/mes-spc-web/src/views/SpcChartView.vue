@@ -33,6 +33,14 @@ const uploadBatchId = ref("");
 const loading = ref(false);
 const error = ref("");
 
+// Dimension selection state: 'PROC', 'CHEM', 'PROD'
+const selectedDimension = ref("PROC");
+const chartTypes = ref([]);
+const categories = ref([]);
+const groups = ref([]);
+const trendChartEl = ref(null);
+let trendChartInstance = null;
+
 // Cascading Selectors State
 const selectedPartId = ref("");
 const selectedProcessId = ref("");
@@ -54,11 +62,20 @@ const chartEl = ref(null);
 const selectedPoint = ref(null);
 const selectedPointIndex = ref(-1);
 
+// Filtered mappings based on selected dimension
+const filteredMappingsByDimension = computed(() => {
+  return mappings.value.filter(m => {
+    if (!m.isEnabled) return false;
+    const dim = getDimensionForMapping(m);
+    return dim === selectedDimension.value;
+  });
+});
+
 // Unique Parts for selection
 const uniqueParts = computed(() => {
   const byId = new Map();
-  mappings.value
-    .filter(m => m.isEnabled && m.part?.isEnabled !== false)
+  filteredMappingsByDimension.value
+    .filter(m => m.part?.isEnabled !== false)
     .forEach(m => {
       if (!byId.has(m.partId)) byId.set(m.partId, m.part);
     });
@@ -71,8 +88,8 @@ const uniqueParts = computed(() => {
 const availableProcesses = computed(() => {
   if (!selectedPartId.value) return [];
   const byId = new Map();
-  mappings.value
-    .filter(m => m.partId === Number(selectedPartId.value) && m.isEnabled && m.process?.isEnabled !== false)
+  filteredMappingsByDimension.value
+    .filter(m => m.partId === Number(selectedPartId.value) && m.process?.isEnabled !== false)
     .forEach(m => {
       if (!byId.has(m.processId)) byId.set(m.processId, m.process);
     });
@@ -84,7 +101,7 @@ const availableProcesses = computed(() => {
 // Characteristics available for selected Part + Process (Inspection Items)
 const availableCharacteristics = computed(() => {
   if (!selectedPartId.value || !selectedProcessId.value) return [];
-  return mappings.value
+  return filteredMappingsByDimension.value
     .filter(m =>
       m.partId === Number(selectedPartId.value) &&
       m.processId === Number(selectedProcessId.value) &&
@@ -98,19 +115,30 @@ const availableCharacteristics = computed(() => {
 
 const selectedMapping = computed(() => {
   if (!selectedPartId.value || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
-  return mappings.value.find(m =>
+  return filteredMappingsByDimension.value.find(m =>
     m.partId === Number(selectedPartId.value) &&
     m.processId === Number(selectedProcessId.value) &&
-    m.characteristicId === Number(selectedCharacteristicId.value) &&
-    m.isEnabled
+    m.characteristicId === Number(selectedCharacteristicId.value)
   ) || null;
 });
+
+const getDimensionForMapping = (m) => {
+  if (!m.chartTypeId) {
+    return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+  }
+  const type = chartTypes.value.find(t => t.id === m.chartTypeId);
+  if (!type) return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+  const cat = categories.value.find(c => c.id === type.chartCategoryId);
+  if (!cat) return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+  const group = groups.value.find(g => g.id === cat.chartGroupId);
+  return group?.groupCode || (m.part?.partNo === "COMMON" ? "PROC" : "PROD");
+};
 
 // Autocomplete search filtering
 const filteredMappings = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
   if (!query) return [];
-  return mappings.value.filter(m => {
+  return filteredMappingsByDimension.value.filter(m => {
     return (
       (m.part?.partNo || "").toLowerCase().includes(query) ||
       (m.part?.partName || "").toLowerCase().includes(query) ||
@@ -130,6 +158,19 @@ function syncCascadingDropdowns(productId, stationId, inspectionItemId) {
 }
 
 // Watchers for cascading select workflow
+watch(selectedDimension, (newDim) => {
+  if (newDim === "PROD") {
+    selectedPartId.value = "";
+  } else {
+    const commonP = mappings.value.find(m => m.part?.partNo === "COMMON")?.part;
+    selectedPartId.value = commonP ? commonP.id : "";
+  }
+  selectedProcessId.value = "";
+  selectedCharacteristicId.value = "";
+  ppcId.value = "";
+  uploadBatchId.value = "";
+});
+
 watch(selectedPartId, () => {
   if (updatingCascades.value) return;
   ppcId.value = "";
@@ -177,7 +218,16 @@ function handleTestQuery() {
 
 async function loadMappings() {
   try {
-    const mapRes = await api.get("/part-process-characteristics");
+    const [mapRes, typesRes, catsRes, groupsRes] = await Promise.all([
+      api.get("/part-process-characteristics"),
+      api.get("/control-chart-types"),
+      api.get("/control-chart-categories"),
+      api.get("/control-chart-groups")
+    ]);
+    
+    chartTypes.value = typesRes.data || [];
+    categories.value = catsRes.data || [];
+    groups.value = groupsRes.data || [];
     mappings.value = mapRes.data || [];
     
     // Auto-select from query
@@ -186,13 +236,22 @@ async function loadMappings() {
     if (qPpc) {
       const match = mappings.value.find(m => m.id === qPpc);
       if (match) {
+        const dim = getDimensionForMapping(match);
+        selectedDimension.value = dim;
+        
+        await nextTick();
         syncCascadingDropdowns(match.partId, match.processId, match.characteristicId);
       }
       ppcId.value = String(qPpc);
       loadActiveChart();
+    } else {
+      const commonP = mappings.value.find(m => m.part?.partNo === "COMMON")?.part;
+      if (selectedDimension.value !== "PROD") {
+        selectedPartId.value = commonP ? commonP.id : "";
+      }
     }
   } catch (e) {
-    error.value = "無法載入檢驗項目基準列表：" + getApiErrorMessage(e);
+    error.value = "無法載入檢驗項目基準及管制圖配置：" + getApiErrorMessage(e);
   }
 }
 
@@ -613,28 +672,190 @@ function renderECharts() {
       }, 300);
     }
   }
+
+  // Render the raw data points trend chart
+  renderTrendChart();
+}
+
+function renderTrendChart() {
+  if (!trendChartEl.value || !chartResult.value) return;
+
+  if (trendChartInstance) {
+    trendChartInstance.dispose();
+    trendChartInstance = null;
+  }
+
+  trendChartInstance = echarts.init(trendChartEl.value);
+
+  const data = chartResult.value;
+  const rawPoints = data.rawDataPoints || [];
+  const limits = data.limits || {};
+
+  const labels = rawPoints.map((p, i) => {
+    if (p.measuredAt) {
+      return new Date(p.measuredAt).toLocaleString('zh-TW', { 
+        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false 
+      });
+    }
+    return `P#${i + 1}`;
+  });
+
+  const seriesData = rawPoints.map((p, i) => {
+    const isExcluded = p.isExcluded;
+    const isOos = (limits.usl != null && p.value > limits.usl) || (limits.lsl != null && p.value < limits.lsl);
+    
+    let color = isOos ? "#ef4444" : "#10b981";
+    let borderColor = isOos ? "#991b1b" : "#047857";
+    let symbol = "circle";
+    let symbolSize = isOos ? 10 : 6;
+
+    if (isExcluded) {
+      color = "#94a3b8";
+      borderColor = "#64748b";
+      symbol = "path://M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z";
+      symbolSize = 12;
+    }
+
+    return {
+      value: p.value !== undefined ? p.value : null,
+      itemStyle: { color, borderColor, borderWidth: 1.5 },
+      symbol,
+      symbolSize,
+      meta: p
+    };
+  });
+
+  const markLines = [];
+  const addLine = (y, name, color, style = "dashed", width = 1.5) => {
+    if (y == null || Number.isNaN(y)) return;
+    markLines.push({
+      name,
+      yAxis: y,
+      lineStyle: { color, width, type: style },
+      label: { formatter: `${name}: ${Number(y).toFixed(3)}`, color, position: "end" }
+    });
+  };
+
+  addLine(limits.usl, "USL", "#ef4444", "dashed", 2);
+  addLine(limits.lsl, "LSL", "#ef4444", "dashed", 2);
+  addLine(limits.target, "Target", "#10b981", "solid", 2);
+
+  const option = {
+    backgroundColor: "transparent",
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: "rgba(15, 23, 42, 0.95)",
+      borderColor: "#334155",
+      textStyle: { color: "#fff", fontSize: 12 },
+      formatter: (params) => {
+        let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${params[0].axisValue}</div>`;
+        const meta = params[0].data?.meta;
+        if (meta) {
+          res += `<div class="text-[10px] text-slate-400 mb-2">`;
+          if (meta.lotNo) res += `<div>批號: <span class="text-slate-200">${meta.lotNo}</span></div>`;
+          if (meta.serialNo) res += `<div>序號: <span class="text-slate-200">${meta.serialNo}</span></div>`;
+          if (meta.operator) res += `<div>人員: <span class="text-slate-200">${meta.operator}</span></div>`;
+          if (meta.lineId) res += `<div>產線: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
+          if (meta.tankId) res += `<div>槽體: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
+          if (meta.slotId) res += `<div>槽位: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
+          res += `</div>`;
+        }
+        params.forEach(p => {
+          res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> 量測值: <strong>${Number(p.value).toFixed(4)}</strong></div>`;
+        });
+        return res;
+      }
+    },
+    toolbox: {
+      feature: {
+        dataZoom: { yAxisIndex: "none" },
+        restore: {},
+        saveAsImage: { name: `Trend_Chart` }
+      },
+      iconStyle: { borderColor: "#64748b" }
+    },
+    dataZoom: [
+      { type: "slider", show: true, xAxisIndex: [0], bottom: 10, borderColor: "#334155", textStyle: { color: "#64748b" } },
+      { type: "inside", xAxisIndex: [0] }
+    ],
+    grid: { left: 60, right: 80, top: 40, bottom: 60 },
+    xAxis: { type: "category", data: labels, boundaryGap: false, axisLine: { lineStyle: { color: "#64748b" } } },
+    yAxis: { type: "value", name: "原始量測值", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true },
+    series: [
+      {
+        name: "量測值",
+        type: "line",
+        data: seriesData,
+        showSymbol: true,
+        markLine: markLines.length > 0 ? { symbol: "none", data: markLines, animation: false } : undefined,
+        smooth: true,
+        lineStyle: { color: "#6366f1", width: 1.5 }
+      }
+    ]
+  };
+
+  trendChartInstance.setOption(option);
 }
 
 function handleResize() {
   chartInstance?.resize();
+  trendChartInstance?.resize();
 }
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
   chartInstance?.dispose();
   chartInstance = null;
+  trendChartInstance?.dispose();
+  trendChartInstance = null;
 });
 </script>
 
 <template>
   <div class="space-y-6">
+    <!-- 🌟 三大類管制項目維度選擇器 -->
+    <div class="grid grid-cols-3 gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <button 
+        @click="selectedDimension = 'PROC'" 
+        :class="selectedDimension === 'PROC' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-lg shadow-blue-500/25' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'"
+        class="py-3 px-4 rounded-xl text-center text-sm font-semibold transition-all duration-200"
+      >
+        製程管制項目 (Process Control)
+      </button>
+      <button 
+        @click="selectedDimension = 'CHEM'" 
+        :class="selectedDimension === 'CHEM' ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold shadow-lg shadow-teal-500/25' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'"
+        class="py-3 px-4 rounded-xl text-center text-sm font-semibold transition-all duration-200"
+      >
+        藥液管制項目 (Chemical Control)
+      </button>
+      <button 
+        @click="selectedDimension = 'PROD'" 
+        :class="selectedDimension === 'PROD' ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold shadow-lg shadow-purple-500/25' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'"
+        class="py-3 px-4 rounded-xl text-center text-sm font-semibold transition-all duration-200"
+      >
+        產品管制項目 (Product Control)
+      </button>
+    </div>
+
     <!-- Header Controls -->
     <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">
           <Activity class="w-4 h-4 animate-spin" /> 工業品質分析空間
         </div>
-        <h1 class="text-2xl font-black text-slate-800 dark:text-white">SPC 即時互動管制圖</h1>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl font-black text-slate-800 dark:text-white">SPC 即時互動管制圖</h1>
+          <button
+            v-if="selectedMapping"
+            @click="router.push({ path: '/part-process-characteristics', query: { editId: selectedMapping.id } })"
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 hover:bg-orange-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-orange-600 dark:text-orange-400 text-xs font-bold transition-all border border-orange-200 dark:border-slate-700"
+            title="編輯此項檢驗基準與規格"
+          >
+            <Sliders class="w-3.5 h-3.5" /> 編輯此基準
+          </button>
+        </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto">
@@ -642,14 +863,14 @@ onBeforeUnmount(() => {
         <div class="relative w-full md:w-72">
           <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">🔍 快速搜尋檢驗基準</label>
           <div class="relative">
-            <input v-model="searchQuery" @focus="showSearchResults = true" @blur="hideSearchResults" placeholder="已切換為層聯下拉選擇" class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" disabled />
+            <input v-model="searchQuery" @focus="showSearchResults = true" @blur="hideSearchResults" placeholder="輸入關鍵字快速搜尋..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
             <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           </div>
         </div>
 
         <!-- 3-Level Cascading selectors -->
         <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
-          <div class="w-40">
+          <div class="w-40" v-if="selectedDimension === 'PROD'">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">料號 (Product)</label>
             <select v-model="selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
               <option value="">選擇產品...</option>
@@ -659,7 +880,7 @@ onBeforeUnmount(() => {
 
           <div class="w-40">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">工站 (Station)</label>
-            <select v-model="selectedProcessId" :disabled="!selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+            <select v-model="selectedProcessId" :disabled="selectedDimension === 'PROD' ? !selectedPartId : false" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
               <option value="">選擇工站...</option>
               <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">[{{ pr.processCode }}] {{ pr.processName }}</option>
             </select>
@@ -777,6 +998,13 @@ onBeforeUnmount(() => {
             <span v-else class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-sm">
               ✨ 預設公式：標準全距法 (UCL = Xbar + A2 * Rbar)
             </span>
+            <router-link
+              v-if="selectedMapping && selectedMapping.chartTypeId"
+              :to="`/control-chart-groups?tab=types&id=${selectedMapping.chartTypeId}`"
+              class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold border border-slate-300 dark:border-slate-600 transition-all flex items-center gap-1"
+            >
+              ⚙️ 微調公式配置
+            </router-link>
           </div>
 
           <div class="flex items-center gap-4 text-xs font-semibold text-slate-500">
@@ -790,6 +1018,58 @@ onBeforeUnmount(() => {
         </div>
 
         <div ref="chartEl" class="h-[600px] w-full min-h-[450px]"></div>
+
+        <!-- 🌟 量測點位趨勢圖 (Trend Chart) -->
+        <div class="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Sliders class="w-5 h-5 text-indigo-500" />
+              量測點位趨勢圖 (Raw Measurements Trend)
+            </h3>
+            <span class="text-xs font-semibold text-slate-400">
+              僅顯示工程規格界限 (USL / LSL / Target)
+            </span>
+          </div>
+
+          <!-- Trend Chart Info panel (No UCL/LCL/CL) -->
+          <div v-if="selectedMapping" class="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-5 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+            <div class="space-y-1">
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">工站製程 (Process)</span>
+              <span class="text-slate-800 dark:text-slate-200">
+                [{{ selectedMapping.process?.processCode }}] {{ selectedMapping.process?.processName }}
+              </span>
+            </div>
+            <div class="space-y-1">
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">檢驗特性 (Characteristic)</span>
+              <span class="text-slate-800 dark:text-slate-200">
+                [{{ selectedMapping.characteristic?.characteristicCode }}] {{ selectedMapping.characteristic?.characteristicName }}
+                <span v-if="selectedMapping.characteristic?.unit" class="text-slate-400"> ({{ selectedMapping.characteristic?.unit }})</span>
+              </span>
+            </div>
+            <div class="space-y-1">
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">工程規格界限 (Specs Limit)</span>
+              <span class="text-slate-800 dark:text-slate-200 font-mono">
+                LSL: {{ selectedMapping.lsl !== null ? selectedMapping.lsl : '-∞' }} | 
+                Target: {{ selectedMapping.targetValue !== null ? selectedMapping.targetValue : 'N/A' }} | 
+                USL: {{ selectedMapping.usl !== null ? selectedMapping.usl : '+∞' }}
+              </span>
+            </div>
+            <div class="space-y-1">
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">抽樣組數配置 (SampleSize N)</span>
+              <span class="text-slate-800 dark:text-slate-200">
+                N = {{ selectedMapping.sampleSize || 1 }}
+              </span>
+            </div>
+            <div class="space-y-1">
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">綁定管制圖 (Chart Type)</span>
+              <span class="text-indigo-600 dark:text-indigo-400 font-bold">
+                {{ chartTypes.find(t => t.id === selectedMapping.chartTypeId)?.chartTypeName || chartResult?.chartType || 'N/A' }}
+              </span>
+            </div>
+          </div>
+
+          <div ref="trendChartEl" class="h-[350px] w-full min-h-[250px]"></div>
+        </div>
 
         <!-- Point Detail Drilldown Card -->
         <div v-if="selectedPoint" class="mt-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 shadow-inner transition-all duration-300">
