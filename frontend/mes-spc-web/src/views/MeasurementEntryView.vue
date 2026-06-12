@@ -28,6 +28,7 @@ const inputWoNo = ref("");
 const selectedWorkOrder = ref(null);
 const selectedProductId = ref(null);
 const selectedProductName = ref("");
+const selectedControlScope = ref("PROCESS");
 const woLoading = ref(false);
 
 // Measurement Entry State
@@ -96,7 +97,7 @@ async function loadMetadata() {
     const partMap = new Map();
     const processMap = new Map();
     mappings.value.forEach(m => {
-      if (m.isEnabled && m.part && !partMap.has(m.partId)) partMap.set(m.partId, { ...m.part, id: m.partId });
+      if (m.isEnabled && (m.controlScope || "PRODUCT") === "PRODUCT" && m.part && !partMap.has(m.partId)) partMap.set(m.partId, { ...m.part, id: m.partId });
       if (m.isEnabled && m.process && !processMap.has(m.processId)) processMap.set(m.processId, { ...m.process, id: m.processId });
     });
     products.value = [...partMap.values()].sort((a, b) => (a.partNo || "").localeCompare(b.partNo || ""));
@@ -131,6 +132,7 @@ function resetForm() {
   selectedWorkOrder.value = null;
   selectedProductId.value = null;
   selectedProductName.value = "";
+  selectedControlScope.value = "PROCESS";
   selectedItemId.value = "";
   successResult.value = null;
   successPpcId.value = null;
@@ -147,10 +149,11 @@ async function fetchWorkOrder() {
 }
 
 const filteredItems = computed(() => {
-  if (!selectedProductId.value || !boundStationId.value) return [];
+  if ((selectedControlScope.value === "PRODUCT" && !selectedProductId.value) || !boundStationId.value) return [];
   return mappings.value
     .filter(m =>
-      m.partId === Number(selectedProductId.value) &&
+      (m.controlScope || "PRODUCT") === selectedControlScope.value &&
+      (selectedControlScope.value !== "PRODUCT" || m.partId === Number(selectedProductId.value)) &&
       m.processId === Number(boundStationId.value) &&
       m.isEnabled &&
       m.characteristic?.isEnabled !== false &&
@@ -161,9 +164,10 @@ const filteredItems = computed(() => {
 });
 
 const selectedMapping = computed(() => {
-  if (!selectedProductId.value || !boundStationId.value || !selectedItemId.value) return null;
+  if ((selectedControlScope.value === "PRODUCT" && !selectedProductId.value) || !boundStationId.value || !selectedItemId.value) return null;
   return mappings.value.find(m => 
-    m.partId === Number(selectedProductId.value) &&
+    (m.controlScope || "PRODUCT") === selectedControlScope.value &&
+    (selectedControlScope.value !== "PRODUCT" || m.partId === Number(selectedProductId.value)) &&
     m.processId === Number(boundStationId.value) &&
     m.characteristicId === Number(selectedItemId.value) &&
     m.isEnabled
@@ -191,6 +195,12 @@ watch(selectedItemId, () => {
   } else {
     payload.value.values = [];
   }
+});
+
+watch(selectedControlScope, () => {
+  selectedProductId.value = null;
+  selectedItemId.value = "";
+  payload.value.values = [];
 });
 
 function checkOutOfSpec(value) {
@@ -339,7 +349,7 @@ async function submitHandleAlerts() {
         <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
           <div class="font-black text-blue-900 dark:text-blue-300">現場量測數據錄入頁面操作說明</div>
           <p><strong>輸入工單：</strong>掃描或輸入工單號碼，作為本次量測資料的來源識別。</p>
-          <p><strong>選擇檢驗基準：</strong>依產品、製程與檢驗項目選擇正確的料號檢驗基準。</p>
+          <p><strong>選擇管制項目：</strong>依管制類型、製程與檢驗項目選擇正確的 SPC 管制項目。</p>
           <p><strong>輸入量測值：</strong>依樣本數填入各筆量測值，確認單位與檢驗項目相符。</p>
           <p><strong>送出資料：</strong>送出後系統會建立檢驗批號，並立即執行 SPC 判定。</p>
           <p><strong>查看結果：</strong>上傳成功後可點「前往 SPC 管制圖查看趨勢」確認圖表與異常狀態。</p>
@@ -388,19 +398,33 @@ async function submitHandleAlerts() {
             <span v-else>帶入工單</span>
           </button>
         </div>
-        <p class="text-xs font-bold text-slate-500 mt-1 pl-2">提示：工單可留空；量測資料會以 V1 料號檢驗基準 ppcId 建立。</p>
+        <p class="text-xs font-bold text-slate-500 mt-1 pl-2">提示：工單可留空；量測資料會以 SPC 管制項目 ppcId 建立。</p>
       </div>
 
       <transition enter-active-class="transition-all duration-300" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0">
         <div class="space-y-6 border-t border-slate-200 dark:border-slate-800 pt-6">
           
-          <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">管制類型</label>
+              <select v-model="selectedControlScope" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="PROCESS">製程管制</option>
+                <option value="CHEMICAL">藥水管制</option>
+                <option value="PRODUCT">產品管制</option>
+              </select>
+            </div>
+            <div v-if="selectedControlScope === 'PRODUCT'">
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">產品料號 (Part)</label>
               <select v-model="selectedProductId" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                 <option :value="null">-- 請選擇料號 --</option>
                 <option v-for="p in products" :key="p.id" :value="p.id">[{{ p.partNo }}] {{ p.partName }}</option>
               </select>
+            </div>
+            <div v-else>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">產品料號 (Part)</label>
+              <div class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">
+                {{ selectedControlScope === 'CHEMICAL' ? '藥水管制不需料號' : '製程管制不需料號' }}
+              </div>
             </div>
             <div>
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">作業人員 (Operator) *</label>
@@ -559,7 +583,7 @@ async function submitHandleAlerts() {
               <MonitorCheck class="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             </div>
             <h2 class="text-2xl font-black text-slate-800 dark:text-white">設定本機所屬工站</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400">請設定這台電腦或平版，目前固定擺放在哪一個製程？系統將以此為基準帶出 V1 料號檢驗基準。</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">請設定這台電腦或平版，目前固定擺放在哪一個製程？系統將以此為基準帶出 SPC 管制項目。</p>
           </div>
           <div>
             <select v-model="boundStationId" class="w-full px-4 py-3 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition-all">

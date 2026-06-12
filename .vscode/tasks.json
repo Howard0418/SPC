@@ -11,7 +11,8 @@
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "inAgents": true
         },
         {
             "label": "publish",
@@ -23,6 +24,24 @@
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
+            "problemMatcher": "$msCompile",
+            "inAgents": true
+        },
+        {
+            "label": "publish:iis-release",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/backend/MesSpc.Api/MesSpc.Api.csproj",
+                "-c",
+                "Release",
+                "-o",
+                "${workspaceFolder}/publish/backend",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "group": "build",
             "problemMatcher": "$msCompile"
         },
         {
@@ -35,7 +54,31 @@
                 "--project",
                 "${workspaceFolder}/backend/MesSpc.Api/MesSpc.Api.csproj"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "inAgents": true
+        },
+        {
+            "label": "test:backend",
+            "type": "shell",
+            "command": "powershell -ExecutionPolicy Bypass -File ${workspaceFolder}/run_tests.ps1",
+            "problemMatcher": "$msCompile",
+            "inAgents": true
+        },
+        {
+            "label": "dev:frontend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "${workspaceFolder}/frontend/mes-spc-web"
+            },
+            "problemMatcher": [],
+            "inAgents": true
+        },
+        {
+            "label": "iis:recycle-default-app-pool",
+            "type": "shell",
+            "command": "Import-Module WebAdministration; Restart-WebAppPool -Name 'DefaultAppPool'",
+            "problemMatcher": []
         }
     ]
 }

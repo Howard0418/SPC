@@ -256,7 +256,7 @@ onMounted(load);
           <p><strong>查詢種類：</strong>可依管制圖代號、名稱或描述搜尋，例如 I-MR、XBAR-R、P、U。</p>
           <p><strong>新增種類：</strong>按「新增管制圖種類」，填入代號、名稱、資料類型與所屬分類。</p>
           <p><strong>設定參數：</strong>依管制圖需求設定樣本數、公式設定與是否啟用。</p>
-          <p><strong>套用位置：</strong>管制圖種類會在「品質特性項目」與「料號檢驗基準設定」中被選用。</p>
+          <p><strong>套用位置：</strong>管制圖種類會在「品質特性項目」與「SPC 管制項目設定」中被選用。</p>
         </div>
       </div>
     </div>

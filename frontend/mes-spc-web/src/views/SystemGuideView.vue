@@ -68,23 +68,23 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
           
           <div class="space-y-4">
             <div class="relative pl-6 before:absolute before:left-0 before:top-2 before:w-2 before:h-2 before:bg-indigo-500 before:rounded-full">
-              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第一步：定義生產與檢驗主檔</div>
+              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第一步：先建立大分類群組</div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                前往「產品料號主檔」、「工站製程主檔」及「品質特性項目」分別建立您正在生產的產品（如 PCBA）、站別（如 OQC）與要檢驗的項目（如 厚度）。
+                前往「管制圖配置維護」，先建立大分類群組，例如製程管制、藥液管制或產品管制。大分類用來決定後續品質特性與管制圖的管理歸屬。
               </p>
             </div>
             
             <div class="relative pl-6 before:absolute before:left-0 before:top-2 before:w-2 before:h-2 before:bg-indigo-500 before:rounded-full">
-              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第二步：設定合格標準 (檢驗基準)</div>
+              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第二步：再建立品質特性</div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                前往「料號檢驗基準設定」，將前一步建立的料號、工站、檢測項目綁定在一起，並輸入規格的上限 (USL) 與下限 (LSL)。
+                前往「品質特性項目」，建立要管制的檢驗特性，例如長度、厚度、濃度、不良率或缺點數，並設定資料類型與預設管制圖。
               </p>
             </div>
             
             <div class="relative pl-6 before:absolute before:left-0 before:top-2 before:w-2 before:h-2 before:bg-indigo-500 before:rounded-full">
-              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第三步：日常數據錄入</div>
+              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第三步：最後綁定基準並錄入量測</div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                設定完成後，現場人員即可前往「現場量測數據錄入系統」輸入每天抽樣的數值，系統將自動套用 SPC 引擎進行監控。
+                建立「工站製程主檔」（含生產機台配置）與必要的「產品料號主檔」後，前往「SPC 管制項目設定」綁定管制類型、製程、特性與 USL/LSL，再錄入或匯入量測資料查看 SPC 管制圖。
               </p>
             </div>
           </div>
@@ -167,18 +167,8 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
             <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 工站製程主檔」。</p>
               <p><span class="font-bold text-slate-700 dark:text-slate-200">建立製程：</span>按「新增」，填入製程代號與製程名稱，例如 OQC、IQC 或製程站別。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">確認用途：</span>製程會用在機台主檔與料號檢驗基準設定，是 SPC 資料歸屬的重要條件。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">配置機台：</span>選取製程後，可在右側「配置生產機台」區塊新增、編輯或移除該製程的機台設備。</p>
               <p><span class="font-bold text-slate-700 dark:text-slate-200">啟用設定：</span>確認製程為啟用狀態，避免後續下拉選單找不到資料。</p>
-            </div>
-          </div>
-
-          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
-            <div class="font-black text-sm text-slate-800 dark:text-white">生產機台主檔</div>
-            <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 生產機台主檔」。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">新增機台：</span>按「新增機台」，填入機台編號、機台名稱與廠房位置。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">指定製程：</span>選擇該機台所屬的工站製程，讓後續量測資料能追溯到正確站別。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">設定狀態：</span>依現場狀態選擇運轉、閒置、停機或保養，並確認是否啟用。</p>
             </div>
           </div>
 
@@ -188,15 +178,15 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
               <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 品質特性項目」。</p>
               <p><span class="font-bold text-slate-700 dark:text-slate-200">新增檢驗項目：</span>填入特性代號與特性名稱，例如厚度、尺寸、缺點數或不良率。</p>
               <p><span class="font-bold text-slate-700 dark:text-slate-200">選資料類型：</span>計量型適用連續數值，計數型適用不良數、缺點數或比例資料。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">指定管制圖：</span>選擇預設管制圖類型，後續料號檢驗基準可帶入或調整。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">指定管制圖：</span>選擇預設管制圖類型，後續 SPC 管制項目可帶入或調整。</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
-            <div class="font-black text-sm text-blue-800 dark:text-blue-300">料號檢驗基準設定</div>
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">SPC 管制項目設定</div>
             <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「基礎主檔設定 / 料號檢驗基準設定」。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">建立綁定：</span>選擇產品料號、工站製程與品質特性項目，建立 PPC 檢驗基準。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「基礎主檔設定 / SPC 管制項目設定」。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">建立綁定：</span>先選製程管制、藥水管制或產品管制，再選必要的主檔與品質特性項目。</p>
               <p><span class="font-bold text-blue-800 dark:text-blue-300">設定規格：</span>輸入 USL、LSL、目標值、樣本數與是否必檢。</p>
               <p><span class="font-bold text-blue-800 dark:text-blue-300">選管制圖：</span>依資料類型選擇 I-MR、XBAR-R、XBAR-S、P、NP、C 或 U 管制圖。</p>
               <p><span class="font-bold text-blue-800 dark:text-blue-300">確認啟用：</span>儲存後確認該基準為啟用，資料匯入與管制圖查詢才會套用。</p>

@@ -169,7 +169,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
             dbContext.VariableMeasurements.Add(new VariableMeasurement
             {
                 UploadBatchId = batchId,
-                PartId = ppc.PartId,
+                PartId = ppc.PartId ?? 0,
                 ProcessId = ppc.ProcessId,
                 MachineId = machine.Id,
                 CharacteristicId = ppc.CharacteristicId,
@@ -268,7 +268,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
                 var vm = new VariableMeasurement
                 {
                     UploadBatchId = batchGuid,
-                    PartId = ppc.PartId,
+                    PartId = ppc.PartId ?? 0,
                     ProcessId = ppc.ProcessId,
                     MachineId = 1,
                     CharacteristicId = ppc.CharacteristicId,
@@ -289,7 +289,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
                     var alert = new AlertEvent
                     {
                         OccurredAt = measuredTime,
-                        PartId = ppc.PartId,
+                        PartId = ppc.PartId ?? 0,
                         ProcessId = ppc.ProcessId,
                         CharacteristicId = ppc.CharacteristicId,
                         ActualValue = val,
@@ -395,16 +395,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
         await EnsureChartTypesAsync(catProd.Id);
         await dbContext.SaveChangesAsync();
 
-        // 2. Ensure Common Part exists
-        var commonPart = await dbContext.Parts.FirstOrDefaultAsync(x => x.PartNo == "COMMON")
-            ?? new Part { PartNo = "COMMON", PartName = "共用產品/線路" };
-        if (commonPart.Id == 0)
-        {
-            dbContext.Parts.Add(commonPart);
-            await dbContext.SaveChangesAsync();
-        }
-
-        // 3. Get or create default rule group
+        // 2. Get or create default rule group
         var ruleGroup = await dbContext.SpcRuleGroups.FirstOrDefaultAsync()
             ?? new SpcRuleGroup { RuleGroupCode = "WE", RuleGroupName = "Western Electric Rules" };
         if (ruleGroup.Id == 0)
@@ -459,19 +450,24 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
 
                 var chartType = await dbContext.ControlChartTypes.FirstOrDefaultAsync(x => x.ChartTypeCode == mappedType);
                 if (chartType == null) continue;
+                if (chartType.RuleGroupId != ruleGroup.Id)
+                {
+                    chartType.RuleGroupId = ruleGroup.Id;
+                }
 
-                // Ensure Part
-                Part part;
+                var scope = isProductSheet
+                    ? "PRODUCT"
+                    : groupId == groupChem.Id ? "CHEMICAL" : "PROCESS";
+                int? partId = null;
+
+                // Ensure Part only for product control
                 if (isProductSheet)
                 {
                     string partNo = GetVal(row, "料號");
-                    part = await dbContext.Parts.FirstOrDefaultAsync(x => x.PartNo == partNo)
+                    var part = await dbContext.Parts.FirstOrDefaultAsync(x => x.PartNo == partNo)
                         ?? new Part { PartNo = partNo, PartName = $"產品 {partNo}" };
                     if (part.Id == 0) { dbContext.Parts.Add(part); await dbContext.SaveChangesAsync(); }
-                }
-                else
-                {
-                    part = commonPart;
+                    partId = part.Id;
                 }
 
                 // Ensure Process
@@ -508,13 +504,14 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
 
                 // Ensure PartProcessCharacteristic
                 var ppc = await dbContext.PartProcessCharacteristics
-                    .FirstOrDefaultAsync(x => x.PartId == part.Id && x.ProcessId == process.Id && x.CharacteristicId == characteristic.Id);
+                    .FirstOrDefaultAsync(x => x.ControlScope == scope && x.PartId == partId && x.ProcessId == process.Id && x.CharacteristicId == characteristic.Id);
 
                 if (ppc == null)
                 {
                     ppc = new PartProcessCharacteristic
                     {
-                        PartId = part.Id,
+                        ControlScope = scope,
+                        PartId = partId,
                         ProcessId = process.Id,
                         CharacteristicId = characteristic.Id,
                         USL = usl, LSL = lsl, UCL = ucl, LCL = lcl,
@@ -522,7 +519,6 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
                            : (usl.HasValue && lsl.HasValue) ? (usl.Value + lsl.Value) / 2.0 : null,
                         SampleSize = chartType.RequiredSampleSize ?? 5,
                         ChartTypeId = chartType.Id,
-                        RuleGroupId = ruleGroup.Id,
                         IsEnabled = true
                     };
                     dbContext.PartProcessCharacteristics.Add(ppc);
@@ -536,7 +532,6 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
                                : (usl.HasValue && lsl.HasValue) ? (usl.Value + lsl.Value) / 2.0 : ppc.CL;
                     }
                     ppc.ChartTypeId = chartType.Id;
-                    ppc.RuleGroupId = ruleGroup.Id;
                 }
 
                 await dbContext.SaveChangesAsync();

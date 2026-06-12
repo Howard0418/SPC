@@ -224,13 +224,13 @@ public class DashboardController(AppDbContext db) : ControllerBase
             .Include(x => x.Part)
             .Include(x => x.Process)
             .Include(x => x.Characteristic)
-            .Where(x => partIds.Contains(x.PartId) && processIds.Contains(x.ProcessId) && characteristicIds.Contains(x.CharacteristicId))
+            .Where(x => processIds.Contains(x.ProcessId) && characteristicIds.Contains(x.CharacteristicId))
             .ToListAsync();
 
         double cumulative = 0;
         return groups.Select(g =>
         {
-            var ppc = ppcs.FirstOrDefault(x => x.PartId == g.PartId && x.ProcessId == g.ProcessId && x.CharacteristicId == g.CharacteristicId);
+            var ppc = ppcs.FirstOrDefault(x => (x.PartId ?? 0) == g.PartId && x.ProcessId == g.ProcessId && x.CharacteristicId == g.CharacteristicId);
             var pct = total > 0 ? (double)g.Count / total * 100 : 0;
             cumulative += pct;
             return new
@@ -262,13 +262,13 @@ internal static class AlertDtoMapper
             .Include(x => x.Part)
             .Include(x => x.Process)
             .Include(x => x.Characteristic)
-            .Where(x => partIds.Contains(x.PartId) && processIds.Contains(x.ProcessId) && characteristicIds.Contains(x.CharacteristicId))
+            .Where(x => processIds.Contains(x.ProcessId) && characteristicIds.Contains(x.CharacteristicId))
             .ToListAsync();
 
         return alerts.Select(a =>
         {
             var ppc = ppcs.FirstOrDefault(x =>
-                x.PartId == a.PartId &&
+                (x.PartId ?? 0) == a.PartId &&
                 x.ProcessId == a.ProcessId &&
                 x.CharacteristicId == a.CharacteristicId);
 

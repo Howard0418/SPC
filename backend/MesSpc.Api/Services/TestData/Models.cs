@@ -30,6 +30,51 @@ public record ClearTestDataResponse(
     int MeasurementValues,
     int Alerts);
 
+public record ClearAllDataResponse(
+    int LotSlotHistories,
+    int SlotParameters,
+    int LotSplitHistories,
+    int LotMasters,
+    int VariableMeasurements,
+    int AttributeMeasurements,
+    int SpcCalculationResults,
+    int UploadErrors,
+    int UploadDetails,
+    int UploadBatches,
+    int AlertEvents,
+    int MeasurementValues,
+    int MeasurementBatches,
+    int StationOperationSessions,
+    int WorkOrders,
+    int MesSyncMessages,
+    int PartProcessCharacteristics,
+    int ProductStationItems,
+    int Machines,
+    int QualityCharacteristics,
+    int Slots,
+    int Tanks,
+    int ProductionLines,
+    int Factories,
+    int Plants,
+    int Parts,
+    int Processes,
+    int SpcRules,
+    int SpcRuleGroups,
+    int ControlChartTypes,
+    int ControlChartCategories,
+    int ControlChartGroups,
+    int FormulaDefinitions,
+    int InspectionItems,
+    int Stations,
+    int Products,
+    int Units,
+    int Shifts,
+    int Operators,
+    int Customers,
+    int Suppliers,
+    int Chemicals
+);
+
 public static class TestDataTags
 {
     public const string TestPrefix = "TEST_";

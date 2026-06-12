@@ -132,6 +132,12 @@ public static class SeedData
                 new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule8_8Outside1Sigma", RuleName = "連續 8 點在 1 Sigma 外", Priority = 80 }
             );
             db.SaveChanges();
+
+            foreach (var chartType in db.ControlChartTypes)
+            {
+                chartType.RuleGroupId = ruleGrp.Id;
+            }
+            db.SaveChanges();
         }
 
         if (!db.Parts.Any())
@@ -154,8 +160,6 @@ public static class SeedData
 
             var xbarType = db.ControlChartTypes.First(x => x.ChartTypeCode == "XBAR_R");
             var pType = db.ControlChartTypes.First(x => x.ChartTypeCode == "P");
-            var weRuleGrp = db.SpcRuleGroups.First(x => x.RuleGroupCode == "WE");
-
             var char1 = new QualityCharacteristic { CharacteristicCode = "LEN-001", CharacteristicName = "模組長度", DataCategory = "Variable", Unit = "mm", DefaultChartTypeId = xbarType.Id };
             var char2 = new QualityCharacteristic { CharacteristicCode = "DEF-001", CharacteristicName = "表面刮傷率", DataCategory = "Attribute", Unit = "%", DefaultChartTypeId = pType.Id };
             db.QualityCharacteristics.AddRange(char1, char2);
@@ -167,14 +171,14 @@ public static class SeedData
                     PartId = part1.Id, ProcessId = proc1.Id, CharacteristicId = char1.Id,
                     USL = 10.2, TargetValue = 10.0, LSL = 9.8,
                     UCL = 10.15, CL = 10.0, LCL = 9.85,
-                    SampleSize = 5, ChartTypeId = xbarType.Id, RuleGroupId = weRuleGrp.Id, IsRequired = true, IsEnabled = true
+                    SampleSize = 5, ChartTypeId = xbarType.Id, IsRequired = true, IsEnabled = true
                 },
                 new PartProcessCharacteristic
                 {
                     PartId = part2.Id, ProcessId = proc2.Id, CharacteristicId = char2.Id,
                     USL = 0.05, TargetValue = 0.01, LSL = 0,
                     UCL = 0.03, CL = 0.01, LCL = 0,
-                    SampleSize = 1, ChartTypeId = pType.Id, RuleGroupId = weRuleGrp.Id, IsRequired = true, IsEnabled = true
+                    SampleSize = 1, ChartTypeId = pType.Id, IsRequired = true, IsEnabled = true
                 }
             );
             db.SaveChanges();
@@ -202,7 +206,7 @@ public static class SeedData
                 varList.Add(new VariableMeasurement
                 {
                     UploadBatchId = batchId,
-                    PartId = ppc1.PartId, ProcessId = ppc1.ProcessId, MachineId = db.Machines.First(m => m.ProcessId == ppc1.ProcessId).Id,
+                    PartId = ppc1.PartId ?? 0, ProcessId = ppc1.ProcessId, MachineId = db.Machines.First(m => m.ProcessId == ppc1.ProcessId).Id,
                     CharacteristicId = ppc1.CharacteristicId, PartProcessCharacteristicId = ppc1.Id,
                     LotNo = "L-2026-001", SerialNo = $"SN-{i:D4}", SampleNo = (i % 5) + 1,
                     MeasuredValue = Math.Round(val, 3), MeasuredAt = time, Operator = "OP-01"
@@ -234,7 +238,7 @@ public static class SeedData
                 attrList.Add(new AttributeMeasurement
                 {
                     UploadBatchId = batchId,
-                    PartId = ppc2.PartId, ProcessId = ppc2.ProcessId, MachineId = db.Machines.First(m => m.ProcessId == ppc2.ProcessId).Id,
+                    PartId = ppc2.PartId ?? 0, ProcessId = ppc2.ProcessId, MachineId = db.Machines.First(m => m.ProcessId == ppc2.ProcessId).Id,
                     CharacteristicId = ppc2.CharacteristicId, PartProcessCharacteristicId = ppc2.Id,
                     LotNo = "L-2026-002", SampleNo = i + 1, InspectedQty = inspected, DefectQty = defects,
                     DefectCount = defects, UnitCount = inspected, MeasuredAt = time, Operator = "OP-02"

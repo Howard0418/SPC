@@ -6,6 +6,7 @@ using MesSpc.Api.Services.Parsers;
 using MesSpc.Api.Services.TestData;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -74,6 +75,51 @@ app.MapOpenApi();
 app.MapScalarApiReference();
 
 app.UseCors("dev");
+
+var frontendRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "frontend"));
+if (!Directory.Exists(frontendRoot))
+{
+    frontendRoot = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "..", "frontend", "mes-spc-web", "dist"));
+}
+
+if (Directory.Exists(frontendRoot) && File.Exists(Path.Combine(frontendRoot, "index.html")))
+{
+    var frontendFiles = new PhysicalFileProvider(frontendRoot);
+    app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = frontendFiles });
+    app.UseStaticFiles(new StaticFileOptions { FileProvider = frontendFiles });
+}
+
+// ── 全域例外處理（Production & Development 均啟用）──
+// 確保所有未處理例外都回傳 JSON 格式的錯誤，而非中斷連線
+app.UseExceptionHandler(errApp =>
+{
+    errApp.Run(async ctx =>
+    {
+        var feature = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        var ex = feature?.Error;
+        ctx.Response.ContentType = "application/json";
+        ctx.Response.StatusCode = 500;
+
+        // 外鍵違規 / 資料庫限制
+        if (ex is Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+        {
+            ctx.Response.StatusCode = 409;
+            var inner = dbEx.InnerException?.Message ?? dbEx.Message;
+            var msg = inner.Contains("FOREIGN KEY") || inner.Contains("REFERENCE")
+                ? "此資料已被其他記錄關聯（外鍵約束），請先刪除或解除相關聯的資料後再操作。"
+                : "資料庫更新失敗：" + inner;
+            await ctx.Response.WriteAsJsonAsync(new { message = msg, detail = inner });
+            return;
+        }
+
+        await ctx.Response.WriteAsJsonAsync(new
+        {
+            message = ex?.Message ?? "伺服器發生未預期的錯誤",
+            detail  = ex?.InnerException?.Message
+        });
+    });
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -91,6 +137,14 @@ if (authEnabled)
     controllers.RequireAuthorization();
 }
 
+if (Directory.Exists(frontendRoot) && File.Exists(Path.Combine(frontendRoot, "index.html")))
+{
+    app.MapFallbackToFile("index.html", new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(frontendRoot)
+    });
+}
+
 using (var scope = app.Services.CreateScope())
 {
     var provider = builder.Configuration["DatabaseProvider"]?.Trim().ToLowerInvariant() ?? "sqlserver";
@@ -104,7 +158,11 @@ using (var scope = app.Services.CreateScope())
         try { EnsureSqlServerMigrationBaseline(db); } catch { }
         db.Database.Migrate();
     }
-    SeedData.Initialize(db);
+    var seedDb = app.Configuration.GetValue<bool>("SeedDatabase", false);
+    if (seedDb)
+    {
+        SeedData.Initialize(db);
+    }
 }
 
 app.Run();

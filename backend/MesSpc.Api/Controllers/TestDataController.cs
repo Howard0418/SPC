@@ -23,5 +23,13 @@ public class TestDataController(IWebHostEnvironment env, TestDataSeeder seeder) 
         var result = await seeder.ClearAsync(runId);
         return Ok(result);
     }
+
+    [HttpDelete("clear-all")]
+    public async Task<IActionResult> ClearAll()
+    {
+        if (!env.IsDevelopment()) return StatusCode(StatusCodes.Status403Forbidden, new { message = "Clear all database data only allowed in Development." });
+        var result = await seeder.ClearAllDatabaseDataAsync();
+        return Ok(result);
+    }
 }
 

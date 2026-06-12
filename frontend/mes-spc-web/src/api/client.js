@@ -50,5 +50,8 @@ export function getApiErrorMessage(err) {
   if (err?.response?.status === 401) {
     return "未授權（401）。若已啟用登入，請先至登入頁取得 Token。";
   }
+  if (err?.response?.status === 409) {
+    return err?.response?.data?.message || "此資料已被其他記錄關聯，請先刪除或解除相關聯的子資料後再操作。";
+  }
   return err?.response?.data?.title || err?.response?.data?.message || msg || "請求失敗";
 }

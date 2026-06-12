@@ -2,7 +2,7 @@
 import { 
   BookOpen, ArrowRight,
   LayoutDashboard, LineChart, UploadCloud, FileSpreadsheet,
-  Package, Cpu, Layers, Sliders, FolderTree,
+  Package, Layers, Sliders, FolderTree,
   Activity, AlertTriangle, Search, Users
 } from "lucide-vue-next";
 import { useRouter } from "vue-router";
@@ -30,18 +30,15 @@ const siteMapCategories = [
     items: [
       { to: "/parts", text: "產品料號主檔", icon: Package },
       { to: "/processes", text: "工站製程主檔", icon: Layers },
-      { to: "/machines", text: "生產機台主檔", icon: Cpu },
       { to: "/characteristics", text: "品質特性項目", icon: Sliders },
-      { to: "/part-process-characteristics", text: "料號檢驗基準設定", icon: FolderTree },
+      { to: "/part-process-characteristics", text: "SPC 管制項目設定", icon: FolderTree },
       { to: "/traceability-master", text: "產線槽位追溯設定", icon: Layers }
     ]
   },
   {
     title: "管制圖與西方電氣規則",
     items: [
-      { to: "/control-chart-groups", text: "管制圖分類總管", icon: Layers },
-      { to: "/control-chart-categories", text: "管制圖分類維護", icon: FolderTree },
-      { to: "/control-chart-types", text: "管制圖參數配置", icon: Activity },
+      { to: "/control-chart-groups", text: "管制圖配置維護", icon: Layers },
       { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity }
     ]
   },

@@ -47,5 +47,7 @@ public class TestDataSeeder(
     }
 
     public Task<ClearTestDataResponse> ClearAsync(string? runId = null) => databaseSeeder.ClearAllTestDataAsync(runId);
+
+    public Task<ClearAllDataResponse> ClearAllDatabaseDataAsync() => databaseSeeder.ClearAllDatabaseDataAsync();
 }
 

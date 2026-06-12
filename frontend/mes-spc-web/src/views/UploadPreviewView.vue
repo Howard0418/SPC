@@ -85,7 +85,7 @@ async function resolveChartPpcId() {
 
 function goToChart() {
   if (!chartPpcId.value) {
-    err.value = "找不到此匯入批次對應的料號檢驗基準，無法開啟管制圖。";
+    err.value = "找不到此匯入批次對應的 SPC 管制項目，無法開啟管制圖。";
     return;
   }
   router.push({

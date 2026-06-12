@@ -176,7 +176,7 @@ public class TraceabilityV1Controller(AppDbContext db) : ControllerBase
         public Guid UploadBatchId { get; set; }
         public int PpcId { get; set; }
         public string DataCategory { get; set; } = string.Empty;
-        public int PartId { get; set; }
+        public int? PartId { get; set; }
         public int ProcessId { get; set; }
         public int CharacteristicId { get; set; }
         public string? PartNo { get; set; }

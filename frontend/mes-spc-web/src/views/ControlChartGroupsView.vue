@@ -24,7 +24,7 @@ import {
 const route = useRoute();
 
 // --- Tab Navigation ---
-const activeTab = ref("groups"); // 'groups', 'categories', 'types'
+const activeTab = ref("groups"); // 'groups', 'types'
 
 // --- Global State ---
 const loading = ref(false);
@@ -267,18 +267,25 @@ async function deleteCategory(item) {
 // 3. TYPES STATE & METHODS
 // ==========================================
 const typesRows = ref([]);
+const ruleGroupsRows = ref([]);
 const typesSearchQuery = ref("");
 const typesStatusFilter = ref("all");
-const typesCategoryFilter = ref("all");
+const typesGroupFilter = ref("all");
 const typesShowModal = ref(false);
 const typesModalMode = ref("create");
 const typesCurrentId = ref(null);
+const ruleLibraryRows = ref([]);
+const typeRuleOptions = ref([]);
+const selectedTypeRuleCodes = ref([]);
+const typeRuleSummaryMap = ref({});
 const typesForm = ref({
+  chartGroupId: null,
   chartCategoryId: null,
   chartTypeCode: "",
   chartTypeName: "",
   dataCategory: "Variable",
   requiredSampleSize: 5,
+  ruleGroupId: null,
   description: "",
   formulaConfigJson: "{}",
   isEnabled: true
@@ -288,7 +295,26 @@ const typesFormErr = ref("");
 async function loadTypes() {
   const { data } = await api.get("/control-chart-types");
   typesRows.value = data || [];
+  await loadTypeRuleSummaries();
 }
+
+async function loadRuleGroups() {
+  const { data } = await api.get("/spc-rule-groups");
+  ruleGroupsRows.value = data || [];
+}
+
+async function loadRuleLibrary() {
+  const { data } = await api.get("/spc-rules?libraryOnly=true");
+  ruleLibraryRows.value = data || [];
+}
+
+const ruleGroupMap = computed(() => {
+  const map = {};
+  ruleGroupsRows.value.forEach(rg => {
+    map[rg.id] = `${rg.ruleGroupCode} (${rg.ruleGroupName})`;
+  });
+  return map;
+});
 
 const categoryMap = computed(() => {
   const map = {};
@@ -298,35 +324,160 @@ const categoryMap = computed(() => {
   return map;
 });
 
+const categoryGroupIdMap = computed(() => {
+  const map = {};
+  categoriesRows.value.forEach(c => {
+    map[c.id] = c.chartGroupId;
+  });
+  return map;
+});
+
+const groupLabelMap = computed(() => {
+  const map = {};
+  groupsRows.value.forEach(g => {
+    map[g.id] = `${g.groupCode} (${g.groupName})`;
+  });
+  return map;
+});
+
+const defaultGroupId = computed(() => groupsRows.value[0]?.id || null);
+
+function getTypeGroupId(type) {
+  return categoryGroupIdMap.value[type.chartCategoryId] || null;
+}
+
+function getTypeGroupLabel(type) {
+  const groupId = getTypeGroupId(type);
+  return groupId ? (groupLabelMap.value[groupId] || `大類別 #${groupId}`) : "未指定大類別";
+}
+
+function resetTypeRuleOptions(options = null) {
+  const source = options || ruleLibraryRows.value.map(x => ({ ...x, isSelected: false }));
+  typeRuleOptions.value = source.map(x => ({ ...x }));
+  selectedTypeRuleCodes.value = typeRuleOptions.value.filter(x => x.isSelected).map(x => x.ruleCode);
+}
+
+async function loadTypeRules(chartTypeId) {
+  const { data } = await api.get(`/control-chart-types/${chartTypeId}/rules`);
+  resetTypeRuleOptions(data?.rules || null);
+  typeRuleSummaryMap.value = {
+    ...typeRuleSummaryMap.value,
+    [chartTypeId]: buildTypeRuleSummary(data?.rules || [])
+  };
+}
+
+async function saveTypeRules(chartTypeId) {
+  const { data } = await api.put(`/control-chart-types/${chartTypeId}/rules`, {
+    selectedRuleCodes: selectedTypeRuleCodes.value
+  });
+  typeRuleSummaryMap.value = {
+    ...typeRuleSummaryMap.value,
+    [chartTypeId]: buildTypeRuleSummary(data?.rules || [])
+  };
+  return data;
+}
+
+async function loadTypeRuleSummaries() {
+  if (!typesRows.value.length) {
+    typeRuleSummaryMap.value = {};
+    return;
+  }
+
+  const entries = await Promise.all(typesRows.value.map(async item => {
+    if (!item.ruleGroupId) return [item.id, buildTypeRuleSummary([])];
+    try {
+      const { data } = await api.get(`/control-chart-types/${item.id}/rules`);
+      return [item.id, buildTypeRuleSummary(data?.rules || [])];
+    } catch {
+      return [item.id, null];
+    }
+  }));
+
+  typeRuleSummaryMap.value = Object.fromEntries(entries);
+}
+
+function buildTypeRuleSummary(rules) {
+  const selectedRules = (rules || []).filter(x => x.isSelected);
+  return {
+    count: selectedRules.length,
+    label: selectedRules.length ? selectedRules.map(x => x.ruleName).join("、") : "不套用規則"
+  };
+}
+
+function getTypeRuleSummary(item) {
+  const summary = typeRuleSummaryMap.value[item.id];
+  if (summary) return summary;
+  if (item.ruleGroupId) return { count: null, label: ruleGroupMap.value[item.ruleGroupId] || `Rule #${item.ruleGroupId}` };
+  return { count: 0, label: "不套用規則" };
+}
+
+function selectAllTypeRules() {
+  selectedTypeRuleCodes.value = typeRuleOptions.value.map(x => x.ruleCode);
+}
+
+function clearTypeRules() {
+  selectedTypeRuleCodes.value = [];
+}
+
+async function ensureCategoryForGroup(groupId) {
+  const numericGroupId = parseInt(groupId);
+  if (!numericGroupId) return null;
+
+  const existing = categoriesRows.value.find(c => c.chartGroupId === numericGroupId);
+  if (existing) return existing;
+
+  const group = groupsRows.value.find(g => g.id === numericGroupId);
+  const code = `AUTO_${group?.groupCode || numericGroupId}`;
+  const payload = {
+    chartGroupId: numericGroupId,
+    categoryCode: code,
+    categoryName: `${group?.groupName || "管制圖"}預設分類`,
+    description: "系統自動建立的隱藏分類，用於讓小分類直接掛在大類別底下。",
+    isEnabled: true
+  };
+  const { data } = await api.post("/control-chart-categories", payload);
+  categoriesRows.value.push(data);
+  return data;
+}
+
+async function ensureDefaultCategories() {
+  for (const group of groupsRows.value) {
+    await ensureCategoryForGroup(group.id);
+  }
+}
+
 const filteredTypes = computed(() => {
   return typesRows.value.filter(row => {
     const q = typesSearchQuery.value.toLowerCase();
-    const cName = row.chartCategoryId ? (categoryMap.value[row.chartCategoryId] || "") : "";
+    const groupName = getTypeGroupLabel(row);
     const matchQuery = !q || 
       (row.chartTypeCode && row.chartTypeCode.toLowerCase().includes(q)) ||
       (row.chartTypeName && row.chartTypeName.toLowerCase().includes(q)) ||
       (row.description && row.description.toLowerCase().includes(q)) ||
-      cName.toLowerCase().includes(q);
+      groupName.toLowerCase().includes(q);
       
     const matchStatus = typesStatusFilter.value === "all" ||
       (typesStatusFilter.value === "active" && row.isEnabled) ||
       (typesStatusFilter.value === "inactive" && !row.isEnabled);
 
-    const matchCat = typesCategoryFilter.value === "all" || row.chartCategoryId === parseInt(typesCategoryFilter.value);
+    const matchGroup = typesGroupFilter.value === "all" || getTypeGroupId(row) === parseInt(typesGroupFilter.value);
 
-    return matchQuery && matchStatus && matchCat;
+    return matchQuery && matchStatus && matchGroup;
   });
 });
 
 function openTypesCreate() {
   typesModalMode.value = "create";
   typesCurrentId.value = null;
+  resetTypeRuleOptions();
   typesForm.value = {
-    chartCategoryId: categoriesRows.value.length > 0 ? categoriesRows.value[0].id : null,
+    chartGroupId: defaultGroupId.value,
+    chartCategoryId: null,
     chartTypeCode: "",
     chartTypeName: "",
     dataCategory: "Variable",
     requiredSampleSize: 5,
+    ruleGroupId: null,
     description: "",
     formulaConfigJson: "{\n  \"UclFormula\": \"Xbar + A2 * Rbar\",\n  \"LclFormula\": \"Xbar - A2 * Rbar\"\n}",
     isEnabled: true
@@ -335,21 +486,29 @@ function openTypesCreate() {
   typesShowModal.value = true;
 }
 
-function openTypesEdit(item) {
+async function openTypesEdit(item) {
   typesModalMode.value = "edit";
   typesCurrentId.value = item.id;
+  resetTypeRuleOptions();
   typesForm.value = {
-    chartCategoryId: item.chartCategoryId || (categoriesRows.value.length > 0 ? categoriesRows.value[0].id : null),
+    chartGroupId: getTypeGroupId(item) || defaultGroupId.value,
+    chartCategoryId: item.chartCategoryId || null,
     chartTypeCode: item.chartTypeCode || "",
     chartTypeName: item.chartTypeName || "",
     dataCategory: item.dataCategory || "Variable",
     requiredSampleSize: item.requiredSampleSize || 5,
+    ruleGroupId: item.ruleGroupId || null,
     description: item.description || "",
     formulaConfigJson: item.formulaConfigJson || "{}",
     isEnabled: item.isEnabled ?? true
   };
   typesFormErr.value = "";
   typesShowModal.value = true;
+  try {
+    await loadTypeRules(item.id);
+  } catch (e) {
+    typesFormErr.value = "載入小分類管制規則失敗：" + getApiErrorMessage(e);
+  }
 }
 
 function setStandardFormula() {
@@ -379,8 +538,8 @@ function setSigmaMethodFormula() {
 }
 
 async function saveType() {
-  if (!typesForm.value.chartTypeCode?.trim() || !typesForm.value.chartTypeName?.trim() || !typesForm.value.chartCategoryId) {
-    typesFormErr.value = "所屬類別、管制圖代號與名稱皆為必填欄位。";
+  if (!typesForm.value.chartTypeCode?.trim() || !typesForm.value.chartTypeName?.trim() || !typesForm.value.chartGroupId) {
+    typesFormErr.value = "所屬大類別、管制圖代號與名稱皆為必填欄位。";
     return;
   }
   try {
@@ -392,21 +551,34 @@ async function saveType() {
   typesFormErr.value = "";
   loading.value = true;
   try {
+    const category = await ensureCategoryForGroup(typesForm.value.chartGroupId);
+    if (!category) {
+      typesFormErr.value = "找不到可用的大類別，請先建立管制圖大類別。";
+      return;
+    }
     const payload = {
       ...typesForm.value,
-      chartCategoryId: parseInt(typesForm.value.chartCategoryId),
+      chartCategoryId: category.id,
+      ruleGroupId: typesForm.value.ruleGroupId ? parseInt(typesForm.value.ruleGroupId) : null,
       requiredSampleSize: parseInt(typesForm.value.requiredSampleSize) || 1
     };
+    delete payload.chartGroupId;
+    let savedType = null;
     if (typesModalMode.value === "create") {
       const { data } = await api.post("/control-chart-types", payload);
-      typesRows.value.push(data);
+      savedType = data;
       successAlert("成功建立管制圖種類：" + data.chartTypeName);
     } else {
       const { data } = await api.put(`/control-chart-types/${typesCurrentId.value}`, payload);
-      const idx = typesRows.value.findIndex(x => x.id === typesCurrentId.value);
-      if (idx !== -1) typesRows.value[idx] = data;
+      savedType = data;
       successAlert("成功更新管制圖種類：" + data.chartTypeName);
     }
+    const rulesResult = await saveTypeRules(savedType.id);
+    savedType.ruleGroupId = rulesResult?.ruleGroupId || null;
+    const idx = typesRows.value.findIndex(x => x.id === savedType.id);
+    if (idx !== -1) typesRows.value[idx] = savedType;
+    else typesRows.value.push(savedType);
+    await loadRuleGroups();
     typesShowModal.value = false;
   } catch (e) {
     typesFormErr.value = getApiErrorMessage(e);
@@ -437,11 +609,12 @@ async function loadAll() {
   err.value = "";
   loading.value = true;
   try {
-    await Promise.all([
-      loadGroups(),
-      loadCategories(),
-      loadTypes()
-    ]);
+    await loadGroups();
+    await loadCategories();
+    await ensureDefaultCategories();
+    await loadRuleGroups();
+    await loadRuleLibrary();
+    await loadTypes();
   } catch (e) {
     err.value = "載入設定失敗：" + getApiErrorMessage(e);
   } finally {
@@ -450,14 +623,12 @@ async function loadAll() {
 }
 
 onMounted(async () => {
-  if (route.path.includes("categories")) {
-    activeTab.value = "categories";
-  } else if (route.path.includes("types")) {
+  if (route.path.includes("types")) {
     activeTab.value = "types";
   }
   
   if (route.query.tab) {
-    if (route.query.tab === "groups" || route.query.tab === "categories" || route.query.tab === "types") {
+    if (route.query.tab === "groups" || route.query.tab === "types") {
       activeTab.value = route.query.tab;
     }
   }
@@ -470,11 +641,6 @@ onMounted(async () => {
       const targetType = typesRows.value.find(t => t.id === editId);
       if (targetType) {
         openTypesEdit(targetType);
-      }
-    } else if (activeTab.value === "categories") {
-      const targetCat = categoriesRows.value.find(c => c.id === editId);
-      if (targetCat) {
-        openCategoriesEdit(targetCat);
       }
     } else if (activeTab.value === "groups") {
       const targetGroup = groupsRows.value.find(g => g.id === editId);
@@ -496,7 +662,7 @@ onMounted(async () => {
         </div>
         <div>
           <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">SPC 管制圖配置總管維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">統一管理管制圖大群組、中分類、以及具體的管制圖小分類公式參數配置</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">統一管理管制圖大類別，以及具體的小分類與公式參數配置</p>
         </div>
       </div>
       
@@ -541,21 +707,14 @@ onMounted(async () => {
         :class="activeTab === 'groups' ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-slate-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
         class="flex-1 py-3 px-4 rounded-xl text-center text-sm transition-all whitespace-nowrap"
       >
-        大群組總管 (Control Groups)
-      </button>
-      <button
-        @click="activeTab = 'categories'"
-        :class="activeTab === 'categories' ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-slate-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
-        class="flex-1 py-3 px-4 rounded-xl text-center text-sm transition-all whitespace-nowrap"
-      >
-        中分類維護 (Categories)
+        大類別總管 (Control Groups)
       </button>
       <button
         @click="activeTab = 'types'"
         :class="activeTab === 'types' ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-slate-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
         class="flex-1 py-3 px-4 rounded-xl text-center text-sm transition-all whitespace-nowrap"
       >
-        小分類與公式配置 (Chart Types & Formulas)
+        小分類與公式配置
       </button>
     </div>
 
@@ -770,7 +929,7 @@ onMounted(async () => {
         <div>
           <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：管制圖種類與公式配置 (Control Chart Types)</h4>
           <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
-            此模組用於設定具體的 SPC 管制圖種類（如 Xbar-R、I-MR 等），包含管制界限算法、抽樣組數與對應的計量/計數公式。
+            此模組用於設定具體的 SPC 管制圖小分類（如 Xbar-R、I-MR 等），直接歸屬於製程、藥液、產品大類別，並配置管制界限算法、抽樣組數與公式。
           </p>
         </div>
       </div>
@@ -781,14 +940,14 @@ onMounted(async () => {
           <input v-model="typesSearchQuery" type="text" placeholder="搜尋種類代號、名稱..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-          <select v-model="typesCategoryFilter" class="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="all">所有中分類</option>
-            <option v-for="c in categoriesRows" :key="c.id" :value="c.id">{{ c.categoryCode }} - {{ c.categoryName }}</option>
+          <select v-model="typesGroupFilter" class="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="all">所有大類別</option>
+            <option v-for="g in groupsRows" :key="g.id" :value="g.id">{{ g.groupCode }} - {{ g.groupName }}</option>
           </select>
           <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
             <button v-for="f in [{id:'all', label:'全部'}, {id:'active', label:'已啟用'}, {id:'inactive', label:'已停用'}]" :key="f.id" @click="typesStatusFilter = f.id" type="button" :class="[ 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap', typesStatusFilter === f.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400' ]">{{ f.label }}</button>
           </div>
-          <button @click="openTypesCreate" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-blue-500/25 transition-all"><Plus class="w-4 h-4" /> 新增圖表種類</button>
+          <button @click="openTypesCreate" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-blue-500/25 transition-all"><Plus class="w-4 h-4" /> 新增小分類</button>
         </div>
       </div>
 
@@ -798,23 +957,24 @@ onMounted(async () => {
             <thead>
               <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                 <th class="py-4 px-6 w-16 text-center">ID</th>
-                <th class="py-4 px-6">所屬中分類</th>
+                <th class="py-4 px-6">所屬大類別</th>
                 <th class="py-4 px-6">圖別代號 / 名稱</th>
                 <th class="py-4 px-6">屬性分類</th>
                 <th class="py-4 px-6 text-center">抽樣數</th>
+                <th class="py-4 px-6">管制規則</th>
                 <th class="py-4 px-6">公式設定概要</th>
                 <th class="py-4 px-6 text-center">狀態</th>
                 <th class="py-4 px-6 text-right">操作</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <tr v-if="loading && typesRows.length === 0"><td colspan="8" class="py-12 text-center text-slate-400">正在載入管制圖種類清單...</td></tr>
-              <tr v-else-if="filteredTypes.length === 0"><td colspan="8" class="py-12 text-center text-slate-400">找不到相符的種類資料</td></tr>
+              <tr v-if="loading && typesRows.length === 0"><td colspan="9" class="py-12 text-center text-slate-400">正在載入管制圖小分類清單...</td></tr>
+              <tr v-else-if="filteredTypes.length === 0"><td colspan="9" class="py-12 text-center text-slate-400">找不到相符的小分類資料</td></tr>
               <tr v-else v-for="item in filteredTypes" :key="item.id" class="hover:bg-blue-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                 <td class="py-4 px-6 font-mono text-xs text-slate-400 dark:text-slate-500 text-center">#{{ item.id }}</td>
                 <td class="py-4 px-6">
                   <span class="text-xs font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 px-2.5 py-1 rounded-lg">
-                    {{ categoryMap[item.chartCategoryId] || `類別 #${item.chartCategoryId}` }}
+                    {{ getTypeGroupLabel(item) }}
                   </span>
                 </td>
                 <td class="py-4 px-6 font-bold text-slate-900 dark:text-white">
@@ -827,6 +987,16 @@ onMounted(async () => {
                   </span>
                 </td>
                 <td class="py-4 px-6 text-center font-mono font-bold text-xs text-slate-600 dark:text-slate-300">{{ item.requiredSampleSize }}</td>
+                <td class="py-4 px-6 text-xs text-slate-600 dark:text-slate-300">
+                  <div v-if="getTypeRuleSummary(item).count" class="space-y-1">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold">
+                      已勾選 {{ getTypeRuleSummary(item).count }} 條
+                    </span>
+                    <div class="max-w-[18rem] truncate" :title="getTypeRuleSummary(item).label">{{ getTypeRuleSummary(item).label }}</div>
+                  </div>
+                  <span v-else-if="item.ruleGroupId && getTypeRuleSummary(item).count === null" class="font-bold text-amber-600 dark:text-amber-400">{{ getTypeRuleSummary(item).label }}</span>
+                  <span v-else class="italic text-slate-400">不套用規則</span>
+                </td>
                 <td class="py-4 px-6 font-mono text-[11px] text-slate-500 dark:text-slate-400 max-w-xs truncate" :title="item.formulaConfigJson">{{ item.formulaConfigJson }}</td>
                 <td class="py-4 px-6 text-center">
                   <span :class="[ 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border tracking-wide', item.isEnabled ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700' ]">
@@ -946,26 +1116,27 @@ onMounted(async () => {
         <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-md"><Activity class="w-5 h-5" /></div>
-            <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ typesModalMode === 'create' ? '新增管制圖種類' : '編輯管制圖種類' }}</h3>
+            <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ typesModalMode === 'create' ? '新增管制圖小分類' : '編輯管制圖小分類' }}</h3>
           </div>
           <button @click="typesShowModal = false" type="button" class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"><X class="w-5 h-5" /></button>
         </div>
         <form @submit.prevent="saveType" class="p-6 space-y-5">
           <div v-if="typesFormErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 rounded-xl text-xs font-bold"><XCircle class="w-4 h-4" /> {{ typesFormErr }}</div>
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">所屬管制圖中分類 (Category) *</label>
-            <select v-model="typesForm.chartCategoryId" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-805">
-              <option disabled value="null">-- 請選擇所屬類別 --</option>
-              <option v-for="c in categoriesRows" :key="c.id" :value="c.id">{{ c.categoryCode }} - {{ c.categoryName }}</option>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">所屬管制圖大類別 *</label>
+            <select v-model="typesForm.chartGroupId" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-805">
+              <option disabled value="null">-- 請選擇所屬大類別 --</option>
+              <option v-for="g in groupsRows" :key="g.id" :value="g.id">{{ g.groupCode }} - {{ g.groupName }}</option>
             </select>
+            <p class="text-[11px] text-slate-400 mt-1">中分類已改為系統內部資料，新增小分類時會自動掛到選定的大類別。</p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">種類代號 (Code) *</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">小分類代號 (Code) *</label>
               <input v-model="typesForm.chartTypeCode" type="text" required placeholder="例如：XBAR_R" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-slate-805" />
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">種類名稱 (Name) *</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">小分類名稱 (Name) *</label>
               <input v-model="typesForm.chartTypeName" type="text" required placeholder="例如：平均數與全距圖" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" />
             </div>
           </div>
@@ -980,6 +1151,38 @@ onMounted(async () => {
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">標準抽樣數 (Required N)</label>
               <input v-model="typesForm.requiredSampleSize" type="number" min="1" max="25" placeholder="例如：5" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono" />
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">管制規則套用</label>
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-3 space-y-3">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  從 SPC 異常規則庫勾選此小分類要套用的規則，管制圖計算只會帶入已勾選規則。
+                </p>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button @click="selectAllTypeRules" type="button" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-blue-600 dark:text-blue-400">全選</button>
+                  <button @click="clearTypeRules" type="button" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400">清除</button>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <label
+                  v-for="rule in typeRuleOptions"
+                  :key="rule.ruleCode"
+                  class="flex items-start gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                >
+                  <input
+                    v-model="selectedTypeRuleCodes"
+                    :value="rule.ruleCode"
+                    type="checkbox"
+                    class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span class="min-w-0">
+                    <span class="block text-xs font-black text-slate-700 dark:text-slate-200">規則 {{ Math.floor(rule.priority / 10) }}</span>
+                    <span class="block text-[11px] leading-4 text-slate-500 dark:text-slate-400">{{ rule.ruleName }}</span>
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
           <div class="space-y-1.5">

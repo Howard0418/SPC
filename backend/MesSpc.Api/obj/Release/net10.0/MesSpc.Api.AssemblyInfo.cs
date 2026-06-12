@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MesSpc.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+664be8b1a7724a83cb5aa44bd74989f68dfcfcc6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3b2a47a8823ac177023464a6b499487803f3189b")]
 [assembly: System.Reflection.AssemblyProductAttribute("MesSpc.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MesSpc.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

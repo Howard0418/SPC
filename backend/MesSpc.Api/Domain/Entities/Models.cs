@@ -274,7 +274,8 @@ public class QualityCharacteristic : BaseEntity<int>
 
 public class PartProcessCharacteristic : BaseEntity<int>
 {
-    public int PartId { get; set; }
+    public string ControlScope { get; set; } = "PRODUCT";
+    public int? PartId { get; set; }
     public int ProcessId { get; set; }
     public int CharacteristicId { get; set; }
     public double? USL { get; set; }
@@ -321,6 +322,7 @@ public class ControlChartType : BaseEntity<int>
     public string ChartTypeName { get; set; } = string.Empty;
     public string DataCategory { get; set; } = "Variable";
     public int? RequiredSampleSize { get; set; }
+    public int? RuleGroupId { get; set; }
     public string? Description { get; set; }
     public string? FormulaConfigJson { get; set; }
     public bool IsEnabled { get; set; } = true;

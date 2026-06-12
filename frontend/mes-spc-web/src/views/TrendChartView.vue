@@ -42,15 +42,18 @@ let trendChartInstance = null;
 
 // ─── Dimension helpers ───────────────────────────────────────
 const getDimensionForMapping = (m) => {
+  if (m.controlScope === "PROCESS") return "PROC";
+  if (m.controlScope === "CHEMICAL") return "CHEM";
+  if (m.controlScope === "PRODUCT") return "PROD";
   if (!m.chartTypeId) {
-    return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+    return m.partId ? "PROD" : "PROC";
   }
   const type = chartTypes.value.find(t => t.id === m.chartTypeId);
-  if (!type) return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+  if (!type) return m.partId ? "PROD" : "PROC";
   const cat = categories.value.find(c => c.id === type.chartCategoryId);
-  if (!cat) return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+  if (!cat) return m.partId ? "PROD" : "PROC";
   const group = groups.value.find(g => g.id === cat.chartGroupId);
-  return group?.groupCode || (m.part?.partNo === "COMMON" ? "PROC" : "PROD");
+  return group?.groupCode || (m.partId ? "PROD" : "PROC");
 };
 
 const filteredMappingsByDimension = computed(() =>
@@ -60,7 +63,7 @@ const filteredMappingsByDimension = computed(() =>
 const uniqueParts = computed(() => {
   const byId = new Map();
   filteredMappingsByDimension.value
-    .filter(m => m.part?.isEnabled !== false)
+    .filter(m => (m.controlScope || "PRODUCT") === "PRODUCT" && m.part?.isEnabled !== false)
     .forEach(m => { if (!byId.has(m.partId)) byId.set(m.partId, m.part); });
   return [...byId.entries()]
     .map(([id, part]) => ({ ...part, id }))
@@ -68,10 +71,13 @@ const uniqueParts = computed(() => {
 });
 
 const availableProcesses = computed(() => {
-  if (!selectedPartId.value) return [];
+  if (selectedDimension.value === "PROD" && !selectedPartId.value) return [];
   const byId = new Map();
   filteredMappingsByDimension.value
-    .filter(m => m.partId === Number(selectedPartId.value) && m.process?.isEnabled !== false)
+    .filter(m =>
+      (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
+      m.process?.isEnabled !== false
+    )
     .forEach(m => { if (!byId.has(m.processId)) byId.set(m.processId, m.process); });
   return [...byId.entries()]
     .map(([id, process]) => ({ ...process, id }))
@@ -79,10 +85,10 @@ const availableProcesses = computed(() => {
 });
 
 const availableCharacteristics = computed(() => {
-  if (!selectedPartId.value || !selectedProcessId.value) return [];
+  if ((selectedDimension.value === "PROD" && !selectedPartId.value) || !selectedProcessId.value) return [];
   return filteredMappingsByDimension.value
     .filter(m =>
-      m.partId === Number(selectedPartId.value) &&
+      (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
       m.processId === Number(selectedProcessId.value) &&
       m.isEnabled && m.characteristic?.isEnabled !== false && m.characteristic?.isSpcEnabled !== false
     )
@@ -91,9 +97,9 @@ const availableCharacteristics = computed(() => {
 });
 
 const selectedMapping = computed(() => {
-  if (!selectedPartId.value || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
+  if ((selectedDimension.value === "PROD" && !selectedPartId.value) || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
   return filteredMappingsByDimension.value.find(m =>
-    m.partId === Number(selectedPartId.value) &&
+    (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
     m.processId === Number(selectedProcessId.value) &&
     m.characteristicId === Number(selectedCharacteristicId.value)
   ) || null;
@@ -113,7 +119,7 @@ const filteredMappings = computed(() => {
 
 function selectMappingFromSearch(m) {
   updatingCascades.value = true;
-  selectedPartId.value = m.partId;
+  selectedPartId.value = m.partId || "";
   selectedProcessId.value = m.processId;
   selectedCharacteristicId.value = m.characteristicId;
   updatingCascades.value = false;
@@ -127,12 +133,7 @@ function hideSearchResults() {
 
 // ─── Watchers ────────────────────────────────────────────────
 watch(selectedDimension, (newDim) => {
-  if (newDim !== "PROD") {
-    const commonP = mappings.value.find(m => m.part?.partNo === "COMMON")?.part;
-    selectedPartId.value = commonP ? commonP.id : "";
-  } else {
-    selectedPartId.value = "";
-  }
+  selectedPartId.value = "";
   selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
   chartResult.value = null;
@@ -165,12 +166,6 @@ async function loadMappings() {
     groups.value = groupsRes.data || [];
     mappings.value = mapRes.data || [];
 
-    // Init PROC dimension default part
-    const commonP = mappings.value.find(m => m.part?.partNo === "COMMON")?.part;
-    if (selectedDimension.value !== "PROD") {
-      selectedPartId.value = commonP ? commonP.id : "";
-    }
-
     // Auto-load from route query
     const qPpc = Number(route.query.ppcId);
     if (qPpc) {
@@ -180,7 +175,7 @@ async function loadMappings() {
         selectedDimension.value = dim;
         await nextTick();
         updatingCascades.value = true;
-        selectedPartId.value = match.partId;
+        selectedPartId.value = match.partId || "";
         selectedProcessId.value = match.processId;
         selectedCharacteristicId.value = match.characteristicId;
         updatingCascades.value = false;

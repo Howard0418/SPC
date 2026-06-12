@@ -98,7 +98,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 var vm = new VariableMeasurement
                 {
                     UploadBatchId = batch.UploadBatchId,
-                    PartId = ctx.Part.Id,
+                    PartId = ctx.Part?.Id ?? 0,
                     ProcessId = ctx.Process.Id,
                     MachineId = ctx.Machine.Id,
                     CharacteristicId = ctx.Characteristic.Id,
@@ -125,7 +125,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 var am = new AttributeMeasurement
                 {
                     UploadBatchId = batch.UploadBatchId,
-                    PartId = ctx.Part.Id,
+                    PartId = ctx.Part?.Id ?? 0,
                     ProcessId = ctx.Process.Id,
                     MachineId = ctx.Machine.Id,
                     CharacteristicId = ctx.Characteristic.Id,
@@ -169,26 +169,31 @@ public class UploadService(AppDbContext db, SpcService spcService)
     private async Task EnsureMasterDataAsync(IEnumerable<Dictionary<string, string?>> rows, string expectedDataCategory, CancellationToken ct)
     {
         var chartTypeMeta = await db.ControlChartTypes.FirstOrDefaultAsync(x => x.ChartTypeCode == "XBAR_R" || x.ChartTypeCode == "I_MR" || x.DataCategory == expectedDataCategory, ct);
-        var ruleGroupMeta = await db.SpcRuleGroups.FirstOrDefaultAsync(ct);
 
         foreach (var r in rows)
         {
             var partNo = Get(r, "PartNo");
+            var scope = ResolveScope(r);
             var procCode = Get(r, "ProcessCode");
             var machCode = Get(r, "MachineCode");
             var charCode = Get(r, "CharacteristicCode");
             var charName = Get(r, "CharacteristicName") ?? charCode;
 
-            if (string.IsNullOrWhiteSpace(partNo) || string.IsNullOrWhiteSpace(procCode) || string.IsNullOrWhiteSpace(charCode)) continue;
+            if (scope == "PRODUCT" && string.IsNullOrWhiteSpace(partNo)) continue;
+            if (string.IsNullOrWhiteSpace(procCode) || string.IsNullOrWhiteSpace(charCode)) continue;
 
             if (string.IsNullOrWhiteSpace(machCode)) machCode = $"{procCode}-M01";
 
-            var part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == partNo, ct);
-            if (part is null)
+            Part? part = null;
+            if (scope == "PRODUCT")
             {
-                part = new Part { PartNo = partNo, PartName = partNo, IsEnabled = true };
-                db.Parts.Add(part);
-                await db.SaveChangesAsync(ct);
+                part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == partNo, ct);
+                if (part is null)
+                {
+                    part = new Part { PartNo = partNo!, PartName = partNo!, IsEnabled = true };
+                    db.Parts.Add(part);
+                    await db.SaveChangesAsync(ct);
+                }
             }
 
             var proc = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == procCode, ct);
@@ -223,7 +228,12 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 await db.SaveChangesAsync(ct);
             }
 
-            var map = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.PartId == part.Id && x.ProcessId == proc.Id && x.CharacteristicId == chr.Id, ct);
+            int? mappingPartId = scope == "PRODUCT" ? part!.Id : null;
+            var map = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x =>
+                x.ControlScope == scope &&
+                x.PartId == mappingPartId &&
+                x.ProcessId == proc.Id &&
+                x.CharacteristicId == chr.Id, ct);
             double.TryParse(Get(r, "USL"), out var uslVal);
             double.TryParse(Get(r, "LSL"), out var lslVal);
 
@@ -231,14 +241,14 @@ public class UploadService(AppDbContext db, SpcService spcService)
             {
                 map = new PartProcessCharacteristic
                 {
-                    PartId = part.Id,
+                    ControlScope = scope,
+                    PartId = mappingPartId,
                     ProcessId = proc.Id,
                     CharacteristicId = chr.Id,
                     USL = uslVal > 0 || lslVal > 0 ? uslVal : null,
                     LSL = uslVal > 0 || lslVal > 0 ? lslVal : null,
                     SampleSize = expectedDataCategory == "Variable" ? 1 : 1,
                     ChartTypeId = chartTypeMeta?.Id,
-                    RuleGroupId = ruleGroupMeta?.Id,
                     IsRequired = true,
                     IsEnabled = true
                 };
@@ -289,8 +299,13 @@ public class UploadService(AppDbContext db, SpcService spcService)
     private async Task<List<(string Field, string Code, string Message)>> ValidateRowAsync(Dictionary<string, string?> row, string expectedDataCategory, CancellationToken ct)
     {
         var errors = new List<(string Field, string Code, string Message)>();
-        var part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == Get(row, "PartNo"), ct);
-        if (part is null) errors.Add(("PartNo", "PART_NOT_FOUND", "PartNo does not exist."));
+        var scope = ResolveScope(row);
+        Part? part = null;
+        if (scope == "PRODUCT")
+        {
+            part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == Get(row, "PartNo"), ct);
+            if (part is null) errors.Add(("PartNo", "PART_NOT_FOUND", "Product control rows require an existing PartNo."));
+        }
         var process = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == Get(row, "ProcessCode"), ct);
         if (process is null) errors.Add(("ProcessCode", "PROCESS_NOT_FOUND", "ProcessCode does not exist."));
         var machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == Get(row, "MachineCode"), ct);
@@ -302,28 +317,55 @@ public class UploadService(AppDbContext db, SpcService spcService)
             errors.Add(("DataCategory", "INVALID_DATA_CATEGORY", $"Characteristic data category should be {expectedDataCategory}."));
         }
 
-        if (part is not null && process is not null && characteristic is not null)
+        if ((scope != "PRODUCT" || part is not null) && process is not null && characteristic is not null)
         {
-            var mapping = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.PartId == part.Id && x.ProcessId == process.Id && x.CharacteristicId == characteristic.Id && x.IsEnabled, ct);
+            int? mappingPartId = scope == "PRODUCT" ? part!.Id : null;
+            var mapping = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x =>
+                x.ControlScope == scope &&
+                x.PartId == mappingPartId &&
+                x.ProcessId == process.Id &&
+                x.CharacteristicId == characteristic.Id &&
+                x.IsEnabled, ct);
             if (mapping is null)
             {
-                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", "Part + Process + Characteristic mapping does not exist."));
+                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", "ControlScope + optional Part + Process + Characteristic mapping does not exist."));
             }
         }
 
         return errors;
     }
 
-    private async Task<(Part Part, Process Process, Machine Machine, QualityCharacteristic Characteristic, PartProcessCharacteristic Mapping)?> ResolveReferencesAsync(Dictionary<string, string?> payload, CancellationToken ct)
+    private async Task<(Part? Part, Process Process, Machine Machine, QualityCharacteristic Characteristic, PartProcessCharacteristic Mapping)?> ResolveReferencesAsync(Dictionary<string, string?> payload, CancellationToken ct)
     {
-        var part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == Get(payload, "PartNo"), ct);
+        var scope = ResolveScope(payload);
+        Part? part = null;
+        if (scope == "PRODUCT")
+        {
+            part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == Get(payload, "PartNo"), ct);
+        }
         var process = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == Get(payload, "ProcessCode"), ct);
         var machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == Get(payload, "MachineCode"), ct);
         var characteristic = await db.QualityCharacteristics.FirstOrDefaultAsync(x => x.CharacteristicCode == Get(payload, "CharacteristicCode"), ct);
-        if (part is null || process is null || machine is null || characteristic is null) return null;
-        var mapping = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.PartId == part.Id && x.ProcessId == process.Id && x.CharacteristicId == characteristic.Id && x.IsEnabled, ct);
+        if ((scope == "PRODUCT" && part is null) || process is null || machine is null || characteristic is null) return null;
+        int? mappingPartId = scope == "PRODUCT" ? part!.Id : null;
+        var mapping = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x =>
+            x.ControlScope == scope &&
+            x.PartId == mappingPartId &&
+            x.ProcessId == process.Id &&
+            x.CharacteristicId == characteristic.Id &&
+            x.IsEnabled, ct);
         if (mapping is null) return null;
         return (part, process, machine, characteristic, mapping);
+    }
+
+    private static string ResolveScope(Dictionary<string, string?> row)
+    {
+        var raw = Get(row, "ControlScope") ?? Get(row, "管制類型");
+        var normalized = (raw ?? "").Trim().ToUpperInvariant();
+        if (normalized is "PROCESS" or "PROC" or "製程" or "製程管制") return "PROCESS";
+        if (normalized is "CHEMICAL" or "CHEM" or "藥水" or "藥液" or "藥水管制" or "藥液管制") return "CHEMICAL";
+        if (normalized is "PRODUCT" or "PROD" or "產品" or "產品管制") return "PRODUCT";
+        return string.IsNullOrWhiteSpace(Get(row, "PartNo")) ? "PROCESS" : "PRODUCT";
     }
 
     private static string? Get(Dictionary<string, string?> row, string key)
@@ -332,6 +374,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var altKey = key.ToLowerInvariant() switch
         {
             "partno" => "料號",
+            "controlscope" => "管制類型",
             "processcode" => "製程",
             "machinecode" => "機台",
             "characteristiccode" => "檢驗項目",

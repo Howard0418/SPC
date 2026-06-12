@@ -4,6 +4,8 @@ using MesSpc.Api.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
 using System.IO;
 
 namespace MesSpc.Api.Tests;
@@ -18,7 +20,13 @@ public class UnitTest1
             .Options;
 
         using var context = new AppDbContext(options);
-        var controller = new MigrationController(context);
+        var controller = new MigrationController(context, new TestWebHostEnvironment())
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
 
         var path = @"C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\SPC管制項目.xlsx";
         using var stream = File.OpenRead(path);
@@ -39,5 +47,15 @@ public class UnitTest1
 
         var ppcs = await context.PartProcessCharacteristics.ToListAsync();
         ppcs.Count.Should().Be(186); // 12 in PROC, 102 in CHEM, 72 in PROD
+    }
+
+    private sealed class TestWebHostEnvironment : IWebHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = "Development";
+        public string ApplicationName { get; set; } = "MesSpc.Api.Tests";
+        public string WebRootPath { get; set; } = Directory.GetCurrentDirectory();
+        public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
+        public string ContentRootPath { get; set; } = Directory.GetCurrentDirectory();
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }

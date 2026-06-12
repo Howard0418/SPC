@@ -75,7 +75,7 @@ function goToSpcChart(batch) {
   const traceKey = batch.lotNo || batch.batchNo;
 
   if (!batch.ppcId) {
-    err.value = "此批資料缺少料號檢驗基準 ppcId，無法自動轉入 SPC 管制圖。";
+    err.value = "此批資料缺少 SPC 管制項目 ppcId，無法自動轉入 SPC 管制圖。";
     return;
   }
 

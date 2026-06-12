@@ -88,7 +88,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             var measurement = new VariableMeasurement
             {
                 UploadBatchId = uploadBatch.UploadBatchId,
-                PartId = mapping.PartId,
+                PartId = mapping.PartId ?? 0,
                 ProcessId = mapping.ProcessId,
                 MachineId = machineId,
                 CharacteristicId = mapping.CharacteristicId,

@@ -13,7 +13,10 @@ import {
   Clock,
   Layers,
   Sparkles,
-  Zap
+  Zap,
+  ClipboardList,
+  Database,
+  FileInput
 } from "lucide-vue-next";
 
 const router = useRouter();
@@ -310,6 +313,85 @@ onBeforeUnmount(() => {
     <div v-if="error" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
       <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ error }}
     </div>
+
+    <!-- First-time Setup Guide -->
+    <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl overflow-hidden">
+      <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <p class="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-1">首次使用建議流程</p>
+          <h2 class="text-xl font-black text-slate-800 dark:text-white">請依照 1 → 2 → 3 建立資料，SPC 圖表才會正確運算</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">主檔清空或新系統上線後，先建分類，再建特性，最後綁定料號製程與檢驗規格。</p>
+        </div>
+        <button @click="router.push('/guide')" class="w-max px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-100 font-bold text-sm transition-all">
+          查看完整操作手冊
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3">
+        <button
+          type="button"
+          @click="router.push('/control-chart-groups')"
+          class="group text-left p-6 border-b xl:border-b-0 xl:border-r border-slate-100 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-lg shadow-blue-500/20">1</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 text-sm font-black text-slate-800 dark:text-white">
+                <ClipboardList class="w-4 h-4 text-blue-600 dark:text-blue-400" /> 先建立大分類群組
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2">
+                到「管制圖配置維護」先建立大分類群組，例如製程管制、藥液管制或產品管制，作為後續特性與管制圖的歸屬。
+              </p>
+              <span class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 mt-4 group-hover:gap-2 transition-all">
+                前往管制圖配置 <ArrowUpRight class="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          @click="router.push('/characteristics')"
+          class="group text-left p-6 border-b xl:border-b-0 xl:border-r border-slate-100 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-lg shadow-emerald-500/20">2</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 text-sm font-black text-slate-800 dark:text-white">
+                <Database class="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> 再建立品質特性
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2">
+                到「品質特性項目」建立要管制的檢驗特性，例如長度、厚度、濃度、不良率，並設定資料類型與預設管制圖。
+              </p>
+              <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-4 group-hover:gap-2 transition-all">
+                前往品質特性項目 <ArrowUpRight class="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          @click="router.push('/uploads/variable')"
+          class="group text-left p-6 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black shadow-lg shadow-amber-500/20">3</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 text-sm font-black text-slate-800 dark:text-white">
+                <FileInput class="w-4 h-4 text-amber-600 dark:text-amber-400" /> 最後綁定基準並量測
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2">
+                建立製程、機台與必要料號後，到「SPC 管制項目設定」綁定管制類型、特性與 USL/LSL，再錄入或匯入量測資料查看 SPC 圖。
+              </p>
+              <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 mt-4 group-hover:gap-2 transition-all">
+                前往資料匯入 <ArrowUpRight class="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
+        </button>
+      </div>
+    </section>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

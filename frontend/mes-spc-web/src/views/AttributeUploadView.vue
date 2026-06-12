@@ -22,7 +22,7 @@ const router = useRouter();
 const fileInput = ref(null);
 const selectedFile = ref(null);
 const mode = ref("excel"); // 'excel' or 'json'
-const jsonInput = ref('[{"PartNo":"P-1002","ProcessCode":"ST-02","MachineCode":"M-02","CharacteristicCode":"DEFECT_RATE","LotNo":"L-20260518-A","SampleNo":1,"InspectedQty":500,"DefectQty":12,"DefectCount":15,"UnitCount":500,"MeasuredAt":"2026-05-18T09:00:00","Operator":"OP-02"}]');
+const jsonInput = ref('[{"ControlScope":"PROCESS","ProcessCode":"ST-02","MachineCode":"M-02","CharacteristicCode":"DEFECT_RATE","LotNo":"L-20260518-A","SampleNo":1,"InspectedQty":500,"DefectQty":12,"DefectCount":15,"UnitCount":500,"MeasuredAt":"2026-05-18T09:00:00","Operator":"OP-02"}]');
 const loading = ref(false);
 const err = ref("");
 const successBatchId = ref("");
@@ -34,7 +34,8 @@ const isMappingMode = ref(false);
 const columnMappings = ref({}); // SystemKey -> FileHeader
 
 const systemFields = [
-  { key: "PartNo", label: "產品料號 (PartNo) *", required: true, altNames: ["料號", "產品", "part", "partno", "part_no", "product"] },
+  { key: "ControlScope", label: "管制類型 (ControlScope)", required: false, altNames: ["管制類型", "scope", "controlscope", "control_scope", "類型"] },
+  { key: "PartNo", label: "產品料號 (PartNo，僅產品管制必填)", required: false, altNames: ["料號", "產品", "part", "partno", "part_no", "product"] },
   { key: "ProcessCode", label: "工站製程代碼 (ProcessCode) *", required: true, altNames: ["製程", "工站", "process", "processcode", "process_code", "station"] },
   { key: "CharacteristicCode", label: "檢驗項目代碼 (CharacteristicCode) *", required: true, altNames: ["項目", "特性", "檢驗項目", "characteristic", "characteristiccode", "char_code", "item"] },
   { key: "MachineCode", label: "生產機台代碼 (MachineCode)", required: false, altNames: ["機台", "設備", "machine", "machinecode", "machine_code", "eqp", "device"] },
@@ -345,7 +346,7 @@ async function uploadJson() {
     <div v-if="mode === 'json'" class="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-slate-800 dark:text-white">貼上原始檢驗 JSON 陣列</h3>
-        <span class="text-xs text-slate-400 font-mono">支援 PartNo, ProcessCode, MachineCode, CharacteristicCode</span>
+        <span class="text-xs text-slate-400 font-mono">支援 ControlScope, PartNo, ProcessCode, MachineCode, CharacteristicCode</span>
       </div>
       <textarea v-model="jsonInput" rows="10" class="w-full p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-mono text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500"></textarea>
       

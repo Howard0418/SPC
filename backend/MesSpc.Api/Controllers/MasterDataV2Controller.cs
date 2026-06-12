@@ -36,7 +36,141 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         x.ProcessCode = req.ProcessCode; x.ProcessName = req.ProcessName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
-    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.Processes.FindAsync(id); if (x is null) return NotFound(); db.Processes.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+
+    [HttpGet("{id:int}/measurements")]
+    public async Task<IActionResult> GetMeasurements(int id, [FromQuery] string type = "variable", [FromQuery] int take = 200)
+    {
+        var process = await db.Processes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (process is null) return NotFound();
+
+        take = Math.Clamp(take, 1, 1000);
+        if (string.Equals(type, "attribute", StringComparison.OrdinalIgnoreCase))
+        {
+            var rows = await db.AttributeMeasurements
+                .AsNoTracking()
+                .Where(x => x.ProcessId == id)
+                .OrderByDescending(x => x.MeasuredAt)
+                .Take(take)
+                .Select(x => new
+                {
+                    dataType = "Attribute",
+                    x.Id,
+                    x.UploadBatchId,
+                    x.PartProcessCharacteristicId,
+                    x.PartId,
+                    x.ProcessId,
+                    x.MachineId,
+                    x.CharacteristicId,
+                    x.LotNo,
+                    x.SampleNo,
+                    value = (double?)null,
+                    x.InspectedQty,
+                    x.DefectQty,
+                    x.DefectCount,
+                    x.UnitCount,
+                    x.MeasuredAt,
+                    x.Operator
+                })
+                .ToListAsync();
+
+            return Ok(new { process, total = await db.AttributeMeasurements.CountAsync(x => x.ProcessId == id), rows });
+        }
+
+        var variableRows = await db.VariableMeasurements
+            .AsNoTracking()
+            .Where(x => x.ProcessId == id)
+            .OrderByDescending(x => x.MeasuredAt)
+            .Take(take)
+            .Select(x => new
+            {
+                dataType = "Variable",
+                x.Id,
+                x.UploadBatchId,
+                x.PartProcessCharacteristicId,
+                x.PartId,
+                x.ProcessId,
+                x.MachineId,
+                x.CharacteristicId,
+                x.LotNo,
+                x.SerialNo,
+                x.SampleNo,
+                value = (double?)x.MeasuredValue,
+                inspectedQty = (int?)null,
+                defectQty = (int?)null,
+                defectCount = (int?)null,
+                unitCount = (int?)null,
+                x.MeasuredAt,
+                x.Operator
+            })
+            .ToListAsync();
+
+        return Ok(new { process, total = await db.VariableMeasurements.CountAsync(x => x.ProcessId == id), rows = variableRows });
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var x = await db.Processes.FindAsync(id);
+        if (x is null) return NotFound();
+
+        // ── 刪除前檢查所有關聯資料 ──
+        var machines = await db.Machines
+            .Where(m => m.ProcessId == id)
+            .Select(m => new { m.Id, Label = $"生產機台：{m.MachineCode} ({m.MachineName})" })
+            .ToListAsync();
+
+        var ppcs = await db.PartProcessCharacteristics
+            .Include(p => p.Part)
+            .Include(p => p.Characteristic)
+            .Where(p => p.ProcessId == id)
+            .Select(p => new
+            {
+                p.Id,
+                Label = $"SPC 管制項目：[{(p.ControlScope == "PRODUCT" ? p.Part!.PartNo : p.ControlScope)}] × [{p.Characteristic!.CharacteristicCode}]"
+            })
+            .ToListAsync();
+
+        var varMeasurements = await db.VariableMeasurements
+            .Where(v => v.ProcessId == id)
+            .GroupBy(v => v.ProcessId)
+            .Select(g => new { Count = g.Count() })
+            .FirstOrDefaultAsync();
+
+        var attrMeasurements = await db.AttributeMeasurements
+            .Where(a => a.ProcessId == id)
+            .GroupBy(a => a.ProcessId)
+            .Select(g => new { Count = g.Count() })
+            .FirstOrDefaultAsync();
+
+        var alerts = await db.AlertEvents
+            .Where(a => a.ProcessId == id)
+            .GroupBy(a => a.ProcessId)
+            .Select(g => new { Count = g.Count() })
+            .FirstOrDefaultAsync();
+
+        var relatedItems = new List<string>();
+        relatedItems.AddRange(machines.Select(m => m.Label));
+        relatedItems.AddRange(ppcs.Select(p => p.Label));
+        if (varMeasurements?.Count > 0)
+            relatedItems.Add($"計量型量測記錄：共 {varMeasurements.Count} 筆");
+        if (attrMeasurements?.Count > 0)
+            relatedItems.Add($"計數型量測記錄：共 {attrMeasurements.Count} 筆");
+        if (alerts?.Count > 0)
+            relatedItems.Add($"SPC 異常通報記錄：共 {alerts.Count} 筆");
+
+        if (relatedItems.Count > 0)
+        {
+            return Conflict(new
+            {
+                message = $"無法刪除工站製程「{x.ProcessCode} ({x.ProcessName})」，因為以下資料正在使用此製程：",
+                relatedItems
+            });
+        }
+
+        db.Processes.Remove(x);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
 }
 
 [ApiController]
@@ -79,17 +213,51 @@ public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
 public class PartProcessCharacteristicsController(AppDbContext db) : ControllerBase
 {
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.PartProcessCharacteristics.Include(x => x.Part).Include(x => x.Process).Include(x => x.Characteristic).OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(PartProcessCharacteristic req) { db.PartProcessCharacteristics.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPost]
+    public async Task<IActionResult> Create(PartProcessCharacteristic req)
+    {
+        var validation = ValidateScope(req);
+        if (validation is not null) return BadRequest(validation);
+        req.RuleGroupId = null;
+        db.PartProcessCharacteristics.Add(req);
+        await db.SaveChangesAsync();
+        return Ok(req);
+    }
+
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, PartProcessCharacteristic req)
     {
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
-        x.PartId = req.PartId; x.ProcessId = req.ProcessId; x.CharacteristicId = req.CharacteristicId;
+        var validation = ValidateScope(req);
+        if (validation is not null) return BadRequest(validation);
+        x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = x.ControlScope == "PRODUCT" ? req.PartId : null; x.ProcessId = req.ProcessId; x.CharacteristicId = req.CharacteristicId;
         x.USL = req.USL; x.LSL = req.LSL; x.UCL = req.UCL; x.CL = req.CL; x.LCL = req.LCL; x.TargetValue = req.TargetValue;
-        x.SampleSize = req.SampleSize; x.ChartTypeId = req.ChartTypeId; x.RuleGroupId = req.RuleGroupId; x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
+        x.SampleSize = req.SampleSize; x.ChartTypeId = req.ChartTypeId; x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound(); db.PartProcessCharacteristics.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+
+    private static string NormalizeScope(string? scope)
+    {
+        var normalized = (scope ?? "PRODUCT").Trim().ToUpperInvariant();
+        return normalized is "PROCESS" or "CHEMICAL" or "PRODUCT" ? normalized : "PRODUCT";
+    }
+
+    private static string? ValidateScope(PartProcessCharacteristic req)
+    {
+        req.ControlScope = NormalizeScope(req.ControlScope);
+        if (req.ProcessId <= 0) return "工站製程為必填。";
+        if (req.CharacteristicId <= 0) return "品質特性為必填。";
+        if (req.ControlScope == "PRODUCT")
+        {
+            if (!req.PartId.HasValue || req.PartId.Value <= 0) return "產品管制項目必須選擇產品料號。";
+        }
+        else
+        {
+            req.PartId = null;
+        }
+        return null;
+    }
 }
 
 [ApiController]
@@ -145,16 +313,144 @@ public class ControlChartCategoriesController(AppDbContext db) : ControllerBase
 [Route("api/v1/control-chart-types")]
 public class ControlChartTypesController(AppDbContext db) : ControllerBase
 {
+    private const string ChartTypeRuleGroupCodePrefix = "CT_RULES_";
+
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.ControlChartTypes.OrderBy(x => x.Id).ToListAsync());
     [HttpPost] public async Task<IActionResult> Create(ControlChartType req) { db.ControlChartTypes.Add(req); await db.SaveChangesAsync(); return Ok(req); }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, ControlChartType req)
     {
         var x = await db.ControlChartTypes.FindAsync(id); if (x is null) return NotFound();
-        x.ChartCategoryId = req.ChartCategoryId; x.ChartTypeCode = req.ChartTypeCode; x.ChartTypeName = req.ChartTypeName; x.DataCategory = req.DataCategory; x.RequiredSampleSize = req.RequiredSampleSize; x.Description = req.Description; x.FormulaConfigJson = req.FormulaConfigJson; x.IsEnabled = req.IsEnabled;
+        x.ChartCategoryId = req.ChartCategoryId; x.ChartTypeCode = req.ChartTypeCode; x.ChartTypeName = req.ChartTypeName; x.DataCategory = req.DataCategory; x.RequiredSampleSize = req.RequiredSampleSize; x.RuleGroupId = req.RuleGroupId; x.Description = req.Description; x.FormulaConfigJson = req.FormulaConfigJson; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
+    [HttpGet("{id:int}/rules")]
+    public async Task<IActionResult> GetRules(int id)
+    {
+        var chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (chartType is null) return NotFound();
+
+        var selectedRules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (chartType.RuleGroupId.HasValue)
+        {
+            selectedRules = await db.SpcRules.AsNoTracking()
+                .Where(x => x.RuleGroupId == chartType.RuleGroupId.Value && x.IsEnabled)
+                .Select(x => x.RuleCode)
+                .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+        }
+
+        return Ok(new ChartTypeRulesResponse(
+            chartType.Id,
+            chartType.RuleGroupId,
+            (await GetRuleLibraryAsync()).Select(x => new ChartTypeRuleOption(
+                x.RuleCode,
+                x.RuleName,
+                x.Priority,
+                selectedRules.Contains(x.RuleCode))).ToList()));
+    }
+
+    [HttpPut("{id:int}/rules")]
+    public async Task<IActionResult> UpdateRules(int id, ChartTypeRulesUpdateRequest req)
+    {
+        var chartType = await db.ControlChartTypes.FirstOrDefaultAsync(x => x.Id == id);
+        if (chartType is null) return NotFound();
+
+        var selectedRuleCodes = (req.SelectedRuleCodes ?? [])
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var ruleLibrary = await GetRuleLibraryAsync();
+        var validRuleCodes = ruleLibrary.Select(x => x.RuleCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var invalidRuleCodes = selectedRuleCodes.Where(x => !validRuleCodes.Contains(x)).ToList();
+        if (invalidRuleCodes.Count > 0)
+        {
+            return BadRequest(new { message = "包含不支援的管制規則。", invalidRuleCodes });
+        }
+
+        if (selectedRuleCodes.Count == 0)
+        {
+            chartType.RuleGroupId = null;
+            await db.SaveChangesAsync();
+            return await GetRules(id);
+        }
+
+        var ruleGroupCode = $"{ChartTypeRuleGroupCodePrefix}{chartType.Id}";
+        var ruleGroup = await db.SpcRuleGroups.FirstOrDefaultAsync(x => x.RuleGroupCode == ruleGroupCode);
+        if (ruleGroup is null)
+        {
+            ruleGroup = new SpcRuleGroup
+            {
+                RuleGroupCode = ruleGroupCode,
+                RuleGroupName = $"{chartType.ChartTypeName} 管制規則",
+                Description = $"管制圖小分類 {chartType.ChartTypeCode} 專用的 8 大管制規則勾選設定。",
+                IsEnabled = true
+            };
+            db.SpcRuleGroups.Add(ruleGroup);
+            await db.SaveChangesAsync();
+        }
+        else
+        {
+            ruleGroup.RuleGroupName = $"{chartType.ChartTypeName} 管制規則";
+            ruleGroup.Description = $"管制圖小分類 {chartType.ChartTypeCode} 專用的 8 大管制規則勾選設定。";
+            ruleGroup.IsEnabled = true;
+        }
+
+        var existingRules = await db.SpcRules.Where(x => x.RuleGroupId == ruleGroup.Id).ToListAsync();
+        foreach (var template in ruleLibrary)
+        {
+            var rule = existingRules.FirstOrDefault(x => x.RuleCode == template.RuleCode);
+            if (rule is null)
+            {
+                db.SpcRules.Add(new SpcRule
+                {
+                    RuleGroupId = ruleGroup.Id,
+                    RuleCode = template.RuleCode,
+                    RuleName = template.RuleName,
+                    RuleConfigJson = template.RuleConfigJson,
+                    Priority = template.Priority,
+                    IsEnabled = selectedRuleCodes.Contains(template.RuleCode)
+                });
+                continue;
+            }
+
+            rule.RuleName = template.RuleName;
+            rule.RuleConfigJson = template.RuleConfigJson;
+            rule.Priority = template.Priority;
+            rule.IsEnabled = selectedRuleCodes.Contains(template.RuleCode);
+        }
+
+        chartType.RuleGroupId = ruleGroup.Id;
+        await db.SaveChangesAsync();
+
+        return await GetRules(id);
+    }
+
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.ControlChartTypes.FindAsync(id); if (x is null) return NotFound(); db.ControlChartTypes.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+
+    private async Task<List<SpcRuleTemplate>> GetRuleLibraryAsync()
+    {
+        var rules = await db.SpcRules.AsNoTracking()
+            .Where(x => x.IsEnabled)
+            .Join(db.SpcRuleGroups.AsNoTracking().Where(g => g.IsEnabled && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)),
+                rule => rule.RuleGroupId,
+                group => group.Id,
+                (rule, group) => rule)
+            .OrderBy(x => x.Priority)
+            .ThenBy(x => x.Id)
+            .ToListAsync();
+
+        return rules
+            .GroupBy(x => x.RuleCode, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .Select(x => new SpcRuleTemplate(x.RuleCode, x.RuleName, x.Priority, x.RuleConfigJson))
+            .ToList();
+    }
+
+    private sealed record SpcRuleTemplate(string RuleCode, string RuleName, int Priority, string? RuleConfigJson);
+    public sealed record ChartTypeRuleOption(string RuleCode, string RuleName, int Priority, bool IsSelected);
+    public sealed record ChartTypeRulesResponse(int ChartTypeId, int? RuleGroupId, List<ChartTypeRuleOption> Rules);
+    public sealed record ChartTypeRulesUpdateRequest(List<string>? SelectedRuleCodes);
 }
 
 [ApiController]
@@ -196,17 +492,39 @@ public class SpcRuleGroupsController(AppDbContext db) : ControllerBase
 [Route("api/v1/spc-rules")]
 public class SpcRulesController(AppDbContext db) : ControllerBase
 {
+    private const string DefaultRuleGroupCode = "WE";
+    private const string ChartTypeRuleGroupCodePrefix = "CT_RULES_";
+
     [HttpGet] 
-    public async Task<IActionResult> Get([FromQuery] int? groupId) 
+    public async Task<IActionResult> Get([FromQuery] int? groupId, [FromQuery] bool libraryOnly = false) 
     {
         var q = db.SpcRules.AsQueryable();
         if (groupId.HasValue) q = q.Where(x => x.RuleGroupId == groupId.Value);
+        if (libraryOnly)
+        {
+            var libraryRules = await q.Join(db.SpcRuleGroups.Where(g => g.IsEnabled && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)),
+                rule => rule.RuleGroupId,
+                group => group.Id,
+                (rule, group) => rule)
+                .OrderBy(x => x.Priority)
+                .ThenBy(x => x.Id)
+                .ToListAsync();
+
+            return Ok(libraryRules
+                .GroupBy(x => x.RuleCode, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToList());
+        }
         return Ok(await q.OrderBy(x => x.Priority).ThenBy(x => x.Id).ToListAsync());
     }
     
     [HttpPost] 
     public async Task<IActionResult> Create(SpcRule req) 
     { 
+        if (req.RuleGroupId <= 0)
+        {
+            req.RuleGroupId = await EnsureDefaultRuleGroupIdAsync();
+        }
         db.SpcRules.Add(req); 
         await db.SaveChangesAsync(); 
         return Ok(req); 
@@ -235,5 +553,22 @@ public class SpcRulesController(AppDbContext db) : ControllerBase
         db.SpcRules.Remove(x); 
         await db.SaveChangesAsync(); 
         return NoContent(); 
+    }
+
+    private async Task<int> EnsureDefaultRuleGroupIdAsync()
+    {
+        var group = await db.SpcRuleGroups.FirstOrDefaultAsync(x => x.RuleGroupCode == DefaultRuleGroupCode);
+        if (group is not null) return group.Id;
+
+        group = new SpcRuleGroup
+        {
+            RuleGroupCode = DefaultRuleGroupCode,
+            RuleGroupName = "SPC 異常檢驗規則庫",
+            Description = "系統預設規則庫；管制圖小分類可從此規則庫勾選要套用的異常檢驗規則。",
+            IsEnabled = true
+        };
+        db.SpcRuleGroups.Add(group);
+        await db.SaveChangesAsync();
+        return group.Id;
     }
 }

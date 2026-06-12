@@ -20,11 +20,12 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                           || (mapping.LSL.HasValue && measurement.MeasuredValue < mapping.LSL.Value);
         var isOutOfControl = (mapping.UCL.HasValue && measurement.MeasuredValue > mapping.UCL.Value)
                              || (mapping.LCL.HasValue && measurement.MeasuredValue < mapping.LCL.Value);
+        var ruleGroupId = chartType.RuleGroupId ?? mapping.RuleGroupId;
 
         List<SpcRuleViolation>? violations = null;
-        if (mapping.RuleGroupId.HasValue && mapping.CL.HasValue && mapping.UCL.HasValue && mapping.LCL.HasValue)
+        if (ruleGroupId.HasValue && mapping.CL.HasValue && mapping.UCL.HasValue && mapping.LCL.HasValue)
         {
-            var rules = await db.SpcRules.AsNoTracking().Where(x => x.RuleGroupId == mapping.RuleGroupId.Value && x.IsEnabled).ToListAsync(ct);
+            var rules = await db.SpcRules.AsNoTracking().Where(x => x.RuleGroupId == ruleGroupId.Value && x.IsEnabled).ToListAsync(ct);
             if (rules.Count > 0)
             {
                 var lastMeasurements = await db.VariableMeasurements.AsNoTracking()
@@ -54,7 +55,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             VariableMeasurementId = measurement.Id,
             PartProcessCharacteristicId = mapping.Id,
             ChartTypeId = chartType.Id,
-            RuleGroupId = mapping.RuleGroupId,
+            RuleGroupId = ruleGroupId,
             StatisticName = chartType.ChartTypeCode,
             StatisticValue = measurement.MeasuredValue,
             USL = mapping.USL,
@@ -112,6 +113,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var statisticValue = CalculateAttributeStatistic(chartType.ChartTypeCode, measurement);
         var isOutOfControl = (mapping.UCL.HasValue && statisticValue.HasValue && statisticValue.Value > mapping.UCL.Value)
                              || (mapping.LCL.HasValue && statisticValue.HasValue && statisticValue.Value < mapping.LCL.Value);
+        var ruleGroupId = chartType.RuleGroupId ?? mapping.RuleGroupId;
 
         var result = new SpcCalculationResult
         {
@@ -120,7 +122,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             AttributeMeasurementId = measurement.Id,
             PartProcessCharacteristicId = mapping.Id,
             ChartTypeId = chartType.Id,
-            RuleGroupId = mapping.RuleGroupId,
+            RuleGroupId = ruleGroupId,
             StatisticName = chartType.ChartTypeCode,
             StatisticValue = statisticValue,
             USL = mapping.USL,
@@ -261,7 +263,12 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         return XbarRChartCalculator.Calculate(subgroups, limits, expectedN);
     }
 
-    public async Task<ControlChartResult?> GetInteractiveChartAsync(int partProcessCharacteristicId, Guid? uploadBatchId, CancellationToken ct = default)
+    public async Task<ControlChartResult?> GetInteractiveChartAsync(
+        int partProcessCharacteristicId,
+        Guid? uploadBatchId,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        CancellationToken ct = default)
     {
         var mapping = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
         if (mapping is null || !mapping.ChartTypeId.HasValue) return null;
@@ -283,6 +290,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         {
             var query = db.VariableMeasurements.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
             if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
+            if (startDate.HasValue) query = query.Where(x => x.MeasuredAt >= startDate.Value.Date);
+            if (endDate.HasValue) query = query.Where(x => x.MeasuredAt < endDate.Value.Date.AddDays(1));
 
             var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return null;
@@ -339,6 +348,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         {
             var query = db.AttributeMeasurements.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
             if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
+            if (startDate.HasValue) query = query.Where(x => x.MeasuredAt >= startDate.Value.Date);
+            if (endDate.HasValue) query = query.Where(x => x.MeasuredAt < endDate.Value.Date.AddDays(1));
 
             var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return null;

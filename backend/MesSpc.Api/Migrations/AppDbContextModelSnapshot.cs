@@ -429,6 +429,9 @@ namespace MesSpc.Api.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<int?>("RuleGroupId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -441,6 +444,8 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("ChartTypeCode")
                         .IsUnique();
+
+                    b.HasIndex("RuleGroupId");
 
                     b.ToTable("ControlChartTypes");
                 });
@@ -1198,6 +1203,10 @@ namespace MesSpc.Api.Migrations
                     b.Property<int?>("ChartTypeId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ControlScope")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1219,7 +1228,7 @@ namespace MesSpc.Api.Migrations
                     b.Property<double?>("LSL")
                         .HasColumnType("float");
 
-                    b.Property<int>("PartId")
+                    b.Property<int?>("PartId")
                         .HasColumnType("int");
 
                     b.Property<int>("ProcessId")
@@ -1257,12 +1266,19 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("ChartTypeId");
 
+                    b.HasIndex("PartId");
+
                     b.HasIndex("ProcessId");
 
                     b.HasIndex("RuleGroupId");
 
-                    b.HasIndex("PartId", "ProcessId", "CharacteristicId")
-                        .IsUnique();
+                    b.HasIndex("ControlScope", "ProcessId", "CharacteristicId")
+                        .IsUnique()
+                        .HasFilter("[PartId] IS NULL");
+
+                    b.HasIndex("ControlScope", "PartId", "ProcessId", "CharacteristicId")
+                        .IsUnique()
+                        .HasFilter("[PartId] IS NOT NULL");
 
                     b.ToTable("PartProcessCharacteristics");
                 });
@@ -2616,6 +2632,11 @@ namespace MesSpc.Api.Migrations
                         .HasForeignKey("ChartCategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.SpcRuleGroup", null)
+                        .WithMany()
+                        .HasForeignKey("RuleGroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotMaster", b =>
@@ -2699,8 +2720,7 @@ namespace MesSpc.Api.Migrations
                     b.HasOne("MesSpc.Api.Domain.Entities.Part", "Part")
                         .WithMany()
                         .HasForeignKey("PartId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("MesSpc.Api.Domain.Entities.Process", "Process")
                         .WithMany()

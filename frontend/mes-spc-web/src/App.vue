@@ -10,7 +10,6 @@ import {
   BookOpen,
   PlusCircle,
   Package,
-  Cpu,
   Layers,
   Sliders,
   FolderTree,
@@ -76,9 +75,8 @@ const menuCategories = [
     title: "企業品質主檔設定",
     items: [
       { to: "/processes", text: "工站製程主檔", icon: Layers },
-      { to: "/machines", text: "生產機台主檔", icon: Cpu },
       { to: "/parts", text: "產品料號主檔", icon: Package },
-      { to: "/part-process-characteristics", text: "料號檢驗基準設定", icon: FolderTree },
+      { to: "/part-process-characteristics", text: "SPC 管制項目設定", icon: FolderTree },
       { to: "/characteristics", text: "品質特性項目", icon: Sliders },
       { to: "/traceability-master", text: "產線槽位追溯設定", icon: Layers },
     ]
@@ -86,7 +84,7 @@ const menuCategories = [
   {
     title: "管制圖與西方電氣規則",
     items: [
-      { to: "/control-chart-groups", text: "管制圖分類總管", icon: Layers },
+      { to: "/control-chart-groups", text: "管制圖配置維護", icon: Layers },
       { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity }
     ]
   },

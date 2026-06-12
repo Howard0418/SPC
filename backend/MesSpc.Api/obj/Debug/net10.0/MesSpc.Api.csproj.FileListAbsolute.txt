@@ -606,3 +606,17 @@ D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\MesSpc.Api.deps.json
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\MesSpc.Api.runtimeconfig.json
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\publish\MesSpc.Api.staticwebassets.endpoints.json
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\Scalar.AspNetCore.dll
+C:\tmp\mes-spc-api-build-check\publish\web.config
+C:\tmp\mes-spc-api-build-check\appsettings.Development.json
+C:\tmp\mes-spc-api-build-check\appsettings.json
+C:\tmp\mes-spc-api-build-check\publish\appsettings.Development.json
+C:\tmp\mes-spc-api-build-check\publish\appsettings.json
+C:\tmp\mes-spc-api-build-check\publish\MesSpc.Api.deps.json
+C:\tmp\mes-spc-api-build-check\publish\MesSpc.Api.runtimeconfig.json
+C:\tmp\mes-spc-api-build-check\publish\MesSpc.Api.staticwebassets.endpoints.json
+C:\tmp\mes-spc-api-build-check\MesSpc.Api.staticwebassets.endpoints.json
+C:\tmp\mes-spc-api-build-check\MesSpc.Api.exe
+C:\tmp\mes-spc-api-build-check\MesSpc.Api.deps.json
+C:\tmp\mes-spc-api-build-check\MesSpc.Api.runtimeconfig.json
+C:\tmp\mes-spc-api-build-check\MesSpc.Api.dll
+C:\tmp\mes-spc-api-build-check\MesSpc.Api.pdb

@@ -32,6 +32,8 @@ const ppcId = ref("");
 const uploadBatchId = ref("");
 const loading = ref(false);
 const error = ref("");
+const startDate = ref("");
+const endDate = ref("");
 
 // Dimension selection state: 'PROC', 'CHEM', 'PROD'
 const selectedDimension = ref("PROC");
@@ -50,9 +52,6 @@ const updatingCascades = ref(false);
 // Autocomplete Search State
 const searchQuery = ref("");
 const showSearchResults = ref(false);
-
-// Test Query Panel State for E2E
-const testPpcId = ref("");
 
 const chartResult = ref(null);
 let chartInstance = null;
@@ -75,7 +74,7 @@ const filteredMappingsByDimension = computed(() => {
 const uniqueParts = computed(() => {
   const byId = new Map();
   filteredMappingsByDimension.value
-    .filter(m => m.part?.isEnabled !== false)
+    .filter(m => (m.controlScope || "PRODUCT") === "PRODUCT" && m.part?.isEnabled !== false)
     .forEach(m => {
       if (!byId.has(m.partId)) byId.set(m.partId, m.part);
     });
@@ -86,10 +85,13 @@ const uniqueParts = computed(() => {
 
 // Processes available for selected Part (Station)
 const availableProcesses = computed(() => {
-  if (!selectedPartId.value) return [];
+  if (selectedDimension.value === "PROD" && !selectedPartId.value) return [];
   const byId = new Map();
   filteredMappingsByDimension.value
-    .filter(m => m.partId === Number(selectedPartId.value) && m.process?.isEnabled !== false)
+    .filter(m =>
+      (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
+      m.process?.isEnabled !== false
+    )
     .forEach(m => {
       if (!byId.has(m.processId)) byId.set(m.processId, m.process);
     });
@@ -100,10 +102,10 @@ const availableProcesses = computed(() => {
 
 // Characteristics available for selected Part + Process (Inspection Items)
 const availableCharacteristics = computed(() => {
-  if (!selectedPartId.value || !selectedProcessId.value) return [];
+  if ((selectedDimension.value === "PROD" && !selectedPartId.value) || !selectedProcessId.value) return [];
   return filteredMappingsByDimension.value
     .filter(m =>
-      m.partId === Number(selectedPartId.value) &&
+      (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
       m.processId === Number(selectedProcessId.value) &&
       m.isEnabled &&
       m.characteristic?.isEnabled !== false &&
@@ -114,24 +116,27 @@ const availableCharacteristics = computed(() => {
 });
 
 const selectedMapping = computed(() => {
-  if (!selectedPartId.value || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
+  if ((selectedDimension.value === "PROD" && !selectedPartId.value) || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
   return filteredMappingsByDimension.value.find(m =>
-    m.partId === Number(selectedPartId.value) &&
+    (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
     m.processId === Number(selectedProcessId.value) &&
     m.characteristicId === Number(selectedCharacteristicId.value)
   ) || null;
 });
 
 const getDimensionForMapping = (m) => {
+  if (m.controlScope === "PROCESS") return "PROC";
+  if (m.controlScope === "CHEMICAL") return "CHEM";
+  if (m.controlScope === "PRODUCT") return "PROD";
   if (!m.chartTypeId) {
-    return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+    return m.partId ? "PROD" : "PROC";
   }
   const type = chartTypes.value.find(t => t.id === m.chartTypeId);
-  if (!type) return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+  if (!type) return m.partId ? "PROD" : "PROC";
   const cat = categories.value.find(c => c.id === type.chartCategoryId);
-  if (!cat) return m.part?.partNo === "COMMON" ? "PROC" : "PROD";
+  if (!cat) return m.partId ? "PROD" : "PROC";
   const group = groups.value.find(g => g.id === cat.chartGroupId);
-  return group?.groupCode || (m.part?.partNo === "COMMON" ? "PROC" : "PROD");
+  return group?.groupCode || (m.partId ? "PROD" : "PROC");
 };
 
 // Autocomplete search filtering
@@ -162,8 +167,7 @@ watch(selectedDimension, (newDim) => {
   if (newDim === "PROD") {
     selectedPartId.value = "";
   } else {
-    const commonP = mappings.value.find(m => m.part?.partNo === "COMMON")?.part;
-    selectedPartId.value = commonP ? commonP.id : "";
+    selectedPartId.value = "";
   }
   selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
@@ -204,18 +208,6 @@ function hideSearchResults() {
   }, 200);
 }
 
-function handleTestQuery() {
-  const match = mappings.value.find(m => m.id === Number(testPpcId.value));
-  if (match) {
-    syncCascadingDropdowns(match.partId, match.processId, match.characteristicId);
-    ppcId.value = String(match.id);
-    loadActiveChart();
-    return;
-  }
-  ppcId.value = testPpcId.value;
-  loadActiveChart();
-}
-
 async function loadMappings() {
   try {
     const [mapRes, typesRes, catsRes, groupsRes] = await Promise.all([
@@ -245,10 +237,7 @@ async function loadMappings() {
       ppcId.value = String(qPpc);
       loadActiveChart();
     } else {
-      const commonP = mappings.value.find(m => m.part?.partNo === "COMMON")?.part;
-      if (selectedDimension.value !== "PROD") {
-        selectedPartId.value = commonP ? commonP.id : "";
-      }
+      selectedPartId.value = "";
     }
   } catch (e) {
     error.value = "無法載入檢驗項目基準及管制圖配置：" + getApiErrorMessage(e);
@@ -277,7 +266,20 @@ watch(batchId, () => {
   loadActiveChart();
 });
 
+const getChartQueryParams = (activePpcId) => {
+  const params = { ppcId: activePpcId };
+  if (uploadBatchId.value) params.uploadBatchId = uploadBatchId.value;
+  if (startDate.value) params.startDate = startDate.value;
+  if (endDate.value) params.endDate = endDate.value;
+  return params;
+};
+
 async function loadActiveChart() {
+  if (startDate.value && endDate.value && startDate.value > endDate.value) {
+    error.value = "量測起日不可晚於量測迄日。";
+    return;
+  }
+
   if (ppcId.value && uploadBatchId.value) {
     await loadUploadBatchChart();
   } else {
@@ -295,10 +297,7 @@ async function loadUploadBatchChart() {
 
   try {
     const res = await api.get("/v1/spc/chart", {
-      params: {
-        ppcId: ppcId.value,
-        uploadBatchId: uploadBatchId.value
-      }
+      params: getChartQueryParams(ppcId.value)
     });
     chartResult.value = res.data;
     loading.value = false;
@@ -328,7 +327,7 @@ async function loadInteractiveChart() {
     const activePpcId = ppcId.value || mapping.id;
     ppcId.value = String(activePpcId);
     const res = await api.get("/v1/spc/chart", {
-      params: { ppcId: activePpcId }
+      params: getChartQueryParams(activePpcId)
     });
     chartResult.value = res.data;
     loading.value = false;
@@ -548,7 +547,7 @@ function renderECharts() {
   });
 
   const seriesTopList = [
-    { name: type === "XBAR_R" || type === "XBAR_S" ? "Xbar" : (isDual ? "Individual" : type), type: "line", xAxisIndex: 0, yAxisIndex: 0, data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: hasDynamicLimits ? undefined : markAreaTop, smooth: true }
+    { name: type === "XBAR_R" || type === "XBAR_S" ? "Xbar" : (isDual ? "Individual" : type), type: "line", xAxisIndex: 0, yAxisIndex: 0, data: seriesTopData, showSymbol: true, markLine: topMarkLineObj, markArea: hasDynamicLimits ? undefined : markAreaTop, smooth: false }
   ];
 
   if (hasDynamicLimits) {
@@ -636,7 +635,7 @@ function renderECharts() {
     series: isDual
       ? [
           ...seriesTopList,
-          { name: type === "XBAR_R" ? "Range" : type === "XBAR_S" ? "Std Dev" : "Moving Range", type: "line", xAxisIndex: 1, yAxisIndex: 1, data: seriesBottomData, showSymbol: true, markLine: bottomMarkLineObj, smooth: true }
+          { name: type === "XBAR_R" ? "Range" : type === "XBAR_S" ? "Std Dev" : "Moving Range", type: "line", xAxisIndex: 1, yAxisIndex: 1, data: seriesBottomData, showSymbol: true, markLine: bottomMarkLineObj, smooth: false }
         ]
       : seriesTopList
   };
@@ -788,7 +787,7 @@ function renderTrendChart() {
         data: seriesData,
         showSymbol: true,
         markLine: markLines.length > 0 ? { symbol: "none", data: markLines, animation: false } : undefined,
-        smooth: true,
+        smooth: false,
         lineStyle: { color: "#6366f1", width: 1.5 }
       }
     ]
@@ -900,24 +899,18 @@ onBeforeUnmount(() => {
           <input v-model="batchId" placeholder="輸入 Lot No..." class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
         </div>
 
+        <div class="w-40">
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">量測起日</label>
+          <input v-model="startDate" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div class="w-40">
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">量測迄日</label>
+          <input v-model="endDate" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+        </div>
+
         <button @click="loadActiveChart" :disabled="loading" class="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all text-sm h-10">
           <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" /> 重新計算
-        </button>
-      </div>
-    </div>
-
-    <!-- E2E System Test Panel (Invisible / tiny or styled nicely) -->
-    <div class="p-4 rounded-3xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-bold text-slate-500">⚙️ 快速 ppcId 查詢 (E2E / 系統測試)</span>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="w-32">
-          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">ppcId</label>
-          <input v-model="testPpcId" type="text" placeholder="501" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <button @click="handleTestQuery" type="button" class="mt-4 flex items-center justify-center px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-all text-xs h-8">
-          查詢
         </button>
       </div>
     </div>

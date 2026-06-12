@@ -10,9 +10,18 @@ namespace MesSpc.Api.Controllers;
 public class SpcController(SpcService spcService, AppDbContext db) : ControllerBase
 {
     [HttpGet("chart")]
-    public async Task<IActionResult> GetChart([FromQuery] int ppcId, [FromQuery] Guid? uploadBatchId)
+    public async Task<IActionResult> GetChart(
+        [FromQuery] int ppcId,
+        [FromQuery] Guid? uploadBatchId,
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate)
     {
-        var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId);
+        if (startDate.HasValue && endDate.HasValue && startDate.Value.Date > endDate.Value.Date)
+        {
+            return BadRequest("Start date cannot be later than end date.");
+        }
+
+        var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId, startDate, endDate);
         if (chart is null) return NotFound("Chart data not found or invalid part process characteristic.");
         return Ok(chart);
     }

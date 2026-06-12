@@ -42,12 +42,14 @@ const loading = ref(false);
 const searchQuery = ref("");
 const statusFilter = ref("all");
 const processFilter = ref("all");
+const scopeFilter = ref("all");
 
 const showModal = ref(false);
 const modalMode = ref("create");
 const currentId = ref(null);
 
 const form = ref({
+  controlScope: "PRODUCT",
   partId: null,
   processId: null,
   characteristicId: null,
@@ -59,11 +61,18 @@ const form = ref({
   targetValue: null,
   sampleSize: 5,
   chartTypeId: null,
-  ruleGroupId: null,
   isRequired: true,
   isEnabled: true
 });
 const formErr = ref("");
+
+const controlScopes = [
+  { id: "PROCESS", label: "製程管制", tone: "purple" },
+  { id: "CHEMICAL", label: "藥水管制", tone: "teal" },
+  { id: "PRODUCT", label: "產品管制", tone: "blue" }
+];
+
+const scopeLabel = (scope) => controlScopes.find(s => s.id === (scope || "PRODUCT"))?.label || "產品管制";
 
 async function load() {
   err.value = "";
@@ -108,6 +117,11 @@ const ruleGroupMap = computed(() => {
   return m;
 });
 
+function getChartTypeRuleGroupId(chartTypeId) {
+  if (!chartTypeId) return null;
+  return chartTypes.value.find(ct => ct.id === chartTypeId)?.ruleGroupId || null;
+}
+
 const selectedChartTypeDimension = computed(() => {
   if (!form.value.chartTypeId) return null;
   const type = chartTypes.value.find(t => t.id === Number(form.value.chartTypeId));
@@ -118,25 +132,9 @@ const selectedChartTypeDimension = computed(() => {
   return group ? group.groupCode : null;
 });
 
-watch(() => form.value.chartTypeId, (newTypeId) => {
-  if (!newTypeId) return;
-  const type = chartTypes.value.find(t => t.id === Number(newTypeId));
-  if (!type) return;
-  const cat = categories.value.find(c => c.id === type.chartCategoryId);
-  if (!cat) return;
-  const group = groups.value.find(g => g.id === cat.chartGroupId);
-  const newDim = group ? group.groupCode : null;
-  
-  if (newDim === "PROC" || newDim === "CHEM") {
-    const commonPart = parts.value.find(p => p.partNo === "COMMON");
-    if (commonPart) {
-      form.value.partId = commonPart.id;
-    }
-  } else if (newDim === "PROD") {
-    const commonPart = parts.value.find(p => p.partNo === "COMMON");
-    if (commonPart && form.value.partId === commonPart.id) {
-      form.value.partId = null;
-    }
+watch(() => form.value.controlScope, (newScope) => {
+  if (newScope !== "PRODUCT") {
+    form.value.partId = null;
   }
 });
 
@@ -160,8 +158,9 @@ const filteredRows = computed(() => {
       (statusFilter.value === "inactive" && !row.isEnabled);
 
     const matchProc = processFilter.value === "all" || row.processId === parseInt(processFilter.value);
+    const matchScope = scopeFilter.value === "all" || (row.controlScope || "PRODUCT") === scopeFilter.value;
 
-    return matchQuery && matchStatus && matchProc;
+    return matchQuery && matchStatus && matchProc && matchScope;
   });
 });
 
@@ -169,13 +168,13 @@ function openCreateModal() {
   modalMode.value = "create";
   currentId.value = null;
   form.value = {
+    controlScope: "PRODUCT",
     partId: parts.value.length > 0 ? parts.value[0].id : null,
     processId: processes.value.length > 0 ? processes.value[0].id : null,
     characteristicId: characteristics.value.length > 0 ? characteristics.value[0].id : null,
     usl: null, lsl: null, ucl: null, cl: null, lcl: null, targetValue: null,
     sampleSize: 5,
     chartTypeId: chartTypes.value.length > 0 ? chartTypes.value[0].id : null,
-    ruleGroupId: ruleGroups.value.length > 0 ? ruleGroups.value[0].id : null,
     isRequired: true,
     isEnabled: true
   };
@@ -187,6 +186,7 @@ function openEditModal(item) {
   modalMode.value = "edit";
   currentId.value = item.id;
   form.value = {
+    controlScope: item.controlScope || (item.partId ? "PRODUCT" : "PROCESS"),
     partId: item.partId || null,
     processId: item.processId || null,
     characteristicId: item.characteristicId || null,
@@ -198,7 +198,6 @@ function openEditModal(item) {
     targetValue: item.targetValue ?? null,
     sampleSize: item.sampleSize ?? 5,
     chartTypeId: item.chartTypeId || null,
-    ruleGroupId: item.ruleGroupId || null,
     isRequired: item.isRequired ?? true,
     isEnabled: item.isEnabled ?? true
   };
@@ -207,8 +206,12 @@ function openEditModal(item) {
 }
 
 async function save() {
-  if (!form.value.partId || !form.value.processId || !form.value.characteristicId) {
-    formErr.value = "產品料號、工站製程與檢驗特性皆為必填項目。";
+  if (form.value.controlScope === "PRODUCT" && !form.value.partId) {
+    formErr.value = "產品管制項目必須選擇產品料號。";
+    return;
+  }
+  if (!form.value.processId || !form.value.characteristicId) {
+    formErr.value = "工站製程與檢驗特性皆為必填項目。";
     return;
   }
   formErr.value = "";
@@ -217,7 +220,8 @@ async function save() {
   try {
     const payload = {
       ...form.value,
-      partId: parseInt(form.value.partId),
+      controlScope: form.value.controlScope,
+      partId: form.value.controlScope === "PRODUCT" ? parseInt(form.value.partId) : null,
       processId: parseInt(form.value.processId),
       characteristicId: parseInt(form.value.characteristicId),
       usl: form.value.usl !== "" && form.value.usl !== null ? parseFloat(form.value.usl) : null,
@@ -227,8 +231,7 @@ async function save() {
       lcl: form.value.lcl !== "" && form.value.lcl !== null ? parseFloat(form.value.lcl) : null,
       targetValue: form.value.targetValue !== "" && form.value.targetValue !== null ? parseFloat(form.value.targetValue) : null,
       sampleSize: parseInt(form.value.sampleSize) || 1,
-      chartTypeId: form.value.chartTypeId ? parseInt(form.value.chartTypeId) : null,
-      ruleGroupId: form.value.ruleGroupId ? parseInt(form.value.ruleGroupId) : null
+      chartTypeId: form.value.chartTypeId ? parseInt(form.value.chartTypeId) : null
     };
 
     if (modalMode.value === "create") {
@@ -248,7 +251,7 @@ async function save() {
 }
 
 async function confirmDelete(item) {
-  const pNo = item.part?.partNo || item.partId;
+  const pNo = item.controlScope === "PRODUCT" ? (item.part?.partNo || item.partId) : scopeLabel(item.controlScope);
   const cName = item.characteristic?.characteristicName || item.characteristicId;
   if (!confirm(`確定要刪除「${pNo} - ${cName}」的檢驗規範基準嗎？`)) return;
   loading.value = true;
@@ -289,8 +292,8 @@ onMounted(async () => {
           <FolderTree class="w-7 h-7" />
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">料號檢驗基準設定與規格維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">關聯產品料號、工站製程與檢驗項目，設置 USL/LSL 規格界限與子組樣本數</p>
+          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">SPC 管制項目設定與規格維護</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">依製程管制、藥水管制與產品管制設定檢驗項目、規格界限與子組樣本數</p>
         </div>
       </div>
       
@@ -308,7 +311,7 @@ onMounted(async () => {
           type="button"
           class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-bold shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all transform hover:-translate-y-0.5"
         >
-          <Plus class="w-4 h-4" /> 新增檢驗基準
+          <Plus class="w-4 h-4" /> 新增管制項目
         </button>
       </div>
     </div>
@@ -319,15 +322,15 @@ onMounted(async () => {
         <Info class="w-5 h-5" />
       </div>
       <div>
-        <h4 class="text-sm font-bold text-amber-900 dark:text-amber-300">模組指南：料號檢驗基準設定 (Part-Process Characteristics)</h4>
+        <h4 class="text-sm font-bold text-amber-900 dark:text-amber-300">模組指南：SPC 管制項目設定</h4>
         <p class="text-xs text-amber-700 dark:text-amber-400/80 mt-1.5 leading-relaxed">
-          這是整個 SPC 系統中最核心的設定。在此處，您將定義「哪一個產品料號」在「哪一站製程」時，必須檢驗「什麼項目」，並設定其專屬的「規格上下限 (USL/LSL)」。<br/>
-          💡 <strong>功能說明：</strong> 檢驗數據上傳時，系統會比對這裡設定的規格界限。若未在此處建立基準，該料號將無法進行 SPC 運算與判圖。
+          這是整個 SPC 系統中最核心的設定。請先選擇管制類型：製程管制與藥水管制不需要產品料號；只有產品管制才需要綁定產品料號。<br/>
+          💡 <strong>功能說明：</strong> 檢驗數據上傳時，系統會比對這裡設定的規格界限。若未在此處建立管制項目，資料將無法進行 SPC 運算與判圖。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-amber-700 dark:text-amber-400/80 leading-relaxed">
-          <div class="font-black text-amber-900 dark:text-amber-300">料號檢驗基準設定頁面操作說明</div>
-          <p><strong>查詢基準：</strong>可用料號、製程或檢驗特性搜尋既有檢驗基準。</p>
-          <p><strong>新增基準：</strong>按「新增檢驗基準」，選擇產品料號、工站製程與品質特性。</p>
+          <div class="font-black text-amber-900 dark:text-amber-300">SPC 管制項目設定頁面操作說明</div>
+          <p><strong>查詢項目：</strong>可用管制類型、料號、製程或檢驗特性搜尋既有管制項目。</p>
+          <p><strong>新增項目：</strong>按「新增管制項目」，先選管制類型，再選必要主檔。</p>
           <p><strong>設定規格：</strong>輸入 USL、LSL、目標值、樣本數與是否必檢。</p>
           <p><strong>指定管制圖：</strong>依資料類型選擇 I-MR、XBAR-R、XBAR-S、P、NP、C 或 U 管制圖。</p>
           <p><strong>啟用後使用：</strong>儲存並啟用後，資料匯入、現場量測與管制圖查詢才會套用此基準。</p>
@@ -362,6 +365,14 @@ onMounted(async () => {
 
       <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
         <!-- Process Filter Dropdown -->
+        <select
+          v-model="scopeFilter"
+          class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+        >
+          <option value="all">全部管制類型</option>
+          <option v-for="s in controlScopes" :key="s.id" :value="s.id">{{ s.label }}</option>
+        </select>
+
         <select
           v-model="processFilter"
           class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
@@ -400,9 +411,9 @@ onMounted(async () => {
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               <th class="py-4 px-6 w-16 text-center">ID</th>
               <th class="py-4 px-6">工站製程與生產機台 (Process & Machines)</th>
-              <th class="py-4 px-6">生產產品與檢驗特性 (Part & Characteristic)</th>
+              <th class="py-4 px-6">管制類型與檢驗特性 (Scope & Characteristic)</th>
               <th class="py-4 px-6">規格限值與抽樣配置 (Limits & Sample Size)</th>
-              <th class="py-4 px-6">套用管制規則</th>
+              <th class="py-4 px-6">管制圖與規則來源</th>
               <th class="py-4 px-6 text-center">狀態</th>
               <th class="py-4 px-6 text-right">操作</th>
             </tr>
@@ -442,9 +453,12 @@ onMounted(async () => {
               </td>
               <td class="py-5 px-6">
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
-                  <Package class="w-4 h-4 text-blue-500" />
-                  {{ item.part?.partNo || `Part #${item.partId}` }}
-                  <span class="text-slate-500 text-xs font-normal ml-1">{{ item.part?.partName }}</span>
+                  <Package v-if="(item.controlScope || 'PRODUCT') === 'PRODUCT'" class="w-4 h-4 text-blue-500" />
+                  <Layers v-else class="w-4 h-4" :class="(item.controlScope || 'PRODUCT') === 'CHEMICAL' ? 'text-teal-500' : 'text-purple-500'" />
+                  {{ scopeLabel(item.controlScope) }}
+                  <span v-if="(item.controlScope || 'PRODUCT') === 'PRODUCT'" class="text-slate-500 text-xs font-normal ml-1">
+                    {{ item.part?.partNo || `Part #${item.partId}` }} {{ item.part?.partName }}
+                  </span>
                 </div>
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs mt-2">
                   <Sliders class="w-3.5 h-3.5 text-pink-500 flex-shrink-0" />
@@ -486,8 +500,8 @@ onMounted(async () => {
                 </div>
                 <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <AlertTriangle class="w-3 h-3 flex-shrink-0 opacity-70" />
-                  <span v-if="item.ruleGroupId" class="font-semibold">{{ ruleGroupMap[item.ruleGroupId] || `Rule #${item.ruleGroupId}` }}</span>
-                  <span v-else class="italic opacity-80">預設判定規則</span>
+                  <span v-if="getChartTypeRuleGroupId(item.chartTypeId)" class="font-semibold">{{ ruleGroupMap[getChartTypeRuleGroupId(item.chartTypeId)] || `Rule #${getChartTypeRuleGroupId(item.chartTypeId)}` }}</span>
+                  <span v-else class="italic opacity-80">此管制圖未套用規則</span>
                 </div>
               </td>
               <td class="py-5 px-6 text-center">
@@ -557,7 +571,7 @@ onMounted(async () => {
               <FolderTree class="w-5 h-5" />
             </div>
             <h3 class="text-lg font-black text-slate-800 dark:text-white">
-              {{ modalMode === 'create' ? '新增料號檢驗基準設定' : '編輯料號檢驗基準設定' }}
+              {{ modalMode === 'create' ? '新增 SPC 管制項目' : '編輯 SPC 管制項目' }}
             </h3>
           </div>
           <button
@@ -573,6 +587,27 @@ onMounted(async () => {
           <div class="flex-1 overflow-y-auto p-6 space-y-5">
           <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
             <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
+          </div>
+
+          <!-- Control Scope Selector -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制類型 <span class="text-red-500">*</span></label>
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                v-for="s in controlScopes"
+                :key="s.id"
+                type="button"
+                @click="form.controlScope = s.id"
+                :class="[
+                  'px-3 py-2.5 rounded-xl text-xs font-black border transition-all',
+                  form.controlScope === s.id
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-500/20'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-300'
+                ]"
+              >
+                {{ s.label }}
+              </button>
+            </div>
           </div>
 
           <!-- Process Selector (置於最上方) -->
@@ -610,30 +645,25 @@ onMounted(async () => {
 
           <!-- Product (Part) & Characteristic (Characteristic) -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="space-y-1.5">
+            <div v-if="form.controlScope === 'PRODUCT'" class="space-y-1.5">
               <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
                 <span>產品料號 (Part) <span class="text-red-500">*</span></span>
-                <span v-if="selectedChartTypeDimension" :class="[
-                  'px-1.5 py-0.5 rounded text-[10px] font-black',
-                  selectedChartTypeDimension === 'PROC' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                  selectedChartTypeDimension === 'CHEM' ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400' :
-                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                ]">
-                  {{ selectedChartTypeDimension === 'PROC' ? '製程管制' : selectedChartTypeDimension === 'CHEM' ? '藥液管制' : '產品管制' }}
-                </span>
               </label>
               <select
                 v-model="form.partId"
                 required
-                :disabled="selectedChartTypeDimension === 'PROC' || selectedChartTypeDimension === 'CHEM'"
-                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800"
+                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
               >
                 <option disabled value="null">-- 選擇料號 --</option>
                 <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.partNo }} - {{ p.partName }}</option>
               </select>
-              <p v-if="selectedChartTypeDimension === 'PROC' || selectedChartTypeDimension === 'CHEM'" class="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1">
-                ⚠️ 製程/藥液管制項目已自動鎖定為 COMMON 共用料號。
-              </p>
+            </div>
+
+            <div v-else class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">產品料號 (Part)</label>
+              <div class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-500 dark:text-slate-400">
+                {{ form.controlScope === 'CHEMICAL' ? '藥水管制不需產品料號' : '製程管制不需產品料號' }}
+              </div>
             </div>
 
             <div class="space-y-1.5">
@@ -722,29 +752,23 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- Chart Type & Rules -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定 SPC 管制圖類型</label>
-              <select
-                v-model="form.chartTypeId"
-                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-              >
-                <option :value="null">-- 無指定 (繼承特性設定) --</option>
-                <option v-for="ct in chartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
-              </select>
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定異常檢驗規則組</label>
-              <select
-                v-model="form.ruleGroupId"
-                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-              >
-                <option :value="null">-- 無指定 (全廠預設 Western Electric 規則) --</option>
-                <option v-for="rg in ruleGroups" :key="rg.id" :value="rg.id">{{ rg.ruleGroupCode }} - {{ rg.ruleGroupName }}</option>
-              </select>
-            </div>
+          <!-- Chart Type -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定 SPC 管制圖類型</label>
+            <select
+              v-model="form.chartTypeId"
+              class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
+            >
+              <option :value="null">-- 無指定 (繼承特性設定) --</option>
+              <option v-for="ct in chartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">
+              管制規則是否套用由「管制圖配置維護 > 小分類與公式配置」決定。
+              <span v-if="getChartTypeRuleGroupId(Number(form.chartTypeId))" class="font-bold text-amber-600 dark:text-amber-400">
+                目前套用：{{ ruleGroupMap[getChartTypeRuleGroupId(Number(form.chartTypeId))] }}
+              </span>
+              <span v-else class="italic">目前未套用規則。</span>
+            </p>
           </div>
 
           <!-- Toggles -->

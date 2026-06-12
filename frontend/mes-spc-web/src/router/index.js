@@ -7,12 +7,9 @@ import LoginView from "../views/LoginView.vue";
 import AlertsWorkflowView from "../views/AlertsWorkflowView.vue";
 import PartsView from "../views/PartsView.vue";
 import ProcessesView from "../views/ProcessesView.vue";
-import MachinesView from "../views/MachinesView.vue";
 import CharacteristicsView from "../views/CharacteristicsView.vue";
 import PartProcessCharacteristicsView from "../views/PartProcessCharacteristicsView.vue";
 import ControlChartGroupsView from "../views/ControlChartGroupsView.vue";
-import ControlChartCategoriesView from "../views/ControlChartCategoriesView.vue";
-import ControlChartTypesView from "../views/ControlChartTypesView.vue";
 import SpcRuleGroupsView from "../views/SpcRuleGroupsView.vue";
 import VariableUploadView from "../views/VariableUploadView.vue";
 import AttributeUploadView from "../views/AttributeUploadView.vue";
@@ -46,12 +43,12 @@ const routes = [
   { path: "/v2/alerts-workflow", redirect: "/alerts-workflow" },
   { path: "/parts", component: PartsView },
   { path: "/processes", component: ProcessesView },
-  { path: "/machines", component: MachinesView },
+  { path: "/machines", redirect: "/processes" },
   { path: "/characteristics", component: CharacteristicsView },
   { path: "/part-process-characteristics", component: PartProcessCharacteristicsView },
   { path: "/control-chart-groups", component: ControlChartGroupsView },
-  { path: "/control-chart-categories", component: ControlChartCategoriesView },
-  { path: "/control-chart-types", component: ControlChartTypesView },
+  { path: "/control-chart-categories", redirect: "/control-chart-groups" },
+  { path: "/control-chart-types", redirect: "/control-chart-groups?tab=types" },
   { path: "/spc-rule-groups", component: SpcRuleGroupsView },
   { path: "/uploads/variable", component: VariableUploadView },
   { path: "/uploads/attribute", component: AttributeUploadView },

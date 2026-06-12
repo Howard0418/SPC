@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MES.SPC.E2ETests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0b260ecb0675401a896d171ad2dcca64414a5644")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3b2a47a8823ac177023464a6b499487803f3189b")]
 [assembly: System.Reflection.AssemblyProductAttribute("MES.SPC.E2ETests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MES.SPC.E2ETests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
