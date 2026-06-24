@@ -70,7 +70,7 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
             <div class="relative pl-6 before:absolute before:left-0 before:top-2 before:w-2 before:h-2 before:bg-indigo-500 before:rounded-full">
               <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第一步：先建立大分類群組</div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                前往「管制圖配置維護」，先建立大分類群組，例如製程管制、藥液管制或產品管制。大分類用來決定後續品質特性與管制圖的管理歸屬。
+                前往「管制圖配置維護」，建立大分類群組（如製程管制、藥液管制等），並可選擇該群組為「管制圖」或「趨勢圖」。此類型決定了管制項目設定中點擊「查看」時導向的目標畫面。
               </p>
             </div>
             
@@ -190,6 +190,21 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
               <p><span class="font-bold text-blue-800 dark:text-blue-300">設定規格：</span>輸入 USL、LSL、目標值、樣本數與是否必檢。</p>
               <p><span class="font-bold text-blue-800 dark:text-blue-300">選管制圖：</span>依資料類型選擇 I-MR、XBAR-R、XBAR-S、P、NP、C 或 U 管制圖。</p>
               <p><span class="font-bold text-blue-800 dark:text-blue-300">確認啟用：</span>儲存後確認該基準為啟用，資料匯入與管制圖查詢才會套用。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">動態圖表跳轉：</span>點擊操作欄的「查看管制圖與趨勢圖」圖示，系統會依據其所屬大類別的「群組類型」設定，自動導向至 **SPC 管制圖** (路徑 `/spc`) 或 **量測趨勢區** (路徑 `/trend-chart`)。</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-900/50 space-y-3">
+            <div class="font-black text-sm text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
+              <span>管制界線試算與分段管制</span>
+              <span class="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/60 text-[10px] text-purple-600 dark:text-purple-400 font-bold border border-purple-200 dark:border-purple-800 animate-pulse">New</span>
+            </div>
+            <div class="space-y-2 text-xs text-purple-600 dark:text-purple-400/80 leading-relaxed">
+              <p><span class="font-bold text-purple-800 dark:text-purple-300">進入設定：</span>前往「SPC 管制項目設定」，在清單項目右側操作欄點擊 **「分段界線與試算」** 紫色圖示按鈕（Sliders）。</p>
+              <p><span class="font-bold text-purple-800 dark:text-purple-300">界線試算：</span>在彈窗左側選擇歷史量測日期範圍，點擊「開始歷史數據試算」，系統將依據該時段數據統計出 UCL、CL、LCL 以及總點數，可一鍵點擊「帶入右側分段表單」。</p>
+              <p><span class="font-bold text-purple-800 dark:text-purple-300">建立分段：</span>在右側表單中填入生效起日、失效止日（留空代表無期限）、UCL、CL、LCL 與說明備註，點擊「新增分段」即可儲存。</p>
+              <p><span class="font-bold text-purple-800 dark:text-purple-300">運作原理：</span>數據匯入時，系統會自動比對其量測時間點，套用對應生效區間的分段界線進行異常（OOS / OOC）規則判定。圖表查詢時，管制線（CL/UCL/LCL）亦會隨時間分段呈現階梯折線效果。</p>
+              <p><span class="font-bold text-purple-800 text-amber-500">* 重疊防呆：</span>同一個管制項目的多個分段生效時間區間不可重疊，若有重疊，系統在儲存時會進行攔截並提示錯誤。</p>
             </div>
           </div>
 

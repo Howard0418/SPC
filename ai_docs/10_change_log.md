@@ -1,5 +1,22 @@
 # 10 Change Log
 
+## [2026-06-24] - 新增管制界線試算與分段管控 (Trial Calculate & Segmented Control Limits)
+- **後端分段界線模型與資料庫升級 (AppDbContext & Program.cs)**:
+  - 新增 `ControlLimitSegment` 實體與 `ControlLimitSegments` 資料表，用於儲存不同時間區間的自訂統計管制界線。
+  - 在 `Program.cs` 啟動階段加入 SQL 自動建表邏輯，避免直接執行 Migration 時遭遇 Windows 沙箱權限阻擋。
+- **點級動態界線異常判定與圖表運算 (SpcEngine & Rules)**:
+  - 升級 `WesternElectricRulesValidator` 與 `NelsonRulesValidator` 的異常檢定引擎，支援「點級動態界線解析」。各點所處時間對應的分段管制界線（`UCL`/`CL`/`LCL`）會作為檢定基準，若無分段則回退至全局設定。
+  - 升級 `AttributeChartCalculator`、`ImrChartCalculator`、`XbarRChartCalculator`、`XbarSChartCalculator`，在輸出數據點時將 active UCL/CL/LCL 動態對應至各個量測點，並輸出 `uclStat`/`clStat`/`lclStat` 供前端繪製。
+- **後端試算與分段 CRUD API (Controllers & Services)**:
+  - 新增 `ControlLimitSegmentsController`，提供分段管制界線的 CRUD 端點，並在建立或更新時實作時間區間重疊的防呆校驗。
+  - 在 `SpcController` 新增 `trial-calculate` 試算端點，允許輸入日期區間，拉取該區間內的量測數據並呼叫 SPC 引擎計算出統計界界線值。
+- **安全清理測試資料 (DatabaseSeeder.cs)**:
+  - 實作 `ClearTransactionalDataAsync()` 方法，只清除量測值、批次、警報等交易性測試數據，安全保留料號、工站、檢驗特性等主配置維護檔 (維護主檔)。
+  - Expose `/api/testdata/clear-transactions` 路由至 `TestDataController`。
+- **前端介面分段管理與 stepped 曲線渲染 (frontend)**:
+  - `PartProcessCharacteristicsView.vue`: 新增「分段管制線與界線試算」功能按鈕。點擊後開啟 Modal，左側可進行歷史數據試算，一鍵帶入右側；右側支援分段上限、中心線、下限、有效日期區間及備註的 CRUD 管理，並整合後端區間重疊錯誤回報。
+  - `SpcChartView.vue`: 配合動態界線，將 ECharts 中心線 (CL) 改為如同 UCL/LCL 的 stepped line (階梯折線) 渲染，與點級分段相符。
+
 ## [2026-06-24] - 查詢時間範圍上限與預設值限制 (日期卡關)
 - **後端安全防護與效能優化 (SpcController.cs)**:
   - 限制 `/chart` 與 `/summary` 統計查詢端點的時間間隔最高不可超過 93 天（約 3 個月），防範大量量測數據的掃描。

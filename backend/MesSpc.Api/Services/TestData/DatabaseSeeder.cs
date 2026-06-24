@@ -220,12 +220,10 @@ public class DatabaseSeeder(AppDbContext db)
 
     public async Task<ClearAllDataResponse> ClearAllDatabaseDataAsync()
     {
-        // 1. Transactional/Operation Data (Deletions order: Children first)
         int lotSlotHistories = await db.LotSlotHistories.ExecuteDeleteAsync();
         int slotParameters = await db.SlotParameters.ExecuteDeleteAsync();
         int lotSplitHistories = await db.LotSplitHistories.ExecuteDeleteAsync();
         
-        // Break self-reference on LotMaster
         await db.LotMasters.ExecuteUpdateAsync(s => s.SetProperty(l => l.ParentLotId, (long?)null));
         int lotMasters = await db.LotMasters.ExecuteDeleteAsync();
         
@@ -238,14 +236,12 @@ public class DatabaseSeeder(AppDbContext db)
         int uploadBatches = await db.UploadBatches.ExecuteDeleteAsync();
         
         int alertEvents = await db.AlertEvents.ExecuteDeleteAsync();
-        
         int measurementValues = await db.MeasurementValues.ExecuteDeleteAsync();
         int measurementBatches = await db.MeasurementBatches.ExecuteDeleteAsync();
         int stationOperationSessions = await db.StationOperationSessions.ExecuteDeleteAsync();
         int workOrders = await db.WorkOrders.ExecuteDeleteAsync();
         int mesSyncMessages = await db.MesSyncMessages.ExecuteDeleteAsync();
 
-        // 2. Master/Configuration Data (Deletions order: Children first)
         int partProcessCharacteristics = await db.PartProcessCharacteristics.ExecuteDeleteAsync();
         int productStationItems = await db.ProductStationItems.ExecuteDeleteAsync();
         int machines = await db.Machines.ExecuteDeleteAsync();
@@ -266,7 +262,6 @@ public class DatabaseSeeder(AppDbContext db)
         int inspectionItems = await db.InspectionItems.ExecuteDeleteAsync();
         int stations = await db.Stations.ExecuteDeleteAsync();
         int products = await db.Products.ExecuteDeleteAsync();
-        
         int units = await db.Units.ExecuteDeleteAsync();
         int shifts = await db.Shifts.ExecuteDeleteAsync();
         int operators = await db.Operators.ExecuteDeleteAsync();
@@ -275,49 +270,50 @@ public class DatabaseSeeder(AppDbContext db)
         int chemicals = await db.Chemicals.ExecuteDeleteAsync();
 
         return new ClearAllDataResponse(
-            lotSlotHistories,
-            slotParameters,
-            lotSplitHistories,
-            lotMasters,
-            variableMeasurements,
-            attributeMeasurements,
-            spcCalculationResults,
-            uploadErrors,
-            uploadDetails,
-            uploadBatches,
-            alertEvents,
-            measurementValues,
-            measurementBatches,
-            stationOperationSessions,
-            workOrders,
-            mesSyncMessages,
-            partProcessCharacteristics,
-            productStationItems,
-            machines,
-            qualityCharacteristics,
-            slots,
-            tanks,
-            productionLines,
-            factories,
-            plants,
-            parts,
-            processes,
-            spcRules,
-            spcRuleGroups,
-            controlChartTypes,
-            controlChartCategories,
-            controlChartGroups,
-            formulaDefinitions,
-            inspectionItems,
-            stations,
-            products,
-            units,
-            shifts,
-            operators,
-            customers,
-            suppliers,
-            chemicals
+            lotSlotHistories, slotParameters, lotSplitHistories, lotMasters,
+            variableMeasurements, attributeMeasurements, spcCalculationResults,
+            uploadErrors, uploadDetails, uploadBatches, alertEvents,
+            measurementValues, measurementBatches, stationOperationSessions,
+            workOrders, mesSyncMessages, partProcessCharacteristics,
+            productStationItems, machines, qualityCharacteristics,
+            slots, tanks, productionLines, factories, plants, parts,
+            processes, spcRules, spcRuleGroups, controlChartTypes,
+            controlChartCategories, controlChartGroups, formulaDefinitions,
+            inspectionItems, stations, products, units, shifts,
+            operators, customers, suppliers, chemicals
+        );
+    }
+
+    public async Task<ClearTransactionalDataResponse> ClearTransactionalDataAsync()
+    {
+        int lotSlotHistories = await db.LotSlotHistories.ExecuteDeleteAsync();
+        int slotParameters = await db.SlotParameters.ExecuteDeleteAsync();
+        int lotSplitHistories = await db.LotSplitHistories.ExecuteDeleteAsync();
+        
+        await db.LotMasters.ExecuteUpdateAsync(s => s.SetProperty(l => l.ParentLotId, (long?)null));
+        int lotMasters = await db.LotMasters.ExecuteDeleteAsync();
+        
+        int variableMeasurements = await db.VariableMeasurements.ExecuteDeleteAsync();
+        int attributeMeasurements = await db.AttributeMeasurements.ExecuteDeleteAsync();
+        int spcCalculationResults = await db.SpcCalculationResults.ExecuteDeleteAsync();
+        
+        int uploadErrors = await db.UploadErrors.ExecuteDeleteAsync();
+        int uploadDetails = await db.UploadDetails.ExecuteDeleteAsync();
+        int uploadBatches = await db.UploadBatches.ExecuteDeleteAsync();
+        
+        int alertEvents = await db.AlertEvents.ExecuteDeleteAsync();
+        int measurementValues = await db.MeasurementValues.ExecuteDeleteAsync();
+        int measurementBatches = await db.MeasurementBatches.ExecuteDeleteAsync();
+        int stationOperationSessions = await db.StationOperationSessions.ExecuteDeleteAsync();
+        int workOrders = await db.WorkOrders.ExecuteDeleteAsync();
+        int mesSyncMessages = await db.MesSyncMessages.ExecuteDeleteAsync();
+
+        return new ClearTransactionalDataResponse(
+            lotSlotHistories, slotParameters, lotSplitHistories, lotMasters,
+            variableMeasurements, attributeMeasurements, spcCalculationResults,
+            uploadErrors, uploadDetails, uploadBatches, alertEvents,
+            measurementValues, measurementBatches, stationOperationSessions,
+            workOrders, mesSyncMessages
         );
     }
 }
-

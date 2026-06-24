@@ -10,18 +10,26 @@ public static class NelsonRulesValidator
     /// </summary>
     public static void ApplyRules(List<SpcDataPoint> points, ControlLimits limits)
     {
-        if (points.Count == 0 || !limits.CL.HasValue || !limits.UCL.HasValue || !limits.LCL.HasValue)
+        if (points.Count == 0)
             return;
-
-        var mean = limits.CL.Value;
-        var sigma = (limits.UCL.Value - mean) / 3.0;
-        
-        if (sigma <= 0) return;
 
         for (int i = 0; i < points.Count; i++)
         {
             var p = points[i];
             var v = p.Value;
+
+            var cl = p.CL ?? limits.CL;
+            var ucl = p.UCL ?? limits.UCL;
+            var lcl = p.LCL ?? limits.LCL;
+
+            if (!cl.HasValue || !ucl.HasValue || !lcl.HasValue)
+                continue;
+
+            var mean = cl.Value;
+            var sigma = (ucl.Value - mean) / 3.0;
+            
+            if (sigma <= 0)
+                continue;
 
             // Rule 1: 1 point is > 3 standard deviations from the mean (Out of Control)
             if (Math.Abs(v - mean) > 3 * sigma)
@@ -39,7 +47,9 @@ public static class NelsonRulesValidator
                     bool match = true;
                     for (int j = 1; j <= 8; j++)
                     {
-                        if (Math.Sign(points[i - j].Value - mean) != side)
+                        var prevPt = points[i - j];
+                        var prevCl = prevPt.CL ?? limits.CL;
+                        if (!prevCl.HasValue || Math.Sign(prevPt.Value - prevCl.Value) != side)
                         {
                             match = false;
                             break;
@@ -97,20 +107,35 @@ public static class NelsonRulesValidator
                 }
             }
 
-            // Simplified other rules could be added here (Rule 5, 6, 7, 8)
-            // For example:
             // Rule 5: 2 out of 3 points > 2 standard deviations from mean in same direction
             if (i >= 2)
             {
                 int countPos = 0;
                 int countNeg = 0;
+                bool valid = true;
                 for (int j = 0; j < 3; j++)
                 {
-                    var diff = points[i - j].Value - mean;
-                    if (diff > 2 * sigma) countPos++;
-                    if (diff < -2 * sigma) countNeg++;
+                    var pt = points[i - j];
+                    var ptCl = pt.CL ?? limits.CL;
+                    var ptUcl = pt.UCL ?? limits.UCL;
+                    if (!ptCl.HasValue || !ptUcl.HasValue)
+                    {
+                        valid = false;
+                        break;
+                    }
+                    var ptMean = ptCl.Value;
+                    var ptSigma = (ptUcl.Value - ptMean) / 3.0;
+                    if (ptSigma <= 0)
+                    {
+                        valid = false;
+                        break;
+                    }
+
+                    var diff = pt.Value - ptMean;
+                    if (diff > 2 * ptSigma) countPos++;
+                    if (diff < -2 * ptSigma) countNeg++;
                 }
-                if (countPos >= 2 || countNeg >= 2)
+                if (valid && (countPos >= 2 || countNeg >= 2))
                 {
                     p.ViolatedRules.Add("Nelson5");
                     p.IsOutOfControl = true;
@@ -122,13 +147,30 @@ public static class NelsonRulesValidator
             {
                 int countPos = 0;
                 int countNeg = 0;
+                bool valid = true;
                 for (int j = 0; j < 5; j++)
                 {
-                    var diff = points[i - j].Value - mean;
-                    if (diff > sigma) countPos++;
-                    if (diff < -sigma) countNeg++;
+                    var pt = points[i - j];
+                    var ptCl = pt.CL ?? limits.CL;
+                    var ptUcl = pt.UCL ?? limits.UCL;
+                    if (!ptCl.HasValue || !ptUcl.HasValue)
+                    {
+                        valid = false;
+                        break;
+                    }
+                    var ptMean = ptCl.Value;
+                    var ptSigma = (ptUcl.Value - ptMean) / 3.0;
+                    if (ptSigma <= 0)
+                    {
+                        valid = false;
+                        break;
+                    }
+
+                    var diff = pt.Value - ptMean;
+                    if (diff > ptSigma) countPos++;
+                    if (diff < -ptSigma) countNeg++;
                 }
-                if (countPos >= 4 || countNeg >= 4)
+                if (valid && (countPos >= 4 || countNeg >= 4))
                 {
                     p.ViolatedRules.Add("Nelson6");
                     p.IsOutOfControl = true;

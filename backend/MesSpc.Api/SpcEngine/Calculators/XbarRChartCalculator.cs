@@ -170,7 +170,14 @@ public static class XbarRChartCalculator
         }
 
         // Only evaluate rules on non-excluded points
-        var evalPoints = subgroups.Where(x => !x.IsExcluded).Select(x => new SpcDataPoint { MeasuredAt = x.MeasuredAt, Value = x.Mean }).ToList();
+        var evalPoints = subgroups.Where(x => !x.IsExcluded).Select(x => new SpcDataPoint 
+        { 
+            MeasuredAt = x.MeasuredAt, 
+            Value = x.Mean,
+            UCL = x.UCL,
+            CL = x.CL,
+            LCL = x.LCL
+        }).ToList();
         if (uclXbar.HasValue && lclXbar.HasValue && nRef >= 2 && validSubgroups.Count > 0)
         {
             var statLimits = new ControlLimits { CL = validSubgroups.Average(x => x.Mean), UCL = uclXbar, LCL = lclXbar };
@@ -190,10 +197,17 @@ public static class XbarRChartCalculator
             var range = x.Range;
             var oos = (configuredLimits.USL.HasValue && xbar > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && xbar < configuredLimits.LSL.Value);
+
+            var activeUcl = x.UCL ?? configuredLimits.UCL ?? uclXbar;
+            var activeLcl = x.LCL ?? configuredLimits.LCL ?? lclXbar;
+            var activeCl = x.CL ?? configuredLimits.CL ?? meanOfXbar;
+
+            var oocConfigured = (activeUcl.HasValue && xbar > activeUcl.Value) || 
+                                (activeLcl.HasValue && xbar < activeLcl.Value);
             var oocStat = p?.IsOutOfControl ?? false; 
             var oocR = uclRrange.HasValue && lclRrange.HasValue && (range > uclRrange.Value || range < lclRrange.Value);
             var outOfSpec = !x.IsExcluded && (x.OutOfSpec || oos);
-            var outOfControl = !x.IsExcluded && (x.OutOfControl || oocStat || oocR);
+            var outOfControl = !x.IsExcluded && (oocStat || oocConfigured || oocR);
 
             xbarPoints.Add(new
             {
@@ -203,9 +217,12 @@ public static class XbarRChartCalculator
                 n = x.N,
                 outOfSpec,
                 outOfControl,
-                outOfControlXbar = oocStat,
+                outOfControlXbar = oocStat || oocConfigured,
                 outOfControlR = !x.IsExcluded && oocR,
                 violatedRules = p?.ViolatedRules ?? new List<string>(),
+                uclStat = activeUcl,
+                lclStat = activeLcl,
+                clStat = activeCl,
                 lotNo = x.LotNo,
                 serialNo = x.SerialNo,
                 @operator = x.Operator,

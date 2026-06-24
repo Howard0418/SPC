@@ -561,10 +561,15 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Update(int id, ControlChartGroup req)
     {
         var x = await db.ControlChartGroups.FindAsync(id); if (x is null) return NotFound();
-        x.GroupCode = req.GroupCode; x.GroupName = req.GroupName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
+        x.GroupCode = req.GroupCode; x.GroupName = req.GroupName; x.GroupType = req.GroupType; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
-    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.ControlChartGroups.FindAsync(id); if (x is null) return NotFound(); db.ControlChartGroups.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+    [HttpDelete("{id:int}")] 
+    public async Task<IActionResult> Delete(int id) 
+    { 
+        var x = await db.ControlChartGroups.FindAsync(id); if (x is null) return NotFound(); 
+        db.ControlChartGroups.Remove(x); await db.SaveChangesAsync(); return NoContent(); 
+    }
 }
 
 [ApiController]
@@ -573,30 +578,40 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
 public class ControlChartCategoriesController(AppDbContext db) : ControllerBase
 {
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.ControlChartCategories.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost]
-    public async Task<IActionResult> Create(ControlChartCategory req)
-    {
-        if (await db.ControlChartCategories.IgnoreQueryFilters().AnyAsync(c => c.ChartGroupId == req.ChartGroupId && c.CategoryCode == req.CategoryCode))
-        {
-            return BadRequest(new { message = $"在大群組下已存在相同類別代號 '{req.CategoryCode}' 的中分類。" });
-        }
-        db.ControlChartCategories.Add(req);
-        await db.SaveChangesAsync();
-        return Ok(req);
-    }
+    [HttpPost] public async Task<IActionResult> Create(ControlChartCategory req) { db.ControlChartCategories.Add(req); await db.SaveChangesAsync(); return Ok(req); }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, ControlChartCategory req)
     {
         var x = await db.ControlChartCategories.FindAsync(id); if (x is null) return NotFound();
-        if (await db.ControlChartCategories.IgnoreQueryFilters().AnyAsync(c => c.Id != id && c.ChartGroupId == req.ChartGroupId && c.CategoryCode == req.CategoryCode))
-        {
-            return BadRequest(new { message = $"在大群組下已存在相同類別代號 '{req.CategoryCode}' 的中分類。" });
-        }
         x.ChartGroupId = req.ChartGroupId; x.CategoryCode = req.CategoryCode; x.CategoryName = req.CategoryName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
-    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.ControlChartCategories.FindAsync(id); if (x is null) return NotFound(); db.ControlChartCategories.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+    [HttpDelete("{id:int}")] 
+    public async Task<IActionResult> Delete(int id) 
+    { 
+        var x = await db.ControlChartCategories.FindAsync(id); if (x is null) return NotFound(); 
+        db.ControlChartCategories.Remove(x); await db.SaveChangesAsync(); return NoContent(); 
+    }
 }
+
+[ApiController]
+[Route("api/operators")]
+[Route("api/v1/operators")]
+public class OperatorsController(AppDbContext db) : ControllerBase
+{
+    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.Operators.OrderBy(x => x.Id).ToListAsync());
+    [HttpPost] public async Task<IActionResult> Create(Operator req) { db.Operators.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, Operator req)
+    {
+        var x = await db.Operators.FindAsync(id); if (x is null) return NotFound();
+        x.OperatorCode = req.OperatorCode; x.OperatorName = req.OperatorName; x.Department = req.Department; x.Email = req.Email; x.IsActive = req.IsActive;
+        await db.SaveChangesAsync(); return Ok(x);
+    }
+    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.Operators.FindAsync(id); if (x is null) return NotFound(); db.Operators.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+}
+
+
 
 [ApiController]
 [Route("api/control-chart-types")]
@@ -744,23 +759,6 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     public sealed record ChartTypeRuleOption(string RuleCode, string RuleName, int Priority, bool IsSelected);
     public sealed record ChartTypeRulesResponse(int ChartTypeId, int? RuleGroupId, List<ChartTypeRuleOption> Rules);
     public sealed record ChartTypeRulesUpdateRequest(List<string>? SelectedRuleCodes);
-}
-
-[ApiController]
-[Route("api/operators")]
-[Route("api/v1/operators")]
-public class OperatorsController(AppDbContext db) : ControllerBase
-{
-    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.Operators.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(Operator req) { db.Operators.Add(req); await db.SaveChangesAsync(); return Ok(req); }
-    [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, Operator req)
-    {
-        var x = await db.Operators.FindAsync(id); if (x is null) return NotFound();
-        x.OperatorCode = req.OperatorCode; x.OperatorName = req.OperatorName; x.Department = req.Department; x.Email = req.Email; x.IsActive = req.IsActive;
-        await db.SaveChangesAsync(); return Ok(x);
-    }
-    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.Operators.FindAsync(id); if (x is null) return NotFound(); db.Operators.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
 }
 
 [ApiController]

@@ -24,12 +24,18 @@
 4. **計數型管制圖 (P, NP, C, U)**：
    - 分別針對固定/變動樣本數的不良數與缺點數進行管制界限計算。
 
-## 異常判定引擎 (Western Electric Rules)
-在 `SpcEngine` 產出計算點後，會將其傳入 `WesternElectricRulesValidator` 進行統計失控判定，支援以下黃金四大規則：
-- **Rule 1**：任一點落在管制界限（$\pm 3\sigma$）之外。
-- **Rule 2**：連續 3 點中有 2 點落在同側的 Zone A ($\pm 2\sigma \sim \pm 3\sigma$) 或之外。
-- **Rule 3**：連續 5 點中有 4 點落在同側的 Zone B ($\pm 1\sigma \sim \pm 3\sigma$) 或之外。
-- **Rule 4**：連續 8 點落在中心線的同一側（Zone C 或之外）。
+## 異常判定引擎 (Western Electric & Nelson Rules)
+在 `SpcEngine` 產出計算點後，會將其傳入 `WesternElectricRulesValidator` 或 `NelsonRulesValidator` 進行統計失控判定。
+- **分段管制界線支援**：異常判定引擎已全面升級為「點級動態界線解析」。在檢定各點的失控規則時，會依該點所處時間的分段界線（`p.UCL` / `p.CL` / `p.LCL`）計算專屬的 Center Line 與 Sigma（標準差），若該點無分段界線則自動回退至全局設定。
+- **規則定義**：
+  - **Rule 1 (Nelson1)**：任一點落在管制界限（$\pm 3\sigma$）之外。
+  - **Rule 2 (Nelson2)**：連續 9 點落在中心線的同一側（Zone C 或之外）。
+  - **Rule 3 (Nelson3)**：連續 6 點持續上升或下降。
+  - **Rule 4 (Nelson4)**：連續 14 點上下交替。
+  - **Rule 5 (Nelson5)**：連續 3 點中有 2 點落在同側的 Zone A ($\pm 2\sigma \sim \pm 3\sigma$) 或之外。
+  - **Rule 6 (Nelson6)**：連續 5 點中有 4 點落在同側的 Zone B ($\pm 1\sigma \sim \pm 3\sigma$) 或之外。
+  - **Rule 7**：連續 15 點落在中心線 1 Sigma 內。
+  - **Rule 8**：連續 8 點落在中心線兩側且都超出 1 Sigma。
 
 ## 製程能力指數 (Capability Indices)
 系統在返回 SPC 資料時會自動計算：

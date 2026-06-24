@@ -16,14 +16,26 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var chartType = await db.ControlChartTypes.FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
         if (chartType is null) return null;
 
+        var activeSegment = await db.ControlLimitSegments
+            .AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == measurement.PartProcessCharacteristicId
+                     && x.StartDate <= measurement.MeasuredAt
+                     && (x.EndDate == null || x.EndDate >= measurement.MeasuredAt))
+            .OrderByDescending(x => x.StartDate)
+            .FirstOrDefaultAsync(ct);
+
+        var activeUcl = activeSegment?.UCL ?? mapping.UCL;
+        var activeCl = activeSegment?.CL ?? mapping.CL;
+        var activeLcl = activeSegment?.LCL ?? mapping.LCL;
+
         var isOutOfSpec = (mapping.USL.HasValue && measurement.MeasuredValue > mapping.USL.Value)
                           || (mapping.LSL.HasValue && measurement.MeasuredValue < mapping.LSL.Value);
-        var isOutOfControl = (mapping.UCL.HasValue && measurement.MeasuredValue > mapping.UCL.Value)
-                             || (mapping.LCL.HasValue && measurement.MeasuredValue < mapping.LCL.Value);
+        var isOutOfControl = (activeUcl.HasValue && measurement.MeasuredValue > activeUcl.Value)
+                             || (activeLcl.HasValue && measurement.MeasuredValue < activeLcl.Value);
         var ruleGroupId = mapping.RuleGroupId ?? chartType.RuleGroupId;
 
         List<SpcRuleViolation>? violations = null;
-        if (ruleGroupId.HasValue && mapping.CL.HasValue && mapping.UCL.HasValue && mapping.LCL.HasValue)
+        if (ruleGroupId.HasValue && activeCl.HasValue && activeUcl.HasValue && activeLcl.HasValue)
         {
             var rules = await db.SpcRules.AsNoTracking().Where(x => x.RuleGroupId == ruleGroupId.Value && x.IsEnabled).ToListAsync(ct);
             if (rules.Count > 0)
@@ -38,7 +50,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 lastMeasurements.Insert(0, measurement.MeasuredValue);
                 lastMeasurements.Reverse();
 
-                violations = SpcRuleEngine.EvaluateRules(lastMeasurements, rules, mapping.CL.Value, mapping.UCL.Value, mapping.LCL.Value);
+                violations = SpcRuleEngine.EvaluateRules(lastMeasurements, rules, activeCl.Value, activeUcl.Value, activeLcl.Value);
                 if (violations.Count > 0)
                 {
                     isOutOfControl = true;
@@ -60,9 +72,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             StatisticValue = measurement.MeasuredValue,
             USL = mapping.USL,
             LSL = mapping.LSL,
-            UCL = mapping.UCL,
-            CL = mapping.CL,
-            LCL = mapping.LCL,
+            UCL = activeUcl,
+            CL = activeCl,
+            LCL = activeLcl,
             IsOutOfSpec = isOutOfSpec,
             IsOutOfControl = isOutOfControl,
             ViolatedRulesJson = violatedRulesJson
@@ -110,9 +122,21 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var chartType = await db.ControlChartTypes.FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
         if (chartType is null) return null;
 
+        var activeSegment = await db.ControlLimitSegments
+            .AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == measurement.PartProcessCharacteristicId
+                     && x.StartDate <= measurement.MeasuredAt
+                     && (x.EndDate == null || x.EndDate >= measurement.MeasuredAt))
+            .OrderByDescending(x => x.StartDate)
+            .FirstOrDefaultAsync(ct);
+
+        var activeUcl = activeSegment?.UCL ?? mapping.UCL;
+        var activeCl = activeSegment?.CL ?? mapping.CL;
+        var activeLcl = activeSegment?.LCL ?? mapping.LCL;
+
         var statisticValue = CalculateAttributeStatistic(chartType.ChartTypeCode, measurement);
-        var isOutOfControl = (mapping.UCL.HasValue && statisticValue.HasValue && statisticValue.Value > mapping.UCL.Value)
-                             || (mapping.LCL.HasValue && statisticValue.HasValue && statisticValue.Value < mapping.LCL.Value);
+        var isOutOfControl = (activeUcl.HasValue && statisticValue.HasValue && statisticValue.Value > activeUcl.Value)
+                             || (activeLcl.HasValue && statisticValue.HasValue && statisticValue.Value < activeLcl.Value);
         var ruleGroupId = mapping.RuleGroupId ?? chartType.RuleGroupId;
 
         var result = new SpcCalculationResult
@@ -127,9 +151,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             StatisticValue = statisticValue,
             USL = mapping.USL,
             LSL = mapping.LSL,
-            UCL = mapping.UCL,
-            CL = mapping.CL,
-            LCL = mapping.LCL,
+            UCL = activeUcl,
+            CL = activeCl,
+            LCL = activeLcl,
             IsOutOfSpec = false,
             IsOutOfControl = isOutOfControl
         };
@@ -278,6 +302,12 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
         if (chartType is null) return null;
 
+        var segments = await db.ControlLimitSegments
+            .AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId)
+            .OrderBy(x => x.StartDate)
+            .ToListAsync(ct);
+
         var limits = new ControlLimits
         {
             USL = mapping.USL,
@@ -311,10 +341,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             var rawPoints = measurements.Select(x =>
             {
                 alertLookup.TryGetValue(x.Id, out var alert);
+                var activeSegment = segments.LastOrDefault(s => s.StartDate <= x.MeasuredAt && (s.EndDate == null || s.EndDate >= x.MeasuredAt));
                 return new SpcDataPoint
                 {
                     MeasuredAt = x.MeasuredAt,
                     Value = x.MeasuredValue,
+                    UCL = activeSegment?.UCL ?? mapping.UCL,
+                    CL = activeSegment?.CL ?? mapping.CL,
+                    LCL = activeSegment?.LCL ?? mapping.LCL,
                     LotNo = x.LotNo,
                     SerialNo = x.SerialNo,
                     Operator = x.Operator,
@@ -346,10 +380,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 var grouped = measurements.GroupBy(x => x.MeasuredAt).Select(g =>
                 {
                     var first = g.First();
+                    var activeSegment = segments.LastOrDefault(s => s.StartDate <= g.Key && (s.EndDate == null || s.EndDate >= g.Key));
                     return new Subgroup
                     {
                         MeasuredAt = g.Key,
                         Values = g.Select(m => m.MeasuredValue).ToList(),
+                        UCL = activeSegment?.UCL ?? mapping.UCL,
+                        CL = activeSegment?.CL ?? mapping.CL,
+                        LCL = activeSegment?.LCL ?? mapping.LCL,
                         LotNo = first.LotNo,
                         SerialNo = first.SerialNo,
                         Operator = first.Operator,
@@ -395,20 +433,27 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             if (measurements.Count == 0) return null;
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
 
-            var points = measurements.Select(x => new AttributeDataPoint
+            var points = measurements.Select(x => 
             {
-                MeasuredAt = x.MeasuredAt,
-                InspectedQty = x.InspectedQty,
-                DefectQty = x.DefectQty,
-                DefectCount = x.DefectCount,
-                UnitCount = x.UnitCount,
-                LotNo = x.LotNo,
-                Operator = x.Operator,
-                LineId = x.LineId,
-                TankId = x.TankId,
-                SlotId = x.SlotId,
-                SideCode = x.SideCode.ToString(),
-                IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
+                var activeSegment = segments.LastOrDefault(s => s.StartDate <= x.MeasuredAt && (s.EndDate == null || s.EndDate >= x.MeasuredAt));
+                return new AttributeDataPoint
+                {
+                    MeasuredAt = x.MeasuredAt,
+                    UCL = activeSegment?.UCL ?? mapping.UCL,
+                    CL = activeSegment?.CL ?? mapping.CL,
+                    LCL = activeSegment?.LCL ?? mapping.LCL,
+                    InspectedQty = x.InspectedQty,
+                    DefectQty = x.DefectQty,
+                    DefectCount = x.DefectCount,
+                    UnitCount = x.UnitCount,
+                    LotNo = x.LotNo,
+                    Operator = x.Operator,
+                    LineId = x.LineId,
+                    TankId = x.TankId,
+                    SlotId = x.SlotId,
+                    SideCode = x.SideCode.ToString(),
+                    IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
+                };
             }).ToList();
 
             return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits) with { RawDataPoints = points };
@@ -905,4 +950,120 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         if (value is null) return null;
         return Convert.ToDouble(value);
     }
+
+    public async Task<TrialCalculateResult?> TrialCalculateLimitsAsync(
+        int partProcessCharacteristicId,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken ct = default)
+    {
+        var mapping = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
+        if (mapping is null || !mapping.ChartTypeId.HasValue) return null;
+
+        var chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
+        if (chartType is null) return null;
+
+        var limits = new ControlLimits
+        {
+            USL = mapping.USL,
+            LSL = mapping.LSL,
+            Target = mapping.TargetValue,
+            UCL = null,
+            CL = null,
+            LCL = null
+        };
+
+        ControlChartResult chartResultVal;
+        int sampleCount = 0;
+
+        if (chartType.DataCategory == "Variable")
+        {
+            var query = db.VariableMeasurements.AsNoTracking()
+                .Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId
+                         && x.MeasuredAt >= startDate.Date
+                         && x.MeasuredAt < endDate.Date.AddDays(1));
+
+            var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
+            if (measurements.Count == 0) return new TrialCalculateResult(null, null, null, 0, "在此區間內無量測數據。");
+
+            var rawPoints = measurements.Select(x => new SpcDataPoint
+            {
+                MeasuredAt = x.MeasuredAt,
+                Value = x.MeasuredValue,
+                IsExcluded = false
+            }).ToList();
+
+            sampleCount = rawPoints.Count;
+
+            if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
+            {
+                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits);
+            }
+            else // XBAR_R / XBAR_S
+            {
+                var expectedSampleSizeVal = mapping.SampleSize > 0 ? mapping.SampleSize : (chartType.RequiredSampleSize ?? 0) > 0 ? chartType.RequiredSampleSize!.Value : 5;
+                var grouped = measurements.GroupBy(x => x.MeasuredAt).Select(g => new Subgroup
+                {
+                    MeasuredAt = g.Key,
+                    Values = g.Select(m => m.MeasuredValue).ToList()
+                }).ToList();
+
+                sampleCount = grouped.Count;
+
+                if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
+                {
+                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal);
+                }
+                else
+                {
+                    var formulaConfigJson = string.IsNullOrWhiteSpace(mapping.FormulaConfigJson)
+                        ? chartType.FormulaConfigJson
+                        : mapping.FormulaConfigJson;
+                    chartResultVal = XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson);
+                }
+            }
+        }
+        else // Attribute
+        {
+            var query = db.AttributeMeasurements.AsNoTracking()
+                .Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId
+                         && x.MeasuredAt >= startDate.Date
+                         && x.MeasuredAt < endDate.Date.AddDays(1));
+
+            var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
+            if (measurements.Count == 0) return new TrialCalculateResult(null, null, null, 0, "在此區間內無量測數據。");
+
+            var points = measurements.Select(x => new AttributeDataPoint
+            {
+                MeasuredAt = x.MeasuredAt,
+                InspectedQty = x.InspectedQty,
+                DefectQty = x.DefectQty,
+                DefectCount = x.DefectCount,
+                UnitCount = x.UnitCount,
+                IsExcluded = false
+            }).ToList();
+
+            sampleCount = points.Count;
+            chartResultVal = AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits);
+        }
+
+        var limitsExtracted = ReadPrimaryControlLimits(chartResultVal.StatControlLimits);
+        
+        double? cl = null;
+        if (chartResultVal.StatControlLimits != null)
+        {
+            var primary = GetPropertyValue(chartResultVal.StatControlLimits, "iControlLimitsStat")
+                ?? GetPropertyValue(chartResultVal.StatControlLimits, "xbarControl")
+                ?? GetPropertyValue(chartResultVal.StatControlLimits, "pControlLimitsStat")
+                ?? GetPropertyValue(chartResultVal.StatControlLimits, "npControlLimitsStat")
+                ?? chartResultVal.StatControlLimits;
+
+            cl = ReadNullableDouble(primary, "cl");
+        }
+
+        var note = $"試算成功。採用圖表類型: {chartType.ChartTypeName}，基準子組數/樣本數: {sampleCount}。";
+        return new TrialCalculateResult(limitsExtracted.Ucl, cl, limitsExtracted.Lcl, sampleCount, note);
+    }
 }
+
+public record TrialCalculateResult(double? Ucl, double? Cl, double? Lcl, int SampleCount, string Note);

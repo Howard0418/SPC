@@ -44,7 +44,8 @@ D:\SPC\publish\backend\Microsoft.IdentityModel.Tokens.dll
 D:\SPC\publish\backend\Microsoft.OpenApi.dll
 D:\SPC\publish\backend\Microsoft.SqlServer.Server.dll
 D:\SPC\publish\backend\NCalc.Core.dll
-D:\SPC\publish\backend\NCalc.Sync.dll
+D:\SPC\publish\backend\NCalc.Domain.dll
+D:\SPC\publish\backend\NCalc.Parser.dll
 D:\SPC\publish\backend\Parlot.dll
 D:\SPC\publish\backend\RBush.dll
 D:\SPC\publish\backend\Scalar.AspNetCore.dll

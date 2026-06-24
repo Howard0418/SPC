@@ -422,6 +422,193 @@ function successAlert(msg) {
   setTimeout(() => { successMsg.value = ""; }, 3000);
 }
 
+const showSegmentModal = ref(false);
+const selectedPpc = ref(null);
+const segments = ref([]);
+const loadingSegments = ref(false);
+const isEditingSegment = ref(false);
+const segmentFormErr = ref("");
+
+const getTodayStr = () => new Date().toISOString().split("T")[0];
+const getThreeMonthsAgoStr = () => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 3);
+  return d.toISOString().split("T")[0];
+};
+
+const segmentForm = ref({
+  id: null,
+  startDate: getTodayStr(),
+  endDate: "",
+  ucl: null,
+  cl: null,
+  lcl: null,
+  note: ""
+});
+
+const trialForm = ref({
+  startDate: getThreeMonthsAgoStr(),
+  endDate: getTodayStr()
+});
+const trialResult = ref(null);
+const trialLoading = ref(false);
+const trialErr = ref("");
+
+async function openSegmentModal(item) {
+  selectedPpc.value = item;
+  showSegmentModal.value = true;
+  trialResult.value = null;
+  trialErr.value = "";
+  segmentFormErr.value = "";
+  trialForm.value = {
+    startDate: getThreeMonthsAgoStr(),
+    endDate: getTodayStr()
+  };
+  resetSegmentForm();
+  await loadSegments();
+}
+
+async function loadSegments() {
+  if (!selectedPpc.value) return;
+  loadingSegments.value = true;
+  try {
+    const res = await api.get("/control-limit-segments", {
+      params: { ppcId: selectedPpc.value.id }
+    });
+    segments.value = res.data || [];
+  } catch (e) {
+    alert("無法載入分段資訊：" + getApiErrorMessage(e));
+  } finally {
+    loadingSegments.value = false;
+  }
+}
+
+function resetSegmentForm() {
+  segmentForm.value = {
+    id: null,
+    startDate: getTodayStr(),
+    endDate: "",
+    ucl: null,
+    cl: null,
+    lcl: null,
+    note: ""
+  };
+  isEditingSegment.value = false;
+  segmentFormErr.value = "";
+}
+
+async function saveSegment() {
+  if (!selectedPpc.value) return;
+  segmentFormErr.value = "";
+  const payload = {
+    ...segmentForm.value,
+    partProcessCharacteristicId: selectedPpc.value.id,
+    ucl: segmentForm.value.ucl !== "" && segmentForm.value.ucl !== null ? parseFloat(segmentForm.value.ucl) : null,
+    cl: segmentForm.value.cl !== "" && segmentForm.value.cl !== null ? parseFloat(segmentForm.value.cl) : null,
+    lcl: segmentForm.value.lcl !== "" && segmentForm.value.lcl !== null ? parseFloat(segmentForm.value.lcl) : null,
+    endDate: segmentForm.value.endDate ? segmentForm.value.endDate : null
+  };
+
+  try {
+    if (isEditingSegment.value) {
+      await api.put(`/control-limit-segments/${segmentForm.value.id}`, payload);
+    } else {
+      await api.post("/control-limit-segments", payload);
+    }
+    resetSegmentForm();
+    await loadSegments();
+    await load();
+  } catch (e) {
+    segmentFormErr.value = getApiErrorMessage(e);
+  }
+}
+
+function editSegment(seg) {
+  segmentForm.value = {
+    id: seg.id,
+    startDate: seg.startDate ? seg.startDate.split("T")[0] : "",
+    endDate: seg.endDate ? seg.endDate.split("T")[0] : "",
+    ucl: seg.ucl,
+    cl: seg.cl,
+    lcl: seg.lcl,
+    note: seg.note || ""
+  };
+  isEditingSegment.value = true;
+  segmentFormErr.value = "";
+}
+
+async function deleteSegment(seg) {
+  if (!confirm("確定要刪除此分段設定嗎？")) return;
+  try {
+    await api.delete(`/control-limit-segments/${seg.id}`);
+    await loadSegments();
+    await load();
+  } catch (e) {
+    alert("刪除失敗：" + getApiErrorMessage(e));
+  }
+}
+
+async function runTrialCalculate() {
+  if (!selectedPpc.value) return;
+  trialLoading.value = true;
+  trialErr.value = "";
+  trialResult.value = null;
+  try {
+    const res = await api.post("/v1/spc/trial-calculate", {
+      partProcessCharacteristicId: selectedPpc.value.id,
+      startDate: trialForm.value.startDate,
+      endDate: trialForm.value.endDate
+    });
+    trialResult.value = res.data;
+  } catch (e) {
+    trialErr.value = getApiErrorMessage(e);
+  } finally {
+    trialLoading.value = false;
+  }
+}
+
+function applyTrialResultToSegment() {
+  if (!trialResult.value) return;
+  segmentForm.value.ucl = trialResult.value.ucl;
+  segmentForm.value.cl = trialResult.value.cl;
+  segmentForm.value.lcl = trialResult.value.lcl;
+  segmentForm.value.startDate = trialForm.value.startDate;
+  segmentForm.value.endDate = trialForm.value.endDate;
+}
+
+const formatNumber = (value, digits = 4) => {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "N/A";
+  return Number(value).toFixed(digits);
+};
+
+function viewChartOrTrend(item) {
+  if (!item.chartTypeId) {
+    router.push({ path: '/spc', query: { ppcId: item.id } });
+    return;
+  }
+  const ct = chartTypes.value.find(c => c.id === item.chartTypeId);
+  if (!ct) {
+    router.push({ path: '/spc', query: { ppcId: item.id } });
+    return;
+  }
+  const cat = categories.value.find(c => c.id === ct.chartCategoryId);
+  if (!cat) {
+    router.push({ path: '/spc', query: { ppcId: item.id } });
+    return;
+  }
+  const group = groups.value.find(g => g.id === cat.chartGroupId);
+  if (!group) {
+    router.push({ path: '/spc', query: { ppcId: item.id } });
+    return;
+  }
+  
+  if (group.groupType === 'TREND_CHART') {
+    router.push({ path: '/trend-chart', query: { ppcId: item.id } });
+  } else {
+    router.push({ path: '/spc', query: { ppcId: item.id } });
+  }
+}
+
 onMounted(async () => {
   await load();
   const editId = Number(route.query.editId);
@@ -684,12 +871,20 @@ onMounted(async () => {
               </td>
               <td class="py-5 px-6 text-right space-x-2">
                 <button
-                  @click="router.push({ path: '/spc', query: { ppcId: item.id } })"
+                  @click="viewChartOrTrend(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-600 dark:text-amber-400 transition-all border border-amber-200 dark:border-slate-700"
                   title="查看管制圖與趨勢圖"
                 >
                   <Activity class="w-4 h-4" />
+                </button>
+                <button
+                  @click="openSegmentModal(item)"
+                  type="button"
+                  class="inline-flex items-center justify-center p-2 rounded-xl bg-purple-50 dark:bg-slate-800 hover:bg-purple-100 dark:hover:bg-purple-950 text-purple-600 dark:text-purple-400 transition-all border border-purple-200 dark:border-slate-700"
+                  title="分段管制線與界線試算"
+                >
+                  <Sliders class="w-4 h-4" />
                 </button>
                 <button
                   @click="openEditModal(item)"
@@ -1079,6 +1274,287 @@ onMounted(async () => {
           </div>
         </form>
       </div>
+      </div>
+    </transition>
+
+    <!-- Slide-over Panel (Segments & Trial Calculate) -->
+    <transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-x-full"
+      enter-to-class="opacity-100 translate-x-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-x-0"
+      leave-to-class="opacity-0 translate-x-full"
+    >
+      <div v-if="showSegmentModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
+        <div class="absolute inset-0 cursor-pointer" @click="showSegmentModal = false"></div>
+        <div class="relative w-full max-w-5xl h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+          
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 bg-purple-600 text-white rounded-xl shadow-md shadow-purple-500/20">
+                <Sliders class="w-5 h-5" />
+              </div>
+              <div>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white">
+                  分段管制線與界線試算
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" v-if="selectedPpc">
+                  {{ selectedPpc.process?.processCode }} ({{ selectedPpc.process?.processName }}) - {{ selectedPpc.characteristic?.characteristicName }}
+                </p>
+              </div>
+            </div>
+            <button
+              @click="showSegmentModal = false"
+              type="button"
+              class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all"
+            >
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="flex-1 overflow-hidden flex flex-col lg:flex-row">
+            
+            <!-- Left Side: Trial Calculate -->
+            <div class="w-full lg:w-1/2 p-6 border-r border-slate-200 dark:border-slate-800 overflow-y-auto space-y-6">
+              <div>
+                <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2">
+                  <Activity class="w-4 h-4 text-amber-500" /> 管制界線試算工具
+                </h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                  選擇特定日期範圍內的歷史量測數據來試算統計學上的管制上限(UCL)、中心線(CL)及管制下限(LCL)。
+                </p>
+              </div>
+
+              <!-- Trial Form -->
+              <div class="p-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 rounded-2xl space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">試算起日</label>
+                    <input
+                      v-model="trialForm.startDate"
+                      type="date"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
+                    />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">試算迄日</label>
+                    <input
+                      v-model="trialForm.endDate"
+                      type="date"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  @click="runTrialCalculate"
+                  :disabled="trialLoading"
+                  class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold shadow-md shadow-amber-500/25 transition-all"
+                >
+                  <RefreshCw :class="['w-4 h-4', trialLoading ? 'animate-spin' : '']" />
+                  {{ trialLoading ? '試算中...' : '開始歷史數據試算' }}
+                </button>
+              </div>
+
+              <!-- Trial Result Display -->
+              <div v-if="trialErr" class="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-2xl text-xs text-red-600 dark:text-red-400">
+                試算錯誤：{{ trialErr }}
+              </div>
+
+              <div v-if="trialResult" class="p-5 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl space-y-4 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-700 dark:text-slate-300">試算統計結果</span>
+                  <span class="text-[10px] bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded text-slate-500 font-bold">量測點數: {{ trialResult.sampleCount }} 點</span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 text-center">
+                  <div class="p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <div class="text-[10px] text-slate-400">UCL</div>
+                    <div class="text-sm font-mono font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ formatNumber(trialResult.ucl, 4) }}</div>
+                  </div>
+                  <div class="p-2 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/50 rounded-xl">
+                    <div class="text-[10px] text-amber-600 dark:text-amber-500">CL (中心線)</div>
+                    <div class="text-sm font-mono font-bold text-amber-800 dark:text-amber-300 mt-0.5">{{ formatNumber(trialResult.cl, 4) }}</div>
+                  </div>
+                  <div class="p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <div class="text-[10px] text-slate-400">LCL</div>
+                    <div class="text-sm font-mono font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ formatNumber(trialResult.lcl, 4) }}</div>
+                  </div>
+                </div>
+
+                <p class="text-[11px] text-slate-400 leading-relaxed italic">
+                  {{ trialResult.note }}
+                </p>
+
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    @click="applyTrialResultToSegment"
+                    class="flex-1 px-3 py-2 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-bold transition-all hover:bg-purple-100"
+                  >
+                    帶入右側分段表單
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side: Segment CRUD & List -->
+            <div class="w-full lg:w-1/2 p-6 overflow-y-auto space-y-6">
+              <div>
+                <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2">
+                  <Sliders class="w-4 h-4 text-purple-500" /> 分段管制界線設定
+                </h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                  定義不同時間區間的管制界線，系統會根據量測時間自動套用對應區間的 UCL/CL/LCL 進行規則檢驗。
+                </p>
+              </div>
+
+              <!-- Segment Add/Edit Form -->
+              <form @submit.prevent="saveSegment" class="p-4 bg-purple-50/20 dark:bg-purple-950/10 border border-purple-100 dark:border-purple-900/50 rounded-2xl space-y-4">
+                <div v-if="segmentFormErr" class="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl text-xs text-red-600 dark:text-red-400">
+                  儲存失敗：{{ segmentFormErr }}
+                </div>
+
+                <!-- Date range -->
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">生效起日 <span class="text-red-500">*</span></label>
+                    <input
+                      v-model="segmentForm.startDate"
+                      type="date"
+                      required
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
+                    />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">失效止日 (選填，留空表無限期)</label>
+                    <input
+                      v-model="segmentForm.endDate"
+                      type="date"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <!-- Limits values -->
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">UCL <span class="text-red-500">*</span></label>
+                    <input v-model="segmentForm.ucl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">CL <span class="text-red-500">*</span></label>
+                    <input v-model="segmentForm.cl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">LCL <span class="text-red-500">*</span></label>
+                    <input v-model="segmentForm.lcl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                  </div>
+                </div>
+
+                <!-- Note -->
+                <div class="space-y-1">
+                  <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">說明備註</label>
+                  <input
+                    v-model="segmentForm.note"
+                    type="text"
+                    placeholder="例如：例行調整、換液、設備大修等..."
+                    class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
+                  />
+                </div>
+
+                <div class="flex gap-2 justify-end">
+                  <button
+                    v-if="isEditingSegment"
+                    type="button"
+                    @click="resetSegmentForm"
+                    class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-bold"
+                  >
+                    取消編輯
+                  </button>
+                  <button
+                    type="submit"
+                    class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold"
+                  >
+                    {{ isEditingSegment ? '儲存更新' : '新增分段' }}
+                  </button>
+                </div>
+              </form>
+
+              <!-- Segments List -->
+              <div class="space-y-3">
+                <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider">已設定的分段管制界線</h5>
+
+                <div v-if="loadingSegments" class="text-center text-xs text-slate-400 py-6">載入分段設定中...</div>
+                <div v-else-if="segments.length === 0" class="text-center text-xs text-slate-400 py-6 italic bg-slate-50 dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                  目前無設定任何分段管制界線，系統將採用全局預設管制界線。
+                </div>
+
+                <div v-else class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm bg-white dark:bg-slate-900">
+                  <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr class="bg-slate-50 dark:bg-slate-800 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
+                        <th class="py-2.5 px-4">生效日期區間</th>
+                        <th class="py-2.5 px-4">UCL/CL/LCL</th>
+                        <th class="py-2.5 px-4">備註說明</th>
+                        <th class="py-2.5 px-4 text-right">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300 font-mono">
+                      <tr v-for="seg in segments" :key="seg.id" class="hover:bg-purple-50/20 dark:hover:bg-slate-800/40">
+                        <td class="py-3 px-4 font-sans font-semibold">
+                          <div>{{ seg.startDate?.split('T')[0] }}</div>
+                          <div class="text-[10px] text-slate-400 mt-0.5">至 {{ seg.endDate ? seg.endDate.split('T')[0] : '永久' }}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                          <div>U: {{ formatNumber(seg.ucl, 3) }}</div>
+                          <div class="text-amber-600 dark:text-amber-500 font-bold">C: {{ formatNumber(seg.cl, 3) }}</div>
+                          <div>L: {{ formatNumber(seg.lcl, 3) }}</div>
+                        </td>
+                        <td class="py-3 px-4 font-sans text-slate-500 text-[11px] leading-relaxed max-w-[120px] truncate" :title="seg.note">
+                          {{ seg.note || '-' }}
+                        </td>
+                        <td class="py-3 px-4 text-right space-x-1.5 font-sans">
+                          <button
+                            type="button"
+                            @click="editSegment(seg)"
+                            class="text-blue-500 hover:text-blue-400 font-bold"
+                          >
+                            編輯
+                          </button>
+                          <button
+                            type="button"
+                            @click="deleteSegment(seg)"
+                            class="text-red-500 hover:text-red-400 font-bold"
+                          >
+                            刪除
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer -->
+          <div class="shrink-0 p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end">
+            <button
+              @click="showSegmentModal = false"
+              type="button"
+              class="px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-bold transition-all"
+            >
+              關閉視窗
+            </button>
+          </div>
+
+        </div>
       </div>
     </transition>
   </section>

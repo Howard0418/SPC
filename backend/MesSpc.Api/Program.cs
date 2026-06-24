@@ -50,6 +50,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
             ?? throw new InvalidOperationException("ConnectionStrings:SqlServer 未設定。");
         opt.UseSqlServer(sqlServerConn);
     }
+    opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 });
 builder.Services.AddScoped<FormulaEngineService>();
 builder.Services.AddScoped<SpcService>();
@@ -158,6 +159,92 @@ using (var scope = app.Services.CreateScope())
         try { EnsureSqlServerMigrationBaseline(db); } catch { }
         db.Database.Migrate();
     }
+
+    try
+    {
+        if (provider == "sqlite")
+        {
+            db.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS [ControlLimitSegments] (
+                    [Id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    [PartProcessCharacteristicId] INTEGER NOT NULL,
+                    [StartDate] TEXT NOT NULL,
+                    [EndDate] TEXT NULL,
+                    [UCL] REAL NULL,
+                    [CL] REAL NULL,
+                    [LCL] REAL NULL,
+                    [Note] TEXT NULL,
+                    [CreatedAt] TEXT NOT NULL,
+                    [CreatedBy] TEXT NULL,
+                    [UpdatedAt] TEXT NULL,
+                    [UpdatedBy] TEXT NULL,
+                    [IsDeleted] INTEGER NOT NULL DEFAULT 0,
+                    [RowVersion] BLOB NULL,
+                    CONSTRAINT [FK_ControlLimitSegments_PartProcessCharacteristics_PartProcessCharacteristicId] 
+                        FOREIGN KEY ([PartProcessCharacteristicId]) REFERENCES [PartProcessCharacteristics] ([Id]) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS [IX_ControlLimitSegments_PartProcessCharacteristicId] ON [ControlLimitSegments] ([PartProcessCharacteristicId]);
+            ");
+        }
+        else
+        {
+            db.Database.ExecuteSqlRaw(@"
+                IF OBJECT_ID(N'[ControlLimitSegments]') IS NULL
+                BEGIN
+                    CREATE TABLE [ControlLimitSegments] (
+                        [Id] int NOT NULL IDENTITY(1,1),
+                        [PartProcessCharacteristicId] int NOT NULL,
+                        [StartDate] datetime2 NOT NULL,
+                        [EndDate] datetime2 NULL,
+                        [UCL] float NULL,
+                        [CL] float NULL,
+                        [LCL] float NULL,
+                        [Note] nvarchar(max) NULL,
+                        [CreatedAt] datetime2 NOT NULL,
+                        [CreatedBy] nvarchar(max) NULL,
+                        [UpdatedAt] datetime2 NULL,
+                        [UpdatedBy] nvarchar(max) NULL,
+                        [IsDeleted] bit NOT NULL DEFAULT 0,
+                        [RowVersion] rowversion NULL,
+                        CONSTRAINT [PK_ControlLimitSegments] PRIMARY KEY ([Id]),
+                        CONSTRAINT [FK_ControlLimitSegments_PartProcessCharacteristics_PartProcessCharacteristicId] 
+                            FOREIGN KEY ([PartProcessCharacteristicId]) REFERENCES [PartProcessCharacteristics] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE INDEX [IX_ControlLimitSegments_PartProcessCharacteristicId] ON [ControlLimitSegments] ([PartProcessCharacteristicId]);
+                END
+            ");
+        }
+    }
+    catch { }
+
+    // Ensure GroupType column exists in ControlChartGroups
+    try
+    {
+        if (provider == "sqlite")
+        {
+            try
+            {
+                db.Database.ExecuteSqlRaw("ALTER TABLE [ControlChartGroups] ADD COLUMN [GroupType] TEXT NOT NULL DEFAULT 'CONTROL_CHART';");
+            }
+            catch { }
+        }
+        else
+        {
+            db.Database.ExecuteSqlRaw(@"
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM sys.columns 
+                    WHERE object_id = OBJECT_ID(N'[ControlChartGroups]') 
+                      AND name = N'GroupType'
+                )
+                BEGIN
+                    ALTER TABLE [ControlChartGroups] ADD [GroupType] nvarchar(max) NOT NULL DEFAULT 'CONTROL_CHART';
+                END
+            ");
+        }
+    }
+    catch { }
+
     var seedDb = app.Configuration.GetValue<bool>("SeedDatabase", false);
     if (seedDb)
     {

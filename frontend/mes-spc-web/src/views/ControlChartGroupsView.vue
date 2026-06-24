@@ -49,6 +49,7 @@ const groupsForm = ref({
   groupCode: "",
   groupName: "",
   description: "",
+  groupType: "CONTROL_CHART",
   isEnabled: true
 });
 const groupsFormErr = ref("");
@@ -75,7 +76,7 @@ const filteredGroups = computed(() => {
 function openGroupsCreate() {
   groupsModalMode.value = "create";
   groupsCurrentId.value = null;
-  groupsForm.value = { groupCode: "", groupName: "", description: "", isEnabled: true };
+  groupsForm.value = { groupCode: "", groupName: "", description: "", groupType: "CONTROL_CHART", isEnabled: true };
   groupsFormErr.value = "";
   groupsShowModal.value = true;
 }
@@ -87,6 +88,7 @@ function openGroupsEdit(item) {
     groupCode: item.groupCode || "",
     groupName: item.groupName || "",
     description: item.description || "",
+    groupType: item.groupType || "CONTROL_CHART",
     isEnabled: item.isEnabled ?? true
   };
   groupsFormErr.value = "";
@@ -752,19 +754,25 @@ onMounted(async () => {
               <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                 <th class="py-4 px-6 w-16 text-center">ID</th>
                 <th class="py-4 px-6">群組代號 / 名稱</th>
+                <th class="py-4 px-6">群組類型</th>
                 <th class="py-4 px-6">說明描述</th>
                 <th class="py-4 px-6 text-center">狀態</th>
                 <th class="py-4 px-6 text-right">操作</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <tr v-if="loading && groupsRows.length === 0"><td colspan="5" class="py-12 text-center text-slate-400">正在載入群組清單...</td></tr>
-              <tr v-else-if="filteredGroups.length === 0"><td colspan="5" class="py-12 text-center text-slate-400">找不到相符的群組資料</td></tr>
+              <tr v-if="loading && groupsRows.length === 0"><td colspan="6" class="py-12 text-center text-slate-400">正在載入群組清單...</td></tr>
+              <tr v-else-if="filteredGroups.length === 0"><td colspan="6" class="py-12 text-center text-slate-400">找不到相符的群組資料</td></tr>
               <tr v-else v-for="g in filteredGroups" :key="g.id" class="hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                 <td class="py-4 px-6 font-mono text-xs text-slate-400 dark:text-slate-500 text-center">#{{ g.id }}</td>
                 <td class="py-4 px-6">
                   <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2"><Layers class="w-4 h-4 text-indigo-500" /> {{ g.groupCode }}</div>
                   <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ g.groupName }}</div>
+                </td>
+                <td class="py-4 px-6">
+                  <span :class="[ 'px-2.5 py-1 rounded-lg text-xs font-bold border tracking-wide', g.groupType === 'TREND_CHART' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800' : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800' ]">
+                    {{ g.groupType === 'TREND_CHART' ? '趨勢圖' : '管制圖' }}
+                  </span>
                 </td>
                 <td class="py-4 px-6 text-slate-600 dark:text-slate-300">{{ g.description || '-' }}</td>
                 <td class="py-4 px-6 text-center">
@@ -1040,6 +1048,13 @@ onMounted(async () => {
               <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">群組名稱 (Name) *</label>
               <input v-model="groupsForm.groupName" type="text" required placeholder="例如：製程管制項目" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" />
             </div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">群組類型 *</label>
+            <select v-model="groupsForm.groupType" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-805">
+              <option value="CONTROL_CHART">管制圖 (Control Chart)</option>
+              <option value="TREND_CHART">趨勢圖 (Trend Chart)</option>
+            </select>
           </div>
           <div class="space-y-1.5">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">說明描述 (Description)</label>

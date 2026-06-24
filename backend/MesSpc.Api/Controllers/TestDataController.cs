@@ -31,5 +31,13 @@ public class TestDataController(IWebHostEnvironment env, TestDataSeeder seeder) 
         var result = await seeder.ClearAllDatabaseDataAsync();
         return Ok(result);
     }
+
+    [HttpDelete("clear-transactions")]
+    public async Task<IActionResult> ClearTransactions()
+    {
+        if (!env.IsDevelopment()) return StatusCode(StatusCodes.Status403Forbidden, new { message = "Clear transactions only allowed in Development." });
+        var result = await seeder.ClearTransactionalDataAsync();
+        return Ok(result);
+    }
 }
 

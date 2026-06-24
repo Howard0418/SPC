@@ -46,11 +46,23 @@ public static class AttributeChartCalculator
             double? ucl = pBar.HasValue ? pBar.Value + 3 * Math.Sqrt(pBar.Value * (1 - pBar.Value) / n) : null;
             double? lcl = pBar.HasValue ? Math.Max(0, pBar.Value - 3 * Math.Sqrt(pBar.Value * (1 - pBar.Value) / n)) : null;
 
-            var outOfControl = !d.IsExcluded && ((ucl.HasValue && p > ucl.Value) || (lcl.HasValue && p < lcl.Value));
+            var activeUcl = d.UCL ?? configuredLimits.UCL ?? ucl;
+            var activeLcl = d.LCL ?? configuredLimits.LCL ?? lcl;
+            var activeCl = d.CL ?? configuredLimits.CL ?? pBar;
+
+            var outOfControl = !d.IsExcluded && ((activeUcl.HasValue && p > activeUcl.Value) || (activeLcl.HasValue && p < activeLcl.Value));
             
             if (!d.IsExcluded)
             {
-                var spcPoint = new SpcDataPoint { MeasuredAt = d.MeasuredAt, Value = p, IsOutOfControl = outOfControl };
+                var spcPoint = new SpcDataPoint 
+                { 
+                    MeasuredAt = d.MeasuredAt, 
+                    Value = p, 
+                    IsOutOfControl = outOfControl,
+                    UCL = d.UCL,
+                    CL = d.CL,
+                    LCL = d.LCL
+                };
                 spcPoints.Add(spcPoint);
                 spcPointIndexes.Add(points.Count);
             }
@@ -60,8 +72,9 @@ public static class AttributeChartCalculator
                 { "measuredAt", d.MeasuredAt },
                 { "value", p },
                 { "n", n },
-                { "uclStat", ucl },
-                { "lclStat", lcl },
+                { "uclStat", activeUcl },
+                { "lclStat", activeLcl },
+                { "clStat", activeCl },
                 { "outOfControl", outOfControl },
                 { "lotNo", d.LotNo },
                 { "operator", d.Operator },
@@ -116,8 +129,20 @@ public static class AttributeChartCalculator
         foreach (var d in includedData)
         {
             double np = d.DefectQty!.Value;
-            var outOfControl = (staticUcl.HasValue && np > staticUcl.Value) || (staticLcl.HasValue && np < staticLcl.Value);
-            spcPoints.Add(new SpcDataPoint { MeasuredAt = d.MeasuredAt, Value = np, IsOutOfControl = outOfControl });
+            var activeUcl = d.UCL ?? configuredLimits.UCL ?? staticUcl;
+            var activeLcl = d.LCL ?? configuredLimits.LCL ?? staticLcl;
+            var activeCl = d.CL ?? configuredLimits.CL ?? npBar;
+
+            var outOfControl = (activeUcl.HasValue && np > activeUcl.Value) || (activeLcl.HasValue && np < activeLcl.Value);
+            spcPoints.Add(new SpcDataPoint 
+            { 
+                MeasuredAt = d.MeasuredAt, 
+                Value = np, 
+                IsOutOfControl = outOfControl,
+                UCL = d.UCL,
+                CL = d.CL,
+                LCL = d.LCL
+            });
         }
 
         if (npBar.HasValue && staticUcl.HasValue && staticLcl.HasValue)
@@ -129,11 +154,19 @@ public static class AttributeChartCalculator
         foreach (var d in chartData)
         {
             var p = spcByMeasuredAt.GetValueOrDefault(d.MeasuredAt);
+            var np = d.DefectQty!.Value;
+            var activeUcl = d.UCL ?? configuredLimits.UCL ?? staticUcl;
+            var activeLcl = d.LCL ?? configuredLimits.LCL ?? staticLcl;
+            var activeCl = d.CL ?? configuredLimits.CL ?? npBar;
+
             points.Add(new Dictionary<string, object?>
             {
                 { "measuredAt", d.MeasuredAt },
-                { "value", d.DefectQty!.Value },
+                { "value", np },
                 { "n", d.InspectedQty },
+                { "uclStat", activeUcl },
+                { "lclStat", activeLcl },
+                { "clStat", activeCl },
                 { "outOfControl", p?.IsOutOfControl ?? false },
                 { "violatedRules", p?.ViolatedRules ?? new List<string>() },
                 { "lotNo", d.LotNo },
@@ -166,8 +199,20 @@ public static class AttributeChartCalculator
         foreach (var d in includedData)
         {
             double c = d.DefectCount!.Value;
-            var outOfControl = (ucl.HasValue && c > ucl.Value) || (lcl.HasValue && c < lcl.Value);
-            spcPoints.Add(new SpcDataPoint { MeasuredAt = d.MeasuredAt, Value = c, IsOutOfControl = outOfControl });
+            var activeUcl = d.UCL ?? configuredLimits.UCL ?? ucl;
+            var activeLcl = d.LCL ?? configuredLimits.LCL ?? lcl;
+            var activeCl = d.CL ?? configuredLimits.CL ?? cBar;
+
+            var outOfControl = (activeUcl.HasValue && c > activeUcl.Value) || (activeLcl.HasValue && c < activeLcl.Value);
+            spcPoints.Add(new SpcDataPoint 
+            { 
+                MeasuredAt = d.MeasuredAt, 
+                Value = c, 
+                IsOutOfControl = outOfControl,
+                UCL = d.UCL,
+                CL = d.CL,
+                LCL = d.LCL
+            });
         }
 
         if (cBar.HasValue && ucl.HasValue && lcl.HasValue)
@@ -179,10 +224,18 @@ public static class AttributeChartCalculator
         foreach (var d in chartData)
         {
             var p = spcByMeasuredAt.GetValueOrDefault(d.MeasuredAt);
+            var c = d.DefectCount!.Value;
+            var activeUcl = d.UCL ?? configuredLimits.UCL ?? ucl;
+            var activeLcl = d.LCL ?? configuredLimits.LCL ?? lcl;
+            var activeCl = d.CL ?? configuredLimits.CL ?? cBar;
+
             points.Add(new Dictionary<string, object?>
             {
                 { "measuredAt", d.MeasuredAt },
-                { "value", d.DefectCount!.Value },
+                { "value", c },
+                { "uclStat", activeUcl },
+                { "lclStat", activeLcl },
+                { "clStat", activeCl },
                 { "outOfControl", p?.IsOutOfControl ?? false },
                 { "violatedRules", p?.ViolatedRules ?? new List<string>() },
                 { "lotNo", d.LotNo },
@@ -227,10 +280,22 @@ public static class AttributeChartCalculator
             double? ucl = uBar.HasValue ? uBar.Value + 3 * Math.Sqrt(uBar.Value / n) : null;
             double? lcl = uBar.HasValue ? Math.Max(0, uBar.Value - 3 * Math.Sqrt(uBar.Value / n)) : null;
 
-            var outOfControl = !d.IsExcluded && ((ucl.HasValue && u > ucl.Value) || (lcl.HasValue && u < lcl.Value));
+            var activeUcl = d.UCL ?? configuredLimits.UCL ?? ucl;
+            var activeLcl = d.LCL ?? configuredLimits.LCL ?? lcl;
+            var activeCl = d.CL ?? configuredLimits.CL ?? uBar;
+
+            var outOfControl = !d.IsExcluded && ((activeUcl.HasValue && u > activeUcl.Value) || (activeLcl.HasValue && u < activeLcl.Value));
             if (!d.IsExcluded)
             {
-                spcPoints.Add(new SpcDataPoint { MeasuredAt = d.MeasuredAt, Value = u, IsOutOfControl = outOfControl });
+                spcPoints.Add(new SpcDataPoint 
+                { 
+                    MeasuredAt = d.MeasuredAt, 
+                    Value = u, 
+                    IsOutOfControl = outOfControl,
+                    UCL = d.UCL,
+                    CL = d.CL,
+                    LCL = d.LCL
+                });
                 spcPointIndexes.Add(points.Count);
             }
             
@@ -239,8 +304,9 @@ public static class AttributeChartCalculator
                 { "measuredAt", d.MeasuredAt },
                 { "value", u },
                 { "n", n },
-                { "uclStat", ucl },
-                { "lclStat", lcl },
+                { "uclStat", activeUcl },
+                { "lclStat", activeLcl },
+                { "clStat", activeCl },
                 { "outOfControl", outOfControl },
                 { "lotNo", d.LotNo },
                 { "operator", d.Operator },

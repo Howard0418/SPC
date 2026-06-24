@@ -9,17 +9,25 @@ public static class WesternElectricRulesValidator
     /// </summary>
     public static void ApplyRules(List<SpcDataPoint> points, ControlLimits limits)
     {
-        if (points.Count == 0 || !limits.CL.HasValue || !limits.UCL.HasValue || !limits.LCL.HasValue)
+        if (points.Count == 0)
             return;
-
-        var mean = limits.CL.Value;
-        var sigma = (limits.UCL.Value - mean) / 3.0;
-        if (sigma <= 0) return;
 
         for (int i = 0; i < points.Count; i++)
         {
             var p = points[i];
             var v = p.Value;
+
+            var cl = p.CL ?? limits.CL;
+            var ucl = p.UCL ?? limits.UCL;
+            var lcl = p.LCL ?? limits.LCL;
+
+            if (!cl.HasValue || !ucl.HasValue || !lcl.HasValue)
+                continue;
+
+            var mean = cl.Value;
+            var sigma = (ucl.Value - mean) / 3.0;
+            if (sigma <= 0)
+                continue;
 
             // Rule 1: 1 point is > 3 standard deviations from the mean (Out of Control)
             if (Math.Abs(v - mean) > 3 * sigma)
@@ -37,7 +45,9 @@ public static class WesternElectricRulesValidator
                     bool match = true;
                     for (int j = 1; j <= 8; j++)
                     {
-                        if (Math.Sign(points[i - j].Value - mean) != side)
+                        var prevPt = points[i - j];
+                        var prevCl = prevPt.CL ?? limits.CL;
+                        if (!prevCl.HasValue || Math.Sign(prevPt.Value - prevCl.Value) != side)
                         {
                             match = false;
                             break;
@@ -98,17 +108,32 @@ public static class WesternElectricRulesValidator
             // Rule 5: 2 out of 3 consecutive points are > 2 sigma from center line (same side)
             if (i >= 2)
             {
-                var side1 = Math.Sign(points[i].Value - mean);
-                var side2 = Math.Sign(points[i - 1].Value - mean);
-                var side3 = Math.Sign(points[i - 2].Value - mean);
-                int aboveCount = (points[i].Value > mean + 2 * sigma ? 1 : 0) + 
-                                 (points[i - 1].Value > mean + 2 * sigma ? 1 : 0) + 
-                                 (points[i - 2].Value > mean + 2 * sigma ? 1 : 0);
-                int belowCount = (points[i].Value < mean - 2 * sigma ? 1 : 0) + 
-                                 (points[i - 1].Value < mean - 2 * sigma ? 1 : 0) + 
-                                 (points[i - 2].Value < mean - 2 * sigma ? 1 : 0);
+                int aboveCount = 0;
+                int belowCount = 0;
+                bool valid = true;
+                for (int j = 0; j < 3; j++)
+                {
+                    var pt = points[i - j];
+                    var ptCl = pt.CL ?? limits.CL;
+                    var ptUcl = pt.UCL ?? limits.UCL;
+                    if (!ptCl.HasValue || !ptUcl.HasValue)
+                    {
+                        valid = false;
+                        break;
+                    }
+                    var ptMean = ptCl.Value;
+                    var ptSigma = (ptUcl.Value - ptMean) / 3.0;
+                    if (ptSigma <= 0)
+                    {
+                        valid = false;
+                        break;
+                    }
 
-                if (aboveCount >= 2 || belowCount >= 2)
+                    if (pt.Value > ptMean + 2 * ptSigma) aboveCount++;
+                    if (pt.Value < ptMean - 2 * ptSigma) belowCount++;
+                }
+
+                if (valid && (aboveCount >= 2 || belowCount >= 2))
                 {
                     p.ViolatedRules.Add("Rule5_2Of3Over2Sigma");
                     p.IsOutOfControl = true;
@@ -120,13 +145,30 @@ public static class WesternElectricRulesValidator
             {
                 int aboveCount = 0;
                 int belowCount = 0;
+                bool valid = true;
                 for (int j = 0; j < 5; j++)
                 {
-                    if (points[i - j].Value > mean + sigma) aboveCount++;
-                    if (points[i - j].Value < mean - sigma) belowCount++;
+                    var pt = points[i - j];
+                    var ptCl = pt.CL ?? limits.CL;
+                    var ptUcl = pt.UCL ?? limits.UCL;
+                    if (!ptCl.HasValue || !ptUcl.HasValue)
+                    {
+                        valid = false;
+                        break;
+                    }
+                    var ptMean = ptCl.Value;
+                    var ptSigma = (ptUcl.Value - ptMean) / 3.0;
+                    if (ptSigma <= 0)
+                    {
+                        valid = false;
+                        break;
+                    }
+
+                    if (pt.Value > ptMean + ptSigma) aboveCount++;
+                    if (pt.Value < ptMean - ptSigma) belowCount++;
                 }
 
-                if (aboveCount >= 4 || belowCount >= 4)
+                if (valid && (aboveCount >= 4 || belowCount >= 4))
                 {
                     p.ViolatedRules.Add("Rule6_4Of5Over1Sigma");
                     p.IsOutOfControl = true;
@@ -139,7 +181,17 @@ public static class WesternElectricRulesValidator
                 bool match = true;
                 for (int j = 0; j < 15; j++)
                 {
-                    if (Math.Abs(points[i - j].Value - mean) >= sigma)
+                    var pt = points[i - j];
+                    var ptCl = pt.CL ?? limits.CL;
+                    var ptUcl = pt.UCL ?? limits.UCL;
+                    if (!ptCl.HasValue || !ptUcl.HasValue)
+                    {
+                        match = false;
+                        break;
+                    }
+                    var ptMean = ptCl.Value;
+                    var ptSigma = (ptUcl.Value - ptMean) / 3.0;
+                    if (ptSigma <= 0 || Math.Abs(pt.Value - ptMean) >= ptSigma)
                     {
                         match = false;
                         break;
@@ -158,7 +210,17 @@ public static class WesternElectricRulesValidator
                 bool match = true;
                 for (int j = 0; j < 8; j++)
                 {
-                    if (Math.Abs(points[i - j].Value - mean) <= sigma)
+                    var pt = points[i - j];
+                    var ptCl = pt.CL ?? limits.CL;
+                    var ptUcl = pt.UCL ?? limits.UCL;
+                    if (!ptCl.HasValue || !ptUcl.HasValue)
+                    {
+                        match = false;
+                        break;
+                    }
+                    var ptMean = ptCl.Value;
+                    var ptSigma = (ptUcl.Value - ptMean) / 3.0;
+                    if (ptSigma <= 0 || Math.Abs(pt.Value - ptMean) <= ptSigma)
                     {
                         match = false;
                         break;

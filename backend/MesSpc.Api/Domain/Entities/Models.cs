@@ -306,10 +306,28 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public virtual QualityCharacteristic? Characteristic { get; set; }
 }
 
+public class ControlLimitSegment : BaseEntity<int>
+{
+    public int PartProcessCharacteristicId { get; set; }
+    
+    public DateTime StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    
+    public double? UCL { get; set; }
+    public double? CL { get; set; }
+    public double? LCL { get; set; }
+    
+    public string? Note { get; set; }
+    
+    [ForeignKey("PartProcessCharacteristicId")]
+    public virtual PartProcessCharacteristic? PartProcessCharacteristic { get; set; }
+}
+
 public class ControlChartGroup : BaseEntity<int>
 {
     public string GroupCode { get; set; } = string.Empty;
     public string GroupName { get; set; } = string.Empty;
+    public string GroupType { get; set; } = "CONTROL_CHART";
     public string? Description { get; set; }
     public bool IsEnabled { get; set; } = true;
 }

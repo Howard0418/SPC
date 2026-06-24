@@ -92,6 +92,23 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         return Ok(new { mapping.Id, mapping.UCL, mapping.CL, mapping.LCL });
     }
 
+    [HttpPost("trial-calculate")]
+    public async Task<IActionResult> TrialCalculate([FromBody] TrialCalculateReq req, CancellationToken ct = default)
+    {
+        if (req.PartProcessCharacteristicId <= 0) return BadRequest("PartProcessCharacteristicId 為必填。");
+        if (!req.StartDate.HasValue || !req.EndDate.HasValue) return BadRequest("量測起迄時間為必填。");
+        if (req.StartDate.Value > req.EndDate.Value) return BadRequest("起日不可晚於迄日。");
+
+        var result = await spcService.TrialCalculateLimitsAsync(
+            req.PartProcessCharacteristicId,
+            req.StartDate.Value,
+            req.EndDate.Value,
+            ct);
+
+        if (result is null) return NotFound("找不到該 SPC 管制項目。");
+        return Ok(result);
+    }
+
     [HttpPost("ocap")]
     public async Task<IActionResult> SaveOcap([FromBody] SaveOcapReq req, CancellationToken ct = default)
     {
@@ -179,6 +196,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     }
 }
 
+public record TrialCalculateReq(int PartProcessCharacteristicId, DateTime? StartDate, DateTime? EndDate);
 public record UpdateControlLimitsReq(double? Ucl, double? Cl, double? Lcl);
 public record SaveOcapReq(
     int PpcId,

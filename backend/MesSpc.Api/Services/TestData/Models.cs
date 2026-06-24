@@ -75,6 +75,25 @@ public record ClearAllDataResponse(
     int Chemicals
 );
 
+public record ClearTransactionalDataResponse(
+    int LotSlotHistories,
+    int SlotParameters,
+    int LotSplitHistories,
+    int LotMasters,
+    int VariableMeasurements,
+    int AttributeMeasurements,
+    int SpcCalculationResults,
+    int UploadErrors,
+    int UploadDetails,
+    int UploadBatches,
+    int AlertEvents,
+    int MeasurementValues,
+    int MeasurementBatches,
+    int StationOperationSessions,
+    int WorkOrders,
+    int MesSyncMessages
+);
+
 public static class TestDataTags
 {
     public const string TestPrefix = "TEST_";

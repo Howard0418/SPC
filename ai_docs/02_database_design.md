@@ -31,6 +31,9 @@
   - 連接產品、工站、特徵與圖表類型。
   - 儲存產品規格界限：`Lsl` (規格下限)、`Target` (目標值)、`Usl` (規格上限)。
   - 儲存統計管制界限：`Lcl`、`Cl`、`Ucl`（若採用計算界限則動態運算）。
+- **ControlLimitSegment** (分段管制界線設定檔)：
+  - 儲存特定時間區間內的自訂/試算統計管制界限。
+  - 欄位包含：`PartProcessCharacteristicId` (關聯主檔)、`StartDate` (生效起日)、`EndDate` (失效止日，選填)、`UCL`、`CL`、`LCL`、`Note` (備註)。
 
 ### 4. 交易資料與檢驗數據 (Transactional Data)
 - **MeasurementBatch**：每批次上傳/登錄之總表。

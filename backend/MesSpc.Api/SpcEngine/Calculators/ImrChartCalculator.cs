@@ -40,8 +40,12 @@ public static class ImrChartCalculator
             var v = p.Value;
             var oos = (configuredLimits.USL.HasValue && v > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && v < configuredLimits.LSL.Value);
-            var oocConfigured = (configuredLimits.UCL.HasValue && v > configuredLimits.UCL.Value) || 
-                                (configuredLimits.LCL.HasValue && v < configuredLimits.LCL.Value);
+            var activeUcl = p.UCL ?? configuredLimits.UCL;
+            var activeLcl = p.LCL ?? configuredLimits.LCL;
+            var activeCl = p.CL ?? configuredLimits.CL ?? iBar;
+
+            var oocConfigured = (activeUcl.HasValue && v > activeUcl.Value) || 
+                                (activeLcl.HasValue && v < activeLcl.Value);
             var oocStat = !p.IsExcluded && p.IsOutOfControl;
             var outOfSpec = !p.IsExcluded && (p.IsOutOfSpec || oos);
             var outOfControl = !p.IsExcluded && (p.IsOutOfControl || oocConfigured || oocStat);
@@ -54,6 +58,9 @@ public static class ImrChartCalculator
                 outOfControl,
                 outOfControlStat = oocStat,
                 violatedRules = p.ViolatedRules ?? new List<string>(),
+                uclStat = activeUcl ?? iUclStat,
+                lclStat = activeLcl ?? iLclStat,
+                clStat = activeCl,
                 lotNo = p.LotNo,
                 serialNo = p.SerialNo,
                 @operator = p.Operator,

@@ -32,6 +32,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SpcRuleGroup> SpcRuleGroups => Set<SpcRuleGroup>();
     public DbSet<SpcRule> SpcRules => Set<SpcRule>();
     public DbSet<SpcCalculationResult> SpcCalculationResults => Set<SpcCalculationResult>();
+    public DbSet<ControlLimitSegment> ControlLimitSegments => Set<ControlLimitSegment>();
 
     // New Organizational DB Sets
     public DbSet<Plant> Plants => Set<Plant>();
@@ -269,6 +270,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(x => x.SlotId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // ControlLimitSegment Mapping
+        modelBuilder.Entity<ControlLimitSegment>().HasKey(x => x.Id);
+        modelBuilder.Entity<ControlLimitSegment>().HasIndex(x => new { x.PartProcessCharacteristicId, x.StartDate });
+        modelBuilder.Entity<ControlLimitSegment>()
+            .HasOne(x => x.PartProcessCharacteristic)
+            .WithMany()
+            .HasForeignKey(x => x.PartProcessCharacteristicId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Global Query Filter for Soft Delete
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

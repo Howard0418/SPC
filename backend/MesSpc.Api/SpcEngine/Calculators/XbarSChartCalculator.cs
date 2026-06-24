@@ -47,7 +47,14 @@ public static class XbarSChartCalculator
         var lclS = b3 * sBar;
 
         var evalPoints = subgroups.Where(x => !x.IsExcluded)
-            .Select(x => new SpcDataPoint { MeasuredAt = x.MeasuredAt, Value = x.Mean })
+            .Select(x => new SpcDataPoint 
+            { 
+                MeasuredAt = x.MeasuredAt, 
+                Value = x.Mean,
+                UCL = x.UCL,
+                CL = x.CL,
+                LCL = x.LCL
+            })
             .ToList();
         if (sBar > 0)
         {
@@ -66,10 +73,17 @@ public static class XbarSChartCalculator
             var s = StandardDeviation(x);
             var oos = (configuredLimits.USL.HasValue && xbar > configuredLimits.USL.Value) ||
                       (configuredLimits.LSL.HasValue && xbar < configuredLimits.LSL.Value);
-            var oocXbar = p?.IsOutOfControl ?? false;
+
+            double? activeUcl = x.UCL ?? configuredLimits.UCL ?? uclXbar;
+            double? activeLcl = x.LCL ?? configuredLimits.LCL ?? lclXbar;
+            double? activeCl = x.CL ?? configuredLimits.CL ?? xDoubleBar;
+
+            var oocConfigured = (activeUcl.HasValue && xbar > activeUcl.Value) || 
+                                (activeLcl.HasValue && xbar < activeLcl.Value);
+            var oocXbar = (p?.IsOutOfControl ?? false) || oocConfigured;
             var oocS = !x.IsExcluded && (s > uclS || s < lclS);
             var outOfSpec = !x.IsExcluded && (x.OutOfSpec || oos);
-            var outOfControl = !x.IsExcluded && (x.OutOfControl || oocXbar || oocS);
+            var outOfControl = !x.IsExcluded && (oocXbar || oocS);
 
             xbarPoints.Add(new
             {
@@ -82,6 +96,9 @@ public static class XbarSChartCalculator
                 outOfControlXbar = oocXbar,
                 outOfControlS = oocS,
                 violatedRules = p?.ViolatedRules ?? new List<string>(),
+                uclStat = activeUcl,
+                lclStat = activeLcl,
+                clStat = activeCl,
                 lotNo = x.LotNo,
                 serialNo = x.SerialNo,
                 @operator = x.Operator,

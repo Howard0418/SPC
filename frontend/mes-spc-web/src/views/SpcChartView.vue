@@ -700,8 +700,7 @@ function renderECharts() {
     addLine(effectiveTopLimits.lcl, "LCL", "#f59e0b", "solid", 1.5);
   }
   if (hasDynamicLimits && showControlLimits.value) {
-    // Dynamic UCL/LCL are rendered as point-wise series; CL remains a constant mark line.
-    addLine(effectiveTopLimits.cl, "CL", "#3b82f6", "solid", 1.5);
+    // UCL/CL/LCL are rendered as point-wise stepped line series.
   }
 
   const topMarkLineObj = markLinesTop.length > 0 ? { symbol: "none", data: markLinesTop, animation: false } : undefined;
@@ -824,6 +823,15 @@ function renderECharts() {
       xAxisIndex: 0, yAxisIndex: 0,
       lineStyle: { color: "#f59e0b", width: 1.5, type: "solid" },
       data: pointsTop.map(p => p.uclStat != null ? Number(p.uclStat.toFixed(4)) : null)
+    });
+    seriesTopList.push({
+      name: "CL",
+      type: "line",
+      step: "middle",
+      symbol: "none",
+      xAxisIndex: 0, yAxisIndex: 0,
+      lineStyle: { color: "#3b82f6", width: 1.5, type: "solid" },
+      data: pointsTop.map(p => p.clStat != null ? Number(p.clStat.toFixed(4)) : null)
     });
     seriesTopList.push({
       name: "LCL",
