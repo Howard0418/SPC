@@ -202,10 +202,22 @@ public class ChemicalImportService
         }
     }
 
-    private static string Sanitize(string s) =>
-        new string(s.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '-').ToArray())
+    private static string Sanitize(string? s)
+    {
+        var source = string.IsNullOrWhiteSpace(s) ? "UNKNOWN" : s;
+        var cleaned = new string(source
+                .Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '-')
+                .ToArray())
             .Trim('-', '_')
-            .ToUpperInvariant()[..Math.Min(50, s.Length)];
+            .ToUpperInvariant();
+
+        if (string.IsNullOrWhiteSpace(cleaned))
+        {
+            cleaned = "UNKNOWN";
+        }
+
+        return cleaned.Length > 50 ? cleaned[..50] : cleaned;
+    }
 }
 
 public class ChemicalImportSummary

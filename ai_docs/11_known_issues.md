@@ -2,7 +2,10 @@
 
 ## 已修復問題 (Resolved Issues)
 
-1. **實體 SQL Server 遷移與 unique 索引衝突**：
+1. **製程工站槽位與 SPC 管制項目同步失效**：
+   - **問題**：更新機台代碼時建立重複產線，導致原槽位關聯遺失；前端過濾機台與產線時使用嚴格大小寫比對，造成槽位下拉選單為空；前端編輯時因非同步競爭條件，使已選取槽位被重置清空；在 UI 移除槽位時，資料庫中未同步刪除已移除的槽位。
+   - **修復**：優化 `SyncMachineTanksAsync` 以雙向同步槽位資料（支援從 UI 刪除），並在更新機台代碼時連動更新既有 `ProductionLine.LineCode`；修正匯入服務同步補建產線；前端重構為監聽 `machineId` 動態 API 請求槽位清單，並在 `openEditModal` 採用非同步順序載入以防 Race Condition。
+2. **實體 SQL Server 遷移與 unique 索引衝突**：
    - **問題**：重複執行資料庫種子或遷移時，因有多個中分類（如 `VAR_PROC`, `VAR_CHEM`, `VAR_PROD`）重複登錄 `XBAR_R`/`XBAR_S`/`I_MR` 管制圖小分類代碼，觸發資料庫唯一約束衝突。
    - **修復**：修改為在寫入前同時向 EF Core `ChangeTracker.Local` 以及實體資料庫查詢以進行重複校驗，保證全局僅寫入一份代碼。
 2. **圖表類型精確判定**：

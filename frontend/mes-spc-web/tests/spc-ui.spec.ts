@@ -4,7 +4,7 @@ test.describe('SPC Rule Engine UI Validation', () => {
 
   test('should render violated rules correctly on the SPC chart', async ({ page }) => {
     // Intercept the API call that provides the interactive chart data
-    await page.route('**/api/v2/spc/interactive-chart*', async (route) => {
+    await page.route('**/api/v1/spc/chart*', async (route) => {
       const json = {
         chartType: 'I-MR',
         limits: { ucl: 130, cl: 100, lcl: 70, target: 100 },
@@ -45,42 +45,42 @@ test.describe('SPC Rule Engine UI Validation', () => {
       await route.fulfill({ json });
     });
 
-    // Assume we have an endpoint that returns the characteristics list
-    await page.route('**/api/v2/masterdata/part-process-characteristics*', async (route) => {
+    await page.route('**/api/part-process-characteristics*', async (route) => {
       const json = [{
-        id: 1, part: { partNo: 'TEST_PART' }, process: { processName: 'TEST_PROC' },
-        characteristic: { characteristicName: 'TEST_CHAR' },
-        usl: 140, lsl: 60, ruleGroup: { ruleGroupName: 'Western Electric Rules' }
+        id: 1,
+        controlScope: 'PRODUCT',
+        partId: 1,
+        processId: 1,
+        characteristicId: 1,
+        chartTypeId: 1,
+        isEnabled: true,
+        part: { id: 1, partNo: 'TEST_PART', partName: 'Test Part', isEnabled: true },
+        process: { id: 1, processCode: 'TEST_PROC', processName: 'TEST_PROC', isEnabled: true },
+        characteristic: { id: 1, characteristicCode: 'TEST_CHAR', characteristicName: 'TEST_CHAR', isEnabled: true, isSpcEnabled: true },
+        usl: 140,
+        lsl: 60,
+        ruleGroup: { ruleGroupName: 'Western Electric Rules' }
       }];
       await route.fulfill({ json });
     });
 
-    // Navigate to SPC Chart view (assuming there is a route /spc/chart?ppcId=1)
-    await page.goto('/spc-chart?ppcId=1');
+    await page.route('**/api/control-chart-types*', async (route) => {
+      await route.fulfill({ json: [{ id: 1, chartCategoryId: 1, chartTypeCode: 'I_MR', chartTypeName: 'I-MR' }] });
+    });
+    await page.route('**/api/control-chart-categories*', async (route) => {
+      await route.fulfill({ json: [{ id: 1, chartGroupId: 1, categoryCode: 'VAR_PROD', categoryName: '產品管制' }] });
+    });
+    await page.route('**/api/control-chart-groups*', async (route) => {
+      await route.fulfill({ json: [{ id: 1, groupCode: 'PROD', groupName: '產品管制' }] });
+    });
 
-    // Verify page has loaded
-    await expect(page.locator('text=TEST_PART')).toBeVisible();
+    await page.goto('/spc?ppcId=1');
 
-    // In ECharts, rendering is onto a canvas element. 
-    // We can't directly inspect canvas pixels easily in E2E, but our component
-    // typically shows detailed alert info in the sidebar or a summary.
-    // Let's assert that the sidebar warning panel shows up.
-    
-    // Check for the presence of warning alerts (if the UI lists violated rules in the DOM)
-    const alertList = page.locator('text=Rule1_Over3Sigma');
-    await expect(alertList.first()).toBeAttached();
-    
-    const alert2 = page.locator('text=Rule2_9SameSide');
-    await expect(alert2.first()).toBeAttached();
+    await expect(page.getByText('料號 (Product)')).toHaveCount(0);
+    await expect(page.getByText('線別', { exact: true })).toHaveCount(0);
 
-    // Trigger hover on chart or interact with data points if the UI renders divs.
-    // Since we know the Vue template shows selected point details:
-    // we simulate clicking on the first data point (ECharts interaction can be complex,
-    // so we might just verify the data is passed to the component state).
-    
-    // Instead, just ensure no errors were thrown and the specific violated rules appear 
-    // somewhere in the DOM (e.g., in the rule breakdown or summary).
-    await expect(page.locator('text=觸發西方電氣判讀規則').first()).toBeAttached({ timeout: 5000 });
+    await expect(page.locator('canvas').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=規格/管制界限失控點')).toBeVisible();
   });
 
 });

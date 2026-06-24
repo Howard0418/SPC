@@ -32,7 +32,7 @@ const siteMapCategories = [
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/characteristics", text: "品質特性項目", icon: Sliders },
       { to: "/part-process-characteristics", text: "SPC 管制項目設定", icon: FolderTree },
-      { to: "/traceability-master", text: "產線槽位追溯設定", icon: Layers }
+      { to: "/traceability-master", text: "線別槽體設定", icon: Layers }
     ]
   },
   {

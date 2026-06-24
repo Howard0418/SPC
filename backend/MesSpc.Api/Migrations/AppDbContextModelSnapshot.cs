@@ -805,6 +805,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("FormulaConfigJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -1228,6 +1231,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<double?>("LSL")
                         .HasColumnType("float");
 
+                    b.Property<int?>("MachineId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("PartId")
                         .HasColumnType("int");
 
@@ -1245,6 +1251,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<int>("SampleSize")
                         .HasColumnType("int");
 
+                    b.Property<int?>("TankId")
+                        .HasColumnType("int");
+
                     b.Property<double?>("TargetValue")
                         .HasColumnType("float");
 
@@ -1253,6 +1262,10 @@ namespace MesSpc.Api.Migrations
 
                     b.Property<double?>("USL")
                         .HasColumnType("float");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1266,19 +1279,23 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("ChartTypeId");
 
+                    b.HasIndex("MachineId");
+
                     b.HasIndex("PartId");
 
                     b.HasIndex("ProcessId");
 
                     b.HasIndex("RuleGroupId");
 
-                    b.HasIndex("ControlScope", "ProcessId", "CharacteristicId")
+                    b.HasIndex("TankId");
+
+                    b.HasIndex("ControlScope", "ProcessId", "MachineId", "TankId", "CharacteristicId")
                         .IsUnique()
                         .HasFilter("[PartId] IS NULL");
 
-                    b.HasIndex("ControlScope", "PartId", "ProcessId", "CharacteristicId")
+                    b.HasIndex("ControlScope", "PartId", "ProcessId", "MachineId", "TankId", "CharacteristicId")
                         .IsUnique()
-                        .HasFilter("[PartId] IS NOT NULL");
+                        .HasFilter("[PartId] IS NOT NULL AND [MachineId] IS NOT NULL AND [TankId] IS NOT NULL");
 
                     b.ToTable("PartProcessCharacteristics");
                 });
@@ -2717,6 +2734,11 @@ namespace MesSpc.Api.Migrations
                         .HasForeignKey("ChartTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("MesSpc.Api.Domain.Entities.Machine", "Machine")
+                        .WithMany()
+                        .HasForeignKey("MachineId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("MesSpc.Api.Domain.Entities.Part", "Part")
                         .WithMany()
                         .HasForeignKey("PartId")
@@ -2733,11 +2755,20 @@ namespace MesSpc.Api.Migrations
                         .HasForeignKey("RuleGroupId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("MesSpc.Api.Domain.Entities.Tank", "Tank")
+                        .WithMany()
+                        .HasForeignKey("TankId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Characteristic");
+
+                    b.Navigation("Machine");
 
                     b.Navigation("Part");
 
                     b.Navigation("Process");
+
+                    b.Navigation("Tank");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.QualityCharacteristic", b =>

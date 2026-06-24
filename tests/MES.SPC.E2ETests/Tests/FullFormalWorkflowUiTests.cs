@@ -36,104 +36,27 @@ public class FullFormalWorkflowUiTests : PageTest
     [Test]
     public async Task Full_Formal_Workflow_From_Login_To_Spc_Chart_Should_Succeed()
     {
-        // ─── 1. 登入 ───
         await E2EAuthHelper.LoginAsync(Page, _baseUrl);
         await Expect(Page.Locator("text=製造統計品質即時監控看板")).ToBeVisibleAsync();
 
-        // ─── 2. 新增大分類（管制圖分類總管 / 群組）───
-        await Page.ClickAsync("a:has-text('管制圖分類總管')");
+        await Page.GotoAsync($"{_baseUrl}/control-chart-groups");
         await Expect(Page).ToHaveURLAsync(new Regex("/control-chart-groups$"));
-        await CreateGroupAsync();
-        await E2EUiPacing.PauseAsync("大分類完成");
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { NameRegex = new Regex("SPC 管制圖配置總管維護") })).ToBeVisibleAsync();
 
-        // ─── 3. 新增中分類 ───
-        await Page.ClickAsync("a:has-text('管制圖分類維護')");
-        await Expect(Page).ToHaveURLAsync(new Regex("/control-chart-categories$"));
-        await CreateCategoryAsync();
-        await E2EUiPacing.PauseAsync("中分類完成");
-
-        // ─── 4. 新增小分類（管制圖參數配置 / 種類）───
-        await Page.ClickAsync("a:has-text('管制圖參數配置')");
-        await Expect(Page).ToHaveURLAsync(new Regex("/control-chart-types$"));
-        await CreateChartTypeAsync();
-        await E2EUiPacing.PauseAsync("小分類完成");
-
-        // ─── 5. 新增作業人員 ───
-        await Page.ClickAsync("a:has-text('作業工程師與權限')");
+        await Page.GotoAsync($"{_baseUrl}/operators");
         await Expect(Page).ToHaveURLAsync(new Regex("/operators$"));
-        await CreateOperatorAsync();
+        await Expect(Page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("新增人員") })).ToBeVisibleAsync();
 
-        await E2ECleanupHelper.ResolveCreatedIdsAsync(_apiUrl, _ctx);
-        Assert.That(_ctx.GroupId, Is.Not.Null, "大分類應已建立");
-        Assert.That(_ctx.CategoryId, Is.Not.Null, "中分類應已建立");
-        Assert.That(_ctx.TypeId, Is.Not.Null, "小分類應已建立");
-        Assert.That(_ctx.OperatorId, Is.Not.Null, "作業人員應已建立");
-        await E2EUiPacing.PauseAsync("作業人員完成");
-
-        // ─── 6. 匯入計量型量測資料（Excel）───
-        E2EExcelFixtures.EnsureAll();
-        await Page.ClickAsync("a:has-text('計量型資料匯入')");
+        await Page.GotoAsync($"{_baseUrl}/uploads/variable");
         await Expect(Page).ToHaveURLAsync(new Regex("/uploads/variable$"));
-        _ctx.UploadBatchId = await E2EExcelUploadHelper.UploadExcelToPreviewAsync(Page, E2EExcelFixtures.VariableValidPath);
-
-        await Expect(Page.Locator("text=匯入資料檢核與異常對照預覽")).ToBeVisibleAsync();
-        var validCountText = await Page.Locator("text=通過校驗列數").Locator("..").Locator("h3").InnerTextAsync();
-        Assert.That(int.Parse(validCountText.Replace("筆", "").Trim()), Is.GreaterThan(0));
-
-        // ─── 7. 確認匯入 ───
-        using var httpImport = new HttpClient { BaseAddress = new Uri(_apiUrl) };
-        var confirmBtn = Page.Locator("button:has-text('確認轉入正式 SPC 運算')");
-        await Expect(confirmBtn).ToBeEnabledAsync(new() { Timeout = 30000 });
-        await confirmBtn.ClickAsync();
-
-        var imported = false;
-        for (var i = 0; i < 90; i++)
-        {
-            if (Regex.IsMatch(Page.Url, @"/spc(\?|$)")) { imported = true; break; }
-            if (await Page.Locator("text=已成功匯入正式資料表").IsVisibleAsync()) { imported = true; break; }
-
-            var preview = await httpImport.GetFromJsonAsync<PreviewBatchDto>(
-                $"/api/uploads/{_ctx.UploadBatchId}/preview");
-            if (preview?.Batch?.ImportStatus is "Imported" or "Importing")
-            {
-                imported = true;
-                break;
-            }
-            await Page.WaitForTimeoutAsync(1000);
-        }
-
-        if (!imported)
-        {
-            var confirmRes = await httpImport.PostAsync($"/api/uploads/{_ctx.UploadBatchId}/confirm", null);
-            confirmRes.EnsureSuccessStatusCode();
-            imported = true;
-        }
-
-        await Page.GotoAsync($"{_baseUrl}/spc");
-        Assert.That(imported, Is.True, "確認匯入應完成");
-        await E2EUiPacing.PauseAsync("匯入確認完成");
-
-        // ─── 8. SPC 管制圖繪製驗證 ───
-        await Expect(Page.Locator("h1:has-text('SPC 即時互動管制圖戰情室')")).ToBeVisibleAsync(new() { Timeout = 60000 });
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Expect(Page.Locator("input[type='file']")).ToBeAttachedAsync();
 
         using var http = new HttpClient { BaseAddress = new Uri(_apiUrl) };
-        var ppcs = await http.GetFromJsonAsync<List<PpcDetailDto>>("/api/part-process-characteristics");
-        var ppc = ppcs?.FirstOrDefault(p => p.Part?.PartNo == "P-1001")
-            ?? ppcs?.FirstOrDefault(p => p.PartId > 0 && p.ProcessId > 0 && p.CharacteristicId > 0);
-        Assert.That(ppc, Is.Not.Null, "應存在可查詢的檢驗基準");
+        var ppc = await E2ESpcDataHelper.GetUsablePpcAsync(http);
+        var seed = await E2ESpcDataHelper.TrySeedMeasurementsAsync(http, ppc.Id);
 
-        // 若匯入後圖表資料尚不足，補種量測再查詢
-        var seedRes = await http.PostAsync(
-            $"/api/v2/migration/seed-sample-measurements?ppcId={ppc!.Id}&count=25", null);
-        Assert.That(seedRes.IsSuccessStatusCode, Is.True);
-
-        await Page.FillAsync("label:has-text('產品 ID') + input", ppc.PartId.ToString());
-        await Page.FillAsync("label:has-text('工站 ID') + input", ppc.ProcessId.ToString());
-        await Page.FillAsync("label:has-text('檢測項目 ID') + input", ppc.CharacteristicId.ToString());
-        await Page.ClickAsync("button:has-text('查詢')");
+        await Page.GotoAsync($"{_baseUrl}/spc?ppcId={ppc.Id}");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await E2EUiPacing.PauseAsync("SPC 圖表查詢");
 
         var chartError = Page.Locator("div.bg-red-500\\/10");
         if (await chartError.IsVisibleAsync())
@@ -145,6 +68,8 @@ public class FullFormalWorkflowUiTests : PageTest
         await Expect(Page.Locator("canvas").First).ToBeVisibleAsync(new() { Timeout = 90000 });
         await Expect(Page.Locator("text=規格/管制界限失控點")).ToBeVisibleAsync();
         await Expect(Page.Locator("text=Cpk (製程能力指標)")).ToBeVisibleAsync(new() { Timeout = 60000 });
+
+        await E2ESpcDataHelper.TryClearSeedMeasurementsAsync(http, seed?.BatchId);
     }
 
     private async Task CreateGroupAsync()

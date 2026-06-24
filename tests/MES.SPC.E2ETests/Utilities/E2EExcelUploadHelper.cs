@@ -20,7 +20,18 @@ public static class E2EExcelUploadHelper
         await E2EUiPacing.PauseAsync("Excel 對照預覽");
 
         await page.ClickAsync("button:has-text('確認映射並上傳批次')");
-        await page.WaitForURLAsync(new Regex("/uploads/[0-9a-f-]+/preview$"), new() { Timeout = 60000 });
+        try
+        {
+            await page.WaitForURLAsync(new Regex("/uploads/[0-9a-f-]+/preview$"), new() { Timeout = 60000 });
+        }
+        catch (TimeoutException)
+        {
+            var visibleError = await page.Locator(".text-red-500, .text-red-600, .bg-red-500\\/10").First.IsVisibleAsync();
+            var errorText = visibleError
+                ? await page.Locator(".text-red-500, .text-red-600, .bg-red-500\\/10").First.InnerTextAsync()
+                : "未偵測到可讀錯誤訊息。";
+            Assert.Fail($"上傳後未導向預覽頁。目前 URL：{page.Url}。頁面錯誤：{errorText}");
+        }
         await E2EUiPacing.PauseAsync("進入匯入預覽頁");
 
         var match = Regex.Match(page.Url, @"/uploads/([0-9a-f-]+)/preview");

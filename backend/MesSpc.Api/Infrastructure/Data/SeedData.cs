@@ -115,30 +115,12 @@ public static class SeedData
             db.SaveChanges();
         }
 
-        if (!db.SpcRuleGroups.Any())
+        var ruleGrp = EnsureDefaultSpcRules(db);
+        foreach (var chartType in db.ControlChartTypes.Where(x => !x.RuleGroupId.HasValue))
         {
-            var ruleGrp = new SpcRuleGroup { RuleGroupCode = "WE", RuleGroupName = "Western Electric Rules (西方電氣規則)" };
-            db.SpcRuleGroups.Add(ruleGrp);
-            db.SaveChanges();
-
-            db.SpcRules.AddRange(
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule1_Over3Sigma", RuleName = "單點超出 3 Sigma 界限", Priority = 10 },
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule2_9SameSide", RuleName = "連續 9 點同側", Priority = 20 },
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule3_6Trend", RuleName = "連續 6 點穩定上升或下降", Priority = 30 },
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule4_14Alternating", RuleName = "連續 14 點上下交替", Priority = 40 },
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule5_2Of3Over2Sigma", RuleName = "連續 3 點中有 2 點超出 2 Sigma (同側)", Priority = 50 },
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule6_4Of5Over1Sigma", RuleName = "連續 5 點中有 4 點超出 1 Sigma (同側)", Priority = 60 },
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule7_15Within1Sigma", RuleName = "連續 15 點在 1 Sigma 內", Priority = 70 },
-                new SpcRule { RuleGroupId = ruleGrp.Id, RuleCode = "Rule8_8Outside1Sigma", RuleName = "連續 8 點在 1 Sigma 外", Priority = 80 }
-            );
-            db.SaveChanges();
-
-            foreach (var chartType in db.ControlChartTypes)
-            {
-                chartType.RuleGroupId = ruleGrp.Id;
-            }
-            db.SaveChanges();
+            chartType.RuleGroupId = ruleGrp.Id;
         }
+        db.SaveChanges();
 
         if (!db.Parts.Any())
         {
@@ -308,4 +290,66 @@ public static class SeedData
             IsBuiltIn = true,
             IsActive = true
         };
+
+    private static SpcRuleGroup EnsureDefaultSpcRules(AppDbContext db)
+    {
+        var ruleGrp = db.SpcRuleGroups.FirstOrDefault(x => x.RuleGroupCode == "WE");
+        if (ruleGrp is null)
+        {
+            ruleGrp = new SpcRuleGroup
+            {
+                RuleGroupCode = "WE",
+                RuleGroupName = "Western Electric Rules (西方電氣規則)",
+                Description = "系統預設 8 大 SPC 管制規則庫。",
+                IsEnabled = true
+            };
+            db.SpcRuleGroups.Add(ruleGrp);
+            db.SaveChanges();
+        }
+        else
+        {
+            ruleGrp.RuleGroupName = "Western Electric Rules (西方電氣規則)";
+            ruleGrp.Description = "系統預設 8 大 SPC 管制規則庫。";
+            ruleGrp.IsEnabled = true;
+        }
+
+        var templates = new (string Code, string Name, string? Config, int Priority)[]
+        {
+            ("Rule1_Over3Sigma", "規則 1：單點超出 3 Sigma 管制界限", null, 10),
+            ("Rule2_9SameSide", "規則 2：連續 9 點落在中心線同一側", "{\"RequiredPoints\":9}", 20),
+            ("Rule3_6Trend", "規則 3：連續 6 點持續上升或下降", "{\"RequiredPoints\":6}", 30),
+            ("Rule4_14Alternating", "規則 4：連續 14 點上下交替", "{\"RequiredPoints\":14}", 40),
+            ("Rule5_2Of3Over2Sigma", "規則 5：連續 3 點中有 2 點超出 2 Sigma 且同側", null, 50),
+            ("Rule6_4Of5Over1Sigma", "規則 6：連續 5 點中有 4 點超出 1 Sigma 且同側", null, 60),
+            ("Rule7_15Within1Sigma", "規則 7：連續 15 點落在中心線 1 Sigma 內", null, 70),
+            ("Rule8_8Outside1Sigma", "規則 8：連續 8 點落在中心線兩側且都超出 1 Sigma", null, 80)
+        };
+
+        var existingRules = db.SpcRules.Where(x => x.RuleGroupId == ruleGrp.Id).ToList();
+        foreach (var template in templates)
+        {
+            var rule = existingRules.FirstOrDefault(x => x.RuleCode == template.Code);
+            if (rule is null)
+            {
+                db.SpcRules.Add(new SpcRule
+                {
+                    RuleGroupId = ruleGrp.Id,
+                    RuleCode = template.Code,
+                    RuleName = template.Name,
+                    RuleConfigJson = template.Config,
+                    Priority = template.Priority,
+                    IsEnabled = true
+                });
+                continue;
+            }
+
+            rule.RuleName = template.Name;
+            rule.RuleConfigJson = template.Config;
+            rule.Priority = template.Priority;
+            rule.IsEnabled = true;
+        }
+
+        db.SaveChanges();
+        return ruleGrp;
+    }
 }

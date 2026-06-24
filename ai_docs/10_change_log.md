@@ -1,5 +1,34 @@
 # 10 Change Log
 
+## [2026-06-24] - 查詢時間範圍上限與預設值限制 (日期卡關)
+- **後端安全防護與效能優化 (SpcController.cs)**:
+  - 限制 `/chart` 與 `/summary` 統計查詢端點的時間間隔最高不可超過 93 天（約 3 個月），防範大量量測數據的掃描。
+  - 當查詢起迄日為空時，預設自動查詢最近 3 個月的數據，防止全表無日期過濾的重度資料庫查詢。
+- **前端日期選取與阻擋 (SpcChartView.vue)**:
+  - 預設載入「量測起日」為 3 個月前，「量測迄日」為今日。
+  - 當使用者挑選日期區間大於 3 個月（93 天）時，由前端主動進行阻擋並回報「查詢時間範圍最多不可超過 3 個月」警告訊息，不向後端發送無效請求。
+
+## [2026-06-23] - 新增直方圖常態分佈曲線疊加與常態性檢定
+- **後端常態性檢定與曲線生成 (SpcEngine & Services)**:
+  - 實作 Jarque-Bera 常態性檢定，包括偏態 (Skewness)、峰態 (Kurtosis) 及卡方生存函數計算 p-value。
+  - 實作與前端組寬對齊的平滑常態 PDF 曲線產生器，點數 100 點，並透過 $ScaledPdf = PDF \times n \times binWidth$ 高度轉換重合公式，確保其能與計數直方圖無縫貼合。
+- **前端直方圖與常態曲線疊加 (SpcChartView.vue)**:
+  - 採用 ECharts 雙 X 軸方案，解決 category 軸柱狀圖與 value 軸曲線無法依數值精準對齊的問題。
+  - 新增直方圖頂部常態性檢定專屬指標卡，展示偏態、峰態、p-value 與常態判定（顯著水準 $\alpha = 0.05$）。
+- **測試防護網**:
+  - 新增 `NormalityTest.cs`，包含正常數據、極端偏離常態數據與零變異防呆邊界情況驗證。
+
+## [2026-06-23] - 製程工站槽位與 SPC 管制項目同步問題修復
+- **槽位自動刪除與同步機制**:
+  - 在 `MasterDataV2Controller.cs` 的 `SyncMachineTanksAsync` 中，實作了槽位（Tanks）與前端 UI 設定的雙向同步。前端移除槽位時，資料庫中對應的槽位記錄一併刪除，並具備外鍵約束保護。
+  - 機台建立時，強制呼叫 `SyncMachineTanksAsync` 建立對應的 `ProductionLine`，防止產生無產線對應的孤立機台。
+  - 機台代碼更新時，主動同步變更既有的 `ProductionLine.LineCode`，確保關聯的既有槽位對照不因機台改名而遺失。
+- **匯入關聯補齊**:
+  - 修正 `UploadService.cs`，在 Excel/CSV 自動匯入建立機台時，同步補建 `ProductionLines` 關聯資料，確保大小寫不一致或新機台能正常加載槽位。
+- **前端載入時序與防呆優化**:
+  - 於 `PartProcessCharacteristicsView.vue` 將槽位過濾改為以 API 動態向後端請求 `/api/machines/{machineId}/tanks`，根治前後端代碼大小寫或空格不一致引起的配對失敗。
+  - 重構 `openEditModal` 編輯載入時序，改為先非同步載入槽位清單後再回填表單欄位，徹底防止競爭條件（Race Condition）導致編輯時已選取槽位被重置為空。
+
 ## [2026-05-18] - SPC 企業級品質管理系統全面升級 (Phase 1 ~ Phase 4 Complete)
 - **資料庫與主檔架構重構 (Phase 1)**: 擴充 EF Core 模型，加入企業層級架構 (`Plant`, `Factory`, `Process`, `Machine`, `PartProcessCharacteristic`) 與中介暫存表，並透過 `SeedData.cs` 自動寫入標準量測項目與西方電氣規則。
 - **SPC 運算引擎與西方電氣規則擴充 (Phase 2)**: 實作完整的 Western Electric Rules (Rule 1~4) 自動檢驗引擎，並擴展統計常數表 ($n=2\sim 25$) 與製程能力指數 ($C_p, C_{pk}, P_p, P_{pk}, \hat{\sigma}_{within}, \sigma_{overall}$) 即時運算。

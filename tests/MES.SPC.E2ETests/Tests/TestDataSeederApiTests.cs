@@ -12,7 +12,16 @@ public class TestDataSeederApiTests
         var settings = ConfigReader.Load();
         using var client = new TestDataApiClient(settings.ApiBaseUrl);
 
-        var generated = await client.GenerateAsync(settings.GenerateRequest);
+        GenerateResponse generated;
+        try
+        {
+            generated = await client.GenerateAsync(settings.GenerateRequest);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            Assert.Inconclusive("Test-data endpoints are disabled in the current API environment.");
+            return;
+        }
         Assert.That(generated.RunId, Is.Not.Empty);
         Assert.That(generated.Products, Is.GreaterThan(0));
         Assert.That(generated.WorkOrders, Is.GreaterThan(0));
@@ -37,7 +46,16 @@ public class TestDataSeederApiTests
             MeasurementPerLot = 10,
             GenerateSpcAnomalies = false
         };
-        var generated = await client.GenerateAsync(req);
+        GenerateResponse generated;
+        try
+        {
+            generated = await client.GenerateAsync(req);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            Assert.Inconclusive("Test-data endpoints are disabled in the current API environment.");
+            return;
+        }
         Assert.That(generated.RunId, Is.Not.Empty);
         Assert.That(generated.Alerts, Is.EqualTo(0));
 

@@ -42,19 +42,23 @@ let trendChartInstance = null;
 
 // ─── Dimension helpers ───────────────────────────────────────
 const getDimensionForMapping = (m) => {
+  if (m.chartTypeId) {
+    const type = chartTypes.value.find(t => t.id === m.chartTypeId);
+    const cat = type ? categories.value.find(c => c.id === type.chartCategoryId) : null;
+    const group = cat ? groups.value.find(g => g.id === cat.chartGroupId) : null;
+    if (group?.groupCode) return group.groupCode;
+  }
   if (m.controlScope === "PROCESS") return "PROC";
   if (m.controlScope === "CHEMICAL") return "CHEM";
   if (m.controlScope === "PRODUCT") return "PROD";
-  if (!m.chartTypeId) {
-    return m.partId ? "PROD" : "PROC";
-  }
-  const type = chartTypes.value.find(t => t.id === m.chartTypeId);
-  if (!type) return m.partId ? "PROD" : "PROC";
-  const cat = categories.value.find(c => c.id === type.chartCategoryId);
-  if (!cat) return m.partId ? "PROD" : "PROC";
-  const group = groups.value.find(g => g.id === cat.chartGroupId);
-  return group?.groupCode || (m.partId ? "PROD" : "PROC");
+  return m.partId ? "PROD" : "PROC";
 };
+
+const dimensionOptions = computed(() =>
+  groups.value
+    .filter(group => group.isEnabled !== false)
+    .map(group => ({ id: group.groupCode, label: group.groupName }))
+);
 
 const filteredMappingsByDimension = computed(() =>
   mappings.value.filter(m => m.isEnabled && getDimensionForMapping(m) === selectedDimension.value)
@@ -165,6 +169,9 @@ async function loadMappings() {
     categories.value = catsRes.data || [];
     groups.value = groupsRes.data || [];
     mappings.value = mapRes.data || [];
+    if (!groups.value.some(group => group.groupCode === selectedDimension.value && group.isEnabled !== false)) {
+      selectedDimension.value = dimensionOptions.value[0]?.id || "PROC";
+    }
 
     // Auto-load from route query
     const qPpc = Number(route.query.ppcId);
@@ -416,13 +423,13 @@ const trendStats = computed(() => {
     </div>
 
     <!-- Dimension Selector -->
-    <div class="grid grid-cols-3 gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="flex flex-wrap gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
       <button
-        v-for="dim in [{ id: 'PROC', label: '製程管制項目 (Process)' }, { id: 'CHEM', label: '藥液管制項目 (Chemical)' }, { id: 'PROD', label: '產品管制項目 (Product)' }]"
+        v-for="dim in dimensionOptions"
         :key="dim.id"
         @click="selectedDimension = dim.id"
         :class="[
-          'py-3 px-4 rounded-xl text-center text-sm font-semibold transition-all duration-200',
+          'flex-1 min-w-40 py-3 px-4 rounded-xl text-center text-sm font-semibold transition-all duration-200',
           selectedDimension === dim.id
             ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-lg shadow-indigo-500/25'
             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -526,7 +533,7 @@ const trendStats = computed(() => {
           <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">檢驗特性</span>
           <span class="text-slate-800 dark:text-slate-200">
             [{{ selectedMapping.characteristic?.characteristicCode }}] {{ selectedMapping.characteristic?.characteristicName }}
-            <span v-if="selectedMapping.characteristic?.unit" class="text-slate-400">({{ selectedMapping.characteristic.unit }})</span>
+            <span v-if="selectedMapping.unit || selectedMapping.characteristic?.unit" class="text-slate-400">({{ selectedMapping.unit || selectedMapping.characteristic.unit }})</span>
           </span>
         </div>
         <div class="space-y-1">

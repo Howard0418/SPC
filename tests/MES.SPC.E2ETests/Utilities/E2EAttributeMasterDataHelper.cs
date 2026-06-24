@@ -43,21 +43,56 @@ public static class E2EAttributeMasterDataHelper
         ctx.CharacteristicId = createdChar!.Id;
 
         var parts = await http.GetFromJsonAsync<List<PartDto>>("/api/parts");
-        var part = parts?.FirstOrDefault(p => p.PartNo == ctx.PartNo)
-            ?? throw new InvalidOperationException($"找不到料號 {ctx.PartNo}");
+        var part = parts?.FirstOrDefault(p => p.PartNo == ctx.PartNo);
+        if (part is null)
+        {
+            var partRes = await http.PostAsJsonAsync("/api/parts", new
+            {
+                partNo = ctx.PartNo,
+                partName = "E2E 預設測試料號",
+                isEnabled = true
+            });
+            partRes.EnsureSuccessStatusCode();
+            part = await partRes.Content.ReadFromJsonAsync<PartDto>();
+        }
+
         var processes = await http.GetFromJsonAsync<List<ProcessDto>>("/api/processes");
-        var process = processes?.FirstOrDefault(p => p.ProcessCode == ctx.ProcessCode)
-            ?? throw new InvalidOperationException($"找不到製程 {ctx.ProcessCode}");
+        var process = processes?.FirstOrDefault(p => p.ProcessCode == ctx.ProcessCode);
+        if (process is null)
+        {
+            var processRes = await http.PostAsJsonAsync("/api/processes", new
+            {
+                processCode = ctx.ProcessCode,
+                processName = "E2E 預設測試製程",
+                isEnabled = true
+            });
+            processRes.EnsureSuccessStatusCode();
+            process = await processRes.Content.ReadFromJsonAsync<ProcessDto>();
+        }
+
         var machines = await http.GetFromJsonAsync<List<MachineDto>>("/api/machines");
         var machine = machines?.FirstOrDefault(m => m.MachineCode == ctx.MachineCode)
-            ?? machines?.FirstOrDefault(m => m.ProcessId == process.Id)
-            ?? throw new InvalidOperationException($"找不到機台 {ctx.MachineCode}");
+            ?? machines?.FirstOrDefault(m => m.ProcessId == process!.Id);
+        if (machine is null)
+        {
+            var machineRes = await http.PostAsJsonAsync("/api/machines", new
+            {
+                machineCode = ctx.MachineCode,
+                machineName = "E2E 預設測試機台",
+                processId = process!.Id,
+                isEnabled = true
+            });
+            machineRes.EnsureSuccessStatusCode();
+            machine = await machineRes.Content.ReadFromJsonAsync<MachineDto>();
+        }
+        if (machine is null)
+            throw new InvalidOperationException("建立或取得 E2E 測試機台失敗。");
         ctx.MachineCode = machine.MachineCode;
 
         var ppcPayload = new
         {
-            partId = part.Id,
-            processId = process.Id,
+            partId = part!.Id,
+            processId = process!.Id,
             characteristicId = ctx.CharacteristicId,
             usl = 0.05,
             lsl = 0.0,

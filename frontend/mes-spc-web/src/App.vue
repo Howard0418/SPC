@@ -78,7 +78,7 @@ const menuCategories = [
       { to: "/parts", text: "產品料號主檔", icon: Package },
       { to: "/part-process-characteristics", text: "SPC 管制項目設定", icon: FolderTree },
       { to: "/characteristics", text: "品質特性項目", icon: Sliders },
-      { to: "/traceability-master", text: "產線槽位追溯設定", icon: Layers },
+      { to: "/traceability-master", text: "線別槽體設定", icon: Layers },
     ]
   },
   {
@@ -187,8 +187,14 @@ function logout() {
       </aside>
 
       <!-- Main Workspace -->
-      <main class="flex-1 p-6 overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors">
-        <div class="max-w-[1800px] w-full mx-auto space-y-6">
+      <main
+        class="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors"
+        :class="route.path === '/spc' ? 'p-3' : 'p-6'"
+      >
+        <div
+          class="w-full mx-auto space-y-6"
+          :class="route.path === '/spc' ? 'max-w-none' : 'max-w-[1800px]'"
+        >
           <router-view />
         </div>
       </main>

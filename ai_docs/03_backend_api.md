@@ -25,8 +25,11 @@
 
 ### 3. 主數據管理 (Master Data CRUD)
 - 提供對 `Products`, `Parts`, `Processes`, `Machines` 以及 `ControlChartCategories` 的標準 CRUD 端點（同時支援雙路由）。
+- **`GET /api/machines/{id}/tanks`**：取得指定機台對應產線下的所有槽位清單（`Tanks` 表）。
+- **`POST /api/machines` 與 `PUT /api/machines/{id}`**：在請求中可包含 `Tanks` 陣列（含有 `Id`, `TankCode`, `TankName`, `IsActive`），後端會自動在 `SyncMachineTanksAsync` 中確保 `ProductionLine` 存在、同步更新產線代碼，並比對資料庫進行槽位的新增、更新或刪除（UI 中被移除的槽位會自資料庫中刪除，若有 SPC 管制項目關聯會被 DB 外鍵約束阻擋並回傳適當錯誤）。
 
 ### 4. SPC 數據查詢 (SPC Analysis)
-- **`GET /api/v1/Spc/Chart`**：
+- **`GET /api/v1/Spc/Chart`** 與 **`GET /api/v1/Spc/InteractiveChart`**：
   - 根據產品 ID、工站 ID、檢驗項目 ID 拉取最近 N 筆數據。
   - 呼叫後端 `SpcEngine` 計算管制界限、製程能力指標，並回傳標記有異常點與觸犯規則清單的資料點。
+  - **常態分佈擴充**：針對計量型 (Variable) 管制項目，若有效點數 $\ge 3$，後端會自動計算 Jarque-Bera 常態性檢定結果（偏態、峰態、統計量與 $p$-value），並產生 100 點經 $ScaledPdf = PDF \times n \times binWidth$ 縮放的平滑常態曲線數據，供前端進行直方圖與曲線的重疊繪製。

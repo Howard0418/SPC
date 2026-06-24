@@ -17,6 +17,17 @@ public static class E2EExcelFixtures
     public static string AttributeValidPathFor(E2EAttributeMasterDataContext ctx) =>
         Path.Combine(FixturesDir, $"attribute_upload_valid_{ctx.Suffix}.xlsx");
 
+    public static string VariableValidPathFor(E2EVariableMasterDataContext ctx) =>
+        Path.Combine(FixturesDir, $"variable_upload_valid_{ctx.Suffix}.xlsx");
+
+    public static string CreateUniqueVariableMixed()
+    {
+        Directory.CreateDirectory(FixturesDir);
+        var path = Path.Combine(FixturesDir, $"variable_upload_mixed_{DateTime.UtcNow:yyyyMMddHHmmssfff}.xlsx");
+        WriteVariableMixed(path, unique: true);
+        return path;
+    }
+
     private static string FixturesDir => Path.Combine(AppContext.BaseDirectory, "Fixtures");
 
     public static void EnsureAll()
@@ -41,14 +52,16 @@ public static class E2EExcelFixtures
     }
 
     /// <summary>計量型：含空料號錯誤列 + 計數型項目誤用 + 一筆有效列。</summary>
-    private static void WriteVariableMixed(string path)
+    private static void WriteVariableMixed(string path, bool unique = false)
     {
+        var suffix = unique ? DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") : "001";
+        var measuredAt = unique ? DateTime.UtcNow : new DateTime(2026, 5, 21, 8, 0, 0, DateTimeKind.Utc);
         var headers = new[] { "料號", "製程", "機台", "檢驗項目", "測量值", "日期", "作業員", "lot", "樣本編號" };
         var rows = new object?[][]
         {
-            new object?[] { "", "ST-01", "M-01", "LEN-001", 10.12, "2026-05-21 08:00:00", "OP-01", "L-E2E-ERR-001", 1 },
-            new object?[] { "P-1001", "ST-01", "M-01", "DEF-001", 0.05, "2026-05-21 08:01:00", "OP-01", "L-E2E-ERR-002", 1 },
-            new object?[] { "P-1001", "ST-01", "M-01", "LEN-001", 10.05, "2026-05-21 08:02:00", "OP-01", "L-E2E-OK-001", 1 }
+            new object?[] { "", "ST-01", "M-01", "LEN-001", 10.12, measuredAt.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", $"L-E2E-ERR-{suffix}-A", 1 },
+            new object?[] { "P-1001", "ST-01", "M-01", "DEF-001", 0.05, measuredAt.AddMinutes(1).ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", $"L-E2E-ERR-{suffix}-B", 1 },
+            new object?[] { "P-1001", "ST-01", "M-01", "LEN-001", 10.05, measuredAt.AddMinutes(2).ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", $"L-E2E-OK-{suffix}", 1 }
         };
         WriteSheet(path, "計量型資料匯入", headers, rows);
     }
@@ -79,6 +92,33 @@ public static class E2EExcelFixtures
             ctx.ProcessCode,
             ctx.MachineCode,
             ctx.CharacteristicCode);
+    }
+
+    public static void WriteVariableValidForContext(E2EVariableMasterDataContext ctx, int rowCount = 25)
+    {
+        Directory.CreateDirectory(FixturesDir);
+        var path = VariableValidPathFor(ctx);
+        var headers = new[] { "料號", "製程", "機台", "檢驗項目", "測量值", "日期", "作業員", "lot", "樣本編號" };
+        var rows = new List<object?[]>();
+        var lot = $"L-E2E-VAR-{ctx.Suffix}";
+        var start = DateTime.UtcNow.AddMinutes(-rowCount);
+        for (var i = 0; i < rowCount; i++)
+        {
+            var wave = Math.Sin(i / 3.0) * 0.025;
+            rows.Add(new object?[]
+            {
+                ctx.PartNo,
+                ctx.ProcessCode,
+                ctx.MachineCode,
+                ctx.CharacteristicCode,
+                Math.Round(10.0 + wave + (i % 5) * 0.003, 4),
+                start.AddMinutes(i).ToString("yyyy-MM-dd HH:mm:ss"),
+                "E2E-VAR-OP",
+                lot,
+                (i % 5) + 1
+            });
+        }
+        WriteSheet(path, "計量型資料匯入", headers, rows.ToArray());
     }
 
     private static void WriteAttributeValid(string path, string partNo, string processCode, string machineCode, string charCode, int rowCount = 2)

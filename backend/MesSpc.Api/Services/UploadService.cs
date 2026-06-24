@@ -68,21 +68,36 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
         if (batch is null) return null;
-        if (batch.ImportStatus is "Imported" or "Importing") return new { batch, message = "Batch already processed." };
+        if (batch.ImportStatus == "Imported") return new { batch, message = "Batch already processed." };
 
-        batch.ImportStatus = "Importing";
-        await db.SaveChangesAsync(ct);
+        if (batch.ImportStatus != "Importing")
+        {
+            batch.ImportStatus = "Importing";
+            await db.SaveChangesAsync(ct);
+        }
 
         var validDetails = await db.UploadDetails
             .Where(x => x.UploadBatchId == uploadBatchId && x.IsValid)
             .OrderBy(x => x.RowNo)
             .ToListAsync(ct);
 
+        var alreadyImported = batch.UploadType == "Variable"
+            ? await db.VariableMeasurements.CountAsync(x => x.UploadBatchId == uploadBatchId, ct)
+            : await db.AttributeMeasurements.CountAsync(x => x.UploadBatchId == uploadBatchId, ct);
+
+        if (alreadyImported >= validDetails.Count)
+        {
+            batch.ImportStatus = "Imported";
+            batch.ConfirmedAt ??= DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
+            return new { batch, imported = 0, spcCount = 0, alertCount = 0, resumed = true, alreadyImported };
+        }
+
         var imported = 0;
         var spcCount = 0;
         var alertCount = 0;
 
-        foreach (var detail in validDetails)
+        foreach (var detail in validDetails.Skip(alreadyImported))
         {
             var payload = JsonSerializer.Deserialize<Dictionary<string, string?>>(detail.PayloadJson) ?? [];
             var resolved = await ResolveReferencesAsync(payload, ct);
@@ -105,6 +120,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     PartProcessCharacteristicId = ctx.Mapping.Id,
                     LotNo = Get(payload, "LotNo"),
                     SerialNo = Get(payload, "SerialNo"),
+                    LineId = ctx.Tank?.LineId,
+                    TankId = ctx.Tank?.Id,
                     SampleNo = TryInt(Get(payload, "SampleNo"), 1),
                     MeasuredValue = measuredValue,
                     MeasuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow),
@@ -131,6 +148,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     CharacteristicId = ctx.Characteristic.Id,
                     PartProcessCharacteristicId = ctx.Mapping.Id,
                     LotNo = Get(payload, "LotNo"),
+                    LineId = ctx.Tank?.LineId,
+                    TankId = ctx.Tank?.Id,
                     SampleNo = TryInt(Get(payload, "SampleNo"), 1),
                     InspectedQty = TryNullableInt(Get(payload, "InspectedQty")),
                     DefectQty = TryNullableInt(Get(payload, "DefectQty")),
@@ -161,6 +180,10 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
         if (batch is null) return false;
+        var errors = db.UploadErrors.Where(x => x.UploadBatchId == uploadBatchId);
+        db.UploadErrors.RemoveRange(errors);
+        var details = db.UploadDetails.Where(x => x.UploadBatchId == uploadBatchId);
+        db.UploadDetails.RemoveRange(details);
         db.UploadBatches.Remove(batch);
         await db.SaveChangesAsync(ct);
         return true;
@@ -178,6 +201,11 @@ public class UploadService(AppDbContext db, SpcService spcService)
             var machCode = Get(r, "MachineCode");
             var charCode = Get(r, "CharacteristicCode");
             var charName = Get(r, "CharacteristicName") ?? charCode;
+
+            if (scope == "CHEMICAL")
+            {
+                continue;
+            }
 
             if (scope == "PRODUCT" && string.IsNullOrWhiteSpace(partNo)) continue;
             if (string.IsNullOrWhiteSpace(procCode) || string.IsNullOrWhiteSpace(charCode)) continue;
@@ -209,6 +237,36 @@ public class UploadService(AppDbContext db, SpcService spcService)
             {
                 mach = new Machine { MachineCode = machCode, MachineName = machCode, ProcessId = proc.Id, IsEnabled = true };
                 db.Machines.Add(mach);
+                await db.SaveChangesAsync(ct);
+            }
+
+            var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == mach.MachineCode, ct);
+            if (line is null)
+            {
+                var factory = await db.Factories.FirstOrDefaultAsync(ct);
+                if (factory is null)
+                {
+                    var plant = await db.Plants.FirstOrDefaultAsync(ct);
+                    if (plant is null)
+                    {
+                        plant = new Plant { PlantCode = "PLT-01", PlantName = "Main Plant" };
+                        db.Plants.Add(plant);
+                        await db.SaveChangesAsync(ct);
+                    }
+
+                    factory = new Factory { FactoryCode = "FAC-01", FactoryName = "Main Factory", PlantId = plant.Id };
+                    db.Factories.Add(factory);
+                    await db.SaveChangesAsync(ct);
+                }
+
+                line = new ProductionLine
+                {
+                    LineCode = mach.MachineCode,
+                    LineName = mach.MachineName,
+                    FactoryId = factory.Id,
+                    IsActive = mach.IsEnabled
+                };
+                db.ProductionLines.Add(line);
                 await db.SaveChangesAsync(ct);
             }
 
@@ -244,6 +302,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     ControlScope = scope,
                     PartId = mappingPartId,
                     ProcessId = proc.Id,
+                    MachineId = null,
+                    TankId = null,
                     CharacteristicId = chr.Id,
                     USL = uslVal > 0 || lslVal > 0 ? uslVal : null,
                     LSL = uslVal > 0 || lslVal > 0 ? lslVal : null,
@@ -300,6 +360,27 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         var errors = new List<(string Field, string Code, string Message)>();
         var scope = ResolveScope(row);
+
+        if (string.Equals(expectedDataCategory, "Variable", StringComparison.OrdinalIgnoreCase))
+        {
+            var measuredValue = Get(row, "MeasuredValue");
+            if (string.IsNullOrWhiteSpace(measuredValue))
+            {
+                errors.Add(("MeasuredValue", "MEASURED_VALUE_REQUIRED", "MeasuredValue is required."));
+            }
+            else if (!double.TryParse(measuredValue, out _))
+            {
+                errors.Add(("MeasuredValue", "INVALID_MEASURED_VALUE", "MeasuredValue must be numeric."));
+            }
+        }
+        else if (string.Equals(expectedDataCategory, "Attribute", StringComparison.OrdinalIgnoreCase))
+        {
+            AddIntegerErrorIfInvalid("InspectedQty", "INSPECTED_QTY_REQUIRED");
+            AddIntegerErrorIfInvalid("DefectQty", "INVALID_DEFECT_QTY", required: false);
+            AddIntegerErrorIfInvalid("DefectCount", "INVALID_DEFECT_COUNT", required: false);
+            AddIntegerErrorIfInvalid("UnitCount", "INVALID_UNIT_COUNT", required: false);
+        }
+
         Part? part = null;
         if (scope == "PRODUCT")
         {
@@ -310,6 +391,26 @@ public class UploadService(AppDbContext db, SpcService spcService)
         if (process is null) errors.Add(("ProcessCode", "PROCESS_NOT_FOUND", "ProcessCode does not exist."));
         var machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == Get(row, "MachineCode"), ct);
         if (machine is null) errors.Add(("MachineCode", "MACHINE_NOT_FOUND", "MachineCode does not exist."));
+        else if (process is not null && machine.ProcessId != process.Id)
+        {
+            errors.Add(("MachineCode", "MACHINE_PROCESS_MISMATCH", "MachineCode does not belong to the specified ProcessCode."));
+        }
+
+        Tank? tank = null;
+        if (scope == "CHEMICAL")
+        {
+            var tankName = Get(row, "TankCode");
+            if (string.IsNullOrWhiteSpace(tankName))
+            {
+                errors.Add(("TankCode", "TANK_REQUIRED", "Chemical control rows require TankCode/槽位."));
+            }
+            else if (machine is not null)
+            {
+                tank = await FindTankAsync(machine, tankName, ct);
+                if (tank is null) errors.Add(("TankCode", "TANK_NOT_FOUND", "TankCode/槽位 does not exist for the specified MachineCode."));
+            }
+        }
+
         var characteristic = await db.QualityCharacteristics.FirstOrDefaultAsync(x => x.CharacteristicCode == Get(row, "CharacteristicCode"), ct);
         if (characteristic is null) errors.Add(("CharacteristicCode", "CHAR_NOT_FOUND", "CharacteristicCode does not exist."));
         if (characteristic is not null && !string.Equals(characteristic.DataCategory, expectedDataCategory, StringComparison.OrdinalIgnoreCase))
@@ -320,22 +421,51 @@ public class UploadService(AppDbContext db, SpcService spcService)
         if ((scope != "PRODUCT" || part is not null) && process is not null && characteristic is not null)
         {
             int? mappingPartId = scope == "PRODUCT" ? part!.Id : null;
-            var mapping = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x =>
-                x.ControlScope == scope &&
-                x.PartId == mappingPartId &&
-                x.ProcessId == process.Id &&
-                x.CharacteristicId == characteristic.Id &&
-                x.IsEnabled, ct);
+            var mappingQuery = db.PartProcessCharacteristics.Where(x =>
+                    x.ControlScope == scope &&
+                    x.PartId == mappingPartId &&
+                    x.ProcessId == process.Id &&
+                    x.CharacteristicId == characteristic.Id &&
+                    x.IsEnabled);
+
+            if (scope == "CHEMICAL")
+            {
+                if (machine is not null) mappingQuery = mappingQuery.Where(x => x.MachineId == machine.Id);
+                if (tank is not null) mappingQuery = mappingQuery.Where(x => x.TankId == tank.Id);
+            }
+            else
+            {
+                mappingQuery = mappingQuery.Where(x => x.TankId == null);
+            }
+
+            var mapping = await mappingQuery.FirstOrDefaultAsync(ct);
             if (mapping is null)
             {
-                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", "ControlScope + optional Part + Process + Characteristic mapping does not exist."));
+                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", scope == "CHEMICAL"
+                    ? "Chemical master data does not exist for ProcessCode + MachineCode + TankCode + CharacteristicCode."
+                    : "ControlScope + optional Part + Process + Characteristic mapping does not exist."));
             }
         }
 
         return errors;
+
+        void AddIntegerErrorIfInvalid(string field, string code, bool required = true)
+        {
+            var raw = Get(row, field);
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                if (required) errors.Add((field, code, $"{field} is required."));
+                return;
+            }
+
+            if (!int.TryParse(raw, out _))
+            {
+                errors.Add((field, code, $"{field} must be an integer."));
+            }
+        }
     }
 
-    private async Task<(Part? Part, Process Process, Machine Machine, QualityCharacteristic Characteristic, PartProcessCharacteristic Mapping)?> ResolveReferencesAsync(Dictionary<string, string?> payload, CancellationToken ct)
+    private async Task<(Part? Part, Process Process, Machine Machine, Tank? Tank, QualityCharacteristic Characteristic, PartProcessCharacteristic Mapping)?> ResolveReferencesAsync(Dictionary<string, string?> payload, CancellationToken ct)
     {
         var scope = ResolveScope(payload);
         Part? part = null;
@@ -347,15 +477,27 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == Get(payload, "MachineCode"), ct);
         var characteristic = await db.QualityCharacteristics.FirstOrDefaultAsync(x => x.CharacteristicCode == Get(payload, "CharacteristicCode"), ct);
         if ((scope == "PRODUCT" && part is null) || process is null || machine is null || characteristic is null) return null;
+        var tank = scope == "CHEMICAL" ? await FindTankAsync(machine, Get(payload, "TankCode"), ct) : null;
+        if (scope == "CHEMICAL" && tank is null) return null;
         int? mappingPartId = scope == "PRODUCT" ? part!.Id : null;
-        var mapping = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x =>
-            x.ControlScope == scope &&
-            x.PartId == mappingPartId &&
-            x.ProcessId == process.Id &&
-            x.CharacteristicId == characteristic.Id &&
-            x.IsEnabled, ct);
+        var mappingQuery = db.PartProcessCharacteristics.Where(x =>
+                x.ControlScope == scope &&
+                x.PartId == mappingPartId &&
+                x.ProcessId == process.Id &&
+                x.CharacteristicId == characteristic.Id &&
+                x.IsEnabled);
+        if (scope == "CHEMICAL")
+        {
+            mappingQuery = mappingQuery.Where(x => x.MachineId == machine.Id && x.TankId == tank!.Id);
+        }
+        else
+        {
+            mappingQuery = mappingQuery.Where(x => x.TankId == null);
+        }
+
+        var mapping = await mappingQuery.FirstOrDefaultAsync(ct);
         if (mapping is null) return null;
-        return (part, process, machine, characteristic, mapping);
+        return (part, process, machine, tank, characteristic, mapping);
     }
 
     private static string ResolveScope(Dictionary<string, string?> row)
@@ -377,6 +519,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             "controlscope" => "管制類型",
             "processcode" => "製程",
             "machinecode" => "機台",
+            "tankcode" => "槽位",
             "characteristiccode" => "檢驗項目",
             "characteristicname" => "檢驗項目名稱",
             "usl" => "上限",
@@ -401,4 +544,20 @@ public class UploadService(AppDbContext db, SpcService spcService)
     private static int TryInt(string? raw, int fallback) => int.TryParse(raw, out var value) ? value : fallback;
     private static int? TryNullableInt(string? raw) => int.TryParse(raw, out var value) ? value : null;
     private static DateTime TryDateTime(string? raw, DateTime fallback) => DateTime.TryParse(raw, out var value) ? value : fallback;
+
+    private async Task<Tank?> FindTankAsync(Machine machine, string? tankNameOrCode, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(tankNameOrCode)) return null;
+        var raw = tankNameOrCode.Trim();
+        var prefixedCode = raw.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase)
+            ? raw
+            : $"{machine.MachineCode}-{raw}";
+
+        var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == machine.MachineCode, ct);
+        if (line is null) return null;
+
+        return await db.Tanks.FirstOrDefaultAsync(x =>
+            x.LineId == line.Id &&
+            (x.TankCode == raw || x.TankCode == prefixedCode || x.TankName == raw), ct);
+    }
 }

@@ -179,15 +179,144 @@ public class ProcessesController(AppDbContext db) : ControllerBase
 public class MachinesController(AppDbContext db) : ControllerBase
 {
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.Machines.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(Machine req) { db.Machines.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpGet("{id:int}/tanks")]
+    public async Task<IActionResult> GetTanks(int id)
+    {
+        var machine = await db.Machines.FindAsync(id);
+        if (machine is null) return NotFound();
+        var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == machine.MachineCode);
+        if (line is null) return Ok(Array.Empty<Tank>());
+        return Ok(await db.Tanks.Where(x => x.LineId == line.Id).OrderBy(x => x.TankCode).ToListAsync());
+    }
+
+    [HttpPost] public async Task<IActionResult> Create(MachineSaveRequest req)
+    {
+        var machine = ToMachine(req);
+        db.Machines.Add(machine);
+        await db.SaveChangesAsync();
+        await SyncMachineTanksAsync(machine, req.Tanks);
+        return Ok(machine);
+    }
+
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, Machine req)
+    public async Task<IActionResult> Update(int id, MachineSaveRequest req)
     {
         var x = await db.Machines.FindAsync(id); if (x is null) return NotFound();
+        var oldCode = x.MachineCode;
         x.MachineCode = req.MachineCode; x.MachineName = req.MachineName; x.ProcessId = req.ProcessId; x.Location = req.Location; x.Status = req.Status; x.IsEnabled = req.IsEnabled;
-        await db.SaveChangesAsync(); return Ok(x);
+        await db.SaveChangesAsync();
+        await SyncMachineTanksAsync(x, req.Tanks, oldCode);
+        return Ok(x);
     }
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.Machines.FindAsync(id); if (x is null) return NotFound(); db.Machines.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+
+    private static Machine ToMachine(MachineSaveRequest req) => new()
+    {
+        MachineCode = req.MachineCode,
+        MachineName = req.MachineName,
+        ProcessId = req.ProcessId,
+        Location = req.Location,
+        Status = req.Status,
+        IsEnabled = req.IsEnabled
+    };
+
+    private async Task SyncMachineTanksAsync(Machine machine, List<MachineTankRequest>? tanks, string? oldMachineCode = null)
+    {
+        tanks ??= [];
+
+        var searchCode = oldMachineCode ?? machine.MachineCode;
+        var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == searchCode);
+        if (line is null)
+        {
+            var factory = await db.Factories.FirstOrDefaultAsync();
+            if (factory is null)
+            {
+                var plant = await db.Plants.FirstOrDefaultAsync();
+                if (plant is null)
+                {
+                    plant = new Plant { PlantCode = "PLT-01", PlantName = "Main Plant" };
+                    db.Plants.Add(plant);
+                    await db.SaveChangesAsync();
+                }
+
+                factory = new Factory { FactoryCode = "FAC-01", FactoryName = "Main Factory", PlantId = plant.Id };
+                db.Factories.Add(factory);
+                await db.SaveChangesAsync();
+            }
+
+            line = new ProductionLine
+            {
+                LineCode = machine.MachineCode,
+                LineName = machine.MachineName,
+                FactoryId = factory.Id,
+                IsActive = machine.IsEnabled
+            };
+            db.ProductionLines.Add(line);
+            await db.SaveChangesAsync();
+        }
+        else
+        {
+            line.LineCode = machine.MachineCode;
+            line.LineName = machine.MachineName;
+            line.IsActive = machine.IsEnabled;
+            await db.SaveChangesAsync();
+        }
+
+        var existingTanks = await db.Tanks.Where(x => x.LineId == line.Id).ToListAsync();
+        var incomingIds = tanks.Select(t => t.Id).Where(id => id > 0).ToHashSet();
+        var tanksToRemove = existingTanks.Where(t => !incomingIds.Contains(t.Id)).ToList();
+        if (tanksToRemove.Count > 0)
+        {
+            db.Tanks.RemoveRange(tanksToRemove);
+        }
+
+        foreach (var tankReq in tanks.Where(x => !string.IsNullOrWhiteSpace(x.TankName) || !string.IsNullOrWhiteSpace(x.TankCode)))
+        {
+            var cleanName = string.IsNullOrWhiteSpace(tankReq.TankName) ? tankReq.TankCode!.Trim() : tankReq.TankName!.Trim();
+            var cleanCode = string.IsNullOrWhiteSpace(tankReq.TankCode) ? cleanName : tankReq.TankCode!.Trim();
+            var tankCode = cleanCode.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase)
+                ? cleanCode
+                : $"{machine.MachineCode}-{cleanCode}";
+
+            var tank = tankReq.Id > 0
+                ? await db.Tanks.FirstOrDefaultAsync(x => x.Id == tankReq.Id)
+                : await db.Tanks.FirstOrDefaultAsync(x => x.LineId == line.Id && x.TankCode == tankCode);
+
+            if (tank is null)
+            {
+                tank = new Tank { LineId = line.Id, TankCode = tankCode, TankName = cleanName, IsActive = tankReq.IsActive };
+                db.Tanks.Add(tank);
+            }
+            else
+            {
+                tank.LineId = line.Id;
+                tank.TankCode = tankCode;
+                tank.TankName = cleanName;
+                tank.IsActive = tankReq.IsActive;
+            }
+        }
+
+        await db.SaveChangesAsync();
+    }
+}
+
+public class MachineSaveRequest
+{
+    public string MachineCode { get; set; } = string.Empty;
+    public string MachineName { get; set; } = string.Empty;
+    public int ProcessId { get; set; }
+    public string? Location { get; set; }
+    public string? Status { get; set; }
+    public bool IsEnabled { get; set; } = true;
+    public List<MachineTankRequest>? Tanks { get; set; }
+}
+
+public class MachineTankRequest
+{
+    public int Id { get; set; }
+    public string? TankCode { get; set; }
+    public string? TankName { get; set; }
+    public bool IsActive { get; set; } = true;
 }
 
 [ApiController]
@@ -212,13 +341,17 @@ public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
 [Route("api/v1/part-process-characteristics")]
 public class PartProcessCharacteristicsController(AppDbContext db) : ControllerBase
 {
-    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.PartProcessCharacteristics.Include(x => x.Part).Include(x => x.Process).Include(x => x.Characteristic).OrderBy(x => x.Id).ToListAsync());
+    private const string ItemRuleGroupCodePrefix = "PPC_RULES_";
+    private const string ChartTypeRuleGroupCodePrefix = "CT_RULES_";
+
+    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.PartProcessCharacteristics.Include(x => x.Part).Include(x => x.Process).Include(x => x.Machine).Include(x => x.Tank).Include(x => x.Characteristic).OrderBy(x => x.Id).ToListAsync());
     [HttpPost]
     public async Task<IActionResult> Create(PartProcessCharacteristic req)
     {
         var validation = ValidateScope(req);
         if (validation is not null) return BadRequest(validation);
-        req.RuleGroupId = null;
+        req.Unit = CleanUnit(req.Unit);
+        req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
         db.PartProcessCharacteristics.Add(req);
         await db.SaveChangesAsync();
         return Ok(req);
@@ -230,12 +363,144 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
         var validation = ValidateScope(req);
         if (validation is not null) return BadRequest(validation);
-        x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = x.ControlScope == "PRODUCT" ? req.PartId : null; x.ProcessId = req.ProcessId; x.CharacteristicId = req.CharacteristicId;
+        x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = x.ControlScope == "PRODUCT" ? req.PartId : null; x.ProcessId = req.ProcessId; x.MachineId = req.MachineId; x.TankId = req.TankId; x.CharacteristicId = req.CharacteristicId;
+        x.Unit = CleanUnit(req.Unit);
         x.USL = req.USL; x.LSL = req.LSL; x.UCL = req.UCL; x.CL = req.CL; x.LCL = req.LCL; x.TargetValue = req.TargetValue;
-        x.SampleSize = req.SampleSize; x.ChartTypeId = req.ChartTypeId; x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
+        x.SampleSize = req.SampleSize; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson); x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
+
+    [HttpGet("{id:int}/rules")]
+    public async Task<IActionResult> GetRules(int id)
+    {
+        var item = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (item is null) return NotFound();
+
+        var selectedRules = item.RuleGroupId.HasValue
+            ? await db.SpcRules.AsNoTracking()
+                .Where(x => x.RuleGroupId == item.RuleGroupId.Value && x.IsEnabled)
+                .Select(x => x.RuleCode)
+                .ToHashSetAsync(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        return Ok(new ItemRulesResponse(
+            item.Id,
+            item.RuleGroupId,
+            (await GetRuleLibraryAsync()).Select(x => new ItemRuleOption(
+                x.RuleCode,
+                x.RuleName,
+                x.Priority,
+                selectedRules.Contains(x.RuleCode))).ToList()));
+    }
+
+    [HttpPut("{id:int}/rules")]
+    public async Task<IActionResult> UpdateRules(int id, ItemRulesUpdateRequest req)
+    {
+        var item = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.Id == id);
+        if (item is null) return NotFound();
+
+        var selectedRuleCodes = (req.SelectedRuleCodes ?? [])
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var ruleLibrary = await GetRuleLibraryAsync();
+        var validRuleCodes = ruleLibrary.Select(x => x.RuleCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var invalidRuleCodes = selectedRuleCodes.Where(x => !validRuleCodes.Contains(x)).ToList();
+        if (invalidRuleCodes.Count > 0)
+        {
+            return BadRequest(new { message = "包含不支援的管制規則。", invalidRuleCodes });
+        }
+
+        if (selectedRuleCodes.Count == 0)
+        {
+            item.RuleGroupId = null;
+            await db.SaveChangesAsync();
+            return await GetRules(id);
+        }
+
+        var ruleGroupCode = $"{ItemRuleGroupCodePrefix}{item.Id}";
+        var ruleGroup = await db.SpcRuleGroups.FirstOrDefaultAsync(x => x.RuleGroupCode == ruleGroupCode);
+        if (ruleGroup is null)
+        {
+            ruleGroup = new SpcRuleGroup
+            {
+                RuleGroupCode = ruleGroupCode,
+                RuleGroupName = $"SPC 管制項目 #{item.Id} 管制規則",
+                Description = $"SPC 管制項目 #{item.Id} 專屬管制規則勾選設定。",
+                IsEnabled = true
+            };
+            db.SpcRuleGroups.Add(ruleGroup);
+            await db.SaveChangesAsync();
+        }
+        else
+        {
+            ruleGroup.RuleGroupName = $"SPC 管制項目 #{item.Id} 管制規則";
+            ruleGroup.Description = $"SPC 管制項目 #{item.Id} 專屬管制規則勾選設定。";
+            ruleGroup.IsEnabled = true;
+        }
+
+        var existingRules = await db.SpcRules.Where(x => x.RuleGroupId == ruleGroup.Id).ToListAsync();
+        foreach (var template in ruleLibrary)
+        {
+            var rule = existingRules.FirstOrDefault(x => x.RuleCode == template.RuleCode);
+            if (rule is null)
+            {
+                db.SpcRules.Add(new SpcRule
+                {
+                    RuleGroupId = ruleGroup.Id,
+                    RuleCode = template.RuleCode,
+                    RuleName = template.RuleName,
+                    RuleConfigJson = template.RuleConfigJson,
+                    Priority = template.Priority,
+                    IsEnabled = selectedRuleCodes.Contains(template.RuleCode)
+                });
+                continue;
+            }
+
+            rule.RuleName = template.RuleName;
+            rule.RuleConfigJson = template.RuleConfigJson;
+            rule.Priority = template.Priority;
+            rule.IsEnabled = selectedRuleCodes.Contains(template.RuleCode);
+        }
+
+        item.RuleGroupId = ruleGroup.Id;
+        await db.SaveChangesAsync();
+        return await GetRules(id);
+    }
+
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound(); db.PartProcessCharacteristics.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+
+    private async Task<List<ItemRuleTemplate>> GetRuleLibraryAsync()
+    {
+        var rules = await db.SpcRules.AsNoTracking()
+            .Where(x => x.IsEnabled)
+            .Join(db.SpcRuleGroups.AsNoTracking().Where(g => g.IsEnabled
+                    && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)
+                    && !g.RuleGroupCode.StartsWith(ItemRuleGroupCodePrefix)),
+                rule => rule.RuleGroupId,
+                group => group.Id,
+                (rule, group) => rule)
+            .OrderBy(x => x.Priority)
+            .ThenBy(x => x.Id)
+            .ToListAsync();
+
+        return rules
+            .GroupBy(x => x.RuleCode, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .Select(x => new ItemRuleTemplate(x.RuleCode, x.RuleName, x.Priority, x.RuleConfigJson))
+            .ToList();
+    }
+
+    private static string? CleanUnit(string? unit) =>
+        string.IsNullOrWhiteSpace(unit) ? null : unit.Trim();
+
+    private static string? CleanFormulaConfig(string? formulaConfigJson)
+    {
+        if (string.IsNullOrWhiteSpace(formulaConfigJson)) return null;
+        using var document = System.Text.Json.JsonDocument.Parse(formulaConfigJson);
+        return document.RootElement.GetRawText();
+    }
 
     private static string NormalizeScope(string? scope)
     {
@@ -248,6 +513,15 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         req.ControlScope = NormalizeScope(req.ControlScope);
         if (req.ProcessId <= 0) return "工站製程為必填。";
         if (req.CharacteristicId <= 0) return "品質特性為必填。";
+        if (req.ControlScope == "CHEMICAL")
+        {
+            if (!req.MachineId.HasValue || req.MachineId.Value <= 0) return "藥液管制項目必須選擇線別/機台。";
+            if (!req.TankId.HasValue || req.TankId.Value <= 0) return "藥液管制項目必須選擇槽體。";
+        }
+        else
+        {
+            req.TankId = null;
+        }
         if (req.ControlScope == "PRODUCT")
         {
             if (!req.PartId.HasValue || req.PartId.Value <= 0) return "產品管制項目必須選擇產品料號。";
@@ -256,8 +530,24 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         {
             req.PartId = null;
         }
+        if (!string.IsNullOrWhiteSpace(req.FormulaConfigJson))
+        {
+            try
+            {
+                using var _ = System.Text.Json.JsonDocument.Parse(req.FormulaConfigJson);
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                return "公式配置格式不正確。";
+            }
+        }
         return null;
     }
+
+    private sealed record ItemRuleTemplate(string RuleCode, string RuleName, int Priority, string? RuleConfigJson);
+    public sealed record ItemRuleOption(string RuleCode, string RuleName, int Priority, bool IsSelected);
+    public sealed record ItemRulesResponse(int PartProcessCharacteristicId, int? RuleGroupId, List<ItemRuleOption> Rules);
+    public sealed record ItemRulesUpdateRequest(List<string>? SelectedRuleCodes);
 }
 
 [ApiController]
@@ -314,6 +604,7 @@ public class ControlChartCategoriesController(AppDbContext db) : ControllerBase
 public class ControlChartTypesController(AppDbContext db) : ControllerBase
 {
     private const string ChartTypeRuleGroupCodePrefix = "CT_RULES_";
+    private const string ItemRuleGroupCodePrefix = "PPC_RULES_";
 
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.ControlChartTypes.OrderBy(x => x.Id).ToListAsync());
     [HttpPost] public async Task<IActionResult> Create(ControlChartType req) { db.ControlChartTypes.Add(req); await db.SaveChangesAsync(); return Ok(req); }
@@ -432,7 +723,9 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     {
         var rules = await db.SpcRules.AsNoTracking()
             .Where(x => x.IsEnabled)
-            .Join(db.SpcRuleGroups.AsNoTracking().Where(g => g.IsEnabled && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)),
+            .Join(db.SpcRuleGroups.AsNoTracking().Where(g => g.IsEnabled
+                    && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)
+                    && !g.RuleGroupCode.StartsWith(ItemRuleGroupCodePrefix)),
                 rule => rule.RuleGroupId,
                 group => group.Id,
                 (rule, group) => rule)
@@ -494,6 +787,7 @@ public class SpcRulesController(AppDbContext db) : ControllerBase
 {
     private const string DefaultRuleGroupCode = "WE";
     private const string ChartTypeRuleGroupCodePrefix = "CT_RULES_";
+    private const string ItemRuleGroupCodePrefix = "PPC_RULES_";
 
     [HttpGet] 
     public async Task<IActionResult> Get([FromQuery] int? groupId, [FromQuery] bool libraryOnly = false) 
@@ -502,7 +796,9 @@ public class SpcRulesController(AppDbContext db) : ControllerBase
         if (groupId.HasValue) q = q.Where(x => x.RuleGroupId == groupId.Value);
         if (libraryOnly)
         {
-            var libraryRules = await q.Join(db.SpcRuleGroups.Where(g => g.IsEnabled && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)),
+            var libraryRules = await q.Join(db.SpcRuleGroups.Where(g => g.IsEnabled
+                    && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)
+                    && !g.RuleGroupCode.StartsWith(ItemRuleGroupCodePrefix)),
                 rule => rule.RuleGroupId,
                 group => group.Id,
                 (rule, group) => rule)

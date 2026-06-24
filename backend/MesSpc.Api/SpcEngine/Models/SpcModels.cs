@@ -18,6 +18,10 @@ public record SpcDataPoint
     public string? RootCause { get; init; }
     public string? CorrectiveAction { get; init; }
     public int? MeasurementBatchId { get; init; }
+    public long? VariableMeasurementId { get; init; }
+    public int? AlertId { get; init; }
+    public string? AlertStatus { get; init; }
+    public string? ResponsibleUser { get; init; }
 }
 
 public record Subgroup
@@ -41,6 +45,10 @@ public record Subgroup
     public string? RootCause { get; init; }
     public string? CorrectiveAction { get; init; }
     public int? MeasurementBatchId { get; init; }
+    public long? VariableMeasurementId { get; init; }
+    public int? AlertId { get; init; }
+    public string? AlertStatus { get; init; }
+    public string? ResponsibleUser { get; init; }
 }
 
 public record AttributeDataPoint

@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "dgSpecHash": "zSEHjmwAjic=",
+  "success": false,
+  "projectFilePath": "D:\\SPC\\test-artifacts\\ExcelInspector\\ExcelInspector.csproj",
+  "expectedPackageFiles": [],
+  "logs": [
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "無法載入來源 https://api.nuget.org/v3/index.json 的服務索引。\r\n  嘗試存取通訊端被拒絕，因為存取權限不足。 (api.nuget.org:443)\r\n  嘗試存取通訊端被拒絕，因為存取權限不足。",
+      "projectPath": "D:\\SPC\\test-artifacts\\ExcelInspector\\ExcelInspector.csproj",
+      "filePath": "D:\\SPC\\test-artifacts\\ExcelInspector\\ExcelInspector.csproj",
+      "targetGraphs": []
+    }
+  ]
+}

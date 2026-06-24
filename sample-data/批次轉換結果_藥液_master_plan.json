@@ -1,0 +1,1308 @@
+{
+  "rowCount": 9587,
+  "comboCount": 135,
+  "processes": [
+    "C1",
+    "C3",
+    "C5",
+    "CN",
+    "DP",
+    "DV",
+    "DV2",
+    "N1",
+    "N2",
+    "PT",
+    "PT2",
+    "QE",
+    "QE2",
+    "ST",
+    "ST2"
+  ],
+  "machines": [
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tanks": [
+        "銅1",
+        "銅2"
+      ]
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tanks": [
+        "剝掛槽",
+        "清潔槽",
+        "酸浸槽",
+        "鍍銅槽"
+      ]
+    },
+    {
+      "process": "C5",
+      "machine": "C5",
+      "tanks": [
+        "剝掛槽",
+        "清潔槽",
+        "酸浸槽"
+      ]
+    },
+    {
+      "process": "CN",
+      "machine": "CN",
+      "tanks": [
+        "鹼洗1",
+        "鹼洗2"
+      ]
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tanks": [
+        "抗氧化",
+        "清潔槽",
+        "酸洗槽",
+        "除鈀槽"
+      ]
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tanks": [
+        "新液洗 New liquid washing",
+        "液洗 Liquid washing",
+        "添加桶 Add Tank",
+        "顯影槽Developer Tank"
+      ]
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tanks": [
+        "新液洗 New liquid washing",
+        "液洗 Liquid washing",
+        "添加桶 Add Tank",
+        "顯影槽Developer Tank"
+      ]
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tanks": [
+        "促進",
+        "催化",
+        "表面處理",
+        "調節",
+        "預浸"
+      ]
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tanks": [
+        "促進",
+        "催化",
+        "化鎳",
+        "表面處理",
+        "調節",
+        "預浸"
+      ]
+    },
+    {
+      "process": "PT",
+      "machine": "PT",
+      "tanks": [
+        "抗氧化 Anti-oxidation",
+        "脫脂槽 Degreasing",
+        "銅 Copper",
+        "鹽酸洗 HCL"
+      ]
+    },
+    {
+      "process": "PT2",
+      "machine": "PT2",
+      "tanks": [
+        "抗氧化 Anti-oxidation",
+        "脫脂槽 Degreasing",
+        "銅 Copper",
+        "鹽酸洗 HCL"
+      ]
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tanks": [
+        "NS-357",
+        "抗氧化 Anti-oxidation",
+        "硫酸洗 H2SO4",
+        "線外配槽",
+        "蝕刻主槽 Main Etching Tank",
+        "銅 copper"
+      ]
+    },
+    {
+      "process": "QE2",
+      "machine": "QE2",
+      "tanks": [
+        "硫酸洗 H2SO4",
+        "蝕刻(3)槽(鎳) Etching Tank (3) – Nickel",
+        "蝕刻主槽(銅) Main Etching Tank"
+      ]
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tanks": [
+        "NS-357",
+        "ST小槽 New liquid washing",
+        "剝膜 (1) 槽 Stripping Tank (1)",
+        "剝膜 (2) 槽Stripping Tank (2)",
+        "剝膜 小槽Resist Stripping Small Tank",
+        "剝膜 添加桶 Resist Stripping Additive Tank",
+        "新液洗 New liquid washing",
+        "液洗 Liquid washing",
+        "液洗(2) Liquid washing",
+        "液洗(3) New liquid washing",
+        "添加桶",
+        "添加桶 New liquid washing",
+        "硫酸洗 H2SO4",
+        "硫酸洗(4) H2SO3",
+        "線外配槽",
+        "銅 copper"
+      ]
+    },
+    {
+      "process": "ST2",
+      "machine": "ST2",
+      "tanks": [
+        "剝膜 (2) 槽 Stripping Tank (2)",
+        "剝膜 (3) 槽 Stripping Tank (3)",
+        "硫酸洗(4) H2SO3"
+      ]
+    }
+  ],
+  "characteristics": [
+    {
+      "code": "比重",
+      "name": "比重"
+    },
+    {
+      "code": "主劑 (%)",
+      "name": "主劑 (%)"
+    },
+    {
+      "code": "主劑 (ml/L)",
+      "name": "主劑 (ml/L)"
+    },
+    {
+      "code": "氯離子",
+      "name": "氯離子"
+    },
+    {
+      "code": "氯離子(ppm)",
+      "name": "氯離子(ppm)"
+    },
+    {
+      "code": "硝酸 (%)",
+      "name": "硝酸 (%)"
+    },
+    {
+      "code": "硫酸",
+      "name": "硫酸"
+    },
+    {
+      "code": "硫酸 (%)",
+      "name": "硫酸 (%)"
+    },
+    {
+      "code": "硫酸 (ml/L)",
+      "name": "硫酸 (ml/L)"
+    },
+    {
+      "code": "溫度 (℃)",
+      "name": "溫度 (℃)"
+    },
+    {
+      "code": "碳酸鈉 (%)",
+      "name": "碳酸鈉 (%)"
+    },
+    {
+      "code": "酸 (%)",
+      "name": "酸 (%)"
+    },
+    {
+      "code": "酸洗",
+      "name": "酸洗"
+    },
+    {
+      "code": "酸洗 (%)",
+      "name": "酸洗 (%)"
+    },
+    {
+      "code": "銅離子",
+      "name": "銅離子"
+    },
+    {
+      "code": "銅離子 (g/L)",
+      "name": "銅離子 (g/L)"
+    },
+    {
+      "code": "雙氧水",
+      "name": "雙氧水"
+    },
+    {
+      "code": "雙氧水 (%)",
+      "name": "雙氧水 (%)"
+    },
+    {
+      "code": "鹼洗 (%)",
+      "name": "鹼洗 (%)"
+    },
+    {
+      "code": "鹼洗 (ml/L)",
+      "name": "鹼洗 (ml/L)"
+    },
+    {
+      "code": "AC-RF (ml/L)",
+      "name": "AC-RF (ml/L)"
+    },
+    {
+      "code": "BCNa ((g/L)",
+      "name": "BCNa ((g/L)"
+    },
+    {
+      "code": "CHO ((g/L)",
+      "name": "CHO ((g/L)"
+    },
+    {
+      "code": "CHO (%)",
+      "name": "CHO (%)"
+    },
+    {
+      "code": "CHO (g/L)",
+      "name": "CHO (g/L)"
+    },
+    {
+      "code": "CHO (ml/L)",
+      "name": "CHO (ml/L)"
+    },
+    {
+      "code": "CuSO4‧5H2O (g/L)",
+      "name": "CuSO4‧5H2O (g/L)"
+    },
+    {
+      "code": "DP333 (ml/L)",
+      "name": "DP333 (ml/L)"
+    },
+    {
+      "code": "HO (%)",
+      "name": "HO (%)"
+    },
+    {
+      "code": "NaH2PO2‧H2O (g/L)",
+      "name": "NaH2PO2‧H2O (g/L)"
+    },
+    {
+      "code": "Ni (g/L)",
+      "name": "Ni (g/L)"
+    },
+    {
+      "code": "NKH (g/L)",
+      "name": "NKH (g/L)"
+    },
+    {
+      "code": "NNH (%)",
+      "name": "NNH (%)"
+    },
+    {
+      "code": "Normality (N)",
+      "name": "Normality (N)"
+    },
+    {
+      "code": "P200 (ml/L)",
+      "name": "P200 (ml/L)"
+    },
+    {
+      "code": "P300 (g/L)",
+      "name": "P300 (g/L)"
+    },
+    {
+      "code": "P400 (ml/L)",
+      "name": "P400 (ml/L)"
+    },
+    {
+      "code": "P500A (ml/L)",
+      "name": "P500A (ml/L)"
+    },
+    {
+      "code": "PH",
+      "name": "PH"
+    },
+    {
+      "code": "S RF-A (ml/L)",
+      "name": "S RF-A (ml/L)"
+    },
+    {
+      "code": "S RF-B (ml/L)",
+      "name": "S RF-B (ml/L)"
+    },
+    {
+      "code": "SF",
+      "name": "SF"
+    },
+    {
+      "code": "SnCl2 (g/L)",
+      "name": "SnCl2 (g/L)"
+    },
+    {
+      "code": "SPS (g/L)",
+      "name": "SPS (g/L)"
+    }
+  ],
+  "combos": [
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅1",
+      "characteristic": "氯離子(ppm)",
+      "count": 31
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅1",
+      "characteristic": "CHO (g/L)",
+      "count": 34
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅1",
+      "characteristic": "CuSO4‧5H2O (g/L)",
+      "count": 29
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅1",
+      "characteristic": "S RF-A (ml/L)",
+      "count": 1
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅1",
+      "characteristic": "S RF-B (ml/L)",
+      "count": 1
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅2",
+      "characteristic": "氯離子(ppm)",
+      "count": 32
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅2",
+      "characteristic": "CHO (g/L)",
+      "count": 35
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅2",
+      "characteristic": "CuSO4‧5H2O (g/L)",
+      "count": 31
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅2",
+      "characteristic": "S RF-A (ml/L)",
+      "count": 1
+    },
+    {
+      "process": "C1",
+      "machine": "C1",
+      "tank": "銅2",
+      "characteristic": "S RF-B (ml/L)",
+      "count": 1
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "剝掛槽",
+      "characteristic": "硫酸",
+      "count": 18
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "剝掛槽",
+      "characteristic": "銅離子",
+      "count": 17
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "剝掛槽",
+      "characteristic": "雙氧水",
+      "count": 20
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "清潔槽",
+      "characteristic": "CHO (ml/L)",
+      "count": 17
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "酸浸槽",
+      "characteristic": "硫酸 (ml/L)",
+      "count": 17
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "鍍銅槽",
+      "characteristic": "氯離子",
+      "count": 15
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "鍍銅槽",
+      "characteristic": "硫酸",
+      "count": 17
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "鍍銅槽",
+      "characteristic": "銅離子",
+      "count": 17
+    },
+    {
+      "process": "C3",
+      "machine": "C3",
+      "tank": "鍍銅槽",
+      "characteristic": "SF",
+      "count": 1
+    },
+    {
+      "process": "C5",
+      "machine": "C5",
+      "tank": "剝掛槽",
+      "characteristic": "硫酸",
+      "count": 1
+    },
+    {
+      "process": "C5",
+      "machine": "C5",
+      "tank": "剝掛槽",
+      "characteristic": "銅離子",
+      "count": 1
+    },
+    {
+      "process": "C5",
+      "machine": "C5",
+      "tank": "剝掛槽",
+      "characteristic": "雙氧水",
+      "count": 1
+    },
+    {
+      "process": "C5",
+      "machine": "C5",
+      "tank": "清潔槽",
+      "characteristic": "DP333 (ml/L)",
+      "count": 1
+    },
+    {
+      "process": "C5",
+      "machine": "C5",
+      "tank": "酸浸槽",
+      "characteristic": "硫酸 (%)",
+      "count": 1
+    },
+    {
+      "process": "CN",
+      "machine": "CN",
+      "tank": "鹼洗1",
+      "characteristic": "BCNa ((g/L)",
+      "count": 8
+    },
+    {
+      "process": "CN",
+      "machine": "CN",
+      "tank": "鹼洗1",
+      "characteristic": "CHO ((g/L)",
+      "count": 8
+    },
+    {
+      "process": "CN",
+      "machine": "CN",
+      "tank": "鹼洗2",
+      "characteristic": "BCNa ((g/L)",
+      "count": 8
+    },
+    {
+      "process": "CN",
+      "machine": "CN",
+      "tank": "鹼洗2",
+      "characteristic": "CHO ((g/L)",
+      "count": 8
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "抗氧化",
+      "characteristic": "PH",
+      "count": 264
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "除鈀槽",
+      "characteristic": "主劑 (%)",
+      "count": 31
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "除鈀槽",
+      "characteristic": "主劑 (ml/L)",
+      "count": 221
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "除鈀槽",
+      "characteristic": "溫度 (℃)",
+      "count": 225
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "除鈀槽",
+      "characteristic": "PH",
+      "count": 264
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "除鈀槽",
+      "characteristic": "SPS (g/L)",
+      "count": 259
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "清潔槽",
+      "characteristic": "鹼洗 (%)",
+      "count": 31
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "清潔槽",
+      "characteristic": "鹼洗 (ml/L)",
+      "count": 223
+    },
+    {
+      "process": "DP",
+      "machine": "DP",
+      "tank": "酸洗槽",
+      "characteristic": "酸洗 (%)",
+      "count": 253
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tank": "液洗 Liquid washing",
+      "characteristic": "碳酸鈉 (%)",
+      "count": 301
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tank": "液洗 Liquid washing",
+      "characteristic": "PH",
+      "count": 309
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tank": "添加桶 Add Tank",
+      "characteristic": "碳酸鈉 (%)",
+      "count": 25
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tank": "添加桶 Add Tank",
+      "characteristic": "PH",
+      "count": 25
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tank": "新液洗 New liquid washing",
+      "characteristic": "碳酸鈉 (%)",
+      "count": 289
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tank": "新液洗 New liquid washing",
+      "characteristic": "PH",
+      "count": 295
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tank": "顯影槽Developer Tank",
+      "characteristic": "碳酸鈉 (%)",
+      "count": 26
+    },
+    {
+      "process": "DV",
+      "machine": "DV",
+      "tank": "顯影槽Developer Tank",
+      "characteristic": "PH",
+      "count": 26
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tank": "液洗 Liquid washing",
+      "characteristic": "碳酸鈉 (%)",
+      "count": 14
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tank": "液洗 Liquid washing",
+      "characteristic": "PH",
+      "count": 15
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tank": "添加桶 Add Tank",
+      "characteristic": "碳酸鈉 (%)",
+      "count": 26
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tank": "添加桶 Add Tank",
+      "characteristic": "PH",
+      "count": 27
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tank": "新液洗 New liquid washing",
+      "characteristic": "碳酸鈉 (%)",
+      "count": 36
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tank": "新液洗 New liquid washing",
+      "characteristic": "PH",
+      "count": 38
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tank": "顯影槽Developer Tank",
+      "characteristic": "碳酸鈉 (%)",
+      "count": 23
+    },
+    {
+      "process": "DV2",
+      "machine": "DV2",
+      "tank": "顯影槽Developer Tank",
+      "characteristic": "PH",
+      "count": 24
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "表面處理",
+      "characteristic": "NKH (g/L)",
+      "count": 10
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "表面處理",
+      "characteristic": "NNH (%)",
+      "count": 10
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "表面處理",
+      "characteristic": "PH",
+      "count": 10
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "促進",
+      "characteristic": "P500A (ml/L)",
+      "count": 10
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "促進",
+      "characteristic": "SnCl2 (g/L)",
+      "count": 10
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "催化",
+      "characteristic": "AC-RF (ml/L)",
+      "count": 11
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "催化",
+      "characteristic": "Normality (N)",
+      "count": 11
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "催化",
+      "characteristic": "SnCl2 (g/L)",
+      "count": 11
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "預浸",
+      "characteristic": "Normality (N)",
+      "count": 11
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "調節",
+      "characteristic": "P200 (ml/L)",
+      "count": 10
+    },
+    {
+      "process": "N1",
+      "machine": "N1",
+      "tank": "調節",
+      "characteristic": "PH",
+      "count": 10
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "化鎳",
+      "characteristic": "NaH2PO2‧H2O (g/L)",
+      "count": 5
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "化鎳",
+      "characteristic": "Ni (g/L)",
+      "count": 46
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "化鎳",
+      "characteristic": "PH",
+      "count": 43
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "表面處理",
+      "characteristic": "NKH (g/L)",
+      "count": 42
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "表面處理",
+      "characteristic": "NNH (%)",
+      "count": 40
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "表面處理",
+      "characteristic": "PH",
+      "count": 40
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "促進",
+      "characteristic": "P500A (ml/L)",
+      "count": 41
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "促進",
+      "characteristic": "SnCl2 (g/L)",
+      "count": 39
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "催化",
+      "characteristic": "P400 (ml/L)",
+      "count": 38
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "催化",
+      "characteristic": "SnCl2 (g/L)",
+      "count": 40
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "預浸",
+      "characteristic": "P300 (g/L)",
+      "count": 41
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "調節",
+      "characteristic": "P200 (ml/L)",
+      "count": 40
+    },
+    {
+      "process": "N2",
+      "machine": "N2",
+      "tank": "調節",
+      "characteristic": "PH",
+      "count": 40
+    },
+    {
+      "process": "PT",
+      "machine": "PT",
+      "tank": "抗氧化 Anti-oxidation",
+      "characteristic": "PH",
+      "count": 271
+    },
+    {
+      "process": "PT",
+      "machine": "PT",
+      "tank": "脫脂槽 Degreasing",
+      "characteristic": "CHO (%)",
+      "count": 286
+    },
+    {
+      "process": "PT",
+      "machine": "PT",
+      "tank": "銅 Copper",
+      "characteristic": "比重",
+      "count": 284
+    },
+    {
+      "process": "PT",
+      "machine": "PT",
+      "tank": "銅 Copper",
+      "characteristic": "溫度 (℃)",
+      "count": 246
+    },
+    {
+      "process": "PT",
+      "machine": "PT",
+      "tank": "銅 Copper",
+      "characteristic": "銅離子 (g/L)",
+      "count": 289
+    },
+    {
+      "process": "PT",
+      "machine": "PT",
+      "tank": "鹽酸洗 HCL",
+      "characteristic": "銅離子 (g/L)",
+      "count": 304
+    },
+    {
+      "process": "PT",
+      "machine": "PT",
+      "tank": "鹽酸洗 HCL",
+      "characteristic": "CHO (%)",
+      "count": 301
+    },
+    {
+      "process": "PT2",
+      "machine": "PT2",
+      "tank": "抗氧化 Anti-oxidation",
+      "characteristic": "PH",
+      "count": 35
+    },
+    {
+      "process": "PT2",
+      "machine": "PT2",
+      "tank": "脫脂槽 Degreasing",
+      "characteristic": "CHO (%)",
+      "count": 36
+    },
+    {
+      "process": "PT2",
+      "machine": "PT2",
+      "tank": "銅 Copper",
+      "characteristic": "比重",
+      "count": 34
+    },
+    {
+      "process": "PT2",
+      "machine": "PT2",
+      "tank": "銅 Copper",
+      "characteristic": "銅離子 (g/L)",
+      "count": 36
+    },
+    {
+      "process": "PT2",
+      "machine": "PT2",
+      "tank": "鹽酸洗 HCL",
+      "characteristic": "銅離子 (g/L)",
+      "count": 35
+    },
+    {
+      "process": "PT2",
+      "machine": "PT2",
+      "tank": "鹽酸洗 HCL",
+      "characteristic": "CHO (%)",
+      "count": 35
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "抗氧化 Anti-oxidation",
+      "characteristic": "PH",
+      "count": 171
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "硫酸洗 H2SO4",
+      "characteristic": "酸洗",
+      "count": 108
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "硫酸洗 H2SO4",
+      "characteristic": "CHO (%)",
+      "count": 167
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "蝕刻主槽 Main Etching Tank",
+      "characteristic": "酸 (%)",
+      "count": 36
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "蝕刻主槽 Main Etching Tank",
+      "characteristic": "銅離子 (g/L)",
+      "count": 36
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "蝕刻主槽 Main Etching Tank",
+      "characteristic": "雙氧水 (%)",
+      "count": 55
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "銅 copper",
+      "characteristic": "酸 (%)",
+      "count": 201
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "銅 copper",
+      "characteristic": "銅離子 (g/L)",
+      "count": 196
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "銅 copper",
+      "characteristic": "雙氧水 (%)",
+      "count": 210
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "線外配槽",
+      "characteristic": "硝酸 (%)",
+      "count": 60
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "線外配槽",
+      "characteristic": "酸洗",
+      "count": 55
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "線外配槽",
+      "characteristic": "雙氧水 (%)",
+      "count": 55
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "NS-357",
+      "characteristic": "硝酸 (%)",
+      "count": 78
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "NS-357",
+      "characteristic": "銅離子 (g/L)",
+      "count": 2
+    },
+    {
+      "process": "QE",
+      "machine": "QE",
+      "tank": "NS-357",
+      "characteristic": "雙氧水 (%)",
+      "count": 73
+    },
+    {
+      "process": "QE2",
+      "machine": "QE2",
+      "tank": "硫酸洗 H2SO4",
+      "characteristic": "酸洗",
+      "count": 30
+    },
+    {
+      "process": "QE2",
+      "machine": "QE2",
+      "tank": "蝕刻(3)槽(鎳) Etching Tank (3) – Nickel",
+      "characteristic": "硝酸 (%)",
+      "count": 34
+    },
+    {
+      "process": "QE2",
+      "machine": "QE2",
+      "tank": "蝕刻(3)槽(鎳) Etching Tank (3) – Nickel",
+      "characteristic": "銅離子 (g/L)",
+      "count": 31
+    },
+    {
+      "process": "QE2",
+      "machine": "QE2",
+      "tank": "蝕刻(3)槽(鎳) Etching Tank (3) – Nickel",
+      "characteristic": "雙氧水 (%)",
+      "count": 32
+    },
+    {
+      "process": "QE2",
+      "machine": "QE2",
+      "tank": "蝕刻主槽(銅) Main Etching Tank",
+      "characteristic": "酸 (%)",
+      "count": 26
+    },
+    {
+      "process": "QE2",
+      "machine": "QE2",
+      "tank": "蝕刻主槽(銅) Main Etching Tank",
+      "characteristic": "銅離子 (g/L)",
+      "count": 25
+    },
+    {
+      "process": "QE2",
+      "machine": "QE2",
+      "tank": "蝕刻主槽(銅) Main Etching Tank",
+      "characteristic": "雙氧水 (%)",
+      "count": 26
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "剝膜 (1) 槽 Stripping Tank (1)",
+      "characteristic": "HO (%)",
+      "count": 35
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "剝膜 (2) 槽Stripping Tank (2)",
+      "characteristic": "HO (%)",
+      "count": 41
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "剝膜 小槽Resist Stripping Small Tank",
+      "characteristic": "HO (%)",
+      "count": 26
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "剝膜 添加桶 Resist Stripping Additive Tank",
+      "characteristic": "HO (%)",
+      "count": 32
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "液洗 Liquid washing",
+      "characteristic": "HO (%)",
+      "count": 181
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "液洗(2) Liquid washing",
+      "characteristic": "HO (%)",
+      "count": 34
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "液洗(3) New liquid washing",
+      "characteristic": "HO (%)",
+      "count": 31
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "添加桶",
+      "characteristic": "HO (%)",
+      "count": 2
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "添加桶 New liquid washing",
+      "characteristic": "HO (%)",
+      "count": 131
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "硫酸洗 H2SO4",
+      "characteristic": "酸洗",
+      "count": 47
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "硫酸洗 H2SO4",
+      "characteristic": "CHO (%)",
+      "count": 179
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "硫酸洗(4) H2SO3",
+      "characteristic": "CHO (%)",
+      "count": 34
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "新液洗 New liquid washing",
+      "characteristic": "HO (%)",
+      "count": 180
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "銅 copper",
+      "characteristic": "酸 (%)",
+      "count": 43
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "銅 copper",
+      "characteristic": "銅離子 (g/L)",
+      "count": 43
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "銅 copper",
+      "characteristic": "雙氧水 (%)",
+      "count": 45
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "線外配槽",
+      "characteristic": "HO (%)",
+      "count": 36
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "NS-357",
+      "characteristic": "硝酸 (%)",
+      "count": 50
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "NS-357",
+      "characteristic": "雙氧水 (%)",
+      "count": 52
+    },
+    {
+      "process": "ST",
+      "machine": "ST",
+      "tank": "ST小槽 New liquid washing",
+      "characteristic": "HO (%)",
+      "count": 133
+    },
+    {
+      "process": "ST2",
+      "machine": "ST2",
+      "tank": "剝膜 (2) 槽 Stripping Tank (2)",
+      "characteristic": "HO (%)",
+      "count": 28
+    },
+    {
+      "process": "ST2",
+      "machine": "ST2",
+      "tank": "剝膜 (3) 槽 Stripping Tank (3)",
+      "characteristic": "HO (%)",
+      "count": 27
+    },
+    {
+      "process": "ST2",
+      "machine": "ST2",
+      "tank": "硫酸洗(4) H2SO3",
+      "characteristic": "CHO (%)",
+      "count": 27
+    }
+  ]
+}

@@ -178,6 +178,7 @@ const selectedItemDetails = computed(() => {
   if (!selectedMapping.value) return null;
   return {
     ...selectedMapping.value.characteristic,
+    unit: selectedMapping.value.unit || selectedMapping.value.characteristic?.unit,
     lsl: selectedMapping.value.lsl,
     usl: selectedMapping.value.usl
   };

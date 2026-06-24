@@ -46,7 +46,7 @@ public static class ProcessCapabilityCalculator
 
         if (sigmaWithin <= 0) sigmaWithin = sigmaOverall;
 
-        double? cp = null, cpk = null, pp = null, ppk = null;
+        double? ca = null, cp = null, cpk = null, pp = null, ppk = null, ppm = null;
 
         if (usl.HasValue && lsl.HasValue)
         {
@@ -60,24 +60,37 @@ public static class ProcessCapabilityCalculator
             double ppkUpper = (usl.Value - mean) / (3 * sigmaOverall);
             double ppkLower = (mean - lsl.Value) / (3 * sigmaOverall);
             ppk = Math.Min(ppkUpper, ppkLower);
+
+            var halfWidth = (usl.Value - lsl.Value) / 2;
+            if (halfWidth > 0)
+            {
+                var target = (usl.Value + lsl.Value) / 2;
+                ca = Math.Abs(mean - target) / halfWidth;
+            }
+
+            ppm = (double)allValues.Count(x => x > usl.Value || x < lsl.Value) / allValues.Count * 1_000_000;
         }
         else if (usl.HasValue)
         {
             cpk = (usl.Value - mean) / (3 * sigmaWithin);
             ppk = (usl.Value - mean) / (3 * sigmaOverall);
+            ppm = (double)allValues.Count(x => x > usl.Value) / allValues.Count * 1_000_000;
         }
         else if (lsl.HasValue)
         {
             cpk = (mean - lsl.Value) / (3 * sigmaWithin);
             ppk = (mean - lsl.Value) / (3 * sigmaOverall);
+            ppm = (double)allValues.Count(x => x < lsl.Value) / allValues.Count * 1_000_000;
         }
 
         return new CapabilityResult
         {
+            Ca = Round(ca),
             Cp = Round(cp),
             Cpk = Round(cpk),
             Pp = Round(pp),
             Ppk = Round(ppk),
+            Ppm = Round(ppm),
             SigmaWithin = Round(sigmaWithin),
             SigmaOverall = Round(sigmaOverall)
         };

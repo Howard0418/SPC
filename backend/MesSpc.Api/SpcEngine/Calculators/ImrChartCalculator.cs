@@ -60,7 +60,11 @@ public static class ImrChartCalculator
                 isExcluded = p.IsExcluded,
                 rootCause = p.RootCause,
                 correctiveAction = p.CorrectiveAction,
-                measurementBatchId = p.MeasurementBatchId
+                measurementBatchId = p.MeasurementBatchId,
+                variableMeasurementId = p.VariableMeasurementId,
+                alertId = p.AlertId,
+                alertStatus = p.AlertStatus,
+                responsibleUser = p.ResponsibleUser
             });
         }
 

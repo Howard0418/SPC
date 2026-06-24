@@ -88,7 +88,11 @@ public static class XbarSChartCalculator
                 isExcluded = x.IsExcluded,
                 rootCause = x.RootCause,
                 correctiveAction = x.CorrectiveAction,
-                measurementBatchId = x.MeasurementBatchId
+                measurementBatchId = x.MeasurementBatchId,
+                variableMeasurementId = x.VariableMeasurementId,
+                alertId = x.AlertId,
+                alertStatus = x.AlertStatus,
+                responsibleUser = x.ResponsibleUser
             });
             sPoints.Add(new { x.MeasuredAt, value = s, outOfControl = oocS, isExcluded = x.IsExcluded });
         }
@@ -133,7 +137,11 @@ public static class XbarSChartCalculator
             isExcluded = x.IsExcluded,
             rootCause = x.RootCause,
             correctiveAction = x.CorrectiveAction,
-            measurementBatchId = x.MeasurementBatchId
+            measurementBatchId = x.MeasurementBatchId,
+            variableMeasurementId = x.VariableMeasurementId,
+            alertId = x.AlertId,
+            alertStatus = x.AlertStatus,
+            responsibleUser = x.ResponsibleUser
         }).ToList();
 
         var sPoints = subgroups.Select(x => new

@@ -30,7 +30,7 @@ public class ProductUiTests : PageTest
 
         // 3. 驗證是否導向儀表板 (Dashboard)
         await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/$"));
-        await Expect(Page.Locator("h2")).ToContainTextAsync("Dashboard");
+        await Expect(Page.Locator("text=製造統計品質即時監控看板")).ToBeVisibleAsync();
 
         // 4. 點擊「產品料號主檔」
         await Page.GetByRole(AriaRole.Link, new() { NameRegex = new System.Text.RegularExpressions.Regex("產品料號主檔") }).First.ClickAsync();

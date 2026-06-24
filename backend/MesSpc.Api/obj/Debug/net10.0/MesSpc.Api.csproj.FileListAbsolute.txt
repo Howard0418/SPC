@@ -449,7 +449,6 @@ D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\Microsoft.SqlServer.Server.dll
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\Microsoft.VisualStudio.SolutionPersistence.dll
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\Mono.TextTemplating.dll
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\NCalc.Core.dll
-D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\NCalc.Sync.dll
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\Newtonsoft.Json.dll
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\Parlot.dll
 D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\RBush.dll
@@ -620,3 +619,5 @@ C:\tmp\mes-spc-api-build-check\MesSpc.Api.deps.json
 C:\tmp\mes-spc-api-build-check\MesSpc.Api.runtimeconfig.json
 C:\tmp\mes-spc-api-build-check\MesSpc.Api.dll
 C:\tmp\mes-spc-api-build-check\MesSpc.Api.pdb
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\NCalc.Domain.dll
+D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\NCalc.Parser.dll

@@ -7,7 +7,7 @@
 - **測試類型**：
   - **單元測試 (Unit Tests)**：
     - 使用 InMemory 資料庫模擬環境。
-    - 覆蓋 `SpcEngine` 的各計算器（`ImrChartCalculator`, `XbarRChartCalculator`）、西方電氣規則判定器，以及 `ClosedXML` Excel 匯入解析邏輯。
+    - 覆蓋 `SpcEngine` 的各計算器（`ImrChartCalculator`, `XbarRChartCalculator`）、西方電氣規則判定器、常態性檢定（Jarque-Bera 與卡方 survival function 計算）、常態分佈平滑 PDF 曲線點，以及 `ClosedXML` Excel 匯入解析邏輯。
   - **整合測試 (Integration Tests)**：
     - 支援實體 SQL Server 連線，測試在併發寫入與 Unique Constraints 下的實際執行結果（如管制圖小分類代碼不重複防護）。
 - **執行指令**：

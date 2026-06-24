@@ -277,7 +277,10 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public string ControlScope { get; set; } = "PRODUCT";
     public int? PartId { get; set; }
     public int ProcessId { get; set; }
+    public int? MachineId { get; set; }
+    public int? TankId { get; set; }
     public int CharacteristicId { get; set; }
+    public string? Unit { get; set; }
     public double? USL { get; set; }
     public double? LSL { get; set; }
     public double? UCL { get; set; }
@@ -286,6 +289,7 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public double? TargetValue { get; set; }
     public int SampleSize { get; set; } = 1;
     public int? ChartTypeId { get; set; }
+    public string? FormulaConfigJson { get; set; }
     public int? RuleGroupId { get; set; }
     public bool IsRequired { get; set; } = true;
     public bool IsEnabled { get; set; } = true;
@@ -294,6 +298,10 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public virtual Part? Part { get; set; }
     [ForeignKey("ProcessId")]
     public virtual Process? Process { get; set; }
+    [ForeignKey("MachineId")]
+    public virtual Machine? Machine { get; set; }
+    [ForeignKey("TankId")]
+    public virtual Tank? Tank { get; set; }
     [ForeignKey("CharacteristicId")]
     public virtual QualityCharacteristic? Characteristic { get; set; }
 }

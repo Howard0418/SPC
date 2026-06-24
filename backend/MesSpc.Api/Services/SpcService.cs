@@ -20,7 +20,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                           || (mapping.LSL.HasValue && measurement.MeasuredValue < mapping.LSL.Value);
         var isOutOfControl = (mapping.UCL.HasValue && measurement.MeasuredValue > mapping.UCL.Value)
                              || (mapping.LCL.HasValue && measurement.MeasuredValue < mapping.LCL.Value);
-        var ruleGroupId = chartType.RuleGroupId ?? mapping.RuleGroupId;
+        var ruleGroupId = mapping.RuleGroupId ?? chartType.RuleGroupId;
 
         List<SpcRuleViolation>? violations = null;
         if (ruleGroupId.HasValue && mapping.CL.HasValue && mapping.UCL.HasValue && mapping.LCL.HasValue)
@@ -113,7 +113,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var statisticValue = CalculateAttributeStatistic(chartType.ChartTypeCode, measurement);
         var isOutOfControl = (mapping.UCL.HasValue && statisticValue.HasValue && statisticValue.Value > mapping.UCL.Value)
                              || (mapping.LCL.HasValue && statisticValue.HasValue && statisticValue.Value < mapping.LCL.Value);
-        var ruleGroupId = chartType.RuleGroupId ?? mapping.RuleGroupId;
+        var ruleGroupId = mapping.RuleGroupId ?? chartType.RuleGroupId;
 
         var result = new SpcCalculationResult
         {
@@ -268,6 +268,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         Guid? uploadBatchId,
         DateTime? startDate = null,
         DateTime? endDate = null,
+        string? batchNo = null,
+        int? partId = null,
         CancellationToken ct = default)
     {
         var mapping = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
@@ -290,30 +292,53 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         {
             var query = db.VariableMeasurements.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
             if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
+            if (!string.IsNullOrWhiteSpace(batchNo)) query = query.Where(x => x.LotNo == batchNo);
+            if (partId.HasValue) query = query.Where(x => x.PartId == partId.Value);
             if (startDate.HasValue) query = query.Where(x => x.MeasuredAt >= startDate.Value.Date);
             if (endDate.HasValue) query = query.Where(x => x.MeasuredAt < endDate.Value.Date.AddDays(1));
 
             var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return null;
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
+            var measurementIds = measurements.Select(x => x.Id).ToList();
+            var alerts = await db.AlertEvents.AsNoTracking()
+                .Where(a => a.VariableMeasurementId.HasValue && measurementIds.Contains(a.VariableMeasurementId.Value))
+                .ToListAsync(ct);
+            var alertLookup = alerts
+                .GroupBy(a => a.VariableMeasurementId!.Value)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.OccurredAt).First());
 
-            var rawPoints = measurements.Select(x => new SpcDataPoint
+            var rawPoints = measurements.Select(x =>
             {
-                MeasuredAt = x.MeasuredAt,
-                Value = x.MeasuredValue,
-                LotNo = x.LotNo,
-                SerialNo = x.SerialNo,
-                Operator = x.Operator,
-                LineId = x.LineId,
-                TankId = x.TankId,
-                SlotId = x.SlotId,
-                SideCode = x.SideCode.ToString(),
-                IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
+                alertLookup.TryGetValue(x.Id, out var alert);
+                return new SpcDataPoint
+                {
+                    MeasuredAt = x.MeasuredAt,
+                    Value = x.MeasuredValue,
+                    LotNo = x.LotNo,
+                    SerialNo = x.SerialNo,
+                    Operator = x.Operator,
+                    LineId = x.LineId,
+                    TankId = x.TankId,
+                    SlotId = x.SlotId,
+                    SideCode = x.SideCode.ToString(),
+                    IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId),
+                    IsOutOfSpec = (mapping.USL.HasValue && x.MeasuredValue > mapping.USL.Value)
+                        || (mapping.LSL.HasValue && x.MeasuredValue < mapping.LSL.Value),
+                    IsOutOfControl = alert?.AlertType == AlertType.OutOfControl,
+                    RootCause = alert?.RootCause,
+                    CorrectiveAction = alert?.CorrectiveAction,
+                    VariableMeasurementId = x.Id,
+                    AlertId = alert?.Id,
+                    AlertStatus = alert?.Status,
+                    ResponsibleUser = alert?.ResponsibleUser
+                };
             }).ToList();
 
+            ControlChartResult chartResultVal;
             if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                return ImrChartCalculator.Calculate(rawPoints, limits) with { RawDataPoints = rawPoints };
+                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits) with { RawDataPoints = rawPoints };
             }
             else // XBAR_R / XBAR_S
             {
@@ -332,22 +357,37 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                         TankId = first.TankId,
                         SlotId = first.SlotId,
                         SideCode = first.SideCode.ToString(),
-                        IsExcluded = g.Any(m => excludedUploadBatchIds.Contains(m.UploadBatchId))
+                        IsExcluded = g.Any(m => excludedUploadBatchIds.Contains(m.UploadBatchId)),
+                        VariableMeasurementId = first.Id,
+                        AlertId = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.Id).FirstOrDefault(id => id.HasValue),
+                        AlertStatus = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.Status).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)),
+                        RootCause = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.RootCause).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)),
+                        CorrectiveAction = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.CorrectiveAction).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)),
+                        ResponsibleUser = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.ResponsibleUser).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))
                     };
                 }).ToList();
 
                 if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
                 {
-                    return XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal) with { RawDataPoints = rawPoints };
+                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal) with { RawDataPoints = rawPoints };
                 }
-
-                return XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, chartType.FormulaConfigJson) with { RawDataPoints = rawPoints };
+                else
+                {
+                    var formulaConfigJson = string.IsNullOrWhiteSpace(mapping.FormulaConfigJson)
+                        ? chartType.FormulaConfigJson
+                        : mapping.FormulaConfigJson;
+                    chartResultVal = XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson) with { RawDataPoints = rawPoints };
+                }
             }
+
+            return PopulateNormalityAndCurve(chartResultVal, rawPoints, limits);
         }
         else // Attribute
         {
             var query = db.AttributeMeasurements.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
             if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
+            if (!string.IsNullOrWhiteSpace(batchNo)) query = query.Where(x => x.LotNo == batchNo);
+            if (partId.HasValue) query = query.Where(x => x.PartId == partId.Value);
             if (startDate.HasValue) query = query.Where(x => x.MeasuredAt >= startDate.Value.Date);
             if (endDate.HasValue) query = query.Where(x => x.MeasuredAt < endDate.Value.Date.AddDays(1));
 
@@ -508,7 +548,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 CorrectiveAction = x.CorrectiveAction,
                 MeasurementBatchId = x.MeasurementBatchId
             }).ToList();
-            return ImrChartCalculator.Calculate(points, limits) with { RawDataPoints = points };
+            var chartRes = ImrChartCalculator.Calculate(points, limits) with { RawDataPoints = points };
+            return PopulateNormalityAndCurve(chartRes, points, limits);
         }
         else
         {
@@ -523,10 +564,345 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 IsOutOfSpec = x.OutOfSpec,
                 IsOutOfControl = x.OutOfControl,
                 RootCause = x.RootCause,
-                CorrectiveAction = x.CorrectiveAction,
-                MeasurementBatchId = x.MeasurementBatchId
+                CorrectiveAction = x.CorrectiveAction
             })).ToList();
-            return XbarRChartCalculator.Calculate(subgroups, limits, expectedN) with { RawDataPoints = rawPoints };
+            var chartRes = XbarRChartCalculator.Calculate(subgroups, limits, expectedN) with { RawDataPoints = rawPoints };
+            return PopulateNormalityAndCurve(chartRes, rawPoints, limits);
         }
+    }
+
+    internal static ControlChartResult PopulateNormalityAndCurve(
+        ControlChartResult result,
+        List<SpcDataPoint> rawPoints,
+        ControlLimits limits)
+    {
+        var nonExcludedValues = rawPoints
+            .Where(x => !x.IsExcluded)
+            .Select(x => x.Value)
+            .ToList();
+
+        if (nonExcludedValues.Count < 3)
+        {
+            return result;
+        }
+
+        // 1. Calculate Jarque-Bera Normality Test
+        double mean = nonExcludedValues.Average();
+        double sumSqDiff = nonExcludedValues.Sum(x => Math.Pow(x - mean, 2));
+        double variance = sumSqDiff / (nonExcludedValues.Count - 1);
+        double stdDev = Math.Sqrt(variance);
+
+        double m2 = 0;
+        double m3 = 0;
+        double m4 = 0;
+        int n = nonExcludedValues.Count;
+
+        foreach (var x in nonExcludedValues)
+        {
+            double diff = x - mean;
+            double diff2 = diff * diff;
+            m2 += diff2;
+            m3 += diff2 * diff;
+            m4 += diff2 * diff2;
+        }
+
+        m2 /= n;
+        m3 /= n;
+        m4 /= n;
+
+        double skewness = 0;
+        double kurtosis = 0;
+        double jbStatistic = 0;
+        double pValue = 1.0;
+        bool isNormal = true;
+        string? note = null;
+
+        if (m2 < 1e-15 || stdDev < 1e-15)
+        {
+            note = "數據無變異 (標準差為 0)，無法進行常態性檢定。";
+        }
+        else
+        {
+            skewness = m3 / Math.Pow(m2, 1.5);
+            kurtosis = m4 / (m2 * m2);
+            jbStatistic = (n / 6.0) * (skewness * skewness + Math.Pow(kurtosis - 3.0, 2) / 4.0);
+            pValue = Math.Exp(-jbStatistic / 2.0);
+            isNormal = pValue >= 0.05;
+        }
+
+        var normality = new NormalityTestResult
+        {
+            TestName = "Jarque-Bera",
+            Statistic = jbStatistic,
+            PValue = m2 < 1e-15 || stdDev < 1e-15 ? null : pValue,
+            Skewness = skewness,
+            Kurtosis = kurtosis,
+            IsNormal = isNormal,
+            Note = note
+        };
+
+        // 2. Generate Normal Curve Points
+        var curvePoints = new List<NormalCurvePoint>();
+        if (stdDev > 1e-15)
+        {
+            // Replicate frontend binWidth logic to get exact scale
+            var numericDomainValues = new List<double>(nonExcludedValues);
+            if (limits.LSL.HasValue) numericDomainValues.Add(limits.LSL.Value);
+            if (limits.USL.HasValue) numericDomainValues.Add(limits.USL.Value);
+            if (limits.Target.HasValue) numericDomainValues.Add(limits.Target.Value);
+            if (limits.LCL.HasValue) numericDomainValues.Add(limits.LCL.Value);
+            if (limits.CL.HasValue) numericDomainValues.Add(limits.CL.Value);
+            if (limits.UCL.HasValue) numericDomainValues.Add(limits.UCL.Value);
+
+            // Also check for dynamically calculated control limits in result.StatControlLimits
+            if (result.StatControlLimits != null)
+            {
+                var type = result.StatControlLimits.GetType();
+                var props = type.GetProperties();
+                var limitGroupProp = props.FirstOrDefault(p =>
+                    p.Name == "iControlLimitsStat" ||
+                    p.Name == "xbarControl" ||
+                    p.Name == "pControlLimitsStat" ||
+                    p.Name == "npControlLimitsStat");
+
+                if (limitGroupProp != null)
+                {
+                    var limitGroup = limitGroupProp.GetValue(result.StatControlLimits);
+                    if (limitGroup != null)
+                    {
+                        var groupType = limitGroup.GetType();
+                        var uclVal = groupType.GetProperty("ucl")?.GetValue(limitGroup) as double?
+                                     ?? groupType.GetProperty("Ucl")?.GetValue(limitGroup) as double?;
+                        var lclVal = groupType.GetProperty("lcl")?.GetValue(limitGroup) as double?
+                                     ?? groupType.GetProperty("Lcl")?.GetValue(limitGroup) as double?;
+                        var clVal = groupType.GetProperty("cl")?.GetValue(limitGroup) as double?
+                                    ?? groupType.GetProperty("Cl")?.GetValue(limitGroup) as double?;
+
+                        if (uclVal.HasValue) numericDomainValues.Add(uclVal.Value);
+                        if (lclVal.HasValue) numericDomainValues.Add(lclVal.Value);
+                        if (clVal.HasValue) numericDomainValues.Add(clVal.Value);
+                    }
+                }
+            }
+
+            double domainMin = numericDomainValues.Min();
+            double domainMax = numericDomainValues.Max();
+            double binWidth = 0;
+            if (domainMax > domainMin)
+            {
+                int preferredBins = 12;
+                int binCount = Math.Max(5, Math.Min(preferredBins, (int)Math.Ceiling(Math.Sqrt(n)) + 3));
+                binWidth = (domainMax - domainMin) / binCount;
+            }
+
+            // Generate 100 points for ECharts line series
+            double minVal = nonExcludedValues.Min();
+            double maxVal = nonExcludedValues.Max();
+            double startX = minVal - 0.5 * (maxVal - minVal);
+            double endX = maxVal + 0.5 * (maxVal - minVal);
+
+            // Expand to cover 3 sigma
+            startX = Math.Min(startX, mean - 3 * stdDev);
+            endX = Math.Max(endX, mean + 3 * stdDev);
+
+            double step = (endX - startX) / 100.0;
+            for (int i = 0; i <= 100; i++)
+            {
+                double x = startX + i * step;
+                double pdf = (1.0 / (stdDev * Math.Sqrt(2 * Math.PI))) * Math.Exp(-0.5 * Math.Pow((x - mean) / stdDev, 2));
+                double scaledPdf = pdf * n * binWidth;
+
+                curvePoints.Add(new NormalCurvePoint
+                {
+                    X = x,
+                    Pdf = pdf,
+                    ScaledPdf = scaledPdf
+                });
+            }
+        }
+
+        return result with { Normality = normality, NormalCurve = curvePoints };
+    }
+
+    public async Task<List<MesSpc.Api.Controllers.ChartSummaryDto>> GetChartSummaryListAsync(
+        string dimension,
+        Guid? uploadBatchId,
+        DateTime? startDate,
+        DateTime? endDate,
+        string? batchNo = null,
+        int? partId = null,
+        CancellationToken ct = default)
+    {
+        var normalizedDimension = NormalizeControlScope(dimension);
+        var groupName = await db.ControlChartGroups.AsNoTracking()
+            .Where(x => x.GroupCode == dimension || x.GroupCode == normalizedDimension)
+            .Select(x => x.GroupName)
+            .FirstOrDefaultAsync(ct)
+            ?? FormatControlScope(normalizedDimension);
+        var chartTypeIds = await (
+            from chartType in db.ControlChartTypes.AsNoTracking()
+            join category in db.ControlChartCategories.AsNoTracking()
+                on chartType.ChartCategoryId equals category.Id
+            join chartGroup in db.ControlChartGroups.AsNoTracking()
+                on category.ChartGroupId equals chartGroup.Id
+            where chartGroup.GroupCode == dimension || chartGroup.GroupCode == normalizedDimension
+            select chartType.Id
+        ).ToListAsync(ct);
+
+        var mappings = await db.PartProcessCharacteristics.AsNoTracking()
+            .Include(x => x.Process)
+            .Include(x => x.Characteristic)
+            .Include(x => x.Machine)
+            .Where(x => x.IsEnabled
+                && ((x.ChartTypeId.HasValue && chartTypeIds.Contains(x.ChartTypeId.Value))
+                    || (chartTypeIds.Count == 0 && x.ControlScope == normalizedDimension)))
+            .Where(x => !partId.HasValue || x.PartId == partId.Value)
+            .ToListAsync(ct);
+
+        var chartTypes = await db.ControlChartTypes.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.ChartTypeName, ct);
+
+        var summaries = new List<MesSpc.Api.Controllers.ChartSummaryDto>();
+        foreach (var mapping in mappings)
+        {
+            var result = await GetInteractiveChartAsync(mapping.Id, uploadBatchId, startDate, endDate, batchNo, partId, ct);
+            if (result == null || result.RawDataPoints == null) continue;
+
+            var rawPoints = new List<SpcDataPoint>();
+            if (result.RawDataPoints is List<SpcDataPoint> varPoints)
+            {
+                rawPoints.AddRange(varPoints);
+            }
+            else if (result.RawDataPoints is List<AttributeDataPoint> attrPoints)
+            {
+                foreach (var a in attrPoints)
+                {
+                    rawPoints.Add(new SpcDataPoint
+                    {
+                        MeasuredAt = a.MeasuredAt,
+                        IsOutOfSpec = false,
+                        IsOutOfControl = a.IsOutOfControl
+                    });
+                }
+            }
+
+            if (rawPoints.Count == 0) continue;
+
+            var includedPoints = rawPoints.Where(x => !x.IsExcluded).ToList();
+            if (includedPoints.Count == 0) continue;
+
+            var oosCount = includedPoints.Count(x => x.IsOutOfSpec);
+            var totalCount = includedPoints.Count;
+            var oosPercentage = totalCount > 0 ? (double)oosCount / totalCount * 100 : 0;
+
+            var latestAlert = includedPoints
+                .Where(x => !string.IsNullOrEmpty(x.RootCause)
+                    || !string.IsNullOrEmpty(x.CorrectiveAction)
+                    || !string.IsNullOrEmpty(x.ResponsibleUser))
+                .OrderByDescending(x => x.MeasuredAt)
+                .FirstOrDefault();
+
+            var lineParts = new[]
+            {
+                mapping.Process?.ProcessName,
+                mapping.Machine?.MachineName
+            }.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+            var lineName = string.Join(" / ", lineParts);
+
+            var calculatedLimits = ReadPrimaryControlLimits(result.StatControlLimits);
+            var usesManualLimits = mapping.UCL.HasValue || mapping.LCL.HasValue;
+            var calcMethod = usesManualLimits
+                ? "自訂輸入 (Manual)"
+                : FormatCalculationMethod(calculatedLimits.CalculationMethod, result.ChartType);
+
+            string typeName = result.ChartType;
+            if (mapping.ChartTypeId.HasValue && chartTypes.TryGetValue(mapping.ChartTypeId.Value, out var n)) typeName = n;
+
+            summaries.Add(new MesSpc.Api.Controllers.ChartSummaryDto
+            {
+                PartProcessCharacteristicId = mapping.Id,
+                ControlCategory = groupName,
+                LineOrProcessName = lineName,
+                ChartName = mapping.Characteristic?.CharacteristicName ?? "",
+                ChartType = typeName,
+                Usl = result.Limits?.USL,
+                Lsl = result.Limits?.LSL,
+                Ucl = mapping.UCL ?? calculatedLimits.Ucl ?? result.Limits?.UCL,
+                Lcl = mapping.LCL ?? calculatedLimits.Lcl ?? result.Limits?.LCL,
+                LimitCalculationMethod = calcMethod,
+                OosCount = oosCount,
+                OosPercentage = Math.Round(oosPercentage, 2),
+                Ca = result.Capability?.Ca,
+                Pp = result.Capability?.Pp,
+                Ppk = result.Capability?.Ppk,
+                ResponsibleUser = latestAlert?.ResponsibleUser ?? "",
+                Remarks = latestAlert?.CorrectiveAction ?? latestAlert?.RootCause ?? ""
+            });
+        }
+        return summaries.OrderByDescending(x => x.OosPercentage).ThenBy(x => x.LineOrProcessName).ToList();
+    }
+
+    private static string NormalizeControlScope(string? dimension)
+    {
+        return dimension?.Trim().ToUpperInvariant() switch
+        {
+            "PROC" or "PROCESS" => "PROCESS",
+            "CHEM" or "CHEMICAL" => "CHEMICAL",
+            "PROD" or "PRODUCT" => "PRODUCT",
+            _ => dimension?.Trim().ToUpperInvariant() ?? string.Empty
+        };
+    }
+
+    private static string FormatControlScope(string? scope)
+    {
+        return NormalizeControlScope(scope) switch
+        {
+            "PROCESS" => "製程管制",
+            "CHEMICAL" => "藥液管制",
+            "PRODUCT" => "產品管制",
+            _ => scope ?? string.Empty
+        };
+    }
+
+    private static string FormatCalculationMethod(string? method, string? chartType)
+    {
+        return method?.Trim().ToUpperInvariant() switch
+        {
+            "MR_METHOD" or "MOVING_RANGE_OF_XBAR" => "平均值移動全距法",
+            "SIGMA_METHOD" or "SAMPLE_STD_DEV" => "樣本標準差法",
+            _ when string.Equals(chartType, "I_MR", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(chartType, "I-MR", StringComparison.OrdinalIgnoreCase) => "移動全距法",
+            _ => "標準管制圖公式"
+        };
+    }
+
+    private static (double? Ucl, double? Lcl, string? CalculationMethod) ReadPrimaryControlLimits(object? statControlLimits)
+    {
+        if (statControlLimits is null) return (null, null, null);
+
+        var primary = GetPropertyValue(statControlLimits, "iControlLimitsStat")
+            ?? GetPropertyValue(statControlLimits, "xbarControl")
+            ?? GetPropertyValue(statControlLimits, "pControlLimitsStat")
+            ?? GetPropertyValue(statControlLimits, "npControlLimitsStat")
+            ?? statControlLimits;
+
+        return (
+            ReadNullableDouble(primary, "ucl"),
+            ReadNullableDouble(primary, "lcl"),
+            GetPropertyValue(primary, "calculationMethod")?.ToString());
+    }
+
+    private static object? GetPropertyValue(object source, string propertyName)
+    {
+        return source.GetType()
+            .GetProperties()
+            .FirstOrDefault(x => string.Equals(x.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            ?.GetValue(source);
+    }
+
+    private static double? ReadNullableDouble(object source, string propertyName)
+    {
+        var value = GetPropertyValue(source, propertyName);
+        if (value is null) return null;
+        return Convert.ToDouble(value);
     }
 }

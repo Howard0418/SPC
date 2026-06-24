@@ -14,12 +14,32 @@ public record ControlLimits
 
 public record CapabilityResult
 {
+    public double? Ca { get; init; }
     public double? Cp { get; init; }
     public double? Cpk { get; init; }
     public double? Pp { get; init; }
     public double? Ppk { get; init; }
+    public double? Ppm { get; init; }
     public double? SigmaWithin { get; init; }
     public double? SigmaOverall { get; init; }
+}
+
+public record NormalityTestResult
+{
+    public string TestName { get; init; } = "Jarque-Bera";
+    public double Statistic { get; init; }
+    public double? PValue { get; init; }
+    public double Skewness { get; init; }
+    public double Kurtosis { get; init; }
+    public bool IsNormal { get; init; }
+    public string? Note { get; init; }
+}
+
+public record NormalCurvePoint
+{
+    public double X { get; init; }
+    public double Pdf { get; init; }
+    public double ScaledPdf { get; init; }
 }
 
 public record ControlChartResult
@@ -33,4 +53,6 @@ public record ControlChartResult
     public string? SubgroupSizeNote { get; init; }
     public CapabilityResult? Capability { get; init; }
     public object? RawDataPoints { get; init; }
+    public NormalityTestResult? Normality { get; init; }
+    public List<NormalCurvePoint>? NormalCurve { get; init; }
 }

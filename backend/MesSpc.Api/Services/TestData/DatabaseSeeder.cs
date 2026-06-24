@@ -170,32 +170,46 @@ public class DatabaseSeeder(AppDbContext db)
 
     public async Task EnsureSpcRulesAsync()
     {
-        var groupCode = "WECO-DEFAULT";
+        var groupCode = "WE";
         var group = await db.SpcRuleGroups.FirstOrDefaultAsync(x => x.RuleGroupCode == groupCode);
         if (group == null)
         {
             group = new SpcRuleGroup
             {
                 RuleGroupCode = groupCode,
-                RuleGroupName = "Western Electric Standard Rules",
-                Description = "Default WECO rules for SPC",
+                RuleGroupName = "Western Electric Rules (西方電氣規則)",
+                Description = "系統預設 8 大 SPC 管制規則庫。",
                 IsEnabled = true
             };
             db.SpcRuleGroups.Add(group);
             await db.SaveChangesAsync();
         }
+        else
+        {
+            group.RuleGroupName = "Western Electric Rules (西方電氣規則)";
+            group.Description = "系統預設 8 大 SPC 管制規則庫。";
+            group.IsEnabled = true;
+        }
 
         var existingRules = await db.SpcRules.Where(x => x.RuleGroupId == group.Id).Select(x => x.RuleCode).ToListAsync();
 
         var rulesToAdd = new List<SpcRule>();
-        if (!existingRules.Contains("WECO-1"))
-            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "WECO-1", RuleName = "1 point > 3 sigma from center line", Priority = 10 });
-        if (!existingRules.Contains("WECO-2"))
-            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "WECO-2", RuleName = "9 points in a row on same side of center line", RuleConfigJson = "{\"RequiredPoints\": 9}", Priority = 20 });
-        if (!existingRules.Contains("WECO-3"))
-            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "WECO-3", RuleName = "6 points in a row, all increasing or all decreasing", RuleConfigJson = "{\"RequiredPoints\": 6}", Priority = 30 });
-        if (!existingRules.Contains("WECO-4"))
-            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "WECO-4", RuleName = "14 points in a row, alternating up and down", RuleConfigJson = "{\"RequiredPoints\": 14}", Priority = 40 });
+        if (!existingRules.Contains("Rule1_Over3Sigma"))
+            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "Rule1_Over3Sigma", RuleName = "規則 1：單點超出 3 Sigma 管制界限", Priority = 10 });
+        if (!existingRules.Contains("Rule2_9SameSide"))
+            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "Rule2_9SameSide", RuleName = "規則 2：連續 9 點落在中心線同一側", RuleConfigJson = "{\"RequiredPoints\":9}", Priority = 20 });
+        if (!existingRules.Contains("Rule3_6Trend"))
+            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "Rule3_6Trend", RuleName = "規則 3：連續 6 點持續上升或下降", RuleConfigJson = "{\"RequiredPoints\":6}", Priority = 30 });
+        if (!existingRules.Contains("Rule4_14Alternating"))
+            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "Rule4_14Alternating", RuleName = "規則 4：連續 14 點上下交替", RuleConfigJson = "{\"RequiredPoints\":14}", Priority = 40 });
+        if (!existingRules.Contains("Rule5_2Of3Over2Sigma"))
+            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "Rule5_2Of3Over2Sigma", RuleName = "規則 5：連續 3 點中有 2 點超出 2 Sigma 且同側", Priority = 50 });
+        if (!existingRules.Contains("Rule6_4Of5Over1Sigma"))
+            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "Rule6_4Of5Over1Sigma", RuleName = "規則 6：連續 5 點中有 4 點超出 1 Sigma 且同側", Priority = 60 });
+        if (!existingRules.Contains("Rule7_15Within1Sigma"))
+            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "Rule7_15Within1Sigma", RuleName = "規則 7：連續 15 點落在中心線 1 Sigma 內", Priority = 70 });
+        if (!existingRules.Contains("Rule8_8Outside1Sigma"))
+            rulesToAdd.Add(new SpcRule { RuleGroupId = group.Id, RuleCode = "Rule8_8Outside1Sigma", RuleName = "規則 8：連續 8 點落在中心線兩側且都超出 1 Sigma", Priority = 80 });
 
         if (rulesToAdd.Count > 0)
         {

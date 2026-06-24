@@ -13,7 +13,8 @@
 ### 1. 組織架構主檔 (Org Structure)
 - **Plant**：工廠
 - **Factory**：車間
-- **ProductionLine**：生產線
+- **ProductionLine**：生產線，代碼 `LineCode` 預設與機台的 `MachineCode` 對應。
+- **Tank** (槽位)：與 `ProductionLine` 關聯，定義在產線/機台下的各個物理槽位，並在 `TankCode` 自動附加機台代碼前綴 (例如 `MC-01-T01`)。
 - **Unit**：設備單元
 
 ### 2. 生產與品質主檔 (Master Data)

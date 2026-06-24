@@ -84,9 +84,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Machine>().HasIndex(x => x.ProcessId);
         modelBuilder.Entity<QualityCharacteristic>().HasKey(x => x.Id);
         modelBuilder.Entity<QualityCharacteristic>().HasIndex(x => x.CharacteristicCode).IsUnique();
-        modelBuilder.Entity<PartProcessCharacteristic>().HasIndex(x => new { x.ControlScope, x.PartId, x.ProcessId, x.CharacteristicId }).IsUnique();
+        modelBuilder.Entity<PartProcessCharacteristic>().HasIndex(x => new { x.ControlScope, x.PartId, x.ProcessId, x.MachineId, x.TankId, x.CharacteristicId }).IsUnique();
+        modelBuilder.Entity<PartProcessCharacteristic>().Property(x => x.Unit).HasMaxLength(50);
         modelBuilder.Entity<PartProcessCharacteristic>()
-            .HasIndex(x => new { x.ControlScope, x.ProcessId, x.CharacteristicId })
+            .HasIndex(x => new { x.ControlScope, x.ProcessId, x.MachineId, x.TankId, x.CharacteristicId })
             .IsUnique()
             .HasFilter("[PartId] IS NULL");
         modelBuilder.Entity<ControlChartGroup>().HasKey(x => x.Id);
@@ -150,6 +151,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(x => x.Process)
             .WithMany()
             .HasForeignKey(x => x.ProcessId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<PartProcessCharacteristic>()
+            .HasOne(x => x.Machine)
+            .WithMany()
+            .HasForeignKey(x => x.MachineId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<PartProcessCharacteristic>()
+            .HasOne(x => x.Tank)
+            .WithMany()
+            .HasForeignKey(x => x.TankId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<PartProcessCharacteristic>()
             .HasOne(x => x.Characteristic)
