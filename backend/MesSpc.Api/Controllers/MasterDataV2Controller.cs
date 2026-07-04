@@ -597,18 +597,101 @@ public class ControlChartCategoriesController(AppDbContext db) : ControllerBase
 [ApiController]
 [Route("api/operators")]
 [Route("api/v1/operators")]
-public class OperatorsController(AppDbContext db) : ControllerBase
+public class OperatorsController(
+    AppDbContext db,
+    MesSpc.Api.Services.Security.UserPasswordHasher passwordHasher) : ControllerBase
 {
-    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.Operators.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(Operator req) { db.Operators.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpGet]
+    public async Task<IActionResult> Get()
+    {
+        var users = await db.Operators.OrderBy(x => x.Id).ToListAsync();
+        return Ok(users.Select(ToResponse));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(OperatorRequest req)
+    {
+        var validation = await ValidateRequestAsync(req);
+        if (validation is not null) return validation;
+
+        var user = new Operator
+        {
+            OperatorCode = req.OperatorCode.Trim(),
+            OperatorName = req.OperatorName.Trim(),
+            Department = req.Department?.Trim(),
+            Email = req.Email?.Trim(),
+            Username = NullIfWhiteSpace(req.Username),
+            Role = MesSpc.Api.Services.Security.UserRoles.Normalize(req.Role),
+            IsActive = req.IsActive,
+            PasswordHash = string.IsNullOrWhiteSpace(req.Password) ? null : passwordHasher.Hash(req.Password)
+        };
+        db.Operators.Add(user);
+        await db.SaveChangesAsync();
+        return Ok(ToResponse(user));
+    }
+
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, Operator req)
+    public async Task<IActionResult> Update(int id, OperatorRequest req)
     {
         var x = await db.Operators.FindAsync(id); if (x is null) return NotFound();
-        x.OperatorCode = req.OperatorCode; x.OperatorName = req.OperatorName; x.Department = req.Department; x.Email = req.Email; x.IsActive = req.IsActive;
-        await db.SaveChangesAsync(); return Ok(x);
+        var validation = await ValidateRequestAsync(req, id);
+        if (validation is not null) return validation;
+
+        x.OperatorCode = req.OperatorCode.Trim();
+        x.OperatorName = req.OperatorName.Trim();
+        x.Department = req.Department?.Trim();
+        x.Email = req.Email?.Trim();
+        x.Username = NullIfWhiteSpace(req.Username);
+        x.Role = MesSpc.Api.Services.Security.UserRoles.Normalize(req.Role);
+        x.IsActive = req.IsActive;
+        if (!string.IsNullOrWhiteSpace(req.Password)) x.PasswordHash = passwordHasher.Hash(req.Password);
+        x.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return Ok(ToResponse(x));
     }
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.Operators.FindAsync(id); if (x is null) return NotFound(); db.Operators.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+
+    private async Task<IActionResult?> ValidateRequestAsync(OperatorRequest req, int? currentId = null)
+    {
+        if (string.IsNullOrWhiteSpace(req.OperatorCode) || string.IsNullOrWhiteSpace(req.OperatorName))
+            return BadRequest(new { message = "作業員工號與姓名皆為必填欄位。" });
+        if (!string.IsNullOrWhiteSpace(req.Username))
+        {
+            var username = req.Username.Trim();
+            if (await db.Operators.AnyAsync(x => x.Username == username && (!currentId.HasValue || x.Id != currentId.Value)))
+                return Conflict(new { message = $"登入帳號「{username}」已存在。" });
+        }
+        if (await db.Operators.AnyAsync(x => x.OperatorCode == req.OperatorCode.Trim() && (!currentId.HasValue || x.Id != currentId.Value)))
+            return Conflict(new { message = $"工號「{req.OperatorCode.Trim()}」已存在。" });
+        return null;
+    }
+
+    private static string? NullIfWhiteSpace(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static object ToResponse(Operator x) => new
+    {
+        x.Id,
+        x.OperatorCode,
+        x.OperatorName,
+        x.Department,
+        x.Email,
+        x.Username,
+        Role = MesSpc.Api.Services.Security.UserRoles.Normalize(x.Role),
+        x.IsActive,
+        HasPassword = !string.IsNullOrWhiteSpace(x.PasswordHash),
+        x.CreatedAt,
+        x.UpdatedAt
+    };
+
+    public record OperatorRequest(
+        string OperatorCode,
+        string OperatorName,
+        string? Department,
+        string? Email,
+        string? Username,
+        string? Password,
+        string? Role,
+        bool IsActive = true);
 }
 
 

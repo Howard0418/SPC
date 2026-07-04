@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using MesSpc.Api.Services.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +65,7 @@ builder.Services.AddScoped<MeasurementGenerator>();
 builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddScoped<TestDataSeeder>();
 builder.Services.AddScoped<GenealogyService>();
+builder.Services.AddSingleton<UserPasswordHasher>();
 builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddCors(opt =>
 {
@@ -130,6 +132,7 @@ if (authEnabled)
 {
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseMiddleware<ViewerWriteGuardMiddleware>();
 }
 
 var controllers = app.MapControllers();
@@ -152,7 +155,10 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     if (provider == "sqlite")
     {
-        db.Database.Migrate();
+        // SQLite is used for local rehearsal/test databases. This project does
+        // not carry provider-specific SQLite migrations, so build a fresh
+        // database directly from the current EF model.
+        db.Database.EnsureCreated();
     }
     else
     {

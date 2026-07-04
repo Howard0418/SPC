@@ -28,6 +28,7 @@ sequenceDiagram
     U->>API: 2. 確認匯入 (POST /api/v1/uploads/confirm/{id})
     API->>S: 鎖定批次，將 Valid 資料寫入 Measurements 正式表
     S->>DB: 觸發 SpcEngine 即時計算與警報判定
+    S->>DB: 將非空白量測者補入 Operators（預設 Editor、無登入密碼）
     API-->>U: 匯入完成，更新 Dashboard
 ```
 
@@ -78,6 +79,13 @@ sequenceDiagram
 | **`ERR_PROCESS_NOT_FOUND`**| 系統中無此製程工站 (`ProcessCode`)。 | 第 2 階段 | 該筆紀錄標記 `IsValid = false`。 |
 | **`ERR_CHAR_NOT_FOUND`** | 系統中無此檢驗項目 (`CharacteristicCode`)。 | 第 2 階段 | 該筆紀錄標記 `IsValid = false`。 |
 | **`ERR_CONFIG_MISSING`** | 料號+製程+檢驗項目之關聯設定不存在 (`PartProcessCharacteristic`)。 | 第 2 階段 | 該筆紀錄標記 `IsValid = false`。 |
+
+### 3.1 量測者同步規則
+- 計量型與計數型資料在「確認匯入」時處理 `Operator`／`作業員` 欄位。
+- 空白值不建立使用者。
+- 依 `OperatorCode` 去重；同一檔案出現多次只建立一次。
+- 不存在時建立 `Operator`，角色為 `Editor`、狀態為啟用、登入帳號預設同工號，但不設定密碼。
+- 已存在時不覆蓋人工維護的姓名、Email、角色、帳號或密碼。
 
 ---
 

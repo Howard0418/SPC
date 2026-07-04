@@ -74,6 +74,9 @@ public class Operator : BaseEntity<int>
     public string OperatorName { get; set; } = string.Empty;
     public string? Department { get; set; }
     public string? Email { get; set; }
+    public string? Username { get; set; }
+    public string? PasswordHash { get; set; }
+    public string Role { get; set; } = "Editor";
     public bool IsActive { get; set; } = true;
 }
 

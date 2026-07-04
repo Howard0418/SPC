@@ -121,6 +121,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Unit>().HasIndex(x => x.UnitCode).IsUnique();
         modelBuilder.Entity<Shift>().HasIndex(x => x.ShiftCode).IsUnique();
         modelBuilder.Entity<Operator>().HasIndex(x => x.OperatorCode).IsUnique();
+        modelBuilder.Entity<Operator>().HasIndex(x => x.Username).IsUnique().HasFilter("[Username] IS NOT NULL");
+        modelBuilder.Entity<Operator>().Property(x => x.Role).HasMaxLength(20).HasDefaultValue("Editor");
+        modelBuilder.Entity<Operator>().Property(x => x.Username).HasMaxLength(100);
         modelBuilder.Entity<Customer>().HasIndex(x => x.CustomerCode).IsUnique();
         modelBuilder.Entity<Supplier>().HasIndex(x => x.SupplierCode).IsUnique();
         modelBuilder.Entity<Chemical>().HasIndex(x => x.ChemicalCode).IsUnique();

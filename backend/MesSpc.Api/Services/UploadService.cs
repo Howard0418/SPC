@@ -2,6 +2,7 @@ using System.Text.Json;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using MesSpc.Api.Services.Security;
 
 namespace MesSpc.Api.Services;
 
@@ -80,6 +81,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
             .Where(x => x.UploadBatchId == uploadBatchId && x.IsValid)
             .OrderBy(x => x.RowNo)
             .ToListAsync(ct);
+
+        await EnsureImportedOperatorsAsync(validDetails, ct);
 
         var alreadyImported = batch.UploadType == "Variable"
             ? await db.VariableMeasurements.CountAsync(x => x.UploadBatchId == uploadBatchId, ct)
@@ -174,6 +177,28 @@ public class UploadService(AppDbContext db, SpcService spcService)
         batch.ConfirmedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return new { batch, imported, spcCount, alertCount };
+    }
+
+    private async Task EnsureImportedOperatorsAsync(IEnumerable<UploadDetail> validDetails, CancellationToken ct)
+    {
+        var operatorCodes = validDetails
+            .Select(x => JsonSerializer.Deserialize<Dictionary<string, string?>>(x.PayloadJson) ?? [])
+            .Select(x => Get(x, "Operator")?.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var operatorCode in operatorCodes)
+        {
+            var code = operatorCode!;
+            var exists = await db.Operators.AnyAsync(x => x.OperatorCode == code, ct);
+            if (exists) continue;
+
+            var user = ImportedOperatorFactory.Create(code);
+            if (await db.Operators.AnyAsync(x => x.Username == code, ct)) user.Username = null;
+            db.Operators.Add(user);
+            await db.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<bool> DeleteBatchAsync(Guid uploadBatchId, CancellationToken ct = default)

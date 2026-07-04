@@ -16,6 +16,11 @@
 - **ProductionLine**：生產線，代碼 `LineCode` 預設與機台的 `MachineCode` 對應。
 - **Tank** (槽位)：與 `ProductionLine` 關聯，定義在產線/機台下的各個物理槽位，並在 `TankCode` 自動附加機台代碼前綴 (例如 `MC-01-T01`)。
 - **Unit**：設備單元
+- **Operator**（系統使用者／量測者）：
+  - `OperatorCode`、`OperatorName`、部門與 Email。
+  - `Username`：可空白；空白表示僅作為量測者主檔，不能登入。
+  - `PasswordHash`：PBKDF2-SHA256 雜湊，API 永不回傳。
+  - `Role`：`Viewer` 或 `Editor`；既有資料及匯入建立資料預設為 `Editor`。
 
 ### 2. 生產與品質主檔 (Master Data)
 - **Part** (產品料號)：存儲產品資料 (如 `PartNo` 必須唯一)。對於製程與藥液等非產品專屬項目，系統會將其關聯至 `"COMMON"` 共用產品。
@@ -44,4 +49,5 @@
 ## 資料庫優化與索引
 - **IX_ControlChartTypes_ChartTypeCode**：唯一索引，防止全系統重複登錄圖表代碼。
 - **IX_ControlChartCategories_ChartGroupId_CategoryCode**：複合唯一索引，限制同群組下不可有重複類別。
+- **IX_Operators_Username**：可空白的唯一索引，避免登入帳號重複。
 - **複合索引**：針對 `PartProcessCharacteristic` 的 FK 關聯與數據表的 `MeasuredAt` 時間欄位建立複合索引，提升 SPC 圖表拉取歷史數據時的效能。

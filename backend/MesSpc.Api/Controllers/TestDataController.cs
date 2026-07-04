@@ -39,5 +39,13 @@ public class TestDataController(IWebHostEnvironment env, TestDataSeeder seeder) 
         var result = await seeder.ClearTransactionalDataAsync();
         return Ok(result);
     }
+
+    [HttpDelete("clear-tagged")]
+    public async Task<IActionResult> ClearTagged()
+    {
+        if (!env.IsDevelopment()) return StatusCode(StatusCodes.Status403Forbidden, new { message = "Tagged test data cleanup only allowed in Development." });
+        var result = await seeder.ClearTaggedTestDataAsync();
+        return Ok(result);
+    }
 }
 

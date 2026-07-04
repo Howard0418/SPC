@@ -51,5 +51,7 @@ public class TestDataSeeder(
     public Task<ClearAllDataResponse> ClearAllDatabaseDataAsync() => databaseSeeder.ClearAllDatabaseDataAsync();
 
     public Task<ClearTransactionalDataResponse> ClearTransactionalDataAsync() => databaseSeeder.ClearTransactionalDataAsync();
+
+    public Task<ClearTaggedTestDataResponse> ClearTaggedTestDataAsync() => databaseSeeder.ClearTaggedTestDataAsync();
 }
 

@@ -2,7 +2,12 @@
 
 ## 基礎資訊
 - **API 基底路由**：支援舊版 `/api/` 與標準 `/api/v1/` 雙路由模式。
-- **認證機制**：可配置的 JWT Bearer Token 驗證，需於 HTTP Header 中附加 `Authorization: Bearer <Token>`。
+- **認證機制**：JWT Bearer Token 驗證，需於 HTTP Header 中附加 `Authorization: Bearer <Token>`。
+- **角色權限**：
+  - `Viewer`：僅允許 GET／HEAD／OPTIONS 查詢。
+  - `Editor`：允許完整 CRUD、匯入、確認匯入、異常處置與系統設定。
+  - 後端會攔截 Viewer 的非讀取請求並回傳 HTTP 403，前端隱藏操作頁不能取代此安全檢查。
+- **登入來源**：優先由 `Operators` 系統使用者主檔驗證帳號與 PBKDF2 密碼；既有 demo 帳號保留為過渡 Editor 管理帳號。
 - **文件工具**：整合 Swagger UI，開發時可於 `http://localhost:5243/swagger` 進行直接調試。
 
 ## 關鍵 API 端點定義
@@ -50,3 +55,12 @@
   - **限制**：為安全起見，僅在 Development (開發環境) 下可執行。
   - **清理資料表**：包含 `LotSlotHistories`、`SlotParameters`、`LotSplitHistories`、`LotMasters`、`VariableMeasurements`、`AttributeMeasurements`、`SpcCalculationResults`、`UploadErrors`、`UploadDetails`、`UploadBatches`、`AlertEvents`、`MeasurementValues`、`MeasurementBatches`、`StationOperationSessions`、`WorkOrders`、`MesSyncMessages`。
   - **回傳**：各資料表清理的筆數統計。
+- **`DELETE /api/testdata/clear-tagged`**：
+  - 只清除 `TEST_`、`E2E_`、`E2E-` 標記的測試交易、上傳批次、警報及測試使用者。
+  - 僅 Development 環境可執行，且啟用認證時仍須 Editor Token。
+  - 不清除正式料號、製程、機台、品質特性、SPC 設定或正式使用者。
+
+### 7. 系統使用者管理
+- **`GET /api/operators`**：Viewer／Editor 均可查詢，回傳帳號、角色及 `HasPassword`，不回傳密碼雜湊。
+- **`POST /api/operators`、`PUT /api/operators/{id}`、`DELETE /api/operators/{id}`**：僅 Editor。
+- 角色只接受 `Viewer`／`Editor`；未知值安全回退為 `Viewer`。既有資料則由 Migration 明確預設為 `Editor`，兼顧最小權限與相容性。

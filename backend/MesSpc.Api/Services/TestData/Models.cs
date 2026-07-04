@@ -94,6 +94,17 @@ public record ClearTransactionalDataResponse(
     int MesSyncMessages
 );
 
+public record ClearTaggedTestDataResponse(
+    int VariableMeasurements,
+    int AttributeMeasurements,
+    int SpcCalculationResults,
+    int UploadErrors,
+    int UploadDetails,
+    int UploadBatches,
+    int AlertEvents,
+    int Operators,
+    ClearTestDataResponse LegacyTestData);
+
 public static class TestDataTags
 {
     public const string TestPrefix = "TEST_";

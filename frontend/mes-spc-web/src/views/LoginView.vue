@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api } from "../api/client";
+import { setAuthSession } from "../utils/auth";
 
 const route = useRoute();
 const router = useRouter();
@@ -16,7 +17,7 @@ const submit = async () => {
       username: username.value,
       password: password.value
     });
-    localStorage.setItem("mes_spc_token", data.token);
+    setAuthSession(data.token, data.user);
     const redir = route.query.redirect;
     router.replace(typeof redir === "string" ? redir : "/");
   } catch (e) {

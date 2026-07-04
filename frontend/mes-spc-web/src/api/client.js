@@ -1,4 +1,5 @@
 import axios from "axios";
+import { clearAuthSession } from "../utils/auth";
 
 const baseURL = import.meta.env.DEV
   ? "/api"
@@ -21,7 +22,7 @@ if (import.meta.env.VITE_AUTH_ENABLED === "true") {
     (r) => r,
     (err) => {
       if (err?.response?.status === 401 && typeof window !== "undefined") {
-        localStorage.removeItem(tokenKey);
+        clearAuthSession();
         if (!window.location.pathname.includes("/login")) {
           window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
         }
@@ -52,6 +53,9 @@ export function getApiErrorMessage(err) {
   }
   if (err?.response?.status === 409) {
     return err?.response?.data?.message || "此資料已被其他記錄關聯，請先刪除或解除相關聯的子資料後再操作。";
+  }
+  if (err?.response?.status === 403) {
+    return err?.response?.data?.message || "權限不足（403）。檢視者只能查看與查詢資料。";
   }
   return err?.response?.data?.title || err?.response?.data?.message || msg || "請求失敗";
 }

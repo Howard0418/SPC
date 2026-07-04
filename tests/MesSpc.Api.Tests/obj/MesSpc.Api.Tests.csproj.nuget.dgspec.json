@@ -92,10 +92,6 @@
               "target": "Package",
               "version": "[6.2.0, )"
             },
-            "SQLitePCLRaw.lib.e_sqlite3": {
-              "target": "Package",
-              "version": "[2.1.14, )"
-            },
             "Scalar.AspNetCore": {
               "target": "Package",
               "version": "[1.2.*, )"

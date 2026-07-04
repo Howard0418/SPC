@@ -218,6 +218,78 @@ public class DatabaseSeeder(AppDbContext db)
         }
     }
 
+    public async Task<ClearTaggedTestDataResponse> ClearTaggedTestDataAsync()
+    {
+        static bool IsTagged(string? value) =>
+            !string.IsNullOrWhiteSpace(value)
+            && (value.StartsWith("TEST_", StringComparison.OrdinalIgnoreCase)
+                || value.StartsWith("E2E_", StringComparison.OrdinalIgnoreCase)
+                || value.StartsWith("E2E-", StringComparison.OrdinalIgnoreCase));
+
+        var variableRows = await db.VariableMeasurements
+            .Where(x =>
+                (x.LotNo != null && (x.LotNo.StartsWith("TEST_") || x.LotNo.StartsWith("E2E_") || x.LotNo.StartsWith("E2E-"))) ||
+                (x.Operator != null && (x.Operator.StartsWith("TEST_") || x.Operator.StartsWith("E2E_") || x.Operator.StartsWith("E2E-"))))
+            .Select(x => new { x.Id, x.UploadBatchId })
+            .ToListAsync();
+        var attributeRows = await db.AttributeMeasurements
+            .Where(x =>
+                (x.LotNo != null && (x.LotNo.StartsWith("TEST_") || x.LotNo.StartsWith("E2E_") || x.LotNo.StartsWith("E2E-"))) ||
+                (x.Operator != null && (x.Operator.StartsWith("TEST_") || x.Operator.StartsWith("E2E_") || x.Operator.StartsWith("E2E-"))))
+            .Select(x => new { x.Id, x.UploadBatchId })
+            .ToListAsync();
+
+        var batchIds = variableRows.Select(x => x.UploadBatchId)
+            .Concat(attributeRows.Select(x => x.UploadBatchId))
+            .Distinct()
+            .ToList();
+        var variableIds = variableRows.Select(x => x.Id).ToList();
+        var attributeIds = attributeRows.Select(x => x.Id).ToList();
+
+        var taggedFileBatchIds = await db.UploadBatches
+            .Where(x => x.OriginalFileName != null &&
+                (x.OriginalFileName.StartsWith("TEST_") || x.OriginalFileName.StartsWith("E2E_") || x.OriginalFileName.StartsWith("E2E-")
+                    || x.OriginalFileName.Contains("e2e_seed")))
+            .Select(x => x.UploadBatchId)
+            .ToListAsync();
+        batchIds = batchIds.Concat(taggedFileBatchIds).Distinct().ToList();
+
+        var alerts = await db.AlertEvents
+            .Where(x => (x.UploadBatchId.HasValue && batchIds.Contains(x.UploadBatchId.Value))
+                || (x.VariableMeasurementId.HasValue && variableIds.Contains(x.VariableMeasurementId.Value))
+                || (x.AttributeMeasurementId.HasValue && attributeIds.Contains(x.AttributeMeasurementId.Value))
+                || x.Message.StartsWith(TestDataTags.E2ePrefix))
+            .ExecuteDeleteAsync();
+        var results = await db.SpcCalculationResults
+            .Where(x => batchIds.Contains(x.UploadBatchId)
+                || (x.VariableMeasurementId.HasValue && variableIds.Contains(x.VariableMeasurementId.Value))
+                || (x.AttributeMeasurementId.HasValue && attributeIds.Contains(x.AttributeMeasurementId.Value)))
+            .ExecuteDeleteAsync();
+        var variableMeasurements = await db.VariableMeasurements.Where(x => variableIds.Contains(x.Id) || batchIds.Contains(x.UploadBatchId)).ExecuteDeleteAsync();
+        var attributeMeasurements = await db.AttributeMeasurements.Where(x => attributeIds.Contains(x.Id) || batchIds.Contains(x.UploadBatchId)).ExecuteDeleteAsync();
+        var uploadErrors = await db.UploadErrors.Where(x => batchIds.Contains(x.UploadBatchId)).ExecuteDeleteAsync();
+        var uploadDetails = await db.UploadDetails.Where(x => batchIds.Contains(x.UploadBatchId)).ExecuteDeleteAsync();
+        var uploadBatches = await db.UploadBatches.Where(x => batchIds.Contains(x.UploadBatchId)).ExecuteDeleteAsync();
+
+        var taggedOperators = await db.Operators
+            .Where(x => x.OperatorCode.StartsWith("TEST_") || x.OperatorCode.StartsWith("E2E_") || x.OperatorCode.StartsWith("E2E-"))
+            .ToListAsync();
+        db.Operators.RemoveRange(taggedOperators.Where(x => IsTagged(x.OperatorCode)));
+        await db.SaveChangesAsync();
+
+        var legacy = await ClearAllTestDataAsync();
+        return new ClearTaggedTestDataResponse(
+            variableMeasurements,
+            attributeMeasurements,
+            results,
+            uploadErrors,
+            uploadDetails,
+            uploadBatches,
+            alerts,
+            taggedOperators.Count,
+            legacy);
+    }
+
     public async Task<ClearAllDataResponse> ClearAllDatabaseDataAsync()
     {
         int lotSlotHistories = await db.LotSlotHistories.ExecuteDeleteAsync();

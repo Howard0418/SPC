@@ -140,4 +140,22 @@ public class DatabaseClearTests : IDisposable
         (await _context.AlertEvents.AnyAsync()).Should().BeFalse();
         (await _context.LotMasters.AnyAsync()).Should().BeFalse();
     }
+
+    [Fact]
+    public async Task ClearTaggedTestDataAsync_Should_Remove_Only_Tagged_Users_And_Keep_Master_Data()
+    {
+        _context.Operators.AddRange(
+            new Operator { OperatorCode = "E2E-OP-001", OperatorName = "測試人員", Role = "Editor" },
+            new Operator { OperatorCode = "OP-REAL-001", OperatorName = "正式人員", Role = "Viewer" });
+        _context.Parts.Add(new Part { PartNo = "P-REAL-001", PartName = "正式料號" });
+        await _context.SaveChangesAsync();
+
+        var seeder = new DatabaseSeeder(_context);
+        var response = await seeder.ClearTaggedTestDataAsync();
+
+        response.Operators.Should().Be(1);
+        (await _context.Operators.AnyAsync(x => x.OperatorCode == "E2E-OP-001")).Should().BeFalse();
+        (await _context.Operators.AnyAsync(x => x.OperatorCode == "OP-REAL-001")).Should().BeTrue();
+        (await _context.Parts.AnyAsync(x => x.PartNo == "P-REAL-001")).Should().BeTrue();
+    }
 }

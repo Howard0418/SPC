@@ -24,11 +24,17 @@ import {
   Users,
   Map
 } from "lucide-vue-next";
+import { clearAuthSession, getCurrentUser } from "./utils/auth";
 
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
 const route = useRoute();
 const router = useRouter();
 const showNav = computed(() => !authOn || route.path !== "/login");
+const currentUser = computed(() => {
+  route.fullPath;
+  return getCurrentUser();
+});
+const canEdit = computed(() => !authOn || currentUser.value?.role === "Editor");
 
 const isDark = ref(true);
 
@@ -54,7 +60,7 @@ onMounted(() => {
   }
 });
 
-const menuCategories = [
+const menuCategories = computed(() => [
   {
     title: "高階戰情與分析",
     items: [
@@ -65,6 +71,7 @@ const menuCategories = [
   },
   {
     title: "自動化匯入與採樣",
+    editorOnly: true,
     items: [
       { to: "/measurements", text: "現場量測數據錄入", icon: Activity },
       { to: "/uploads/variable", text: "計量型資料匯入", icon: UploadCloud },
@@ -73,6 +80,7 @@ const menuCategories = [
   },
   {
     title: "企業品質主檔設定",
+    editorOnly: true,
     items: [
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/parts", text: "產品料號主檔", icon: Package },
@@ -83,6 +91,7 @@ const menuCategories = [
   },
   {
     title: "管制圖與西方電氣規則",
+    editorOnly: true,
     items: [
       { to: "/control-chart-groups", text: "管制圖配置維護", icon: Layers },
       { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity }
@@ -92,7 +101,7 @@ const menuCategories = [
     title: "異常管理與追溯",
     items: [
       { to: "/alerts", text: "異常通報總覽", icon: AlertTriangle },
-      { to: "/alerts-workflow", text: "異常單簽核處置", icon: Activity },
+      ...(canEdit.value ? [{ to: "/alerts-workflow", text: "異常單簽核處置", icon: Activity }] : []),
       { to: "/genealogy", text: "產品系譜圖 (Genealogy)", icon: FolderTree },
       { to: "/spc/query", text: "多維度品質履歷查詢", icon: Search }
     ]
@@ -101,14 +110,16 @@ const menuCategories = [
     title: "系統管理與通報設定",
     items: [
       { to: "/guide", text: "系統操作手冊", icon: BookOpen },
-      { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders },
-      { to: "/operators", text: "系統使用者管理", icon: Users }
+      ...(canEdit.value ? [
+        { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders },
+        { to: "/operators", text: "系統使用者管理", icon: Users }
+      ] : [])
     ]
   }
-];
+].filter(cat => !cat.editorOnly || canEdit.value));
 
 function logout() {
-  localStorage.removeItem("mes_spc_token");
+  clearAuthSession();
   router.push("/login");
 }
 </script>
@@ -143,7 +154,10 @@ function logout() {
 
         <!-- Auth info -->
         <div v-if="authOn" class="flex items-center gap-3 text-sm pl-4 border-l border-slate-700/80">
-          <router-link to="/login" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition-all">登入系統</router-link>
+          <div v-if="currentUser" class="text-right leading-tight">
+            <div class="text-xs font-bold text-white">{{ currentUser.displayName || currentUser.username }}</div>
+            <div class="text-[10px] text-blue-300">{{ currentUser.role === 'Viewer' ? '檢視者' : '編輯者' }}</div>
+          </div>
           <button
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-red-600/80 hover:text-white border border-slate-700 transition-all text-slate-300"

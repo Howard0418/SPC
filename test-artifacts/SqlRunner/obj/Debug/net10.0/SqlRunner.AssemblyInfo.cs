@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SqlRunner")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e987815d5190ec38280bc244516d791b2fd81a6b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4ca35450ba742e51e7b136ee04144e8b12a46d13")]
 [assembly: System.Reflection.AssemblyProductAttribute("SqlRunner")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SqlRunner")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
