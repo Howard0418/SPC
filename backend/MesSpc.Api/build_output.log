@@ -1,0 +1,22 @@
+  正在判斷要還原的專案...
+D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj : warning NU1903: 套件 'Microsoft.OpenApi' 2.0.0 具有已知的 高 嚴重性弱點，https://github.com/advisories/GHSA-v5pm-xwqc-g5wc。
+D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj : warning NU1903: 套件 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 具有已知的 高 嚴重性弱點，https://github.com/advisories/GHSA-2m69-gcr7-jv3q。
+  所有專案都在最新狀態，可進行還原。
+D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj : warning NU1903: 套件 'Microsoft.OpenApi' 2.0.0 具有已知的 高 嚴重性弱點，https://github.com/advisories/GHSA-v5pm-xwqc-g5wc。
+D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj : warning NU1903: 套件 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 具有已知的 高 嚴重性弱點，https://github.com/advisories/GHSA-2m69-gcr7-jv3q。
+D:\SPC\backend\MesSpc.Api\Services\SpcOverviewReportService.cs(42,64): warning CS8601: 可能有 Null 參考指派。 [D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj]
+D:\SPC\backend\MesSpc.Api\Services\SpcOverviewReportService.cs(42,74): warning CS8601: 可能有 Null 參考指派。 [D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj]
+  MesSpc.Api -> D:\SPC\backend\MesSpc.Api\bin\Debug\net10.0\MesSpc.Api.dll
+
+建置成功。
+
+D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj : warning NU1903: 套件 'Microsoft.OpenApi' 2.0.0 具有已知的 高 嚴重性弱點，https://github.com/advisories/GHSA-v5pm-xwqc-g5wc。
+D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj : warning NU1903: 套件 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 具有已知的 高 嚴重性弱點，https://github.com/advisories/GHSA-2m69-gcr7-jv3q。
+D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj : warning NU1903: 套件 'Microsoft.OpenApi' 2.0.0 具有已知的 高 嚴重性弱點，https://github.com/advisories/GHSA-v5pm-xwqc-g5wc。
+D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj : warning NU1903: 套件 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 具有已知的 高 嚴重性弱點，https://github.com/advisories/GHSA-2m69-gcr7-jv3q。
+D:\SPC\backend\MesSpc.Api\Services\SpcOverviewReportService.cs(42,64): warning CS8601: 可能有 Null 參考指派。 [D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj]
+D:\SPC\backend\MesSpc.Api\Services\SpcOverviewReportService.cs(42,74): warning CS8601: 可能有 Null 參考指派。 [D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj]
+    6 個警告
+    0 個錯誤
+
+經過時間 00:00:07.15

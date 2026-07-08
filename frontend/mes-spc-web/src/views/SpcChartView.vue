@@ -5,24 +5,26 @@ import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
 import {
   LineChart,
-  Sliders,
+  TrendingUp,
+  Search,
+  RefreshCw,
+  AlertTriangle,
   Activity,
+  ShieldAlert,
+  Info,
+  Sliders,
+  List,
+  BarChart3,
   Layers,
   Sparkles,
-  ShieldAlert,
-  RefreshCw,
-  Info,
-  CheckCircle2,
-  AlertTriangle,
   Download,
   User,
   Calendar,
   Hash,
   Clock,
-  BarChart3,
-  List,
   Loader2
 } from "lucide-vue-next";
+import SpcSummaryTable from "../components/SpcSummaryTable.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -70,6 +72,7 @@ const summaryDimension = ref("");
 const summaryPartId = ref("");
 const summaryQueryMode = ref("DATE");
 const summaryProductPartId = ref("");
+const selectedSummaryRow = ref(null);
 const chartResult = ref(null);
 let chartInstance = null;
 const chartEl = ref(null);
@@ -119,11 +122,11 @@ const productPartOptions = computed(() => {
 
 // Processes available for selected Part (Station)
 const availableProcesses = computed(() => {
-  if (selectedDimension.value === "PROD" && !selectedPartId.value) return [];
+  if (selectedDimension.value === "PRODUCT" && !selectedPartId.value) return [];
   const byId = new Map();
   filteredMappingsByDimension.value
     .filter(m =>
-      (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
+      (selectedDimension.value !== "PRODUCT" || m.partId === Number(selectedPartId.value)) &&
       m.process?.isEnabled !== false
     )
     .forEach(m => {
@@ -139,12 +142,47 @@ const selectedMapping = computed(() => {
     const exactMatch = filteredMappingsByDimension.value.find(m => m.id === Number(ppcId.value));
     if (exactMatch) return exactMatch;
   }
-  if ((selectedDimension.value === "PROD" && !selectedPartId.value) || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
+  if ((selectedDimension.value === "PRODUCT" && !selectedPartId.value) || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
   return filteredMappingsByDimension.value.find(m =>
-    (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
+    (selectedDimension.value !== "PRODUCT" || m.partId === Number(selectedPartId.value)) &&
     m.processId === Number(selectedProcessId.value) &&
     m.characteristicId === Number(selectedCharacteristicId.value)
   ) || null;
+});
+
+function uniqueNonEmptyParts(parts) {
+  return [...new Set(parts
+    .map(x => (x ?? "").toString().trim())
+    .filter(Boolean))];
+}
+
+function formatTankLabel(tank) {
+  if (!tank) return "";
+  const name = tank.tankName || "";
+  const code = tank.tankCode || "";
+  if (name && code) return `${name} (${code})`;
+  return name || code;
+}
+
+const activeChartDisplayName = computed(() => {
+  const row = selectedSummaryRow.value;
+  const rowTitleParts = uniqueNonEmptyParts([
+    row?.lineOrProcessName,
+    row?.slotName,
+    row?.chartName
+  ]);
+  if (rowTitleParts.length > 0) return rowTitleParts.join(" - ");
+
+  const mapping = selectedMapping.value;
+  const mappingTitleParts = uniqueNonEmptyParts([
+    ...uniqueNonEmptyParts([
+      mapping?.process?.processName,
+      mapping?.machine?.machineName
+    ]),
+    formatTankLabel(mapping?.tank),
+    mapping?.characteristic?.characteristicName
+  ]);
+  return mappingTitleParts.join(" - ");
 });
 
 const topControlStat = computed(() => {
@@ -155,6 +193,33 @@ const topControlStat = computed(() => {
 const bottomControlStat = computed(() => {
   const stat = chartResult.value?.statControlLimits || {};
   return stat.mrControlLimitsStat || stat.rControl || stat.sControl || null;
+});
+
+const primaryCalculationMethod = computed(() => {
+  const stat = chartResult.value?.statControlLimits || {};
+  const primary = stat.iControlLimitsStat || stat.xbarControl || stat.pControlLimitsStat || stat.npControlLimitsStat || stat.cControlLimitsStat || stat.uControlLimitsStat || {};
+  return (primary.calculationMethod || "").toString().toUpperCase();
+});
+
+const calculationMethodLabel = computed(() => {
+  const method = primaryCalculationMethod.value;
+  const chartType = (chartResult.value?.chartType || "").toString().toUpperCase();
+  if (method === "MR_METHOD" || method === "MOVING_RANGE_OF_XBAR" || chartType === "I_MR" || chartType === "I-MR") {
+    return {
+      text: "移動全距法 (UCL = Xbar + 2.66 * MRbar)",
+      cls: "bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300 dark:border-purple-800"
+    };
+  }
+  if (method === "SIGMA_METHOD" || method === "SAMPLE_STD_DEV") {
+    return {
+      text: "樣本標準差法 (UCL = Xbar + 3 * S_Xbar)",
+      cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+    };
+  }
+  return {
+    text: "標準全距法 (UCL = Xbar + A2 * Rbar)",
+    cls: "bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800"
+  };
 });
 
 const chartPoints = computed(() => chartResult.value?.chartData?.points || []);
@@ -189,27 +254,28 @@ const formatLimit = (value) => value === null || value === undefined ? "N/A" : N
 const formatPercentage = (value) => value === null || value === undefined ? "N/A" : `${Number(value).toFixed(2)}%`;
 
 const summaryDimensionMap = {
-  PROC: "PROCESS",
-  CHEM: "CHEMICAL",
-  PROD: "PRODUCT"
+  PROCESS: "PROCESS",
+  CHEMICAL: "CHEMICAL",
+  PRODUCT: "PRODUCT"
 };
+const pageGroupType = "CONTROL_CHART";
 
 const getDimensionForMapping = (m) => {
   if (m.chartTypeId) {
     const type = chartTypes.value.find(t => t.id === m.chartTypeId);
     const cat = type ? categories.value.find(c => c.id === type.chartCategoryId) : null;
     const group = cat ? groups.value.find(g => g.id === cat.chartGroupId) : null;
-    if (group?.groupCode) return group.groupCode;
+    return group?.groupCode || "";
   }
-  if (m.controlScope === "PROCESS") return "PROC";
-  if (m.controlScope === "CHEMICAL") return "CHEM";
-  if (m.controlScope === "PRODUCT") return "PROD";
-  return m.partId ? "PROD" : "PROC";
+  if (m.controlScope === "PROCESS") return "PROCESS";
+  if (m.controlScope === "CHEMICAL") return "CHEMICAL";
+  if (m.controlScope === "PRODUCT") return "PRODUCT";
+  return m.partId ? "PRODUCT" : "PROCESS";
 };
 
 const dimensionOptions = computed(() =>
   groups.value
-    .filter(group => group.isEnabled !== false)
+    .filter(group => group.isEnabled !== false && (group.groupType || pageGroupType) === pageGroupType)
     .map(group => ({
       id: group.groupCode,
       label: group.groupName,
@@ -221,8 +287,8 @@ const dimensionButtonClass = (dimensionId) => {
   if (selectedDimension.value !== dimensionId) {
     return "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800";
   }
-  if (dimensionId === "CHEM") return "bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold shadow-lg shadow-teal-500/25";
-  if (dimensionId === "PROD") return "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold shadow-lg shadow-purple-500/25";
+  if (dimensionId === "CHEMICAL") return "bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold shadow-lg shadow-teal-500/25";
+  if (dimensionId === "PRODUCT") return "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold shadow-lg shadow-purple-500/25";
   return "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-lg shadow-blue-500/25";
 };
 
@@ -237,23 +303,19 @@ function syncCascadingDropdowns(productId, stationId, inspectionItemId) {
 
 // Watchers for cascading select workflow
 watch(selectedDimension, (newDim) => {
-  if (newDim === "PROD") {
-    selectedPartId.value = "";
+  if (newDim === "PRODUCT") {
+    selectedPartId.value = "ALL";
+    selectedProcessId.value = "ALL";
   } else {
     selectedPartId.value = "";
+    selectedProcessId.value = "";
+    productQueryMode.value = "DATE";
+    productPartId.value = "";
   }
-  selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
   ppcId.value = "";
   uploadBatchId.value = "";
   tableSummaryData.value = null;
-  if (newDim === "PROD") {
-    selectedPartId.value = "ALL";
-    selectedProcessId.value = "ALL";
-  } else {
-    productQueryMode.value = "DATE";
-    productPartId.value = "";
-  }
 });
 
 watch(selectedPartId, (newValue) => {
@@ -285,15 +347,15 @@ async function loadMappings() {
       api.get("/part-process-characteristics"),
       api.get("/control-chart-types"),
       api.get("/control-chart-categories"),
-      api.get("/control-chart-groups")
+      api.get("/control-chart-groups", { params: { groupType: pageGroupType } })
     ]);
     
     chartTypes.value = typesRes.data || [];
     categories.value = catsRes.data || [];
     groups.value = groupsRes.data || [];
     mappings.value = mapRes.data || [];
-    if (!groups.value.some(group => group.groupCode === selectedDimension.value && group.isEnabled !== false)) {
-      selectedDimension.value = dimensionOptions.value[0]?.id || "PROC";
+    if (!dimensionOptions.value.some(group => group.id === selectedDimension.value)) {
+      selectedDimension.value = dimensionOptions.value[0]?.id || "PROCESS";
     }
     
     // Auto-select from query
@@ -303,6 +365,10 @@ async function loadMappings() {
       const match = mappings.value.find(m => m.id === qPpc);
       if (match) {
         const dim = getDimensionForMapping(match);
+        if (!groups.value.some(group => group.groupCode === dim)) {
+          router.replace({ path: "/trend-chart", query: route.query });
+          return;
+        }
         selectedDimension.value = dim;
         
         await nextTick();
@@ -353,7 +419,7 @@ watch([showSpecLimits, showControlLimits, showPointValues], () => {
 const getChartQueryParams = (activePpcId) => {
   const params = { ppcId: activePpcId };
   if (uploadBatchId.value) params.uploadBatchId = uploadBatchId.value;
-  if (selectedDimension.value === "PROD" && productQueryMode.value === "PART") {
+  if (selectedDimension.value === "PRODUCT" && productQueryMode.value === "PART") {
     if (productPartId.value && productPartId.value !== "ALL") params.partId = Number(productPartId.value);
   } else {
     if (startDate.value) params.startDate = startDate.value;
@@ -363,7 +429,7 @@ const getChartQueryParams = (activePpcId) => {
 };
 
 async function loadActiveChart() {
-  const useProductPart = selectedDimension.value === "PROD" && productQueryMode.value === "PART";
+  const useProductPart = selectedDimension.value === "PRODUCT" && productQueryMode.value === "PART";
   if (useProductPart) {
     if (!productPartId.value) {
       error.value = "請選擇料號。";
@@ -393,12 +459,12 @@ async function loadActiveChart() {
     }
   }
 
-  if (!ppcId.value && (selectedDimension.value === "PROD" || selectedProcessId.value === "ALL")) {
+  if (!ppcId.value && (selectedDimension.value === "PRODUCT" || selectedProcessId.value === "ALL")) {
     loading.value = true;
     error.value = "";
     chartResult.value = null;
     try {
-      const params = { dimension: summaryDimensionMap[selectedDimension.value] || selectedDimension.value };
+      const params = { dimension: summaryDimensionMap[selectedDimension.value] || selectedDimension.value, groupType: pageGroupType };
       if (useProductPart) {
         if (productPartId.value !== "ALL") params.partId = Number(productPartId.value);
       } else {
@@ -423,6 +489,11 @@ async function loadActiveChart() {
   }
 
   tableSummaryData.value = null;
+
+  if (!ppcId.value) {
+    error.value = "請選擇一個檢驗項目，或選擇全部(All)以檢視總表。";
+    return;
+  }
 
   if (ppcId.value && uploadBatchId.value) {
     await loadUploadBatchChart();
@@ -489,6 +560,11 @@ async function loadInteractiveChart() {
 }
 
 async function drawSingleChart(row) {
+  if (row?.groupType === "TREND_CHART" || row?.chartKind === "趨勢圖") {
+    router.push({ path: "/trend-chart", query: { ppcId: row.partProcessCharacteristicId } });
+    return;
+  }
+
   const match = mappings.value.find(m => m.id === row.partProcessCharacteristicId);
   if (!match) {
     error.value = "找不到此管制項目的設定，可能已停用或刪除。";
@@ -500,6 +576,7 @@ async function drawSingleChart(row) {
   syncCascadingDropdowns(match.partId, match.processId, match.characteristicId);
   ppcId.value = String(match.id);
   uploadBatchId.value = "";
+  selectedSummaryRow.value = row;
   tableSummaryData.value = null;
   await loadInteractiveChart();
 }
@@ -508,6 +585,7 @@ async function returnToSummary() {
   chartResult.value = null;
   selectedPoint.value = null;
   selectedPointIndex.value = -1;
+  selectedSummaryRow.value = null;
   ppcId.value = "";
   uploadBatchId.value = "";
 
@@ -518,7 +596,7 @@ async function returnToSummary() {
 
   productQueryMode.value = summaryQueryMode.value;
   productPartId.value = summaryProductPartId.value;
-  selectedPartId.value = summaryDimension.value === "PROD" ? (summaryPartId.value || "ALL") : "";
+  selectedPartId.value = summaryDimension.value === "PRODUCT" ? (summaryPartId.value || "ALL") : "";
   await nextTick();
   selectedProcessId.value = "ALL";
   selectedCharacteristicId.value = "";
@@ -972,8 +1050,7 @@ function renderECharts() {
     }
   }
 
-  // Render raw measurement distribution companion charts.
-  renderTrendChart();
+  // Render raw measurement distribution companion chart.
   renderHistogramChart();
 }
 
@@ -1381,7 +1458,7 @@ onBeforeUnmount(() => {
       <div class="flex flex-wrap items-end gap-2 w-full">
         <!-- Query Conditions -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 items-end flex-1">
-          <div v-if="selectedDimension === 'PROD'" class="w-full">
+          <div v-if="selectedDimension === 'PRODUCT'" class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">查詢條件</label>
             <select
               v-model="productQueryMode"
@@ -1395,15 +1472,15 @@ onBeforeUnmount(() => {
 
           <div class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">量測起日</label>
-            <input v-model="startDate" :disabled="selectedDimension === 'PROD' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            <input v-model="startDate" :disabled="selectedDimension === 'PRODUCT' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
           </div>
 
           <div class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">量測迄日</label>
-            <input v-model="endDate" :disabled="selectedDimension === 'PROD' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            <input v-model="endDate" :disabled="selectedDimension === 'PRODUCT' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
           </div>
 
-          <div v-if="selectedDimension === 'PROD'" class="w-full">
+          <div v-if="selectedDimension === 'PRODUCT'" class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">料號</label>
             <select
               v-model="productPartId"
@@ -1445,92 +1522,12 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- All-lines summary table -->
-    <div
+    <SpcSummaryTable
       v-if="tableSummaryData && !loading"
-      data-testid="spc-summary-table"
-      class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden"
-    >
-      <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 class="font-black text-slate-800 dark:text-white flex items-center gap-2">
-            <List class="w-5 h-5 text-blue-500" /> SPC 管制項目總覽
-          </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">共 {{ tableSummaryData.length }} 個有量測資料的管制項目</p>
-        </div>
-        <span class="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
-          線別：全部 (All)
-        </span>
-      </div>
-
-      <div v-if="tableSummaryData.length === 0" class="py-10 text-center text-slate-400">
-        <BarChart3 class="w-8 h-8 mx-auto mb-2 opacity-50" />
-        <p class="font-bold">此類別與日期區間沒有可計算的量測資料</p>
-      </div>
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-[1900px] w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
-              <th class="px-4 py-3">管制類別</th>
-              <th class="px-4 py-3">製程線別</th>
-              <th class="px-4 py-3">管制圖名稱</th>
-              <th class="px-4 py-3">管制圖種類</th>
-              <th class="px-4 py-3 text-right">USL</th>
-              <th class="px-4 py-3 text-right">LSL</th>
-              <th class="px-4 py-3 text-right">UCL</th>
-              <th class="px-4 py-3 text-right">LCL</th>
-              <th class="px-4 py-3">管制界線計算方式</th>
-              <th class="px-4 py-3 text-right">OOS件數</th>
-              <th class="px-4 py-3 text-right">% OOS</th>
-              <th class="px-4 py-3 text-right">Ca</th>
-              <th class="px-4 py-3 text-right">Pp</th>
-              <th class="px-4 py-3 text-right">Ppk</th>
-              <th class="px-4 py-3">工程負責人</th>
-              <th class="px-4 py-3">備註</th>
-              <th class="px-4 py-3 text-center sticky right-0 bg-slate-50 dark:bg-slate-800">製圖</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-200">
-            <tr
-              v-for="row in tableSummaryData"
-              :key="row.partProcessCharacteristicId"
-              class="hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors"
-            >
-              <td class="px-4 py-3 font-bold whitespace-nowrap">{{ row.controlCategory || 'N/A' }}</td>
-              <td class="px-4 py-3 min-w-44">{{ row.lineOrProcessName || 'N/A' }}</td>
-              <td class="px-4 py-3 min-w-44 font-bold text-blue-700 dark:text-blue-300">{{ row.chartName || 'N/A' }}</td>
-              <td class="px-4 py-3 whitespace-nowrap">{{ row.chartType || 'N/A' }}</td>
-              <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.usl) }}</td>
-              <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.lsl) }}</td>
-              <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.ucl) }}</td>
-              <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.lcl) }}</td>
-              <td class="px-4 py-3 min-w-40">{{ row.limitCalculationMethod || 'N/A' }}</td>
-              <td class="px-4 py-3 text-right font-bold" :class="row.oosCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
-                {{ row.oosCount }}
-              </td>
-              <td class="px-4 py-3 text-right font-bold" :class="row.oosPercentage > 0 ? 'text-red-600 dark:text-red-400' : ''">
-                {{ formatPercentage(row.oosPercentage) }}
-              </td>
-              <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.ca) }}</td>
-              <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.pp) }}</td>
-              <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.ppk) }}</td>
-              <td class="px-4 py-3 min-w-32">{{ row.responsibleUser || 'N/A' }}</td>
-              <td class="px-4 py-3 min-w-56 max-w-xs truncate" :title="row.remarks || ''">{{ row.remarks || 'N/A' }}</td>
-              <td class="px-4 py-3 text-center sticky right-0 bg-white dark:bg-slate-900">
-                <button
-                  type="button"
-                  :data-testid="`draw-chart-${row.partProcessCharacteristicId}`"
-                  @click="drawSingleChart(row)"
-                  class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-sm whitespace-nowrap"
-                >
-                  <LineChart class="w-4 h-4" /> 製圖
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      :data="tableSummaryData"
+      :loading="loading"
+      @draw-chart="drawSingleChart"
+    />
 
     <!-- Main Chart & Capability Workspace -->
     <div v-if="chartResult && !loading" class="space-y-3">
@@ -1543,6 +1540,17 @@ onBeforeUnmount(() => {
       >
         ← 返回已查詢總表
       </button>
+
+      <div
+        v-if="activeChartDisplayName"
+        data-testid="active-chart-display-name"
+        class="px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+      >
+        <p class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">圖表名稱</p>
+        <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white leading-snug">
+          {{ activeChartDisplayName }}
+        </h2>
+      </div>
 
       <!-- Capability Summary Cards -->
       <div v-if="chartResult.capability" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
@@ -1677,18 +1685,12 @@ onBeforeUnmount(() => {
             <span class="text-sm font-bold text-slate-600 dark:text-slate-300">
               子組大小 (Subgroup N) = {{ chartResult.subgroupSize }}
             </span>
-            <span v-if="chartResult.statControlLimits?.xbarControl?.calculationMethod === 'MR_METHOD'" class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300 dark:border-purple-800 text-xs font-bold tracking-wide flex items-center gap-1.5 animate-pulse shadow-sm">
-              🧪 截圖公式：平均值移動全距法 (UCL = Xbar + 2.66 * MRbar)
-            </span>
-            <span v-else-if="chartResult.statControlLimits?.xbarControl?.calculationMethod === 'SIGMA_METHOD'" class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs font-bold tracking-wide flex items-center gap-1.5 animate-pulse shadow-sm">
-              🧪 樣本標準差法 (UCL = Xbar + 3 * S_Xbar)
-            </span>
-            <span v-else class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-sm">
-              ✨ 預設公式：標準全距法 (UCL = Xbar + A2 * Rbar)
+            <span :class="['px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-sm', calculationMethodLabel.cls]">
+              {{ calculationMethodLabel.text }}
             </span>
             <router-link
               v-if="selectedMapping && selectedMapping.chartTypeId"
-              :to="`/control-chart-groups?tab=types&id=${selectedMapping.chartTypeId}`"
+              :to="`/part-process-characteristics?tab=types&id=${selectedMapping.chartTypeId}`"
               class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold border border-slate-300 dark:border-slate-600 transition-all flex items-center gap-1"
             >
               ⚙️ 微調公式配置
@@ -1770,58 +1772,6 @@ onBeforeUnmount(() => {
               </tbody>
             </table>
           </div>
-        </div>
-
-        <!-- 🌟 量測點位趨勢圖 (Trend Chart) -->
-        <div class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Sliders class="w-5 h-5 text-indigo-500" />
-              量測點位趨勢圖 (Raw Measurements Trend)
-            </h3>
-            <span class="text-xs font-semibold text-slate-400">
-              僅顯示工程規格界限 (USL / LSL / Target)
-            </span>
-          </div>
-
-          <!-- Trend Chart Info panel (No UCL/LCL/CL) -->
-          <div v-if="selectedMapping" class="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold">
-            <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">工站製程 (Process)</span>
-              <span class="text-slate-800 dark:text-slate-200">
-                [{{ selectedMapping.process?.processCode }}] {{ selectedMapping.process?.processName }}
-              </span>
-            </div>
-            <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">檢驗特性 (Characteristic)</span>
-              <span class="text-slate-800 dark:text-slate-200">
-                [{{ selectedMapping.characteristic?.characteristicCode }}] {{ selectedMapping.characteristic?.characteristicName }}
-                <span v-if="selectedMapping.unit || selectedMapping.characteristic?.unit" class="text-slate-400"> ({{ selectedMapping.unit || selectedMapping.characteristic?.unit }})</span>
-              </span>
-            </div>
-            <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">工程規格界限 (Specs Limit)</span>
-              <span class="text-slate-800 dark:text-slate-200 font-mono">
-                LSL: {{ selectedMapping.lsl !== null ? selectedMapping.lsl : '-∞' }} | 
-                Target: {{ selectedMapping.targetValue !== null ? selectedMapping.targetValue : 'N/A' }} | 
-                USL: {{ selectedMapping.usl !== null ? selectedMapping.usl : '+∞' }}
-              </span>
-            </div>
-            <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">抽樣組數配置 (SampleSize N)</span>
-              <span class="text-slate-800 dark:text-slate-200">
-                N = {{ selectedMapping.sampleSize || 1 }}
-              </span>
-            </div>
-            <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">綁定管制圖 (Chart Type)</span>
-              <span class="text-indigo-600 dark:text-indigo-400 font-bold">
-                {{ chartTypes.find(t => t.id === selectedMapping.chartTypeId)?.chartTypeName || chartResult?.chartType || 'N/A' }}
-              </span>
-            </div>
-          </div>
-
-          <div ref="trendChartEl" class="h-[300px] w-full min-h-[240px]"></div>
         </div>
 
         <!-- 量測值分布直方圖 (Histogram) -->

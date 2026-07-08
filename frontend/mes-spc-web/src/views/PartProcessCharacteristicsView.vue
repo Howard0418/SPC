@@ -1,5 +1,7 @@
 <script setup>
-import { onMounted, ref, computed, watch } from "vue";
+import ModuleGuide from "../components/ModuleGuide.vue";
+import ControlChartGroupsView from "./ControlChartGroupsView.vue";
+import { onBeforeUnmount, onMounted, ref, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -34,6 +36,9 @@ const groups = ref([]);
 const machines = ref([]);
 const lines = ref([]);
 const tanks = ref([]);
+const tableScroll = ref(null);
+const tableScrollLeft = ref(0);
+const tableScrollMax = ref(0);
 
 const route = useRoute();
 const router = useRouter();
@@ -41,6 +46,22 @@ const router = useRouter();
 const err = ref("");
 const successMsg = ref("");
 const loading = ref(false);
+const activeMainTab = ref(["groups", "categories", "types"].includes(route.query.tab) ? route.query.tab : "items");
+
+const mainTabs = [
+  { id: "items", label: "管制項目與規格" },
+  { id: "groups", label: "圖表群組" },
+  { id: "categories", label: "圖表分類" },
+  { id: "types", label: "圖表種類與公式" }
+];
+
+function setMainTab(tabId) {
+  activeMainTab.value = tabId;
+  router.replace({
+    path: "/part-process-characteristics",
+    query: tabId === "items" ? {} : { tab: tabId }
+  });
+}
 
 const searchQuery = ref("");
 const statusFilter = ref("all");
@@ -50,6 +71,7 @@ const scopeFilter = ref("all");
 const showModal = ref(false);
 const modalMode = ref("create");
 const currentId = ref(null);
+const advancedMode = ref(localStorage.getItem("ppcAdvancedMode") === "true");
 
 const form = ref({
   controlScope: "PRODUCT",
@@ -66,6 +88,7 @@ const form = ref({
   lcl: null,
   targetValue: null,
   sampleSize: 5,
+  displayMode: "CONTROL_CHART",
   chartTypeId: null,
   formulaConfigJson: "",
   selectedRuleCodes: [],
@@ -125,6 +148,24 @@ function formulaLabel(config) {
 
 const scopeLabel = (scope) => controlScopes.find(s => s.id === (scope || "PRODUCT"))?.label || "產品管制";
 
+function updateTableScrollMax() {
+  const body = tableScroll.value;
+  if (!body) return;
+  tableScrollMax.value = Math.max(0, body.scrollWidth - body.clientWidth);
+  tableScrollLeft.value = Math.min(body.scrollLeft, tableScrollMax.value);
+}
+
+function syncTableScroll() {
+  updateTableScrollMax();
+}
+
+function setTableScrollFromSlider() {
+  const body = tableScroll.value;
+  if (!body) return;
+  body.scrollLeft = Number(tableScrollLeft.value) || 0;
+  updateTableScrollMax();
+}
+
 async function load() {
   err.value = "";
   loading.value = true;
@@ -155,6 +196,8 @@ async function load() {
     machines.value = resMachines.data || [];
     lines.value = resLines.data || [];
     tanks.value = resTanks.data || [];
+    await nextTick();
+    updateTableScrollMax();
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -183,6 +226,12 @@ function getEffectiveRuleGroupId(item) {
   return item.ruleGroupId || getChartTypeRuleGroupId(item.chartTypeId);
 }
 
+function defaultSelectedRuleCodes() {
+  const firstRule = [...ruleLibrary.value]
+    .sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0) || (Number(a.id) || 0) - (Number(b.id) || 0))[0];
+  return firstRule ? [firstRule.ruleCode] : [];
+}
+
 const selectedChartTypeDimension = computed(() => {
   if (!form.value.chartTypeId) return null;
   const type = chartTypes.value.find(t => t.id === Number(form.value.chartTypeId));
@@ -192,6 +241,54 @@ const selectedChartTypeDimension = computed(() => {
   const group = groups.value.find(g => g.id === cat.chartGroupId);
   return group ? group.groupCode : null;
 });
+
+function getChartTypeGroupType(chartTypeId) {
+  if (!chartTypeId) return "";
+  const type = chartTypes.value.find(t => t.id === Number(chartTypeId));
+  const cat = type ? categories.value.find(c => c.id === type.chartCategoryId) : null;
+  const group = cat ? groups.value.find(g => g.id === cat.chartGroupId) : null;
+  return group?.groupType || "CONTROL_CHART";
+}
+
+const selectedCharacteristic = computed(() =>
+  characteristics.value.find(x => x.id === Number(form.value.characteristicId)) || null
+);
+
+const selectedChartType = computed(() =>
+  chartTypes.value.find(x => x.id === Number(form.value.chartTypeId)) || null
+);
+
+const selectedDisplayModeLabel = computed(() =>
+  form.value.displayMode === "TREND_CHART" ? "趨勢圖" : "管制圖"
+);
+
+const availableChartTypes = computed(() =>
+  chartTypes.value.filter(type => {
+    const groupType = getChartTypeGroupType(type.id);
+    const dataCategory = selectedCharacteristic.value?.dataCategory;
+    return groupType === form.value.displayMode
+      && (!dataCategory || type.dataCategory === dataCategory);
+  })
+);
+
+function findDefaultChartTypeId(mode = "CONTROL_CHART", dataCategory = null) {
+  return chartTypes.value.find(type =>
+    getChartTypeGroupType(type.id) === mode
+    && (!dataCategory || type.dataCategory === dataCategory)
+  )?.id || null;
+}
+
+const effectiveUnit = computed(() => form.value.unit || selectedCharacteristic.value?.unit || "-");
+const isUnitOverridden = computed(() =>
+  !!form.value.unit && !!selectedCharacteristic.value?.unit && form.value.unit !== selectedCharacteristic.value.unit
+);
+const isFormulaOverridden = computed(() => !!form.value.formulaConfigJson);
+const hasManualControlLimits = computed(() =>
+  form.value.ucl !== null && form.value.ucl !== "" ||
+  form.value.cl !== null && form.value.cl !== "" ||
+  form.value.lcl !== null && form.value.lcl !== ""
+);
+const hasItemRules = computed(() => form.value.selectedRuleCodes.length > 0);
 
 const availableMachines = computed(() =>
   machines.value.filter(m => m.processId === Number(form.value.processId))
@@ -206,6 +303,21 @@ watch(() => form.value.controlScope, (newScope) => {
   if (newScope !== "CHEMICAL") {
     form.value.machineId = null;
     form.value.tankId = null;
+  }
+});
+
+watch(() => form.value.displayMode, () => {
+  if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
+    form.value.chartTypeId = availableChartTypes.value[0]?.id || null;
+  }
+});
+
+watch(() => form.value.characteristicId, () => {
+  if (selectedCharacteristic.value?.dataCategory === "Attribute") {
+    form.value.displayMode = "CONTROL_CHART";
+  }
+  if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
+    form.value.chartTypeId = availableChartTypes.value[0]?.id || null;
   }
 });
 
@@ -270,19 +382,22 @@ function openCreateModal() {
   modalMode.value = "create";
   currentId.value = null;
   availableTanks.value = [];
+  const characteristic = characteristics.value[0] || null;
+  const displayMode = "CONTROL_CHART";
   form.value = {
     controlScope: "PRODUCT",
     partId: parts.value.length > 0 ? parts.value[0].id : null,
     processId: processes.value.length > 0 ? processes.value[0].id : null,
     machineId: null,
     tankId: null,
-    characteristicId: characteristics.value.length > 0 ? characteristics.value[0].id : null,
-    unit: characteristics.value[0]?.unit || "",
+    characteristicId: characteristic?.id || null,
+    unit: characteristic?.unit || "",
     usl: null, lsl: null, ucl: null, cl: null, lcl: null, targetValue: null,
     sampleSize: 5,
-    chartTypeId: chartTypes.value.length > 0 ? chartTypes.value[0].id : null,
+    displayMode,
+    chartTypeId: findDefaultChartTypeId(displayMode, characteristic?.dataCategory),
     formulaConfigJson: "",
-    selectedRuleCodes: [],
+    selectedRuleCodes: defaultSelectedRuleCodes(),
     isRequired: true,
     isEnabled: true
   };
@@ -307,6 +422,12 @@ async function openEditModal(item) {
     availableTanks.value = [];
   }
 
+  const displayMode = item.displayMode === "TREND_CHART" || getChartTypeGroupType(item.chartTypeId) === "TREND_CHART"
+    ? "TREND_CHART"
+    : "CONTROL_CHART";
+  const existingChartTypeId = getChartTypeGroupType(item.chartTypeId) === displayMode ? item.chartTypeId : null;
+  const itemDataCategory = item.characteristic?.dataCategory || characteristics.value.find(x => x.id === Number(item.characteristicId))?.dataCategory;
+
   form.value = {
     controlScope: item.controlScope || (item.partId ? "PRODUCT" : "PROCESS"),
     partId: item.partId || null,
@@ -322,7 +443,8 @@ async function openEditModal(item) {
     lcl: item.lcl ?? null,
     targetValue: item.targetValue ?? null,
     sampleSize: item.sampleSize ?? 5,
-    chartTypeId: item.chartTypeId || null,
+    displayMode,
+    chartTypeId: existingChartTypeId || findDefaultChartTypeId(displayMode, itemDataCategory),
     formulaConfigJson: item.formulaConfigJson || "",
     selectedRuleCodes: [],
     isRequired: item.isRequired ?? true,
@@ -357,6 +479,18 @@ async function save() {
     formErr.value = "藥水管制項目必須選擇線別/機台與槽體。";
     return;
   }
+  if (!["CONTROL_CHART", "TREND_CHART"].includes(form.value.displayMode)) {
+    formErr.value = "圖表顯示方式必須擇一：管制圖或趨勢圖，不能同時選擇。";
+    return;
+  }
+  if (!form.value.chartTypeId) {
+    formErr.value = `請選擇${selectedDisplayModeLabel.value}類型。`;
+    return;
+  }
+  if (getChartTypeGroupType(form.value.chartTypeId) !== form.value.displayMode) {
+    formErr.value = `目前選擇的是${selectedDisplayModeLabel.value}，不能同時選擇另一種圖表類型。`;
+    return;
+  }
   formErr.value = "";
   loading.value = true;
 
@@ -376,6 +510,7 @@ async function save() {
       lcl: form.value.lcl !== "" && form.value.lcl !== null ? parseFloat(form.value.lcl) : null,
       targetValue: form.value.targetValue !== "" && form.value.targetValue !== null ? parseFloat(form.value.targetValue) : null,
       sampleSize: parseInt(form.value.sampleSize) || 1,
+      displayMode: form.value.displayMode === "TREND_CHART" ? "TREND_CHART" : "CONTROL_CHART",
       chartTypeId: form.value.chartTypeId ? parseInt(form.value.chartTypeId) : null
     };
 
@@ -611,6 +746,8 @@ function viewChartOrTrend(item) {
 
 onMounted(async () => {
   await load();
+  window.addEventListener("resize", updateTableScrollMax);
+  if (activeMainTab.value !== "items") return;
   const editId = Number(route.query.editId);
   if (editId) {
     const item = rows.value.find(r => r.id === editId);
@@ -619,13 +756,25 @@ onMounted(async () => {
     }
   }
 });
+
+watch(advancedMode, (value) => {
+  localStorage.setItem("ppcAdvancedMode", value ? "true" : "false");
+});
+
+watch(() => route.query.tab, (tab) => {
+  activeMainTab.value = ["groups", "categories", "types"].includes(tab) ? tab : "items";
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateTableScrollMax);
+});
 </script>
 
 <template>
   <section class="space-y-6">
     <!-- Title & Actions -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-      <div class="flex items-center gap-3">
+      <div v-if="activeMainTab === 'items'" class="flex items-center gap-3">
         <div class="p-3 bg-gradient-to-tr from-amber-600 to-orange-500 rounded-xl shadow-lg shadow-amber-500/30 text-white">
           <FolderTree class="w-7 h-7" />
         </div>
@@ -654,14 +803,27 @@ onMounted(async () => {
       </div>
     </div>
 
+    <div class="flex overflow-x-auto border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-1 shadow-sm">
+      <button
+        v-for="tab in mainTabs"
+        :key="tab.id"
+        @click="setMainTab(tab.id)"
+        type="button"
+        :class="[
+          'flex-1 min-w-40 py-3 px-4 rounded-xl text-center text-sm font-bold transition-all whitespace-nowrap',
+          activeMainTab === tab.id
+            ? 'bg-amber-50 dark:bg-slate-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-slate-700 shadow-sm'
+            : 'border border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+        ]"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+
+    <div v-if="activeMainTab === 'items'" class="space-y-6">
     <!-- Guide / Wizard Tip -->
-    <div class="p-5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-600 dark:text-amber-400 mt-0.5">
-        <Info class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-amber-900 dark:text-amber-300">模組指南：SPC 管制項目設定</h4>
-        <p class="text-xs text-amber-700 dark:text-amber-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：SPC 管制項目設定">
+      <p class="text-xs text-amber-700 dark:text-amber-400/80 mt-1.5 leading-relaxed">
           這是整個 SPC 系統中最核心的設定。請先選擇管制類型：製程管制與藥水管制不需要產品料號；只有產品管制才需要綁定產品料號。<br/>
           💡 <strong>功能說明：</strong> 檢驗數據上傳時，系統會比對這裡設定的規格界限。若未在此處建立管制項目，資料將無法進行 SPC 運算與判圖。
         </p>
@@ -673,8 +835,7 @@ onMounted(async () => {
           <p><strong>指定管制圖：</strong>依資料類型選擇 I-MR、XBAR-R、XBAR-S、P、NP、C 或 U 管制圖。</p>
           <p><strong>啟用後使用：</strong>儲存並啟用後，資料匯入、現場量測與管制圖查詢才會套用此基準。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">
@@ -688,8 +849,8 @@ onMounted(async () => {
     </div>
 
     <!-- Filters & Search Bar -->
-    <div class="flex flex-col lg:flex-row gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 items-center justify-between">
-      <div class="relative w-full lg:w-80">
+    <div class="flex flex-col xl:flex-row gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 items-start xl:items-center justify-between">
+      <div class="relative w-full xl:w-80">
         <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
           <Search class="w-4 h-4" />
         </span>
@@ -701,11 +862,11 @@ onMounted(async () => {
         />
       </div>
 
-      <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+      <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
         <!-- Process Filter Dropdown -->
         <select
           v-model="scopeFilter"
-          class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+          class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all cursor-pointer"
         >
           <option value="all">全部管制類型</option>
           <option v-for="s in controlScopes" :key="s.id" :value="s.id">{{ s.label }}</option>
@@ -713,7 +874,7 @@ onMounted(async () => {
 
         <select
           v-model="processFilter"
-          class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+          class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all cursor-pointer"
         >
           <option value="all">全廠所有製程</option>
           <option v-for="p in processes" :key="p.id" :value="p.id">
@@ -743,25 +904,42 @@ onMounted(async () => {
 
     <!-- Data Table Container -->
     <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+      <div class="ppc-scroll-range-wrap px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
+        <input
+          v-model.number="tableScrollLeft"
+          type="range"
+          min="0"
+          :max="tableScrollMax"
+          :disabled="tableScrollMax === 0"
+          aria-label="表格橫向捲動"
+          class="ppc-scroll-range w-full"
+          @input="setTableScrollFromSlider"
+        />
+      </div>
+      <div
+        ref="tableScroll"
+        class="ppc-table-scroll overflow-x-scroll overflow-y-hidden pb-3"
+        @scroll="syncTableScroll"
+      >
+        <table class="min-w-[1580px] w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+            <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
               <th class="py-4 px-6 w-16 text-center">ID</th>
               <th class="py-4 px-6">工站製程與生產機台 (Process & Machines)</th>
               <th class="py-4 px-6">管制類型與檢驗特性 (Scope & Characteristic)</th>
               <th class="py-4 px-6">規格限值與抽樣配置 (Limits & Sample Size)</th>
               <th class="py-4 px-6">管制圖與規則來源</th>
+              <th class="py-4 px-6 text-center">匯入筆數</th>
               <th class="py-4 px-6 text-center">狀態</th>
               <th class="py-4 px-6 text-right">操作</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
+              <td colspan="8" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
+              <td colspan="8" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
             </tr>
             <tr
               v-else
@@ -829,11 +1007,11 @@ onMounted(async () => {
                     <span class="px-2 py-1 text-slate-700 dark:text-slate-300 font-bold">{{ item.usl !== null ? item.usl : '+∞' }}</span>
                   </div>
                 </div>
-                <div class="mt-2.5 flex flex-wrap items-center gap-2 text-[10px] font-mono text-slate-500">
-                  <span>UCL: {{ item.ucl !== null ? item.ucl : '自動' }}</span> |
-                  <span>CL: {{ item.cl !== null ? item.cl : '自動' }}</span> |
-                  <span>LCL: {{ item.lcl !== null ? item.lcl : '自動' }}</span> |
-                  <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800">
+                <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-slate-500">
+                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">UCL: {{ item.ucl !== null ? item.ucl : '自動' }}</span>
+                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md font-bold text-amber-600 dark:text-amber-500">CL: {{ item.cl !== null ? item.cl : '自動' }}</span>
+                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">LCL: {{ item.lcl !== null ? item.lcl : '自動' }}</span>
+                  <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800/80">
                     N={{ item.sampleSize || 1 }}
                   </span>
                 </div>
@@ -857,6 +1035,15 @@ onMounted(async () => {
                 </div>
               </td>
               <td class="py-5 px-6 text-center">
+                <div
+                  class="inline-flex flex-col items-center justify-center min-w-20 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                  :title="`計量型 ${item.variableMeasurementCount || 0} 筆；計數型 ${item.attributeMeasurementCount || 0} 筆`"
+                >
+                  <span class="text-lg font-black font-mono text-slate-900 dark:text-white">{{ item.measurementCount || 0 }}</span>
+                  <span class="text-[10px] font-bold text-slate-400">筆資料</span>
+                </div>
+              </td>
+              <td class="py-5 px-6 text-center">
                 <span
                   :class="[
                     'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border tracking-wide',
@@ -869,7 +1056,7 @@ onMounted(async () => {
                   {{ item.isEnabled ? '啟用中' : '已停用' }}
                 </span>
               </td>
-              <td class="py-5 px-6 text-right space-x-2">
+              <td class="py-5 px-6 text-right space-x-2 whitespace-nowrap">
                 <button
                   @click="viewChartOrTrend(item)"
                   type="button"
@@ -912,6 +1099,9 @@ onMounted(async () => {
         <span>顯示第 1 至 {{ filteredRows.length }} 項結果（總計 {{ rows.length }} 筆檢驗基準）</span>
       </div>
     </div>
+    </div>
+
+    <ControlChartGroupsView v-else embedded />
 
     <!-- Slide-over Panel (Add / Edit) -->
     <transition
@@ -924,7 +1114,7 @@ onMounted(async () => {
     >
       <div v-if="showModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
         <div class="absolute inset-0 cursor-pointer" @click="showModal = false"></div>
-        <div class="relative w-full max-w-2xl h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+        <div class="relative w-full max-w-4xl h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
           <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-amber-600 text-white rounded-xl shadow-md shadow-amber-500/20">
@@ -947,6 +1137,29 @@ onMounted(async () => {
           <div class="flex-1 overflow-y-auto p-6 space-y-5">
           <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
             <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
+          </div>
+
+          <div class="p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-1">
+            <button
+              type="button"
+              @click="advancedMode = false"
+              :class="[
+                'px-4 py-2.5 rounded-xl text-sm font-black transition-all',
+                !advancedMode ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ]"
+            >
+              簡易模式
+            </button>
+            <button
+              type="button"
+              @click="advancedMode = true"
+              :class="[
+                'px-4 py-2.5 rounded-xl text-sm font-black transition-all',
+                advancedMode ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ]"
+            >
+              進階模式
+            </button>
           </div>
 
           <!-- Control Scope Selector -->
@@ -1076,7 +1289,44 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="space-y-1.5">
+          <div v-if="!advancedMode" class="p-4 bg-blue-50/60 dark:bg-blue-950/15 rounded-2xl border border-blue-200 dark:border-blue-900/70 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-2">
+              <Info class="w-4 h-4" /> 目前套用資訊
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                <div class="text-slate-400 font-bold">量測單位</div>
+                <div class="mt-1 font-black text-slate-800 dark:text-white">{{ effectiveUnit }}</div>
+                <div class="mt-1 text-[11px]" :class="isUnitOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
+                  {{ isUnitOverridden ? '此管制項目覆寫' : '繼承品質特性主檔' }}
+                </div>
+              </div>
+              <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                <div class="text-slate-400 font-bold">管制圖類型</div>
+                <div class="mt-1 font-black text-slate-800 dark:text-white">{{ selectedChartType ? `${selectedChartType.chartTypeCode} (${selectedChartType.chartTypeName})` : '繼承特性設定' }}</div>
+                <div class="mt-1 text-[11px] text-slate-400">{{ selectedChartType ? '此管制項目指定' : '未指定項目專屬管制圖' }}</div>
+              </div>
+              <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                <div class="text-slate-400 font-bold">公式來源</div>
+                <div class="mt-1 font-black text-slate-800 dark:text-white">{{ isFormulaOverridden ? formulaLabel(form.formulaConfigJson) : '繼承管制圖種類' }}</div>
+                <div class="mt-1 text-[11px]" :class="isFormulaOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
+                  {{ isFormulaOverridden ? '此管制項目覆寫' : '未覆寫公式' }}
+                </div>
+              </div>
+              <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                <div class="text-slate-400 font-bold">管制規則</div>
+                <div class="mt-1 font-black text-slate-800 dark:text-white">{{ hasItemRules ? `項目專屬 ${form.selectedRuleCodes.length} 條` : '繼承管制圖種類' }}</div>
+                <div class="mt-1 text-[11px]" :class="hasItemRules ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
+                  {{ hasItemRules ? '此管制項目覆寫' : '未覆寫規則' }}
+                </div>
+              </div>
+            </div>
+            <p class="text-[11px] text-blue-700/70 dark:text-blue-300/70 font-semibold">
+              若要調整單位、公式、管制規則或固定 UCL/CL/LCL，請切換到進階模式。
+            </p>
+          </div>
+
+          <div v-if="advancedMode" class="space-y-1.5">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">量測單位 (Unit)</label>
             <input
               v-model.trim="form.unit"
@@ -1086,7 +1336,10 @@ onMounted(async () => {
               class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
             />
             <p class="text-[11px] text-slate-400">
-              此單位只套用於目前管制項目；切換檢驗特性時會帶入特性主檔的預設單位，之後可自行修改。
+              <span :class="isUnitOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : ''">
+                {{ isUnitOverridden ? '此管制項目已覆寫品質特性單位。' : '目前繼承或沿用品質特性主檔單位。' }}
+              </span>
+              切換檢驗特性時會帶入特性主檔的預設單位，之後可自行修改。
             </p>
           </div>
 
@@ -1144,7 +1397,7 @@ onMounted(async () => {
             </div>
 
             <!-- Custom Control Limits -->
-            <div class="pt-2 border-t border-slate-200 dark:border-slate-700">
+            <div v-if="advancedMode" class="pt-2 border-t border-slate-200 dark:border-slate-700">
               <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mb-2 block">固定統計管制線 (可留空由系統自動算圖)</span>
               <div class="grid grid-cols-3 gap-3">
                 <div>
@@ -1160,18 +1413,55 @@ onMounted(async () => {
                   <input v-model="form.lcl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
                 </div>
               </div>
+              <p class="mt-2 text-[11px]" :class="hasManualControlLimits ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
+                {{ hasManualControlLimits ? '目前使用手動固定管制線；分段管制線仍會依日期區間覆寫。' : '目前未手動固定管制線，管制圖會自動計算或套用分段管制線。' }}
+              </p>
             </div>
           </div>
 
           <!-- Chart Type -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定 SPC 管制圖類型</label>
+          <div v-if="advancedMode" class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
+            <div class="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800/70 p-1 border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                @click="form.displayMode = 'CONTROL_CHART'"
+                :class="[
+                  'px-4 py-2.5 rounded-xl text-sm font-black border transition-all',
+                  form.displayMode === 'CONTROL_CHART'
+                    ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800 shadow-sm'
+                    : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                ]"
+              >
+                管制圖
+              </button>
+              <button
+                type="button"
+                :disabled="selectedCharacteristic?.dataCategory === 'Attribute'"
+                @click="form.displayMode = 'TREND_CHART'"
+                :class="[
+                  'px-4 py-2.5 rounded-xl text-sm font-black border transition-all disabled:opacity-40 disabled:cursor-not-allowed',
+                  form.displayMode === 'TREND_CHART'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 shadow-sm'
+                    : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                ]"
+              >
+                趨勢圖
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              管制圖與趨勢圖只能擇一；選定後下方只會顯示對應的圖表類型。
+            </p>
+          </div>
+
+          <div v-if="advancedMode" class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定 {{ selectedDisplayModeLabel }} 類型</label>
             <select
               v-model="form.chartTypeId"
               class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
             >
-              <option :value="null">-- 無指定 (繼承特性設定) --</option>
-              <option v-for="ct in chartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
+              <option :value="null" disabled>-- 請選擇{{ selectedDisplayModeLabel }}類型 --</option>
+              <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
             </select>
             <p class="text-[11px] text-slate-400 mt-1">
               未設定項目專屬規則時，會繼承「管制圖配置維護 > 小分類與公式配置」的規則。
@@ -1182,7 +1472,7 @@ onMounted(async () => {
             </p>
           </div>
 
-          <div class="space-y-1.5">
+          <div v-if="advancedMode" class="space-y-1.5">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">公式配置</label>
             <select
               v-model="form.formulaConfigJson"
@@ -1201,7 +1491,7 @@ onMounted(async () => {
             </p>
           </div>
 
-          <div class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
+          <div v-if="advancedMode" class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
             <div>
               <h4 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-2">
                 <AlertTriangle class="w-4 h-4" /> 管制規則
@@ -1315,10 +1605,10 @@ onMounted(async () => {
           </div>
 
           <!-- Body -->
-          <div class="flex-1 overflow-hidden flex flex-col lg:flex-row">
+          <div class="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row">
             
             <!-- Left Side: Trial Calculate -->
-            <div class="w-full lg:w-1/2 p-6 border-r border-slate-200 dark:border-slate-800 overflow-y-auto space-y-6">
+            <div class="w-full md:w-1/2 p-6 md:border-r border-slate-200 dark:border-slate-800 md:overflow-y-auto space-y-6 shrink-0 md:shrink">
               <div>
                 <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2">
                   <Activity class="w-4 h-4 text-amber-500" /> 管制界線試算工具
@@ -1403,7 +1693,7 @@ onMounted(async () => {
             </div>
 
             <!-- Right Side: Segment CRUD & List -->
-            <div class="w-full lg:w-1/2 p-6 overflow-y-auto space-y-6">
+            <div class="w-full md:w-1/2 p-6 md:overflow-y-auto space-y-6 shrink-0 md:shrink">
               <div>
                 <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2">
                   <Sliders class="w-4 h-4 text-purple-500" /> 分段管制界線設定
@@ -1559,3 +1849,105 @@ onMounted(async () => {
     </transition>
   </section>
 </template>
+
+<style scoped>
+.ppc-table-scroll {
+  scrollbar-gutter: stable;
+}
+
+.ppc-table-scroll::-webkit-scrollbar {
+  height: 14px;
+}
+
+.ppc-table-scroll::-webkit-scrollbar-track {
+  background: rgb(241 245 249);
+  border-top: 1px solid rgb(226 232 240);
+}
+
+.ppc-table-scroll::-webkit-scrollbar-thumb {
+  background: rgb(245 158 11);
+  border: 3px solid rgb(241 245 249);
+  border-radius: 999px;
+}
+
+.ppc-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(217 119 6);
+}
+
+:global(.dark) .ppc-table-scroll::-webkit-scrollbar-track {
+  background: rgb(15 23 42);
+  border-top-color: rgb(51 65 85);
+}
+
+:global(.dark) .ppc-table-scroll::-webkit-scrollbar-thumb {
+  background: rgb(245 158 11);
+  border-color: rgb(15 23 42);
+}
+
+.ppc-scroll-range {
+  height: 18px;
+  cursor: grab;
+  accent-color: rgb(245 158 11);
+}
+
+.ppc-scroll-range:active {
+  cursor: grabbing;
+}
+
+.ppc-scroll-range:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.ppc-scroll-range::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 999px;
+  background: rgb(226 232 240);
+  border: 1px solid rgb(203 213 225);
+}
+
+.ppc-scroll-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 88px;
+  height: 18px;
+  margin-top: -4px;
+  border-radius: 999px;
+  background: rgb(245 158 11);
+  border: 3px solid rgb(255 251 235);
+  box-shadow: 0 6px 14px rgb(245 158 11 / 0.28);
+}
+
+.ppc-scroll-range::-moz-range-track {
+  height: 12px;
+  border-radius: 999px;
+  background: rgb(226 232 240);
+  border: 1px solid rgb(203 213 225);
+}
+
+.ppc-scroll-range::-moz-range-thumb {
+  width: 88px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgb(245 158 11);
+  border: 3px solid rgb(255 251 235);
+  box-shadow: 0 6px 14px rgb(245 158 11 / 0.28);
+}
+
+:global(.dark) .ppc-scroll-range::-webkit-slider-runnable-track {
+  background: rgb(30 41 59);
+  border-color: rgb(71 85 105);
+}
+
+:global(.dark) .ppc-scroll-range::-webkit-slider-thumb {
+  border-color: rgb(15 23 42);
+}
+
+:global(.dark) .ppc-scroll-range::-moz-range-track {
+  background: rgb(30 41 59);
+  border-color: rgb(71 85 105);
+}
+
+:global(.dark) .ppc-scroll-range::-moz-range-thumb {
+  border-color: rgb(15 23 42);
+}
+</style>

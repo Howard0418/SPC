@@ -84,3 +84,31 @@ test.describe('SPC Rule Engine UI Validation', () => {
   });
 
 });
+
+test.describe('Global UI Components Validation', () => {
+  test('should display the correct version in the sidebar', async ({ page }) => {
+    await page.goto('/traceability-master');
+    // We expect the version from package.json e.g., v0.1.0 Enterprise SPC Edition
+    const versionText = page.getByText(/v\d+\.\d+\.\d+ Enterprise SPC Edition/);
+    await expect(versionText).toBeVisible();
+  });
+
+  test('ModuleGuide should be collapsible', async ({ page }) => {
+    await page.goto('/traceability-master');
+    
+    const title = page.getByText('模組指南：線別槽體設定');
+    await expect(title).toBeVisible();
+
+    // Check inner content visibility
+    const content = page.getByText('此頁面用來設定各線別內有哪些藥水槽體');
+    await expect(content).toBeVisible();
+
+    // Click to collapse
+    await title.click();
+    await expect(content).toBeHidden();
+
+    // Click to expand
+    await title.click();
+    await expect(content).toBeVisible();
+  });
+});

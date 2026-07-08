@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -177,13 +178,8 @@ onMounted(load);
     </div>
 
     <!-- Guide / Operation Tip -->
-    <div class="p-5 bg-gradient-to-r from-red-50 to-indigo-50 dark:from-red-950/30 dark:to-indigo-900/20 border border-red-100 dark:border-red-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-red-100 dark:bg-red-900/50 rounded-xl text-red-600 dark:text-red-400 mt-0.5">
-        <ShieldAlert class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-red-900 dark:text-red-300">模組指南：異常通報總覽 (Alerts)</h4>
-        <p class="text-xs text-red-700 dark:text-red-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：異常通報總覽 (Alerts)">
+      <p class="text-xs text-red-700 dark:text-red-400/80 mt-1.5 leading-relaxed">
           此頁面集中顯示由 SPC 判定產生的 OOS、OOC 異常通報，協助品管人員快速掌握待處理警報、已簽收案件與通知狀態。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-red-700 dark:text-red-400/80 leading-relaxed">
@@ -194,8 +190,7 @@ onMounted(load);
           <p><strong>前往處置：</strong>需要填寫真因與對策時，點選處置入口前往「異常單簽核處置」。</p>
           <p><strong>測試通知：</strong>可使用模擬警報或 SMTP 測試區確認異常通知與郵件流程。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Alert Messages Box -->
     <div v-if="err" class="p-4 rounded-xl bg-red-500/10 dark:bg-red-950/50 border border-red-500/30 text-red-600 dark:text-red-300 text-sm flex items-center gap-3 animate-fade-in shadow-sm">

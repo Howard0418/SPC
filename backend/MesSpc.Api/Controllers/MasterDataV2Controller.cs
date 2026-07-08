@@ -344,12 +344,78 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
     private const string ItemRuleGroupCodePrefix = "PPC_RULES_";
     private const string ChartTypeRuleGroupCodePrefix = "CT_RULES_";
 
-    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.PartProcessCharacteristics.Include(x => x.Part).Include(x => x.Process).Include(x => x.Machine).Include(x => x.Tank).Include(x => x.Characteristic).OrderBy(x => x.Id).ToListAsync());
+    [HttpGet]
+    public async Task<IActionResult> Get()
+    {
+        var items = await db.PartProcessCharacteristics
+            .AsNoTracking()
+            .Include(x => x.Part)
+            .Include(x => x.Process)
+            .Include(x => x.Machine)
+            .Include(x => x.Tank)
+            .Include(x => x.Characteristic)
+            .OrderBy(x => x.Id)
+            .ToListAsync();
+
+        var ids = items.Select(x => x.Id).ToList();
+        var variableCounts = await db.VariableMeasurements
+            .AsNoTracking()
+            .Where(x => ids.Contains(x.PartProcessCharacteristicId))
+            .GroupBy(x => x.PartProcessCharacteristicId)
+            .Select(g => new { PartProcessCharacteristicId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.PartProcessCharacteristicId, x => x.Count);
+        var attributeCounts = await db.AttributeMeasurements
+            .AsNoTracking()
+            .Where(x => ids.Contains(x.PartProcessCharacteristicId))
+            .GroupBy(x => x.PartProcessCharacteristicId)
+            .Select(g => new { PartProcessCharacteristicId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.PartProcessCharacteristicId, x => x.Count);
+
+        return Ok(items.Select(x =>
+        {
+            var variableCount = variableCounts.GetValueOrDefault(x.Id);
+            var attributeCount = attributeCounts.GetValueOrDefault(x.Id);
+            return new
+            {
+                x.Id,
+                x.ControlScope,
+                x.PartId,
+                x.ProcessId,
+                x.MachineId,
+                x.TankId,
+                x.CharacteristicId,
+                x.Unit,
+                x.USL,
+                x.LSL,
+                x.UCL,
+                x.CL,
+                x.LCL,
+                x.TargetValue,
+                x.SampleSize,
+                x.DisplayMode,
+                x.ChartTypeId,
+                x.RuleGroupId,
+                x.FormulaConfigJson,
+                x.IsRequired,
+                x.IsEnabled,
+                x.Part,
+                x.Process,
+                x.Machine,
+                x.Tank,
+                x.Characteristic,
+                VariableMeasurementCount = variableCount,
+                AttributeMeasurementCount = attributeCount,
+                MeasurementCount = variableCount + attributeCount
+            };
+        }));
+    }
     [HttpPost]
     public async Task<IActionResult> Create(PartProcessCharacteristic req)
     {
         var validation = ValidateScope(req);
         if (validation is not null) return BadRequest(validation);
+        var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
+        if (displayValidation is not null) return BadRequest(displayValidation);
         req.Unit = CleanUnit(req.Unit);
         req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
         db.PartProcessCharacteristics.Add(req);
@@ -363,10 +429,12 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
         var validation = ValidateScope(req);
         if (validation is not null) return BadRequest(validation);
+        var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
+        if (displayValidation is not null) return BadRequest(displayValidation);
         x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = x.ControlScope == "PRODUCT" ? req.PartId : null; x.ProcessId = req.ProcessId; x.MachineId = req.MachineId; x.TankId = req.TankId; x.CharacteristicId = req.CharacteristicId;
         x.Unit = CleanUnit(req.Unit);
         x.USL = req.USL; x.LSL = req.LSL; x.UCL = req.UCL; x.CL = req.CL; x.LCL = req.LCL; x.TargetValue = req.TargetValue;
-        x.SampleSize = req.SampleSize; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson); x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
+        x.SampleSize = req.SampleSize; x.DisplayMode = req.DisplayMode; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson); x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
 
@@ -544,6 +612,53 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         return null;
     }
 
+    private async Task<string?> ValidateAndNormalizeDisplayModeAsync(PartProcessCharacteristic req)
+    {
+        var characteristic = await db.QualityCharacteristics
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == req.CharacteristicId);
+        if (characteristic is null) return "找不到指定的品質特性。";
+
+        var mode = (req.DisplayMode ?? "CONTROL_CHART").Trim().ToUpperInvariant();
+        if (characteristic.DataCategory.Equals("Attribute", StringComparison.OrdinalIgnoreCase))
+        {
+            req.DisplayMode = "CONTROL_CHART";
+        }
+        else
+        {
+            if (mode is not ("CONTROL_CHART" or "TREND_CHART"))
+                return "計量型顯示方式必須擇一：管制圖或趨勢圖，不能同時選擇。";
+            req.DisplayMode = mode;
+        }
+
+        if (!req.ChartTypeId.HasValue)
+            return req.DisplayMode == "TREND_CHART"
+                ? "選擇趨勢圖顯示時，必須指定趨勢圖類型。"
+                : "選擇管制圖顯示時，必須指定 SPC 管制圖類型。";
+
+        if (req.ChartTypeId.HasValue)
+        {
+            var chartType = await (
+                from type in db.ControlChartTypes.AsNoTracking()
+                join category in db.ControlChartCategories.AsNoTracking()
+                    on type.ChartCategoryId equals category.Id
+                join groupInfo in db.ControlChartGroups.AsNoTracking()
+                    on category.ChartGroupId equals groupInfo.Id
+                where type.Id == req.ChartTypeId.Value && type.IsEnabled
+                select new { Type = type, groupInfo.GroupType }
+            ).FirstOrDefaultAsync();
+            if (chartType is null) return "找不到指定的 SPC 管制圖類型。";
+            if (!chartType.Type.DataCategory.Equals(characteristic.DataCategory, StringComparison.OrdinalIgnoreCase))
+                return "管制圖類型與品質特性的資料型態不一致。";
+            if (!string.Equals(chartType.GroupType, req.DisplayMode, StringComparison.OrdinalIgnoreCase))
+                return req.DisplayMode == "TREND_CHART"
+                    ? "趨勢圖顯示只能選擇趨勢圖類型，不能同時選管制圖。"
+                    : "管制圖顯示只能選擇管制圖類型，不能同時選趨勢圖。";
+        }
+
+        return null;
+    }
+
     private sealed record ItemRuleTemplate(string RuleCode, string RuleName, int Priority, string? RuleConfigJson);
     public sealed record ItemRuleOption(string RuleCode, string RuleName, int Priority, bool IsSelected);
     public sealed record ItemRulesResponse(int PartProcessCharacteristicId, int? RuleGroupId, List<ItemRuleOption> Rules);
@@ -555,7 +670,17 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
 [Route("api/v1/control-chart-groups")]
 public class ControlChartGroupsController(AppDbContext db) : ControllerBase
 {
-    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.ControlChartGroups.OrderBy(x => x.Id).ToListAsync());
+    [HttpGet]
+    public async Task<IActionResult> Get([FromQuery] string? groupType = null)
+    {
+        var query = db.ControlChartGroups.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(groupType))
+        {
+            var normalizedType = groupType.Trim().ToUpperInvariant();
+            query = query.Where(x => x.GroupType == normalizedType);
+        }
+        return Ok(await query.OrderBy(x => x.Id).ToListAsync());
+    }
     [HttpPost] public async Task<IActionResult> Create(ControlChartGroup req) { db.ControlChartGroups.Add(req); await db.SaveChangesAsync(); return Ok(req); }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, ControlChartGroup req)

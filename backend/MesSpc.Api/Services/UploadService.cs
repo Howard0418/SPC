@@ -113,6 +113,25 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 {
                     continue;
                 }
+                var measuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow);
+                var sampleNo = TryInt(Get(payload, "SampleNo"), 1);
+
+                var existingVm = await db.VariableMeasurements.FirstOrDefaultAsync(x => 
+                    x.PartProcessCharacteristicId == ctx.Mapping.Id && 
+                    x.MeasuredAt == measuredAt && 
+                    x.LotNo == Get(payload, "LotNo") &&
+                    x.SampleNo == sampleNo, ct);
+
+                if (existingVm != null)
+                {
+                    var oldAlerts = db.AlertEvents.Where(a => a.VariableMeasurementId == existingVm.Id);
+                    db.AlertEvents.RemoveRange(oldAlerts);
+                    var oldCalcs = db.SpcCalculationResults.Where(c => c.VariableMeasurementId == existingVm.Id);
+                    db.SpcCalculationResults.RemoveRange(oldCalcs);
+                    db.VariableMeasurements.Remove(existingVm);
+                    await db.SaveChangesAsync(ct);
+                }
+
                 var vm = new VariableMeasurement
                 {
                     UploadBatchId = batch.UploadBatchId,
@@ -125,10 +144,13 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     SerialNo = Get(payload, "SerialNo"),
                     LineId = ctx.Tank?.LineId,
                     TankId = ctx.Tank?.Id,
-                    SampleNo = TryInt(Get(payload, "SampleNo"), 1),
+                    SampleNo = sampleNo,
                     MeasuredValue = measuredValue,
-                    MeasuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow),
-                    Operator = Get(payload, "Operator")
+                    MeasuredAt = measuredAt,
+                    Operator = Get(payload, "Operator"),
+                    RecheckValue = double.TryParse(Get(payload, "RecheckValue"), out var rVal) ? rVal : null,
+                    AdjustAction = Get(payload, "AdjustAction"),
+                    AdjustAmount = double.TryParse(Get(payload, "AdjustAmount"), out var aVal) ? aVal : null
                 };
                 db.VariableMeasurements.Add(vm);
                 await db.SaveChangesAsync(ct);
@@ -142,6 +164,25 @@ public class UploadService(AppDbContext db, SpcService spcService)
             }
             else
             {
+                var measuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow);
+                var sampleNo = TryInt(Get(payload, "SampleNo"), 1);
+
+                var existingAm = await db.AttributeMeasurements.FirstOrDefaultAsync(x => 
+                    x.PartProcessCharacteristicId == ctx.Mapping.Id && 
+                    x.MeasuredAt == measuredAt && 
+                    x.LotNo == Get(payload, "LotNo") &&
+                    x.SampleNo == sampleNo, ct);
+
+                if (existingAm != null)
+                {
+                    var oldAlerts = db.AlertEvents.Where(a => a.AttributeMeasurementId == existingAm.Id);
+                    db.AlertEvents.RemoveRange(oldAlerts);
+                    var oldCalcs = db.SpcCalculationResults.Where(c => c.AttributeMeasurementId == existingAm.Id);
+                    db.SpcCalculationResults.RemoveRange(oldCalcs);
+                    db.AttributeMeasurements.Remove(existingAm);
+                    await db.SaveChangesAsync(ct);
+                }
+
                 var am = new AttributeMeasurement
                 {
                     UploadBatchId = batch.UploadBatchId,
@@ -153,12 +194,12 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     LotNo = Get(payload, "LotNo"),
                     LineId = ctx.Tank?.LineId,
                     TankId = ctx.Tank?.Id,
-                    SampleNo = TryInt(Get(payload, "SampleNo"), 1),
+                    SampleNo = sampleNo,
                     InspectedQty = TryNullableInt(Get(payload, "InspectedQty")),
                     DefectQty = TryNullableInt(Get(payload, "DefectQty")),
                     DefectCount = TryNullableInt(Get(payload, "DefectCount")),
                     UnitCount = TryNullableInt(Get(payload, "UnitCount")),
-                    MeasuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow),
+                    MeasuredAt = measuredAt,
                     Operator = Get(payload, "Operator")
                 };
                 db.AttributeMeasurements.Add(am);
@@ -559,6 +600,9 @@ public class UploadService(AppDbContext db, SpcService spcService)
             "defectqty" => "不良數",
             "defectcount" => "缺點數",
             "unitcount" => "單位數",
+            "recheckvalue" => "複驗",
+            "adjustaction" => "調整",
+            "adjustamount" => "調整量",
             _ => null
         };
         if (altKey != null && row.TryGetValue(altKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;

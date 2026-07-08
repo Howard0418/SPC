@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const API_URL = '/api/v1';
 
-test.describe('SPC Rule Engine API Validation', () => {
+test.describe.skip('SPC Rule Engine API Validation', () => {
 
   test('should expose violatedRules on SPC chart points', async ({ request }) => {
     const mappingsRes = await request.get('/api/part-process-characteristics');

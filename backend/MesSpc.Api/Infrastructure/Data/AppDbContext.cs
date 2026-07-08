@@ -41,6 +41,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Unit> Units => Set<Unit>();
     public DbSet<Shift> Shifts => Set<Shift>();
     public DbSet<Operator> Operators => Set<Operator>();
+    public DbSet<SpcReportSchedule> SpcReportSchedules => Set<SpcReportSchedule>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<Chemical> Chemicals => Set<Chemical>();
@@ -87,6 +88,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<QualityCharacteristic>().HasIndex(x => x.CharacteristicCode).IsUnique();
         modelBuilder.Entity<PartProcessCharacteristic>().HasIndex(x => new { x.ControlScope, x.PartId, x.ProcessId, x.MachineId, x.TankId, x.CharacteristicId }).IsUnique();
         modelBuilder.Entity<PartProcessCharacteristic>().Property(x => x.Unit).HasMaxLength(50);
+        modelBuilder.Entity<PartProcessCharacteristic>().Property(x => x.DisplayMode).HasMaxLength(30).HasDefaultValue("CONTROL_CHART");
         modelBuilder.Entity<PartProcessCharacteristic>()
             .HasIndex(x => new { x.ControlScope, x.ProcessId, x.MachineId, x.TankId, x.CharacteristicId })
             .IsUnique()
@@ -124,6 +126,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Operator>().HasIndex(x => x.Username).IsUnique().HasFilter("[Username] IS NOT NULL");
         modelBuilder.Entity<Operator>().Property(x => x.Role).HasMaxLength(20).HasDefaultValue("Editor");
         modelBuilder.Entity<Operator>().Property(x => x.Username).HasMaxLength(100);
+        modelBuilder.Entity<SpcReportSchedule>().Property(x => x.ScheduleName).HasMaxLength(100);
+        modelBuilder.Entity<SpcReportSchedule>().Property(x => x.Department).HasMaxLength(100);
         modelBuilder.Entity<Customer>().HasIndex(x => x.CustomerCode).IsUnique();
         modelBuilder.Entity<Supplier>().HasIndex(x => x.SupplierCode).IsUnique();
         modelBuilder.Entity<Chemical>().HasIndex(x => x.ChemicalCode).IsUnique();

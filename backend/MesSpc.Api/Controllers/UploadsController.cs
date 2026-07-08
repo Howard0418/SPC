@@ -278,7 +278,7 @@ public class UploadsController(UploadService uploadService)
 
         var headers = new string[]
         {
-            "料號", "製程", "機台", "檢驗項目", "測量值", "日期", "作業員", "批號", "樣本編號", "序號"
+            "料號", "製程", "機台", "檢驗項目", "測量值", "複驗", "調整", "調整量", "日期", "作業員", "批號", "樣本編號", "序號"
         };
 
         for (int i = 0; i < headers.Length; i++)
@@ -294,9 +294,9 @@ public class UploadsController(UploadService uploadService)
         // Add 3 sample rows
         var samples = new object[][]
         {
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", 100.12, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", 100.08, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 2, "WO-101" },
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "WIDTH", 50.05, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-02", "L20260518-2", 1, "WO-102" }
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", 100.12, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", 100.08, 100.10, "添加", 0.5, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 2, "WO-101" },
+            new object[] { "PART-A001", "ST-01", "ST-01-M01", "WIDTH", 50.05, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-02", "L20260518-2", 1, "WO-102" }
         };
 
         for (int r = 0; r < samples.Length; r++)

@@ -9,7 +9,6 @@ import PartsView from "../views/PartsView.vue";
 import ProcessesView from "../views/ProcessesView.vue";
 import CharacteristicsView from "../views/CharacteristicsView.vue";
 import PartProcessCharacteristicsView from "../views/PartProcessCharacteristicsView.vue";
-import ControlChartGroupsView from "../views/ControlChartGroupsView.vue";
 import SpcRuleGroupsView from "../views/SpcRuleGroupsView.vue";
 import VariableUploadView from "../views/VariableUploadView.vue";
 import AttributeUploadView from "../views/AttributeUploadView.vue";
@@ -19,6 +18,7 @@ import SpcAlertsView from "../views/SpcAlertsView.vue";
 import SmtpSettingsView from "../views/SmtpSettingsView.vue";
 import OperatorsView from "../views/OperatorsView.vue";
 import TrendChartView from "../views/TrendChartView.vue";
+import SpcReportSettingsView from "../views/SpcReportSettingsView.vue";
 
 import GenealogyView from "../views/GenealogyView.vue";
 import TraceabilityMasterView from "../views/TraceabilityMasterView.vue";
@@ -35,8 +35,10 @@ const routes = [
   { path: "/measurements", component: MeasurementEntryView, meta: { editorOnly: true } },
   { path: "/csv-import", redirect: "/uploads/variable" },
   { path: "/spc", component: SpcChartView },
+  { path: "/spc/control-chart/:ppcId?", component: SpcChartView },
   { path: "/trend-chart", component: TrendChartView },
-  { path: "/alerts", component: AlertsView },
+  { path: "/spc/trend/:ppcId?", component: TrendChartView },
+  { path: "/alerts", component: AlertsView, meta: { editorOnly: true } },
   { path: "/v2/work-orders", redirect: "/measurements" },
   { path: "/v2/station-ops", redirect: "/measurements" },
   { path: "/v2/traceability", redirect: "/spc/query" },
@@ -47,20 +49,21 @@ const routes = [
   { path: "/machines", redirect: "/processes" },
   { path: "/characteristics", component: CharacteristicsView, meta: { editorOnly: true } },
   { path: "/part-process-characteristics", component: PartProcessCharacteristicsView, meta: { editorOnly: true } },
-  { path: "/control-chart-groups", component: ControlChartGroupsView, meta: { editorOnly: true } },
-  { path: "/control-chart-categories", redirect: "/control-chart-groups" },
-  { path: "/control-chart-types", redirect: "/control-chart-groups?tab=types" },
+  { path: "/control-chart-groups", redirect: "/part-process-characteristics?tab=groups" },
+  { path: "/control-chart-categories", redirect: "/part-process-characteristics?tab=categories" },
+  { path: "/control-chart-types", redirect: "/part-process-characteristics?tab=types" },
   { path: "/spc-rule-groups", component: SpcRuleGroupsView, meta: { editorOnly: true } },
   { path: "/uploads/variable", component: VariableUploadView, meta: { editorOnly: true } },
   { path: "/uploads/attribute", component: AttributeUploadView, meta: { editorOnly: true } },
   { path: "/uploads/:batchId/preview", component: UploadPreviewView, meta: { editorOnly: true } },
-  { path: "/spc/query", component: SpcQueryView },
-  { path: "/spc/alerts", component: SpcAlertsView },
+  { path: "/spc/query", component: SpcQueryView, meta: { editorOnly: true } },
+  { path: "/spc/alerts", component: SpcAlertsView, meta: { editorOnly: true } },
   { path: "/settings/smtp", component: SmtpSettingsView, meta: { editorOnly: true } },
+  { path: "/settings/spc-reports", component: SpcReportSettingsView, meta: { editorOnly: true } },
   { path: "/operators", component: OperatorsView, meta: { editorOnly: true } },
-  { path: "/genealogy", component: GenealogyView },
+  { path: "/genealogy", component: GenealogyView, meta: { editorOnly: true } },
   { path: "/traceability-master", component: TraceabilityMasterView, meta: { editorOnly: true } },
-  { path: "/guide", component: () => import("../views/SystemGuideView.vue") }
+  { path: "/guide", component: () => import("../views/SystemGuideView.vue"), meta: { editorOnly: true } }
 ];
 
 const router = createRouter({

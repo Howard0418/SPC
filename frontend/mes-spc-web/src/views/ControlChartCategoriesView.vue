@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -203,13 +204,8 @@ onMounted(load);
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <div class="p-5 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-900/20 border border-cyan-100 dark:border-cyan-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-cyan-100 dark:bg-cyan-900/50 rounded-xl text-cyan-600 dark:text-cyan-400 mt-0.5">
-        <Info class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-cyan-900 dark:text-cyan-300">模組指南：管制圖類別主檔 (Control Chart Categories)</h4>
-        <p class="text-xs text-cyan-700 dark:text-cyan-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：管制圖類別主檔 (Control Chart Categories)">
+      <p class="text-xs text-cyan-700 dark:text-cyan-400/80 mt-1.5 leading-relaxed">
           此模組用於設定 SPC 系統的「中分類」資料，歸屬於「大群組」之下。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-cyan-700 dark:text-cyan-400/80 leading-relaxed">
@@ -219,8 +215,7 @@ onMounted(load);
           <p><strong>切換檢視：</strong>可透過畫面上的分類卡或篩選條件查看不同大群組下的類別。</p>
           <p><strong>後續設定：</strong>類別建立後，請到「管制圖種類配置」設定實際管制圖種類。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">

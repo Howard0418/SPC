@@ -37,6 +37,42 @@ public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEma
         return await SendEmailInternalAsync(recipientEmail, "品管測試員", subject, body, overrideSettings);
     }
 
+    public async Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName)
+    {
+        var host = config["SmtpSettings:Host"] ?? "localhost";
+        var port = int.TryParse(config["SmtpSettings:Port"], out var p) ? p : 25;
+        var sender = config["SmtpSettings:SenderEmail"] ?? "mes-spc-report@pmr-spc.internal";
+        using var mail = new MailMessage
+        {
+            From = new MailAddress(sender, "MES+SPC 報表中心"),
+            Subject = subject,
+            Body = htmlBody,
+            IsBodyHtml = true,
+            BodyEncoding = Encoding.UTF8
+        };
+        mail.To.Add(new MailAddress(recipientEmail, recipientName));
+        mail.Attachments.Add(new Attachment(new MemoryStream(excelBytes), fileName,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        using var smtp = new SmtpClient(host, port)
+        {
+            EnableSsl = bool.TryParse(config["SmtpSettings:EnableSsl"], out var ssl) && ssl
+        };
+        var user = config["SmtpSettings:Username"];
+        var pass = config["SmtpSettings:Password"];
+        if (!string.IsNullOrWhiteSpace(user) && !string.IsNullOrWhiteSpace(pass))
+            smtp.Credentials = new NetworkCredential(user, pass);
+        try
+        {
+            await smtp.SendMailAsync(mail);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "SPC 排程報表寄送失敗：{Email}", recipientEmail);
+            return false;
+        }
+    }
+
     private async Task<bool> SendEmailInternalAsync(string toEmail, string toName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null)
     {
         var host = overrideSettings?.Host ?? config["SmtpSettings:Host"] ?? "localhost";

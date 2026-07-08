@@ -116,9 +116,9 @@ public static class SeedData
         }
 
         var ruleGrp = EnsureDefaultSpcRules(db);
-        foreach (var chartType in db.ControlChartTypes.Where(x => !x.RuleGroupId.HasValue))
+        foreach (var chartType in db.ControlChartTypes.Where(x => !x.RuleGroupId.HasValue || x.RuleGroupId == ruleGrp.Id).ToList())
         {
-            chartType.RuleGroupId = ruleGrp.Id;
+            EnsureDefaultChartTypeRules(db, chartType, ruleGrp.Id);
         }
         db.SaveChanges();
 
@@ -351,5 +351,64 @@ public static class SeedData
 
         db.SaveChanges();
         return ruleGrp;
+    }
+
+    private static void EnsureDefaultChartTypeRules(AppDbContext db, ControlChartType chartType, int defaultRuleGroupId)
+    {
+        const string chartTypeRuleGroupCodePrefix = "CT_RULES_";
+        var ruleGroupCode = $"{chartTypeRuleGroupCodePrefix}{chartType.Id}";
+        var ruleGroup = db.SpcRuleGroups.FirstOrDefault(x => x.RuleGroupCode == ruleGroupCode);
+        if (ruleGroup is null)
+        {
+            ruleGroup = new SpcRuleGroup
+            {
+                RuleGroupCode = ruleGroupCode,
+                RuleGroupName = $"{chartType.ChartTypeName} 管制規則",
+                Description = $"管制圖小分類 {chartType.ChartTypeCode} 專用的管制規則預設設定。",
+                IsEnabled = true
+            };
+            db.SpcRuleGroups.Add(ruleGroup);
+            db.SaveChanges();
+        }
+        else
+        {
+            ruleGroup.RuleGroupName = $"{chartType.ChartTypeName} 管制規則";
+            ruleGroup.Description = $"管制圖小分類 {chartType.ChartTypeCode} 專用的管制規則預設設定。";
+            ruleGroup.IsEnabled = true;
+        }
+
+        var templates = db.SpcRules
+            .Where(x => x.RuleGroupId == defaultRuleGroupId)
+            .OrderBy(x => x.Priority)
+            .ThenBy(x => x.Id)
+            .ToList();
+        var firstRuleCode = templates.FirstOrDefault()?.RuleCode;
+        var existingRules = db.SpcRules.Where(x => x.RuleGroupId == ruleGroup.Id).ToList();
+
+        foreach (var template in templates)
+        {
+            var rule = existingRules.FirstOrDefault(x => x.RuleCode == template.RuleCode);
+            var isDefaultSelected = string.Equals(template.RuleCode, firstRuleCode, StringComparison.OrdinalIgnoreCase);
+            if (rule is null)
+            {
+                db.SpcRules.Add(new SpcRule
+                {
+                    RuleGroupId = ruleGroup.Id,
+                    RuleCode = template.RuleCode,
+                    RuleName = template.RuleName,
+                    RuleConfigJson = template.RuleConfigJson,
+                    Priority = template.Priority,
+                    IsEnabled = isDefaultSelected
+                });
+                continue;
+            }
+
+            rule.RuleName = template.RuleName;
+            rule.RuleConfigJson = template.RuleConfigJson;
+            rule.Priority = template.Priority;
+            rule.IsEnabled = isDefaultSelected;
+        }
+
+        chartType.RuleGroupId = ruleGroup.Id;
     }
 }

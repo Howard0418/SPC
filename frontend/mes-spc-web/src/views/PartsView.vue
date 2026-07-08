@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -175,13 +176,8 @@ onMounted(load);
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5">
-        <Info class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：產品料號主檔 (Parts)</h4>
-        <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：產品料號主檔 (Parts)">
+      <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
           此模組用於建檔全廠的生產料號。在 SPC 系統中，所有的抽樣檢驗數據都必須關聯到特定的產品料號。<br/>
           💡 <strong>下一步建議：</strong> 在此處建立料號後，請前往「SPC 管制項目設定」頁面，為產品管制項目配置專屬的上下限 (USL/LSL) 規格。
         </p>
@@ -192,8 +188,7 @@ onMounted(load);
           <p><strong>編輯資料：</strong>在列表點選編輯按鈕，調整名稱、描述或啟用狀態。</p>
           <p><strong>後續設定：</strong>料號建立完成後，請到「SPC 管制項目設定」建立產品管制項目並綁定製程、檢驗特性與規格上下限。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">

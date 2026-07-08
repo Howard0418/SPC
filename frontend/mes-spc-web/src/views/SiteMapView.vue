@@ -38,7 +38,7 @@ const siteMapCategories = [
   {
     title: "管制圖與西方電氣規則",
     items: [
-      { to: "/control-chart-groups", text: "管制圖配置維護", icon: Layers },
+      { to: "/part-process-characteristics?tab=groups", text: "管制圖配置維護", icon: Layers },
       { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity }
     ]
   },
@@ -56,7 +56,8 @@ const siteMapCategories = [
     items: [
       { to: "/guide", text: "系統操作手冊", icon: BookOpen },
       { to: "/operators", text: "作業工程師與權限", icon: Users },
-      { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders }
+      { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders },
+      { to: "/settings/spc-reports", text: "SPC 週報月報設定", icon: Sliders }
     ]
   }
 ];

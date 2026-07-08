@@ -21,7 +21,7 @@ const router = useRouter();
 const fileInput = ref(null);
 const selectedFile = ref(null);
 const mode = ref("excel"); // 'excel' or 'json'
-const jsonInput = ref('[{"ControlScope":"PROCESS","ProcessCode":"ST-01","MachineCode":"M-01","CharacteristicCode":"THICKNESS","LotNo":"L-20260518","SampleNo":1,"MeasuredValue":10.05,"MeasuredAt":"2026-05-18T08:00:00","Operator":"OP-01"}]');
+const jsonInput = ref('[{"ControlScope":"PROCESS","ProcessCode":"ST-01","MachineCode":"M-01","CharacteristicCode":"THICKNESS","LotNo":"L-20260518","SampleNo":1,"MeasuredValue":10.05,"RecheckValue":10.04,"AdjustAction":"添加","AdjustAmount":0.5,"MeasuredAt":"2026-05-18T08:00:00","Operator":"OP-01"}]');
 const loading = ref(false);
 const err = ref("");
 const successBatchId = ref("");
@@ -39,6 +39,9 @@ const systemFields = [
   { key: "CharacteristicCode", label: "檢驗項目代碼 (CharacteristicCode) *", required: true, altNames: ["項目", "特性", "檢驗項目", "characteristic", "characteristiccode", "char_code", "item"] },
   { key: "MachineCode", label: "生產機台代碼 (MachineCode)", required: false, altNames: ["機台", "設備", "machine", "machinecode", "machine_code", "eqp", "device"] },
   { key: "MeasuredValue", label: "量測數值 (MeasuredValue) *", required: true, altNames: ["測量值", "數值", "值", "measuredvalue", "measured_value", "value", "val"] },
+  { key: "RecheckValue", label: "複驗值 (RecheckValue)", required: false, altNames: ["複驗", "複驗值", "recheck", "recheckvalue", "recheck_value", "review_value"] },
+  { key: "AdjustAction", label: "調整 (AdjustAction)", required: false, altNames: ["調整", "調整方式", "調整動作", "adjust", "adjustaction", "adjust_action", "action"] },
+  { key: "AdjustAmount", label: "調整量 (AdjustAmount)", required: false, altNames: ["調整量", "添加量", "稀釋量", "adjustamount", "adjust_amount", "amount"] },
   { key: "LotNo", label: "生產批號 (LotNo)", required: false, altNames: ["批號", "lot", "lotno", "lot_no", "batch"] },
   { key: "SerialNo", label: "零件序號 (SerialNo)", required: false, altNames: ["序號", "工單", "serial", "serialno", "serial_no", "sn", "workorder"] },
   { key: "MeasuredAt", label: "量測時間 (MeasuredAt)", required: false, altNames: ["時間", "日期", "時間戳記", "measuredat", "measured_at", "time", "date", "timestamp"] },

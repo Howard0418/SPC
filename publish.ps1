@@ -84,6 +84,13 @@ Write-Host "[2/3] 開始編譯前端 (Vue 3 + Vite)..."
 $FrontendSrcDir = Join-Path $RootDir "frontend\mes-spc-web"
 Set-Location $FrontendSrcDir
 
+Write-Host "自動遞增前端版本號 (Patch)..."
+try {
+    npm.cmd version patch --no-git-tag-version
+} catch {
+    npm version patch --no-git-tag-version
+}
+
 Write-Host "執行 npm install..."
 npm install
 

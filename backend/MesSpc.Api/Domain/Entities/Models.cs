@@ -80,6 +80,21 @@ public class Operator : BaseEntity<int>
     public bool IsActive { get; set; } = true;
 }
 
+public class SpcReportSchedule : BaseEntity<int>
+{
+    public string ScheduleName { get; set; } = "項目管制總覽報表";
+    public string? Department { get; set; }
+    public string RecipientOperatorIdsJson { get; set; } = "[]";
+    public bool WeeklyEnabled { get; set; }
+    public int WeeklyDayOfWeek { get; set; } = 1;
+    public bool MonthlyEnabled { get; set; }
+    public int MonthlyDay { get; set; } = 1;
+    public TimeSpan SendTime { get; set; } = new(8, 0, 0);
+    public DateTime? LastWeeklySentAt { get; set; }
+    public DateTime? LastMonthlySentAt { get; set; }
+    public bool IsEnabled { get; set; } = true;
+}
+
 public class Customer : BaseEntity<int>
 {
     public string CustomerCode { get; set; } = string.Empty;
@@ -291,6 +306,7 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public double? LCL { get; set; }
     public double? TargetValue { get; set; }
     public int SampleSize { get; set; } = 1;
+    public string DisplayMode { get; set; } = "CONTROL_CHART";
     public int? ChartTypeId { get; set; }
     public string? FormulaConfigJson { get; set; }
     public int? RuleGroupId { get; set; }
@@ -412,6 +428,10 @@ public class VariableMeasurement : BaseEntity<long>
     public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
     public string? Operator { get; set; }
     
+    public double? RecheckValue { get; set; }
+    public string? AdjustAction { get; set; }
+    public double? AdjustAmount { get; set; }
+
     public SourceType SourceType { get; set; } = SourceType.Manual;
     public string? SourceReference { get; set; }
     public SideCode SideCode { get; set; } = SideCode.None;

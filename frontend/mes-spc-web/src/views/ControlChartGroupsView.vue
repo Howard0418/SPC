@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -20,6 +20,13 @@ import {
   Activity,
   Sliders
 } from "lucide-vue-next";
+
+const { embedded } = defineProps({
+  embedded: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const route = useRoute();
 
@@ -359,6 +366,22 @@ function resetTypeRuleOptions(options = null) {
   selectedTypeRuleCodes.value = typeRuleOptions.value.filter(x => x.isSelected).map(x => x.ruleCode);
 }
 
+function syncTabFromRoute() {
+  if (route.path.includes("types")) {
+    activeTab.value = "types";
+  }
+
+  if (route.query.tab === "groups" || route.query.tab === "categories" || route.query.tab === "types") {
+    activeTab.value = route.query.tab;
+  }
+}
+
+function defaultTypeRuleCodes() {
+  const firstRule = [...ruleLibraryRows.value]
+    .sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0) || (Number(a.id) || 0) - (Number(b.id) || 0))[0];
+  return firstRule ? [firstRule.ruleCode] : [];
+}
+
 async function loadTypeRules(chartTypeId) {
   const { data } = await api.get(`/control-chart-types/${chartTypeId}/rules`);
   resetTypeRuleOptions(data?.rules || null);
@@ -472,6 +495,7 @@ function openTypesCreate() {
   typesModalMode.value = "create";
   typesCurrentId.value = null;
   resetTypeRuleOptions();
+  selectedTypeRuleCodes.value = defaultTypeRuleCodes();
   typesForm.value = {
     chartGroupId: defaultGroupId.value,
     chartCategoryId: null,
@@ -625,15 +649,7 @@ async function loadAll() {
 }
 
 onMounted(async () => {
-  if (route.path.includes("types")) {
-    activeTab.value = "types";
-  }
-  
-  if (route.query.tab) {
-    if (route.query.tab === "groups" || route.query.tab === "types") {
-      activeTab.value = route.query.tab;
-    }
-  }
+  syncTabFromRoute();
 
   await loadAll();
   
@@ -652,12 +668,14 @@ onMounted(async () => {
     }
   }
 });
+
+watch(() => route.query.tab, syncTabFromRoute);
 </script>
 
 <template>
   <section class="space-y-6">
     <!-- Header Banner -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+    <div v-if="!embedded" class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
       <div class="flex items-center gap-3">
         <div class="p-3 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-xl shadow-lg shadow-indigo-500/30 text-white">
           <Activity class="w-7 h-7" />
@@ -703,13 +721,20 @@ onMounted(async () => {
     </div>
 
     <!-- 🌟 Tab Header Navigation -->
-    <div class="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-1 shadow-sm border">
+    <div v-if="!embedded" class="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-1 shadow-sm border">
       <button
         @click="activeTab = 'groups'"
         :class="activeTab === 'groups' ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-slate-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
         class="flex-1 py-3 px-4 rounded-xl text-center text-sm transition-all whitespace-nowrap"
       >
         大類別總管 (Control Groups)
+      </button>
+      <button
+        @click="activeTab = 'categories'"
+        :class="activeTab === 'categories' ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-slate-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+        class="flex-1 py-3 px-4 rounded-xl text-center text-sm transition-all whitespace-nowrap"
+      >
+        中分類維護
       </button>
       <button
         @click="activeTab = 'types'"

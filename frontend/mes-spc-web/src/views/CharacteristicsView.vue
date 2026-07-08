@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -207,13 +208,8 @@ onMounted(load);
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <div class="p-5 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-900/20 border border-pink-100 dark:border-pink-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-pink-100 dark:bg-pink-900/50 rounded-xl text-pink-600 dark:text-pink-400 mt-0.5">
-        <Info class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-pink-900 dark:text-pink-300">模組指南：品質檢驗特性主檔 (Characteristics)</h4>
-        <p class="text-xs text-pink-700 dark:text-pink-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：品質檢驗特性主檔 (Characteristics)">
+      <p class="text-xs text-pink-700 dark:text-pink-400/80 mt-1.5 leading-relaxed">
           此模組用於建置全廠的「檢驗項目字典」(如：長度、重量、銅離子濃度等)。<br/>
           💡 <strong>資料類型說明：</strong><br/>
           - <strong>計量 (Variable)：</strong>可以量測出具體數值的特性 (如：長度 10.5 mm)，通常對應 X-bar 管制圖。<br/>
@@ -226,8 +222,7 @@ onMounted(load);
           <p><strong>選擇類型：</strong>連續數值請選計量型；不良數、缺點數或比例資料請選計數型。</p>
           <p><strong>指定預設圖：</strong>依資料類型設定預設管制圖，後續檢驗基準可沿用或調整。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">

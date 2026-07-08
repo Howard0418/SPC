@@ -1,5 +1,50 @@
 # 10 Change Log
 
+## [2026-07-08] - SPC 製圖後圖表名稱顯示規則
+- **SPC 管制項目總覽製圖**:
+  - 從總覽列點擊「製圖」後，管制圖頁上方新增「圖表名稱」區塊。
+  - 圖表名稱依序使用 `線別 / 製程線別`、`槽位`、`管制圖名稱` 組合，格式為 `線別 - 槽位 - 管制圖名稱`。
+  - 若不是從總覽列進入，前端會以 `PartProcessCharacteristic` 主檔資料 fallback 組合製程/機台、槽位、品質特性名稱。
+
+## [2026-07-08] - 登入角色選單與路由權限收斂
+- **前端權限顯示規則**:
+  - `Viewer` 登入後左側選單僅顯示「儀表板」、「SPC 管制圖」、「量測值趨勢圖」。
+  - `Editor` 登入後顯示全部功能選單。
+- **路由保護同步**:
+  - 將異常管理、追溯查詢、系統操作手冊等非三個檢視頁同步標記為 `editorOnly`，避免 Viewer 直接輸入 URL 進入非授權頁面。
+
+## [2026-07-08] - SPC 總覽槽位欄位與週/月報寄送設定
+- **SPC 管制項目總覽 (Summary)**:
+  - `/api/v1/spc/summary` 回傳新增 `SlotName`，前端 `SpcSummaryTable` 於「製程線別」後顯示「槽位」欄位。
+  - 總覽表水平捲動寬度同步調整，避免新增欄位後遮擋後方 Ppk、OOS、製圖等資料。
+- **SPC 週報 / 月報寄送設定**:
+  - 新增前端頁面 `/settings/spc-reports`，提供部門篩選、使用者收件人勾選、週報/月報啟用、寄送時間設定。
+  - 預設寄送時間為 `08:00`；週報預設星期一，月報預設每月 1 日。
+  - 側邊欄「系統管理與通報設定」新增「SPC 週報月報設定」入口。
+  - 新增 `POST /api/v1/spc-report-settings/send-now` 立即寄送端點，前端提供「立即寄送週報」與「立即寄送月報」按鈕，可直接測試 SMTP、收件人與 Excel 附件。
+  - 立即寄送回傳每位收件人的成功/失敗結果，且不更新正式排程的上次寄送時間，避免測試寄送影響排程判定。
+- **Excel 匯出與排程期間**:
+  - `SpcOverviewReportService` 改為沿用 SPC 總覽統計結果產生 Excel，欄位包含槽位、本期/上月 Ppk、本期/上月 OOS、%OOS、OOC、管制界線計算方式等。
+  - `SpcReportSchedulerService` 週報改取上一週完整期間，月報改取上一個完整月份，並透過既有 SMTP 寄送服務附加 Excel。
+- **測試資料清除限制**:
+  - 本次清除測試資料僅允許使用 `/api/testdata/clear-tagged` 的安全標記清除流程，保留維護主檔；若正式 SQL Server 無法連線，不改用直接刪表或手動刪除方式。
+
+## [2026-07-08] - SPC 總覽比較欄位與管制圖/趨勢圖分流修正
+- **SPC 管制項目總覽 (Summary)**:
+  - `/api/v1/spc/summary` 回傳新增 `GroupType`、`ChartKind`，前端總覽表可直接顯示「管制圖 / 趨勢圖」。
+  - 總覽表新增上一個完整月份比較欄位：上一月 `Ppk`、上一月 `OOS 件數`、上一月 `%OOS`，方便與目前查詢區間的本期數據對照。
+- **圖表分流與頁面責任拆分**:
+  - `SpcSummaryTable` 製圖按鈕依列資料的 `GroupType` 顯示管制圖或趨勢圖圖示。
+  - `SpcChartView` 若收到趨勢圖列資料會導向 `TrendChartView`；`TrendChartView` 若收到管制圖列資料會導向 `SpcChartView`。
+  - `SpcChartView` 移除內嵌的「量測點位趨勢圖」區塊，管制圖頁只呈現 SPC 管制圖、異常點清單與量測值分布直方圖；原始量測時序趨勢集中於趨勢圖頁。
+- **公式顯示一致性修正**:
+  - 管制圖頁公式標籤改讀實際 primary control limit 的 `calculationMethod`，支援 `iControlLimitsStat`、`xbarControl` 與計數型控制界限來源。
+  - I-MR / 單值移動全距圖統一顯示「移動全距法」，避免總覽顯示移動全距法但圖內誤顯示標準全距法。
+- **管制圖與趨勢圖互斥設定**:
+  - `PartProcessCharacteristic.DisplayMode` 改為只能選擇 `CONTROL_CHART` 或 `TREND_CHART`，不再允許 `BOTH`。
+  - SPC 管制項目設定頁改為「管制圖 / 趨勢圖」二選一，圖表種類下拉只顯示所選圖種的類型。
+  - 後端儲存時驗證 chart type 所屬 `ControlChartGroup.GroupType` 必須與 `DisplayMode` 一致，避免 API 直接送出管制圖與趨勢圖混用設定。
+
 ## [2026-06-25] - 作業人員角色權限與匯入量測者帳號整合
 - **修改目的**:
   - 將既有作業人員主檔擴充為可登入的系統使用者，提供 `Viewer`（僅檢視與查詢）及 `Editor`（完整操作）兩種角色。

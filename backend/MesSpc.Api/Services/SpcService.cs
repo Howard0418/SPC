@@ -28,10 +28,12 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var activeCl = activeSegment?.CL ?? mapping.CL;
         var activeLcl = activeSegment?.LCL ?? mapping.LCL;
 
-        var isOutOfSpec = (mapping.USL.HasValue && measurement.MeasuredValue > mapping.USL.Value)
-                          || (mapping.LSL.HasValue && measurement.MeasuredValue < mapping.LSL.Value);
-        var isOutOfControl = (activeUcl.HasValue && measurement.MeasuredValue > activeUcl.Value)
-                             || (activeLcl.HasValue && measurement.MeasuredValue < activeLcl.Value);
+        var actualValue = measurement.RecheckValue ?? measurement.MeasuredValue;
+
+        var isOutOfSpec = (mapping.USL.HasValue && actualValue > mapping.USL.Value)
+                          || (mapping.LSL.HasValue && actualValue < mapping.LSL.Value);
+        var isOutOfControl = (activeUcl.HasValue && actualValue > activeUcl.Value)
+                             || (activeLcl.HasValue && actualValue < activeLcl.Value);
         var ruleGroupId = mapping.RuleGroupId ?? chartType.RuleGroupId;
 
         List<SpcRuleViolation>? violations = null;
@@ -44,10 +46,10 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     .Where(x => x.PartProcessCharacteristicId == mapping.Id)
                     .OrderByDescending(x => x.MeasuredAt)
                     .Take(30)
-                    .Select(x => x.MeasuredValue)
+                    .Select(x => x.RecheckValue ?? x.MeasuredValue)
                     .ToListAsync(ct);
                 
-                lastMeasurements.Insert(0, measurement.MeasuredValue);
+                lastMeasurements.Insert(0, actualValue);
                 lastMeasurements.Reverse();
 
                 violations = SpcRuleEngine.EvaluateRules(lastMeasurements, rules, activeCl.Value, activeUcl.Value, activeLcl.Value);
@@ -69,7 +71,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             ChartTypeId = chartType.Id,
             RuleGroupId = ruleGroupId,
             StatisticName = chartType.ChartTypeCode,
-            StatisticValue = measurement.MeasuredValue,
+            StatisticValue = actualValue,
             USL = mapping.USL,
             LSL = mapping.LSL,
             UCL = activeUcl,
@@ -85,8 +87,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         if (isOutOfSpec || isOutOfControl)
         {
             var alertMessage = isOutOfSpec
-                ? $"Variable measurement violates spec limit. Value={measurement.MeasuredValue}"
-                : $"Variable measurement violates control limit. Value={measurement.MeasuredValue}";
+                ? $"Variable measurement violates spec limit. Value={actualValue}"
+                : $"Variable measurement violates control limit. Value={actualValue}";
 
             if (violations?.Count > 0)
             {
@@ -101,7 +103,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 CharacteristicId = measurement.CharacteristicId,
                 UploadBatchId = measurement.UploadBatchId,
                 VariableMeasurementId = measurement.Id,
-                ActualValue = measurement.MeasuredValue,
+                ActualValue = actualValue,
                 AlertType = isOutOfSpec ? AlertType.OutOfSpec : AlertType.OutOfControl,
                 Message = alertMessage
             };
@@ -296,11 +298,17 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         int? partId = null,
         CancellationToken ct = default)
     {
-        var mapping = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
-        if (mapping is null || !mapping.ChartTypeId.HasValue) return null;
+        var mapping = await db.PartProcessCharacteristics
+            .Include(x => x.Characteristic)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
+        if (mapping is null) return null;
 
-        var chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
-        if (chartType is null) return null;
+        ControlChartType? chartType = null;
+        if (mapping.ChartTypeId.HasValue)
+        {
+            chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
+        }
 
         var segments = await db.ControlLimitSegments
             .AsNoTracking()
@@ -318,7 +326,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             LCL = mapping.LCL
         };
 
-        if (chartType.DataCategory == "Variable")
+        var dataCategory = chartType?.DataCategory ?? mapping.Characteristic?.DataCategory ?? "Variable";
+
+        if (dataCategory == "Variable")
         {
             var query = db.VariableMeasurements.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
             if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
@@ -345,7 +355,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 return new SpcDataPoint
                 {
                     MeasuredAt = x.MeasuredAt,
-                    Value = x.MeasuredValue,
+                    Value = x.RecheckValue ?? x.MeasuredValue,
                     UCL = activeSegment?.UCL ?? mapping.UCL,
                     CL = activeSegment?.CL ?? mapping.CL,
                     LCL = activeSegment?.LCL ?? mapping.LCL,
@@ -357,20 +367,27 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     SlotId = x.SlotId,
                     SideCode = x.SideCode.ToString(),
                     IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId),
-                    IsOutOfSpec = (mapping.USL.HasValue && x.MeasuredValue > mapping.USL.Value)
-                        || (mapping.LSL.HasValue && x.MeasuredValue < mapping.LSL.Value),
+                    IsOutOfSpec = (mapping.USL.HasValue && (x.RecheckValue ?? x.MeasuredValue) > mapping.USL.Value)
+                        || (mapping.LSL.HasValue && (x.RecheckValue ?? x.MeasuredValue) < mapping.LSL.Value),
                     IsOutOfControl = alert?.AlertType == AlertType.OutOfControl,
                     RootCause = alert?.RootCause,
                     CorrectiveAction = alert?.CorrectiveAction,
                     VariableMeasurementId = x.Id,
                     AlertId = alert?.Id,
                     AlertStatus = alert?.Status,
-                    ResponsibleUser = alert?.ResponsibleUser
+                    ResponsibleUser = alert?.ResponsibleUser,
+                    RecheckValue = x.RecheckValue,
+                    AdjustAction = x.AdjustAction,
+                    AdjustAmount = x.AdjustAmount
                 };
             }).ToList();
 
             ControlChartResult chartResultVal;
-            if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
+            if (chartType == null)
+            {
+                chartResultVal = new ControlChartResult { RawDataPoints = rawPoints, Limits = limits };
+            }
+            else if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
                 chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits) with { RawDataPoints = rawPoints };
             }
@@ -384,7 +401,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     return new Subgroup
                     {
                         MeasuredAt = g.Key,
-                        Values = g.Select(m => m.MeasuredValue).ToList(),
+                        Values = g.Select(m => m.RecheckValue ?? m.MeasuredValue).ToList(),
                         UCL = activeSegment?.UCL ?? mapping.UCL,
                         CL = activeSegment?.CL ?? mapping.CL,
                         LCL = activeSegment?.LCL ?? mapping.LCL,
@@ -401,7 +418,10 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                         AlertStatus = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.Status).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)),
                         RootCause = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.RootCause).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)),
                         CorrectiveAction = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.CorrectiveAction).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)),
-                        ResponsibleUser = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.ResponsibleUser).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))
+                        ResponsibleUser = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.ResponsibleUser).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)),
+                        RecheckValue = first.RecheckValue,
+                        AdjustAction = first.AdjustAction,
+                        AdjustAmount = first.AdjustAmount
                     };
                 }).ToList();
 
@@ -422,6 +442,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         }
         else // Attribute
         {
+            if (chartType == null) return null;
+            
             var query = db.AttributeMeasurements.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
             if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
             if (!string.IsNullOrWhiteSpace(batchNo)) query = query.Where(x => x.LotNo == batchNo);
@@ -776,35 +798,60 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         DateTime? endDate,
         string? batchNo = null,
         int? partId = null,
+        string? groupType = null,
         CancellationToken ct = default)
     {
         var normalizedDimension = NormalizeControlScope(dimension);
-        var groupName = await db.ControlChartGroups.AsNoTracking()
-            .Where(x => x.GroupCode == dimension || x.GroupCode == normalizedDimension)
-            .Select(x => x.GroupName)
+        var normalizedGroupType = string.IsNullOrWhiteSpace(groupType) ? null : groupType.Trim().ToUpperInvariant();
+        var groupInfo = await db.ControlChartGroups.AsNoTracking()
+            .Where(x => (x.GroupCode == dimension || x.GroupCode == normalizedDimension)
+                && (normalizedGroupType == null || x.GroupType == normalizedGroupType))
+            .Select(x => new { x.GroupName, x.GroupType })
             .FirstOrDefaultAsync(ct)
-            ?? FormatControlScope(normalizedDimension);
+            ?? new { GroupName = FormatControlScope(normalizedDimension), GroupType = normalizedGroupType ?? "CONTROL_CHART" };
+        var groupName = groupInfo.GroupName;
+        var resolvedGroupType = groupInfo.GroupType;
         var chartTypeIds = await (
             from chartType in db.ControlChartTypes.AsNoTracking()
             join category in db.ControlChartCategories.AsNoTracking()
                 on chartType.ChartCategoryId equals category.Id
             join chartGroup in db.ControlChartGroups.AsNoTracking()
                 on category.ChartGroupId equals chartGroup.Id
-            where chartGroup.GroupCode == dimension || chartGroup.GroupCode == normalizedDimension
+            where (chartGroup.GroupCode == dimension || chartGroup.GroupCode == normalizedDimension)
+                && (normalizedGroupType == null || chartGroup.GroupType == normalizedGroupType)
             select chartType.Id
         ).ToListAsync(ct);
+
+        var chartTypeGroupMap = await (
+            from chartType in db.ControlChartTypes.AsNoTracking()
+            join category in db.ControlChartCategories.AsNoTracking()
+                on chartType.ChartCategoryId equals category.Id
+            join chartGroup in db.ControlChartGroups.AsNoTracking()
+                on category.ChartGroupId equals chartGroup.Id
+            where chartTypeIds.Contains(chartType.Id)
+            select new { chartType.Id, chartGroup.GroupType }
+        ).ToDictionaryAsync(x => x.Id, x => x.GroupType, ct);
 
         var mappings = await db.PartProcessCharacteristics.AsNoTracking()
             .Include(x => x.Process)
             .Include(x => x.Characteristic)
             .Include(x => x.Machine)
+            .Include(x => x.Tank)
             .Where(x => x.IsEnabled
                 && ((x.ChartTypeId.HasValue && chartTypeIds.Contains(x.ChartTypeId.Value))
-                    || (chartTypeIds.Count == 0 && x.ControlScope == normalizedDimension)))
+                    || (chartTypeIds.Count == 0
+                        && x.ControlScope == normalizedDimension
+                        && (normalizedGroupType == null || normalizedGroupType == "CONTROL_CHART"))
+                    || (!x.ChartTypeId.HasValue
+                        && x.ControlScope == normalizedDimension
+                        && (normalizedGroupType == null || normalizedGroupType == "CONTROL_CHART"))))
             .Where(x => !partId.HasValue || x.PartId == partId.Value)
             .ToListAsync(ct);
 
         var chartTypes = await db.ControlChartTypes.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.ChartTypeName, ct);
+        var comparisonEnd = endDate?.Date ?? DateTime.Today;
+        var previousMonthStart = new DateTime(comparisonEnd.Year, comparisonEnd.Month, 1).AddMonths(-1);
+        var previousMonthEnd = previousMonthStart.AddMonths(1).AddDays(-1);
 
         var summaries = new List<MesSpc.Api.Controllers.ChartSummaryDto>();
         foreach (var mapping in mappings)
@@ -812,23 +859,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             var result = await GetInteractiveChartAsync(mapping.Id, uploadBatchId, startDate, endDate, batchNo, partId, ct);
             if (result == null || result.RawDataPoints == null) continue;
 
-            var rawPoints = new List<SpcDataPoint>();
-            if (result.RawDataPoints is List<SpcDataPoint> varPoints)
-            {
-                rawPoints.AddRange(varPoints);
-            }
-            else if (result.RawDataPoints is List<AttributeDataPoint> attrPoints)
-            {
-                foreach (var a in attrPoints)
-                {
-                    rawPoints.Add(new SpcDataPoint
-                    {
-                        MeasuredAt = a.MeasuredAt,
-                        IsOutOfSpec = false,
-                        IsOutOfControl = a.IsOutOfControl
-                    });
-                }
-            }
+            var rawPoints = ToSpcDataPoints(result.RawDataPoints);
 
             if (rawPoints.Count == 0) continue;
 
@@ -836,8 +867,18 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             if (includedPoints.Count == 0) continue;
 
             var oosCount = includedPoints.Count(x => x.IsOutOfSpec);
+            var oocCount = includedPoints.Count(x => x.IsOutOfControl || (x.ViolatedRules != null && x.ViolatedRules.Count > 0));
             var totalCount = includedPoints.Count;
             var oosPercentage = totalCount > 0 ? (double)oosCount / totalCount * 100 : 0;
+            var oocPercentage = totalCount > 0 ? (double)oocCount / totalCount * 100 : 0;
+            var previousMonth = await CalculateSummaryPeriodStatsAsync(
+                mapping.Id,
+                uploadBatchId,
+                previousMonthStart,
+                previousMonthEnd,
+                batchNo,
+                partId,
+                ct);
 
             var latestAlert = includedPoints
                 .Where(x => !string.IsNullOrEmpty(x.RootCause)
@@ -861,12 +902,18 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             string typeName = result.ChartType;
             if (mapping.ChartTypeId.HasValue && chartTypes.TryGetValue(mapping.ChartTypeId.Value, out var n)) typeName = n;
+            var mappingGroupType = mapping.ChartTypeId.HasValue && chartTypeGroupMap.TryGetValue(mapping.ChartTypeId.Value, out var typeGroupType)
+                ? typeGroupType
+                : resolvedGroupType;
 
             summaries.Add(new MesSpc.Api.Controllers.ChartSummaryDto
             {
                 PartProcessCharacteristicId = mapping.Id,
                 ControlCategory = groupName,
+                GroupType = mappingGroupType,
+                ChartKind = FormatChartKind(mappingGroupType),
                 LineOrProcessName = lineName,
+                SlotName = FormatSlotName(mapping.Tank),
                 ChartName = mapping.Characteristic?.CharacteristicName ?? "",
                 ChartType = typeName,
                 Usl = result.Limits?.USL,
@@ -874,16 +921,60 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 Ucl = mapping.UCL ?? calculatedLimits.Ucl ?? result.Limits?.UCL,
                 Lcl = mapping.LCL ?? calculatedLimits.Lcl ?? result.Limits?.LCL,
                 LimitCalculationMethod = calcMethod,
+                TotalCount = totalCount,
                 OosCount = oosCount,
                 OosPercentage = Math.Round(oosPercentage, 2),
+                PreviousMonthOosCount = previousMonth.OosCount,
+                PreviousMonthOosPercentage = Math.Round(previousMonth.OosPercentage, 2),
+                OocCount = oocCount,
+                OocPercentage = Math.Round(oocPercentage, 2),
                 Ca = result.Capability?.Ca,
                 Pp = result.Capability?.Pp,
                 Ppk = result.Capability?.Ppk,
+                PreviousMonthPpk = previousMonth.Ppk,
                 ResponsibleUser = latestAlert?.ResponsibleUser ?? "",
                 Remarks = latestAlert?.CorrectiveAction ?? latestAlert?.RootCause ?? ""
             });
         }
         return summaries.OrderByDescending(x => x.OosPercentage).ThenBy(x => x.LineOrProcessName).ToList();
+    }
+
+    private async Task<(int OosCount, double OosPercentage, double? Ppk)> CalculateSummaryPeriodStatsAsync(
+        int partProcessCharacteristicId,
+        Guid? uploadBatchId,
+        DateTime startDate,
+        DateTime endDate,
+        string? batchNo,
+        int? partId,
+        CancellationToken ct)
+    {
+        var result = await GetInteractiveChartAsync(partProcessCharacteristicId, uploadBatchId, startDate, endDate, batchNo, partId, ct);
+        if (result?.RawDataPoints == null) return (0, 0, null);
+
+        var rawPoints = ToSpcDataPoints(result.RawDataPoints);
+        var includedPoints = rawPoints.Where(x => !x.IsExcluded).ToList();
+        if (includedPoints.Count == 0) return (0, 0, result.Capability?.Ppk);
+
+        var oosCount = includedPoints.Count(x => x.IsOutOfSpec);
+        var oosPercentage = (double)oosCount / includedPoints.Count * 100;
+        return (oosCount, oosPercentage, result.Capability?.Ppk);
+    }
+
+    private static List<SpcDataPoint> ToSpcDataPoints(object rawDataPoints)
+    {
+        if (rawDataPoints is List<SpcDataPoint> varPoints) return varPoints.ToList();
+        if (rawDataPoints is List<AttributeDataPoint> attrPoints)
+        {
+            return attrPoints.Select(a => new SpcDataPoint
+            {
+                MeasuredAt = a.MeasuredAt,
+                IsOutOfSpec = false,
+                IsOutOfControl = a.IsOutOfControl,
+                IsExcluded = a.IsExcluded
+            }).ToList();
+        }
+
+        return [];
     }
 
     private static string NormalizeControlScope(string? dimension)
@@ -908,14 +999,34 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         };
     }
 
+    private static string FormatChartKind(string? groupType)
+    {
+        return groupType?.Trim().ToUpperInvariant() switch
+        {
+            "TREND_CHART" => "趨勢圖",
+            "CONTROL_CHART" => "管制圖",
+            _ => "管制圖"
+        };
+    }
+
+    private static string FormatSlotName(Tank? tank)
+    {
+        if (tank is null) return string.Empty;
+        if (!string.IsNullOrWhiteSpace(tank.TankName) && !string.IsNullOrWhiteSpace(tank.TankCode))
+            return $"{tank.TankName} ({tank.TankCode})";
+        return tank.TankName ?? tank.TankCode ?? string.Empty;
+    }
+
     private static string FormatCalculationMethod(string? method, string? chartType)
     {
         return method?.Trim().ToUpperInvariant() switch
         {
-            "MR_METHOD" or "MOVING_RANGE_OF_XBAR" => "平均值移動全距法",
+            "MR_METHOD" or "MOVING_RANGE_OF_XBAR" => "移動全距法",
             "SIGMA_METHOD" or "SAMPLE_STD_DEV" => "樣本標準差法",
             _ when string.Equals(chartType, "I_MR", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(chartType, "I-MR", StringComparison.OrdinalIgnoreCase) => "移動全距法",
+            _ when string.Equals(chartType, "XBAR_R", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(chartType, "XBAR-R", StringComparison.OrdinalIgnoreCase) => "標準全距法",
             _ => "標準管制圖公式"
         };
     }

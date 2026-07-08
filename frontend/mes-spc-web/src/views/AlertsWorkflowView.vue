@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import { 
@@ -159,13 +160,8 @@ onMounted(load);
     </div>
 
     <!-- Guide / Operation Tip -->
-    <div class="p-5 bg-gradient-to-r from-sky-50 to-amber-50 dark:from-sky-950/30 dark:to-amber-900/20 border border-sky-100 dark:border-sky-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-sky-100 dark:bg-sky-900/50 rounded-xl text-sky-600 dark:text-sky-400 mt-0.5">
-        <Wrench class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-sky-900 dark:text-sky-300">模組指南：異常單簽核處置 (Alert Workflow)</h4>
-        <p class="text-xs text-sky-700 dark:text-sky-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：異常單簽核處置 (Alert Workflow)">
+      <p class="text-xs text-sky-700 dark:text-sky-400/80 mt-1.5 leading-relaxed">
           此頁面用於追蹤異常單處置進度，將 OOS/OOC 警報轉成可稽核的真因分析、改善對策與結案紀錄。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-sky-700 dark:text-sky-400/80 leading-relaxed">
@@ -176,8 +172,7 @@ onMounted(load);
           <p><strong>更新狀態：</strong>依處理進度選擇 In Progress 或 Closed，儲存後回到列表確認狀態更新。</p>
           <p><strong>結案提醒：</strong>設為 Closed 時，系統會同步完成簽收狀態，形成異常處置閉環。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Alert Messages Box -->
     <div v-if="err" class="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 text-sm flex items-center gap-3 animate-fade-in shadow-sm">

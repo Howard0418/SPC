@@ -25,6 +25,9 @@ public record SpcDataPoint
     public int? AlertId { get; init; }
     public string? AlertStatus { get; init; }
     public string? ResponsibleUser { get; init; }
+    public double? RecheckValue { get; init; }
+    public string? AdjustAction { get; init; }
+    public double? AdjustAmount { get; init; }
 }
 
 public record Subgroup
@@ -55,6 +58,9 @@ public record Subgroup
     public int? AlertId { get; init; }
     public string? AlertStatus { get; init; }
     public string? ResponsibleUser { get; init; }
+    public double? RecheckValue { get; init; }
+    public string? AdjustAction { get; init; }
+    public double? AdjustAmount { get; init; }
 }
 
 public record AttributeDataPoint

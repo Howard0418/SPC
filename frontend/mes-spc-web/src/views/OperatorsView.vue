@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -191,13 +192,8 @@ onMounted(load);
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5">
-        <Info class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：作業人員主檔 (Operators)</h4>
-        <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：作業人員主檔 (Operators)">
+      <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
           此模組用於設定現場量測人員的基本資料。當 SPC 數據發生異常時，系統會將告警信件發送至這裡設定的電子郵件信箱。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
@@ -207,8 +203,7 @@ onMounted(load);
           <p><strong>設定通知：</strong>確認 Email 正確，異常通知與處置提醒才可送達。</p>
           <p><strong>維護狀態：</strong>離職或不需通知的人員可停用，保留歷史資料但不再作為通知對象。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">
@@ -260,7 +255,7 @@ onMounted(load);
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               <th class="py-4 px-6">ID</th>
-              <th class="py-4 px-6">工號 / 姓名</th>
+              <th class="py-4 px-6">姓名 / 工號</th>
               <th class="py-4 px-6">所屬部門</th>
               <th class="py-4 px-6">登入帳號 / 權限</th>
               <th class="py-4 px-6">電子郵件 (警報通知)</th>
@@ -284,9 +279,9 @@ onMounted(load);
               <td class="py-4 px-6 font-mono text-xs text-slate-400 dark:text-slate-500">#{{ item.id }}</td>
               <td class="py-4 px-6">
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <UserCheck class="w-4 h-4 text-blue-500" /> {{ item.operatorCode }}
+                  <UserCheck class="w-4 h-4 text-blue-500" /> {{ item.operatorName || '未命名人員' }}
                 </div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ item.operatorName }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">{{ item.operatorCode || '-' }}</div>
               </td>
               <td class="py-4 px-6 font-semibold text-xs text-slate-600 dark:text-slate-300">
                 <div class="flex items-center gap-1.5">

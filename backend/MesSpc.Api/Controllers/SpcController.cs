@@ -42,6 +42,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     [HttpGet("summary")]
     public async Task<IActionResult> GetChartSummary(
         [FromQuery] string dimension,
+        [FromQuery] string? groupType,
         [FromQuery] Guid? uploadBatchId,
         [FromQuery] string? batchNo,
         [FromQuery] int? partId,
@@ -62,7 +63,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             return BadRequest("查詢時間範圍最多不可超過 3 個月。");
         }
 
-        var list = await spcService.GetChartSummaryListAsync(dimension, uploadBatchId, start, end, batchNo, partId);
+        var list = await spcService.GetChartSummaryListAsync(dimension, uploadBatchId, start, end, batchNo, partId, groupType);
         return Ok(list);
     }
 
@@ -215,7 +216,10 @@ public class ChartSummaryDto
 {
     public int PartProcessCharacteristicId { get; set; }
     public string ControlCategory { get; set; } = string.Empty;
+    public string GroupType { get; set; } = string.Empty;
+    public string ChartKind { get; set; } = string.Empty;
     public string LineOrProcessName { get; set; } = string.Empty;
+    public string SlotName { get; set; } = string.Empty;
     public string ChartName { get; set; } = string.Empty;
     public string ChartType { get; set; } = string.Empty;
     public double? Usl { get; set; }
@@ -223,11 +227,17 @@ public class ChartSummaryDto
     public double? Ucl { get; set; }
     public double? Lcl { get; set; }
     public string LimitCalculationMethod { get; set; } = string.Empty;
+    public int TotalCount { get; set; }
     public int OosCount { get; set; }
     public double OosPercentage { get; set; }
+    public int PreviousMonthOosCount { get; set; }
+    public double PreviousMonthOosPercentage { get; set; }
+    public int OocCount { get; set; }
+    public double OocPercentage { get; set; }
     public double? Ca { get; set; }
     public double? Pp { get; set; }
     public double? Ppk { get; set; }
+    public double? PreviousMonthPpk { get; set; }
     public string ResponsibleUser { get; set; } = string.Empty;
     public string Remarks { get; set; } = string.Empty;
 }

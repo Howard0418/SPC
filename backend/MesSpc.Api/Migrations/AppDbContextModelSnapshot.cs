@@ -1291,6 +1291,13 @@ namespace MesSpc.Api.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DisplayMode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("CONTROL_CHART");
+
                     b.Property<string>("FormulaConfigJson")
                         .HasColumnType("nvarchar(max)");
 
@@ -1948,6 +1955,76 @@ namespace MesSpc.Api.Migrations
                     b.ToTable("SpcCalculationResults");
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpcReportSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastMonthlySentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastWeeklySentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MonthlyDay")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("MonthlyEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("RecipientOperatorIdsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("ScheduleName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<TimeSpan>("SendTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("WeeklyDayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("WeeklyEnabled")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SpcReportSchedules");
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpcRule", b =>
                 {
                     b.Property<int>("Id")
@@ -2502,6 +2579,12 @@ namespace MesSpc.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("AdjustAction")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("AdjustAmount")
+                        .HasColumnType("float");
+
                     b.Property<int>("CharacteristicId")
                         .HasColumnType("int");
 
@@ -2546,6 +2629,9 @@ namespace MesSpc.Api.Migrations
 
                     b.Property<int>("ProcessId")
                         .HasColumnType("int");
+
+                    b.Property<double?>("RecheckValue")
+                        .HasColumnType("float");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()

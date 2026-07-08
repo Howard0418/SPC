@@ -50,6 +50,9 @@ async function load() {
         processCode: p.ProcessCode || p["製程"] || "",
         characteristicCode: p.CharacteristicCode || p["檢驗項目"] || "",
         measuredValue: p.MeasuredValue !== undefined ? p.MeasuredValue : (p["測量值"] !== undefined ? p["測量值"] : null),
+        recheckValue: p.RecheckValue !== undefined ? p.RecheckValue : (p["複驗"] !== undefined ? p["複驗"] : (p["複驗值"] !== undefined ? p["複驗值"] : "")),
+        adjustAction: p.AdjustAction || p["調整"] || p["調整方式"] || "",
+        adjustAmount: p.AdjustAmount !== undefined ? p.AdjustAmount : (p["調整量"] !== undefined ? p["調整量"] : ""),
         defectQty: p.DefectQty !== undefined ? p.DefectQty : (p["不良數"] !== undefined ? p["不良數"] : null),
         inspectedQty: p.InspectedQty !== undefined ? p.InspectedQty : (p["總數"] !== undefined ? p["總數"] : null),
         measuredAt: p.MeasuredAt || p["日期"] || "",
@@ -241,6 +244,9 @@ onMounted(load);
               <th class="p-3">製程代碼 (Process)</th>
               <th class="p-3">檢測項目 (Char)</th>
               <th class="p-3">量測數值 (Value)</th>
+              <th class="p-3">複驗 (Recheck)</th>
+              <th class="p-3">調整 (Adjust)</th>
+              <th class="p-3">調整量</th>
               <th class="p-3">時間 (Time)</th>
               <th class="p-3">人員 (OP)</th>
               <th class="p-3 w-72">校驗狀態 / 錯誤詳細原因</th>
@@ -293,6 +299,18 @@ onMounted(load);
                 </div>
               </td>
 
+              <td class="p-3 font-mono text-slate-500 dark:text-slate-400">
+                {{ d.recheckValue !== '' && d.recheckValue !== null && d.recheckValue !== undefined ? d.recheckValue : '-' }}
+              </td>
+
+              <td class="p-3">
+                {{ d.adjustAction || '-' }}
+              </td>
+
+              <td class="p-3 font-mono text-slate-500 dark:text-slate-400">
+                {{ d.adjustAmount !== '' && d.adjustAmount !== null && d.adjustAmount !== undefined ? d.adjustAmount : '-' }}
+              </td>
+
               <!-- MeasuredAt -->
               <td class="p-3 font-mono text-slate-400">
                 {{ d.measuredAt ? new Date(d.measuredAt).toLocaleString() : '即時' }}
@@ -318,7 +336,7 @@ onMounted(load);
 
             <!-- Empty Rows fallback -->
             <tr v-if="!details || details.length === 0">
-              <td colspan="8" class="p-8 text-center text-slate-400 text-sm">
+              <td colspan="11" class="p-8 text-center text-slate-400 text-sm">
                 無任何量測上傳數據明細。
               </td>
             </tr>

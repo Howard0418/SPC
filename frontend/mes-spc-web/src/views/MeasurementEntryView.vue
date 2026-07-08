@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, computed, onMounted, watch } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -338,13 +339,8 @@ async function submitHandleAlerts() {
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5">
-        <Info class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：現場量測數據錄入系統 (Measurement Entry)</h4>
-        <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：現場量測數據錄入系統 (Measurement Entry)">
+      <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
           此模組用於產線現場人員以手動或掃碼方式輸入即時量測檢驗數據。系統將自動比對檢驗基準配置與西方電氣規則，並於異常時即時彈出警報單填寫畫面。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
@@ -355,8 +351,7 @@ async function submitHandleAlerts() {
           <p><strong>送出資料：</strong>送出後系統會建立檢驗批號，並立即執行 SPC 判定。</p>
           <p><strong>查看結果：</strong>上傳成功後可點「前往 SPC 管制圖查看趨勢」確認圖表與異常狀態。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Alert / Messages -->
     <div v-if="error" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">

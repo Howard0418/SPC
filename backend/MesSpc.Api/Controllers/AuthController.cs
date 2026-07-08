@@ -25,30 +25,13 @@ public class AuthController(
         var systemUser = await db.Operators.FirstOrDefaultAsync(x =>
             x.IsActive && x.Username != null && x.Username == normalizedUsername);
 
-        string displayName;
-        string operatorCode;
-        string role;
-        int? userId;
+        if (systemUser is null || !passwordHasher.Verify(req.Password, systemUser.PasswordHash))
+            return Unauthorized(new { message = "帳號或密碼錯誤，或帳號尚未設定登入密碼" });
 
-        if (systemUser is not null && passwordHasher.Verify(req.Password, systemUser.PasswordHash))
-        {
-            displayName = systemUser.OperatorName;
-            operatorCode = systemUser.OperatorCode;
-            role = UserRoles.Normalize(systemUser.Role);
-            userId = systemUser.Id;
-        }
-        else
-        {
-            var demoUser = config["Auth:DemoUsername"] ?? "demo";
-            var demoPass = config["Auth:DemoPassword"] ?? "demo123";
-            if (req.Username != demoUser || req.Password != demoPass)
-                return Unauthorized(new { message = "帳號或密碼錯誤，或帳號尚未設定登入密碼" });
-
-            displayName = "系統管理員";
-            operatorCode = demoUser;
-            role = UserRoles.Editor;
-            userId = null;
-        }
+        var displayName = systemUser.OperatorName;
+        var operatorCode = systemUser.OperatorCode;
+        var role = UserRoles.Normalize(systemUser.Role);
+        var userId = systemUser.Id;
 
         var keyStr = config["Auth:JwtKey"];
         if (string.IsNullOrWhiteSpace(keyStr) || keyStr.Length < 32)
@@ -64,7 +47,7 @@ public class AuthController(
             new("displayName", displayName),
             new("operatorCode", operatorCode)
         };
-        if (userId.HasValue) claims.Add(new Claim(ClaimTypes.NameIdentifier, userId.Value.ToString()));
+        claims.Add(new Claim(ClaimTypes.NameIdentifier, userId.ToString()));
         var token = new JwtSecurityToken(
             claims: claims,
             expires: expires,

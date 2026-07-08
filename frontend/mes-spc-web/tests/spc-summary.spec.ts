@@ -209,4 +209,79 @@ test.describe('SPC all-lines summary', () => {
     await page.goto('/trend-chart');
     await expect(page.getByRole('button', { name: '環境管制' })).toBeVisible();
   });
+
+  test('Pure Trend Chart (chartTypeId: null) should appear in ALL-lines summary with fallback chartType', async ({ page }) => {
+    await page.route('**/api/part-process-characteristics*', async route => {
+      await route.fulfill({
+        json: [{
+          id: 99,
+          controlScope: 'PROCESS',
+          partId: null,
+          processId: 3,
+          machineId: 8,
+          characteristicId: 99,
+          chartTypeId: null, // Pure Trend Chart
+          isEnabled: true,
+          process: { id: 3, processCode: 'ETCH', processName: '蝕刻製程', isEnabled: true },
+          machine: { id: 8, machineCode: 'LINE-A', machineName: 'A線', isEnabled: true },
+          characteristic: {
+            id: 99,
+            characteristicCode: 'TEMP_NO_SPC',
+            characteristicName: '無SPC溫度',
+            isEnabled: true,
+            isSpcEnabled: false
+          }
+        }]
+      });
+    });
+
+    await page.route('**/api/control-chart-categories*', async route => {
+      await route.fulfill({ json: [] });
+    });
+    
+    await page.route('**/api/v1/spc/summary*', async route => {
+      await route.fulfill({
+        json: [{
+          partProcessCharacteristicId: 99,
+          controlCategory: '製程管制',
+          lineOrProcessName: '蝕刻製程 / A線',
+          chartName: '無SPC溫度',
+          chartType: '-', // Expected fallback for null chartType
+          usl: null,
+          lsl: null,
+          ucl: null,
+          lcl: null,
+          oosCount: 0,
+          oosRate: 0,
+          ca: null,
+          cp: null,
+          cpk: null,
+          pp: null,
+          ppk: null,
+          pic: 'User',
+          remark: ''
+        }]
+      });
+    });
+
+    // Go to Trend Chart page
+    await page.goto('/trend-chart');
+    
+    // Select Process (index 1) to enable Characteristic select (index 2)
+    // The dimension is default 'PROC'
+    await page.locator('select').nth(1).selectOption('3');
+    await page.locator('select').last().selectOption('ALL');
+    await page.getByRole('button', { name: '載入趨勢圖' }).click();
+
+    // Wait for the summary table to render
+    const summaryTable = page.getByTestId('spc-summary-table');
+    await expect(summaryTable).toBeVisible();
+
+    // Verify it contains the pure trend chart and the chartType column shows fallback '-'
+    await expect(summaryTable).toContainText('無SPC溫度');
+    
+    // Specifically check the row contains the fallback chartType '-'
+    const row = summaryTable.locator('tbody tr', { hasText: '無SPC溫度' });
+    await expect(row.locator('td').nth(3)).toHaveText('-');
+  });
 });

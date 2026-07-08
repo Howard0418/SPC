@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
@@ -129,13 +130,8 @@ onMounted(() => {
     </div>
 
     <!-- Guide / Operation Tip -->
-    <div class="p-5 bg-gradient-to-r from-indigo-50 to-sky-50 dark:from-indigo-950/30 dark:to-sky-900/20 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl text-indigo-600 dark:text-indigo-400 mt-0.5">
-        <Search class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">模組指南：多維度品質履歷與查詢 (SPC Query)</h4>
-        <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：多維度品質履歷與查詢 (SPC Query)">
+      <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
           此頁面用於依工單、批號與序號查詢品質履歷，並可從查詢結果快速轉入 SPC 管制圖或匯出廠級 CPK 總表。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-indigo-700 dark:text-indigo-400/80 leading-relaxed">
@@ -145,8 +141,7 @@ onMounted(() => {
           <p><strong>查看管制圖：</strong>在查詢結果中點選 SPC 圖表入口，可直接跳到對應批次的管制圖。</p>
           <p><strong>匯出報表：</strong>選擇月份後按「匯出廠級 CPK 總表」，下載該月份統計報表。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <!-- Query Panel -->
     <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">

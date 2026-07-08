@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
       <div class="grid grid-cols-1 xl:grid-cols-3">
         <button
           type="button"
-          @click="router.push('/control-chart-groups')"
+          @click="router.push('/part-process-characteristics?tab=groups')"
           class="group text-left p-6 border-b xl:border-b-0 xl:border-r border-slate-100 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
         >
           <div class="flex items-start gap-4">

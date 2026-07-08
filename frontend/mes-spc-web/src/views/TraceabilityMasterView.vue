@@ -1,4 +1,5 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, onMounted } from 'vue';
 import { api, getApiErrorMessage } from '../api/client.js';
 import { Plus, Edit2, Trash2, Save, X, Server, Layers, Info } from 'lucide-vue-next';
@@ -109,13 +110,8 @@ const cancelEdit = (list, item, index) => {
     </header>
 
     <!-- Guide / Wizard Tip -->
-    <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
-      <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5">
-        <Info class="w-5 h-5" />
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：線別槽體設定</h4>
-        <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
+    <ModuleGuide title="模組指南：線別槽體設定">
+      <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
           此頁面用來設定各線別內有哪些藥水槽體。SPC 資料匯入與藥液管制項目會依照「線別 → 槽體」對應到實際生產位置。<br/>
           💡 <strong>操作建議：</strong> 請先建立或選擇線別，再新增該線別所包含的槽體。
         </p>
@@ -125,8 +121,7 @@ const cancelEdit = (list, item, index) => {
           <p><strong>建立槽體：</strong>先點選線別，再於右側「槽體」區塊新增槽體代號與名稱。</p>
           <p><strong>維護順序：</strong>請依線別、槽體由左至右設定。</p>
         </div>
-      </div>
-    </div>
+    </ModuleGuide>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-[500px]">
       

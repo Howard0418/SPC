@@ -22,11 +22,14 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
-  Map
+  Map,
+  CalendarClock
 } from "lucide-vue-next";
 import { clearAuthSession, getCurrentUser } from "./utils/auth";
+import pkg from "../package.json";
 
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
+const appVersion = pkg.version;
 const route = useRoute();
 const router = useRouter();
 const showNav = computed(() => !authOn || route.path !== "/login");
@@ -60,7 +63,7 @@ onMounted(() => {
   }
 });
 
-const menuCategories = computed(() => [
+const viewerMenuCategories = [
   {
     title: "高階戰情與分析",
     items: [
@@ -68,10 +71,13 @@ const menuCategories = computed(() => [
       { to: "/spc", text: "SPC 管制圖", icon: LineChart },
       { to: "/trend-chart", text: "量測值趨勢圖", icon: TrendingUp }
     ]
-  },
+  }
+];
+
+const editorMenuCategories = [
+  ...viewerMenuCategories,
   {
     title: "自動化匯入與採樣",
-    editorOnly: true,
     items: [
       { to: "/measurements", text: "現場量測數據錄入", icon: Activity },
       { to: "/uploads/variable", text: "計量型資料匯入", icon: UploadCloud },
@@ -80,7 +86,6 @@ const menuCategories = computed(() => [
   },
   {
     title: "企業品質主檔設定",
-    editorOnly: true,
     items: [
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/parts", text: "產品料號主檔", icon: Package },
@@ -91,9 +96,8 @@ const menuCategories = computed(() => [
   },
   {
     title: "管制圖與西方電氣規則",
-    editorOnly: true,
     items: [
-      { to: "/control-chart-groups", text: "管制圖配置維護", icon: Layers },
+      { to: "/part-process-characteristics?tab=groups", text: "管制圖配置維護", icon: Layers },
       { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity }
     ]
   },
@@ -101,7 +105,7 @@ const menuCategories = computed(() => [
     title: "異常管理與追溯",
     items: [
       { to: "/alerts", text: "異常通報總覽", icon: AlertTriangle },
-      ...(canEdit.value ? [{ to: "/alerts-workflow", text: "異常單簽核處置", icon: Activity }] : []),
+      { to: "/alerts-workflow", text: "異常單簽核處置", icon: Activity },
       { to: "/genealogy", text: "產品系譜圖 (Genealogy)", icon: FolderTree },
       { to: "/spc/query", text: "多維度品質履歷查詢", icon: Search }
     ]
@@ -110,13 +114,14 @@ const menuCategories = computed(() => [
     title: "系統管理與通報設定",
     items: [
       { to: "/guide", text: "系統操作手冊", icon: BookOpen },
-      ...(canEdit.value ? [
-        { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders },
-        { to: "/operators", text: "系統使用者管理", icon: Users }
-      ] : [])
+      { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders },
+      { to: "/settings/spc-reports", text: "SPC 週報月報設定", icon: CalendarClock },
+      { to: "/operators", text: "系統使用者管理", icon: Users }
     ]
   }
-].filter(cat => !cat.editorOnly || canEdit.value));
+];
+
+const menuCategories = computed(() => canEdit.value ? editorMenuCategories : viewerMenuCategories);
 
 function logout() {
   clearAuthSession();
@@ -196,7 +201,7 @@ function logout() {
         <!-- Footer Info -->
         <div class="pt-4 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-400 dark:text-slate-500 text-center space-y-1 font-medium">
           <p>© 2026 PMR Quality System</p>
-          <p class="text-[10px] text-slate-500/70">v10.0 Enterprise SPC Edition</p>
+          <p class="text-[10px] text-slate-500/70">v{{ appVersion }} Enterprise SPC Edition</p>
         </div>
       </aside>
 

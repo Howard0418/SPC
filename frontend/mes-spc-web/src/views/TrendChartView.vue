@@ -1,6 +1,7 @@
 <script setup>
+import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -13,8 +14,10 @@ import {
   Info,
   Sliders
 } from "lucide-vue-next";
+import SpcSummaryTable from "../components/SpcSummaryTable.vue";
 
 const route = useRoute();
+const router = useRouter();
 
 // Master data
 const mappings = ref([]);
@@ -40,23 +43,23 @@ const chartResult = ref(null);
 const trendChartEl = ref(null);
 let trendChartInstance = null;
 
+const tableSummaryData = ref(null);
+const pageGroupType = "TREND_CHART";
+
 // ─── Dimension helpers ───────────────────────────────────────
 const getDimensionForMapping = (m) => {
   if (m.chartTypeId) {
     const type = chartTypes.value.find(t => t.id === m.chartTypeId);
     const cat = type ? categories.value.find(c => c.id === type.chartCategoryId) : null;
     const group = cat ? groups.value.find(g => g.id === cat.chartGroupId) : null;
-    if (group?.groupCode) return group.groupCode;
+    return group?.groupCode || "";
   }
-  if (m.controlScope === "PROCESS") return "PROC";
-  if (m.controlScope === "CHEMICAL") return "CHEM";
-  if (m.controlScope === "PRODUCT") return "PROD";
-  return m.partId ? "PROD" : "PROC";
+  return "";
 };
 
 const dimensionOptions = computed(() =>
   groups.value
-    .filter(group => group.isEnabled !== false)
+    .filter(group => group.isEnabled !== false && group.groupType === pageGroupType)
     .map(group => ({ id: group.groupCode, label: group.groupName }))
 );
 
@@ -131,6 +134,28 @@ function selectMappingFromSearch(m) {
   loadChart();
 }
 
+async function drawSingleChart(row) {
+  if (row?.groupType === "CONTROL_CHART" || row?.chartKind === "管制圖") {
+    router.push({ path: "/spc", query: { ppcId: row.partProcessCharacteristicId } });
+    return;
+  }
+
+  const match = mappings.value.find(m => m.id === row.partProcessCharacteristicId);
+  if (!match) {
+    error.value = "找不到該管制項目的設定，可能已被刪除。";
+    return;
+  }
+  selectedDimension.value = getDimensionForMapping(match);
+  await nextTick();
+  updatingCascades.value = true;
+  selectedPartId.value = match.partId || "";
+  selectedProcessId.value = match.processId;
+  selectedCharacteristicId.value = match.characteristicId;
+  updatingCascades.value = false;
+  tableSummaryData.value = null;
+  loadChart();
+}
+
 function hideSearchResults() {
   setTimeout(() => { showSearchResults.value = false; }, 200);
 }
@@ -141,6 +166,7 @@ watch(selectedDimension, (newDim) => {
   selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
   chartResult.value = null;
+  tableSummaryData.value = null;
 });
 
 watch(selectedPartId, () => {
@@ -148,12 +174,14 @@ watch(selectedPartId, () => {
   selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
   chartResult.value = null;
+  tableSummaryData.value = null;
 });
 
-watch(selectedProcessId, () => {
+watch(selectedProcessId, (newVal) => {
   if (updatingCascades.value) return;
-  selectedCharacteristicId.value = "";
+  selectedCharacteristicId.value = newVal === "ALL" ? "ALL" : "";
   chartResult.value = null;
+  tableSummaryData.value = null;
 });
 
 // ─── Data loading ─────────────────────────────────────────────
@@ -163,13 +191,13 @@ async function loadMappings() {
       api.get("/part-process-characteristics"),
       api.get("/control-chart-types"),
       api.get("/control-chart-categories"),
-      api.get("/control-chart-groups")
+      api.get("/control-chart-groups", { params: { groupType: pageGroupType } })
     ]);
     chartTypes.value = typesRes.data || [];
     categories.value = catsRes.data || [];
     groups.value = groupsRes.data || [];
     mappings.value = mapRes.data || [];
-    if (!groups.value.some(group => group.groupCode === selectedDimension.value && group.isEnabled !== false)) {
+    if (!dimensionOptions.value.some(group => group.id === selectedDimension.value)) {
       selectedDimension.value = dimensionOptions.value[0]?.id || "PROC";
     }
 
@@ -179,6 +207,10 @@ async function loadMappings() {
       const match = mappings.value.find(m => m.id === qPpc);
       if (match) {
         const dim = getDimensionForMapping(match);
+        if (!groups.value.some(group => group.groupCode === dim)) {
+          router.replace({ path: "/spc", query: route.query });
+          return;
+        }
         selectedDimension.value = dim;
         await nextTick();
         updatingCascades.value = true;
@@ -195,6 +227,30 @@ async function loadMappings() {
 }
 
 async function loadChart() {
+  if (selectedProcessId.value === "ALL" || selectedCharacteristicId.value === "ALL") {
+    loading.value = true;
+    error.value = "";
+    chartResult.value = null;
+    try {
+      const res = await api.get("/v1/spc/summary", {
+        params: {
+          dimension: selectedDimension.value,
+          groupType: pageGroupType,
+          partId: selectedPartId.value || undefined
+        }
+      });
+      tableSummaryData.value = res.data;
+    } catch (e) {
+      error.value = "無法載入總表：" + getApiErrorMessage(e);
+      tableSummaryData.value = null;
+    } finally {
+      loading.value = false;
+    }
+    return;
+  }
+
+  tableSummaryData.value = null;
+
   const mapping = selectedMapping.value;
   if (!mapping) return;
 
@@ -482,26 +538,28 @@ const trendStats = computed(() => {
       </div>
 
       <div class="w-40">
-        <label class="block text-[11px] font-bold text-slate-400 mb-1">工站 (Station)</label>
+        <label class="block text-[11px] font-bold text-slate-400 mb-1">線別 (Line)</label>
         <select v-model="selectedProcessId" :disabled="selectedDimension === 'PROD' ? !selectedPartId : false"
           class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500 disabled:opacity-50">
-          <option value="">選擇工站...</option>
+          <option value="">選擇線別...</option>
+          <option value="ALL">全部 (All)</option>
           <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">[{{ pr.processCode }}] {{ pr.processName }}</option>
         </select>
       </div>
 
       <div class="w-48">
         <label class="block text-[11px] font-bold text-slate-400 mb-1">檢驗項目 (Inspection Item)</label>
-        <select v-model="selectedCharacteristicId" :disabled="!selectedProcessId"
+        <select v-model="selectedCharacteristicId" :disabled="!selectedProcessId || selectedProcessId === 'ALL'"
           class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500 disabled:opacity-50">
-          <option value="">選擇檢驗項目...</option>
+          <option value="" disabled>選擇管制點...</option>
+          <option value="ALL">全部 (All)</option>
           <option v-for="c in availableCharacteristics" :key="c.id" :value="c.id">[{{ c.characteristicCode }}] {{ c.characteristicName }}</option>
         </select>
       </div>
 
       <button
         @click="loadChart"
-        :disabled="loading || !selectedMapping"
+        :disabled="loading || (!selectedMapping && selectedProcessId !== 'ALL' && selectedCharacteristicId !== 'ALL')"
         class="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 disabled:opacity-50 transition-all"
       >
         <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
@@ -520,13 +578,22 @@ const trendStats = computed(() => {
       <p class="text-sm font-bold">正在載入量測趨勢資料...</p>
     </div>
 
+    <!-- Summary Table -->
+    <SpcSummaryTable
+      v-if="tableSummaryData && !loading"
+      :data="tableSummaryData"
+      :loading="loading"
+      :isSpc="false"
+      @draw-chart="drawSingleChart"
+    />
+
     <!-- Chart Area -->
     <div v-if="chartResult && !loading" class="space-y-5">
 
       <!-- Info Strip -->
       <div v-if="selectedMapping" class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">
         <div class="space-y-1">
-          <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">工站製程</span>
+          <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">線別</span>
           <span class="text-slate-800 dark:text-slate-200">[{{ selectedMapping.process?.processCode }}] {{ selectedMapping.process?.processName }}</span>
         </div>
         <div class="space-y-1">
@@ -565,8 +632,8 @@ const trendStats = computed(() => {
         </div>
       </div>
 
-      <!-- Trend Chart -->
-      <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
+      <!-- Main Chart -->
+      <div v-if="chartResult && !loading" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md p-4 relative">
         <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
           <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <Sliders class="w-5 h-5 text-indigo-500" />
@@ -581,16 +648,15 @@ const trendStats = computed(() => {
       </div>
 
       <!-- Guide tip -->
-      <div class="p-4 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-3 text-xs text-indigo-700 dark:text-indigo-300">
-        <Info class="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-500" />
-        <span>此趨勢圖顯示的是<strong>每筆原始量測值</strong>的時序折線，不含管制界限（UCL/LCL/CL）。如需查看管制界限與西方電氣判讀，請切換至「SPC 管制圖」頁面。</span>
-      </div>
+      <ModuleGuide title="模組指南">
+        此趨勢圖顯示的是<strong>每筆原始量測值</strong>的時序折線，不含管制界限（UCL/LCL/CL）。如需查看管制界限與西方電氣判讀，請切換至「SPC 管制圖」頁面。
+      </ModuleGuide>
     </div>
 
     <!-- Empty state -->
-    <div v-if="!chartResult && !loading && !error" class="h-64 flex flex-col items-center justify-center space-y-3 text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+    <div v-if="!chartResult && !tableSummaryData && !loading && !error" class="h-64 flex flex-col items-center justify-center space-y-3 text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
       <TrendingUp class="w-12 h-12 text-indigo-300" />
-      <p class="text-sm font-bold">請選擇工站與檢驗項目後按「載入趨勢圖」</p>
+      <p class="text-sm font-bold">請選擇線別與檢驗項目後按「載入趨勢圖」</p>
     </div>
   </section>
 </template>

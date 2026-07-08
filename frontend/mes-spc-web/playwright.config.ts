@@ -10,6 +10,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
+    storageState: '.playwright/auth.json'
   },
   projects: [
     {
@@ -18,8 +19,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run dev -- --mode test',
     url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false, // Force restart to pick up env vars
+    env: {
+      VITE_AUTH_ENABLED: 'false',
+      VITE_API_BASE: 'http://localhost:8082/api'
+    }
   },
 });
