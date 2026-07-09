@@ -813,10 +813,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var resolvedGroupType = groupInfo.GroupType;
         var chartTypeIds = await (
             from chartType in db.ControlChartTypes.AsNoTracking()
-            join category in db.ControlChartCategories.AsNoTracking()
-                on chartType.ChartCategoryId equals category.Id
             join chartGroup in db.ControlChartGroups.AsNoTracking()
-                on category.ChartGroupId equals chartGroup.Id
+                on chartType.ChartGroupId equals chartGroup.Id
             where (chartGroup.GroupCode == dimension || chartGroup.GroupCode == normalizedDimension)
                 && (normalizedGroupType == null || chartGroup.GroupType == normalizedGroupType)
             select chartType.Id
@@ -824,10 +822,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
         var chartTypeGroupMap = await (
             from chartType in db.ControlChartTypes.AsNoTracking()
-            join category in db.ControlChartCategories.AsNoTracking()
-                on chartType.ChartCategoryId equals category.Id
             join chartGroup in db.ControlChartGroups.AsNoTracking()
-                on category.ChartGroupId equals chartGroup.Id
+                on chartType.ChartGroupId equals chartGroup.Id
             where chartTypeIds.Contains(chartType.Id)
             select new { chartType.Id, chartGroup.GroupType }
         ).ToDictionaryAsync(x => x.Id, x => x.GroupType, ct);
@@ -901,7 +897,10 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 : FormatCalculationMethod(calculatedLimits.CalculationMethod, result.ChartType);
 
             string typeName = result.ChartType;
-            if (mapping.ChartTypeId.HasValue && chartTypes.TryGetValue(mapping.ChartTypeId.Value, out var n)) typeName = n;
+            if (mapping.ChartTypeId.HasValue && chartTypes.TryGetValue(mapping.ChartTypeId.Value, out var chartTypeNameVal))
+            {
+                typeName = chartTypeNameVal;
+            }
             var mappingGroupType = mapping.ChartTypeId.HasValue && chartTypeGroupMap.TryGetValue(mapping.ChartTypeId.Value, out var typeGroupType)
                 ? typeGroupType
                 : resolvedGroupType;

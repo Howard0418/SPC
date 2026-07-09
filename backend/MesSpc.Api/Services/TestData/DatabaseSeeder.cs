@@ -328,7 +328,6 @@ public class DatabaseSeeder(AppDbContext db)
         int spcRules = await db.SpcRules.ExecuteDeleteAsync();
         int spcRuleGroups = await db.SpcRuleGroups.ExecuteDeleteAsync();
         int controlChartTypes = await db.ControlChartTypes.ExecuteDeleteAsync();
-        int controlChartCategories = await db.ControlChartCategories.ExecuteDeleteAsync();
         int controlChartGroups = await db.ControlChartGroups.ExecuteDeleteAsync();
         int formulaDefinitions = await db.FormulaDefinitions.ExecuteDeleteAsync();
         int inspectionItems = await db.InspectionItems.ExecuteDeleteAsync();
@@ -350,7 +349,7 @@ public class DatabaseSeeder(AppDbContext db)
             productStationItems, machines, qualityCharacteristics,
             slots, tanks, productionLines, factories, plants, parts,
             processes, spcRules, spcRuleGroups, controlChartTypes,
-            controlChartCategories, controlChartGroups, formulaDefinitions,
+            controlChartGroups, formulaDefinitions,
             inspectionItems, stations, products, units, shifts,
             operators, customers, suppliers, chemicals
         );

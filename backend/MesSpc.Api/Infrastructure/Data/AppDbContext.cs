@@ -22,7 +22,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<QualityCharacteristic> QualityCharacteristics => Set<QualityCharacteristic>();
     public DbSet<PartProcessCharacteristic> PartProcessCharacteristics => Set<PartProcessCharacteristic>();
     public DbSet<ControlChartGroup> ControlChartGroups => Set<ControlChartGroup>();
-    public DbSet<ControlChartCategory> ControlChartCategories => Set<ControlChartCategory>();
     public DbSet<ControlChartType> ControlChartTypes => Set<ControlChartType>();
     public DbSet<UploadBatch> UploadBatches => Set<UploadBatch>();
     public DbSet<UploadDetail> UploadDetails => Set<UploadDetail>();
@@ -95,8 +94,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasFilter("[PartId] IS NULL");
         modelBuilder.Entity<ControlChartGroup>().HasKey(x => x.Id);
         modelBuilder.Entity<ControlChartGroup>().HasIndex(x => x.GroupCode).IsUnique();
-        modelBuilder.Entity<ControlChartCategory>().HasKey(x => x.Id);
-        modelBuilder.Entity<ControlChartCategory>().HasIndex(x => new { x.ChartGroupId, x.CategoryCode }).IsUnique();
         modelBuilder.Entity<ControlChartType>().HasKey(x => x.Id);
         modelBuilder.Entity<ControlChartType>().HasIndex(x => x.ChartTypeCode).IsUnique();
         modelBuilder.Entity<SpcRuleGroup>().HasKey(x => x.Id);
@@ -187,15 +184,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(x => x.RuleGroupId)
             .OnDelete(DeleteBehavior.SetNull);
-        modelBuilder.Entity<ControlChartCategory>()
+        modelBuilder.Entity<ControlChartType>()
             .HasOne<ControlChartGroup>()
             .WithMany()
             .HasForeignKey(x => x.ChartGroupId)
-            .OnDelete(DeleteBehavior.Restrict);
-        modelBuilder.Entity<ControlChartType>()
-            .HasOne<ControlChartCategory>()
-            .WithMany()
-            .HasForeignKey(x => x.ChartCategoryId)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<ControlChartType>()
             .HasOne<SpcRuleGroup>()

@@ -294,4 +294,118 @@ static void EnsureSqlServerMigrationBaseline(AppDbContext db)
                 VALUES ({0}, '10.0.7');
             END", id);
     }
+
+    // ──────────────── 自我修復 (Self-Healing) 機制：針對 MergeGroupsAndCategories 進行 SQL Server 資料庫相容遷移 ────────────────
+    try
+    {
+        // 1. 若 ControlChartTypes 表中不存在 ChartGroupId 欄位則新增它
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (
+                SELECT 1 FROM sys.columns 
+                WHERE object_id = OBJECT_ID(N'[ControlChartTypes]') AND name = N'ChartGroupId'
+            )
+            BEGIN
+                ALTER TABLE [ControlChartTypes] ADD [ChartGroupId] INT NULL;
+            END
+        ");
+
+        // 2. 當 ControlChartCategories 舊資料表仍存在時，將 Group 關聯 ID 複製到 ControlChartTypes
+        db.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[ControlChartCategories]') IS NOT NULL
+               AND EXISTS (
+                   SELECT 1 FROM sys.columns 
+                   WHERE object_id = OBJECT_ID(N'[ControlChartTypes]') AND name = N'ChartGroupId'
+               )
+            BEGIN
+                EXEC('
+                    UPDATE ControlChartTypes
+                    SET ChartGroupId = (
+                        SELECT ChartGroupId 
+                        FROM ControlChartCategories 
+                        WHERE ControlChartCategories.Id = ControlChartTypes.ChartCategoryId
+                    )
+                    WHERE ChartGroupId IS NULL
+                ');
+            END
+        ");
+
+        // 3. 找出並移除 ControlChartTypes 與 ControlChartCategories 之間舊的外鍵約束
+        db.Database.ExecuteSqlRaw(@"
+            DECLARE @ConstraintName nvarchar(200)
+            SELECT @ConstraintName = name 
+            FROM sys.foreign_keys 
+            WHERE parent_object_id = OBJECT_ID(N'[ControlChartTypes]') 
+              AND referenced_object_id = OBJECT_ID(N'[ControlChartCategories]')
+            IF @ConstraintName IS NOT NULL
+            BEGIN
+                EXEC('ALTER TABLE [ControlChartTypes] DROP CONSTRAINT [' + @ConstraintName + ']')
+            END
+        ");
+
+        // 4. 移除 ChartCategoryId 欄位上的索引
+        db.Database.ExecuteSqlRaw(@"
+            IF EXISTS (
+                SELECT 1 FROM sys.indexes 
+                WHERE name = N'IX_ControlChartTypes_ChartCategoryId' AND object_id = OBJECT_ID(N'[ControlChartTypes]')
+            )
+            BEGIN
+                DROP INDEX [IX_ControlChartTypes_ChartCategoryId] ON [ControlChartTypes];
+            END
+        ");
+
+        // 5. 移除 ControlChartTypes 中的 ChartCategoryId 舊欄位
+        db.Database.ExecuteSqlRaw(@"
+            IF EXISTS (
+                SELECT 1 FROM sys.columns 
+                WHERE object_id = OBJECT_ID(N'[ControlChartTypes]') AND name = N'ChartCategoryId'
+            )
+            BEGIN
+                ALTER TABLE [ControlChartTypes] DROP COLUMN [ChartCategoryId];
+            END
+        ");
+
+        // 6. 為 ChartGroupId 欄位建立索引
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (
+                SELECT 1 FROM sys.indexes 
+                WHERE name = N'IX_ControlChartTypes_ChartGroupId' AND object_id = OBJECT_ID(N'[ControlChartTypes]')
+            )
+            BEGIN
+                CREATE INDEX [IX_ControlChartTypes_ChartGroupId] ON [ControlChartTypes] ([ChartGroupId]);
+            END
+        ");
+
+        // 7. 建立 ControlChartTypes 對 ControlChartGroups 的新外鍵關聯
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (
+                SELECT 1 FROM sys.foreign_keys 
+                WHERE name = N'FK_ControlChartTypes_ControlChartGroups_ChartGroupId'
+            )
+            BEGIN
+                ALTER TABLE [ControlChartTypes] ADD CONSTRAINT [FK_ControlChartTypes_ControlChartGroups_ChartGroupId] 
+                FOREIGN KEY ([ChartGroupId]) REFERENCES [ControlChartGroups] ([Id]) ON DELETE NO ACTION;
+            END
+        ");
+
+        // 8. 移除已無用處的 ControlChartCategories 表
+        db.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[ControlChartCategories]') IS NOT NULL
+            BEGIN
+                DROP TABLE [ControlChartCategories];
+            END
+        ");
+
+        // 9. 將該 Migration ID 寫入歷史紀錄，避免 EF 再次嘗試執行該 Migration 丟出錯誤
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = '20260709080000_MergeGroupsAndCategories')
+            BEGIN
+                INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+                VALUES ('20260709080000_MergeGroupsAndCategories', '10.0.7');
+            END
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error during self-healing database migration: {ex.Message}");
+    }
 }

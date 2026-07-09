@@ -351,18 +351,9 @@ public class ControlChartGroup : BaseEntity<int>
     public bool IsEnabled { get; set; } = true;
 }
 
-public class ControlChartCategory : BaseEntity<int>
-{
-    public int ChartGroupId { get; set; }
-    public string CategoryCode { get; set; } = string.Empty;
-    public string CategoryName { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public bool IsEnabled { get; set; } = true;
-}
-
 public class ControlChartType : BaseEntity<int>
 {
-    public int ChartCategoryId { get; set; }
+    public int ChartGroupId { get; set; }
     public string ChartTypeCode { get; set; } = string.Empty;
     public string ChartTypeName { get; set; } = string.Empty;
     public string DataCategory { get; set; } = "Variable";

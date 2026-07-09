@@ -12,8 +12,22 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         if (!string.IsNullOrEmpty(fileHash))
         {
-            var isDuplicate = await db.UploadBatches.AnyAsync(x => x.FileHash == fileHash && x.ImportStatus != "Failed" && x.ImportStatus != "Rejected", ct);
+            var isDuplicate = await db.UploadBatches.AnyAsync(x => x.FileHash == fileHash && (x.ImportStatus == "Imported" || x.ImportStatus == "Importing"), ct);
             if (isDuplicate) throw new InvalidOperationException("DUPLICATE_FILE");
+
+            var staleBatches = await db.UploadBatches.Where(x => x.FileHash == fileHash && x.ImportStatus == "PreviewReady").ToListAsync(ct);
+            foreach (var b in staleBatches)
+            {
+                var errors = db.UploadErrors.Where(e => e.UploadBatchId == b.UploadBatchId);
+                var details = db.UploadDetails.Where(d => d.UploadBatchId == b.UploadBatchId);
+                db.UploadErrors.RemoveRange(errors);
+                db.UploadDetails.RemoveRange(details);
+                db.UploadBatches.Remove(b);
+            }
+            if (staleBatches.Count > 0)
+            {
+                await db.SaveChangesAsync(ct);
+            }
         }
 
         var batch = new UploadBatch
@@ -36,8 +50,22 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         if (!string.IsNullOrEmpty(fileHash))
         {
-            var isDuplicate = await db.UploadBatches.AnyAsync(x => x.FileHash == fileHash && x.ImportStatus != "Failed" && x.ImportStatus != "Rejected", ct);
+            var isDuplicate = await db.UploadBatches.AnyAsync(x => x.FileHash == fileHash && (x.ImportStatus == "Imported" || x.ImportStatus == "Importing"), ct);
             if (isDuplicate) throw new InvalidOperationException("DUPLICATE_FILE");
+
+            var staleBatches = await db.UploadBatches.Where(x => x.FileHash == fileHash && x.ImportStatus == "PreviewReady").ToListAsync(ct);
+            foreach (var b in staleBatches)
+            {
+                var errors = db.UploadErrors.Where(e => e.UploadBatchId == b.UploadBatchId);
+                var details = db.UploadDetails.Where(d => d.UploadBatchId == b.UploadBatchId);
+                db.UploadErrors.RemoveRange(errors);
+                db.UploadDetails.RemoveRange(details);
+                db.UploadBatches.Remove(b);
+            }
+            if (staleBatches.Count > 0)
+            {
+                await db.SaveChangesAsync(ct);
+            }
         }
 
         var batch = new UploadBatch

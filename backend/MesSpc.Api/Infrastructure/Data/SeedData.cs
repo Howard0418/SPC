@@ -99,18 +99,13 @@ public static class SeedData
             db.ControlChartGroups.Add(grp);
             db.SaveChanges();
 
-            var catVar = new ControlChartCategory { ChartGroupId = grp.Id, CategoryCode = "VAR", CategoryName = "計量型管制圖" };
-            var catAttr = new ControlChartCategory { ChartGroupId = grp.Id, CategoryCode = "ATTR", CategoryName = "計數型管制圖" };
-            db.ControlChartCategories.AddRange(catVar, catAttr);
-            db.SaveChanges();
-
             db.ControlChartTypes.AddRange(
-                new ControlChartType { ChartCategoryId = catVar.Id, ChartTypeCode = "XBAR_R", ChartTypeName = "平均數-全距圖", DataCategory = "Variable", RequiredSampleSize = 5 },
-                new ControlChartType { ChartCategoryId = catVar.Id, ChartTypeCode = "I_MR", ChartTypeName = "單值-移動全距圖", DataCategory = "Variable", RequiredSampleSize = 1 },
-                new ControlChartType { ChartCategoryId = catAttr.Id, ChartTypeCode = "P", ChartTypeName = "不良率圖", DataCategory = "Attribute" },
-                new ControlChartType { ChartCategoryId = catAttr.Id, ChartTypeCode = "NP", ChartTypeName = "不良品數圖", DataCategory = "Attribute" },
-                new ControlChartType { ChartCategoryId = catAttr.Id, ChartTypeCode = "C", ChartTypeName = "缺點數圖", DataCategory = "Attribute" },
-                new ControlChartType { ChartCategoryId = catAttr.Id, ChartTypeCode = "U", ChartTypeName = "單位缺點數圖", DataCategory = "Attribute" }
+                new ControlChartType { ChartGroupId = grp.Id, ChartTypeCode = "XBAR_R", ChartTypeName = "平均數-全距圖", DataCategory = "Variable", RequiredSampleSize = 5 },
+                new ControlChartType { ChartGroupId = grp.Id, ChartTypeCode = "I_MR", ChartTypeName = "單值-移動全距圖", DataCategory = "Variable", RequiredSampleSize = 1 },
+                new ControlChartType { ChartGroupId = grp.Id, ChartTypeCode = "P", ChartTypeName = "不良率圖", DataCategory = "Attribute" },
+                new ControlChartType { ChartGroupId = grp.Id, ChartTypeCode = "NP", ChartTypeName = "不良品數圖", DataCategory = "Attribute" },
+                new ControlChartType { ChartGroupId = grp.Id, ChartTypeCode = "C", ChartTypeName = "缺點數圖", DataCategory = "Attribute" },
+                new ControlChartType { ChartGroupId = grp.Id, ChartTypeCode = "U", ChartTypeName = "單位缺點數圖", DataCategory = "Attribute" }
             );
             db.SaveChanges();
         }

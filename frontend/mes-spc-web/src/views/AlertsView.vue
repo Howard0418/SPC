@@ -470,7 +470,7 @@ onMounted(load);
                   <router-link
                     to="/alerts-workflow"
                     class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                    title="前往異常單 V2 閉環處置"
+                    title="前往異常單簽核處置"
                   >
                     <ArrowUpRight class="w-4 h-4" />
                   </router-link>

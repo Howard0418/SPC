@@ -2,14 +2,18 @@
 import { ref } from 'vue';
 import { Info, ChevronDown, ChevronUp } from 'lucide-vue-next';
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: '模組指南'
+  },
+  defaultExpanded: {
+    type: Boolean,
+    default: false
   }
 });
 
-const isExpanded = ref(true);
+const isExpanded = ref(props.defaultExpanded);
 
 function toggle() {
   isExpanded.value = !isExpanded.value;

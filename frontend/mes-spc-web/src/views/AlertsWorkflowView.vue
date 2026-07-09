@@ -38,6 +38,12 @@ const form = ref({
   responsibleUser: ""
 });
 
+function normalizeStatus(row) {
+  if (row.status === "Closed" || row.isAcknowledged) return "Closed";
+  if (row.status === "InProgress") return "InProgress";
+  return "Open";
+}
+
 async function load() {
   err.value = "";
   loading.value = true;
@@ -66,9 +72,10 @@ const filteredRows = computed(() => {
 
     // 2. Status Filter
     let matchStatus = true;
-    if (statusFilter.value === "Open") matchStatus = !r.status || r.status === "Open" || !r.isAcknowledged;
-    else if (statusFilter.value === "InProgress") matchStatus = r.status === "InProgress";
-    else if (statusFilter.value === "Closed") matchStatus = r.status === "Closed" || r.isAcknowledged;
+    const normalizedStatus = normalizeStatus(r);
+    if (statusFilter.value === "Open") matchStatus = normalizedStatus === "Open";
+    else if (statusFilter.value === "InProgress") matchStatus = normalizedStatus === "InProgress";
+    else if (statusFilter.value === "Closed") matchStatus = normalizedStatus === "Closed";
 
     return matchSearch && matchStatus;
   });
@@ -76,9 +83,9 @@ const filteredRows = computed(() => {
 
 const stats = computed(() => {
   return {
-    open: rows.value.filter(r => !r.status || r.status === "Open" || !r.isAcknowledged).length,
-    inProgress: rows.value.filter(r => r.status === "InProgress").length,
-    closed: rows.value.filter(r => r.status === "Closed" || r.isAcknowledged).length
+    open: rows.value.filter(r => normalizeStatus(r) === "Open").length,
+    inProgress: rows.value.filter(r => normalizeStatus(r) === "InProgress").length,
+    closed: rows.value.filter(r => normalizeStatus(r) === "Closed").length
   };
 });
 
@@ -139,7 +146,7 @@ onMounted(load);
             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">OOC 通報維護</span>
           </div>
           <h1 class="text-2xl font-black mt-1 bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-            異常處置閉環工作流 (Alert Workflow)
+            異常單簽核處置
           </h1>
           <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
             追蹤所有 OOS/OOC 警報，填寫真因分析 (Root Cause) 與對策 (Action)，確保每一個品質異常皆被妥善處理與結案，符合 8D 報告與稽核要求。
@@ -160,7 +167,7 @@ onMounted(load);
     </div>
 
     <!-- Guide / Operation Tip -->
-    <ModuleGuide title="模組指南：異常單簽核處置 (Alert Workflow)">
+    <ModuleGuide title="模組指南：異常單簽核處置">
       <p class="text-xs text-sky-700 dark:text-sky-400/80 mt-1.5 leading-relaxed">
           此頁面用於追蹤異常單處置進度，將 OOS/OOC 警報轉成可稽核的真因分析、改善對策與結案紀錄。
         </p>

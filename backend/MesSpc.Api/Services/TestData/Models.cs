@@ -61,7 +61,6 @@ public record ClearAllDataResponse(
     int SpcRules,
     int SpcRuleGroups,
     int ControlChartTypes,
-    int ControlChartCategories,
     int ControlChartGroups,
     int FormulaDefinitions,
     int InspectionItems,
@@ -110,4 +109,3 @@ public static class TestDataTags
     public const string TestPrefix = "TEST_";
     public const string E2ePrefix = "E2E_";
 }
-

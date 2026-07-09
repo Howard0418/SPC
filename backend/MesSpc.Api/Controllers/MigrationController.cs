@@ -79,9 +79,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
         dbContext.ControlChartTypes.RemoveRange(chartTypes);
         await dbContext.SaveChangesAsync();
 
-        var categories = dbContext.ControlChartCategories.ToList();
-        dbContext.ControlChartCategories.RemoveRange(categories);
-        await dbContext.SaveChangesAsync();
+
 
         var groups = dbContext.ControlChartGroups.ToList();
         dbContext.ControlChartGroups.RemoveRange(groups);
@@ -92,7 +90,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
             success = true,
             message = "已成功清除所有大中小分類結構及相關資料，請重新呼叫 import-custom-spc 進行匯入。",
             deletedGroups = groups.Count,
-            deletedCategories = categories.Count,
+            deletedCategories = 0,
             deletedChartTypes = chartTypes.Count,
             deletedParts = parts.Count,
             deletedProcesses = processes.Count,
@@ -350,20 +348,8 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
         if (groupProd.Id == 0) dbContext.ControlChartGroups.Add(groupProd);
         await dbContext.SaveChangesAsync();
 
-        var catProc = await dbContext.ControlChartCategories.FirstOrDefaultAsync(x => x.CategoryCode == "VAR_PROC")
-            ?? new ControlChartCategory { ChartGroupId = groupProc.Id, CategoryCode = "VAR_PROC", CategoryName = "計量型製程管制" };
-        var catChem = await dbContext.ControlChartCategories.FirstOrDefaultAsync(x => x.CategoryCode == "VAR_CHEM")
-            ?? new ControlChartCategory { ChartGroupId = groupChem.Id, CategoryCode = "VAR_CHEM", CategoryName = "計量型藥液管制" };
-        var catProd = await dbContext.ControlChartCategories.FirstOrDefaultAsync(x => x.CategoryCode == "VAR_PROD")
-            ?? new ControlChartCategory { ChartGroupId = groupProd.Id, CategoryCode = "VAR_PROD", CategoryName = "計量型產品管制" };
-
-        if (catProc.Id == 0) dbContext.ControlChartCategories.Add(catProc);
-        if (catChem.Id == 0) dbContext.ControlChartCategories.Add(catChem);
-        if (catProd.Id == 0) dbContext.ControlChartCategories.Add(catProd);
-        await dbContext.SaveChangesAsync();
-
         // Helper to ensure Chart Types exist (globally unique ChartTypeCode)
-        async Task EnsureChartTypesAsync(int catId)
+        async Task EnsureChartTypesAsync(int groupId)
         {
             var types = new[]
             {
@@ -380,7 +366,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
                 {
                     dbContext.ControlChartTypes.Add(new ControlChartType
                     {
-                        ChartCategoryId = catId,
+                        ChartGroupId = groupId,
                         ChartTypeCode = t.Code,
                         ChartTypeName = t.Name,
                         RequiredSampleSize = t.Size,
@@ -390,9 +376,9 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
             }
         }
 
-        await EnsureChartTypesAsync(catProc.Id);
-        await EnsureChartTypesAsync(catChem.Id);
-        await EnsureChartTypesAsync(catProd.Id);
+        await EnsureChartTypesAsync(groupProc.Id);
+        await EnsureChartTypesAsync(groupChem.Id);
+        await EnsureChartTypesAsync(groupProd.Id);
         await dbContext.SaveChangesAsync();
 
         // 2. Get or create default rule group
@@ -409,7 +395,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
         int importedProductItems = 0;
 
         // Sheet processing helper
-        async Task ProcessSheetAsync(IXLWorksheet ws, int groupId, int catId, bool isProductSheet)
+        async Task ProcessSheetAsync(IXLWorksheet ws, int groupId, bool isProductSheet)
         {
             var maxRow = ws.LastRowUsed()?.RowNumber() ?? 0;
             var maxCol = ws.LastColumnUsed()?.ColumnNumber() ?? 0;
@@ -543,13 +529,13 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
         }
 
         var wsProc = wb.Worksheet("製程管制項目");
-        if (wsProc != null) await ProcessSheetAsync(wsProc, groupProc.Id, catProc.Id, false);
+        if (wsProc != null) await ProcessSheetAsync(wsProc, groupProc.Id, false);
 
         var wsChem = wb.Worksheet("藥液管制項目");
-        if (wsChem != null) await ProcessSheetAsync(wsChem, groupChem.Id, catChem.Id, false);
+        if (wsChem != null) await ProcessSheetAsync(wsChem, groupChem.Id, false);
 
         var wsProd = wb.Worksheet("產品管制項目");
-        if (wsProd != null) await ProcessSheetAsync(wsProd, groupProd.Id, catProd.Id, true);
+        if (wsProd != null) await ProcessSheetAsync(wsProd, groupProd.Id, true);
 
         return Ok(new
         {

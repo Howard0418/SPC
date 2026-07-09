@@ -27,6 +27,9 @@ import {
 const rows = ref([]);
 const parts = ref([]);
 const processes = ref([]);
+const filterProcesses = ref([]);
+const formProcesses = ref([]);
+const currentStep = ref(1);
 const characteristics = ref([]);
 const chartTypes = ref([]);
 const ruleGroups = ref([]);
@@ -46,22 +49,42 @@ const router = useRouter();
 const err = ref("");
 const successMsg = ref("");
 const loading = ref(false);
-const activeMainTab = ref(["groups", "categories", "types"].includes(route.query.tab) ? route.query.tab : "items");
+const activeMainTab = ref(["groups", "types", "settings"].includes(route.query.tab) ? "settings" : "items");
+const settingsSubTab = ref(["groups", "types"].includes(route.query.tab) ? route.query.tab : "groups");
 
 const mainTabs = [
-  { id: "items", label: "管制項目與規格" },
-  { id: "groups", label: "圖表群組" },
-  { id: "categories", label: "圖表分類" },
-  { id: "types", label: "圖表種類與公式" }
+  { id: "items", label: "管制項目與規格維護" },
+  { id: "settings", label: "系統主檔配置" }
 ];
 
 function setMainTab(tabId) {
   activeMainTab.value = tabId;
+  if (tabId === "items") {
+    router.replace({ path: "/part-process-characteristics", query: {} });
+  } else {
+    router.replace({
+      path: "/part-process-characteristics",
+      query: { tab: settingsSubTab.value }
+    });
+  }
+}
+
+function setSettingsSubTab(subTab) {
+  settingsSubTab.value = subTab;
   router.replace({
     path: "/part-process-characteristics",
-    query: tabId === "items" ? {} : { tab: tabId }
+    query: { tab: subTab }
   });
 }
+
+watch(() => route.query.tab, (newTab) => {
+  if (["groups", "types"].includes(newTab)) {
+    activeMainTab.value = "settings";
+    settingsSubTab.value = newTab;
+  } else {
+    activeMainTab.value = "items";
+  }
+});
 
 const searchQuery = ref("");
 const statusFilter = ref("all");
@@ -72,6 +95,7 @@ const showModal = ref(false);
 const modalMode = ref("create");
 const currentId = ref(null);
 const advancedMode = ref(localStorage.getItem("ppcAdvancedMode") === "true");
+const formMode = ref("quick"); // 'quick', 'advanced'
 
 const form = ref({
   controlScope: "PRODUCT",
@@ -97,11 +121,24 @@ const form = ref({
 });
 const formErr = ref("");
 
-const controlScopes = [
-  { id: "PROCESS", label: "製程管制", tone: "purple" },
-  { id: "CHEMICAL", label: "藥水管制", tone: "teal" },
-  { id: "PRODUCT", label: "產品管制", tone: "blue" }
-];
+const controlScopes = computed(() => {
+  return groups.value
+    .filter(g => g.isEnabled !== false)
+    .map(g => {
+      let tone = "blue";
+      if (g.groupCode === "PROCESS") tone = "purple";
+      else if (g.groupCode === "CHEMICAL") tone = "teal";
+      else if (g.groupCode === "PRODUCT") tone = "blue";
+      else if (g.groupCode?.includes("DUST") || g.groupName?.includes("落塵")) tone = "amber";
+      else tone = "slate";
+
+      return {
+        id: g.groupCode,
+        label: g.groupName,
+        tone: tone
+      };
+    });
+});
 
 const formulaOptions = [
   { id: "", label: "繼承管制圖種類預設公式" },
@@ -146,7 +183,7 @@ function formulaLabel(config) {
   }
 }
 
-const scopeLabel = (scope) => controlScopes.find(s => s.id === (scope || "PRODUCT"))?.label || "產品管制";
+const scopeLabel = (scope) => controlScopes.value.find(s => s.id === (scope || "PRODUCT"))?.label || "產品管制";
 
 function updateTableScrollMax() {
   const body = tableScroll.value;
@@ -196,6 +233,15 @@ async function load() {
     machines.value = resMachines.data || [];
     lines.value = resLines.data || [];
     tanks.value = resTanks.data || [];
+    
+    // Load filtered processes based on initial scopeFilter
+    try {
+      const resFilterProc = await api.get("/processes", { params: { controlScope: scopeFilter.value, configuredOnly: true } });
+      filterProcesses.value = resFilterProc.data || [];
+    } catch (e) {
+      filterProcesses.value = resProc.data || [];
+    }
+
     await nextTick();
     updateTableScrollMax();
   } catch (e) {
@@ -236,17 +282,14 @@ const selectedChartTypeDimension = computed(() => {
   if (!form.value.chartTypeId) return null;
   const type = chartTypes.value.find(t => t.id === Number(form.value.chartTypeId));
   if (!type) return null;
-  const cat = categories.value.find(c => c.id === type.chartCategoryId);
-  if (!cat) return null;
-  const group = groups.value.find(g => g.id === cat.chartGroupId);
+  const group = groups.value.find(g => g.id === type.chartGroupId);
   return group ? group.groupCode : null;
 });
 
 function getChartTypeGroupType(chartTypeId) {
   if (!chartTypeId) return "";
   const type = chartTypes.value.find(t => t.id === Number(chartTypeId));
-  const cat = type ? categories.value.find(c => c.id === type.chartCategoryId) : null;
-  const group = cat ? groups.value.find(g => g.id === cat.chartGroupId) : null;
+  const group = type ? groups.value.find(g => g.id === type.chartGroupId) : null;
   return group?.groupType || "CONTROL_CHART";
 }
 
@@ -296,13 +339,32 @@ const availableMachines = computed(() =>
 
 const availableTanks = ref([]);
 
-watch(() => form.value.controlScope, (newScope) => {
+watch(() => form.value.controlScope, async (newScope) => {
   if (newScope !== "PRODUCT") {
     form.value.partId = null;
   }
   if (newScope !== "CHEMICAL") {
     form.value.machineId = null;
     form.value.tankId = null;
+  }
+  try {
+    const { data } = await api.get("/processes", { params: { controlScope: newScope, configuredOnly: false } });
+    formProcesses.value = data || [];
+    if (form.value.processId && !formProcesses.value.some(p => p.id === Number(form.value.processId))) {
+      form.value.processId = null;
+    }
+  } catch (e) {
+    console.error("無法查詢表單製程資料：", e);
+  }
+});
+
+watch(scopeFilter, async (newScope) => {
+  processFilter.value = "all";
+  try {
+    const { data } = await api.get("/processes", { params: { controlScope: newScope, configuredOnly: true } });
+    filterProcesses.value = data || [];
+  } catch (e) {
+    console.error("無法查詢製程資料：", e);
   }
 });
 
@@ -378,16 +440,91 @@ const filteredRows = computed(() => {
   });
 });
 
-function openCreateModal() {
+function validateStep(step) {
+  formErr.value = "";
+  if (step === 1) {
+    if (!form.value.controlScope) {
+      formErr.value = "請選擇管制類型";
+      return false;
+    }
+    if (!form.value.processId) {
+      formErr.value = "請選擇工站製程";
+      return false;
+    }
+    if (form.value.controlScope === "PRODUCT" && !form.value.partId) {
+      formErr.value = "請選擇產品料號";
+      return false;
+    }
+    if (form.value.controlScope === "CHEMICAL") {
+      if (!form.value.machineId) {
+        formErr.value = "請選擇生產設備機台";
+        return false;
+      }
+      if (!form.value.tankId) {
+        formErr.value = "請選擇生產槽體";
+        return false;
+      }
+    }
+    if (!form.value.characteristicId) {
+      formErr.value = "請選擇品質檢驗特性";
+      return false;
+    }
+  } else if (step === 2) {
+    if (form.value.sampleSize === null || form.value.sampleSize === undefined || form.value.sampleSize <= 0) {
+      formErr.value = "子組大小必須大於 0";
+      return false;
+    }
+    if (form.value.usl !== null && form.value.lsl !== null && Number(form.value.usl) <= Number(form.value.lsl)) {
+      formErr.value = "規格上限 (USL) 必須大於規格下限 (LSL)";
+      return false;
+    }
+  }
+  return true;
+}
+
+function nextStep() {
+  if (validateStep(currentStep.value)) {
+    currentStep.value += 1;
+    scrollToModalTop();
+  }
+}
+
+function prevStep() {
+  if (currentStep.value > 1) {
+    currentStep.value -= 1;
+    scrollToModalTop();
+  }
+}
+
+function scrollToModalTop() {
+  nextTick(() => {
+    const modalBody = document.querySelector(".overflow-y-auto");
+    if (modalBody) {
+      modalBody.scrollTop = 0;
+    }
+  });
+}
+
+async function openCreateModal() {
   modalMode.value = "create";
   currentId.value = null;
+  currentStep.value = 1;
+  formMode.value = "quick";
   availableTanks.value = [];
   const characteristic = characteristics.value[0] || null;
   const displayMode = "CONTROL_CHART";
+  
+  try {
+    const { data } = await api.get("/processes", { params: { controlScope: "PRODUCT", configuredOnly: false } });
+    formProcesses.value = data || [];
+  } catch (e) {
+    console.error(e);
+  }
+
   form.value = {
     controlScope: "PRODUCT",
     partId: parts.value.length > 0 ? parts.value[0].id : null,
-    processId: processes.value.length > 0 ? processes.value[0].id : null,
+    processId: formProcesses.value.length > 0 ? formProcesses.value[0].id : null,
     machineId: null,
     tankId: null,
     characteristicId: characteristic?.id || null,
@@ -408,9 +545,19 @@ function openCreateModal() {
 async function openEditModal(item) {
   modalMode.value = "edit";
   currentId.value = item.id;
+  currentStep.value = 1;
+  formMode.value = "quick";
   formErr.value = "";
 
-  if ((item.controlScope || (item.partId ? "PRODUCT" : "PROCESS")) === "CHEMICAL" && item.machineId) {
+  const scope = item.controlScope || (item.partId ? "PRODUCT" : "PROCESS");
+  try {
+    const { data } = await api.get("/processes", { params: { controlScope: scope, configuredOnly: false } });
+    formProcesses.value = data || [];
+  } catch (e) {
+    console.error(e);
+  }
+
+  if (scope === "CHEMICAL" && item.machineId) {
     try {
       const { data } = await api.get(`/machines/${item.machineId}/tanks`);
       availableTanks.value = data || [];
@@ -429,7 +576,7 @@ async function openEditModal(item) {
   const itemDataCategory = item.characteristic?.dataCategory || characteristics.value.find(x => x.id === Number(item.characteristicId))?.dataCategory;
 
   form.value = {
-    controlScope: item.controlScope || (item.partId ? "PRODUCT" : "PROCESS"),
+    controlScope: scope,
     partId: item.partId || null,
     processId: item.processId || null,
     machineId: item.machineId || null,
@@ -467,6 +614,18 @@ function applyCharacteristicUnit() {
 }
 
 async function save() {
+  if (formMode.value === "quick") {
+    form.value.displayMode = form.value.displayMode || "CONTROL_CHART";
+    form.value.chartTypeId = form.value.chartTypeId || findDefaultChartTypeId(form.value.displayMode, selectedCharacteristic.value?.dataCategory);
+    const isAttribute = selectedCharacteristic.value?.dataCategory === "Attribute";
+    if (form.value.sampleSize === null || form.value.sampleSize === undefined || form.value.sampleSize <= 0) {
+      form.value.sampleSize = isAttribute ? 100 : 5;
+    }
+    if (!form.value.selectedRuleCodes || form.value.selectedRuleCodes.length === 0) {
+      form.value.selectedRuleCodes = defaultSelectedRuleCodes();
+    }
+  }
+
   if (form.value.controlScope === "PRODUCT" && !form.value.partId) {
     formErr.value = "產品管制項目必須選擇產品料號。";
     return;
@@ -726,12 +885,7 @@ function viewChartOrTrend(item) {
     router.push({ path: '/spc', query: { ppcId: item.id } });
     return;
   }
-  const cat = categories.value.find(c => c.id === ct.chartCategoryId);
-  if (!cat) {
-    router.push({ path: '/spc', query: { ppcId: item.id } });
-    return;
-  }
-  const group = groups.value.find(g => g.id === cat.chartGroupId);
+  const group = groups.value.find(g => g.id === ct.chartGroupId);
   if (!group) {
     router.push({ path: '/spc', query: { ppcId: item.id } });
     return;
@@ -877,7 +1031,7 @@ onBeforeUnmount(() => {
           class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all cursor-pointer"
         >
           <option value="all">全廠所有製程</option>
-          <option v-for="p in processes" :key="p.id" :value="p.id">
+          <option v-for="p in filterProcesses" :key="p.id" :value="p.id">
             {{ p.processCode }} - {{ p.processName }}
           </option>
         </select>
@@ -904,24 +1058,8 @@ onBeforeUnmount(() => {
 
     <!-- Data Table Container -->
     <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-      <div class="ppc-scroll-range-wrap px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
-        <input
-          v-model.number="tableScrollLeft"
-          type="range"
-          min="0"
-          :max="tableScrollMax"
-          :disabled="tableScrollMax === 0"
-          aria-label="表格橫向捲動"
-          class="ppc-scroll-range w-full"
-          @input="setTableScrollFromSlider"
-        />
-      </div>
-      <div
-        ref="tableScroll"
-        class="ppc-table-scroll overflow-x-scroll overflow-y-hidden pb-3"
-        @scroll="syncTableScroll"
-      >
-        <table class="min-w-[1580px] w-full text-left border-collapse">
+      <div class="overflow-x-auto pb-3">
+        <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
               <th class="py-4 px-6 w-16 text-center">ID</th>
@@ -1101,7 +1239,37 @@ onBeforeUnmount(() => {
     </div>
     </div>
 
-    <ControlChartGroupsView v-else embedded />
+    <!-- ⚙️ 系統主檔配置 (settings) -->
+    <div v-if="activeMainTab === 'settings'" class="space-y-6 animate-fade-in">
+      <!-- Sub Tab Header Navigation -->
+      <div class="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/80 rounded-2xl p-1 shadow-sm border max-w-md">
+        <button
+          @click="setSettingsSubTab('groups')"
+          type="button"
+          :class="[
+            'flex-1 py-2 px-4 rounded-xl text-center text-xs font-bold transition-all whitespace-nowrap',
+            settingsSubTab === 'groups'
+              ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm'
+              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          ]"
+        >
+          大類別總管 (Chart Groups)
+        </button>
+        <button
+          @click="setSettingsSubTab('types')"
+          type="button"
+          :class="[
+            'flex-1 py-2 px-4 rounded-xl text-center text-xs font-bold transition-all whitespace-nowrap',
+            settingsSubTab === 'types'
+              ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm'
+              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          ]"
+        >
+          小分類與公式配置
+        </button>
+      </div>
+      <ControlChartGroupsView embedded />
+    </div>
 
     <!-- Slide-over Panel (Add / Edit) -->
     <transition
@@ -1124,6 +1292,19 @@ onBeforeUnmount(() => {
               {{ modalMode === 'create' ? '新增 SPC 管制項目' : '編輯 SPC 管制項目' }}
             </h3>
           </div>
+          <div class="flex items-center gap-2 ml-auto mr-4">
+            <button
+              @click="formMode = formMode === 'quick' ? 'advanced' : 'quick'"
+              type="button"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all hover:opacity-90"
+              :class="formMode === 'quick'
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/60'
+                : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900/60'"
+            >
+              <span v-if="formMode === 'quick'">⚡ 快速建檔模式</span>
+              <span v-else>⚙️ 進階精靈模式</span>
+            </button>
+          </div>
           <button
             @click="showModal = false"
             type="button"
@@ -1135,432 +1316,545 @@ onBeforeUnmount(() => {
 
         <form @submit.prevent="save" class="flex flex-col h-full overflow-hidden">
           <div class="flex-1 overflow-y-auto p-6 space-y-5">
-          <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
-            <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
-          </div>
-
-          <div class="p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-1">
-            <button
-              type="button"
-              @click="advancedMode = false"
-              :class="[
-                'px-4 py-2.5 rounded-xl text-sm font-black transition-all',
-                !advancedMode ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              ]"
-            >
-              簡易模式
-            </button>
-            <button
-              type="button"
-              @click="advancedMode = true"
-              :class="[
-                'px-4 py-2.5 rounded-xl text-sm font-black transition-all',
-                advancedMode ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              ]"
-            >
-              進階模式
-            </button>
-          </div>
-
-          <!-- Control Scope Selector -->
-          <div class="space-y-2">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制類型 <span class="text-red-500">*</span></label>
-            <div class="grid grid-cols-3 gap-2">
-              <button
-                v-for="s in controlScopes"
-                :key="s.id"
-                type="button"
-                @click="form.controlScope = s.id"
-                :class="[
-                  'px-3 py-2.5 rounded-xl text-xs font-black border transition-all',
-                  form.controlScope === s.id
-                    ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-500/20'
-                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-300'
-                ]"
-              >
-                {{ s.label }}
-              </button>
+            <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
+              <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
             </div>
-          </div>
 
-          <!-- Process Selector (置於最上方) -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">工站製程 (Process) <span class="text-red-500">*</span></label>
-            <select
-              v-model="form.processId"
-              required
-              class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-            >
-              <option disabled value="null">-- 選擇製程 --</option>
-              <option v-for="pr in processes" :key="pr.id" :value="pr.id">{{ pr.processCode }} - {{ pr.processName }}</option>
-            </select>
-          </div>
+            <!-- Step Indicator (進度指示器) -->
+            <div v-show="formMode === 'advanced'" class="px-2 py-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 mb-2">
+              <div class="flex items-center justify-between max-w-lg mx-auto relative">
+                <!-- Background Connecting Line -->
+                <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-slate-200 dark:bg-slate-700 z-0"></div>
+                <!-- Active Progress Line -->
+                <div 
+                  class="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-amber-500 transition-all duration-300 z-0"
+                  :style="{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }"
+                ></div>
 
-          <!-- Machines associated with the selected Process -->
-          <div v-if="form.processId" class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-600 dark:text-slate-300">
-            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-2">
-              <Cpu class="w-4 h-4 text-purple-500" />
-              <span>此工站配置生產設備機台：</span>
-            </div>
-            <div v-if="machines.filter(m => m.processId === Number(form.processId)).length === 0" class="text-slate-400 dark:text-slate-500 italic">
-              目前無配置任何機台設備。
-            </div>
-            <div v-else class="flex flex-wrap gap-2">
-              <span
-                v-for="mach in machines.filter(m => m.processId === Number(form.processId))"
-                :key="mach.id"
-                class="px-2 py-1 rounded bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-mono text-[11px]"
-              >
-                {{ mach.machineCode }} - {{ mach.machineName }}
-              </span>
-            </div>
-          </div>
+                <!-- Step 1 -->
+                <div class="flex flex-col items-center relative z-10">
+                  <div 
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all border-2"
+                    :class="currentStep >= 1 ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-slate-100 border-slate-300 text-slate-400 dark:bg-slate-800 dark:border-slate-700'"
+                  >
+                    <span v-if="currentStep > 1">✓</span>
+                    <span v-else>1</span>
+                  </div>
+                  <span class="text-[11px] font-black mt-1.5" :class="currentStep >= 1 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">基礎對照</span>
+                </div>
 
-          <div v-if="form.controlScope === 'CHEMICAL'" class="p-4 bg-teal-50/60 dark:bg-teal-950/10 border border-teal-200 dark:border-teal-900/70 rounded-2xl space-y-4">
-            <div class="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300">
-              <Cpu class="w-4 h-4" />
-              <span>藥水管制定位</span>
+                <!-- Step 2 -->
+                <div class="flex flex-col items-center relative z-10">
+                  <div 
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all border-2"
+                    :class="currentStep >= 2 ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-white border-slate-200 text-slate-400 dark:bg-slate-900 dark:border-slate-800'"
+                  >
+                    <span v-if="currentStep > 2">✓</span>
+                    <span v-else>2</span>
+                  </div>
+                  <span class="text-[11px] font-black mt-1.5" :class="currentStep >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">規格設定</span>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flex flex-col items-center relative z-10">
+                  <div 
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all border-2"
+                    :class="currentStep >= 3 ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-white border-slate-200 text-slate-400 dark:bg-slate-900 dark:border-slate-800'"
+                  >
+                    3
+                  </div>
+                  <span class="text-[11px] font-black mt-1.5" :class="currentStep >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">圖表規則</span>
+                </div>
+              </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <!-- STEP 1 CONTAINER -->
+            <div v-show="formMode === 'quick' || currentStep === 1" class="space-y-5 animate-fade-in">
+              <!-- Control Scope Selector -->
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制類型 <span class="text-red-500">*</span></label>
+                <div class="grid grid-cols-3 gap-2">
+                  <button
+                    v-for="s in controlScopes"
+                    :key="s.id"
+                    type="button"
+                    @click="form.controlScope = s.id"
+                    :class="[
+                      'px-3 py-2.5 rounded-xl text-xs font-black border transition-all',
+                      form.controlScope === s.id
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-500/20'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-300'
+                    ]"
+                  >
+                    {{ s.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Process Selector (置於最上方) -->
               <div class="space-y-1.5">
-                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">線別 / 機台 <span class="text-red-500">*</span></label>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">工站製程 (Process) <span class="text-red-500">*</span></label>
                 <select
-                  v-model="form.machineId"
-                  required
-                  class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                  v-model="form.processId"
+                  :required="currentStep === 1"
+                  class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                 >
-                  <option :value="null">-- 選擇線別/機台 --</option>
-                  <option v-for="mach in availableMachines" :key="mach.id" :value="mach.id">{{ mach.machineCode }} - {{ mach.machineName }}</option>
+                  <option disabled value="null">-- 選擇製程 --</option>
+                  <option v-for="pr in formProcesses" :key="pr.id" :value="pr.id">{{ pr.processCode }} - {{ pr.processName }}</option>
                 </select>
               </div>
 
-              <div class="space-y-1.5">
-                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">槽體 <span class="text-red-500">*</span></label>
-                <select
-                  v-model="form.tankId"
-                  required
-                  :disabled="!form.machineId"
-                  class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+              <!-- Machines associated with the selected Process -->
+              <div v-if="form.processId" class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-600 dark:text-slate-300">
+                <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-2">
+                  <Cpu class="w-4 h-4 text-purple-500" />
+                  <span>此工站配置生產設備機台：</span>
+                </div>
+                <div v-if="machines.filter(m => m.processId === Number(form.processId)).length === 0" class="text-slate-400 dark:text-slate-500 italic">
+                  目前無配置任何機台設備。
+                </div>
+                <div v-else class="flex flex-wrap gap-2">
+                  <span
+                    v-for="mach in machines.filter(m => m.processId === Number(form.processId))"
+                    :key="mach.id"
+                    class="px-2 py-1 rounded bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-mono text-[11px]"
+                  >
+                    {{ mach.machineCode }} - {{ mach.machineName }}
+                  </span>
+                </div>
+              </div>
+
+              <div v-if="form.controlScope === 'CHEMICAL'" class="p-4 bg-teal-50/60 dark:bg-teal-950/10 border border-teal-200 dark:border-teal-900/70 rounded-2xl space-y-4">
+                <div class="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300">
+                  <Cpu class="w-4 h-4" />
+                  <span>藥水管制定位</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">線別 / 機台 <span class="text-red-500">*</span></label>
+                    <select
+                      v-model="form.machineId"
+                      :required="form.controlScope === 'CHEMICAL' && currentStep === 1"
+                      class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                    >
+                      <option :value="null">-- 選擇線別/機台 --</option>
+                      <option v-for="mach in availableMachines" :key="mach.id" :value="mach.id">{{ mach.machineCode }} - {{ mach.machineName }}</option>
+                    </select>
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">槽體 <span class="text-red-500">*</span></label>
+                    <select
+                      v-model="form.tankId"
+                      :required="form.controlScope === 'CHEMICAL' && currentStep === 1"
+                      :disabled="!form.machineId"
+                      class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                    >
+                      <option :value="null">-- 選擇槽體 --</option>
+                      <option v-for="tank in availableTanks" :key="tank.id" :value="tank.id">{{ tank.tankName }} [{{ tank.tankCode }}]</option>
+                    </select>
+                  </div>
+                </div>
+                <p v-if="form.machineId && availableTanks.length === 0" class="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                  此線別尚未建立槽體，請先到「線別槽體設定」新增槽體。
+                </p>
+              </div>
+
+              <!-- Product (Part) & Characteristic (Characteristic) -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-if="form.controlScope === 'PRODUCT'" class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>產品料號 (Part) <span class="text-red-500">*</span></span>
+                  </label>
+                  <select
+                    v-model="form.partId"
+                    :required="form.controlScope === 'PRODUCT' && currentStep === 1"
+                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                  >
+                    <option disabled value="null">-- 選擇料號 --</option>
+                    <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.partNo }} - {{ p.partName }}</option>
+                  </select>
+                </div>
+
+                <div v-else class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">產品料號 (Part)</label>
+                  <div class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-500 dark:text-slate-400">
+                    {{ form.controlScope === 'CHEMICAL' ? '藥水管制不需產品料號' : '製程管制不需產品料號' }}
+                  </div>
+                </div>
+
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">檢驗特性 (Characteristic) <span class="text-red-500">*</span></label>
+                  <select
+                    v-model="form.characteristicId"
+                    @change="applyCharacteristicUnit"
+                    :required="currentStep === 1"
+                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                  >
+                    <option disabled value="null">-- 選擇特性 --</option>
+                    <option v-for="ch in characteristics" :key="ch.id" :value="ch.id">{{ ch.characteristicCode }} - {{ ch.characteristicName }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- ⚡ 快速建檔模式：新增預設管制圖與顯示類型設定 -->
+              <div v-if="formMode === 'quick'" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表類型 (可選)</label>
+                  <select
+                    v-model="form.chartTypeId"
+                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                  >
+                    <option :value="null">-- 自動判斷管制圖 --</option>
+                    <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">
+                      {{ ct.chartTypeCode }} - {{ ct.chartTypeName }}
+                    </option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
+                  <select
+                    v-model="form.displayMode"
+                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                  >
+                    <option value="CONTROL_CHART">管制圖</option>
+                    <option :disabled="selectedCharacteristic?.dataCategory === 'Attribute'" value="TREND_CHART">趨勢圖</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2 CONTAINER -->
+            <div v-show="formMode === 'quick' || currentStep === 2" class="space-y-5 animate-fade-in">
+              <!-- Specs: USL, Target, LSL, Sample Size -->
+              <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <Sliders class="w-4 h-4 text-amber-500" /> 規格界限與抽樣配置
+                </h4>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">上限 (USL)</label>
+                    <input
+                      v-model="form.usl"
+                      type="number"
+                      step="any"
+                      placeholder="如: 10.2"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
+                    />
+                  </div>
+
+                  <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">目標值 (Target)</label>
+                    <input
+                      v-model="form.targetValue"
+                      type="number"
+                      step="any"
+                      placeholder="如: 10.0"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
+                    />
+                  </div>
+
+                  <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">下限 (LSL)</label>
+                    <input
+                      v-model="form.lsl"
+                      type="number"
+                      step="any"
+                      placeholder="如: 9.8"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
+                    />
+                  </div>
+
+                  <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400">子組大小 (Sample Size) <span class="text-red-500">*</span></label>
+                    <input
+                      v-model="form.sampleSize"
+                      type="number"
+                      min="1"
+                      max="25"
+                      :required="currentStep === 2"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-xl text-sm font-mono font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Toggles -->
+              <div class="grid grid-cols-2 gap-4 pt-2">
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">是否必檢項目</label>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input v-model="form.isRequired" type="checkbox" class="sr-only peer" />
+                    <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                    <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isRequired ? '必檢項目' : '非必檢' }}</span>
+                  </label>
+                </div>
+
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">啟用設定</label>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
+                    <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                    <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用 (Active)' : '停用 (Inactive)' }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 3 CONTAINER -->
+            <div v-show="formMode === 'advanced' && currentStep === 3" class="space-y-5 animate-fade-in">
+              <!-- Mode Switcher -->
+              <div class="p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-1">
+                <button
+                  type="button"
+                  @click="advancedMode = false"
+                  :class="[
+                    'px-4 py-2.5 rounded-xl text-sm font-black transition-all',
+                    !advancedMode ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ]"
                 >
-                  <option :value="null">-- 選擇槽體 --</option>
-                  <option v-for="tank in availableTanks" :key="tank.id" :value="tank.id">{{ tank.tankName }} [{{ tank.tankCode }}]</option>
-                </select>
+                  簡易模式
+                </button>
+                <button
+                  type="button"
+                  @click="advancedMode = true"
+                  :class="[
+                    'px-4 py-2.5 rounded-xl text-sm font-black transition-all',
+                    advancedMode ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ]"
+                >
+                  進階模式
+                </button>
               </div>
-            </div>
-            <p v-if="form.machineId && availableTanks.length === 0" class="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-              此線別尚未建立槽體，請先到「線別槽體設定」新增槽體。
-            </p>
-          </div>
 
-          <!-- Product (Part) & Characteristic (Characteristic) -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-if="form.controlScope === 'PRODUCT'" class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                <span>產品料號 (Part) <span class="text-red-500">*</span></span>
-              </label>
-              <select
-                v-model="form.partId"
-                required
-                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-              >
-                <option disabled value="null">-- 選擇料號 --</option>
-                <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.partNo }} - {{ p.partName }}</option>
-              </select>
-            </div>
-
-            <div v-else class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">產品料號 (Part)</label>
-              <div class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-500 dark:text-slate-400">
-                {{ form.controlScope === 'CHEMICAL' ? '藥水管制不需產品料號' : '製程管制不需產品料號' }}
+              <!-- currently applied info card (!advancedMode) -->
+              <div v-if="!advancedMode" class="p-4 bg-blue-50/60 dark:bg-blue-950/15 rounded-2xl border border-blue-200 dark:border-blue-900/70 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                  <Info class="w-4 h-4" /> 目前套用資訊
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                    <div class="text-slate-400 font-bold">量測單位</div>
+                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ effectiveUnit }}</div>
+                    <div class="mt-1 text-[11px]" :class="isUnitOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
+                      {{ isUnitOverridden ? '此管制項目覆寫' : '繼承品質特性主檔' }}
+                    </div>
+                  </div>
+                  <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                    <div class="text-slate-400 font-bold">管制圖類型</div>
+                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ selectedChartType ? `${selectedChartType.chartTypeCode} (${selectedChartType.chartTypeName})` : '繼承特性設定' }}</div>
+                    <div class="mt-1 text-[11px] text-slate-400">{{ selectedChartType ? '此管制項目指定' : '未指定項目專屬管制圖' }}</div>
+                  </div>
+                  <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                    <div class="text-slate-400 font-bold">公式來源</div>
+                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ isFormulaOverridden ? formulaLabel(form.formulaConfigJson) : '繼承管制圖種類' }}</div>
+                    <div class="mt-1 text-[11px]" :class="isFormulaOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
+                      {{ isFormulaOverridden ? '此管制項目覆寫' : '未覆寫公式' }}
+                    </div>
+                  </div>
+                  <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                    <div class="text-slate-400 font-bold">管制規則</div>
+                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ hasItemRules ? `項目專屬 ${form.selectedRuleCodes.length} 條` : '繼承管制圖種類' }}</div>
+                    <div class="mt-1 text-[11px]" :class="hasItemRules ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
+                      {{ hasItemRules ? '此管制項目覆寫' : '未覆寫規則' }}
+                    </div>
+                  </div>
+                </div>
+                <p class="text-[11px] text-blue-700/70 dark:text-blue-300/70 font-semibold">
+                  若要調整單位、公式、管制規則或固定 UCL/CL/LCL，請切換到進階模式。
+                </p>
               </div>
-            </div>
 
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">檢驗特性 (Characteristic) <span class="text-red-500">*</span></label>
-              <select
-                v-model="form.characteristicId"
-                @change="applyCharacteristicUnit"
-                required
-                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-              >
-                <option disabled value="null">-- 選擇特性 --</option>
-                <option v-for="ch in characteristics" :key="ch.id" :value="ch.id">{{ ch.characteristicCode }} - {{ ch.characteristicName }}</option>
-              </select>
-            </div>
-          </div>
+              <!-- Advanced Override items -->
+              <div v-if="advancedMode" class="space-y-5">
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">量測單位 (Unit)</label>
+                  <input
+                    v-model.trim="form.unit"
+                    type="text"
+                    maxlength="50"
+                    placeholder="例如：mm、μm、%、mg/L"
+                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                  />
+                  <p class="text-[11px] text-slate-400">
+                    <span :class="isUnitOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : ''">
+                      {{ isUnitOverridden ? '此管制項目已覆寫品質特性單位。' : '目前繼承或沿用品質特性主檔單位。' }}
+                    </span>
+                    切換檢驗特性時會帶入特性主檔的預設單位，之後可自行修改。
+                  </p>
+                </div>
 
-          <div v-if="!advancedMode" class="p-4 bg-blue-50/60 dark:bg-blue-950/15 rounded-2xl border border-blue-200 dark:border-blue-900/70 space-y-3">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-2">
-              <Info class="w-4 h-4" /> 目前套用資訊
-            </h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
-                <div class="text-slate-400 font-bold">量測單位</div>
-                <div class="mt-1 font-black text-slate-800 dark:text-white">{{ effectiveUnit }}</div>
-                <div class="mt-1 text-[11px]" :class="isUnitOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                  {{ isUnitOverridden ? '此管制項目覆寫' : '繼承品質特性主檔' }}
+                <!-- Custom Control Limits -->
+                <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                  <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mb-2 block">固定統計管制線 (可留空由系統自動算圖)</span>
+                  <div class="grid grid-cols-3 gap-3">
+                    <div>
+                      <label class="block text-[11px] text-slate-500">UCL</label>
+                      <input v-model="form.ucl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] text-slate-500">中心線 (CL)</label>
+                      <input v-model="form.cl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] text-slate-500">LCL</label>
+                      <input v-model="form.lcl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
+                    </div>
+                  </div>
+                  <p class="mt-2 text-[11px]" :class="hasManualControlLimits ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
+                    {{ hasManualControlLimits ? '目前使用手動固定管制線；分段管制線仍會依日期區間覆寫。' : '目前未手動固定管制線，管制圖會自動計算或套用分段管制線。' }}
+                  </p>
+                </div>
+
+                <!-- Chart Type -->
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
+                  <div class="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800/70 p-1 border border-slate-200 dark:border-slate-700">
+                    <button
+                      type="button"
+                      @click="form.displayMode = 'CONTROL_CHART'"
+                      :class="[
+                        'px-4 py-2.5 rounded-xl text-sm font-black border transition-all',
+                        form.displayMode === 'CONTROL_CHART'
+                          ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800 shadow-sm'
+                          : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      ]"
+                    >
+                      管制圖
+                    </button>
+                    <button
+                      type="button"
+                      :disabled="selectedCharacteristic?.dataCategory === 'Attribute'"
+                      @click="form.displayMode = 'TREND_CHART'"
+                      :class="[
+                        'px-4 py-2.5 rounded-xl text-sm font-black border transition-all disabled:opacity-40 disabled:cursor-not-allowed',
+                        form.displayMode === 'TREND_CHART'
+                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 shadow-sm'
+                          : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      ]"
+                    >
+                      趨勢圖
+                    </button>
+                  </div>
+                  <p class="text-[11px] text-slate-400">
+                    管制圖與趨勢圖只能擇一；選定後下方只會顯示對應的圖表類型。
+                  </p>
+                </div>
+
+                <!-- Bind Chart Type -->
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定 {{ selectedDisplayModeLabel }} 類型</label>
+                  <select
+                    v-model="form.chartTypeId"
+                    :required="advancedMode && currentStep === 3"
+                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
+                  >
+                    <option :value="null" disabled>-- 請選擇{{ selectedDisplayModeLabel }}類型 --</option>
+                    <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
+                  </select>
+                  <p class="text-[11px] text-slate-400 mt-1">
+                    未設定項目專屬規則時，會繼承「管制圖配置維護 > 小分類與公式配置」的規則。
+                    <span v-if="getChartTypeRuleGroupId(Number(form.chartTypeId))" class="font-bold text-amber-600 dark:text-amber-400">
+                      目前套用：{{ ruleGroupMap[getChartTypeRuleGroupId(Number(form.chartTypeId))] }}
+                    </span>
+                    <span v-else class="italic">目前未套用規則。</span>
+                  </p>
+                </div>
+
+                <!-- Formula Config -->
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">公式配置</label>
+                  <select
+                    v-model="form.formulaConfigJson"
+                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
+                  >
+                    <option
+                      v-if="form.formulaConfigJson && !formulaOptions.some(option => option.id === form.formulaConfigJson)"
+                      :value="form.formulaConfigJson"
+                    >
+                      既有自訂公式
+                    </option>
+                    <option v-for="option in formulaOptions" :key="option.label" :value="option.id">{{ option.label }}</option>
+                  </select>
+                  <p class="text-[11px] text-slate-400">
+                    項目選擇的公式會優先於管制圖種類設定；目前公式套用於 X̄-R 管制線計算。
+                  </p>
+                </div>
+
+                <!-- Control Rules -->
+                <div class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
+                  <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                      <AlertTriangle class="w-4 h-4" /> 管制規則
+                    </h4>
+                    <p class="text-[11px] text-amber-700/70 dark:text-amber-300/70 mt-1">
+                      勾選後會優先套用此管制項目的專屬規則；全部不勾選時，繼承管制圖種類的規則設定。
+                    </p>
+                  </div>
+                  <div v-if="ruleLibrary.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label
+                      v-for="rule in ruleLibrary"
+                      :key="rule.ruleCode"
+                      class="flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all"
+                      :class="form.selectedRuleCodes.includes(rule.ruleCode)
+                        ? 'bg-white dark:bg-slate-900 border-amber-400 dark:border-amber-700 shadow-sm'
+                        : 'bg-amber-50/40 dark:bg-slate-900/40 border-amber-100 dark:border-slate-800 hover:border-amber-300'"
+                    >
+                      <input
+                        v-model="form.selectedRuleCodes"
+                        type="checkbox"
+                        :value="rule.ruleCode"
+                        class="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                      />
+                      <span class="min-w-0">
+                        <span class="block text-xs font-black text-slate-800 dark:text-slate-100">{{ rule.ruleCode }} · {{ rule.ruleName }}</span>
+                        <span class="block text-[10px] text-slate-400 mt-0.5">優先序 {{ rule.priority }}</span>
+                      </span>
+                    </label>
+                  </div>
+                  <p v-else class="text-xs text-slate-400 italic">尚未建立可選擇的管制規則。</p>
                 </div>
               </div>
-              <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
-                <div class="text-slate-400 font-bold">管制圖類型</div>
-                <div class="mt-1 font-black text-slate-800 dark:text-white">{{ selectedChartType ? `${selectedChartType.chartTypeCode} (${selectedChartType.chartTypeName})` : '繼承特性設定' }}</div>
-                <div class="mt-1 text-[11px] text-slate-400">{{ selectedChartType ? '此管制項目指定' : '未指定項目專屬管制圖' }}</div>
-              </div>
-              <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
-                <div class="text-slate-400 font-bold">公式來源</div>
-                <div class="mt-1 font-black text-slate-800 dark:text-white">{{ isFormulaOverridden ? formulaLabel(form.formulaConfigJson) : '繼承管制圖種類' }}</div>
-                <div class="mt-1 text-[11px]" :class="isFormulaOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                  {{ isFormulaOverridden ? '此管制項目覆寫' : '未覆寫公式' }}
-                </div>
-              </div>
-              <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
-                <div class="text-slate-400 font-bold">管制規則</div>
-                <div class="mt-1 font-black text-slate-800 dark:text-white">{{ hasItemRules ? `項目專屬 ${form.selectedRuleCodes.length} 條` : '繼承管制圖種類' }}</div>
-                <div class="mt-1 text-[11px]" :class="hasItemRules ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                  {{ hasItemRules ? '此管制項目覆寫' : '未覆寫規則' }}
-                </div>
-              </div>
-            </div>
-            <p class="text-[11px] text-blue-700/70 dark:text-blue-300/70 font-semibold">
-              若要調整單位、公式、管制規則或固定 UCL/CL/LCL，請切換到進階模式。
-            </p>
-          </div>
-
-          <div v-if="advancedMode" class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">量測單位 (Unit)</label>
-            <input
-              v-model.trim="form.unit"
-              type="text"
-              maxlength="50"
-              placeholder="例如：mm、μm、%、mg/L"
-              class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-            />
-            <p class="text-[11px] text-slate-400">
-              <span :class="isUnitOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : ''">
-                {{ isUnitOverridden ? '此管制項目已覆寫品質特性單位。' : '目前繼承或沿用品質特性主檔單位。' }}
-              </span>
-              切換檢驗特性時會帶入特性主檔的預設單位，之後可自行修改。
-            </p>
-          </div>
-
-          <!-- Specs: USL, Target, LSL, Sample Size -->
-          <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-              <Sliders class="w-4 h-4 text-amber-500" /> 規格界限與抽樣配置
-            </h4>
-            
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="space-y-1">
-                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">上限 (USL)</label>
-                <input
-                  v-model="form.usl"
-                  type="number"
-                  step="any"
-                  placeholder="如: 10.2"
-                  class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-                />
-              </div>
-
-              <div class="space-y-1">
-                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">目標值 (Target)</label>
-                <input
-                  v-model="form.targetValue"
-                  type="number"
-                  step="any"
-                  placeholder="如: 10.0"
-                  class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-                />
-              </div>
-
-              <div class="space-y-1">
-                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">下限 (LSL)</label>
-                <input
-                  v-model="form.lsl"
-                  type="number"
-                  step="any"
-                  placeholder="如: 9.8"
-                  class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-                />
-              </div>
-
-              <div class="space-y-1">
-                <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400">子組大小 (Sample Size) <span class="text-red-500">*</span></label>
-                <input
-                  v-model="form.sampleSize"
-                  type="number"
-                  min="1"
-                  max="25"
-                  required
-                  class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-xl text-sm font-mono font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-                />
-              </div>
-            </div>
-
-            <!-- Custom Control Limits -->
-            <div v-if="advancedMode" class="pt-2 border-t border-slate-200 dark:border-slate-700">
-              <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mb-2 block">固定統計管制線 (可留空由系統自動算圖)</span>
-              <div class="grid grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-[11px] text-slate-500">UCL</label>
-                  <input v-model="form.ucl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
-                </div>
-                <div>
-                  <label class="block text-[11px] text-slate-500">中心線 (CL)</label>
-                  <input v-model="form.cl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
-                </div>
-                <div>
-                  <label class="block text-[11px] text-slate-500">LCL</label>
-                  <input v-model="form.lcl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
-                </div>
-              </div>
-              <p class="mt-2 text-[11px]" :class="hasManualControlLimits ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                {{ hasManualControlLimits ? '目前使用手動固定管制線；分段管制線仍會依日期區間覆寫。' : '目前未手動固定管制線，管制圖會自動計算或套用分段管制線。' }}
-              </p>
             </div>
           </div>
-
-          <!-- Chart Type -->
-          <div v-if="advancedMode" class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
-            <div class="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800/70 p-1 border border-slate-200 dark:border-slate-700">
-              <button
-                type="button"
-                @click="form.displayMode = 'CONTROL_CHART'"
-                :class="[
-                  'px-4 py-2.5 rounded-xl text-sm font-black border transition-all',
-                  form.displayMode === 'CONTROL_CHART'
-                    ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800 shadow-sm'
-                    : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                ]"
-              >
-                管制圖
-              </button>
-              <button
-                type="button"
-                :disabled="selectedCharacteristic?.dataCategory === 'Attribute'"
-                @click="form.displayMode = 'TREND_CHART'"
-                :class="[
-                  'px-4 py-2.5 rounded-xl text-sm font-black border transition-all disabled:opacity-40 disabled:cursor-not-allowed',
-                  form.displayMode === 'TREND_CHART'
-                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 shadow-sm'
-                    : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                ]"
-              >
-                趨勢圖
-              </button>
-            </div>
-            <p class="text-[11px] text-slate-400">
-              管制圖與趨勢圖只能擇一；選定後下方只會顯示對應的圖表類型。
-            </p>
-          </div>
-
-          <div v-if="advancedMode" class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定 {{ selectedDisplayModeLabel }} 類型</label>
-            <select
-              v-model="form.chartTypeId"
-              class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-            >
-              <option :value="null" disabled>-- 請選擇{{ selectedDisplayModeLabel }}類型 --</option>
-              <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
-            </select>
-            <p class="text-[11px] text-slate-400 mt-1">
-              未設定項目專屬規則時，會繼承「管制圖配置維護 > 小分類與公式配置」的規則。
-              <span v-if="getChartTypeRuleGroupId(Number(form.chartTypeId))" class="font-bold text-amber-600 dark:text-amber-400">
-                目前套用：{{ ruleGroupMap[getChartTypeRuleGroupId(Number(form.chartTypeId))] }}
-              </span>
-              <span v-else class="italic">目前未套用規則。</span>
-            </p>
-          </div>
-
-          <div v-if="advancedMode" class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">公式配置</label>
-            <select
-              v-model="form.formulaConfigJson"
-              class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-            >
-              <option
-                v-if="form.formulaConfigJson && !formulaOptions.some(option => option.id === form.formulaConfigJson)"
-                :value="form.formulaConfigJson"
-              >
-                既有自訂公式
-              </option>
-              <option v-for="option in formulaOptions" :key="option.label" :value="option.id">{{ option.label }}</option>
-            </select>
-            <p class="text-[11px] text-slate-400">
-              項目選擇的公式會優先於管制圖種類設定；目前公式套用於 X̄-R 管制線計算。
-            </p>
-          </div>
-
-          <div v-if="advancedMode" class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
+          <div class="shrink-0 p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-2">
-                <AlertTriangle class="w-4 h-4" /> 管制規則
-              </h4>
-              <p class="text-[11px] text-amber-700/70 dark:text-amber-300/70 mt-1">
-                勾選後會優先套用此管制項目的專屬規則；全部不勾選時，繼承管制圖種類的規則設定。
-              </p>
-            </div>
-            <div v-if="ruleLibrary.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <label
-                v-for="rule in ruleLibrary"
-                :key="rule.ruleCode"
-                class="flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all"
-                :class="form.selectedRuleCodes.includes(rule.ruleCode)
-                  ? 'bg-white dark:bg-slate-900 border-amber-400 dark:border-amber-700 shadow-sm'
-                  : 'bg-amber-50/40 dark:bg-slate-900/40 border-amber-100 dark:border-slate-800 hover:border-amber-300'"
+              <button
+                v-if="formMode === 'advanced' && currentStep > 1"
+                @click="prevStep"
+                type="button"
+                class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all"
               >
-                <input
-                  v-model="form.selectedRuleCodes"
-                  type="checkbox"
-                  :value="rule.ruleCode"
-                  class="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                />
-                <span class="min-w-0">
-                  <span class="block text-xs font-black text-slate-800 dark:text-slate-100">{{ rule.ruleCode }} · {{ rule.ruleName }}</span>
-                  <span class="block text-[10px] text-slate-400 mt-0.5">優先序 {{ rule.priority }}</span>
-                </span>
-              </label>
+                上一步
+              </button>
+              <button
+                v-else
+                @click="showModal = false"
+                type="button"
+                class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all"
+              >
+                取消
+              </button>
             </div>
-            <p v-else class="text-xs text-slate-400 italic">尚未建立可選擇的管制規則。</p>
-          </div>
-
-          <!-- Toggles -->
-          <div class="grid grid-cols-2 gap-4 pt-2">
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">是否必檢項目</label>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input v-model="form.isRequired" type="checkbox" class="sr-only peer" />
-                <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isRequired ? '必檢項目' : '非必檢' }}</span>
-              </label>
+            <div>
+              <button
+                v-if="formMode === 'advanced' && currentStep < 3"
+                @click="nextStep"
+                type="button"
+                class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold shadow-lg shadow-amber-500/25 transition-all"
+              >
+                下一步
+              </button>
+              <button
+                v-else
+                type="submit"
+                :disabled="loading"
+                class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-bold shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all transform hover:-translate-y-0.5"
+              >
+                <Save class="w-4 h-4" /> 確認儲存
+              </button>
             </div>
-
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">啟用設定</label>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
-                <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用 (Active)' : '停用 (Inactive)' }}</span>
-              </label>
-            </div>
-          </div>
-
-          </div>
-          <div class="shrink-0 p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
-            <button
-              @click="showModal = false"
-              type="button"
-              class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              :disabled="loading"
-              class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-bold shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all transform hover:-translate-y-0.5"
-            >
-              <Save class="w-4 h-4" /> 確認儲存
-            </button>
           </div>
         </form>
       </div>

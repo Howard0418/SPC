@@ -176,7 +176,7 @@ public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEma
 
                 <div style='background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;'>
                     <p style='margin: 0; font-size: 13px; color: #991b1b; line-height: 1.5;'>
-                        <strong>處置指示：</strong> 本警報單已自動建檔並指派狀態為 <code>Open</code>。請負責人盡快登入 SPC 系統之「異常單簽核處置 (V2 Workflow)」頁面填寫真因分析 (Root Cause) 與對策，完成 IATF 16949 審核閉環。
+                        <strong>處置指示：</strong> 本警報單已自動建檔並指派狀態為 <code>Open</code>。請負責人盡快登入 SPC 系統之「異常單簽核處置」頁面填寫真因分析 (Root Cause) 與對策，完成 IATF 16949 審核閉環。
                     </p>
                 </div>
 

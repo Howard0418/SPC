@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import * as XLSX from "xlsx";
 import { api, getApiErrorMessage } from "../api/client";
 import { parseUploadSpreadsheet } from "../utils/parseUploadSpreadsheet";
 import {
@@ -26,11 +27,24 @@ const loading = ref(false);
 const err = ref("");
 const successBatchId = ref("");
 
+// Group & Process selection state
+const groups = ref([]);
+const selectedGroupId = ref("");
+
 // Column Mapping state
 const fileHeaders = ref([]);
 const rawRowsData = ref([]);
 const isMappingMode = ref(false);
 const columnMappings = ref({}); // SystemKey -> FileHeader
+
+// Dust Monitoring Custom Rows
+const mappedDustRows = ref([]);
+
+const isDustMode = computed(() => {
+  if (!selectedGroupId.value) return false;
+  const grp = groups.value.find(g => g.id === Number(selectedGroupId.value));
+  return grp && (grp.groupCode === "DUST" || (grp.groupName && grp.groupName.includes("落塵")));
+});
 
 const systemFields = [
   { key: "ControlScope", label: "管制類型 (ControlScope)", required: false, altNames: ["管制類型", "scope", "controlscope", "control_scope", "類型"] },
@@ -49,6 +63,88 @@ const systemFields = [
   { key: "SampleNo", label: "樣本序號 (SampleNo)", required: false, altNames: ["樣本", "樣本編號", "sampleno", "sample_no", "sample"] }
 ];
 
+async function loadGroupsAndProcesses() {
+  loading.value = true;
+  err.value = "";
+  try {
+    const res = await api.get("/control-chart-groups");
+    groups.value = (res.data || []).filter(g => g.isEnabled !== false);
+    
+    // Auto-select first group
+    if (groups.value.length > 0) {
+      selectedGroupId.value = String(groups.value[0].id);
+    }
+  } catch (e) {
+    err.value = "無法載入管制群組清單：" + getApiErrorMessage(e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadGroupsAndProcesses();
+});
+
+function parseDustMatrix(rawRows) {
+  if (rawRows.length < 2) {
+    throw new Error("Excel 格式不正確：列數太少，無法解析標題與位置/粒徑。");
+  }
+
+  // Row 0 is location row
+  const locationRow = rawRows[0] || [];
+  // Row 1 is header row (particle sizes)
+  const headerRow = rawRows[1] || [];
+
+  // Parse Locations with forward fill for merged cells
+  const locations = [];
+  let lastLocation = "";
+  // Columns 1 to 48 represent the locations R1 to R12
+  for (let col = 1; col <= 48; col++) {
+    const val = String(locationRow[col] || "").trim();
+    if (val && val !== "null") {
+      lastLocation = val;
+    }
+    locations[col] = lastLocation;
+  }
+
+  const resultRows = [];
+
+  // Parse Data Rows starting from index 2
+  for (let r = 2; r < rawRows.length; r++) {
+    const row = rawRows[r];
+    if (!row || row.length === 0) continue;
+    
+    const dateTimeStr = String(row[0] || "").trim();
+    if (!dateTimeStr || dateTimeStr === "null") continue; // Skip empty dates
+
+    // Iterate columns 1 to 48 (ignore column 49 "備註")
+    for (let col = 1; col <= 48; col++) {
+      const loc = locations[col];
+      const partSize = String(headerRow[col] || "").trim();
+      const val = row[col];
+
+      if (!loc || !partSize) continue;
+      if (val === "" || val === undefined || val === null) continue; // Skip empty cells
+
+      // Clean characteristic code (e.g. "0.5 um" -> "0.5um")
+      const charCode = partSize.toLowerCase().replace(/\s/g, "");
+
+      resultRows.push({
+        ControlScope: "PROCESS",
+        ProcessCode: loc,   // For dust monitoring, locations R1 to R12 represent "區域 (Processes)"
+        MachineCode: loc,   // Keep MachineCode aligned or fallback
+        CharacteristicCode: charCode,
+        MeasuredValue: String(val).trim(),
+        MeasuredAt: dateTimeStr.replace(/\r\n/g, " ").replace(/\n/g, " "), // normalize newlines in timestamps
+        LotNo: "落塵監控",
+        Operator: "SYSTEM"
+      });
+    }
+  }
+
+  return resultRows;
+}
+
 async function handleFileChange(e) {
   const files = e.target.files;
   if (!files || files.length === 0) return;
@@ -60,14 +156,46 @@ async function handleFileChange(e) {
   fileHeaders.value = [];
   rawRowsData.value = [];
   columnMappings.value = {};
+  mappedDustRows.value = [];
 
   loading.value = true;
   try {
-    const parsed = await parseUploadSpreadsheet(file);
-    fileHeaders.value = parsed.headers;
-    rawRowsData.value = parsed.rows;
-    runFuzzyAutoMapping();
-    isMappingMode.value = true;
+    if (isDustMode.value) {
+      // Custom Dust Matrix Parser
+      const parsedRows = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            if (workbook.SheetNames.length === 0) {
+              throw new Error("Excel 檔案中找不到任何工作表。");
+            }
+            const ws = workbook.Sheets[workbook.SheetNames[0]];
+            const raw = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            resolve(raw);
+          } catch (ex) {
+            reject(ex);
+          }
+        };
+        reader.onerror = () => reject(new Error("讀取檔案失敗。"));
+        reader.readAsArrayBuffer(file);
+      });
+
+      const unpivoted = parseDustMatrix(parsedRows);
+      if (unpivoted.length === 0) {
+        throw new Error("無塵室落塵交叉表解析結果為空，請檢查表單標頭或數值是否有值。");
+      }
+      mappedDustRows.value = unpivoted;
+      isMappingMode.value = true;
+    } else {
+      // Standard Column Mapping Parser
+      const parsed = await parseUploadSpreadsheet(file);
+      fileHeaders.value = parsed.headers;
+      rawRowsData.value = parsed.rows;
+      runFuzzyAutoMapping();
+      isMappingMode.value = true;
+    }
   } catch (ex) {
     err.value = ex?.message || String(ex);
     selectedFile.value = null;
@@ -94,7 +222,7 @@ function runFuzzyAutoMapping() {
   });
 }
 
-// Preview first 3 mapped rows
+// Preview first 3 mapped rows (Standard Mode)
 const mappedPreviewData = computed(() => {
   return rawRowsData.value.slice(0, 3).map(row => {
     const result = {};
@@ -106,7 +234,63 @@ const mappedPreviewData = computed(() => {
   });
 });
 
+function generateDustTemplate() {
+  const wb = XLSX.utils.book_new();
+  
+  // Custom structured matrix data matching exactly the sample file layout (R1 to R12)
+  const row0 = ["日期\\時間\\位置"];
+  const row1 = [""];
+  const row2 = ["2026/7/2\r\n08:11"];
+  const row3 = ["2026/7/3\r\n08:15"];
+  
+  const merges = [
+    { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },  // Date merge A1:A2
+    { s: { r: 0, c: 49 }, e: { r: 1, c: 49 } } // Remarks merge AX1:AX2
+  ];
+  
+  for (let r = 1; r <= 12; r++) {
+    const loc = `R${r}`;
+    row0.push(loc, null, null, null);
+    row1.push("0.5 um", 1, 5, 10);
+    
+    // Merge Location across 4 columns in Row 0
+    const startCol = 1 + (r - 1) * 4;
+    const endCol = startCol + 3;
+    merges.push({ s: { r: 0, c: startCol }, e: { r: 0, c: endCol } });
+    
+    // Dummy values
+    row2.push(r === 4 ? 23 : 0, 0, 0, 0);
+    row3.push(0, r === 1 ? 23 : 0, 0, 0);
+  }
+  
+  row0.push("備註");
+  row1.push("");
+  row2.push("作業前");
+  row3.push("作業後");
+  
+  const data = [row0, row1, row2, row3];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws["!merges"] = merges;
+  
+  XLSX.utils.book_append_sheet(wb, ws, "落塵監控表單");
+  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  
+  const blob = new Blob([wbout], { type: "application/octet-stream" });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "Dust_Monitoring_Template.xlsx");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 async function downloadTemplate() {
+  if (isDustMode.value) {
+    generateDustTemplate();
+    return;
+  }
+
   try {
     const res = await api.get("/uploads/template/variable", { responseType: "blob" });
     const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -122,39 +306,44 @@ async function downloadTemplate() {
 }
 
 async function uploadMappedData() {
-  // Validate that all required system fields are mapped
-  const missingFields = systemFields
-    .filter(f => f.required && !columnMappings.value[f.key])
-    .map(f => f.label);
-  
-  if (missingFields.length > 0) {
-    err.value = "請先對應所有必填欄位：" + missingFields.join(", ");
-    return;
-  }
-
   loading.value = true;
   err.value = "";
 
   try {
-    // Transform all raw rows according to mapping configuration
-    const transformedRows = rawRowsData.value.map(row => {
-      const obj = {};
-      systemFields.forEach(field => {
-        const mappedHeader = columnMappings.value[field.key];
-        if (mappedHeader && row[mappedHeader] !== undefined && row[mappedHeader] !== null) {
-          obj[field.key] = String(row[mappedHeader]).trim();
-        } else {
-          obj[field.key] = "";
-        }
-      });
-      // Fallback machine code if blank
-      if (!obj.MachineCode && obj.ProcessCode) {
-        obj.MachineCode = `${obj.ProcessCode}-M01`;
+    let payload = [];
+    if (isDustMode.value) {
+      payload = mappedDustRows.value;
+    } else {
+      // Validate required columns
+      const missingFields = systemFields
+        .filter(f => f.required && !columnMappings.value[f.key])
+        .map(f => f.label);
+      
+      if (missingFields.length > 0) {
+        err.value = "請先對應所有必填欄位：" + missingFields.join(", ");
+        loading.value = false;
+        return;
       }
-      return obj;
-    });
 
-    const res = await api.post("/uploads/variable", transformedRows);
+      // Convert standard rows
+      payload = rawRowsData.value.map(row => {
+        const obj = {};
+        systemFields.forEach(field => {
+          const mappedHeader = columnMappings.value[field.key];
+          if (mappedHeader && row[mappedHeader] !== undefined && row[mappedHeader] !== null) {
+            obj[field.key] = String(row[mappedHeader]).trim();
+          } else {
+            obj[field.key] = "";
+          }
+        });
+        if (!obj.MachineCode && obj.ProcessCode) {
+          obj.MachineCode = `${obj.ProcessCode}-M01`;
+        }
+        return obj;
+      });
+    }
+
+    const res = await api.post("/uploads/variable", payload);
     successBatchId.value = res.data.uploadBatchId;
     router.push(`/uploads/${successBatchId.value}/preview`);
   } catch (e) {
@@ -216,8 +405,18 @@ async function uploadJson() {
         </div>
         <h1 class="text-3xl font-black tracking-tight">計量型 (Variable) 抽樣檢驗數據上傳</h1>
         <p class="text-indigo-100 text-sm max-w-xl">
-          支援廠區自動量測機台匯出之 Excel / CSV 檔案上傳。配備「智能對照對應器」，非標準表頭欄位亦可輕鬆對應。
+          支援廠區自動量測機台匯出之 Excel / CSV 檔案上傳。配備「智慧對照對應器」，非標準表頭欄位亦可輕鬆對應。
         </p>
+      </div>
+    </div>
+
+    <!-- 管制圖群組選取區 -->
+    <div class="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 mb-1.5">🎯 1. 選擇要匯入的管制群組 (Import Group)</label>
+        <select v-model="selectedGroupId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+          <option v-for="g in groups" :key="g.id" :value="String(g.id)">{{ g.groupName }} ({{ g.groupCode }})</option>
+        </select>
       </div>
     </div>
 
@@ -232,6 +431,7 @@ async function uploadJson() {
           <FileText class="w-4 h-4" /> 智慧對照 Excel / CSV 匯入
         </button>
         <button
+          v-if="!isDustMode"
           @click="mode = 'json'"
           class="pb-3 text-sm font-bold flex items-center gap-2 transition-all"
           :class="mode === 'json' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'"
@@ -243,7 +443,8 @@ async function uploadJson() {
         @click="downloadTemplate"
         class="flex items-center gap-2 mb-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md shadow-blue-500/20 transition-all text-xs"
       >
-        <Download class="w-4 h-4" /> 下載標準計量型 Excel 範本
+        <Download class="w-4 h-4" />
+        {{ isDustMode ? '下載落塵監控區域 (R1-R12) Excel 範本' : '下載標準計量型 Excel 範本' }}
       </button>
     </div>
 
@@ -264,15 +465,19 @@ async function uploadJson() {
             <UploadCloud class="w-8 h-8" />
           </div>
           <div>
-            <p class="text-sm font-bold text-slate-800 dark:text-white">點擊選擇檔案或將 Excel / CSV 拖曳至此處</p>
-            <p class="text-xs text-slate-400 mt-1">系統將讀取欄位，引導進行智慧欄位對照（免改 Excel 即可匯入）</p>
+            <p class="text-sm font-bold text-slate-800 dark:text-white">
+              {{ isDustMode ? '點擊選擇落塵監控區域表單或拖曳至此處' : '點擊選擇檔案或將 Excel / CSV 拖曳至此處' }}
+            </p>
+            <p class="text-xs text-slate-400 mt-1">
+              {{ isDustMode ? '系統將自動解析 R1 ~ R12 各區域與粒徑交叉點數據，進行攤平匯入。' : '系統將讀取欄位，引導進行智慧欄位對照（免改 Excel 即可匯入）' }}
+            </p>
           </div>
           <div v-if="selectedFile" class="mt-4 px-4 py-2 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center gap-2 border border-blue-500/30">
             <CheckCircle2 class="w-4 h-4 text-blue-500" /> 已選擇檔案：{{ selectedFile.name }} ({{ (selectedFile.size / 1024).toFixed(1) }} KB)
           </div>
         </div>
 
-        <div v-if="!isMappingMode" class="flex flex-wrap items-center justify-end gap-3">
+        <div v-if="!isMappingMode && !isDustMode" class="flex flex-wrap items-center justify-end gap-3">
           <button
             @click="testUploadDemoExcel"
             :disabled="loading"
@@ -286,70 +491,116 @@ async function uploadJson() {
 
       <!-- Column Mapping Workspace -->
       <div v-if="isMappingMode" class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-        <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-          <Settings class="w-5 h-5 text-blue-500" />
-          <h3 class="text-lg font-black text-slate-800 dark:text-white">智慧欄位對照器 (Excel Mapping Manager)</h3>
-        </div>
         
-        <p class="text-xs text-slate-400">系統已完成初步模糊配對，請檢查或自訂各 SPC 資料欄位對應的工作表欄位：</p>
+        <!-- Case A: Standard Column Mapping -->
+        <template v-if="!isDustMode">
+          <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <Settings class="w-5 h-5 text-blue-500" />
+            <h3 class="text-lg font-black text-slate-800 dark:text-white">智慧欄位對照器 (Excel Mapping Manager)</h3>
+          </div>
+          
+          <p class="text-xs text-slate-400">系統已完成初步模糊配對，請檢查或自訂各 SPC 資料欄位對應的工作表欄位：</p>
 
-        <!-- Fields Mapping Matrix Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div v-for="field in systemFields" :key="field.key" class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-black text-slate-700 dark:text-slate-300">
-                {{ field.label }}
-              </span>
-              <HelpCircle v-if="!field.required" class="w-3.5 h-3.5 text-slate-400 cursor-help" title="此為選填項目，若檔案無此欄位可保留空白。" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-for="field in systemFields" :key="field.key" class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-slate-700 dark:text-slate-300">
+                  {{ field.label }}
+                </span>
+                <HelpCircle v-if="!field.required" class="w-3.5 h-3.5 text-slate-400 cursor-help" title="此為選填項目，若檔案無此欄位可保留空白。" />
+              </div>
+              <select v-model="columnMappings[field.key]" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="">-- 不對應（留空） --</option>
+                <option v-for="h in fileHeaders" :key="h" :value="h">{{ h }}</option>
+              </select>
             </div>
-            <select v-model="columnMappings[field.key]" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-              <option value="">-- 不對應（留空） --</option>
-              <option v-for="h in fileHeaders" :key="h" :value="h">{{ h }}</option>
-            </select>
           </div>
-        </div>
 
-        <!-- Mapped Live Preview -->
-        <div class="space-y-3">
-          <h4 class="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-            <Table class="w-4 h-4 text-indigo-500" /> 即時對照前 3 筆資料預覽 (Data Mapping Preview)
-          </h4>
-          <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-400 font-bold uppercase">
-                <tr>
-                  <th v-for="f in systemFields" :key="f.key" class="p-2.5 font-bold text-[10px]">
-                    {{ f.key }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300 font-medium">
-                <tr v-for="(pRow, pIdx) in mappedPreviewData" :key="pIdx" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/50">
-                  <td v-for="f in systemFields" :key="f.key" class="p-2.5 font-mono max-w-[120px] truncate">
-                    {{ pRow[f.key] || '-' }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Mapped Live Preview -->
+          <div class="space-y-3">
+            <h4 class="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Table class="w-4 h-4 text-indigo-500" /> 即時對照前 3 筆資料預覽 (Data Mapping Preview)
+            </h4>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-400 font-bold uppercase">
+                  <tr>
+                    <th v-for="f in systemFields" :key="f.key" class="p-2.5 font-bold text-[10px]">
+                      {{ f.key }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                  <tr v-for="(pRow, pIdx) in mappedPreviewData" :key="pIdx" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/50">
+                    <td v-for="f in systemFields" :key="f.key" class="p-2.5 font-mono max-w-[120px] truncate">
+                      {{ pRow[f.key] || '-' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </template>
+
+        <!-- Case B: Dust Custom Matrix Parser Preview -->
+        <template v-else>
+          <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <Settings class="w-5 h-5 text-indigo-500" />
+            <h3 class="text-lg font-black text-slate-800 dark:text-white">落塵監控區域交叉表自動解析預覽</h3>
+          </div>
+
+          <p class="text-xs text-slate-400">已自動解析 Excel 中各別監控區域（R1 ~ R12）與粒徑交叉欄位。以下為攤平（Unpivoted）後的量測值：</p>
+
+          <div class="space-y-3">
+            <h4 class="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Table class="w-4 h-4 text-indigo-500" /> 解析結果預覽（共計 {{ mappedDustRows.length }} 筆量測點）
+            </h4>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 max-h-96">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-400 font-bold uppercase sticky top-0">
+                  <tr>
+                    <th class="p-2.5 font-bold text-[10px]">時間 (MeasuredAt)</th>
+                    <th class="p-2.5 font-bold text-[10px]">監控區域 (ProcessCode)</th>
+                    <th class="p-2.5 font-bold text-[10px]">量測位置 (MachineCode)</th>
+                    <th class="p-2.5 font-bold text-[10px]">粒徑項目 (CharacteristicCode)</th>
+                    <th class="p-2.5 font-bold text-[10px]">量測數值 (MeasuredValue)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                  <tr v-for="(pRow, pIdx) in mappedDustRows.slice(0, 100)" :key="pIdx" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/50">
+                    <td class="p-2.5 font-mono">{{ pRow.MeasuredAt }}</td>
+                    <td class="p-2.5 font-mono font-bold text-blue-600 dark:text-blue-400">{{ pRow.ProcessCode }}</td>
+                    <td class="p-2.5 font-mono font-semibold text-slate-600 dark:text-slate-400">{{ pRow.MachineCode }}</td>
+                    <td class="p-2.5 font-mono font-bold text-amber-600 dark:text-amber-400">{{ pRow.CharacteristicCode }}</td>
+                    <td class="p-2.5 font-mono font-black text-emerald-600">{{ pRow.MeasuredValue }}</td>
+                  </tr>
+                  <tr v-if="mappedDustRows.length > 100">
+                    <td colspan="5" class="p-2.5 text-center text-slate-400 font-bold bg-slate-50 dark:bg-slate-850">
+                      ... 僅預覽前 100 筆數據 ...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
 
         <!-- Mapping submit bar -->
         <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <button @click="isMappingMode = false; selectedFile = null" :disabled="loading" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-850">
+          <button @click="isMappingMode = false; selectedFile = null; mappedDustRows = []" :disabled="loading" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-850">
             重新選檔
           </button>
           <button @click="uploadMappedData" :disabled="loading" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold shadow-lg shadow-blue-500/20 text-xs transition-all">
             <RefreshCw v-if="loading" class="w-4 h-4 animate-spin" />
             <ArrowRight v-else class="w-4 h-4" />
-            確認映射並上傳批次
+            確認並送出匯入批次
           </button>
         </div>
       </div>
     </div>
 
     <!-- JSON Mode -->
-    <div v-if="mode === 'json'" class="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+    <div v-if="mode === 'json' && !isDustMode" class="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-slate-800 dark:text-white">貼上原始檢驗 JSON 陣列</h3>
         <span class="text-xs text-slate-400 font-mono">支援 ControlScope, PartNo, ProcessCode, MachineCode, CharacteristicCode</span>

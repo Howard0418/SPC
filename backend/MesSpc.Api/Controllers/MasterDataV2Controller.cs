@@ -27,7 +27,36 @@ public class PartsController(AppDbContext db) : ControllerBase
 [Route("api/v1/processes")]
 public class ProcessesController(AppDbContext db) : ControllerBase
 {
-    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.Processes.OrderBy(x => x.Id).ToListAsync());
+    [HttpGet]
+    public async Task<IActionResult> Get([FromQuery] string? controlScope = null, [FromQuery] bool? configuredOnly = null)
+    {
+        var query = db.Processes.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(controlScope) && !string.Equals(controlScope, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            var normalizedScope = controlScope.Trim().ToUpperInvariant();
+            if (configuredOnly == true)
+            {
+                var processIds = await db.PartProcessCharacteristics
+                    .Where(x => x.ControlScope == normalizedScope)
+                    .Select(x => x.ProcessId)
+                    .Distinct()
+                    .ToListAsync();
+                query = query.Where(x => processIds.Contains(x.Id));
+            }
+            else
+            {
+                if (normalizedScope == "CHEMICAL")
+                {
+                    var processIds = await db.Machines
+                        .Select(x => x.ProcessId)
+                        .Distinct()
+                        .ToListAsync();
+                    query = query.Where(x => processIds.Contains(x.Id));
+                }
+            }
+        }
+        return Ok(await query.OrderBy(x => x.Id).ToListAsync());
+    }
     [HttpPost] public async Task<IActionResult> Create(Process req) { db.Processes.Add(req); await db.SaveChangesAsync(); return Ok(req); }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, Process req)
@@ -640,10 +669,8 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         {
             var chartType = await (
                 from type in db.ControlChartTypes.AsNoTracking()
-                join category in db.ControlChartCategories.AsNoTracking()
-                    on type.ChartCategoryId equals category.Id
                 join groupInfo in db.ControlChartGroups.AsNoTracking()
-                    on category.ChartGroupId equals groupInfo.Id
+                    on type.ChartGroupId equals groupInfo.Id
                 where type.Id == req.ChartTypeId.Value && type.IsEnabled
                 select new { Type = type, groupInfo.GroupType }
             ).FirstOrDefaultAsync();
@@ -697,27 +724,7 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
     }
 }
 
-[ApiController]
-[Route("api/control-chart-categories")]
-[Route("api/v1/control-chart-categories")]
-public class ControlChartCategoriesController(AppDbContext db) : ControllerBase
-{
-    [HttpGet] public async Task<IActionResult> Get() => Ok(await db.ControlChartCategories.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(ControlChartCategory req) { db.ControlChartCategories.Add(req); await db.SaveChangesAsync(); return Ok(req); }
-    [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, ControlChartCategory req)
-    {
-        var x = await db.ControlChartCategories.FindAsync(id); if (x is null) return NotFound();
-        x.ChartGroupId = req.ChartGroupId; x.CategoryCode = req.CategoryCode; x.CategoryName = req.CategoryName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
-        await db.SaveChangesAsync(); return Ok(x);
-    }
-    [HttpDelete("{id:int}")] 
-    public async Task<IActionResult> Delete(int id) 
-    { 
-        var x = await db.ControlChartCategories.FindAsync(id); if (x is null) return NotFound(); 
-        db.ControlChartCategories.Remove(x); await db.SaveChangesAsync(); return NoContent(); 
-    }
-}
+
 
 [ApiController]
 [Route("api/operators")]
@@ -835,7 +842,7 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Update(int id, ControlChartType req)
     {
         var x = await db.ControlChartTypes.FindAsync(id); if (x is null) return NotFound();
-        x.ChartCategoryId = req.ChartCategoryId; x.ChartTypeCode = req.ChartTypeCode; x.ChartTypeName = req.ChartTypeName; x.DataCategory = req.DataCategory; x.RequiredSampleSize = req.RequiredSampleSize; x.RuleGroupId = req.RuleGroupId; x.Description = req.Description; x.FormulaConfigJson = req.FormulaConfigJson; x.IsEnabled = req.IsEnabled;
+        x.ChartGroupId = req.ChartGroupId; x.ChartTypeCode = req.ChartTypeCode; x.ChartTypeName = req.ChartTypeName; x.DataCategory = req.DataCategory; x.RequiredSampleSize = req.RequiredSampleSize; x.RuleGroupId = req.RuleGroupId; x.Description = req.Description; x.FormulaConfigJson = req.FormulaConfigJson; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
     [HttpGet("{id:int}/rules")]

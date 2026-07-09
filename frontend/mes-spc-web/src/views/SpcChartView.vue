@@ -53,7 +53,6 @@ const productPartId = ref("");
 // Dimension selection state: 'PROC', 'CHEM', 'PROD'
 const selectedDimension = ref("PROC");
 const chartTypes = ref([]);
-const categories = ref([]);
 const groups = ref([]);
 const trendChartEl = ref(null);
 const histogramChartEl = ref(null);
@@ -263,8 +262,7 @@ const pageGroupType = "CONTROL_CHART";
 const getDimensionForMapping = (m) => {
   if (m.chartTypeId) {
     const type = chartTypes.value.find(t => t.id === m.chartTypeId);
-    const cat = type ? categories.value.find(c => c.id === type.chartCategoryId) : null;
-    const group = cat ? groups.value.find(g => g.id === cat.chartGroupId) : null;
+    const group = type ? groups.value.find(g => g.id === type.chartGroupId) : null;
     return group?.groupCode || "";
   }
   if (m.controlScope === "PROCESS") return "PROCESS";
@@ -343,15 +341,13 @@ watch(selectedCharacteristicId, (newVal) => {
 
 async function loadMappings() {
   try {
-    const [mapRes, typesRes, catsRes, groupsRes] = await Promise.all([
+    const [mapRes, typesRes, groupsRes] = await Promise.all([
       api.get("/part-process-characteristics"),
       api.get("/control-chart-types"),
-      api.get("/control-chart-categories"),
       api.get("/control-chart-groups", { params: { groupType: pageGroupType } })
     ]);
     
     chartTypes.value = typesRes.data || [];
-    categories.value = catsRes.data || [];
     groups.value = groupsRes.data || [];
     mappings.value = mapRes.data || [];
     if (!dimensionOptions.value.some(group => group.id === selectedDimension.value)) {

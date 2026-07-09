@@ -44,14 +44,14 @@ const trendChartEl = ref(null);
 let trendChartInstance = null;
 
 const tableSummaryData = ref(null);
+const selectedSummaryRow = ref(null);
 const pageGroupType = "TREND_CHART";
 
 // ─── Dimension helpers ───────────────────────────────────────
 const getDimensionForMapping = (m) => {
   if (m.chartTypeId) {
     const type = chartTypes.value.find(t => t.id === m.chartTypeId);
-    const cat = type ? categories.value.find(c => c.id === type.chartCategoryId) : null;
-    const group = cat ? groups.value.find(g => g.id === cat.chartGroupId) : null;
+    const group = type ? groups.value.find(g => g.id === type.chartGroupId) : null;
     return group?.groupCode || "";
   }
   return "";
@@ -59,7 +59,7 @@ const getDimensionForMapping = (m) => {
 
 const dimensionOptions = computed(() =>
   groups.value
-    .filter(group => group.isEnabled !== false && group.groupType === pageGroupType)
+    .filter(group => group.isEnabled !== false)
     .map(group => ({ id: group.groupCode, label: group.groupName }))
 );
 
@@ -112,6 +112,41 @@ const selectedMapping = computed(() => {
   ) || null;
 });
 
+function uniqueNonEmptyParts(parts) {
+  return [...new Set(parts
+    .map(x => (x ?? "").toString().trim())
+    .filter(Boolean))];
+}
+
+function formatTankLabel(tank) {
+  if (!tank) return "";
+  const name = tank.tankName || "";
+  const code = tank.tankCode || "";
+  if (name && code) return `${name} (${code})`;
+  return name || code;
+}
+
+const activeChartDisplayName = computed(() => {
+  const row = selectedSummaryRow.value;
+  const rowTitleParts = uniqueNonEmptyParts([
+    row?.lineOrProcessName,
+    row?.slotName,
+    row?.chartName
+  ]);
+  if (rowTitleParts.length > 0) return rowTitleParts.join(" - ");
+
+  const mapping = selectedMapping.value;
+  const mappingTitleParts = uniqueNonEmptyParts([
+    ...uniqueNonEmptyParts([
+      mapping?.process?.processName,
+      mapping?.machine?.machineName
+    ]),
+    formatTankLabel(mapping?.tank),
+    mapping?.characteristic?.characteristicName
+  ]);
+  return mappingTitleParts.join(" - ");
+});
+
 // Autocomplete
 const filteredMappings = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
@@ -131,6 +166,7 @@ function selectMappingFromSearch(m) {
   selectedCharacteristicId.value = m.characteristicId;
   updatingCascades.value = false;
   showSearchResults.value = false;
+  selectedSummaryRow.value = null;
   loadChart();
 }
 
@@ -152,6 +188,7 @@ async function drawSingleChart(row) {
   selectedProcessId.value = match.processId;
   selectedCharacteristicId.value = match.characteristicId;
   updatingCascades.value = false;
+  selectedSummaryRow.value = row;
   tableSummaryData.value = null;
   loadChart();
 }
@@ -167,6 +204,7 @@ watch(selectedDimension, (newDim) => {
   selectedCharacteristicId.value = "";
   chartResult.value = null;
   tableSummaryData.value = null;
+  selectedSummaryRow.value = null;
 });
 
 watch(selectedPartId, () => {
@@ -175,6 +213,7 @@ watch(selectedPartId, () => {
   selectedCharacteristicId.value = "";
   chartResult.value = null;
   tableSummaryData.value = null;
+  selectedSummaryRow.value = null;
 });
 
 watch(selectedProcessId, (newVal) => {
@@ -182,19 +221,18 @@ watch(selectedProcessId, (newVal) => {
   selectedCharacteristicId.value = newVal === "ALL" ? "ALL" : "";
   chartResult.value = null;
   tableSummaryData.value = null;
+  selectedSummaryRow.value = null;
 });
 
 // ─── Data loading ─────────────────────────────────────────────
 async function loadMappings() {
   try {
-    const [mapRes, typesRes, catsRes, groupsRes] = await Promise.all([
+    const [mapRes, typesRes, groupsRes] = await Promise.all([
       api.get("/part-process-characteristics"),
       api.get("/control-chart-types"),
-      api.get("/control-chart-categories"),
-      api.get("/control-chart-groups", { params: { groupType: pageGroupType } })
+      api.get("/control-chart-groups")
     ]);
     chartTypes.value = typesRes.data || [];
-    categories.value = catsRes.data || [];
     groups.value = groupsRes.data || [];
     mappings.value = mapRes.data || [];
     if (!dimensionOptions.value.some(group => group.id === selectedDimension.value)) {
@@ -235,7 +273,6 @@ async function loadChart() {
       const res = await api.get("/v1/spc/summary", {
         params: {
           dimension: selectedDimension.value,
-          groupType: pageGroupType,
           partId: selectedPartId.value || undefined
         }
       });
@@ -253,6 +290,10 @@ async function loadChart() {
 
   const mapping = selectedMapping.value;
   if (!mapping) return;
+
+  if (selectedSummaryRow.value && selectedSummaryRow.value.partProcessCharacteristicId !== mapping.id) {
+    selectedSummaryRow.value = null;
+  }
 
   loading.value = true;
   error.value = "";
@@ -359,6 +400,16 @@ function renderTrendChart() {
 
   trendChartInstance.setOption({
     backgroundColor: "transparent",
+    title: {
+      text: activeChartDisplayName.value,
+      left: "center",
+      top: 5,
+      textStyle: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: document.documentElement.classList.contains("dark") ? "#e2e8f0" : "#1e293b"
+      }
+    },
     tooltip: {
       trigger: "axis",
       backgroundColor: "rgba(15, 23, 42, 0.95)",
@@ -396,7 +447,7 @@ function renderTrendChart() {
       { type: "slider", show: true, xAxisIndex: [0], bottom: 8, borderColor: "#334155", textStyle: { color: "#64748b" } },
       { type: "inside", xAxisIndex: [0] }
     ],
-    grid: { left: 65, right: 90, top: 50, bottom: 60 },
+    grid: { left: 65, right: 90, top: 55, bottom: 60 },
     xAxis: {
       type: "category", data: labels, boundaryGap: false,
       axisLine: { lineStyle: { color: "#64748b" } },
@@ -589,6 +640,18 @@ const trendStats = computed(() => {
 
     <!-- Chart Area -->
     <div v-if="chartResult && !loading" class="space-y-5">
+
+      <!-- Active Chart Display Name -->
+      <div
+        v-if="activeChartDisplayName"
+        data-testid="active-chart-display-name"
+        class="px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+      >
+        <p class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">圖表名稱</p>
+        <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white leading-snug">
+          {{ activeChartDisplayName }}
+        </h2>
+      </div>
 
       <!-- Info Strip -->
       <div v-if="selectedMapping" class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">

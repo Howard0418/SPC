@@ -291,7 +291,7 @@ async function submitHandleAlerts() {
   try {
     for (const alertObj of activeAlerts.value) {
       await api.put(`/v1/alerts/${alertObj.id}/workflow`, {
-        status: "Closed",
+        status: "InProgress",
         rootCause: handleForm.value.rootCause,
         correctiveAction: handleForm.value.correctiveAction,
         responsibleUser: payload.value.operatorName
@@ -524,7 +524,7 @@ async function submitHandleAlerts() {
             </div>
             <div>
               <h2 class="text-xl font-black text-white tracking-wide">品質異常強制卡控 (Soft Hold)</h2>
-              <p class="text-red-100 text-sm font-medium mt-0.5">系統偵測到剛輸入的數據違反品質管制規則，請立刻填寫處置對策解鎖畫面。</p>
+              <p class="text-red-100 text-sm font-medium mt-0.5">系統偵測到剛輸入的數據違反品質管制規則，請立刻填寫初步處置；案件會進入處置中，後續由 QE 或主管結案。</p>
             </div>
           </div>
 
@@ -563,7 +563,7 @@ async function submitHandleAlerts() {
           <div class="px-6 py-5 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shrink-0 flex justify-end">
             <button type="button" @click="submitHandleAlerts" :disabled="handlingAlerts" class="flex items-center gap-2 px-8 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold shadow-lg shadow-red-500/30 disabled:opacity-50 transition-all text-sm">
               <RefreshCw v-if="handlingAlerts" class="w-4 h-4 animate-spin" />
-              {{ handlingAlerts ? '正在提交...' : '確認提交處置並解除卡控' }}
+              {{ handlingAlerts ? '正在提交...' : '提交初步處置並解除卡控' }}
             </button>
           </div>
         </div>

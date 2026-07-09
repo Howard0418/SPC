@@ -120,6 +120,21 @@ async function confirmImport() {
   }
 }
 
+async function discardImport() {
+  if (!confirm("確定要放棄本次匯入並刪除暫存資料嗎？")) return;
+  loading.value = true;
+  err.value = "";
+  try {
+    await api.delete(`/uploads/${batchId.value}`);
+    const isVariable = batch.value?.uploadType === "Variable";
+    router.push(isVariable ? "/uploads/variable" : "/uploads/attribute");
+  } catch (e) {
+    err.value = "放棄匯入失敗：" + getApiErrorMessage(e);
+  } finally {
+    loading.value = false;
+  }
+}
+
 // Check if a specific cell key is invalid
 function hasCellError(detailItem, fieldName) {
   return detailItem.errorsList.some(e => e.fieldName?.toLowerCase() === fieldName.toLowerCase());
@@ -169,6 +184,16 @@ onMounted(load);
             <RefreshCw v-if="loading" class="w-4 h-4 animate-spin text-indigo-600" />
             <ArrowRight v-else class="w-4 h-4 text-indigo-600" />
             確認轉入正式 SPC 運算
+          </button>
+
+          <button
+            v-if="!isImported"
+            @click="discardImport"
+            :disabled="loading"
+            class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow-xl shadow-indigo-900/30 disabled:opacity-50 transition-all text-sm"
+          >
+            <XCircle class="w-4 h-4 text-white" />
+            放棄並刪除此暫存
           </button>
 
           <button
