@@ -1,0 +1,28 @@
+# Node / frontend
+node_modules/
+**/node_modules/
+frontend/mes-spc-web/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# .NET
+**/bin/
+**/obj/
+**/publish/
+publish/
+
+# IDE / local runtime
+.vs/
+.vscode/
+.dotnet/
+.dotnet_home/
+
+# Logs and generated output
+*.log
+EmailOutbox/
+test-artifacts/
+
+# OS
+Thumbs.db
+.DS_Store
