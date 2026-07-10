@@ -1,2 +1,0 @@
-@echo off
-dotnet build > build_output.log 2>&1
