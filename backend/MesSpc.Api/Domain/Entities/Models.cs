@@ -349,6 +349,10 @@ public class ControlChartGroup : BaseEntity<int>
     public string GroupCode { get; set; } = string.Empty;
     public string GroupName { get; set; } = string.Empty;
     public string GroupType { get; set; } = "CONTROL_CHART";
+    public string BusinessScopeCode { get; set; } = string.Empty;
+    public bool RequiresPart { get; set; }
+    public bool RequiresMachine { get; set; }
+    public bool RequiresTank { get; set; }
     public string? Description { get; set; }
     public bool IsEnabled { get; set; } = true;
 }
@@ -405,7 +409,7 @@ public class VariableMeasurement : BaseEntity<long>
     public Guid UploadBatchId { get; set; }
     public int PartId { get; set; }
     public int ProcessId { get; set; }
-    public int MachineId { get; set; }
+    public int? MachineId { get; set; }
     public int CharacteristicId { get; set; }
     public int PartProcessCharacteristicId { get; set; }
     public string? WorkOrderNo { get; set; }
@@ -445,7 +449,7 @@ public class AttributeMeasurement : BaseEntity<long>
     public Guid UploadBatchId { get; set; }
     public int PartId { get; set; }
     public int ProcessId { get; set; }
-    public int MachineId { get; set; }
+    public int? MachineId { get; set; }
     public int CharacteristicId { get; set; }
     public int PartProcessCharacteristicId { get; set; }
     public string? WorkOrderNo { get; set; }

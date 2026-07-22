@@ -165,7 +165,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     UploadBatchId = batch.UploadBatchId,
                     PartId = ctx.Part?.Id ?? 0,
                     ProcessId = ctx.Process.Id,
-                    MachineId = ctx.Machine.Id,
+                    MachineId = ctx.Machine?.Id,
                     CharacteristicId = ctx.Characteristic.Id,
                     PartProcessCharacteristicId = ctx.Mapping.Id,
                     LotNo = Get(payload, "LotNo"),
@@ -216,7 +216,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     UploadBatchId = batch.UploadBatchId,
                     PartId = ctx.Part?.Id ?? 0,
                     ProcessId = ctx.Process.Id,
-                    MachineId = ctx.Machine.Id,
+                    MachineId = ctx.Machine?.Id,
                     CharacteristicId = ctx.Characteristic.Id,
                     PartProcessCharacteristicId = ctx.Mapping.Id,
                     LotNo = Get(payload, "LotNo"),
@@ -454,6 +454,12 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         var errors = new List<(string Field, string Code, string Message)>();
         var scope = ResolveScope(row);
+        var scopeGroup = await FindScopeGroupAsync(scope, ct);
+        if (scopeGroup is null)
+            errors.Add(("ControlScope", "SCOPE_NOT_CONFIGURED", "ControlScope has no enabled control-chart group configuration."));
+        var requiresPart = scopeGroup?.RequiresPart ?? scope == "PRODUCT";
+        var requiresMachine = scopeGroup?.RequiresMachine ?? true;
+        var requiresTank = scopeGroup?.RequiresTank ?? scope == "CHEMICAL";
 
         if (string.Equals(expectedDataCategory, "Variable", StringComparison.OrdinalIgnoreCase))
         {
@@ -476,22 +482,25 @@ public class UploadService(AppDbContext db, SpcService spcService)
         }
 
         Part? part = null;
-        if (scope == "PRODUCT")
+        if (requiresPart)
         {
             part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == Get(row, "PartNo"), ct);
             if (part is null) errors.Add(("PartNo", "PART_NOT_FOUND", "Product control rows require an existing PartNo."));
         }
         var process = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == Get(row, "ProcessCode"), ct);
         if (process is null) errors.Add(("ProcessCode", "PROCESS_NOT_FOUND", "ProcessCode does not exist."));
-        var machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == Get(row, "MachineCode"), ct);
-        if (machine is null) errors.Add(("MachineCode", "MACHINE_NOT_FOUND", "MachineCode does not exist."));
-        else if (process is not null && machine.ProcessId != process.Id)
+        Machine? machine = null;
+        var machineCode = Get(row, "MachineCode");
+        if (!string.IsNullOrWhiteSpace(machineCode))
+            machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == machineCode, ct);
+        if (requiresMachine && machine is null) errors.Add(("MachineCode", "MACHINE_NOT_FOUND", "MachineCode does not exist."));
+        else if (process is not null && machine is not null && machine.ProcessId != process.Id)
         {
             errors.Add(("MachineCode", "MACHINE_PROCESS_MISMATCH", "MachineCode does not belong to the specified ProcessCode."));
         }
 
         Tank? tank = null;
-        if (scope == "CHEMICAL")
+        if (requiresTank)
         {
             var tankName = Get(row, "TankCode");
             if (string.IsNullOrWhiteSpace(tankName))
@@ -512,9 +521,9 @@ public class UploadService(AppDbContext db, SpcService spcService)
             errors.Add(("DataCategory", "INVALID_DATA_CATEGORY", $"Characteristic data category should be {expectedDataCategory}."));
         }
 
-        if ((scope != "PRODUCT" || part is not null) && process is not null && characteristic is not null)
+        if ((!requiresPart || part is not null) && (!requiresMachine || machine is not null) && process is not null && characteristic is not null)
         {
-            int? mappingPartId = scope == "PRODUCT" ? part!.Id : null;
+            int? mappingPartId = requiresPart ? part!.Id : null;
             var mappingQuery = db.PartProcessCharacteristics.Where(x =>
                     x.ControlScope == scope &&
                     x.PartId == mappingPartId &&
@@ -522,22 +531,13 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     x.CharacteristicId == characteristic.Id &&
                     x.IsEnabled);
 
-            if (scope == "CHEMICAL")
-            {
-                if (machine is not null) mappingQuery = mappingQuery.Where(x => x.MachineId == machine.Id);
-                if (tank is not null) mappingQuery = mappingQuery.Where(x => x.TankId == tank.Id);
-            }
-            else
-            {
-                mappingQuery = mappingQuery.Where(x => x.TankId == null);
-            }
+            mappingQuery = mappingQuery.Where(x => x.MachineId == (requiresMachine ? machine!.Id : null));
+            mappingQuery = mappingQuery.Where(x => x.TankId == (requiresTank ? tank!.Id : null));
 
             var mapping = await mappingQuery.FirstOrDefaultAsync(ct);
             if (mapping is null)
             {
-                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", scope == "CHEMICAL"
-                    ? "Chemical master data does not exist for ProcessCode + MachineCode + TankCode + CharacteristicCode."
-                    : "ControlScope + optional Part + Process + Characteristic mapping does not exist."));
+                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", "Configured business-scope mapping does not exist for the supplied master data."));
             }
         }
 
@@ -559,35 +559,33 @@ public class UploadService(AppDbContext db, SpcService spcService)
         }
     }
 
-    private async Task<(Part? Part, Process Process, Machine Machine, Tank? Tank, QualityCharacteristic Characteristic, PartProcessCharacteristic Mapping)?> ResolveReferencesAsync(Dictionary<string, string?> payload, CancellationToken ct)
+    private async Task<(Part? Part, Process Process, Machine? Machine, Tank? Tank, QualityCharacteristic Characteristic, PartProcessCharacteristic Mapping)?> ResolveReferencesAsync(Dictionary<string, string?> payload, CancellationToken ct)
     {
         var scope = ResolveScope(payload);
+        var scopeGroup = await FindScopeGroupAsync(scope, ct);
+        var requiresPart = scopeGroup?.RequiresPart ?? scope == "PRODUCT";
+        var requiresMachine = scopeGroup?.RequiresMachine ?? true;
+        var requiresTank = scopeGroup?.RequiresTank ?? scope == "CHEMICAL";
         Part? part = null;
-        if (scope == "PRODUCT")
+        if (requiresPart)
         {
             part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == Get(payload, "PartNo"), ct);
         }
         var process = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == Get(payload, "ProcessCode"), ct);
         var machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == Get(payload, "MachineCode"), ct);
         var characteristic = await db.QualityCharacteristics.FirstOrDefaultAsync(x => x.CharacteristicCode == Get(payload, "CharacteristicCode"), ct);
-        if ((scope == "PRODUCT" && part is null) || process is null || machine is null || characteristic is null) return null;
-        var tank = scope == "CHEMICAL" ? await FindTankAsync(machine, Get(payload, "TankCode"), ct) : null;
-        if (scope == "CHEMICAL" && tank is null) return null;
-        int? mappingPartId = scope == "PRODUCT" ? part!.Id : null;
+        if ((requiresPart && part is null) || process is null || (requiresMachine && machine is null) || characteristic is null) return null;
+        var tank = requiresTank && machine is not null ? await FindTankAsync(machine, Get(payload, "TankCode"), ct) : null;
+        if (requiresTank && tank is null) return null;
+        int? mappingPartId = requiresPart ? part!.Id : null;
         var mappingQuery = db.PartProcessCharacteristics.Where(x =>
                 x.ControlScope == scope &&
                 x.PartId == mappingPartId &&
                 x.ProcessId == process.Id &&
                 x.CharacteristicId == characteristic.Id &&
                 x.IsEnabled);
-        if (scope == "CHEMICAL")
-        {
-            mappingQuery = mappingQuery.Where(x => x.MachineId == machine.Id && x.TankId == tank!.Id);
-        }
-        else
-        {
-            mappingQuery = mappingQuery.Where(x => x.TankId == null);
-        }
+        mappingQuery = mappingQuery.Where(x => x.MachineId == (requiresMachine ? machine!.Id : null));
+        mappingQuery = mappingQuery.Where(x => x.TankId == (requiresTank ? tank!.Id : null));
 
         var mapping = await mappingQuery.FirstOrDefaultAsync(ct);
         if (mapping is null) return null;
@@ -601,8 +599,15 @@ public class UploadService(AppDbContext db, SpcService spcService)
         if (normalized is "PROCESS" or "PROC" or "製程" or "製程管制") return "PROCESS";
         if (normalized is "CHEMICAL" or "CHEM" or "藥水" or "藥液" or "藥水管制" or "藥液管制") return "CHEMICAL";
         if (normalized is "PRODUCT" or "PROD" or "產品" or "產品管制") return "PRODUCT";
+        if (!string.IsNullOrWhiteSpace(normalized)) return normalized;
         return string.IsNullOrWhiteSpace(Get(row, "PartNo")) ? "PROCESS" : "PRODUCT";
     }
+
+    private Task<ControlChartGroup?> FindScopeGroupAsync(string scope, CancellationToken ct)
+        => db.ControlChartGroups.AsNoTracking()
+            .Where(x => x.IsEnabled && x.GroupType == "CONTROL_CHART" && x.BusinessScopeCode == scope)
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync(ct);
 
     private static string? Get(Dictionary<string, string?> row, string key)
     {

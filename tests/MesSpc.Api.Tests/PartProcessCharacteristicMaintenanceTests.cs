@@ -13,6 +13,35 @@ namespace MesSpc.Api.Tests;
 public class PartProcessCharacteristicMaintenanceTests
 {
     [Fact]
+    public async Task Create_Should_Use_Configured_Group_FieldRequirements()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        await using var db = new AppDbContext(options);
+        var process = new Process { ProcessCode = "CUSTOM_P", ProcessName = "自訂製程", ControlScope = "CUSTOM" };
+        var characteristic = new QualityCharacteristic { CharacteristicCode = "CUSTOM_C", CharacteristicName = "自訂特性", ControlScope = "CUSTOM", DataCategory = "Variable" };
+        var group = new ControlChartGroup
+        {
+            GroupCode = "CUSTOM_GROUP", GroupName = "自訂範圍", GroupType = "CONTROL_CHART",
+            BusinessScopeCode = "CUSTOM", RequiresMachine = true, RequiresTank = true
+        };
+        db.AddRange(process, characteristic, group);
+        await db.SaveChangesAsync();
+        var chartType = new ControlChartType { ChartGroupId = group.Id, ChartTypeCode = "CUSTOM_IMR", ChartTypeName = "自訂 I-MR", DataCategory = "Variable", RequiredSampleSize = 1 };
+        db.Add(chartType);
+        await db.SaveChangesAsync();
+
+        var result = await new PartProcessCharacteristicsController(db).Create(new PartProcessCharacteristic
+        {
+            ControlScope = "CUSTOM", ProcessId = process.Id, CharacteristicId = characteristic.Id,
+            ChartTypeId = chartType.Id, SampleSize = 1
+        });
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+        ((BadRequestObjectResult)result).Value.Should().Be("自訂範圍管制項目必須選擇線別/機台。");
+    }
+
+    [Fact]
     public async Task Update_Should_Save_Unit_And_ItemSpecificRules()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()

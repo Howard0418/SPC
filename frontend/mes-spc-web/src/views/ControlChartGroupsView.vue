@@ -61,6 +61,10 @@ const groupsForm = ref({
   groupName: "",
   description: "",
   groupType: "CONTROL_CHART",
+  businessScopeCode: "",
+  requiresPart: false,
+  requiresMachine: false,
+  requiresTank: false,
   isEnabled: true
 });
 const groupsFormErr = ref("");
@@ -87,7 +91,7 @@ const filteredGroups = computed(() => {
 function openGroupsCreate() {
   groupsModalMode.value = "create";
   groupsCurrentId.value = null;
-  groupsForm.value = { groupCode: "", groupName: "", description: "", groupType: "CONTROL_CHART", isEnabled: true };
+  groupsForm.value = { groupCode: "", groupName: "", description: "", groupType: "CONTROL_CHART", businessScopeCode: "", requiresPart: false, requiresMachine: false, requiresTank: false, isEnabled: true };
   groupsFormErr.value = "";
   groupsShowModal.value = true;
 }
@@ -100,6 +104,10 @@ function openGroupsEdit(item) {
     groupName: item.groupName || "",
     description: item.description || "",
     groupType: item.groupType || "CONTROL_CHART",
+    businessScopeCode: item.businessScopeCode || item.groupCode || "",
+    requiresPart: item.requiresPart ?? false,
+    requiresMachine: item.requiresMachine ?? false,
+    requiresTank: item.requiresTank ?? false,
     isEnabled: item.isEnabled ?? true
   };
   groupsFormErr.value = "";
@@ -107,8 +115,8 @@ function openGroupsEdit(item) {
 }
 
 async function saveGroup() {
-  if (!groupsForm.value.groupCode?.trim() || !groupsForm.value.groupName?.trim()) {
-    groupsFormErr.value = "群組代號與名稱皆為必填欄位。";
+  if (!groupsForm.value.groupCode?.trim() || !groupsForm.value.groupName?.trim() || !groupsForm.value.businessScopeCode?.trim()) {
+    groupsFormErr.value = "群組代號、名稱與業務範圍代碼皆為必填欄位。";
     return;
   }
   groupsFormErr.value = "";
@@ -706,6 +714,19 @@ watch(() => route.query.tab, syncTabFromRoute);
               <option value="CONTROL_CHART">管制圖 (Control Chart)</option>
               <option value="TREND_CHART">趨勢圖 (Trend Chart)</option>
             </select>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">業務範圍代碼 *</label>
+            <input v-model="groupsForm.businessScopeCode" type="text" required placeholder="例如：CHEMICAL" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold uppercase text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <p class="text-[11px] text-slate-500">相同業務流程的管制圖與趨勢圖請使用相同代碼。</p>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">資料必填規則</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input v-model="groupsForm.requiresPart" type="checkbox" class="w-4 h-4" /> 產品料號</label>
+              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input v-model="groupsForm.requiresMachine" type="checkbox" class="w-4 h-4" /> 線別／機台</label>
+              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input v-model="groupsForm.requiresTank" type="checkbox" class="w-4 h-4" /> 槽體</label>
+            </div>
           </div>
           <div class="space-y-1.5">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">說明描述 (Description)</label>

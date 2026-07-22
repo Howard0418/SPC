@@ -94,6 +94,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasFilter("[PartId] IS NULL");
         modelBuilder.Entity<ControlChartGroup>().HasKey(x => x.Id);
         modelBuilder.Entity<ControlChartGroup>().HasIndex(x => x.GroupCode).IsUnique();
+        modelBuilder.Entity<ControlChartGroup>().Property(x => x.BusinessScopeCode).HasMaxLength(50);
+        modelBuilder.Entity<ControlChartGroup>().HasIndex(x => x.BusinessScopeCode);
         modelBuilder.Entity<ControlChartType>().HasKey(x => x.Id);
         modelBuilder.Entity<ControlChartType>().HasIndex(x => x.ChartTypeCode).IsUnique();
         modelBuilder.Entity<SpcRuleGroup>().HasKey(x => x.Id);
