@@ -14,13 +14,16 @@ import {
   XCircle,
   AlertTriangle,
   RefreshCw,
-  Activity,
   Check,
   Info
 } from "lucide-vue-next";
 
+const { embedded } = defineProps({
+  embedded: { type: Boolean, default: false }
+});
+
 const rows = ref([]);
-const chartTypes = ref([]);
+const controlGroups = ref([]);
 const err = ref("");
 const successMsg = ref("");
 const loading = ref(false);
@@ -35,24 +38,39 @@ const currentId = ref(null);
 const form = ref({
   characteristicCode: "",
   characteristicName: "",
+  controlScope: "PRODUCT",
   dataCategory: "Variable",
   unit: "",
-  defaultChartTypeId: null,
   isSpcEnabled: true,
   isEnabled: true
 });
 const formErr = ref("");
 
+function controlScopeLabel(scope) {
+  const normalized = String(scope || "PRODUCT").trim().toUpperCase();
+  const fixedLabels = {
+    CHEMICAL: "藥液",
+    PRODUCT: "產品管制",
+    PROD: "產品管制",
+    PROCESS: "製程管制",
+    PROC: "製程管制",
+    DUST: "落塵監控"
+  };
+  if (fixedLabels[normalized]) return fixedLabels[normalized];
+  const group = controlGroups.value.find(x => String(x.groupCode).trim().toUpperCase() === normalized);
+  return group?.groupName || normalized;
+}
+
 async function load() {
   err.value = "";
   loading.value = true;
   try {
-    const [resChars, resTypes] = await Promise.all([
+    const [characteristicsRes, groupsRes] = await Promise.all([
       api.get("/characteristics"),
-      api.get("/control-chart-types")
+      api.get("/control-chart-groups")
     ]);
-    rows.value = resChars.data || [];
-    chartTypes.value = resTypes.data || [];
+    rows.value = characteristicsRes.data || [];
+    controlGroups.value = (groupsRes.data || []).filter(x => x.isEnabled !== false);
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -60,23 +78,13 @@ async function load() {
   }
 }
 
-const chartTypeMap = computed(() => {
-  const map = {};
-  chartTypes.value.forEach(ct => {
-    map[ct.id] = `${ct.chartTypeCode} (${ct.chartTypeName})`;
-  });
-  return map;
-});
-
 const filteredRows = computed(() => {
   return rows.value.filter(row => {
     const q = searchQuery.value.toLowerCase();
-    const ctName = row.defaultChartTypeId ? (chartTypeMap.value[row.defaultChartTypeId] || "") : "";
     const matchQuery = !q || 
       (row.characteristicCode && row.characteristicCode.toLowerCase().includes(q)) ||
       (row.characteristicName && row.characteristicName.toLowerCase().includes(q)) ||
-      (row.unit && row.unit.toLowerCase().includes(q)) ||
-      ctName.toLowerCase().includes(q);
+      (row.unit && row.unit.toLowerCase().includes(q));
       
     const matchStatus = statusFilter.value === "all" || 
       (statusFilter.value === "active" && row.isEnabled) ||
@@ -94,9 +102,9 @@ function openCreateModal() {
   form.value = {
     characteristicCode: "",
     characteristicName: "",
+    controlScope: controlGroups.value[0]?.groupCode || "PRODUCT",
     dataCategory: "Variable",
     unit: "",
-    defaultChartTypeId: null,
     isSpcEnabled: true,
     isEnabled: true
   };
@@ -110,9 +118,9 @@ function openEditModal(item) {
   form.value = {
     characteristicCode: item.characteristicCode || "",
     characteristicName: item.characteristicName || "",
+    controlScope: item.controlScope || "PRODUCT",
     dataCategory: item.dataCategory || "Variable",
     unit: item.unit || "",
-    defaultChartTypeId: item.defaultChartTypeId || null,
     isSpcEnabled: item.isSpcEnabled ?? true,
     isEnabled: item.isEnabled ?? true
   };
@@ -129,10 +137,7 @@ async function save() {
   loading.value = true;
 
   try {
-    const payload = {
-      ...form.value,
-      defaultChartTypeId: form.value.defaultChartTypeId ? parseInt(form.value.defaultChartTypeId) : null
-    };
+    const payload = { ...form.value, defaultChartTypeId: null };
 
     if (modalMode.value === "create") {
       const { data } = await api.post("/characteristics", payload);
@@ -177,7 +182,7 @@ onMounted(load);
 <template>
   <section class="space-y-6">
     <!-- Title & Actions -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+    <div v-if="!embedded" class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
       <div class="flex items-center gap-3">
         <div class="p-3 bg-gradient-to-tr from-pink-600 to-rose-500 rounded-xl shadow-lg shadow-pink-500/30 text-white">
           <Sliders class="w-7 h-7" />
@@ -208,19 +213,18 @@ onMounted(load);
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <ModuleGuide title="模組指南：品質檢驗特性主檔 (Characteristics)">
+    <ModuleGuide v-if="!embedded" title="模組指南：品質檢驗特性主檔">
       <p class="text-xs text-pink-700 dark:text-pink-400/80 mt-1.5 leading-relaxed">
           此模組用於建置全廠的「檢驗項目字典」(如：長度、重量、銅離子濃度等)。<br/>
           💡 <strong>資料類型說明：</strong><br/>
-          - <strong>計量 (Variable)：</strong>可以量測出具體數值的特性 (如：長度 10.5 mm)，通常對應 X-bar 管制圖。<br/>
-          - <strong>計數 (Attribute)：</strong>以不良數或不良率表示的特性 (如：外觀不良件數)，通常對應 P 或 C 管制圖。
+          - <strong>計量：</strong>可以量測出具體數值的特性（如：長度 10.5 mm）。<br/>
+          - <strong>計數：</strong>以不良數、不良率或缺點數表示的特性。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-pink-700 dark:text-pink-400/80 leading-relaxed">
           <div class="font-black text-pink-900 dark:text-pink-300">品質檢驗特性主檔頁面操作說明</div>
           <p><strong>查詢特性：</strong>輸入特性代號、名稱或單位，快速篩選檢驗項目。</p>
           <p><strong>新增特性：</strong>按「新增特性」，填入特性代號、名稱、資料類型與量測單位。</p>
           <p><strong>選擇類型：</strong>連續數值請選計量型；不良數、缺點數或比例資料請選計數型。</p>
-          <p><strong>指定預設圖：</strong>依資料類型設定預設管制圖，後續檢驗基準可沿用或調整。</p>
         </div>
     </ModuleGuide>
 
@@ -253,7 +257,7 @@ onMounted(load);
         <!-- Category Filter -->
         <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
           <button
-            v-for="c in [{id:'all', label:'全屬性'}, {id:'Variable', label:'計量 (Variable)'}, {id:'Attribute', label:'計數 (Attribute)'}]"
+            v-for="c in [{id:'all', label:'全屬性'}, {id:'Variable', label:'計量'}, {id:'Attribute', label:'計數'}]"
             :key="c.id"
             @click="categoryFilter = c.id"
             type="button"
@@ -295,10 +299,10 @@ onMounted(load);
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               <th class="py-4 px-6">ID</th>
+              <th class="py-4 px-6">所屬管制類型</th>
               <th class="py-4 px-6">特性編號 / 名稱</th>
-              <th class="py-4 px-6">資料類型 (Category)</th>
+              <th class="py-4 px-6">資料類型</th>
               <th class="py-4 px-6">單位</th>
-              <th class="py-4 px-6">預設管制圖</th>
               <th class="py-4 px-6 text-center">SPC 運算</th>
               <th class="py-4 px-6 text-center">啟用狀態</th>
               <th class="py-4 px-6 text-right">操作</th>
@@ -319,6 +323,11 @@ onMounted(load);
             >
               <td class="py-6 px-6 font-mono text-xs text-slate-400 dark:text-slate-500">#{{ item.id }}</td>
               <td class="py-6 px-6">
+                <span class="inline-flex px-2.5 py-1 rounded-lg text-xs font-bold border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800">
+                  {{ controlScopeLabel(item.controlScope) }}
+                </span>
+              </td>
+              <td class="py-6 px-6">
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
                   <Sliders class="w-4 h-4 text-pink-500" /> {{ item.characteristicCode }}
                 </div>
@@ -331,17 +340,11 @@ onMounted(load);
                     ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
                     : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
                 ]">
-                  {{ item.dataCategory === 'Variable' ? '計量 (Variable)' : '計數 (Attribute)' }}
+                  {{ item.dataCategory === 'Variable' ? '計量' : '計數' }}
                 </span>
               </td>
               <td class="py-6 px-6 font-semibold text-xs text-slate-600 dark:text-slate-300">
                 {{ item.unit || '無 (N/A)' }}
-              </td>
-              <td class="py-6 px-6">
-                <span v-if="item.defaultChartTypeId" class="text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                  {{ chartTypeMap[item.defaultChartTypeId] || `管制圖 #${item.defaultChartTypeId}` }}
-                </span>
-                <span v-else class="text-slate-400 text-xs">未設定預設圖</span>
               </td>
               <td class="py-6 px-6 text-center">
                 <span :class="['inline-flex items-center justify-center w-7 h-7 rounded-lg border font-bold text-xs', item.isSpcEnabled ? 'bg-indigo-50 border-indigo-300 text-indigo-600 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-400' : 'bg-slate-100 border-slate-300 text-slate-400 dark:bg-slate-800 dark:border-slate-700']">
@@ -426,9 +429,23 @@ onMounted(load);
             <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
           </div>
 
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">所屬管制類型 <span class="text-red-500">*</span></label>
+            <select
+              v-model="form.controlScope"
+              required
+              class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
+            >
+              <option v-for="group in controlGroups" :key="group.id" :value="group.groupCode">
+                {{ controlScopeLabel(group.groupCode) }}
+              </option>
+            </select>
+            <p class="text-[11px] text-slate-400">SPC 管制項目會依此欄位分流；例如藥液不會顯示落塵監控特性。</p>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性代號 (Code) <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性代號 <span class="text-red-500">*</span></label>
               <input
                 v-model="form.characteristicCode"
                 type="text"
@@ -439,7 +456,7 @@ onMounted(load);
             </div>
             
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性名稱 (Name) <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性名稱 <span class="text-red-500">*</span></label>
               <input
                 v-model="form.characteristicName"
                 type="text"
@@ -452,18 +469,18 @@ onMounted(load);
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">資料類型 (Category)</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">資料類型</label>
               <select
                 v-model="form.dataCategory"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
               >
-                <option value="Variable">計量型數值 (Variable)</option>
-                <option value="Attribute">計數型不良數 (Attribute)</option>
+                <option value="Variable">計量型數值</option>
+                <option value="Attribute">計數型資料</option>
               </select>
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">測量單位 (Unit)</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">測量單位</label>
               <input
                 v-model="form.unit"
                 type="text"
@@ -471,19 +488,6 @@ onMounted(load);
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
               />
             </div>
-          </div>
-
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">預設 SPC 管制圖類型 (可選)</label>
-            <select
-              v-model="form.defaultChartTypeId"
-              class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-            >
-              <option :value="null">-- 無預設管制圖 --</option>
-              <option v-for="ct in chartTypes" :key="ct.id" :value="ct.id">
-                {{ ct.chartTypeCode }} - {{ ct.chartTypeName }}
-              </option>
-            </select>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -501,7 +505,7 @@ onMounted(load);
               <label class="relative inline-flex items-center cursor-pointer">
                 <input v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
                 <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 dark:peer-focus:ring-pink-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
-                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用 (Active)' : '停用 (Inactive)' }}</span>
+                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用' : '停用' }}</span>
               </label>
             </div>
           </div>

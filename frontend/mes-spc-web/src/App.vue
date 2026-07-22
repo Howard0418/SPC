@@ -2,11 +2,9 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
-  LayoutDashboard,
   LineChart,
   TrendingUp,
   UploadCloud,
-  FileSpreadsheet,
   BookOpen,
   PlusCircle,
   Package,
@@ -67,7 +65,6 @@ const viewerMenuCategories = [
   {
     title: "高階戰情與分析",
     items: [
-      { to: "/", text: "儀表板", icon: LayoutDashboard },
       { to: "/spc", text: "SPC 管制圖", icon: LineChart },
       { to: "/trend-chart", text: "量測值趨勢圖", icon: TrendingUp }
     ]
@@ -79,26 +76,19 @@ const editorMenuCategories = [
   {
     title: "自動化匯入與採樣",
     items: [
-      { to: "/measurements", text: "現場量測數據錄入", icon: Activity },
-      { to: "/uploads/variable", text: "計量型資料匯入", icon: UploadCloud },
-      { to: "/uploads/attribute", text: "計數型資料匯入", icon: FileSpreadsheet }
+      { to: "/uploads", text: "SPC 資料匯入", icon: UploadCloud }
     ]
   },
   {
     title: "企業品質主檔設定",
     items: [
+      { to: "/part-process-characteristics", text: "SPC 管制項目設定", icon: FolderTree },
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/parts", text: "產品料號主檔", icon: Package },
-      { to: "/part-process-characteristics", text: "SPC 管制項目設定", icon: FolderTree },
       { to: "/characteristics", text: "品質特性項目", icon: Sliders },
       { to: "/traceability-master", text: "線別槽體設定", icon: Layers },
-    ]
-  },
-  {
-    title: "管制圖與西方電氣規則",
-    items: [
-      { to: "/part-process-characteristics?tab=groups", text: "管制圖配置維護", icon: Layers },
-      { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity }
+      { to: "/control-chart-groups", text: "管制圖大類別維護", icon: Layers },
+      { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity },
     ]
   },
   {

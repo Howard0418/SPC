@@ -30,7 +30,7 @@ public class SpcSummaryTests
         var chartType = new ControlChartType
         {
             Id = 1,
-            ChartCategoryId = 1,
+            ChartGroupId = 1,
             ChartTypeCode = "I_MR",
             ChartTypeName = "單值-移動全距圖",
             DataCategory = "Variable"
@@ -39,19 +39,13 @@ public class SpcSummaryTests
         {
             Id = 10,
             GroupCode = "ENV",
-            GroupName = "環境管制"
-        };
-        var customCategory = new ControlChartCategory
-        {
-            Id = 10,
-            ChartGroupId = customGroup.Id,
-            CategoryCode = "ENV_VAR",
-            CategoryName = "環境計量管制"
+            GroupName = "環境管制",
+            GroupType = "CONTROL_CHART"
         };
         var customChartType = new ControlChartType
         {
             Id = 2,
-            ChartCategoryId = customCategory.Id,
+            ChartGroupId = customGroup.Id,
             ChartTypeCode = "ENV_I_MR",
             ChartTypeName = "環境單值圖",
             DataCategory = "Variable"
@@ -97,7 +91,6 @@ public class SpcSummaryTests
             chartType,
             mapping,
             customGroup,
-            customCategory,
             customChartType,
             customCharacteristic,
             customMapping,

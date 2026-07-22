@@ -20,6 +20,32 @@ import {
 // Data Lists
 const rows = ref([]); // Processes
 const machines = ref([]);
+const controlChartGroups = ref([]);
+
+const controlScopeOptions = computed(() => {
+  const defaults = [
+    { id: "PRODUCT", label: "產品管制" },
+    { id: "PROCESS", label: "製程管制" },
+    { id: "CHEMICAL", label: "藥液管制" }
+  ];
+  const options = new Map(defaults.map(x => [x.id, x]));
+  controlChartGroups.value
+    .filter(group => group.isEnabled !== false)
+    .forEach(group => {
+      const id = String(group.groupCode || "").trim().toUpperCase();
+      if (id) options.set(id, { id, label: group.groupName || id });
+    });
+  rows.value.forEach(process => {
+    const id = String(process.controlScope || "PRODUCT").trim().toUpperCase();
+    if (id && !options.has(id)) options.set(id, { id, label: id });
+  });
+  return [...options.values()];
+});
+
+const controlScopeLabel = scope => {
+  const id = String(scope || "PRODUCT").trim().toUpperCase();
+  return controlScopeOptions.value.find(option => option.id === id)?.label || id;
+};
 
 // Core Page State
 const err = ref("");
@@ -68,12 +94,14 @@ async function load() {
   err.value = "";
   loading.value = true;
   try {
-    const [resProc, resMach] = await Promise.all([
+    const [resProc, resMach, resGroups] = await Promise.all([
       api.get("/processes"),
-      api.get("/machines")
+      api.get("/machines"),
+      api.get("/control-chart-groups")
     ]);
     rows.value = resProc.data || [];
     machines.value = resMach.data || [];
+    controlChartGroups.value = resGroups.data || [];
 
     // Auto-select first process if none selected
     if (!selectedProcessId.value && rows.value.length > 0) {
@@ -95,6 +123,7 @@ const currentId = ref(null);
 const form = ref({
   processCode: "",
   processName: "",
+  controlScope: "PRODUCT",
   description: "",
   isEnabled: true
 });
@@ -106,6 +135,7 @@ function openCreateModal() {
   form.value = {
     processCode: "",
     processName: "",
+    controlScope: "PRODUCT",
     description: "",
     isEnabled: true
   };
@@ -119,6 +149,7 @@ function openEditModal(item) {
   form.value = {
     processCode: item.processCode || "",
     processName: item.processName || "",
+    controlScope: item.controlScope || "PRODUCT",
     description: item.description || "",
     isEnabled: item.isEnabled ?? true
   };
@@ -469,6 +500,9 @@ onMounted(load);
                       <span>{{ item.processCode }}</span>
                     </div>
                     <div class="text-[10px] text-slate-400 font-normal mt-0.5">{{ item.processName }}</div>
+                    <div class="text-[9px] font-bold mt-1 text-blue-500">
+                      {{ controlScopeLabel(item.controlScope) }}
+                    </div>
                   </td>
                   <td class="py-3.5 px-3 text-center">
                     <span
@@ -669,6 +703,18 @@ onMounted(load);
                     class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制類型 <span class="text-red-500">*</span></label>
+                <select
+                  v-model="form.controlScope"
+                  required
+                  class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option v-for="option in controlScopeOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
+                </select>
+                <p class="text-[11px] text-slate-400">SPC 管制項目會依此設定過濾可選的工站製程。</p>
               </div>
 
               <div class="space-y-1.5">

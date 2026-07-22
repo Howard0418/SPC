@@ -11,7 +11,7 @@ namespace MesSpc.Api.Tests
 {
     public class AnalyzeExcelTest
     {
-        [Fact]
+        [Fact(Skip = "Developer-only workbook inspection utility; not an automated test.")]
         public void Analyze()
         {
             var filePath = @"D:\SPC\sample-data\SPC系統建置.xlsx";
@@ -76,7 +76,7 @@ namespace MesSpc.Api.Tests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Developer-only live database dump; excluded from automated tests.")]
         public void DumpDatabaseData()
         {
             var connString = "Server=172.16.110.16;Database=PMR_SPC_2026;User Id=sa;Password=a@t123;Encrypt=True;TrustServerCertificate=True;";

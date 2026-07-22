@@ -45,26 +45,23 @@ let trendChartInstance = null;
 
 const tableSummaryData = ref(null);
 const selectedSummaryRow = ref(null);
-const pageGroupType = "TREND_CHART";
-
 // ─── Dimension helpers ───────────────────────────────────────
 const getDimensionForMapping = (m) => {
-  if (m.chartTypeId) {
-    const type = chartTypes.value.find(t => t.id === m.chartTypeId);
-    const group = type ? groups.value.find(g => g.id === type.chartGroupId) : null;
-    return group?.groupCode || "";
-  }
-  return "";
+  return m.controlScope || "";
 };
 
 const dimensionOptions = computed(() =>
   groups.value
-    .filter(group => group.isEnabled !== false)
+    .filter(group => group.isEnabled !== false && group.groupType === "TREND_CHART")
     .map(group => ({ id: group.groupCode, label: group.groupName }))
 );
 
 const filteredMappingsByDimension = computed(() =>
-  mappings.value.filter(m => m.isEnabled && getDimensionForMapping(m) === selectedDimension.value)
+  mappings.value.filter(m =>
+    m.isEnabled &&
+    m.characteristic?.dataCategory === "Variable" &&
+    getDimensionForMapping(m) === selectedDimension.value
+  )
 );
 
 const uniqueParts = computed(() => {
@@ -171,11 +168,6 @@ function selectMappingFromSearch(m) {
 }
 
 async function drawSingleChart(row) {
-  if (row?.groupType === "CONTROL_CHART" || row?.chartKind === "管制圖") {
-    router.push({ path: "/spc", query: { ppcId: row.partProcessCharacteristicId } });
-    return;
-  }
-
   const match = mappings.value.find(m => m.id === row.partProcessCharacteristicId);
   if (!match) {
     error.value = "找不到該管制項目的設定，可能已被刪除。";
@@ -245,10 +237,6 @@ async function loadMappings() {
       const match = mappings.value.find(m => m.id === qPpc);
       if (match) {
         const dim = getDimensionForMapping(match);
-        if (!groups.value.some(group => group.groupCode === dim)) {
-          router.replace({ path: "/spc", query: route.query });
-          return;
-        }
         selectedDimension.value = dim;
         await nextTick();
         updatingCascades.value = true;

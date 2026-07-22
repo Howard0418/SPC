@@ -20,19 +20,37 @@ public class PartProcessCharacteristicMaintenanceTests
             .Options;
 
         await using var db = new AppDbContext(options);
-        var process = new Process { ProcessCode = "P1", ProcessName = "製程一" };
+        var process = new Process { ProcessCode = "P1", ProcessName = "製程一", ControlScope = "PROCESS" };
         var characteristic = new QualityCharacteristic
         {
             CharacteristicCode = "C1",
             CharacteristicName = "厚度",
+            ControlScope = "PROCESS",
             Unit = "mm"
+        };
+        var chartGroup = new ControlChartGroup
+        {
+            GroupCode = "PROCESS",
+            GroupName = "製程管制",
+            GroupType = "CONTROL_CHART"
         };
         var libraryGroup = new SpcRuleGroup
         {
             RuleGroupCode = "WE",
             RuleGroupName = "規則庫"
         };
-        db.AddRange(process, characteristic, libraryGroup);
+        db.AddRange(process, characteristic, libraryGroup, chartGroup);
+        await db.SaveChangesAsync();
+
+        var chartType = new ControlChartType
+        {
+            ChartGroupId = chartGroup.Id,
+            ChartTypeCode = "XBAR_R",
+            ChartTypeName = "平均數-全距圖",
+            DataCategory = "Variable",
+            RequiredSampleSize = 5
+        };
+        db.ControlChartTypes.Add(chartType);
         await db.SaveChangesAsync();
 
         db.SpcRules.AddRange(
@@ -46,7 +64,8 @@ public class PartProcessCharacteristicMaintenanceTests
             Unit = "μm",
             USL = 10.2,
             LSL = 9.8,
-            SampleSize = 5
+            SampleSize = 5,
+            ChartTypeId = chartType.Id
         };
         db.PartProcessCharacteristics.Add(item);
         await db.SaveChangesAsync();
@@ -62,6 +81,7 @@ public class PartProcessCharacteristicMaintenanceTests
             USL = item.USL,
             LSL = item.LSL,
             SampleSize = item.SampleSize,
+            ChartTypeId = item.ChartTypeId,
             FormulaConfigJson = formulaConfig,
             IsRequired = true,
             IsEnabled = true
@@ -97,7 +117,7 @@ public class PartProcessCharacteristicMaintenanceTests
 
         var chartType = new ControlChartType
         {
-            ChartCategoryId = 1,
+            ChartGroupId = 1,
             ChartTypeCode = "I_MR",
             ChartTypeName = "I-MR",
             RuleGroupId = chartRules.Id

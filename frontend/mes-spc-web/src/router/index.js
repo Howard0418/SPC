@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import DashboardView from "../views/DashboardView.vue";
 import MeasurementEntryView from "../views/MeasurementEntryView.vue";
 import SpcChartView from "../views/SpcChartView.vue";
 import AlertsView from "../views/AlertsView.vue";
@@ -9,9 +8,9 @@ import PartsView from "../views/PartsView.vue";
 import ProcessesView from "../views/ProcessesView.vue";
 import CharacteristicsView from "../views/CharacteristicsView.vue";
 import PartProcessCharacteristicsView from "../views/PartProcessCharacteristicsView.vue";
+import ControlChartGroupsView from "../views/ControlChartGroupsView.vue";
 import SpcRuleGroupsView from "../views/SpcRuleGroupsView.vue";
-import VariableUploadView from "../views/VariableUploadView.vue";
-import AttributeUploadView from "../views/AttributeUploadView.vue";
+import DataUploadView from "../views/DataUploadView.vue";
 import UploadPreviewView from "../views/UploadPreviewView.vue";
 import SpcQueryView from "../views/SpcQueryView.vue";
 import SpcAlertsView from "../views/SpcAlertsView.vue";
@@ -28,12 +27,12 @@ const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
 
 const routes = [
   { path: "/login", component: LoginView },
-  { path: "/", component: DashboardView },
+  { path: "/", redirect: "/spc" },
   { path: "/products", redirect: "/parts" },
   { path: "/stations", redirect: "/processes" },
   { path: "/inspection-items", redirect: "/characteristics" },
   { path: "/measurements", component: MeasurementEntryView, meta: { editorOnly: true } },
-  { path: "/csv-import", redirect: "/uploads/variable" },
+  { path: "/csv-import", redirect: "/uploads" },
   { path: "/spc", component: SpcChartView },
   { path: "/spc/control-chart/:ppcId?", component: SpcChartView },
   { path: "/trend-chart", component: TrendChartView },
@@ -49,12 +48,13 @@ const routes = [
   { path: "/machines", redirect: "/processes" },
   { path: "/characteristics", component: CharacteristicsView, meta: { editorOnly: true } },
   { path: "/part-process-characteristics", component: PartProcessCharacteristicsView, meta: { editorOnly: true } },
-  { path: "/control-chart-groups", redirect: "/part-process-characteristics?tab=groups" },
-  { path: "/control-chart-categories", redirect: "/part-process-characteristics?tab=categories" },
-  { path: "/control-chart-types", redirect: "/part-process-characteristics?tab=types" },
+  { path: "/control-chart-groups", component: ControlChartGroupsView, props: { groupsOnly: true }, meta: { editorOnly: true } },
+  { path: "/control-chart-categories", redirect: "/part-process-characteristics" },
+  { path: "/control-chart-types", redirect: "/part-process-characteristics" },
   { path: "/spc-rule-groups", component: SpcRuleGroupsView, meta: { editorOnly: true } },
-  { path: "/uploads/variable", component: VariableUploadView, meta: { editorOnly: true } },
-  { path: "/uploads/attribute", component: AttributeUploadView, meta: { editorOnly: true } },
+  { path: "/uploads", component: DataUploadView, meta: { editorOnly: true } },
+  { path: "/uploads/variable", redirect: "/uploads" },
+  { path: "/uploads/attribute", redirect: "/uploads?tab=attribute" },
   { path: "/uploads/:batchId/preview", component: UploadPreviewView, meta: { editorOnly: true } },
   { path: "/spc/query", component: SpcQueryView, meta: { editorOnly: true } },
   { path: "/spc/alerts", component: SpcAlertsView, meta: { editorOnly: true } },

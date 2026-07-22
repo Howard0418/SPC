@@ -34,7 +34,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                           || (mapping.LSL.HasValue && actualValue < mapping.LSL.Value);
         var isOutOfControl = (activeUcl.HasValue && actualValue > activeUcl.Value)
                              || (activeLcl.HasValue && actualValue < activeLcl.Value);
-        var ruleGroupId = mapping.RuleGroupId ?? chartType.RuleGroupId;
+        var ruleGroupId = mapping.RuleGroupId;
 
         List<SpcRuleViolation>? violations = null;
         if (ruleGroupId.HasValue && activeCl.HasValue && activeUcl.HasValue && activeLcl.HasValue)
@@ -139,7 +139,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var statisticValue = CalculateAttributeStatistic(chartType.ChartTypeCode, measurement);
         var isOutOfControl = (activeUcl.HasValue && statisticValue.HasValue && statisticValue.Value > activeUcl.Value)
                              || (activeLcl.HasValue && statisticValue.HasValue && statisticValue.Value < activeLcl.Value);
-        var ruleGroupId = mapping.RuleGroupId ?? chartType.RuleGroupId;
+        var ruleGroupId = mapping.RuleGroupId;
 
         var result = new SpcCalculationResult
         {
@@ -431,9 +431,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 }
                 else
                 {
-                    var formulaConfigJson = string.IsNullOrWhiteSpace(mapping.FormulaConfigJson)
-                        ? chartType.FormulaConfigJson
-                        : mapping.FormulaConfigJson;
+                    var formulaConfigJson = mapping.FormulaConfigJson;
                     chartResultVal = XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson) with { RawDataPoints = rawPoints };
                 }
             }
@@ -1126,9 +1124,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 }
                 else
                 {
-                    var formulaConfigJson = string.IsNullOrWhiteSpace(mapping.FormulaConfigJson)
-                        ? chartType.FormulaConfigJson
-                        : mapping.FormulaConfigJson;
+                    var formulaConfigJson = mapping.FormulaConfigJson;
                     chartResultVal = XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson);
                 }
             }

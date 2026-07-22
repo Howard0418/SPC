@@ -151,13 +151,25 @@ test.describe('SPC all-lines summary', () => {
     await expect(summaryTable).toBeVisible();
     expect(requestedDimension).toBe('CHEMICAL');
 
-    const expectedHeaders = [
-      '管制類別', '製程線別', '管制圖名稱', '管制圖種類',
-      'USL', 'LSL', 'UCL', 'LCL', '管制界線計算方式',
-      'OOS件數', '% OOS', 'Ca', 'Pp', 'Ppk',
-      '工程負責人', '備註', '製圖'
-    ];
-    await expect(summaryTable.locator('thead th')).toHaveText(expectedHeaders);
+    // 確認各欄位標題文字存在（表頭現已支援排序，含有圖示元素）
+    const thead = summaryTable.locator('thead');
+    await expect(thead).toContainText('管制類別');
+    await expect(thead).toContainText('圖表類型');
+    await expect(thead).toContainText('製程線別');
+    await expect(thead).toContainText('管制圖名稱');
+    await expect(thead).toContainText('管制圖種類');
+    await expect(thead).toContainText('USL');
+    await expect(thead).toContainText('LSL');
+    await expect(thead).toContainText('UCL');
+    await expect(thead).toContainText('LCL');
+    await expect(thead).toContainText('管制界線計算方式');
+    await expect(thead).toContainText('本期OOS');
+    await expect(thead).toContainText('本期%OOS');
+    await expect(thead).toContainText('本期Ppk');
+    await expect(thead).toContainText('工程負責人');
+    await expect(thead).toContainText('備註');
+    await expect(thead).toContainText('製圖');
+
     await expect(summaryTable).toContainText('銅離子濃度');
     await expect(summaryTable).toContainText('12.50%');
 

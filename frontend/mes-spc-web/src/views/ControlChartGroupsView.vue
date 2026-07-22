@@ -21,8 +21,12 @@ import {
   Sliders
 } from "lucide-vue-next";
 
-const { embedded } = defineProps({
+const { embedded, groupsOnly } = defineProps({
   embedded: {
+    type: Boolean,
+    default: false
+  },
+  groupsOnly: {
     type: Boolean,
     default: false
   }
@@ -454,8 +458,8 @@ watch(() => route.query.tab, syncTabFromRoute);
           <Activity class="w-7 h-7" />
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">SPC 管制圖配置總管維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">統一管理管制圖大類別，以及具體的小分類與公式參數配置</p>
+          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">管制圖大類別維護</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">新增、編輯、刪除及啟停管制圖大類別</p>
         </div>
       </div>
 
@@ -494,13 +498,13 @@ watch(() => route.query.tab, syncTabFromRoute);
     </div>
 
     <!-- Tab Header -->
-    <div v-if="!embedded" class="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-1 shadow-sm border">
+    <div v-if="!embedded && !groupsOnly" class="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-1 shadow-sm border">
       <button
         @click="activeTab = 'groups'"
         :class="activeTab === 'groups' ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-slate-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
         class="flex-1 py-3 px-4 rounded-xl text-center text-sm transition-all whitespace-nowrap"
       >
-        大類別總管 (Control Groups)
+        大類別總管
       </button>
       <button
         @click="activeTab = 'types'"
@@ -516,7 +520,7 @@ watch(() => route.query.tab, syncTabFromRoute);
       <div class="p-5 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-900/20 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
         <div class="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl text-indigo-600 dark:text-indigo-400 mt-0.5"><Info class="w-5 h-5" /></div>
         <div>
-          <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">模組指南：管制圖大群組主檔 (Control Chart Groups)</h4>
+          <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">模組指南：管制圖大群組主檔</h4>
           <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
             此模組用於設定 SPC 系統中最頂層的分類結構（如：PROC 製程管制、CHEM 藥液管制、PROD 產品管制），幫助您有效管理全廠各類型的管制圖類別。
           </p>
@@ -582,7 +586,7 @@ watch(() => route.query.tab, syncTabFromRoute);
     </div>
 
     <!-- TAB 2: TYPES VIEW -->
-    <div v-if="activeTab === 'types'" class="space-y-6 animate-fade-in">
+    <div v-if="!groupsOnly && activeTab === 'types'" class="space-y-6 animate-fade-in">
       <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
         <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5"><Info class="w-5 h-5" /></div>
         <div>

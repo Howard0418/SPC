@@ -110,6 +110,25 @@ public static class SeedData
             db.SaveChanges();
         }
 
+        // Existing databases may predate Xbar-S. Keep the fixed algorithm catalog complete.
+        if (!db.ControlChartTypes.Any(x => x.ChartTypeCode == "XBAR_S"))
+        {
+            var controlGroup = db.ControlChartGroups
+                .OrderByDescending(x => x.GroupCode == "STD")
+                .ThenBy(x => x.Id)
+                .First(x => x.GroupType == "CONTROL_CHART");
+            db.ControlChartTypes.Add(new ControlChartType
+            {
+                ChartGroupId = controlGroup.Id,
+                ChartTypeCode = "XBAR_S",
+                ChartTypeName = "平均數-標準差圖",
+                DataCategory = "Variable",
+                RequiredSampleSize = 10,
+                IsEnabled = true
+            });
+            db.SaveChanges();
+        }
+
         var ruleGrp = EnsureDefaultSpcRules(db);
         foreach (var chartType in db.ControlChartTypes.Where(x => !x.RuleGroupId.HasValue || x.RuleGroupId == ruleGrp.Id).ToList())
         {

@@ -265,6 +265,7 @@ public class Process : BaseEntity<int>
 {
     public string ProcessCode { get; set; } = string.Empty;
     public string ProcessName { get; set; } = string.Empty;
+    public string ControlScope { get; set; } = "PRODUCT";
     public string? Description { get; set; }
     public bool IsEnabled { get; set; } = true;
 }
@@ -283,6 +284,7 @@ public class QualityCharacteristic : BaseEntity<int>
 {
     public string CharacteristicCode { get; set; } = string.Empty;
     public string CharacteristicName { get; set; } = string.Empty;
+    public string ControlScope { get; set; } = "PRODUCT";
     public string DataCategory { get; set; } = "Variable";
     public string? Unit { get; set; }
     public int? DefaultChartTypeId { get; set; }

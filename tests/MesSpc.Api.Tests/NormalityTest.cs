@@ -48,7 +48,7 @@ public class NormalityTest
     public void TestSkewedDataset_FailsNormalityTest()
     {
         // GIVEN: A highly skewed/non-normal dataset with extreme outliers
-        var values = new List<double> { 10.0, 10.1, 9.9, 10.2, 9.8, 10.05, 9.95, 10.02, 9.98, 50.0, 50.0, 50.0, 50.0 };
+        var values = Enumerable.Repeat(10.0, 20).Append(50.0).ToList();
         var rawPoints = values.Select(v => new SpcDataPoint { Value = v }).ToList();
         var limits = new ControlLimits { USL = 12, LSL = 8, Target = 10 };
         var initialResult = new ControlChartResult();

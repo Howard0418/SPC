@@ -34,6 +34,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         if (!string.IsNullOrWhiteSpace(controlScope) && !string.Equals(controlScope, "all", StringComparison.OrdinalIgnoreCase))
         {
             var normalizedScope = controlScope.Trim().ToUpperInvariant();
+            query = query.Where(x => x.ControlScope == normalizedScope);
             if (configuredOnly == true)
             {
                 var processIds = await db.PartProcessCharacteristics
@@ -43,27 +44,26 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                     .ToListAsync();
                 query = query.Where(x => processIds.Contains(x.Id));
             }
-            else
-            {
-                if (normalizedScope == "CHEMICAL")
-                {
-                    var processIds = await db.Machines
-                        .Select(x => x.ProcessId)
-                        .Distinct()
-                        .ToListAsync();
-                    query = query.Where(x => processIds.Contains(x.Id));
-                }
-            }
         }
         return Ok(await query.OrderBy(x => x.Id).ToListAsync());
     }
-    [HttpPost] public async Task<IActionResult> Create(Process req) { db.Processes.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPost] public async Task<IActionResult> Create(Process req)
+    {
+        req.ControlScope = NormalizeControlScope(req.ControlScope);
+        db.Processes.Add(req); await db.SaveChangesAsync(); return Ok(req);
+    }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, Process req)
     {
         var x = await db.Processes.FindAsync(id); if (x is null) return NotFound();
-        x.ProcessCode = req.ProcessCode; x.ProcessName = req.ProcessName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
+        x.ProcessCode = req.ProcessCode; x.ProcessName = req.ProcessName; x.ControlScope = NormalizeControlScope(req.ControlScope); x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
+    }
+
+    private static string NormalizeControlScope(string? scope)
+    {
+        var normalized = (scope ?? "PRODUCT").Trim().ToUpperInvariant();
+        return string.IsNullOrWhiteSpace(normalized) ? "PRODUCT" : normalized;
     }
 
     [HttpGet("{id:int}/measurements")]
@@ -354,15 +354,17 @@ public class MachineTankRequest
 public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
 {
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.QualityCharacteristics.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(QualityCharacteristic req) { db.QualityCharacteristics.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPost] public async Task<IActionResult> Create(QualityCharacteristic req) { req.ControlScope = NormalizeScope(req.ControlScope); db.QualityCharacteristics.Add(req); await db.SaveChangesAsync(); return Ok(req); }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, QualityCharacteristic req)
     {
         var x = await db.QualityCharacteristics.FindAsync(id); if (x is null) return NotFound();
-        x.CharacteristicCode = req.CharacteristicCode; x.CharacteristicName = req.CharacteristicName; x.DataCategory = req.DataCategory; x.Unit = req.Unit; x.DefaultChartTypeId = req.DefaultChartTypeId; x.IsSpcEnabled = req.IsSpcEnabled; x.IsEnabled = req.IsEnabled;
+        x.CharacteristicCode = req.CharacteristicCode; x.CharacteristicName = req.CharacteristicName; x.ControlScope = NormalizeScope(req.ControlScope); x.DataCategory = req.DataCategory; x.Unit = req.Unit; x.DefaultChartTypeId = req.DefaultChartTypeId; x.IsSpcEnabled = req.IsSpcEnabled; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.QualityCharacteristics.FindAsync(id); if (x is null) return NotFound(); db.QualityCharacteristics.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+
+    private static string NormalizeScope(string? scope) => string.IsNullOrWhiteSpace(scope) ? "PRODUCT" : scope.Trim().ToUpperInvariant();
 }
 
 [ApiController]
@@ -602,7 +604,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
     private static string NormalizeScope(string? scope)
     {
         var normalized = (scope ?? "PRODUCT").Trim().ToUpperInvariant();
-        return normalized is "PROCESS" or "CHEMICAL" or "PRODUCT" ? normalized : "PRODUCT";
+        return string.IsNullOrWhiteSpace(normalized) ? "PRODUCT" : normalized;
     }
 
     private static string? ValidateScope(PartProcessCharacteristic req)
@@ -647,23 +649,39 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.CharacteristicId);
         if (characteristic is null) return "找不到指定的品質特性。";
+        if (!string.Equals(characteristic.ControlScope, req.ControlScope, StringComparison.OrdinalIgnoreCase))
+            return "品質特性與所選管制類型不一致。";
 
-        var mode = (req.DisplayMode ?? "CONTROL_CHART").Trim().ToUpperInvariant();
-        if (characteristic.DataCategory.Equals("Attribute", StringComparison.OrdinalIgnoreCase))
+        // ControlScope 使用業務代碼（CHEMICAL/PRODUCT），管制圖大類使用短碼（CHEM/PROD）。
+        // 查詢前轉為管制圖大類代碼，避免合法的藥液/產品對照永遠查不到大類。
+        var chartGroupCode = req.ControlScope switch
         {
-            req.DisplayMode = "CONTROL_CHART";
-        }
-        else
+            "CHEMICAL" => "CHEM",
+            "PRODUCT" => "PROD",
+            "PROCESS" => "PROC",
+            _ => req.ControlScope
+        };
+        var selectedGroup = await db.ControlChartGroups.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.GroupCode == chartGroupCode && x.IsEnabled);
+        if (selectedGroup is null) return "找不到管制類型對應的管制圖大類別。";
+        req.DisplayMode = selectedGroup.GroupType == "TREND_CHART" ? "TREND_CHART" : "CONTROL_CHART";
+
+        var processMatchesScope = await db.Processes.AsNoTracking()
+            .AnyAsync(x => x.Id == req.ProcessId && x.ControlScope == req.ControlScope && x.IsEnabled);
+        if (!processMatchesScope) return "工站製程與所選管制類型不一致。";
+
+        if (req.DisplayMode == "TREND_CHART")
         {
-            if (mode is not ("CONTROL_CHART" or "TREND_CHART"))
-                return "計量型顯示方式必須擇一：管制圖或趨勢圖，不能同時選擇。";
-            req.DisplayMode = mode;
+            req.ChartTypeId = null;
+            req.FormulaConfigJson = null;
+            req.UCL = null;
+            req.CL = null;
+            req.LCL = null;
+            return null;
         }
 
         if (!req.ChartTypeId.HasValue)
-            return req.DisplayMode == "TREND_CHART"
-                ? "選擇趨勢圖顯示時，必須指定趨勢圖類型。"
-                : "選擇管制圖顯示時，必須指定 SPC 管制圖類型。";
+            return "選擇管制圖顯示時，必須指定 SPC 管制圖類型。";
 
         if (req.ChartTypeId.HasValue)
         {

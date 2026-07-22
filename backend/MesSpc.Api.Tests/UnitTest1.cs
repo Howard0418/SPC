@@ -5,7 +5,7 @@ namespace MesSpc.Api.Tests;
 
 public class UnitTest1(ITestOutputHelper output)
 {
-    [Fact]
+    [Fact(Skip = "Developer-only local workbook inspection utility; not an automated test.")]
     public void InspectExcelFile()
     {
         var filePath = @"C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\SPC開發\管制項目\藥液分析總表new.xlsx";

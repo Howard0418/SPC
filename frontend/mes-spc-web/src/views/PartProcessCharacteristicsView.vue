@@ -1,6 +1,5 @@
 <script setup>
 import ModuleGuide from "../components/ModuleGuide.vue";
-import ControlChartGroupsView from "./ControlChartGroupsView.vue";
 import { onBeforeUnmount, onMounted, ref, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
@@ -21,7 +20,8 @@ import {
   Layers,
   Activity,
   Info,
-  Cpu
+  Cpu,
+  Code2
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -49,42 +49,6 @@ const router = useRouter();
 const err = ref("");
 const successMsg = ref("");
 const loading = ref(false);
-const activeMainTab = ref(["groups", "types", "settings"].includes(route.query.tab) ? "settings" : "items");
-const settingsSubTab = ref(["groups", "types"].includes(route.query.tab) ? route.query.tab : "groups");
-
-const mainTabs = [
-  { id: "items", label: "管制項目與規格維護" },
-  { id: "settings", label: "系統主檔配置" }
-];
-
-function setMainTab(tabId) {
-  activeMainTab.value = tabId;
-  if (tabId === "items") {
-    router.replace({ path: "/part-process-characteristics", query: {} });
-  } else {
-    router.replace({
-      path: "/part-process-characteristics",
-      query: { tab: settingsSubTab.value }
-    });
-  }
-}
-
-function setSettingsSubTab(subTab) {
-  settingsSubTab.value = subTab;
-  router.replace({
-    path: "/part-process-characteristics",
-    query: { tab: subTab }
-  });
-}
-
-watch(() => route.query.tab, (newTab) => {
-  if (["groups", "types"].includes(newTab)) {
-    activeMainTab.value = "settings";
-    settingsSubTab.value = newTab;
-  } else {
-    activeMainTab.value = "items";
-  }
-});
 
 const searchQuery = ref("");
 const statusFilter = ref("all");
@@ -121,27 +85,52 @@ const form = ref({
 });
 const formErr = ref("");
 
+function normalizeControlScope(scope) {
+  const value = String(scope || "PRODUCT").trim().toUpperCase();
+  if (["PROD", "PRODUCT"].includes(value)) return "PRODUCT";
+  if (["PROC", "PROCESS"].includes(value)) return "PROCESS";
+  if (["CHEM", "CHEMICAL"].includes(value)) return "CHEMICAL";
+  return value;
+}
+
 const controlScopes = computed(() => {
-  return groups.value
-    .filter(g => g.isEnabled !== false)
-    .map(g => {
+  const labelDefaults = {
+    PRODUCT: "產品管制",
+    PROCESS: "製程管制",
+    CHEMICAL: "藥液管制"
+  };
+  const scopeMap = new Map();
+  const enabledGroups = groups.value.filter(g => g.isEnabled !== false);
+  const scopeIds = new Set([
+    ...enabledGroups.map(g => normalizeControlScope(g.groupCode)),
+    ...rows.value.map(row => normalizeControlScope(row.controlScope))
+  ]);
+  scopeIds.forEach(id => {
+      if (scopeMap.has(id)) return;
+      const group = enabledGroups.find(g => normalizeControlScope(g.groupCode) === id);
       let tone = "blue";
-      if (g.groupCode === "PROCESS") tone = "purple";
-      else if (g.groupCode === "CHEMICAL") tone = "teal";
-      else if (g.groupCode === "PRODUCT") tone = "blue";
-      else if (g.groupCode?.includes("DUST") || g.groupName?.includes("落塵")) tone = "amber";
+      if (id === "PROCESS") tone = "purple";
+      else if (id === "CHEMICAL") tone = "teal";
+      else if (id === "PRODUCT") tone = "blue";
+      else if (id.includes("DUST") || group?.groupName?.includes("落塵")) tone = "amber";
       else tone = "slate";
 
-      return {
-        id: g.groupCode,
-        label: g.groupName,
+      scopeMap.set(id, {
+        id,
+        label: group?.groupName || labelDefaults[id] || id,
         tone: tone
-      };
-    });
+      });
+  });
+  return [...scopeMap.values()];
+});
+
+const filterControlScopes = computed(() => {
+  const scopesWithRows = new Set(rows.value.map(row => normalizeControlScope(row.controlScope)));
+  return controlScopes.value.filter(scope => scopesWithRows.has(scope.id));
 });
 
 const formulaOptions = [
-  { id: "", label: "繼承管制圖種類預設公式" },
+  { id: "", label: "系統標準公式" },
   {
     id: JSON.stringify({
       XbarCalculationMethod: "STANDARD_RANGE",
@@ -171,7 +160,7 @@ const formulaOptions = [
 ];
 
 function formulaLabel(config) {
-  if (!config) return "繼承預設";
+  if (!config) return "系統標準公式";
   try {
     const parsed = JSON.parse(config);
     const method = parsed.XbarCalculationMethod;
@@ -183,7 +172,7 @@ function formulaLabel(config) {
   }
 }
 
-const scopeLabel = (scope) => controlScopes.value.find(s => s.id === (scope || "PRODUCT"))?.label || "產品管制";
+const scopeLabel = (scope) => controlScopes.value.find(s => s.id === normalizeControlScope(scope))?.label || "產品管制";
 
 function updateTableScrollMax() {
   const body = tableScroll.value;
@@ -224,6 +213,7 @@ async function load() {
     rows.value = resMain.data || [];
     parts.value = resParts.data || [];
     processes.value = resProc.data || [];
+    formProcesses.value = processes.value.filter(p => normalizeControlScope(p.controlScope) === normalizeControlScope(form.value.controlScope));
     characteristics.value = resChar.data || [];
     chartTypes.value = resTypes.data || [];
     ruleGroups.value = resRules.data || [];
@@ -296,10 +286,22 @@ function getChartTypeGroupType(chartTypeId) {
 const selectedCharacteristic = computed(() =>
   characteristics.value.find(x => x.id === Number(form.value.characteristicId)) || null
 );
+const availableCharacteristics = computed(() =>
+  characteristics.value.filter(x =>
+    x.isEnabled !== false &&
+    x.isSpcEnabled !== false &&
+    normalizeControlScope(x.controlScope) === normalizeControlScope(form.value.controlScope)
+  )
+);
 
 const selectedChartType = computed(() =>
   chartTypes.value.find(x => x.id === Number(form.value.chartTypeId)) || null
 );
+
+function getControlScopeGroupType(scope) {
+  const normalizedScope = normalizeControlScope(scope);
+  return groups.value.find(group => normalizeControlScope(group.groupCode) === normalizedScope)?.groupType || "CONTROL_CHART";
+}
 
 const selectedDisplayModeLabel = computed(() =>
   form.value.displayMode === "TREND_CHART" ? "趨勢圖" : "管制圖"
@@ -340,6 +342,21 @@ const availableMachines = computed(() =>
 const availableTanks = ref([]);
 
 watch(() => form.value.controlScope, async (newScope) => {
+  if (!availableCharacteristics.value.some(x => x.id === Number(form.value.characteristicId))) {
+    form.value.characteristicId = null;
+    form.value.unit = "";
+  }
+  form.value.displayMode = getControlScopeGroupType(newScope);
+  if (form.value.displayMode === "TREND_CHART") {
+    form.value.chartTypeId = null;
+    form.value.formulaConfigJson = "";
+    form.value.selectedRuleCodes = [];
+    form.value.ucl = null;
+    form.value.cl = null;
+    form.value.lcl = null;
+  } else if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
+    form.value.chartTypeId = availableChartTypes.value[0]?.id || null;
+  }
   if (newScope !== "PRODUCT") {
     form.value.partId = null;
   }
@@ -368,17 +385,11 @@ watch(scopeFilter, async (newScope) => {
   }
 });
 
-watch(() => form.value.displayMode, () => {
-  if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
-    form.value.chartTypeId = availableChartTypes.value[0]?.id || null;
-  }
-});
-
 watch(() => form.value.characteristicId, () => {
-  if (selectedCharacteristic.value?.dataCategory === "Attribute") {
-    form.value.displayMode = "CONTROL_CHART";
-  }
-  if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
+  form.value.displayMode = getControlScopeGroupType(form.value.controlScope);
+  if (form.value.displayMode === "TREND_CHART") {
+    form.value.chartTypeId = null;
+  } else if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
     form.value.chartTypeId = availableChartTypes.value[0]?.id || null;
   }
 });
@@ -434,7 +445,7 @@ const filteredRows = computed(() => {
       (statusFilter.value === "inactive" && !row.isEnabled);
 
     const matchProc = processFilter.value === "all" || row.processId === parseInt(processFilter.value);
-    const matchScope = scopeFilter.value === "all" || (row.controlScope || "PRODUCT") === scopeFilter.value;
+    const matchScope = scopeFilter.value === "all" || normalizeControlScope(row.controlScope) === normalizeControlScope(scopeFilter.value);
 
     return matchQuery && matchStatus && matchProc && matchScope;
   });
@@ -512,7 +523,7 @@ async function openCreateModal() {
   formMode.value = "quick";
   availableTanks.value = [];
   const characteristic = characteristics.value[0] || null;
-  const displayMode = "CONTROL_CHART";
+  const displayMode = getControlScopeGroupType("PRODUCT");
   
   try {
     const { data } = await api.get("/processes", { params: { controlScope: "PRODUCT", configuredOnly: false } });
@@ -532,9 +543,9 @@ async function openCreateModal() {
     usl: null, lsl: null, ucl: null, cl: null, lcl: null, targetValue: null,
     sampleSize: 5,
     displayMode,
-    chartTypeId: findDefaultChartTypeId(displayMode, characteristic?.dataCategory),
+    chartTypeId: displayMode === "CONTROL_CHART" ? findDefaultChartTypeId(displayMode, characteristic?.dataCategory) : null,
     formulaConfigJson: "",
-    selectedRuleCodes: defaultSelectedRuleCodes(),
+    selectedRuleCodes: displayMode === "CONTROL_CHART" ? defaultSelectedRuleCodes() : [],
     isRequired: true,
     isEnabled: true
   };
@@ -569,9 +580,7 @@ async function openEditModal(item) {
     availableTanks.value = [];
   }
 
-  const displayMode = item.displayMode === "TREND_CHART" || getChartTypeGroupType(item.chartTypeId) === "TREND_CHART"
-    ? "TREND_CHART"
-    : "CONTROL_CHART";
+  const displayMode = getControlScopeGroupType(scope);
   const existingChartTypeId = getChartTypeGroupType(item.chartTypeId) === displayMode ? item.chartTypeId : null;
   const itemDataCategory = item.characteristic?.dataCategory || characteristics.value.find(x => x.id === Number(item.characteristicId))?.dataCategory;
 
@@ -591,17 +600,17 @@ async function openEditModal(item) {
     targetValue: item.targetValue ?? null,
     sampleSize: item.sampleSize ?? 5,
     displayMode,
-    chartTypeId: existingChartTypeId || findDefaultChartTypeId(displayMode, itemDataCategory),
-    formulaConfigJson: item.formulaConfigJson || "",
+    chartTypeId: displayMode === "CONTROL_CHART" ? (existingChartTypeId || findDefaultChartTypeId(displayMode, itemDataCategory)) : null,
+    formulaConfigJson: displayMode === "CONTROL_CHART" ? (item.formulaConfigJson || "") : "",
     selectedRuleCodes: [],
     isRequired: item.isRequired ?? true,
     isEnabled: item.isEnabled ?? true
   };
   try {
     const { data } = await api.get(`/part-process-characteristics/${item.id}/rules`);
-    form.value.selectedRuleCodes = (data?.rules || [])
+    form.value.selectedRuleCodes = displayMode === "CONTROL_CHART" ? (data?.rules || [])
       .filter(rule => rule.isSelected)
-      .map(rule => rule.ruleCode);
+      .map(rule => rule.ruleCode) : [];
   } catch (e) {
     formErr.value = "載入管制規則失敗：" + getApiErrorMessage(e);
   }
@@ -616,12 +625,14 @@ function applyCharacteristicUnit() {
 async function save() {
   if (formMode.value === "quick") {
     form.value.displayMode = form.value.displayMode || "CONTROL_CHART";
-    form.value.chartTypeId = form.value.chartTypeId || findDefaultChartTypeId(form.value.displayMode, selectedCharacteristic.value?.dataCategory);
+    if (form.value.displayMode === "CONTROL_CHART") {
+      form.value.chartTypeId = form.value.chartTypeId || findDefaultChartTypeId(form.value.displayMode, selectedCharacteristic.value?.dataCategory);
+    }
     const isAttribute = selectedCharacteristic.value?.dataCategory === "Attribute";
     if (form.value.sampleSize === null || form.value.sampleSize === undefined || form.value.sampleSize <= 0) {
       form.value.sampleSize = isAttribute ? 100 : 5;
     }
-    if (!form.value.selectedRuleCodes || form.value.selectedRuleCodes.length === 0) {
+    if (form.value.displayMode === "CONTROL_CHART" && (!form.value.selectedRuleCodes || form.value.selectedRuleCodes.length === 0)) {
       form.value.selectedRuleCodes = defaultSelectedRuleCodes();
     }
   }
@@ -638,15 +649,12 @@ async function save() {
     formErr.value = "藥水管制項目必須選擇線別/機台與槽體。";
     return;
   }
-  if (!["CONTROL_CHART", "TREND_CHART"].includes(form.value.displayMode)) {
-    formErr.value = "圖表顯示方式必須擇一：管制圖或趨勢圖，不能同時選擇。";
-    return;
-  }
-  if (!form.value.chartTypeId) {
+  form.value.displayMode = getControlScopeGroupType(form.value.controlScope);
+  if (form.value.displayMode === "CONTROL_CHART" && !form.value.chartTypeId) {
     formErr.value = `請選擇${selectedDisplayModeLabel.value}類型。`;
     return;
   }
-  if (getChartTypeGroupType(form.value.chartTypeId) !== form.value.displayMode) {
+  if (form.value.displayMode === "CONTROL_CHART" && getChartTypeGroupType(form.value.chartTypeId) !== form.value.displayMode) {
     formErr.value = `目前選擇的是${selectedDisplayModeLabel.value}，不能同時選擇另一種圖表類型。`;
     return;
   }
@@ -664,13 +672,14 @@ async function save() {
       characteristicId: parseInt(form.value.characteristicId),
       usl: form.value.usl !== "" && form.value.usl !== null ? parseFloat(form.value.usl) : null,
       lsl: form.value.lsl !== "" && form.value.lsl !== null ? parseFloat(form.value.lsl) : null,
-      ucl: form.value.ucl !== "" && form.value.ucl !== null ? parseFloat(form.value.ucl) : null,
-      cl: form.value.cl !== "" && form.value.cl !== null ? parseFloat(form.value.cl) : null,
-      lcl: form.value.lcl !== "" && form.value.lcl !== null ? parseFloat(form.value.lcl) : null,
+      ucl: form.value.displayMode === "CONTROL_CHART" && form.value.ucl !== "" && form.value.ucl !== null ? parseFloat(form.value.ucl) : null,
+      cl: form.value.displayMode === "CONTROL_CHART" && form.value.cl !== "" && form.value.cl !== null ? parseFloat(form.value.cl) : null,
+      lcl: form.value.displayMode === "CONTROL_CHART" && form.value.lcl !== "" && form.value.lcl !== null ? parseFloat(form.value.lcl) : null,
       targetValue: form.value.targetValue !== "" && form.value.targetValue !== null ? parseFloat(form.value.targetValue) : null,
       sampleSize: parseInt(form.value.sampleSize) || 1,
-      displayMode: form.value.displayMode === "TREND_CHART" ? "TREND_CHART" : "CONTROL_CHART",
-      chartTypeId: form.value.chartTypeId ? parseInt(form.value.chartTypeId) : null
+      displayMode: form.value.displayMode,
+      chartTypeId: form.value.displayMode === "CONTROL_CHART" && form.value.chartTypeId ? parseInt(form.value.chartTypeId) : null,
+      formulaConfigJson: form.value.displayMode === "CONTROL_CHART" ? form.value.formulaConfigJson : null
     };
 
     let savedItem;
@@ -684,7 +693,7 @@ async function save() {
       successAlert("成功更新檢驗基準");
     }
     await api.put(`/part-process-characteristics/${savedItem.id}/rules`, {
-      selectedRuleCodes: form.value.selectedRuleCodes
+      selectedRuleCodes: form.value.displayMode === "CONTROL_CHART" ? form.value.selectedRuleCodes : []
     });
     showModal.value = false;
     await load();
@@ -876,6 +885,10 @@ const formatNumber = (value, digits = 4) => {
 };
 
 function viewChartOrTrend(item) {
+  if (item.displayMode === 'TREND_CHART') {
+    router.push({ path: '/trend-chart', query: { ppcId: item.id } });
+    return;
+  }
   if (!item.chartTypeId) {
     router.push({ path: '/spc', query: { ppcId: item.id } });
     return;
@@ -901,7 +914,6 @@ function viewChartOrTrend(item) {
 onMounted(async () => {
   await load();
   window.addEventListener("resize", updateTableScrollMax);
-  if (activeMainTab.value !== "items") return;
   const editId = Number(route.query.editId);
   if (editId) {
     const item = rows.value.find(r => r.id === editId);
@@ -915,10 +927,6 @@ watch(advancedMode, (value) => {
   localStorage.setItem("ppcAdvancedMode", value ? "true" : "false");
 });
 
-watch(() => route.query.tab, (tab) => {
-  activeMainTab.value = ["groups", "categories", "types"].includes(tab) ? tab : "items";
-});
-
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateTableScrollMax);
 });
@@ -928,7 +936,7 @@ onBeforeUnmount(() => {
   <section class="space-y-6">
     <!-- Title & Actions -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-      <div v-if="activeMainTab === 'items'" class="flex items-center gap-3">
+      <div class="flex items-center gap-3">
         <div class="p-3 bg-gradient-to-tr from-amber-600 to-orange-500 rounded-xl shadow-lg shadow-amber-500/30 text-white">
           <FolderTree class="w-7 h-7" />
         </div>
@@ -957,24 +965,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="flex overflow-x-auto border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-1 shadow-sm">
-      <button
-        v-for="tab in mainTabs"
-        :key="tab.id"
-        @click="setMainTab(tab.id)"
-        type="button"
-        :class="[
-          'flex-1 min-w-40 py-3 px-4 rounded-xl text-center text-sm font-bold transition-all whitespace-nowrap',
-          activeMainTab === tab.id
-            ? 'bg-amber-50 dark:bg-slate-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-slate-700 shadow-sm'
-            : 'border border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-        ]"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
-
-    <div v-if="activeMainTab === 'items'" class="space-y-6">
+    <div class="space-y-6">
     <!-- Guide / Wizard Tip -->
     <ModuleGuide title="模組指南：SPC 管制項目設定">
       <p class="text-xs text-amber-700 dark:text-amber-400/80 mt-1.5 leading-relaxed">
@@ -1023,7 +1014,7 @@ onBeforeUnmount(() => {
           class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all cursor-pointer"
         >
           <option value="all">全部管制類型</option>
-          <option v-for="s in controlScopes" :key="s.id" :value="s.id">{{ s.label }}</option>
+          <option v-for="s in filterControlScopes" :key="s.id" :value="s.id">{{ s.label }}</option>
         </select>
 
         <select
@@ -1058,14 +1049,29 @@ onBeforeUnmount(() => {
 
     <!-- Data Table Container -->
     <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-      <div class="overflow-x-auto pb-3">
+      <div v-if="tableScrollMax > 0" class="px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">水平捲動</span>
+          <input
+            v-model.number="tableScrollLeft"
+            type="range"
+            min="0"
+            :max="tableScrollMax"
+            step="1"
+            class="w-full h-2 accent-amber-500 cursor-ew-resize"
+            aria-label="資料表水平捲動"
+            @input="setTableScrollFromSlider"
+          />
+        </div>
+      </div>
+      <div ref="tableScroll" class="overflow-x-auto pb-3" @scroll="syncTableScroll">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
               <th class="py-4 px-6 w-16 text-center">ID</th>
-              <th class="py-4 px-6">工站製程與生產機台 (Process & Machines)</th>
-              <th class="py-4 px-6">管制類型與檢驗特性 (Scope & Characteristic)</th>
-              <th class="py-4 px-6">規格限值與抽樣配置 (Limits & Sample Size)</th>
+              <th class="py-4 px-6">工站製程與生產機台</th>
+              <th class="py-4 px-6">管制類型與檢驗特性</th>
+              <th class="py-4 px-6">規格限值與抽樣配置</th>
               <th class="py-4 px-6">管制圖與規則來源</th>
               <th class="py-4 px-6 text-center">匯入筆數</th>
               <th class="py-4 px-6 text-center">狀態</th>
@@ -1157,17 +1163,18 @@ onBeforeUnmount(() => {
               <td class="py-5 px-6 text-xs space-y-2">
                 <div class="flex items-center gap-1.5">
                   <Activity class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
-                  <span v-if="item.chartTypeId" class="font-bold text-indigo-600 dark:text-indigo-400">{{ chartTypeMap[item.chartTypeId] || `Chart #${item.chartTypeId}` }}</span>
-                  <span v-else class="text-slate-400 italic">自動判斷管制圖</span>
+                  <span v-if="item.displayMode === 'TREND_CHART'" class="font-bold text-indigo-600 dark:text-indigo-400">量測值趨勢圖</span>
+                  <span v-else-if="item.chartTypeId" class="font-bold text-indigo-600 dark:text-indigo-400">{{ chartTypeMap[item.chartTypeId] || `圖表 #${item.chartTypeId}` }}</span>
+                  <span v-else class="text-slate-400 italic">未設定管制圖</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                <div v-if="item.displayMode !== 'TREND_CHART'" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <AlertTriangle class="w-3 h-3 flex-shrink-0 opacity-70" />
                   <span v-if="getEffectiveRuleGroupId(item)" class="font-semibold">
-                    {{ item.ruleGroupId ? '項目專屬規則' : (ruleGroupMap[getEffectiveRuleGroupId(item)] || `Rule #${getEffectiveRuleGroupId(item)}`) }}
+                    {{ item.ruleGroupId ? '項目專屬規則' : (ruleGroupMap[getEffectiveRuleGroupId(item)] || `規則 #${getEffectiveRuleGroupId(item)}`) }}
                   </span>
                   <span v-else class="italic opacity-80">此管制圖未套用規則</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                <div v-if="item.displayMode !== 'TREND_CHART'" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <Sliders class="w-3 h-3 flex-shrink-0 opacity-70" />
                   <span class="font-semibold">公式：{{ formulaLabel(item.formulaConfigJson) }}</span>
                 </div>
@@ -1199,11 +1206,12 @@ onBeforeUnmount(() => {
                   @click="viewChartOrTrend(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-600 dark:text-amber-400 transition-all border border-amber-200 dark:border-slate-700"
-                  title="查看管制圖與趨勢圖"
+                  :title="item.displayMode === 'TREND_CHART' ? '查看趨勢圖' : '查看 SPC 管制圖'"
                 >
                   <Activity class="w-4 h-4" />
                 </button>
                 <button
+                  v-if="item.displayMode !== 'TREND_CHART'"
                   @click="openSegmentModal(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-purple-50 dark:bg-slate-800 hover:bg-purple-100 dark:hover:bg-purple-950 text-purple-600 dark:text-purple-400 transition-all border border-purple-200 dark:border-slate-700"
@@ -1237,38 +1245,6 @@ onBeforeUnmount(() => {
         <span>顯示第 1 至 {{ filteredRows.length }} 項結果（總計 {{ rows.length }} 筆檢驗基準）</span>
       </div>
     </div>
-    </div>
-
-    <!-- ⚙️ 系統主檔配置 (settings) -->
-    <div v-if="activeMainTab === 'settings'" class="space-y-6 animate-fade-in">
-      <!-- Sub Tab Header Navigation -->
-      <div class="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/80 rounded-2xl p-1 shadow-sm border max-w-md">
-        <button
-          @click="setSettingsSubTab('groups')"
-          type="button"
-          :class="[
-            'flex-1 py-2 px-4 rounded-xl text-center text-xs font-bold transition-all whitespace-nowrap',
-            settingsSubTab === 'groups'
-              ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          ]"
-        >
-          大類別總管 (Chart Groups)
-        </button>
-        <button
-          @click="setSettingsSubTab('types')"
-          type="button"
-          :class="[
-            'flex-1 py-2 px-4 rounded-xl text-center text-xs font-bold transition-all whitespace-nowrap',
-            settingsSubTab === 'types'
-              ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          ]"
-        >
-          小分類與公式配置
-        </button>
-      </div>
-      <ControlChartGroupsView embedded />
     </div>
 
     <!-- Slide-over Panel (Add / Edit) -->
@@ -1393,7 +1369,7 @@ onBeforeUnmount(() => {
 
               <!-- Process Selector (置於最上方) -->
               <div class="space-y-1.5">
-                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">工站製程 (Process) <span class="text-red-500">*</span></label>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">工站製程 <span class="text-red-500">*</span></label>
                 <select
                   v-model="form.processId"
                   :required="currentStep === 1"
@@ -1464,7 +1440,7 @@ onBeforeUnmount(() => {
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div v-if="form.controlScope === 'PRODUCT'" class="space-y-1.5">
                   <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                    <span>產品料號 (Part) <span class="text-red-500">*</span></span>
+                    <span>產品料號 <span class="text-red-500">*</span></span>
                   </label>
                   <select
                     v-model="form.partId"
@@ -1477,14 +1453,14 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div v-else class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">產品料號 (Part)</label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">產品料號</label>
                   <div class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-500 dark:text-slate-400">
                     {{ form.controlScope === 'CHEMICAL' ? '藥水管制不需產品料號' : '製程管制不需產品料號' }}
                   </div>
                 </div>
 
                 <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">檢驗特性 (Characteristic) <span class="text-red-500">*</span></label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">檢驗特性 <span class="text-red-500">*</span></label>
                   <select
                     v-model="form.characteristicId"
                     @change="applyCharacteristicUnit"
@@ -1492,34 +1468,30 @@ onBeforeUnmount(() => {
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   >
                     <option disabled value="null">-- 選擇特性 --</option>
-                    <option v-for="ch in characteristics" :key="ch.id" :value="ch.id">{{ ch.characteristicCode }} - {{ ch.characteristicName }}</option>
+                    <option v-for="ch in availableCharacteristics" :key="ch.id" :value="ch.id">{{ ch.characteristicCode }} - {{ ch.characteristicName }}</option>
                   </select>
                 </div>
               </div>
 
               <!-- ⚡ 快速建檔模式：新增預設管制圖與顯示類型設定 -->
               <div v-if="formMode === 'quick'" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表類型 (可選)</label>
+                <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ selectedDisplayModeLabel }}類型</label>
                   <select
                     v-model="form.chartTypeId"
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   >
-                    <option :value="null">-- 自動判斷管制圖 --</option>
+                    <option :value="null">-- 請選擇{{ selectedDisplayModeLabel }}類型 --</option>
                     <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">
                       {{ ct.chartTypeCode }} - {{ ct.chartTypeName }}
                     </option>
                   </select>
                 </div>
                 <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
-                  <select
-                    v-model="form.displayMode"
-                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-                  >
-                    <option value="CONTROL_CHART">管制圖</option>
-                    <option :disabled="selectedCharacteristic?.dataCategory === 'Attribute'" value="TREND_CHART">趨勢圖</option>
-                  </select>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">可用圖表</label>
+                  <div class="px-3 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                    {{ selectedDisplayModeLabel }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1545,7 +1517,7 @@ onBeforeUnmount(() => {
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">目標值 (Target)</label>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">目標值</label>
                     <input
                       v-model="form.targetValue"
                       type="number"
@@ -1567,7 +1539,7 @@ onBeforeUnmount(() => {
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400">子組大小 (Sample Size) <span class="text-red-500">*</span></label>
+                    <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400">子組大小 <span class="text-red-500">*</span></label>
                     <input
                       v-model="form.sampleSize"
                       type="number"
@@ -1596,16 +1568,16 @@ onBeforeUnmount(() => {
                   <label class="relative inline-flex items-center cursor-pointer">
                     <input v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
                     <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                    <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用 (Active)' : '停用 (Inactive)' }}</span>
+                    <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用' : '停用' }}</span>
                   </label>
                 </div>
               </div>
             </div>
 
             <!-- STEP 3 CONTAINER -->
-            <div v-show="formMode === 'advanced' && currentStep === 3" class="space-y-5 animate-fade-in">
+            <div v-show="formMode === 'quick' || currentStep === 3" class="space-y-5 animate-fade-in">
               <!-- Mode Switcher -->
-              <div class="p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-1">
+              <div v-if="formMode === 'advanced'" class="p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-1">
                 <button
                   type="button"
                   @click="advancedMode = false"
@@ -1629,7 +1601,7 @@ onBeforeUnmount(() => {
               </div>
 
               <!-- currently applied info card (!advancedMode) -->
-              <div v-if="!advancedMode" class="p-4 bg-blue-50/60 dark:bg-blue-950/15 rounded-2xl border border-blue-200 dark:border-blue-900/70 space-y-3">
+              <div v-if="formMode === 'advanced' && !advancedMode" class="p-4 bg-blue-50/60 dark:bg-blue-950/15 rounded-2xl border border-blue-200 dark:border-blue-900/70 space-y-3">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-2">
                   <Info class="w-4 h-4" /> 目前套用資訊
                 </h4>
@@ -1641,35 +1613,35 @@ onBeforeUnmount(() => {
                       {{ isUnitOverridden ? '此管制項目覆寫' : '繼承品質特性主檔' }}
                     </div>
                   </div>
-                  <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                  <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
                     <div class="text-slate-400 font-bold">管制圖類型</div>
                     <div class="mt-1 font-black text-slate-800 dark:text-white">{{ selectedChartType ? `${selectedChartType.chartTypeCode} (${selectedChartType.chartTypeName})` : '繼承特性設定' }}</div>
                     <div class="mt-1 text-[11px] text-slate-400">{{ selectedChartType ? '此管制項目指定' : '未指定項目專屬管制圖' }}</div>
                   </div>
-                  <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                  <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
                     <div class="text-slate-400 font-bold">公式來源</div>
-                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ isFormulaOverridden ? formulaLabel(form.formulaConfigJson) : '繼承管制圖種類' }}</div>
-                    <div class="mt-1 text-[11px]" :class="isFormulaOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                      {{ isFormulaOverridden ? '此管制項目覆寫' : '未覆寫公式' }}
+                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ formulaLabel(form.formulaConfigJson) }}</div>
+                    <div class="mt-1 text-[11px] text-amber-600 dark:text-amber-400 font-bold">
+                      此管制項目專屬設定
                     </div>
                   </div>
-                  <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
+                  <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
                     <div class="text-slate-400 font-bold">管制規則</div>
-                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ hasItemRules ? `項目專屬 ${form.selectedRuleCodes.length} 條` : '繼承管制圖種類' }}</div>
+                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ hasItemRules ? `項目專屬 ${form.selectedRuleCodes.length} 條` : '未啟用規則' }}</div>
                     <div class="mt-1 text-[11px]" :class="hasItemRules ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                      {{ hasItemRules ? '此管制項目覆寫' : '未覆寫規則' }}
+                      {{ hasItemRules ? '此管制項目專屬設定' : '此項目不執行異常規則' }}
                     </div>
                   </div>
                 </div>
                 <p class="text-[11px] text-blue-700/70 dark:text-blue-300/70 font-semibold">
-                  若要調整單位、公式、管制規則或固定 UCL/CL/LCL，請切換到進階模式。
+                  {{ form.displayMode === 'TREND_CHART' ? '趨勢圖僅使用量測單位、目標值與規格界限。' : '若要調整單位、公式、管制規則或固定 UCL/CL/LCL，請切換到進階模式。' }}
                 </p>
               </div>
 
               <!-- Advanced Override items -->
-              <div v-if="advancedMode" class="space-y-5">
+              <div v-if="formMode === 'quick' || advancedMode" class="space-y-5">
                 <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">量測單位 (Unit)</label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">量測單位</label>
                   <input
                     v-model.trim="form.unit"
                     type="text"
@@ -1686,7 +1658,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Custom Control Limits -->
-                <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                   <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mb-2 block">固定統計管制線 (可留空由系統自動算圖)</span>
                   <div class="grid grid-cols-3 gap-3">
                     <div>
@@ -1708,42 +1680,18 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Chart Type -->
-                <div class="space-y-1.5">
+                <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
                   <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
-                  <div class="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800/70 p-1 border border-slate-200 dark:border-slate-700">
-                    <button
-                      type="button"
-                      @click="form.displayMode = 'CONTROL_CHART'"
-                      :class="[
-                        'px-4 py-2.5 rounded-xl text-sm font-black border transition-all',
-                        form.displayMode === 'CONTROL_CHART'
-                          ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800 shadow-sm'
-                          : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                      ]"
-                    >
-                      管制圖
-                    </button>
-                    <button
-                      type="button"
-                      :disabled="selectedCharacteristic?.dataCategory === 'Attribute'"
-                      @click="form.displayMode = 'TREND_CHART'"
-                      :class="[
-                        'px-4 py-2.5 rounded-xl text-sm font-black border transition-all disabled:opacity-40 disabled:cursor-not-allowed',
-                        form.displayMode === 'TREND_CHART'
-                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 shadow-sm'
-                          : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                      ]"
-                    >
-                      趨勢圖
-                    </button>
+                  <div class="px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-sm font-bold text-blue-700 dark:text-blue-300">
+                    此項目由所屬大類別決定顯示為{{ selectedDisplayModeLabel }}。
                   </div>
                   <p class="text-[11px] text-slate-400">
-                    管制圖與趨勢圖只能擇一；選定後下方只會顯示對應的圖表類型。
+                    如需變更顯示方式，請調整管制圖大類別的群組類型。
                   </p>
                 </div>
 
                 <!-- Bind Chart Type -->
-                <div class="space-y-1.5">
+                <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
                   <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定 {{ selectedDisplayModeLabel }} 類型</label>
                   <select
                     v-model="form.chartTypeId"
@@ -1754,42 +1702,62 @@ onBeforeUnmount(() => {
                     <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
                   </select>
                   <p class="text-[11px] text-slate-400 mt-1">
-                    未設定項目專屬規則時，會繼承「管制圖配置維護 > 小分類與公式配置」的規則。
-                    <span v-if="getChartTypeRuleGroupId(Number(form.chartTypeId))" class="font-bold text-amber-600 dark:text-amber-400">
-                      目前套用：{{ ruleGroupMap[getChartTypeRuleGroupId(Number(form.chartTypeId))] }}
-                    </span>
-                    <span v-else class="italic">目前未套用規則。</span>
+                    圖表類型只套用於目前管制項目；修改此處不會影響其他資料。
                   </p>
                 </div>
 
                 <!-- Formula Config -->
-                <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">公式配置</label>
-                  <select
-                    v-model="form.formulaConfigJson"
-                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-                  >
-                    <option
-                      v-if="form.formulaConfigJson && !formulaOptions.some(option => option.id === form.formulaConfigJson)"
-                      :value="form.formulaConfigJson"
+                <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-4 space-y-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/15 border border-indigo-200 dark:border-indigo-900/70">
+                  <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
+                      <Code2 class="w-4 h-4" /> 公式配置
+                    </h4>
+                    <p class="mt-1 text-[11px] text-indigo-700/70 dark:text-indigo-300/70">
+                      可套用預設公式後再編輯 JSON；設定只影響目前這一個管制項目。
+                    </p>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      v-for="option in formulaOptions"
+                      :key="option.label"
+                      type="button"
+                      @click="form.formulaConfigJson = option.id"
+                      class="p-3 rounded-xl border text-left transition-all"
+                      :class="form.formulaConfigJson === option.id
+                        ? 'bg-white dark:bg-slate-900 border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm'
+                        : 'bg-indigo-50/40 dark:bg-slate-900/40 border-indigo-100 dark:border-slate-800 hover:border-indigo-300'"
                     >
-                      既有自訂公式
-                    </option>
-                    <option v-for="option in formulaOptions" :key="option.label" :value="option.id">{{ option.label }}</option>
-                  </select>
-                  <p class="text-[11px] text-slate-400">
-                    項目選擇的公式會優先於管制圖種類設定；目前公式套用於 X̄-R 管制線計算。
-                  </p>
+                      <span class="block text-xs font-black text-slate-800 dark:text-slate-100">{{ option.label }}</span>
+                      <span class="block mt-1 text-[10px] text-slate-400">
+                        {{ option.id ? '套用後可在下方調整內容' : '由所選管制圖類型使用標準常數計算' }}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">公式設定 JSON</label>
+                    <textarea
+                      v-model="form.formulaConfigJson"
+                      rows="7"
+                      spellcheck="false"
+                      placeholder="留空代表使用系統標準公式；也可貼入自訂公式 JSON"
+                      class="w-full px-4 py-3 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl font-mono text-xs leading-5 text-green-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                    ></textarea>
+                    <p class="text-[11px] text-slate-400">
+                      留空使用系統標準公式；既有自訂公式會完整帶入此欄位，可直接修改。
+                    </p>
+                  </div>
                 </div>
 
                 <!-- Control Rules -->
-                <div class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
+                <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
                   <div>
                     <h4 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-2">
                       <AlertTriangle class="w-4 h-4" /> 管制規則
                     </h4>
                     <p class="text-[11px] text-amber-700/70 dark:text-amber-300/70 mt-1">
-                      勾選後會優先套用此管制項目的專屬規則；全部不勾選時，繼承管制圖種類的規則設定。
+                      規則只套用於目前管制項目；全部不勾選時，此項目不執行異常規則。
                     </p>
                   </div>
                   <div v-if="ruleLibrary.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
