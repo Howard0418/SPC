@@ -11,12 +11,18 @@ yarn-error.log*
 **/obj/
 **/publish/
 publish/
+publish-backups/
 
 # IDE / local runtime
 .vs/
 .vscode/
 .dotnet/
 .dotnet_home/
+
+# Local environment and secrets
+frontend/mes-spc-web/.env
+backend/MesSpc.Api/appsettings.json
+backend/MesSpc.Api/appsettings.Development.json
 
 # Logs and generated output
 *.log
