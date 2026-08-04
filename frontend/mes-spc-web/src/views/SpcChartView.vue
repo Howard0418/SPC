@@ -22,12 +22,15 @@ import {
   Calendar,
   Hash,
   Clock,
-  Loader2
+  Loader2,
+  ZoomIn,
+  RotateCcw
 } from "lucide-vue-next";
 import SpcSummaryTable from "../components/SpcSummaryTable.vue";
 
 const route = useRoute();
 const router = useRouter();
+const isMonthlyChartPage = computed(() => route.path.startsWith("/monthly-control-chart"));
 
 // SPC master data source: PartProcessCharacteristics
 const mappings = ref([]);
@@ -44,9 +47,34 @@ const getThreeMonthsAgoStr = () => {
   d.setMonth(d.getMonth() - 3);
   return d.toISOString().split("T")[0];
 };
+const toLocalDateStr = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+const getCurrentMonthStr = () => getTodayStr().slice(0, 7);
+const getCurrentIsoWeekStr = () => {
+  const date = new Date();
+  const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  utc.setUTCDate(utc.getUTCDate() + 4 - (utc.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
+  return `${utc.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+};
+const getMonthStartStr = (monthValue = getCurrentMonthStr()) => `${monthValue}-01`;
+const getMonthEndStr = (monthValue = getCurrentMonthStr()) => {
+  const [year, month] = monthValue.split("-").map(Number);
+  return toLocalDateStr(new Date(year, month, 0));
+};
+const getDefaultStartDateStr = () => isMonthlyChartPage.value ? getMonthStartStr() : getThreeMonthsAgoStr();
+const getDefaultEndDateStr = () => isMonthlyChartPage.value ? getMonthEndStr() : getTodayStr();
 
-const startDate = ref(getThreeMonthsAgoStr());
-const endDate = ref(getTodayStr());
+const startDate = ref(getDefaultStartDateStr());
+const endDate = ref(getDefaultEndDateStr());
+const reportPeriodType = ref("MONTH");
+const reportMonth = ref(getCurrentMonthStr());
+const reportWeek = ref(getCurrentIsoWeekStr());
 const productQueryMode = ref("DATE");
 const productPartId = ref("");
 
@@ -79,7 +107,7 @@ const chartEl = ref(null);
 // Click Drill-down State
 const selectedPoint = ref(null);
 const selectedPointIndex = ref(-1);
-const showSpecLimits = ref(true);
+const showSpecLimits = ref(false);
 const showControlLimits = ref(true);
 const showPointValues = ref(false);
 const savingControlLimits = ref(false);
@@ -149,6 +177,39 @@ const selectedMapping = computed(() => {
   ) || null;
 });
 
+const monitorMapping = computed(() =>
+  selectedMapping.value
+  || mappings.value.find(m => m.id === Number(ppcId.value))
+  || null
+);
+
+function formatMonitorMaster(code, name, fallbackName) {
+  const displayName = name || fallbackName || "";
+  if (code && displayName) return `[${code}] ${displayName}`;
+  return displayName || code || "未提供";
+}
+
+const monitorProcessLabel = computed(() => formatMonitorMaster(
+  chartResult.value?.monitorContext?.lineCode || chartResult.value?.monitorContext?.processCode || monitorMapping.value?.process?.processCode,
+  chartResult.value?.monitorContext?.lineName || chartResult.value?.monitorContext?.processName || monitorMapping.value?.process?.processName,
+  selectedSummaryRow.value?.lineOrProcessName
+));
+const monitorCharacteristicLabel = computed(() => formatMonitorMaster(
+  chartResult.value?.monitorContext?.characteristicCode || monitorMapping.value?.characteristic?.characteristicCode,
+  chartResult.value?.monitorContext?.characteristicName || monitorMapping.value?.characteristic?.characteristicName,
+  selectedSummaryRow.value?.chartName
+));
+const monitorMachineLabel = computed(() => formatMonitorMaster(
+  chartResult.value?.monitorContext?.lineCode || monitorMapping.value?.machine?.machineCode || monitorMapping.value?.process?.processCode,
+  chartResult.value?.monitorContext?.lineName || monitorMapping.value?.machine?.machineName || monitorMapping.value?.process?.processName,
+  selectedSummaryRow.value?.lineOrProcessName
+));
+const monitorSlotLabel = computed(() => formatMonitorMaster(
+  chartResult.value?.monitorContext?.slotCode || chartResult.value?.monitorContext?.tankCode || monitorMapping.value?.slot?.slotCode || monitorMapping.value?.tank?.tankCode,
+  chartResult.value?.monitorContext?.slotName || chartResult.value?.monitorContext?.tankName || monitorMapping.value?.slot?.slotName || monitorMapping.value?.tank?.tankName,
+  selectedSummaryRow.value?.slotName
+));
+
 function uniqueNonEmptyParts(parts) {
   return [...new Set(parts
     .map(x => (x ?? "").toString().trim())
@@ -194,33 +255,6 @@ const bottomControlStat = computed(() => {
   return stat.mrControlLimitsStat || stat.rControl || stat.sControl || null;
 });
 
-const primaryCalculationMethod = computed(() => {
-  const stat = chartResult.value?.statControlLimits || {};
-  const primary = stat.iControlLimitsStat || stat.xbarControl || stat.pControlLimitsStat || stat.npControlLimitsStat || stat.cControlLimitsStat || stat.uControlLimitsStat || {};
-  return (primary.calculationMethod || "").toString().toUpperCase();
-});
-
-const calculationMethodLabel = computed(() => {
-  const method = primaryCalculationMethod.value;
-  const chartType = (chartResult.value?.chartType || "").toString().toUpperCase();
-  if (method === "MR_METHOD" || method === "MOVING_RANGE_OF_XBAR" || chartType === "I_MR" || chartType === "I-MR") {
-    return {
-      text: "移動全距法 (UCL = Xbar + 2.66 * MRbar)",
-      cls: "bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300 dark:border-purple-800"
-    };
-  }
-  if (method === "SIGMA_METHOD" || method === "SAMPLE_STD_DEV") {
-    return {
-      text: "樣本標準差法 (UCL = Xbar + 3 * S_Xbar)",
-      cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
-    };
-  }
-  return {
-    text: "標準全距法 (UCL = Xbar + A2 * Rbar)",
-    cls: "bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800"
-  };
-});
-
 const chartPoints = computed(() => chartResult.value?.chartData?.points || []);
 
 const violationRows = computed(() => {
@@ -237,10 +271,7 @@ const capabilityRows = computed(() => {
   return [
     { label: "Ca", value: c.ca, note: "準確度" },
     { label: "Cp", value: c.cp, note: "短期能力" },
-    { label: "Cpk", value: c.cpk, note: "短期能力下限" },
-    { label: "Pp", value: c.pp, note: "長期性能" },
-    { label: "Ppk", value: c.ppk, note: "長期性能下限" },
-    { label: "Ppm", value: c.ppm, note: "實測不良 ppm" }
+    { label: "Cpk", value: c.cpk, note: "短期能力下限" }
   ];
 });
 
@@ -251,10 +282,14 @@ const formatNumber = (value, digits = 4) => {
 
 const formatLimit = (value) => value === null || value === undefined ? "N/A" : Number(value).toFixed(4);
 const formatPercentage = (value) => value === null || value === undefined ? "N/A" : `${Number(value).toFixed(2)}%`;
+const formatRuleCode = (value) => {
+  const match = String(value || "").match(/^(?:Rule|Nelson)(\d+)/i);
+  return match ? `Rule ${match[1]}` : String(value || "");
+};
 
 const summaryDimensionMap = {
   PROCESS: "PROCESS",
-  CHEMICAL: "CHEMICAL",
+  CHEM: "CHEM",
   PRODUCT: "PRODUCT"
 };
 const pageGroupType = "CONTROL_CHART";
@@ -266,7 +301,7 @@ const getDimensionForMapping = (m) => {
     return group?.groupCode || "";
   }
   if (m.controlScope === "PROCESS") return "PROCESS";
-  if (m.controlScope === "CHEMICAL") return "CHEMICAL";
+  if (m.controlScope === "CHEM" || m.controlScope === "CHEMICAL") return "CHEM";
   if (m.controlScope === "PRODUCT") return "PRODUCT";
   return m.partId ? "PRODUCT" : "PROCESS";
 };
@@ -285,7 +320,7 @@ const dimensionButtonClass = (dimensionId) => {
   if (selectedDimension.value !== dimensionId) {
     return "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800";
   }
-  if (dimensionId === "CHEMICAL") return "bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold shadow-lg shadow-teal-500/25";
+  if (dimensionId === "CHEM") return "bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold shadow-lg shadow-teal-500/25";
   if (dimensionId === "PRODUCT") return "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold shadow-lg shadow-purple-500/25";
   return "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-lg shadow-blue-500/25";
 };
@@ -408,6 +443,36 @@ watch(batchId, () => {
   loadActiveChart();
 });
 
+watch(isMonthlyChartPage, () => {
+  if (isMonthlyChartPage.value) productQueryMode.value = "DATE";
+  startDate.value = getDefaultStartDateStr();
+  endDate.value = getDefaultEndDateStr();
+  ppcId.value = "";
+  chartResult.value = null;
+  tableSummaryData.value = null;
+});
+
+watch([reportPeriodType, reportMonth, reportWeek], () => {
+  if (!isMonthlyChartPage.value) return;
+  if (reportPeriodType.value === "MONTH") {
+    if (!reportMonth.value) return;
+    startDate.value = getMonthStartStr(reportMonth.value);
+    endDate.value = getMonthEndStr(reportMonth.value);
+    return;
+  }
+  const match = /^(\d{4})-W(\d{2})$/.exec(reportWeek.value || "");
+  if (!match) return;
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  const januaryFourth = new Date(year, 0, 4);
+  const monday = new Date(januaryFourth);
+  monday.setDate(januaryFourth.getDate() - ((januaryFourth.getDay() + 6) % 7) + ((week - 1) * 7));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  startDate.value = toLocalDateStr(monday);
+  endDate.value = toLocalDateStr(sunday);
+}, { immediate: true });
+
 watch([showSpecLimits, showControlLimits, showPointValues], () => {
   if (chartResult.value) renderECharts();
 });
@@ -434,7 +499,7 @@ async function loadActiveChart() {
   } else {
     // Ensure default dates if they are cleared/empty to protect DB from full table scans
     if (!startDate.value) {
-      startDate.value = getThreeMonthsAgoStr();
+      startDate.value = getDefaultStartDateStr();
     }
     if (!endDate.value) {
       endDate.value = getTodayStr();
@@ -445,22 +510,26 @@ async function loadActiveChart() {
       return;
     }
 
-    // Enforce 3-month date filter constraint (approx. 93 days max)
+    // Enforce the date filter constraint for the active page.
     const startD = new Date(startDate.value);
     const endD = new Date(endDate.value);
     const diffDays = Math.ceil(Math.abs(endD - startD) / (1000 * 60 * 60 * 24));
-    if (diffDays > 93) {
-      error.value = "查詢時間範圍最多不可超過 3 個月。";
+    const maxQueryDays = isMonthlyChartPage.value ? 31 : 93;
+    if (diffDays > maxQueryDays) {
+      error.value = isMonthlyChartPage.value
+        ? "月管制圖查詢時間範圍最多不可超過 1 個月。"
+        : "查詢時間範圍最多不可超過 3 個月。";
       return;
     }
   }
 
-  if (!ppcId.value && (selectedDimension.value === "PRODUCT" || selectedProcessId.value === "ALL")) {
+  if (!ppcId.value && (selectedDimension.value === "PRODUCT" || selectedProcessId.value)) {
     loading.value = true;
     error.value = "";
     chartResult.value = null;
     try {
       const params = { dimension: summaryDimensionMap[selectedDimension.value] || selectedDimension.value, groupType: pageGroupType };
+      if (isMonthlyChartPage.value) params.comparisonPeriod = reportPeriodType.value;
       if (useProductPart) {
         if (productPartId.value !== "ALL") params.partId = Number(productPartId.value);
       } else {
@@ -468,6 +537,9 @@ async function loadActiveChart() {
         if (endDate.value) params.endDate = endDate.value;
       }
       if (uploadBatchId.value) params.uploadBatchId = uploadBatchId.value;
+      if (selectedProcessId.value && selectedProcessId.value !== "ALL") {
+        params.processId = Number(selectedProcessId.value);
+      }
       const res = await api.get("/v1/spc/summary", { params });
       tableSummaryData.value = res.data;
       cachedSummaryData.value = res.data;
@@ -694,6 +766,16 @@ function renderECharts() {
     lcl: topStat?.lcl ?? limits.lcl
   };
   const isDual = type === "XBAR_R" || type === "XBAR_S" || type === "I-MR" || type === "I_MR";
+  const topChartTitle = type === "XBAR_R" || type === "XBAR_S"
+    ? "Xbar 平均值管制圖"
+    : "I 個別值管制圖";
+  const bottomChartTitle = type === "XBAR_R"
+    ? "R 全距管制圖"
+    : type === "XBAR_S"
+      ? "S 標準差管制圖"
+      : "MR 移動全距圖";
+  const primarySeriesName = type === "XBAR_R" || type === "XBAR_S" ? "Xbar" : (isDual ? "Individual" : type);
+  const secondarySeriesName = type === "XBAR_R" ? "Range" : type === "XBAR_S" ? "Std Dev" : "Moving Range";
 
   // Calculate standard deviation (sigma) based on control limits
   const cl = effectiveTopLimits.cl;
@@ -800,14 +882,14 @@ function renderECharts() {
     markLinesBottom.push({
       name,
       yAxis: y,
-      lineStyle: { color, width: 1.5, type: "dashed" },
+      lineStyle: { color, width: 1.5, type: "solid" },
       label: { formatter: `${name}: ${Number(y).toFixed(3)}`, color, position: "end" }
     });
   };
   if (showControlLimits.value) {
-    addLineB(bottomUcl, "UCL(R/MR)", "#f59e0b");
-    addLineB(bottomCl, "CL(R/MR)", "#3b82f6");
-    addLineB(bottomLcl, "LCL(R/MR)", "#f59e0b");
+    addLineB(bottomUcl, "UCL", "#f59e0b");
+    addLineB(bottomCl, "CL", "#3b82f6");
+    addLineB(bottomLcl, "LCL", "#f59e0b");
   }
 
   const bottomMarkLineObj = markLinesBottom.length > 0 ? { symbol: "none", data: markLinesBottom, animation: false } : undefined;
@@ -875,7 +957,7 @@ function renderECharts() {
 
   const seriesTopList = [
     {
-      name: type === "XBAR_R" || type === "XBAR_S" ? "Xbar" : (isDual ? "Individual" : type),
+      name: primarySeriesName,
       type: "line",
       xAxisIndex: 0,
       yAxisIndex: 0,
@@ -896,6 +978,8 @@ function renderECharts() {
       symbol: "none",
       xAxisIndex: 0, yAxisIndex: 0,
       lineStyle: { color: "#f59e0b", width: 1.5, type: "solid" },
+      endLabel: { show: true, formatter: p => `UCL ${formatNumber(p.value, 3)}`, color: "#d97706", fontSize: 10, fontWeight: "bold" },
+      labelLayout: { moveOverlap: "shiftY" },
       data: pointsTop.map(p => p.uclStat != null ? Number(p.uclStat.toFixed(4)) : null)
     });
     seriesTopList.push({
@@ -905,6 +989,8 @@ function renderECharts() {
       symbol: "none",
       xAxisIndex: 0, yAxisIndex: 0,
       lineStyle: { color: "#3b82f6", width: 1.5, type: "solid" },
+      endLabel: { show: true, formatter: p => `CL ${formatNumber(p.value, 3)}`, color: "#2563eb", fontSize: 10, fontWeight: "bold" },
+      labelLayout: { moveOverlap: "shiftY" },
       data: pointsTop.map(p => p.clStat != null ? Number(p.clStat.toFixed(4)) : null)
     });
     seriesTopList.push({
@@ -914,12 +1000,52 @@ function renderECharts() {
       symbol: "none",
       xAxisIndex: 0, yAxisIndex: 0,
       lineStyle: { color: "#f59e0b", width: 1.5, type: "solid" },
+      endLabel: { show: true, formatter: p => `LCL ${formatNumber(p.value, 3)}`, color: "#d97706", fontSize: 10, fontWeight: "bold" },
+      labelLayout: { moveOverlap: "shiftY" },
       data: pointsTop.map(p => p.lclStat != null ? Math.max(0, Number(p.lclStat.toFixed(4))) : null)
     });
   }
 
   const option = {
     backgroundColor: "transparent",
+    title: isDual
+      ? [
+          { text: topChartTitle, left: "center", top: 5, textStyle: { fontSize: 13, fontWeight: "bold", color: "#475569" } },
+          { text: bottomChartTitle, left: "center", top: "55%", textStyle: { fontSize: 13, fontWeight: "bold", color: "#475569" } }
+        ]
+      : undefined,
+    legend: isDual
+      ? [
+          {
+            top: 27,
+            left: "center",
+            data: [primarySeriesName, "UCL", "CL", "LCL"],
+            itemWidth: 22,
+            itemHeight: 9,
+            textStyle: { color: "#64748b", fontSize: 11 },
+            formatter: name => name === "Individual" ? "量測值 (I)" : name
+          },
+          {
+            top: "58%",
+            left: "center",
+            data: [secondarySeriesName],
+            itemWidth: 22,
+            itemHeight: 9,
+            textStyle: { color: "#64748b", fontSize: 11 },
+            formatter: name => ({
+              "Moving Range": "移動全距 (MR)",
+              Range: "全距 (R)",
+              "Std Dev": "標準差 (S)"
+            }[name] || name)
+          }
+        ]
+      : {
+          top: 27,
+          left: "center",
+          itemWidth: 22,
+          itemHeight: 9,
+          textStyle: { color: "#64748b", fontSize: 11 }
+        },
     tooltip: {
       trigger: "axis",
       backgroundColor: "rgba(15, 23, 42, 0.95)",
@@ -940,7 +1066,7 @@ function renderECharts() {
         params.forEach(p => {
           res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> ${p.seriesName}: <strong>${p.data?.value !== undefined ? Number(p.data?.value).toFixed(4) : Number(p.value).toFixed(4)}</strong></div>`;
           if (p.data?.violatedRules?.length > 0) {
-            res += `<div class="mt-1.5 px-2 py-0.5 rounded bg-red-900/50 border border-red-500/50 text-red-300 text-[11px] font-bold">⚠️ 西方電氣規則違規：<br>${p.data.violatedRules.join("<br>")}</div>`;
+            res += `<div class="mt-1.5 px-2 py-0.5 rounded bg-red-900/50 border border-red-500/50 text-red-300 text-[11px] font-bold">⚠️ 西方電氣規則違規：<br>${p.data.violatedRules.map(formatRuleCode).join("<br>")}</div>`;
           }
         });
         if (hasDynamicLimits && meta) {
@@ -951,20 +1077,17 @@ function renderECharts() {
     },
     toolbox: {
       feature: {
-        dataZoom: { yAxisIndex: "none" },
-        restore: {},
         saveAsImage: { name: `SPC_${type}_Chart` }
       },
       iconStyle: { borderColor: "#64748b" }
     },
     dataZoom: [
-      { type: "slider", show: true, xAxisIndex: isDual ? [0, 1] : [0], bottom: 10, borderColor: "#334155", textStyle: { color: "#64748b" } },
-      { type: "inside", xAxisIndex: isDual ? [0, 1] : [0] }
+      { type: "slider", show: true, xAxisIndex: isDual ? [0, 1] : [0], bottom: 10, borderColor: "#334155", textStyle: { color: "#64748b" } }
     ],
     grid: isDual
       ? [
-          { left: 60, right: 80, top: 40, height: "36%", containLabel: true },
-          { left: 60, right: 80, top: "62%", height: "24%", containLabel: true }
+          { left: 60, right: 80, top: 62, height: "31%", containLabel: true },
+          { left: 60, right: 80, top: "65%", height: "21%", containLabel: true }
         ]
       : [{ left: 60, right: 80, top: 40, bottom: 60, containLabel: true }],
     xAxis: isDual
@@ -975,8 +1098,8 @@ function renderECharts() {
             boundaryGap: false,
             gridIndex: 0,
             axisLine: { lineStyle: { color: "#64748b" } },
-            axisLabel: { show: false },
-            axisTick: { show: false }
+            axisLabel: { show: true, hideOverlap: true, margin: 10 },
+            axisTick: { show: true }
           },
           {
             type: "category",
@@ -998,7 +1121,7 @@ function renderECharts() {
       ? [
           ...seriesTopList,
           {
-            name: type === "XBAR_R" ? "Range" : type === "XBAR_S" ? "Std Dev" : "Moving Range",
+            name: secondarySeriesName,
             type: "line",
             xAxisIndex: 1,
             yAxisIndex: 1,
@@ -1267,9 +1390,12 @@ function renderHistogramChart() {
     const idx = bins.findIndex(bin => numericValue >= bin.min && numericValue <= bin.max);
     return idx >= 0 ? idx : null;
   };
+  const labelSlotsByBin = new Map();
   const addXAxisLine = (value, name, color, style = "dashed") => {
     const idx = findBinIndexForValue(value);
     if (idx === null) return;
+    const slot = labelSlotsByBin.get(idx) || 0;
+    labelSlotsByBin.set(idx, slot + 1);
     markLines.push({
       name,
       xAxis: idx,
@@ -1277,9 +1403,13 @@ function renderHistogramChart() {
       label: {
         formatter: `${name}: ${formatNumber(value, 3)}`,
         color,
-        position: "end",
-        fontSize: 11,
-        fontWeight: "bold"
+        position: slot % 2 === 0 ? "end" : "start",
+        offset: [Math.floor(slot / 2) * 18, 0],
+        fontSize: 10,
+        fontWeight: "bold",
+        backgroundColor: "rgba(255, 255, 255, 0.88)",
+        borderRadius: 4,
+        padding: [2, 4]
       }
     });
   };
@@ -1319,10 +1449,10 @@ function renderHistogramChart() {
       name: "量測值分布",
       type: "bar",
       xAxisIndex: 0,
-      data: bins.map((bin, idx) => ({
+      data: bins.map(bin => ({
         value: bin.count,
         itemStyle: {
-          color: idx % 2 === 0 ? "rgba(245, 158, 11, 0.75)" : "rgba(20, 184, 166, 0.75)",
+          color: "rgba(245, 158, 11, 0.75)",
           borderRadius: [4, 4, 0, 0]
         }
       })),
@@ -1405,6 +1535,32 @@ function handleResize() {
   histogramChartInstance?.resize();
 }
 
+function zoomChartIn() {
+  if (!chartInstance) return;
+  const zoom = chartInstance.getOption()?.dataZoom?.[0] || {};
+  const start = Number.isFinite(Number(zoom.start)) ? Number(zoom.start) : 0;
+  const end = Number.isFinite(Number(zoom.end)) ? Number(zoom.end) : 100;
+  const span = end - start;
+  if (span <= 10) return;
+  const nextSpan = Math.max(10, span * 0.7);
+  const center = (start + end) / 2;
+  chartInstance.dispatchAction({
+    type: "dataZoom",
+    dataZoomIndex: 0,
+    start: Math.max(0, center - nextSpan / 2),
+    end: Math.min(100, center + nextSpan / 2)
+  });
+}
+
+function resetChartZoom() {
+  chartInstance?.dispatchAction({
+    type: "dataZoom",
+    dataZoomIndex: 0,
+    start: 0,
+    end: 100
+  });
+}
+
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
   chartInstance?.dispose();
@@ -1438,7 +1594,9 @@ onBeforeUnmount(() => {
           <Activity class="w-5 h-5" />
         </div>
         <div class="flex items-center gap-2">
-          <h1 class="text-lg font-black text-slate-800 dark:text-white whitespace-nowrap">SPC 即時互動管制圖</h1>
+          <h1 class="text-lg font-black text-slate-800 dark:text-white whitespace-nowrap">
+            {{ isMonthlyChartPage ? 'SPC 週月報表' : 'SPC 即時互動管制圖' }}
+          </h1>
           <button
             v-if="selectedMapping"
             @click="router.push({ path: '/part-process-characteristics', query: { editId: selectedMapping.id } })"
@@ -1454,7 +1612,7 @@ onBeforeUnmount(() => {
       <div class="flex flex-wrap items-end gap-2 w-full">
         <!-- Query Conditions -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 items-end flex-1">
-          <div v-if="selectedDimension === 'PRODUCT'" class="w-full">
+          <div v-if="selectedDimension === 'PRODUCT' && !isMonthlyChartPage" class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">查詢條件</label>
             <select
               v-model="productQueryMode"
@@ -1466,17 +1624,35 @@ onBeforeUnmount(() => {
             </select>
           </div>
 
-          <div class="w-full">
+          <div v-if="isMonthlyChartPage" class="w-full">
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">報表週期</label>
+            <select v-model="reportPeriodType" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+              <option value="MONTH">月報</option>
+              <option value="WEEK">週報</option>
+            </select>
+          </div>
+
+          <div v-if="isMonthlyChartPage && reportPeriodType === 'MONTH'" class="w-full">
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">報表月份</label>
+            <input v-model="reportMonth" type="month" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div v-if="isMonthlyChartPage && reportPeriodType === 'WEEK'" class="w-full">
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">報表週次</label>
+            <input v-model="reportWeek" type="week" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div v-if="!isMonthlyChartPage" class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">量測起日</label>
             <input v-model="startDate" :disabled="selectedDimension === 'PRODUCT' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
           </div>
 
-          <div class="w-full">
+          <div v-if="!isMonthlyChartPage" class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">量測迄日</label>
             <input v-model="endDate" :disabled="selectedDimension === 'PRODUCT' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
           </div>
 
-          <div v-if="selectedDimension === 'PRODUCT'" class="w-full">
+          <div v-if="selectedDimension === 'PRODUCT' && !isMonthlyChartPage" class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">料號</label>
             <select
               v-model="productPartId"
@@ -1514,7 +1690,7 @@ onBeforeUnmount(() => {
 
     <div v-if="loading && !chartResult" class="h-48 flex flex-col items-center justify-center space-y-2 text-slate-400">
       <Activity class="w-8 h-8 animate-bounce text-blue-500" />
-      <p class="text-sm font-bold">正在執行西方電氣規則判定與管制圖引擎運算...</p>
+      <p class="text-sm font-bold">查詢中...</p>
     </div>
 
     <!-- All-lines summary table -->
@@ -1522,6 +1698,7 @@ onBeforeUnmount(() => {
       v-if="tableSummaryData && !loading"
       :data="tableSummaryData"
       :loading="loading"
+      :comparison-period="isMonthlyChartPage ? reportPeriodType : ''"
       @draw-chart="drawSingleChart"
     />
 
@@ -1549,42 +1726,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Capability Summary Cards -->
-      <div v-if="chartResult.capability" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
-        <div class="p-3 rounded-xl bg-gradient-to-tr from-slate-900 to-slate-800 text-white border border-slate-700 shadow-sm">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cp (規格寬度比)</p>
-          <h3 class="text-xl font-black mt-0.5" :class="chartResult.capability.cp >= 1.33 ? 'text-emerald-400' : 'text-amber-400'">
-            {{ chartResult.capability.cp !== null ? chartResult.capability.cp : 'N/A' }}
-          </h3>
-        </div>
-
-        <div class="p-3 rounded-xl bg-gradient-to-tr from-slate-900 to-slate-800 text-white border border-slate-700 shadow-sm">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cpk (製程能力指標)</p>
-          <h3 class="text-xl font-black mt-0.5" :class="chartResult.capability.cpk >= 1.33 ? 'text-emerald-400' : chartResult.capability.cpk < 1.0 ? 'text-red-400 animate-pulse' : 'text-amber-400'">
-            {{ chartResult.capability.cpk !== null ? chartResult.capability.cpk : 'N/A' }}
-          </h3>
-        </div>
-
-        <div class="p-3 rounded-xl bg-gradient-to-tr from-slate-900 to-slate-800 text-white border border-slate-700 shadow-sm">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pp (長期性能比)</p>
-          <h3 class="text-xl font-black mt-0.5 text-blue-400">
-            {{ chartResult.capability.pp !== null ? chartResult.capability.pp : 'N/A' }}
-          </h3>
-        </div>
-
-        <div class="p-3 rounded-xl bg-gradient-to-tr from-slate-900 to-slate-800 text-white border border-slate-700 shadow-sm">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ppk (長期能力指標)</p>
-          <h3 class="text-xl font-black mt-0.5 text-cyan-400">
-            {{ chartResult.capability.ppk !== null ? chartResult.capability.ppk : 'N/A' }}
-          </h3>
-        </div>
-
-        <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">組內標準差 (σ_within)</p>
-          <h3 class="text-lg font-bold mt-0.5 text-slate-800 dark:text-white">
-            {{ chartResult.capability.sigmaWithin !== null ? Number(chartResult.capability.sigmaWithin).toFixed(4) : 'N/A' }}
-          </h3>
-        </div>
-
+      <div v-if="chartResult.capability" class="grid grid-cols-1 gap-2">
         <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
           <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">整體標準差 (σ_overall)</p>
           <h3 class="text-lg font-bold mt-0.5 text-slate-800 dark:text-white">
@@ -1602,19 +1744,19 @@ onBeforeUnmount(() => {
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div>
               <p class="text-slate-400 font-bold">製程 / 線別</p>
-              <p class="font-semibold text-slate-800 dark:text-slate-200">[{{ selectedMapping?.process?.processCode || '-' }}] {{ selectedMapping?.process?.processName || '-' }}</p>
+              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorProcessLabel }}</p>
             </div>
             <div>
               <p class="text-slate-400 font-bold">藥液 / 檢驗特性</p>
-              <p class="font-semibold text-slate-800 dark:text-slate-200">[{{ selectedMapping?.characteristic?.characteristicCode || '-' }}] {{ selectedMapping?.characteristic?.characteristicName || '-' }}</p>
+              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorCharacteristicLabel }}</p>
             </div>
             <div>
               <p class="text-slate-400 font-bold">機台</p>
-              <p class="font-semibold text-slate-800 dark:text-slate-200">[{{ selectedMapping?.machine?.machineCode || selectedMapping?.process?.processCode || '-' }}] {{ selectedMapping?.machine?.machineName || selectedMapping?.process?.processName || '-' }}</p>
+              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorMachineLabel }}</p>
             </div>
             <div>
               <p class="text-slate-400 font-bold">槽體</p>
-              <p class="font-semibold text-slate-800 dark:text-slate-200">[{{ selectedMapping?.tank?.tankCode || '-' }}] {{ selectedMapping?.tank?.tankName || '-' }}</p>
+              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorSlotLabel }}</p>
             </div>
             <div>
               <p class="text-slate-400 font-bold">量測筆數</p>
@@ -1632,14 +1774,6 @@ onBeforeUnmount(() => {
             <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
               <Sliders class="w-4 h-4 text-amber-500" /> 管制界線
             </h3>
-            <button
-              v-if="topControlStat"
-              @click="updateControlLimitsFromChart"
-              :disabled="savingControlLimits"
-              class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-[11px] font-bold disabled:opacity-50"
-            >
-              {{ savingControlLimits ? '更新中...' : '更新管制界線' }}
-            </button>
           </div>
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div class="space-y-1">
@@ -1676,21 +1810,8 @@ onBeforeUnmount(() => {
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3 mb-2">
           <div class="flex items-center gap-3">
             <span class="px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold tracking-widest uppercase shadow-md shadow-blue-500/20">
-              {{ chartResult.chartType }} CHART
+              {{ ['I-MR', 'I_MR'].includes(String(chartResult.chartType).toUpperCase()) ? 'I-MR' : `${chartResult.chartType} CHART` }}
             </span>
-            <span class="text-sm font-bold text-slate-600 dark:text-slate-300">
-              子組大小 (Subgroup N) = {{ chartResult.subgroupSize }}
-            </span>
-            <span :class="['px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-sm', calculationMethodLabel.cls]">
-              {{ calculationMethodLabel.text }}
-            </span>
-            <router-link
-              v-if="selectedMapping && selectedMapping.chartTypeId"
-              :to="`/part-process-characteristics?tab=types&id=${selectedMapping.chartTypeId}`"
-              class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold border border-slate-300 dark:border-slate-600 transition-all flex items-center gap-1"
-            >
-              ⚙️ 微調公式配置
-            </router-link>
           </div>
 
           <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
@@ -1715,7 +1836,17 @@ onBeforeUnmount(() => {
           <AlertTriangle class="w-4 h-4 flex-shrink-0" /> {{ chartResult.subgroupSizeNote }}
         </div>
 
-        <div ref="chartEl" data-testid="primary-spc-chart" class="h-[620px] w-full min-h-[500px]"></div>
+        <div class="relative">
+          <div class="absolute top-1 right-12 z-20 flex items-center gap-1">
+            <button type="button" @click="zoomChartIn" title="放大" aria-label="放大" class="p-1 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
+              <ZoomIn class="w-5 h-5" />
+            </button>
+            <button type="button" @click="resetChartZoom" title="重設縮放" aria-label="重設縮放" class="p-1 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
+              <RotateCcw class="w-5 h-5" />
+            </button>
+          </div>
+          <div ref="chartEl" data-testid="primary-spc-chart" class="h-[620px] w-full min-h-[500px]"></div>
+        </div>
 
         <div class="mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-2">
@@ -1752,7 +1883,7 @@ onBeforeUnmount(() => {
                     <span v-else-if="row.outOfControl" class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 font-bold">OOC</span>
                   </td>
                   <td class="py-2 pr-3 max-w-md">
-                    <span v-if="row.violatedRules?.length">{{ row.violatedRules.join('、') }}</span>
+                    <span v-if="row.violatedRules?.length">{{ row.violatedRules.map(formatRuleCode).join('、') }}</span>
                     <span v-else class="text-slate-400">界限判定</span>
                   </td>
                   <td class="py-2 pr-3">{{ row.alertStatus || (row.rootCause || row.correctiveAction ? 'Handled' : '未處置') }}</td>
@@ -1778,8 +1909,6 @@ onBeforeUnmount(() => {
               量測值分布直方圖 (Raw Measurements Histogram)
             </h3>
             <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
-              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-500 inline-block"></span>分布區間</span>
-              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-teal-500 inline-block"></span>交錯區間</span>
               <span class="flex items-center gap-1.5"><span class="w-5 h-0.5 bg-red-500 border-t border-dashed border-red-500 inline-block"></span>規格上下線</span>
               <span class="flex items-center gap-1.5"><span class="w-5 h-0.5 bg-amber-500 inline-block"></span>管制上下線</span>
               <span class="text-slate-400">已剔除資料不納入統計</span>
@@ -1947,7 +2076,7 @@ onBeforeUnmount(() => {
               </p>
               <div class="flex flex-wrap gap-1.5">
                 <span v-for="(rule, rIdx) in selectedPoint.violatedRules" :key="rIdx" class="px-2.5 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 text-[11px] font-bold">
-                  {{ rule }}
+                  {{ formatRuleCode(rule) }}
                 </span>
               </div>
             </div>

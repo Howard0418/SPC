@@ -8,13 +8,10 @@ namespace MesSpc.Api.Services;
 
 public class UploadService(AppDbContext db, SpcService spcService)
 {
-    public async Task<UploadBatch> CreateVariableBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, string? fileHash = null, CancellationToken ct = default)
+    public async Task<UploadBatch> CreateVariableBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, string? fileHash = null, CancellationToken ct = default, Guid? uploadBatchId = null)
     {
         if (!string.IsNullOrEmpty(fileHash))
         {
-            var isDuplicate = await db.UploadBatches.AnyAsync(x => x.FileHash == fileHash && (x.ImportStatus == "Imported" || x.ImportStatus == "Importing"), ct);
-            if (isDuplicate) throw new InvalidOperationException("DUPLICATE_FILE");
-
             var staleBatches = await db.UploadBatches.Where(x => x.FileHash == fileHash && x.ImportStatus == "PreviewReady").ToListAsync(ct);
             foreach (var b in staleBatches)
             {
@@ -32,6 +29,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
         var batch = new UploadBatch
         {
+            UploadBatchId = uploadBatchId ?? Guid.NewGuid(),
             UploadType = "Variable",
             SourceType = sourceType,
             ImportStatus = "PreviewReady",
@@ -46,13 +44,10 @@ public class UploadService(AppDbContext db, SpcService spcService)
         return batch;
     }
 
-    public async Task<UploadBatch> CreateAttributeBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, string? fileHash = null, CancellationToken ct = default)
+    public async Task<UploadBatch> CreateAttributeBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, string? fileHash = null, CancellationToken ct = default, Guid? uploadBatchId = null)
     {
         if (!string.IsNullOrEmpty(fileHash))
         {
-            var isDuplicate = await db.UploadBatches.AnyAsync(x => x.FileHash == fileHash && (x.ImportStatus == "Imported" || x.ImportStatus == "Importing"), ct);
-            if (isDuplicate) throw new InvalidOperationException("DUPLICATE_FILE");
-
             var staleBatches = await db.UploadBatches.Where(x => x.FileHash == fileHash && x.ImportStatus == "PreviewReady").ToListAsync(ct);
             foreach (var b in staleBatches)
             {
@@ -70,6 +65,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
         var batch = new UploadBatch
         {
+            UploadBatchId = uploadBatchId ?? Guid.NewGuid(),
             UploadType = "Attribute",
             SourceType = sourceType,
             ImportStatus = "PreviewReady",
@@ -88,12 +84,242 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
         if (batch is null) return null;
-        var details = await db.UploadDetails.Where(x => x.UploadBatchId == uploadBatchId).OrderBy(x => x.RowNo).Take(200).ToListAsync(ct);
+        var invalidDetails = await db.UploadDetails
+            .Where(x => x.UploadBatchId == uploadBatchId)
+            .Where(x => !x.IsValid)
+            .OrderBy(x => x.RowNo)
+            .ToListAsync(ct);
+        var firstValidDetail = await db.UploadDetails
+            .Where(x => x.UploadBatchId == uploadBatchId && x.IsValid)
+            .OrderBy(x => x.RowNo)
+            .FirstOrDefaultAsync(ct);
+        var details = firstValidDetail is null
+            ? invalidDetails
+            : invalidDetails.Append(firstValidDetail).ToList();
         var errors = await db.UploadErrors.Where(x => x.UploadBatchId == uploadBatchId).OrderBy(x => x.RowNo).ToListAsync(ct);
         return new { batch, details, errors };
     }
 
-    public async Task<object?> ConfirmAsync(Guid uploadBatchId, CancellationToken ct = default)
+    public async Task<object?> GetProgressAsync(Guid uploadBatchId, CancellationToken ct = default)
+    {
+        return await db.UploadBatches.AsNoTracking()
+            .Where(x => x.UploadBatchId == uploadBatchId)
+            .Select(x => new
+            {
+                x.UploadBatchId,
+                total = x.TotalRows,
+                processed = x.ValidRows + x.ErrorRows,
+                valid = x.ValidRows,
+                errors = x.ErrorRows,
+                x.ImportStatus
+            })
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<object?> CreateMissingMappingsAndRevalidateAsync(Guid uploadBatchId, CancellationToken ct = default)
+    {
+        var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
+        if (batch is null) return null;
+        if (batch.ImportStatus != "PreviewReady")
+            throw new InvalidOperationException("只有尚未確認的匯入批次可以補建設定。");
+
+        var missingDetailIds = await db.UploadErrors
+            .Where(x => x.UploadBatchId == uploadBatchId &&
+                (x.ErrorCode == "MAPPING_NOT_FOUND" || x.ErrorCode == "CHAR_NOT_FOUND") &&
+                x.UploadDetailId != null)
+            .Select(x => x.UploadDetailId!.Value)
+            .Distinct()
+            .ToListAsync(ct);
+        var details = await db.UploadDetails.Where(x => missingDetailIds.Contains(x.Id)).ToListAsync(ct);
+        var created = 0;
+        var createdCharacteristics = 0;
+        var reusedMappings = 0;
+        var skippedMissingMasterData = 0;
+        var skippedMissingTank = 0;
+        var skippedMissingChartType = 0;
+        var createdTanks = 0;
+        var handled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var detail in details)
+        {
+            var row = JsonSerializer.Deserialize<Dictionary<string, string?>>(detail.PayloadJson) ?? [];
+            var scope = ResolveScope(row);
+            var group = await FindScopeGroupAsync(scope, ct);
+            if (group is null) { skippedMissingMasterData++; continue; }
+            var process = await FindProcessAsync(Get(row, "ProcessCode"), ct);
+            var machine = await FindMachineAsync(Get(row, "MachineCode"), process, ct);
+            if (process is null && machine is not null)
+                process = await db.Processes.FirstOrDefaultAsync(x => x.Id == machine.ProcessId, ct);
+            if (process is null || (group.RequiresMachine && machine is null)) { skippedMissingMasterData++; continue; }
+            var tank = group.RequiresTank && machine is not null
+                ? await FindTankAsync(machine, Get(row, "TankCode"), ct)
+                : null;
+            if (group.RequiresTank && machine is not null && tank is null)
+            {
+                var tankResult = await CreateTankIfNoSimilarAsync(machine, Get(row, "TankCode"), ct);
+                tank = tankResult.Tank;
+                if (tankResult.Created) createdTanks++;
+            }
+            if (group.RequiresTank && tank is null) { skippedMissingTank++; continue; }
+            var characteristic = await FindMappedCharacteristicAsync(
+                Get(row, "CharacteristicCode"), Get(row, "Unit"), scope,
+                process, machine, tank, group.RequiresMachine, group.RequiresTank, ct)
+                ?? await FindCharacteristicAsync(Get(row, "CharacteristicCode"), Get(row, "Unit"), scope, ct);
+            if (characteristic is null)
+            {
+                var rawName = Get(row, "CharacteristicCode")?.Trim();
+                if (string.IsNullOrWhiteSpace(rawName)) continue;
+                var unit = Get(row, "Unit")?.Trim();
+                var cleanName = string.Join(" / ", rawName.Replace("\r", "\n")
+                    .Split(['\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                var baseCode = !string.IsNullOrWhiteSpace(unit) && !cleanName.Contains($"({unit})", StringComparison.OrdinalIgnoreCase)
+                    ? $"{cleanName} ({unit})"
+                    : cleanName;
+                characteristic = await db.QualityCharacteristics.FirstOrDefaultAsync(x =>
+                    x.ControlScope == scope &&
+                    (x.CharacteristicCode == baseCode || x.CharacteristicCode == $"{baseCode}_CHEM"), ct);
+                if (characteristic is null)
+                {
+                    var code = baseCode;
+                    var suffix = 0;
+                    while (await db.QualityCharacteristics.AnyAsync(x => x.CharacteristicCode == code, ct))
+                    {
+                        suffix++;
+                        code = suffix == 1 ? $"{baseCode}_CHEM" : $"{baseCode}_CHEM{suffix}";
+                    }
+                    characteristic = new QualityCharacteristic
+                    {
+                        CharacteristicCode = code,
+                        CharacteristicName = cleanName,
+                        ControlScope = scope,
+                        DataCategory = "Variable",
+                        Unit = unit,
+                        InputMode = "DIRECT",
+                        ValueLabel = "量測值",
+                        DecimalPlaces = 3,
+                        IsSpcEnabled = true,
+                        IsEnabled = true
+                    };
+                    db.QualityCharacteristics.Add(characteristic);
+                    await db.SaveChangesAsync(ct);
+                    createdCharacteristics++;
+                }
+            }
+
+            var key = $"{scope}|{process.Id}|{machine?.Id}|{tank?.Id}|{characteristic.Id}";
+            if (!handled.Add(key)) continue;
+            var exists = await db.PartProcessCharacteristics.AnyAsync(x =>
+                x.ControlScope == scope && x.PartId == null && x.ProcessId == process.Id &&
+                x.MachineId == (group.RequiresMachine ? machine!.Id : null) &&
+                x.TankId == (group.RequiresTank ? tank!.Id : null) &&
+                x.CharacteristicId == characteristic.Id && x.IsEnabled, ct);
+            if (exists) { reusedMappings++; continue; }
+
+            var template = await db.PartProcessCharacteristics
+                .Where(x => x.ControlScope == scope && x.CharacteristicId == characteristic.Id && x.IsEnabled)
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefaultAsync(ct);
+            var chartType = template?.ChartTypeId is not null
+                ? await db.ControlChartTypes.FirstOrDefaultAsync(x => x.Id == template.ChartTypeId, ct)
+                : await db.ControlChartTypes
+                    .Where(x => x.ChartGroupId == group.Id && x.IsEnabled && x.DataCategory == "Variable")
+                    .OrderBy(x => x.ChartTypeCode == "I_MR" ? 0 : x.RequiredSampleSize == 1 ? 1 : 2)
+                    .FirstOrDefaultAsync(ct);
+            if (chartType is null) { skippedMissingChartType++; continue; }
+            characteristic.DefaultChartTypeId ??= chartType.Id;
+
+            db.PartProcessCharacteristics.Add(new PartProcessCharacteristic
+            {
+                ControlScope = scope,
+                PartId = null,
+                ProcessId = process.Id,
+                MachineId = group.RequiresMachine ? machine!.Id : null,
+                TankId = group.RequiresTank ? tank!.Id : null,
+                CharacteristicId = characteristic.Id,
+                Unit = template?.Unit ?? characteristic.Unit ?? Get(row, "Unit"),
+                USL = template?.USL,
+                LSL = template?.LSL,
+                UCL = template?.UCL,
+                CL = template?.CL,
+                LCL = template?.LCL,
+                TargetValue = template?.TargetValue,
+                SampleSize = template?.SampleSize ?? 1,
+                DisplayMode = template?.DisplayMode ?? "CONTROL_CHART",
+                ChartTypeId = chartType.Id,
+                FormulaConfigJson = template?.FormulaConfigJson,
+                RuleGroupId = template?.RuleGroupId ?? chartType.RuleGroupId,
+                IsRequired = true,
+                IsEnabled = true
+            });
+            await db.SaveChangesAsync(ct);
+            created++;
+        }
+
+        await RevalidateBatchAsync(batch, ct);
+        return new
+        {
+            createdMappings = created,
+            createdCharacteristics,
+            reusedMappings,
+            skippedMissingMasterData,
+            skippedMissingTank,
+            skippedMissingChartType,
+            createdTanks,
+            batch.ValidRows,
+            batch.ErrorRows
+        };
+    }
+
+    private async Task RevalidateBatchAsync(UploadBatch batch, CancellationToken ct)
+    {
+        var uploadBatchId = batch.UploadBatchId;
+        var allDetails = await db.UploadDetails.Where(x => x.UploadBatchId == uploadBatchId).OrderBy(x => x.RowNo).ToListAsync(ct);
+        var oldErrors = await db.UploadErrors.Where(x => x.UploadBatchId == uploadBatchId).ToListAsync(ct);
+        db.UploadErrors.RemoveRange(oldErrors);
+        batch.ImportStatus = "Revalidating";
+        batch.TotalRows = allDetails.Count;
+        batch.ValidRows = 0;
+        batch.ErrorRows = 0;
+        await db.SaveChangesAsync(ct);
+        var processed = 0;
+        foreach (var detail in allDetails)
+        {
+            var row = JsonSerializer.Deserialize<Dictionary<string, string?>>(detail.PayloadJson) ?? [];
+            var validationErrors = await ValidateRowAsync(row, batch.UploadType, ct);
+            detail.IsValid = validationErrors.Count == 0;
+            if (detail.IsValid)
+            {
+                var resolved = await ResolveReferencesAsync(row, ct);
+                if (resolved is not null)
+                {
+                    row["ResolvedProcessCode"] = resolved.Value.Process.ProcessCode;
+                    row["ResolvedMachineCode"] = resolved.Value.Machine?.MachineCode;
+                    row["ResolvedTankCode"] = resolved.Value.Tank?.TankCode;
+                    row["ResolvedCharacteristicCode"] = resolved.Value.Characteristic.CharacteristicCode;
+                    detail.PayloadJson = JsonSerializer.Serialize(row);
+                }
+            }
+            foreach (var error in validationErrors)
+                db.UploadErrors.Add(new UploadError
+                {
+                    UploadBatchId = uploadBatchId,
+                    UploadDetailId = detail.Id,
+                    RowNo = detail.RowNo,
+                    FieldName = error.Field,
+                    ErrorCode = error.Code,
+                    ErrorMessage = error.Message
+                });
+            if (detail.IsValid) batch.ValidRows++;
+            else batch.ErrorRows++;
+            processed++;
+            if (processed % 10 == 0) await db.SaveChangesAsync(ct);
+        }
+        await db.SaveChangesAsync(ct);
+        batch.ImportStatus = "PreviewReady";
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task<object?> ConfirmAsync(Guid uploadBatchId, string mode = "upsert", CancellationToken ct = default)
     {
         var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
         if (batch is null) return null;
@@ -125,6 +351,9 @@ public class UploadService(AppDbContext db, SpcService spcService)
         }
 
         var imported = 0;
+        var inserted = 0;
+        var updated = 0;
+        var skipped = 0;
         var spcCount = 0;
         var alertCount = 0;
 
@@ -141,6 +370,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 {
                     continue;
                 }
+                ApplyImportedSpecification(payload, ctx.Mapping);
                 var measuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow);
                 var sampleNo = TryInt(Get(payload, "SampleNo"), 1);
 
@@ -152,13 +382,20 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
                 if (existingVm != null)
                 {
+                    if (mode == "insertOnly")
+                    {
+                        skipped++;
+                        continue;
+                    }
                     var oldAlerts = db.AlertEvents.Where(a => a.VariableMeasurementId == existingVm.Id);
                     db.AlertEvents.RemoveRange(oldAlerts);
                     var oldCalcs = db.SpcCalculationResults.Where(c => c.VariableMeasurementId == existingVm.Id);
                     db.SpcCalculationResults.RemoveRange(oldCalcs);
                     db.VariableMeasurements.Remove(existingVm);
                     await db.SaveChangesAsync(ct);
+                    updated++;
                 }
+                else inserted++;
 
                 var vm = new VariableMeasurement
                 {
@@ -168,10 +405,12 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     MachineId = ctx.Machine?.Id,
                     CharacteristicId = ctx.Characteristic.Id,
                     PartProcessCharacteristicId = ctx.Mapping.Id,
+                    WorkOrderNo = Get(payload, "WorkOrderNo"),
                     LotNo = Get(payload, "LotNo"),
                     SerialNo = Get(payload, "SerialNo"),
                     LineId = ctx.Tank?.LineId,
                     TankId = ctx.Tank?.Id,
+                    SlotId = ctx.Slot?.Id,
                     SampleNo = sampleNo,
                     MeasuredValue = measuredValue,
                     MeasuredAt = measuredAt,
@@ -203,13 +442,20 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
                 if (existingAm != null)
                 {
+                    if (mode == "insertOnly")
+                    {
+                        skipped++;
+                        continue;
+                    }
                     var oldAlerts = db.AlertEvents.Where(a => a.AttributeMeasurementId == existingAm.Id);
                     db.AlertEvents.RemoveRange(oldAlerts);
                     var oldCalcs = db.SpcCalculationResults.Where(c => c.AttributeMeasurementId == existingAm.Id);
                     db.SpcCalculationResults.RemoveRange(oldCalcs);
                     db.AttributeMeasurements.Remove(existingAm);
                     await db.SaveChangesAsync(ct);
+                    updated++;
                 }
+                else inserted++;
 
                 var am = new AttributeMeasurement
                 {
@@ -222,6 +468,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     LotNo = Get(payload, "LotNo"),
                     LineId = ctx.Tank?.LineId,
                     TankId = ctx.Tank?.Id,
+                    SlotId = ctx.Slot?.Id,
                     SampleNo = sampleNo,
                     InspectedQty = TryNullableInt(Get(payload, "InspectedQty")),
                     DefectQty = TryNullableInt(Get(payload, "DefectQty")),
@@ -245,7 +492,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         batch.ImportStatus = "Imported";
         batch.ConfirmedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
-        return new { batch, imported, spcCount, alertCount };
+        return new { batch, mode, imported, inserted, updated, skipped, spcCount, alertCount };
     }
 
     private async Task EnsureImportedOperatorsAsync(IEnumerable<UploadDetail> validDetails, CancellationToken ct)
@@ -296,7 +543,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             var charCode = Get(r, "CharacteristicCode");
             var charName = Get(r, "CharacteristicName") ?? charCode;
 
-            if (scope == "CHEMICAL")
+            if (scope == "CHEM")
             {
                 continue;
             }
@@ -414,10 +661,16 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
     private async Task BuildStagingAsync(UploadBatch batch, IEnumerable<Dictionary<string, string?>> rows, string expectedDataCategory, CancellationToken ct)
     {
-        await EnsureMasterDataAsync(rows, expectedDataCategory, ct);
+        var rowList = rows.ToList();
+        batch.TotalRows = rowList.Count;
+        batch.ValidRows = 0;
+        batch.ErrorRows = 0;
+        await db.SaveChangesAsync(ct);
+        await EnsureMasterDataAsync(rowList, expectedDataCategory, ct);
 
         var rowNo = 0;
-        foreach (var row in rows)
+        var batchKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in rowList)
         {
             rowNo++;
             var detail = new UploadDetail { UploadBatchId = batch.UploadBatchId, RowNo = rowNo, PayloadJson = JsonSerializer.Serialize(row), IsValid = true };
@@ -441,12 +694,45 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     });
                 }
             }
+            else
+            {
+                var resolved = await ResolveReferencesAsync(row, ct);
+                if (resolved is not null)
+                {
+                    var ctx = resolved.Value;
+                    row["ResolvedProcessCode"] = ctx.Process.ProcessCode;
+                    row["ResolvedMachineCode"] = ctx.Machine?.MachineCode;
+                    row["ResolvedTankCode"] = ctx.Tank?.TankCode;
+                    row["ResolvedCharacteristicCode"] = ctx.Characteristic.CharacteristicCode;
+
+                    var measuredAt = TryDateTime(Get(row, "MeasuredAt"), DateTime.UtcNow);
+                    var sampleNo = TryInt(Get(row, "SampleNo"), 1);
+                    var lotNo = Get(row, "LotNo") ?? "";
+                    var duplicateKey = $"{ctx.Mapping.Id}|{measuredAt:O}|{lotNo}|{sampleNo}";
+                    var duplicateInFile = !batchKeys.Add(duplicateKey);
+                    var duplicateInDatabase = expectedDataCategory == "Variable"
+                        ? await db.VariableMeasurements.AnyAsync(x =>
+                            x.PartProcessCharacteristicId == ctx.Mapping.Id &&
+                            x.MeasuredAt == measuredAt &&
+                            (x.LotNo ?? "") == lotNo &&
+                            x.SampleNo == sampleNo, ct)
+                        : await db.AttributeMeasurements.AnyAsync(x =>
+                            x.PartProcessCharacteristicId == ctx.Mapping.Id &&
+                            x.MeasuredAt == measuredAt &&
+                            (x.LotNo ?? "") == lotNo &&
+                            x.SampleNo == sampleNo, ct);
+                    row["DuplicateStatus"] = duplicateInFile
+                        ? "同一匯入檔內重複"
+                        : duplicateInDatabase ? "正式資料已存在" : "";
+                    detail.PayloadJson = JsonSerializer.Serialize(row);
+                }
+            }
+            if (detail.IsValid) batch.ValidRows++;
+            else batch.ErrorRows++;
             await db.SaveChangesAsync(ct);
         }
 
         batch.TotalRows = rowNo;
-        batch.ValidRows = await db.UploadDetails.CountAsync(x => x.UploadBatchId == batch.UploadBatchId && x.IsValid, ct);
-        batch.ErrorRows = rowNo - batch.ValidRows;
         await db.SaveChangesAsync(ct);
     }
 
@@ -459,7 +745,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             errors.Add(("ControlScope", "SCOPE_NOT_CONFIGURED", "ControlScope has no enabled control-chart group configuration."));
         var requiresPart = scopeGroup?.RequiresPart ?? scope == "PRODUCT";
         var requiresMachine = scopeGroup?.RequiresMachine ?? true;
-        var requiresTank = scopeGroup?.RequiresTank ?? scope == "CHEMICAL";
+        var requiresTank = scopeGroup?.RequiresTank ?? scope == "CHEM";
 
         if (string.Equals(expectedDataCategory, "Variable", StringComparison.OrdinalIgnoreCase))
         {
@@ -487,13 +773,13 @@ public class UploadService(AppDbContext db, SpcService spcService)
             part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == Get(row, "PartNo"), ct);
             if (part is null) errors.Add(("PartNo", "PART_NOT_FOUND", "Product control rows require an existing PartNo."));
         }
-        var process = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == Get(row, "ProcessCode"), ct);
-        if (process is null) errors.Add(("ProcessCode", "PROCESS_NOT_FOUND", "ProcessCode does not exist."));
-        Machine? machine = null;
         var machineCode = Get(row, "MachineCode");
-        if (!string.IsNullOrWhiteSpace(machineCode))
-            machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == machineCode, ct);
-        if (requiresMachine && machine is null) errors.Add(("MachineCode", "MACHINE_NOT_FOUND", "MachineCode does not exist."));
+        var process = await FindProcessAsync(Get(row, "ProcessCode"), ct);
+        var machine = await FindMachineAsync(machineCode, process, ct);
+        if (process is null && machine is not null)
+            process = await db.Processes.FirstOrDefaultAsync(x => x.Id == machine.ProcessId, ct);
+        if (process is null) errors.Add(("ProcessCode", "PROCESS_NOT_FOUND", "製程代碼／名稱不存在，且無法由線別取得所屬製程。"));
+        if (requiresMachine && machine is null) errors.Add(("MachineCode", "MACHINE_NOT_FOUND", "線別代碼／名稱不存在。"));
         else if (process is not null && machine is not null && machine.ProcessId != process.Id)
         {
             errors.Add(("MachineCode", "MACHINE_PROCESS_MISMATCH", "MachineCode does not belong to the specified ProcessCode."));
@@ -510,18 +796,25 @@ public class UploadService(AppDbContext db, SpcService spcService)
             else if (machine is not null)
             {
                 tank = await FindTankAsync(machine, tankName, ct);
-                if (tank is null) errors.Add(("TankCode", "TANK_NOT_FOUND", "TankCode/槽位 does not exist for the specified MachineCode."));
+                if (tank is null) errors.Add(("TankCode", "TANK_NOT_FOUND", "此線別底下找不到指定槽位。"));
             }
         }
 
-        var characteristic = await db.QualityCharacteristics.FirstOrDefaultAsync(x => x.CharacteristicCode == Get(row, "CharacteristicCode"), ct);
-        if (characteristic is null) errors.Add(("CharacteristicCode", "CHAR_NOT_FOUND", "CharacteristicCode does not exist."));
+        var characteristic = await FindMappedCharacteristicAsync(
+            Get(row, "CharacteristicCode"), Get(row, "Unit"), scope,
+            process, machine, tank, requiresMachine, requiresTank, ct)
+            ?? await FindCharacteristicAsync(Get(row, "CharacteristicCode"), Get(row, "Unit"), scope, ct);
+        if (characteristic is null) errors.Add(("CharacteristicCode", "CHAR_NOT_FOUND", "管制項目代碼／名稱不存在，請先建立品質特性。"));
         if (characteristic is not null && !string.Equals(characteristic.DataCategory, expectedDataCategory, StringComparison.OrdinalIgnoreCase))
         {
             errors.Add(("DataCategory", "INVALID_DATA_CATEGORY", $"Characteristic data category should be {expectedDataCategory}."));
         }
 
-        if ((!requiresPart || part is not null) && (!requiresMachine || machine is not null) && process is not null && characteristic is not null)
+        if ((!requiresPart || part is not null) &&
+            (!requiresMachine || machine is not null) &&
+            (!requiresTank || tank is not null) &&
+            process is not null &&
+            characteristic is not null)
         {
             int? mappingPartId = requiresPart ? part!.Id : null;
             var mappingQuery = db.PartProcessCharacteristics.Where(x =>
@@ -537,7 +830,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             var mapping = await mappingQuery.FirstOrDefaultAsync(ct);
             if (mapping is null)
             {
-                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", "Configured business-scope mapping does not exist for the supplied master data."));
+                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", "此線別、槽位與管制項目尚未建立品質特性設定。"));
             }
         }
 
@@ -559,24 +852,38 @@ public class UploadService(AppDbContext db, SpcService spcService)
         }
     }
 
-    private async Task<(Part? Part, Process Process, Machine? Machine, Tank? Tank, QualityCharacteristic Characteristic, PartProcessCharacteristic Mapping)?> ResolveReferencesAsync(Dictionary<string, string?> payload, CancellationToken ct)
+    private async Task<(Part? Part, Process Process, Machine? Machine, Tank? Tank, Slot? Slot, QualityCharacteristic Characteristic, PartProcessCharacteristic Mapping)?> ResolveReferencesAsync(Dictionary<string, string?> payload, CancellationToken ct)
     {
         var scope = ResolveScope(payload);
         var scopeGroup = await FindScopeGroupAsync(scope, ct);
         var requiresPart = scopeGroup?.RequiresPart ?? scope == "PRODUCT";
         var requiresMachine = scopeGroup?.RequiresMachine ?? true;
-        var requiresTank = scopeGroup?.RequiresTank ?? scope == "CHEMICAL";
+        var requiresTank = scopeGroup?.RequiresTank ?? scope == "CHEM";
         Part? part = null;
         if (requiresPart)
         {
             part = await db.Parts.FirstOrDefaultAsync(x => x.PartNo == Get(payload, "PartNo"), ct);
         }
-        var process = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == Get(payload, "ProcessCode"), ct);
-        var machine = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == Get(payload, "MachineCode"), ct);
-        var characteristic = await db.QualityCharacteristics.FirstOrDefaultAsync(x => x.CharacteristicCode == Get(payload, "CharacteristicCode"), ct);
-        if ((requiresPart && part is null) || process is null || (requiresMachine && machine is null) || characteristic is null) return null;
+        var process = await FindProcessAsync(Get(payload, "ProcessCode"), ct);
+        var machine = await FindMachineAsync(Get(payload, "MachineCode"), process, ct);
+        if (process is null && machine is not null)
+            process = await db.Processes.FirstOrDefaultAsync(x => x.Id == machine.ProcessId, ct);
+        if ((requiresPart && part is null) || process is null || (requiresMachine && machine is null)) return null;
         var tank = requiresTank && machine is not null ? await FindTankAsync(machine, Get(payload, "TankCode"), ct) : null;
         if (requiresTank && tank is null) return null;
+        var characteristic = await FindMappedCharacteristicAsync(
+            Get(payload, "CharacteristicCode"), Get(payload, "Unit"), scope,
+            process, machine, tank, requiresMachine, requiresTank, ct)
+            ?? await FindCharacteristicAsync(Get(payload, "CharacteristicCode"), Get(payload, "Unit"), scope, ct);
+        if (characteristic is null) return null;
+        Slot? slot = null;
+        var slotCode = Get(payload, "SlotCode");
+        if (!string.IsNullOrWhiteSpace(slotCode))
+        {
+            if (tank is null) return null;
+            slot = await db.Slots.FirstOrDefaultAsync(x => x.TankId == tank.Id && x.SlotCode == slotCode, ct);
+            if (slot is null) return null;
+        }
         int? mappingPartId = requiresPart ? part!.Id : null;
         var mappingQuery = db.PartProcessCharacteristics.Where(x =>
                 x.ControlScope == scope &&
@@ -587,9 +894,12 @@ public class UploadService(AppDbContext db, SpcService spcService)
         mappingQuery = mappingQuery.Where(x => x.MachineId == (requiresMachine ? machine!.Id : null));
         mappingQuery = mappingQuery.Where(x => x.TankId == (requiresTank ? tank!.Id : null));
 
-        var mapping = await mappingQuery.FirstOrDefaultAsync(ct);
+        var mapping = slot is null
+            ? await mappingQuery.Where(x => x.SlotId == null).FirstOrDefaultAsync(ct)
+            : await mappingQuery.Where(x => x.SlotId == slot.Id || x.SlotId == null)
+                .OrderByDescending(x => x.SlotId == slot.Id).FirstOrDefaultAsync(ct);
         if (mapping is null) return null;
-        return (part, process, machine, tank, characteristic, mapping);
+        return (part, process, machine, tank, slot, characteristic, mapping);
     }
 
     private static string ResolveScope(Dictionary<string, string?> row)
@@ -597,7 +907,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var raw = Get(row, "ControlScope") ?? Get(row, "管制類型");
         var normalized = (raw ?? "").Trim().ToUpperInvariant();
         if (normalized is "PROCESS" or "PROC" or "製程" or "製程管制") return "PROCESS";
-        if (normalized is "CHEMICAL" or "CHEM" or "藥水" or "藥液" or "藥水管制" or "藥液管制") return "CHEMICAL";
+        if (normalized is "CHEMICAL" or "CHEM" or "藥水" or "藥液" or "藥水管制" or "藥液管制") return "CHEM";
         if (normalized is "PRODUCT" or "PROD" or "產品" or "產品管制") return "PRODUCT";
         if (!string.IsNullOrWhiteSpace(normalized)) return normalized;
         return string.IsNullOrWhiteSpace(Get(row, "PartNo")) ? "PROCESS" : "PRODUCT";
@@ -636,6 +946,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
             "recheckvalue" => "複驗",
             "adjustaction" => "調整",
             "adjustamount" => "調整量",
+            "specification" => "規格",
+            "specificationrange" => "範圍",
             _ => null
         };
         if (altKey != null && row.TryGetValue(altKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;
@@ -643,9 +955,240 @@ public class UploadService(AppDbContext db, SpcService spcService)
         if (matchedKey != null && row.TryGetValue(matchedKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;
         return null;
     }
+
+    private static void ApplyImportedSpecification(
+        Dictionary<string, string?> payload,
+        PartProcessCharacteristic mapping)
+    {
+        if (ResolveScope(payload) != "CHEM") return;
+
+        var parsed = SpecificationRangeParser.Parse(
+            Get(payload, "Specification"),
+            Get(payload, "SpecificationRange"));
+
+        if (parsed.TargetValue.HasValue) mapping.TargetValue = parsed.TargetValue;
+        if (parsed.Lsl.HasValue) mapping.LSL = parsed.Lsl;
+        if (parsed.Usl.HasValue) mapping.USL = parsed.Usl;
+    }
     private static int TryInt(string? raw, int fallback) => int.TryParse(raw, out var value) ? value : fallback;
     private static int? TryNullableInt(string? raw) => int.TryParse(raw, out var value) ? value : null;
     private static DateTime TryDateTime(string? raw, DateTime fallback) => DateTime.TryParse(raw, out var value) ? value : fallback;
+
+    private async Task<Process?> FindProcessAsync(string? codeOrName, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(codeOrName)) return null;
+        var value = codeOrName.Trim();
+        var byCode = await db.Processes.FirstOrDefaultAsync(x => x.ProcessCode == value, ct);
+        if (byCode is not null) return byCode;
+        var byName = await db.Processes.Where(x => x.ProcessName == value).Take(2).ToListAsync(ct);
+        if (byName.Count == 1) return byName[0];
+
+        var normalized = NormalizeMasterLookup(value, "PROCESS");
+        if (normalized.Length < 2) return null;
+        var fuzzyMatches = (await db.Processes.Where(x => x.IsEnabled).ToListAsync(ct))
+            .Where(x => IsUniqueFuzzyMatch(
+                normalized,
+                NormalizeMasterLookup(x.ProcessCode, "PROCESS"),
+                NormalizeMasterLookup(x.ProcessName, "PROCESS")))
+            .Take(2)
+            .ToList();
+        return fuzzyMatches.Count == 1 ? fuzzyMatches[0] : null;
+    }
+
+    private async Task<Machine?> FindMachineAsync(string? codeOrName, Process? process, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(codeOrName)) return null;
+        var value = codeOrName.Trim();
+        var codeQuery = db.Machines.Where(x => x.MachineCode == value);
+        if (process is not null) codeQuery = codeQuery.Where(x => x.ProcessId == process.Id);
+        var byCode = await codeQuery.FirstOrDefaultAsync(ct);
+        if (byCode is not null) return byCode;
+
+        var legacyCode = $"{value}1";
+        if (!value.EndsWith("1", StringComparison.OrdinalIgnoreCase))
+        {
+            var legacyQuery = db.Machines.Where(x => x.MachineCode == legacyCode);
+            if (process is not null) legacyQuery = legacyQuery.Where(x => x.ProcessId == process.Id);
+            var legacyMachine = await legacyQuery.FirstOrDefaultAsync(ct);
+            if (legacyMachine is not null) return legacyMachine;
+        }
+
+        var nameQuery = db.Machines.Where(x => x.MachineName == value);
+        if (process is not null) nameQuery = nameQuery.Where(x => x.ProcessId == process.Id);
+        var byName = await nameQuery.Take(2).ToListAsync(ct);
+        if (byName.Count == 1) return byName[0];
+
+        var normalized = NormalizeMasterLookup(value, "MACHINE");
+        if (normalized.Length < 2) return null;
+        var fuzzyQuery = db.Machines.Where(x => x.IsEnabled);
+        if (process is not null) fuzzyQuery = fuzzyQuery.Where(x => x.ProcessId == process.Id);
+        var fuzzyMatches = (await fuzzyQuery.ToListAsync(ct))
+            .Where(x => IsUniqueFuzzyMatch(
+                normalized,
+                NormalizeMasterLookup(x.MachineCode, "MACHINE"),
+                NormalizeMasterLookup(x.MachineName, "MACHINE")))
+            .Take(2)
+            .ToList();
+        return fuzzyMatches.Count == 1 ? fuzzyMatches[0] : null;
+    }
+
+    private static bool IsUniqueFuzzyMatch(string input, params string[] candidates)
+        => candidates.Any(candidate =>
+            candidate == input ||
+            candidate.StartsWith(input, StringComparison.OrdinalIgnoreCase) ||
+            input.StartsWith(candidate, StringComparison.OrdinalIgnoreCase) ||
+            candidate.Contains(input, StringComparison.OrdinalIgnoreCase) ||
+            input.Contains(candidate, StringComparison.OrdinalIgnoreCase));
+
+    private static string NormalizeMasterLookup(string? value, string kind)
+    {
+        var normalized = string.Concat((value ?? "").Trim().ToUpperInvariant().Where(char.IsLetterOrDigit));
+        if (kind == "PROCESS")
+            normalized = normalized.Replace("製程", "", StringComparison.OrdinalIgnoreCase);
+        else
+            normalized = normalized
+                .Replace("線別", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("機台", "", StringComparison.OrdinalIgnoreCase)
+                .TrimEnd('線');
+        return normalized;
+    }
+
+    private async Task<QualityCharacteristic?> FindCharacteristicAsync(string? codeOrName, string? unit, string scope, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(codeOrName)) return null;
+        var value = codeOrName.Trim();
+        var scopedQuery = db.QualityCharacteristics.Where(x => x.ControlScope == scope && x.IsEnabled);
+        var byCode = await scopedQuery.FirstOrDefaultAsync(x => x.CharacteristicCode == value, ct);
+        if (byCode is not null) return byCode;
+        var cleanName = string.Join(" / ", value.Replace("\r", "\n")
+            .Split(['\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        var normalizedUnit = NormalizeUnit(unit);
+        var importedCode = !string.IsNullOrWhiteSpace(unit) && !cleanName.Contains($"({unit})", StringComparison.OrdinalIgnoreCase)
+            ? $"{cleanName} ({unit})"
+            : cleanName;
+        var importedMatch = await scopedQuery.FirstOrDefaultAsync(x =>
+            x.CharacteristicCode == importedCode || x.CharacteristicCode == $"{importedCode}_CHEM", ct);
+        if (importedMatch is not null) return importedMatch;
+        var byName = await scopedQuery.Where(x => x.CharacteristicName == value).Take(2).ToListAsync(ct);
+        if (byName.Count == 1) return byName[0];
+
+        var inputTokens = GetCharacteristicTokens(value);
+        var candidates = (await scopedQuery.ToListAsync(ct))
+            .Where(x => GetCharacteristicTokens(x.CharacteristicCode)
+                    .Concat(GetCharacteristicTokens(x.CharacteristicName))
+                    .Any(candidate => inputTokens.Contains(candidate, StringComparer.OrdinalIgnoreCase)))
+            .ToList();
+        if (candidates.Count == 1) return candidates[0];
+
+        if (!string.IsNullOrWhiteSpace(normalizedUnit))
+        {
+            var unitMatches = candidates.Where(x =>
+                NormalizeUnit(x.Unit) == normalizedUnit ||
+                GetParenthesizedUnits(x.CharacteristicCode).Contains(normalizedUnit, StringComparer.OrdinalIgnoreCase) ||
+                GetParenthesizedUnits(x.CharacteristicName).Contains(normalizedUnit, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+            if (unitMatches.Count == 1) return unitMatches[0];
+        }
+        return null;
+    }
+
+    private async Task<QualityCharacteristic?> FindMappedCharacteristicAsync(
+        string? codeOrName,
+        string? unit,
+        string scope,
+        Process? process,
+        Machine? machine,
+        Tank? tank,
+        bool requiresMachine,
+        bool requiresTank,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(codeOrName) || process is null ||
+            (requiresMachine && machine is null) || (requiresTank && tank is null))
+            return null;
+
+        var mappings = await db.PartProcessCharacteristics
+            .Include(x => x.Characteristic)
+            .Where(x => x.ControlScope == scope && x.ProcessId == process.Id &&
+                x.MachineId == (requiresMachine ? machine!.Id : null) &&
+                x.TankId == (requiresTank ? tank!.Id : null) &&
+                x.IsEnabled && x.Characteristic != null && x.Characteristic.IsEnabled)
+            .ToListAsync(ct);
+        var inputTokens = ExpandChemicalAliases(GetCharacteristicTokens(codeOrName));
+        var candidates = mappings
+            .Select(x => x.Characteristic!)
+            .Where(x => ExpandChemicalAliases(
+                    GetCharacteristicTokens(x.CharacteristicCode)
+                        .Concat(GetCharacteristicTokens(x.CharacteristicName))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList())
+                .Any(token => inputTokens.Contains(token, StringComparer.OrdinalIgnoreCase)))
+            .DistinctBy(x => x.Id)
+            .ToList();
+        if (candidates.Count == 1) return candidates[0];
+
+        var normalizedUnit = NormalizeUnit(unit);
+        if (!string.IsNullOrWhiteSpace(normalizedUnit))
+        {
+            var unitMatches = candidates.Where(x =>
+                NormalizeUnit(x.Unit) == normalizedUnit ||
+                GetParenthesizedUnits(x.CharacteristicCode).Contains(normalizedUnit, StringComparer.OrdinalIgnoreCase) ||
+                GetParenthesizedUnits(x.CharacteristicName).Contains(normalizedUnit, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+            if (unitMatches.Count == 1) return unitMatches[0];
+        }
+        return null;
+    }
+
+    private static List<string> GetCharacteristicTokens(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+        return value.Replace("\r", "\n")
+            .Split(['\n', '/'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .SelectMany(line => new[] { line, line.Split('(')[0].Trim() })
+            .Select(NormalizeCharacteristicToken)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static List<string> ExpandChemicalAliases(List<string> tokens)
+    {
+        var expanded = new HashSet<string>(tokens, StringComparer.OrdinalIgnoreCase);
+        foreach (var token in tokens)
+        {
+            var aliases = token.ToUpperInvariant() switch
+            {
+                "H2SO4" => new[] { "硫酸" },
+                "HCL" => new[] { "鹽酸" },
+                "CU2+" => new[] { "銅離子" },
+                "H2O2" => new[] { "雙氧水" },
+                "KOH" => new[] { "氫氧化鉀" },
+                "CL-" => new[] { "氯離子" },
+                "NA2CO3" => new[] { "碳酸鈉" },
+                "HNO3" => new[] { "硝酸" },
+                "SPS" => new[] { "過硫酸鈉" },
+                _ => []
+            };
+            foreach (var alias in aliases) expanded.Add(NormalizeCharacteristicToken(alias));
+        }
+        return expanded.ToList();
+    }
+
+    private static string NormalizeCharacteristicToken(string value)
+        => string.Concat(value.Where(c => !char.IsWhiteSpace(c))).ToUpperInvariant();
+
+    private static string NormalizeUnit(string? value)
+        => string.Concat((value ?? "").Where(c => !char.IsWhiteSpace(c))).Trim('(', ')').ToUpperInvariant();
+
+    private static List<string> GetParenthesizedUnits(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+        var matches = System.Text.RegularExpressions.Regex.Matches(value, @"\(([^()]*)\)");
+        return matches.Select(x => NormalizeUnit(x.Groups[1].Value))
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+    }
 
     private async Task<Tank?> FindTankAsync(Machine machine, string? tankNameOrCode, CancellationToken ct)
     {
@@ -658,8 +1201,80 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == machine.MachineCode, ct);
         if (line is null) return null;
 
-        return await db.Tanks.FirstOrDefaultAsync(x =>
+        var exactMatch = await db.Tanks.FirstOrDefaultAsync(x =>
             x.LineId == line.Id &&
             (x.TankCode == raw || x.TankCode == prefixedCode || x.TankName == raw), ct);
+        if (exactMatch is not null) return exactMatch;
+
+        var normalizedRaw = NormalizeTankName(raw);
+        if (normalizedRaw.Length < 2) return null;
+        var tanks = await db.Tanks.Where(x => x.LineId == line.Id && x.IsActive).ToListAsync(ct);
+        var fuzzyMatches = tanks.Where(x =>
+        {
+            var normalizedName = NormalizeTankName(x.TankName);
+            var codeWithoutLine = x.TankCode.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase)
+                ? x.TankCode[(machine.MachineCode.Length + 1)..]
+                : x.TankCode;
+            var normalizedCode = NormalizeTankName(codeWithoutLine);
+            return normalizedName == normalizedRaw ||
+                   normalizedCode == normalizedRaw ||
+                   normalizedName.StartsWith(normalizedRaw, StringComparison.OrdinalIgnoreCase) ||
+                   normalizedCode.StartsWith(normalizedRaw, StringComparison.OrdinalIgnoreCase);
+        }).Take(2).ToList();
+        return fuzzyMatches.Count == 1 ? fuzzyMatches[0] : null;
+    }
+
+    private async Task<(Tank? Tank, bool Created)> CreateTankIfNoSimilarAsync(
+        Machine machine, string? tankNameOrCode, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(tankNameOrCode)) return (null, false);
+        var raw = tankNameOrCode.Trim();
+        var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == machine.MachineCode, ct);
+        if (line is null) return (null, false);
+
+        var normalizedRaw = NormalizeTankName(raw);
+        var tanks = await db.Tanks.Where(x => x.LineId == line.Id).ToListAsync(ct);
+        var similar = tanks.Where(x =>
+        {
+            var normalizedName = NormalizeTankName(x.TankName);
+            var codeWithoutLine = x.TankCode.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase)
+                ? x.TankCode[(machine.MachineCode.Length + 1)..]
+                : x.TankCode;
+            var normalizedCode = NormalizeTankName(codeWithoutLine);
+            return normalizedName.Contains(normalizedRaw, StringComparison.OrdinalIgnoreCase) ||
+                   normalizedRaw.Contains(normalizedName, StringComparison.OrdinalIgnoreCase) ||
+                   normalizedCode.Contains(normalizedRaw, StringComparison.OrdinalIgnoreCase) ||
+                   normalizedRaw.Contains(normalizedCode, StringComparison.OrdinalIgnoreCase);
+        }).Take(2).ToList();
+        if (similar.Count == 1) return (similar[0], false);
+        if (similar.Count > 1) return (null, false);
+
+        var tankCode = raw.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase)
+            ? raw
+            : $"{machine.MachineCode}-{raw}";
+        var existingByCode = await db.Tanks.FirstOrDefaultAsync(x => x.TankCode == tankCode, ct);
+        if (existingByCode is not null)
+            return existingByCode.LineId == line.Id ? (existingByCode, false) : (null, false);
+
+        var tank = new Tank
+        {
+            LineId = line.Id,
+            TankCode = tankCode,
+            TankName = raw,
+            Description = "由匯入批次自動建立",
+            IsActive = true
+        };
+        db.Tanks.Add(tank);
+        await db.SaveChangesAsync(ct);
+        return (tank, true);
+    }
+
+    private static string NormalizeTankName(string? value)
+    {
+        var normalized = string.Concat((value ?? "").Where(c =>
+            !char.IsWhiteSpace(c) && c is not '-' and not '_' and not '(' and not ')'))
+            .Replace("TANK", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
+        return normalized == "表處" ? "表面處理" : normalized;
     }
 }

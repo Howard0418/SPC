@@ -287,6 +287,9 @@ public class QualityCharacteristic : BaseEntity<int>
     public string ControlScope { get; set; } = "PRODUCT";
     public string DataCategory { get; set; } = "Variable";
     public string? Unit { get; set; }
+    public string InputMode { get; set; } = "DIRECT";
+    public string ValueLabel { get; set; } = "量測值";
+    public int DecimalPlaces { get; set; } = 3;
     public int? DefaultChartTypeId { get; set; }
     public bool IsSpcEnabled { get; set; } = true;
     public bool IsEnabled { get; set; } = true;
@@ -299,6 +302,7 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public int ProcessId { get; set; }
     public int? MachineId { get; set; }
     public int? TankId { get; set; }
+    public int? SlotId { get; set; }
     public int CharacteristicId { get; set; }
     public string? Unit { get; set; }
     public double? USL { get; set; }
@@ -323,6 +327,8 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public virtual Machine? Machine { get; set; }
     [ForeignKey("TankId")]
     public virtual Tank? Tank { get; set; }
+    [ForeignKey("SlotId")]
+    public virtual Slot? Slot { get; set; }
     [ForeignKey("CharacteristicId")]
     public virtual QualityCharacteristic? Characteristic { get; set; }
 }

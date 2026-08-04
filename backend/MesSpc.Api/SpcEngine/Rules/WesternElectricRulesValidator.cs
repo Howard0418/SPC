@@ -7,7 +7,10 @@ public static class WesternElectricRulesValidator
     /// <summary>
     /// Applies Western Electric Rules (Rules 1, 2, 3, 4) to a chronological list of SPC data points.
     /// </summary>
-    public static void ApplyRules(List<SpcDataPoint> points, ControlLimits limits)
+    public static void ApplyRules(
+        List<SpcDataPoint> points,
+        ControlLimits limits,
+        IReadOnlySet<string>? enabledRuleCodes = null)
     {
         if (points.Count == 0)
             return;
@@ -15,6 +18,7 @@ public static class WesternElectricRulesValidator
         for (int i = 0; i < points.Count; i++)
         {
             var p = points[i];
+            var wasOutOfControl = p.IsOutOfControl;
             var v = p.Value;
 
             var cl = p.CL ?? limits.CL;
@@ -231,6 +235,12 @@ public static class WesternElectricRulesValidator
                     p.ViolatedRules.Add("Rule8_8Outside1Sigma");
                     p.IsOutOfControl = true;
                 }
+            }
+
+            if (enabledRuleCodes is not null)
+            {
+                p.ViolatedRules.RemoveAll(ruleCode => !enabledRuleCodes.Contains(ruleCode));
+                p.IsOutOfControl = wasOutOfControl || p.ViolatedRules.Count > 0;
             }
         }
     }

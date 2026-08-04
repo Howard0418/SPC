@@ -37,6 +37,7 @@ const routes = [
   { path: "/spc/control-chart/:ppcId?", component: SpcChartView },
   { path: "/trend-chart", component: TrendChartView },
   { path: "/spc/trend/:ppcId?", component: TrendChartView },
+  { path: "/monthly-control-chart", component: SpcChartView },
   { path: "/alerts", component: AlertsView, meta: { editorOnly: true } },
   { path: "/v2/work-orders", redirect: "/measurements" },
   { path: "/v2/station-ops", redirect: "/measurements" },
@@ -61,6 +62,7 @@ const routes = [
   { path: "/settings/smtp", component: SmtpSettingsView, meta: { editorOnly: true } },
   { path: "/settings/spc-reports", component: SpcReportSettingsView, meta: { editorOnly: true } },
   { path: "/operators", component: OperatorsView, meta: { editorOnly: true } },
+  { path: "/chemicals", redirect: "/spc" },
   { path: "/genealogy", component: GenealogyView, meta: { editorOnly: true } },
   { path: "/traceability-master", component: TraceabilityMasterView, meta: { editorOnly: true } },
   { path: "/guide", component: () => import("../views/SystemGuideView.vue"), meta: { editorOnly: true } }

@@ -55,4 +55,19 @@ public record ControlChartResult
     public object? RawDataPoints { get; init; }
     public NormalityTestResult? Normality { get; init; }
     public List<NormalCurvePoint>? NormalCurve { get; init; }
+    public ChartMonitorContext? MonitorContext { get; init; }
+}
+
+public record ChartMonitorContext
+{
+    public string? ProcessCode { get; init; }
+    public string? ProcessName { get; init; }
+    public string? CharacteristicCode { get; init; }
+    public string? CharacteristicName { get; init; }
+    public string? LineCode { get; init; }
+    public string? LineName { get; init; }
+    public string? TankCode { get; init; }
+    public string? TankName { get; init; }
+    public string? SlotCode { get; init; }
+    public string? SlotName { get; init; }
 }

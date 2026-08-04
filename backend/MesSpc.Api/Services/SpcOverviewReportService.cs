@@ -20,7 +20,7 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService)
             [
                 new { GroupCode = "PRODUCT", GroupType = "CONTROL_CHART" },
                 new { GroupCode = "PROCESS", GroupType = "CONTROL_CHART" },
-                new { GroupCode = "CHEMICAL", GroupType = "CONTROL_CHART" }
+                new { GroupCode = "CHEM", GroupType = "CONTROL_CHART" }
             ];
         }
 
@@ -35,7 +35,7 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService)
                 batchNo: null,
                 partId: null,
                 groupType: dimension.GroupType,
-                ct);
+                ct: ct);
             summaryRows.AddRange(rows);
         }
 

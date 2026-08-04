@@ -1299,6 +1299,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<int>("SampleSize")
                         .HasColumnType("int");
 
+                    b.Property<int?>("SlotId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("TankId")
                         .HasColumnType("int");
 
@@ -1335,15 +1338,17 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("RuleGroupId");
 
+                    b.HasIndex("SlotId");
+
                     b.HasIndex("TankId");
 
-                    b.HasIndex("ControlScope", "ProcessId", "MachineId", "TankId", "CharacteristicId")
+                    b.HasIndex("ControlScope", "ProcessId", "MachineId", "TankId", "SlotId", "CharacteristicId")
                         .IsUnique()
                         .HasFilter("[PartId] IS NULL");
 
-                    b.HasIndex("ControlScope", "PartId", "ProcessId", "MachineId", "TankId", "CharacteristicId")
+                    b.HasIndex("ControlScope", "PartId", "ProcessId", "MachineId", "TankId", "SlotId", "CharacteristicId")
                         .IsUnique()
-                        .HasFilter("[PartId] IS NOT NULL AND [MachineId] IS NOT NULL AND [TankId] IS NOT NULL");
+                        .HasFilter("[PartId] IS NOT NULL AND [MachineId] IS NOT NULL AND [TankId] IS NOT NULL AND [SlotId] IS NOT NULL");
 
                     b.ToTable("PartProcessCharacteristics");
                 });
@@ -1633,8 +1638,18 @@ namespace MesSpc.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("DecimalPlaces")
+                        .HasColumnType("int");
+
                     b.Property<int?>("DefaultChartTypeId")
                         .HasColumnType("int");
+
+                    b.Property<string>("InputMode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("DIRECT");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -1658,6 +1673,13 @@ namespace MesSpc.Api.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ValueLabel")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("量測值");
 
                     b.HasKey("Id");
 
@@ -2892,6 +2914,10 @@ namespace MesSpc.Api.Migrations
                         .HasForeignKey("RuleGroupId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("MesSpc.Api.Domain.Entities.Slot", "Slot")
+                        .WithMany()
+                        .HasForeignKey("SlotId");
+
                     b.HasOne("MesSpc.Api.Domain.Entities.Tank", "Tank")
                         .WithMany()
                         .HasForeignKey("TankId")
@@ -2904,6 +2930,8 @@ namespace MesSpc.Api.Migrations
                     b.Navigation("Part");
 
                     b.Navigation("Process");
+
+                    b.Navigation("Slot");
 
                     b.Navigation("Tank");
                 });

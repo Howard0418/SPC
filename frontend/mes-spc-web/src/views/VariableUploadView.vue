@@ -26,6 +26,18 @@ const jsonInput = ref('[{"ControlScope":"PROCESS","ProcessCode":"ST-01","Machine
 const loading = ref(false);
 const err = ref("");
 const successBatchId = ref("");
+const uploadProgress = ref(null);
+
+function createClientBatchId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(bytes);
+  else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 // Group & Process selection state
 const groups = ref([]);
@@ -46,22 +58,41 @@ const isDustMode = computed(() => {
   return grp && (grp.groupCode === "DUST" || (grp.groupName && grp.groupName.includes("落塵")));
 });
 
-const systemFields = [
-  { key: "ControlScope", label: "管制類型 (ControlScope)", required: false, altNames: ["管制類型", "scope", "controlscope", "control_scope", "類型"] },
+const selectedGroup = computed(() =>
+  groups.value.find(g => g.id === Number(selectedGroupId.value)) || null
+);
+
+const selectedControlScope = computed(() => {
+  const group = selectedGroup.value;
+  const configuredScope = String(group?.businessScopeCode || "").trim().toUpperCase();
+  if (configuredScope) return configuredScope;
+  const groupCode = String(group?.groupCode || "").trim().toUpperCase();
+  if (groupCode === "CHEM" || groupCode === "CHEM_TREND") return "CHEM";
+  if (groupCode === "PROD") return "PRODUCT";
+  return "PROCESS";
+});
+
+const systemFields = computed(() => [
+  { key: "ControlScope", label: "管制類型 (ControlScope)", required: false, altNames: ["管制類型", "類別", "scope", "controlscope", "control_scope", "類型"] },
   { key: "PartNo", label: "產品料號 (PartNo，僅產品管制必填)", required: false, altNames: ["料號", "產品", "part", "partno", "part_no", "product"] },
-  { key: "ProcessCode", label: "工站製程代碼 (ProcessCode) *", required: true, altNames: ["製程", "工站", "process", "processcode", "process_code", "station"] },
-  { key: "CharacteristicCode", label: "檢驗項目代碼 (CharacteristicCode) *", required: true, altNames: ["項目", "特性", "檢驗項目", "characteristic", "characteristiccode", "char_code", "item"] },
-  { key: "MachineCode", label: "生產機台代碼 (MachineCode)", required: false, altNames: ["機台", "設備", "machine", "machinecode", "machine_code", "eqp", "device"] },
+  { key: "ProcessCode", label: "工站製程代碼 (ProcessCode)", required: selectedControlScope.value !== "CHEM", altNames: ["製程", "工站", "process", "processcode", "process_code", "station"] },
+  { key: "CharacteristicCode", label: "檢驗項目代碼／名稱 (CharacteristicCode) *", required: true, altNames: ["管制項目", "項目", "特性", "檢驗項目", "characteristic", "characteristiccode", "char_code", "item"] },
+  { key: "Unit", label: "單位（協助對應管制項目）", required: false, altNames: ["單位", "unit", "uom"] },
+  { key: "MachineCode", label: "線別／機台代碼或名稱 (MachineCode) *", required: selectedGroup.value?.requiresMachine !== false, altNames: ["線別", "機台", "設備", "machine", "machinecode", "machine_code", "eqp", "device"] },
+  { key: "TankCode", label: "槽位 (TankCode)", required: selectedGroup.value?.requiresTank === true || selectedControlScope.value === "CHEM", altNames: ["槽位", "槽體", "tank", "tankcode", "tank_code"] },
+  { key: "Specification", label: "規格／目標值 (Specification)", required: false, altNames: ["規格", "規格值", "目標值", "spec", "specification", "target"] },
+  { key: "SpecificationRange", label: "規格範圍 (SpecificationRange)", required: false, altNames: ["範圍", "規格範圍", "上下限", "range", "specificationrange", "specification_range"] },
   { key: "MeasuredValue", label: "量測數值 (MeasuredValue) *", required: true, altNames: ["測量值", "數值", "值", "measuredvalue", "measured_value", "value", "val"] },
   { key: "RecheckValue", label: "複驗值 (RecheckValue)", required: false, altNames: ["複驗", "複驗值", "recheck", "recheckvalue", "recheck_value", "review_value"] },
   { key: "AdjustAction", label: "調整 (AdjustAction)", required: false, altNames: ["調整", "調整方式", "調整動作", "adjust", "adjustaction", "adjust_action", "action"] },
   { key: "AdjustAmount", label: "調整量 (AdjustAmount)", required: false, altNames: ["調整量", "添加量", "稀釋量", "adjustamount", "adjust_amount", "amount"] },
   { key: "LotNo", label: "生產批號 (LotNo)", required: false, altNames: ["批號", "lot", "lotno", "lot_no", "batch"] },
   { key: "SerialNo", label: "零件序號 (SerialNo)", required: false, altNames: ["序號", "工單", "serial", "serialno", "serial_no", "sn", "workorder"] },
-  { key: "MeasuredAt", label: "量測時間 (MeasuredAt)", required: false, altNames: ["時間", "日期", "時間戳記", "measuredat", "measured_at", "time", "date", "timestamp"] },
-  { key: "Operator", label: "作業人員 (Operator)", required: false, altNames: ["作業員", "人員", "operator", "op", "user"] },
+  { key: "MeasuredAt", label: "量測日期 (MeasuredAt)", required: false, altNames: ["量測日期", "日期", "時間戳記", "measuredat", "measured_at", "date", "timestamp"] },
+  { key: "MeasuredTime", label: "量測時間（與日期合併）", required: false, altNames: ["量測時間", "time", "measurementtime"] },
+  { key: "Operator", label: "作業人員 (Operator)", required: false, altNames: ["量測員", "作業員", "人員", "operator", "op", "user"] },
   { key: "SampleNo", label: "樣本序號 (SampleNo)", required: false, altNames: ["樣本", "樣本編號", "sampleno", "sample_no", "sample"] }
-];
+]);
 
 async function loadGroupsAndProcesses() {
   loading.value = true;
@@ -205,7 +236,7 @@ async function handleFileChange(e) {
 }
 
 function runFuzzyAutoMapping() {
-  systemFields.forEach(field => {
+  systemFields.value.forEach(field => {
     // Try to find a matching file header using altNames or exact match
     const match = fileHeaders.value.find(h => {
       const hClean = h.toLowerCase().trim().replace(/[\s-_]/g, "");
@@ -226,7 +257,7 @@ function runFuzzyAutoMapping() {
 const mappedPreviewData = computed(() => {
   return rawRowsData.value.slice(0, 3).map(row => {
     const result = {};
-    systemFields.forEach(field => {
+    systemFields.value.forEach(field => {
       const mappedHeader = columnMappings.value[field.key];
       result[field.key] = mappedHeader ? row[mappedHeader] : "";
     });
@@ -315,7 +346,7 @@ async function uploadMappedData() {
       payload = mappedDustRows.value;
     } else {
       // Validate required columns
-      const missingFields = systemFields
+      const missingFields = systemFields.value
         .filter(f => f.required && !columnMappings.value[f.key])
         .map(f => f.label);
       
@@ -328,7 +359,7 @@ async function uploadMappedData() {
       // Convert standard rows
       payload = rawRowsData.value.map(row => {
         const obj = {};
-        systemFields.forEach(field => {
+        systemFields.value.forEach(field => {
           const mappedHeader = columnMappings.value[field.key];
           if (mappedHeader && row[mappedHeader] !== undefined && row[mappedHeader] !== null) {
             obj[field.key] = String(row[mappedHeader]).trim();
@@ -339,11 +370,36 @@ async function uploadMappedData() {
         if (!obj.MachineCode && obj.ProcessCode) {
           obj.MachineCode = `${obj.ProcessCode}-M01`;
         }
+        if (obj.MeasuredAt && obj.MeasuredTime) {
+          obj.MeasuredAt = `${obj.MeasuredAt} ${obj.MeasuredTime}`.trim();
+        }
+        delete obj.MeasuredTime;
+        obj.ControlScope = selectedControlScope.value;
         return obj;
       });
     }
 
-    const res = await api.post("/uploads/variable", payload);
+    const clientBatchId = createClientBatchId();
+    uploadProgress.value = { processed: 0, total: payload.length, percent: 0 };
+    const progressTimer = window.setInterval(async () => {
+      try {
+        const { data } = await api.get(`/uploads/${clientBatchId}/progress`);
+        const total = Number(data.total || payload.length || 1);
+        const processed = Number(data.processed || 0);
+        uploadProgress.value = {
+          processed,
+          total,
+          percent: Math.min(100, Math.round(processed * 100 / total))
+        };
+      } catch {}
+    }, 1000);
+    let res;
+    try {
+      res = await api.post("/uploads/variable", payload, { params: { clientBatchId } });
+      uploadProgress.value = { processed: payload.length, total: payload.length, percent: 100 };
+    } finally {
+      window.clearInterval(progressTimer);
+    }
     successBatchId.value = res.data.uploadBatchId;
     router.push(`/uploads/${successBatchId.value}/preview`);
   } catch (e) {
@@ -354,6 +410,7 @@ async function uploadMappedData() {
     }
   } finally {
     loading.value = false;
+    uploadProgress.value = null;
   }
 }
 
@@ -396,6 +453,18 @@ async function uploadJson() {
 
 <template>
   <div class="max-w-4xl mx-auto space-y-6">
+    <div v-if="uploadProgress" class="fixed inset-0 z-[100] bg-slate-950/60 flex items-center justify-center p-4">
+      <div class="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-2xl">
+        <div class="flex justify-between text-sm font-black text-slate-800 dark:text-white mb-3">
+          <span>正在驗證匯入資料</span>
+          <span>{{ uploadProgress.processed }} / {{ uploadProgress.total }}（{{ uploadProgress.percent }}%）</span>
+        </div>
+        <div class="h-4 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+          <div class="h-full bg-blue-600 transition-all duration-300" :style="{ width: `${uploadProgress.percent}%` }"></div>
+        </div>
+        <p class="mt-3 text-xs text-slate-500">請勿關閉頁面，完成後會自動進入結果頁。</p>
+      </div>
+    </div>
     <!-- Jumbotron banner -->
     <div class="p-8 rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-850 text-white shadow-xl relative overflow-hidden">
       <div class="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="data && !loading" data-testid="spc-summary-table"
+  <div v-if="data && !loading" ref="summaryContainer" data-testid="spc-summary-table"
     class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden">
     <div
       class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
@@ -20,15 +20,9 @@
       <p class="font-bold">此條件下沒有可計算之量測點</p>
     </div>
 
-    <div v-else ref="topSummaryScroll"
-      class="spc-summary-scroll spc-summary-scroll-top overflow-x-scroll overflow-y-hidden"
-      @scroll="syncSummaryScroll('top')">
-      <div class="h-1 min-w-[2480px]"></div>
-    </div>
-
     <div v-if="data.length > 0" ref="summaryScroll" class="spc-summary-scroll overflow-x-scroll overflow-y-hidden pb-3"
       @scroll="syncSummaryScroll('body')">
-      <table class="min-w-[2480px] w-full text-left text-xs border-collapse">
+      <table class="min-w-[1960px] w-full text-left text-xs border-collapse">
         <thead>
           <tr
             class="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
@@ -40,18 +34,6 @@
                 <span class="text-slate-400 dark:text-slate-500">
                   <ArrowUp v-if="sortKey === 'controlCategory' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                   <ArrowDown v-else-if="sortKey === 'controlCategory' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                  <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                </span>
-              </div>
-            </th>
-            <th
-              class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              @click="handleSort('chartKind')">
-              <div class="flex items-center gap-1">
-                <span>圖表類型</span>
-                <span class="text-slate-400 dark:text-slate-500">
-                  <ArrowUp v-if="sortKey === 'chartKind' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                  <ArrowDown v-else-if="sortKey === 'chartKind' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                   <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
                 </span>
               </div>
@@ -87,13 +69,13 @@
               </div>
             </th>
             <th
-              class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              @click="handleSort('chartType')">
-              <div class="flex items-center gap-1">
-                <span>管制圖種類</span>
-                <ArrowUp v-if="sortKey === 'chartType' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                <ArrowDown v-else-if="sortKey === 'chartType' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
+              class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              @click="handleSort('totalCount')">
+              <div class="flex items-center justify-end gap-1">
+                <ArrowUp v-if="sortKey === 'totalCount' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
+                <ArrowDown v-else-if="sortKey === 'totalCount' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                 <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
+                <span>匯入資料數</span>
               </div>
             </th>
             <th
@@ -145,16 +127,6 @@
               </div>
             </th>
             <th
-              class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              @click="handleSort('limitCalculationMethod')">
-              <div class="flex items-center gap-1">
-                <span>管制界線計算方式</span>
-                <ArrowUp v-if="sortKey === 'limitCalculationMethod' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                <ArrowDown v-else-if="sortKey === 'limitCalculationMethod' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-              </div>
-            </th>
-            <th
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('oosCount')">
               <div class="flex items-center justify-end gap-1">
@@ -166,19 +138,13 @@
                 </span>
               </div>
             </th>
-            <th
-              class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              @click="handleSort('previousMonthOosCount')">
-              <div class="flex items-center justify-end gap-1">
-                <span class="flex items-center gap-1">
-                  <ArrowUp v-if="sortKey === 'previousMonthOosCount' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                  <ArrowDown v-else-if="sortKey === 'previousMonthOosCount' && sortOrder === 'desc'"
-                    class="w-3.5 h-3.5" />
-                  <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>上月OOS</span>
-                </span>
-              </div>
+            <th v-if="comparisonPeriod" class="px-4 py-3 text-right cursor-pointer select-none" @click="handleSort('previousMonthOosCount')">
+              <span class="flex items-center justify-end gap-1">
+                <ArrowUpDown class="w-3.5 h-3.5 opacity-60" />
+                <span>{{ comparisonPrefix }}OOS</span>
+              </span>
             </th>
+            <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">OOS 差異</th>
             <th
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('oosPercentage')">
@@ -191,19 +157,13 @@
                 </span>
               </div>
             </th>
-            <th
-              class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              @click="handleSort('previousMonthOosPercentage')">
-              <div class="flex items-center justify-end gap-1">
-                <span class="flex items-center gap-1">
-                  <ArrowUp v-if="sortKey === 'previousMonthOosPercentage' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                  <ArrowDown v-else-if="sortKey === 'previousMonthOosPercentage' && sortOrder === 'desc'"
-                    class="w-3.5 h-3.5" />
-                  <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>上月%OOS</span>
-                </span>
-              </div>
+            <th v-if="comparisonPeriod" class="px-4 py-3 text-right cursor-pointer select-none" @click="handleSort('previousMonthOosPercentage')">
+              <span class="flex items-center justify-end gap-1">
+                <ArrowUpDown class="w-3.5 h-3.5 opacity-60" />
+                <span>{{ comparisonPrefix }}%OOS</span>
+              </span>
             </th>
+            <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">%OOS 差異</th>
             <th
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('ca')">
@@ -224,7 +184,7 @@
                   <ArrowUp v-if="sortKey === 'pp' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                   <ArrowDown v-else-if="sortKey === 'pp' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                   <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>Pp</span>
+                  <span>Cp</span>
                 </span>
               </div>
             </th>
@@ -236,46 +196,17 @@
                   <ArrowUp v-if="sortKey === 'ppk' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                   <ArrowDown v-else-if="sortKey === 'ppk' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                   <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>本期Ppk</span>
+                  <span>本期Cpk</span>
                 </span>
               </div>
             </th>
-            <th
-              class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              @click="handleSort('previousMonthPpk')">
-              <div class="flex items-center justify-end gap-1">
-                <span class="flex items-center gap-1">
-                  <ArrowUp v-if="sortKey === 'previousMonthPpk' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                  <ArrowDown v-else-if="sortKey === 'previousMonthPpk' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                  <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>上月Ppk</span>
-                </span>
-              </div>
+            <th v-if="comparisonPeriod" class="px-4 py-3 text-right cursor-pointer select-none" @click="handleSort('previousMonthPpk')">
+              <span class="flex items-center justify-end gap-1">
+                <ArrowUpDown class="w-3.5 h-3.5 opacity-60" />
+                <span>{{ comparisonPrefix }}Cpk</span>
+              </span>
             </th>
-            <th
-              class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              @click="handleSort('responsibleUser')">
-              <div class="flex items-center gap-1">
-                <span class="flex items-center gap-1">
-                  <ArrowUp v-if="sortKey === 'responsibleUser' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                  <ArrowDown v-else-if="sortKey === 'responsibleUser' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                  <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>工程負責人</span>
-                </span>
-              </div>
-            </th>
-            <th
-              class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              @click="handleSort('remarks')">
-              <div class="flex items-center gap-1">
-                <span class="flex items-center gap-1">
-                  <ArrowUp v-if="sortKey === 'remarks' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                  <ArrowDown v-else-if="sortKey === 'remarks' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                  <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>備註</span>
-                </span>
-              </div>
-            </th>
+            <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">Cpk 差異</th>
             <th class="px-4 py-3 text-center sticky right-0 bg-slate-50 dark:bg-slate-800">製圖</th>
           </tr>
         </thead>
@@ -283,47 +214,46 @@
           <tr v-for="row in sortedData" :key="row.partProcessCharacteristicId"
             class="hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors">
             <td class="px-4 py-3 font-bold whitespace-nowrap">{{ row.controlCategory || 'N/A' }}</td>
-            <td class="px-4 py-3 whitespace-nowrap">
-              <span :class="[
-                'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black border',
-                isTrendRow(row)
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800'
-                  : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800'
-              ]">
-                {{ row.chartKind || (isTrendRow(row) ? '趨勢圖' : '管制圖') }}
-              </span>
-            </td>
-            <td class="px-4 py-3 min-w-44">{{ row.lineOrProcessName || 'N/A' }}</td>
-            <td class="px-4 py-3 min-w-36">{{ row.slotName || 'N/A' }}</td>
+            <td class="px-4 py-3 min-w-44" :title="row.lineOrProcessName || ''">{{ formatLineName(row.lineOrProcessName) }}</td>
+            <td class="px-4 py-3 min-w-36" :title="row.slotName || ''">{{ formatSlotName(row.slotName) }}</td>
             <td class="px-4 py-3 min-w-44 font-bold text-blue-700 dark:text-blue-300">{{ row.chartName || 'N/A' }}</td>
-            <td class="px-4 py-3 whitespace-nowrap">{{ row.chartType || 'N/A' }}</td>
+            <td class="px-4 py-3 text-right font-mono font-bold">{{ row.totalCount ?? 0 }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.usl) }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.lsl) }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.ucl) }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.lcl) }}</td>
-            <td class="px-4 py-3 min-w-40">{{ row.limitCalculationMethod || 'N/A' }}</td>
             <td class="px-4 py-3 text-right font-bold"
               :class="row.oosCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
               {{ row.oosCount }}
             </td>
-            <td class="px-4 py-3 text-right font-bold"
+            <td v-if="comparisonPeriod" class="px-4 py-3 text-right font-bold"
               :class="row.previousMonthOosCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'">
               {{ row.previousMonthOosCount ?? 0 }}
+            </td>
+            <td v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right font-bold"
+              :class="differenceClass(row.oosCount, row.previousMonthOosCount, false)">
+              {{ formatDifference(row.oosCount, row.previousMonthOosCount, 0) }}
             </td>
             <td class="px-4 py-3 text-right font-bold"
               :class="row.oosPercentage > 0 ? 'text-red-600 dark:text-red-400' : ''">
               {{ formatPercentage(row.oosPercentage) }}
             </td>
-            <td class="px-4 py-3 text-right font-bold"
+            <td v-if="comparisonPeriod" class="px-4 py-3 text-right font-bold"
               :class="row.previousMonthOosPercentage > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'">
               {{ formatPercentage(row.previousMonthOosPercentage) }}
+            </td>
+            <td v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right font-bold"
+              :class="differenceClass(row.oosPercentage, row.previousMonthOosPercentage, false)">
+              {{ formatDifference(row.oosPercentage, row.previousMonthOosPercentage, 2) }}%
             </td>
             <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.ca) }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.pp) }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.ppk) }}</td>
-            <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.previousMonthPpk) }}</td>
-            <td class="px-4 py-3 min-w-32">{{ row.responsibleUser || 'N/A' }}</td>
-            <td class="px-4 py-3 min-w-56 max-w-xs truncate" :title="row.remarks || ''">{{ row.remarks || 'N/A' }}</td>
+            <td v-if="comparisonPeriod" class="px-4 py-3 text-right font-mono">{{ formatNumber(row.previousMonthPpk) }}</td>
+            <td v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right font-mono font-bold"
+              :class="differenceClass(row.ppk, row.previousMonthPpk, true)">
+              {{ formatDifference(row.ppk, row.previousMonthPpk, 2) }}
+            </td>
             <td class="px-4 py-3 text-center sticky right-0 bg-white dark:bg-slate-900">
               <button type="button" :data-testid="`draw-chart-${row.partProcessCharacteristicId}`"
                 @click="$emit('draw-chart', row)"
@@ -337,11 +267,18 @@
         </tbody>
       </table>
     </div>
+
+    <div v-if="showFloatingScroll" ref="floatingSummaryScroll"
+      class="spc-summary-scroll spc-summary-scroll-floating fixed overflow-x-scroll overflow-y-hidden"
+      :style="floatingScrollStyle"
+      @scroll="syncSummaryScroll('floating')">
+      <div class="h-1" :style="{ width: `${floatingContentWidth}px` }"></div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue"; // 新增 computed
+import { ref, computed, nextTick, onBeforeUnmount, onMounted, watch } from "vue";
 import { List, BarChart3, LineChart, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-vue-next"; // 新增三個排序圖示
 
 // 1. 新增排序狀態
@@ -397,31 +334,86 @@ const props = defineProps({
   isSpc: {
     type: Boolean,
     default: true
+  },
+  comparisonPeriod: {
+    type: String,
+    default: ""
   }
 });
 
+const comparisonPrefix = computed(() => props.comparisonPeriod === "WEEK" ? "上週" : "上月");
+
 defineEmits(["draw-chart"]);
 
-const topSummaryScroll = ref(null);
+const summaryContainer = ref(null);
 const summaryScroll = ref(null);
+const floatingSummaryScroll = ref(null);
+const showFloatingScroll = ref(false);
+const floatingContentWidth = ref(0);
+const floatingScrollStyle = ref({});
 let syncingSummaryScroll = false;
+let summaryResizeObserver = null;
 
 function syncSummaryScroll(source) {
   if (syncingSummaryScroll) return;
-  const top = topSummaryScroll.value;
   const body = summaryScroll.value;
-  if (!top || !body) return;
+  const floating = floatingSummaryScroll.value;
+  if (!body) return;
 
   syncingSummaryScroll = true;
-  if (source === "top") {
-    body.scrollLeft = top.scrollLeft;
+  if (source === "floating" && floating) {
+    body.scrollLeft = floating.scrollLeft;
   } else {
-    top.scrollLeft = body.scrollLeft;
+    if (floating) floating.scrollLeft = body.scrollLeft;
   }
-  requestAnimationFrame(() => {
+  window.requestAnimationFrame(() => {
     syncingSummaryScroll = false;
   });
 }
+
+function updateFloatingScroll() {
+  const container = summaryContainer.value;
+  const body = summaryScroll.value;
+  if (!container || !body || props.data.length === 0) {
+    showFloatingScroll.value = false;
+    return;
+  }
+
+  const rect = container.getBoundingClientRect();
+  const hasHorizontalOverflow = body.scrollWidth > body.clientWidth + 1;
+  showFloatingScroll.value = hasHorizontalOverflow
+    && rect.top < window.innerHeight
+    && rect.bottom > window.innerHeight;
+  floatingContentWidth.value = body.scrollWidth;
+  floatingScrollStyle.value = {
+    left: `${Math.max(0, rect.left)}px`,
+    width: `${Math.min(rect.width, window.innerWidth - Math.max(0, rect.left))}px`
+  };
+
+  nextTick(() => {
+    if (floatingSummaryScroll.value) {
+      floatingSummaryScroll.value.scrollLeft = body.scrollLeft;
+    }
+  });
+}
+
+onMounted(() => {
+  window.addEventListener("scroll", updateFloatingScroll, { passive: true });
+  window.addEventListener("resize", updateFloatingScroll);
+  if (typeof ResizeObserver !== "undefined") {
+    summaryResizeObserver = new ResizeObserver(updateFloatingScroll);
+    if (summaryContainer.value) summaryResizeObserver.observe(summaryContainer.value);
+  }
+  nextTick(updateFloatingScroll);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", updateFloatingScroll);
+  window.removeEventListener("resize", updateFloatingScroll);
+  summaryResizeObserver?.disconnect();
+});
+
+watch(() => props.data, () => nextTick(updateFloatingScroll), { deep: true });
 
 function formatNumber(val) {
   if (val == null) return "-";
@@ -435,6 +427,26 @@ function formatPercentage(val) {
   if (val == null) return "-";
   return typeof val === "number" ? val.toFixed(2) + "%" : val;
 }
+function formatSlotName(val) {
+  if (!val) return "N/A";
+  return String(val).split(/[（(]/, 1)[0].trim() || "N/A";
+}
+function formatLineName(val) {
+  if (!val) return "N/A";
+  return String(val).split(/\s*[／/]\s*/, 1)[0].trim() || "N/A";
+}
+function formatDifference(current, previous, digits) {
+  if (current == null || previous == null) return "-";
+  const difference = Number(current) - Number(previous);
+  return `${difference > 0 ? "+" : ""}${difference.toFixed(digits)}`;
+}
+function differenceClass(current, previous, higherIsBetter) {
+  if (current == null || previous == null || Number(current) === Number(previous)) return "text-slate-500 dark:text-slate-400";
+  const improved = higherIsBetter
+    ? Number(current) > Number(previous)
+    : Number(current) < Number(previous);
+  return improved ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400";
+}
 
 function isTrendRow(row) {
   return row?.groupType === "TREND_CHART" || row?.chartKind === "趨勢圖" || !props.isSpc;
@@ -446,8 +458,15 @@ function isTrendRow(row) {
   scrollbar-gutter: stable;
 }
 
-.spc-summary-scroll-top {
-  border-bottom: 1px solid rgb(226 232 240);
+.spc-summary-scroll-floating {
+  z-index: 60;
+  bottom: 0;
+  height: 20px;
+  background: rgb(241 245 249);
+  border: 1px solid rgb(203 213 225);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -4px 12px rgb(15 23 42 / 0.16);
 }
 
 .spc-summary-scroll::-webkit-scrollbar {
@@ -469,8 +488,9 @@ function isTrendRow(row) {
   background: rgb(37 99 235);
 }
 
-:global(.dark) .spc-summary-scroll-top {
-  border-bottom-color: rgb(51 65 85);
+:global(.dark) .spc-summary-scroll-floating {
+  background: rgb(15 23 42);
+  border-color: rgb(51 65 85);
 }
 
 :global(.dark) .spc-summary-scroll::-webkit-scrollbar-track {

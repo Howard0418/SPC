@@ -41,6 +41,9 @@ const form = ref({
   controlScope: "PRODUCT",
   dataCategory: "Variable",
   unit: "",
+  inputMode: "DIRECT",
+  valueLabel: "濃度",
+  decimalPlaces: 3,
   isSpcEnabled: true,
   isEnabled: true
 });
@@ -49,7 +52,7 @@ const formErr = ref("");
 function controlScopeLabel(scope) {
   const normalized = String(scope || "PRODUCT").trim().toUpperCase();
   const fixedLabels = {
-    CHEMICAL: "藥液",
+    CHEM: "藥液",
     PRODUCT: "產品管制",
     PROD: "產品管制",
     PROCESS: "製程管制",
@@ -105,6 +108,7 @@ function openCreateModal() {
     controlScope: controlGroups.value[0]?.groupCode || "PRODUCT",
     dataCategory: "Variable",
     unit: "",
+    inputMode: "DIRECT", valueLabel: "濃度", decimalPlaces: 3,
     isSpcEnabled: true,
     isEnabled: true
   };
@@ -121,6 +125,9 @@ function openEditModal(item) {
     controlScope: item.controlScope || "PRODUCT",
     dataCategory: item.dataCategory || "Variable",
     unit: item.unit || "",
+    inputMode: item.inputMode || "DIRECT",
+    valueLabel: item.valueLabel || "量測值",
+    decimalPlaces: item.decimalPlaces ?? 3,
     isSpcEnabled: item.isSpcEnabled ?? true,
     isEnabled: item.isEnabled ?? true
   };
@@ -487,6 +494,25 @@ onMounted(load);
                 placeholder="例如：g/L, mm, kg, %"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
               />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-600">輸入模式</label>
+              <select v-model="form.inputMode" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl">
+                <option value="FORMULA">公式計算</option>
+                <option value="DIRECT">直接輸入濃度</option>
+                <option value="RECORD_ONLY">僅記錄、不判定</option>
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-600">數值欄位名稱</label>
+              <input v-model="form.valueLabel" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl" placeholder="例如：濃度" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-600">小數位數</label>
+              <input v-model.number="form.decimalPlaces" type="number" min="0" max="8" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl" />
             </div>
           </div>
 

@@ -10,7 +10,7 @@ test.describe('SPC all-lines summary', () => {
       await route.fulfill({
         json: [{
           id: 21,
-          controlScope: 'CHEMICAL',
+          controlScope: 'CHEM',
           partId: null,
           processId: 3,
           machineId: 8,
@@ -101,6 +101,7 @@ test.describe('SPC all-lines summary', () => {
           ucl: 8.2,
           lcl: 2.1,
           limitCalculationMethod: '移動全距法',
+          totalCount: 8,
           oosCount: 1,
           oosPercentage: 12.5,
           ca: 0.1,
@@ -149,28 +150,25 @@ test.describe('SPC all-lines summary', () => {
 
     const summaryTable = page.getByTestId('spc-summary-table');
     await expect(summaryTable).toBeVisible();
-    expect(requestedDimension).toBe('CHEMICAL');
+    expect(requestedDimension).toBe('CHEM');
 
     // 確認各欄位標題文字存在（表頭現已支援排序，含有圖示元素）
     const thead = summaryTable.locator('thead');
     await expect(thead).toContainText('管制類別');
-    await expect(thead).toContainText('圖表類型');
     await expect(thead).toContainText('製程線別');
     await expect(thead).toContainText('管制圖名稱');
-    await expect(thead).toContainText('管制圖種類');
+    await expect(thead).toContainText('匯入資料數');
     await expect(thead).toContainText('USL');
     await expect(thead).toContainText('LSL');
     await expect(thead).toContainText('UCL');
     await expect(thead).toContainText('LCL');
-    await expect(thead).toContainText('管制界線計算方式');
     await expect(thead).toContainText('本期OOS');
     await expect(thead).toContainText('本期%OOS');
-    await expect(thead).toContainText('本期Ppk');
-    await expect(thead).toContainText('工程負責人');
-    await expect(thead).toContainText('備註');
+    await expect(thead).toContainText('本期Cpk');
     await expect(thead).toContainText('製圖');
 
     await expect(summaryTable).toContainText('銅離子濃度');
+    await expect(summaryTable).toContainText('8');
     await expect(summaryTable).toContainText('12.50%');
 
     await page.getByTestId('draw-chart-21').click();

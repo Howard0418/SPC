@@ -1,12 +1,10 @@
 <script setup>
-import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
 import {
   TrendingUp,
-  Search,
   RefreshCw,
   AlertTriangle,
   Activity,
@@ -30,11 +28,19 @@ const selectedDimension = ref("PROC");
 const selectedPartId = ref("");
 const selectedProcessId = ref("");
 const selectedCharacteristicId = ref("");
+const selectedPpcId = ref("");
 const updatingCascades = ref(false);
-
-// Autocomplete search
-const searchQuery = ref("");
-const showSearchResults = ref(false);
+const toDateInputValue = date => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+const today = new Date();
+const threeMonthsAgo = new Date(today);
+threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+const startDate = ref(toDateInputValue(threeMonthsAgo));
+const endDate = ref(toDateInputValue(today));
 
 // Chart state
 const loading = ref(false);
@@ -42,19 +48,28 @@ const error = ref("");
 const chartResult = ref(null);
 const trendChartEl = ref(null);
 let trendChartInstance = null;
+const selectedPointIndex = ref(-1);
 
 const tableSummaryData = ref(null);
+const cachedSummaryData = ref(null);
 const selectedSummaryRow = ref(null);
 // ─── Dimension helpers ───────────────────────────────────────
 const getDimensionForMapping = (m) => {
   return m.controlScope || "";
 };
 
-const dimensionOptions = computed(() =>
+const dimensionOptions = computed(() => {
+  const byCode = new Map();
   groups.value
-    .filter(group => group.isEnabled !== false && group.groupType === "TREND_CHART")
-    .map(group => ({ id: group.groupCode, label: group.groupName }))
-);
+    .filter(group => group.isEnabled !== false
+      && (group.groupType === "TREND_CHART" || group.groupType === "CONTROL_CHART"))
+    .forEach(group => {
+      if (!byCode.has(group.groupCode)) {
+        byCode.set(group.groupCode, { id: group.groupCode, label: group.groupName });
+      }
+    });
+  return [...byCode.values()];
+});
 
 const filteredMappingsByDimension = computed(() =>
   mappings.value.filter(m =>
@@ -101,6 +116,10 @@ const availableCharacteristics = computed(() => {
 });
 
 const selectedMapping = computed(() => {
+  if (selectedPpcId.value) {
+    const exactMatch = filteredMappingsByDimension.value.find(m => m.id === Number(selectedPpcId.value));
+    if (exactMatch) return exactMatch;
+  }
   if ((selectedDimension.value === "PROD" && !selectedPartId.value) || !selectedProcessId.value || !selectedCharacteristicId.value) return null;
   return filteredMappingsByDimension.value.find(m =>
     (selectedDimension.value !== "PROD" || m.partId === Number(selectedPartId.value)) &&
@@ -141,31 +160,8 @@ const activeChartDisplayName = computed(() => {
     formatTankLabel(mapping?.tank),
     mapping?.characteristic?.characteristicName
   ]);
-  return mappingTitleParts.join(" - ");
+  return mappingTitleParts.join(" - ") || "量測值趨勢圖";
 });
-
-// Autocomplete
-const filteredMappings = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase();
-  if (!q) return [];
-  return filteredMappingsByDimension.value.filter(m =>
-    (m.part?.partNo || "").toLowerCase().includes(q) ||
-    (m.part?.partName || "").toLowerCase().includes(q) ||
-    (m.process?.processName || "").toLowerCase().includes(q) ||
-    (m.characteristic?.characteristicName || "").toLowerCase().includes(q)
-  ).slice(0, 15);
-});
-
-function selectMappingFromSearch(m) {
-  updatingCascades.value = true;
-  selectedPartId.value = m.partId || "";
-  selectedProcessId.value = m.processId;
-  selectedCharacteristicId.value = m.characteristicId;
-  updatingCascades.value = false;
-  showSearchResults.value = false;
-  selectedSummaryRow.value = null;
-  loadChart();
-}
 
 async function drawSingleChart(row) {
   const match = mappings.value.find(m => m.id === row.partProcessCharacteristicId);
@@ -179,14 +175,23 @@ async function drawSingleChart(row) {
   selectedPartId.value = match.partId || "";
   selectedProcessId.value = match.processId;
   selectedCharacteristicId.value = match.characteristicId;
+  await nextTick();
   updatingCascades.value = false;
+  selectedPpcId.value = String(match.id);
   selectedSummaryRow.value = row;
   tableSummaryData.value = null;
   loadChart();
 }
 
-function hideSearchResults() {
-  setTimeout(() => { showSearchResults.value = false; }, 200);
+function returnToSummary() {
+  chartResult.value = null;
+  selectedPointIndex.value = -1;
+  selectedSummaryRow.value = null;
+  tableSummaryData.value = cachedSummaryData.value || [];
+  if (trendChartInstance) {
+    trendChartInstance.dispose();
+    trendChartInstance = null;
+  }
 }
 
 // ─── Watchers ────────────────────────────────────────────────
@@ -194,6 +199,7 @@ watch(selectedDimension, (newDim) => {
   selectedPartId.value = "";
   selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
+  selectedPpcId.value = "";
   chartResult.value = null;
   tableSummaryData.value = null;
   selectedSummaryRow.value = null;
@@ -201,6 +207,7 @@ watch(selectedDimension, (newDim) => {
 
 watch(selectedPartId, () => {
   if (updatingCascades.value) return;
+  selectedPpcId.value = "";
   selectedProcessId.value = "";
   selectedCharacteristicId.value = "";
   chartResult.value = null;
@@ -210,10 +217,16 @@ watch(selectedPartId, () => {
 
 watch(selectedProcessId, (newVal) => {
   if (updatingCascades.value) return;
+  selectedPpcId.value = "";
   selectedCharacteristicId.value = newVal === "ALL" ? "ALL" : "";
   chartResult.value = null;
   tableSummaryData.value = null;
   selectedSummaryRow.value = null;
+});
+
+watch(selectedCharacteristicId, () => {
+  if (updatingCascades.value) return;
+  selectedPpcId.value = "";
 });
 
 // ─── Data loading ─────────────────────────────────────────────
@@ -243,7 +256,9 @@ async function loadMappings() {
         selectedPartId.value = match.partId || "";
         selectedProcessId.value = match.processId;
         selectedCharacteristicId.value = match.characteristicId;
+        await nextTick();
         updatingCascades.value = false;
+        selectedPpcId.value = String(match.id);
         loadChart();
       }
     }
@@ -253,7 +268,18 @@ async function loadMappings() {
 }
 
 async function loadChart() {
-  if (selectedProcessId.value === "ALL" || selectedCharacteristicId.value === "ALL") {
+  const start = startDate.value ? new Date(`${startDate.value}T00:00:00`) : null;
+  const end = endDate.value ? new Date(`${endDate.value}T00:00:00`) : null;
+  if (start && end && start > end) {
+    error.value = "量測起日不可晚於量測迄日。";
+    return;
+  }
+  if (start && end && (end - start) / 86400000 > 93) {
+    error.value = "查詢時間範圍最多不可超過 3 個月。";
+    return;
+  }
+
+  if (selectedProcessId.value && (!selectedCharacteristicId.value || selectedProcessId.value === "ALL" || selectedCharacteristicId.value === "ALL")) {
     loading.value = true;
     error.value = "";
     chartResult.value = null;
@@ -261,10 +287,14 @@ async function loadChart() {
       const res = await api.get("/v1/spc/summary", {
         params: {
           dimension: selectedDimension.value,
-          partId: selectedPartId.value || undefined
+          partId: selectedPartId.value || undefined,
+          processId: selectedProcessId.value !== "ALL" ? Number(selectedProcessId.value) : undefined,
+          startDate: startDate.value || undefined,
+          endDate: endDate.value || undefined
         }
       });
       tableSummaryData.value = res.data;
+      cachedSummaryData.value = res.data;
     } catch (e) {
       error.value = "無法載入總表：" + getApiErrorMessage(e);
       tableSummaryData.value = null;
@@ -275,6 +305,7 @@ async function loadChart() {
   }
 
   tableSummaryData.value = null;
+  selectedPointIndex.value = -1;
 
   const mapping = selectedMapping.value;
   if (!mapping) return;
@@ -288,7 +319,9 @@ async function loadChart() {
   chartResult.value = null;
 
   try {
-    const res = await api.get("/v1/spc/chart", { params: { ppcId: mapping.id } });
+    const res = await api.get("/v1/spc/chart", {
+      params: { ppcId: mapping.id, startDate: startDate.value || undefined, endDate: endDate.value || undefined }
+    });
     chartResult.value = res.data;
     loading.value = false;
     await nextTick();
@@ -303,6 +336,58 @@ async function loadChart() {
     loading.value = false;
   }
 }
+
+function loadSummary() {
+  selectedCharacteristicId.value = "";
+  selectedSummaryRow.value = null;
+  selectedPointIndex.value = -1;
+  loadChart();
+}
+
+function selectTrendPoint(index) {
+  const points = chartResult.value?.rawDataPoints || [];
+  if (index < 0 || index >= points.length) return;
+  selectedPointIndex.value = index;
+  trendChartInstance?.dispatchAction({ type: "downplay", seriesIndex: 0 });
+  trendChartInstance?.dispatchAction({ type: "highlight", seriesIndex: 0, dataIndex: index });
+  trendChartInstance?.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: index });
+}
+
+function formatPointTime(value) {
+  if (!value) return "未提供";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("zh-TW", { hour12: false });
+}
+
+function formatPointValue(value) {
+  return value == null || Number.isNaN(Number(value)) ? "未提供" : Number(value).toFixed(4);
+}
+
+function formatDifference(value, limit) {
+  if (value == null || limit == null || Number.isNaN(Number(value)) || Number.isNaN(Number(limit))) return "未設定";
+  const difference = Number(value) - Number(limit);
+  return `${difference >= 0 ? "+" : ""}${difference.toFixed(4)}`;
+}
+
+const selectedPointDetails = computed(() => {
+  const point = chartResult.value?.rawDataPoints?.[selectedPointIndex.value];
+  if (!point) return null;
+  const sourceLimits = chartResult.value?.limits || {};
+  const limits = {
+    ...sourceLimits,
+    ucl: sourceLimits.ucl ?? (trendStats.value?.ucl !== "N/A" ? trendStats.value?.ucl : null),
+    cl: sourceLimits.cl ?? (trendStats.value?.cl !== "N/A" ? trendStats.value?.cl : null),
+    lcl: sourceLimits.lcl ?? (trendStats.value?.lcl !== "N/A" ? trendStats.value?.lcl : null)
+  };
+  const value = Number(point.value);
+  const isOos = point.isOutOfSpec === true
+    || (limits.usl != null && value > Number(limits.usl))
+    || (limits.lsl != null && value < Number(limits.lsl));
+  const isOoc = point.isOutOfControl === true
+    || (limits.ucl != null && value > Number(limits.ucl))
+    || (limits.lcl != null && value < Number(limits.lcl));
+  return { point, limits, value, isOos, isOoc };
+});
 
 // ─── Chart rendering ──────────────────────────────────────────
 function renderTrendChart() {
@@ -364,26 +449,46 @@ function renderTrendChart() {
 
   const markLines = [];
   const addLine = (y, name, color, style = "dashed", width = 2) => {
-    if (y == null || Number.isNaN(y)) return;
+    if (y == null || Number.isNaN(Number(y))) return;
     markLines.push({
-      name, yAxis: y,
+      name, yAxis: Number(y),
       lineStyle: { color, width, type: style },
       label: { formatter: `${name}: ${Number(y).toFixed(3)}`, color, position: "end", fontSize: 11, fontWeight: "bold" }
     });
   };
-  addLine(limits.usl, "USL", "#ef4444", "dashed", 2);
-  addLine(limits.lsl, "LSL", "#ef4444", "dashed", 2);
-  addLine(limits.target, "Target", "#10b981", "solid", 2);
 
-  // Stats for reference
-  const vals = rawPoints.filter(p => !p.isExcluded && p.value != null).map(p => p.value);
-  const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-  if (mean != null) {
-    markLines.push({
-      name: "Mean", yAxis: mean,
-      lineStyle: { color: "#3b82f6", width: 1.5, type: "dotted" },
-      label: { formatter: `Mean: ${mean.toFixed(3)}`, color: "#3b82f6", position: "end", fontSize: 10 }
-    });
+  if (showSpecLimits.value) {
+    addLine(limits.usl, "USL (工程上限)", "#ef4444", "dashed", 2);
+    addLine(limits.lsl, "LSL (工程下限)", "#ef4444", "dashed", 2);
+    addLine(limits.target, "目標值", "#10b981", "solid", 2);
+  }
+
+  if (showControlLimits.value) {
+    const stats = trendStats.value;
+    const uclVal = limits.ucl ?? (stats && stats.ucl !== "N/A" ? Number(stats.ucl) : null);
+    const clVal = limits.cl ?? (stats && stats.cl !== "N/A" ? Number(stats.cl) : null);
+    const lclVal = limits.lcl ?? (stats && stats.lcl !== "N/A" ? Number(stats.lcl) : null);
+
+    addLine(uclVal, "UCL (管制上限)", "#f59e0b", "dashed", 2);
+    addLine(clVal, "CL (平均線)", "#3b82f6", "solid", 1.5);
+    addLine(lclVal, "LCL (管制下限)", "#f59e0b", "dashed", 2);
+  }
+
+  const yAxisValues = [
+    ...seriesData.map(point => Number(point.value)),
+    ...markLines.map(line => Number(line.yAxis))
+  ].filter(Number.isFinite);
+  let yAxisMin;
+  let yAxisMax;
+  if (yAxisValues.length > 0) {
+    const dataMin = Math.min(...yAxisValues);
+    const dataMax = Math.max(...yAxisValues);
+    const range = dataMax - dataMin;
+    const padding = range > 0
+      ? range * 0.08
+      : Math.max(Math.abs(dataMin) * 0.08, 1);
+    yAxisMin = dataMin - padding;
+    yAxisMax = dataMax + padding;
   }
 
   trendChartInstance.setOption({
@@ -444,6 +549,8 @@ function renderTrendChart() {
     },
     yAxis: {
       type: "value", name: "量測值",
+      min: yAxisMin,
+      max: yAxisMax,
       nameTextStyle: { color: "#94a3b8", fontSize: 11 },
       splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } },
       axisLine: { lineStyle: { color: "#64748b" } },
@@ -469,6 +576,12 @@ function renderTrendChart() {
       }
     }]
   });
+
+  trendChartInstance.on("click", params => {
+    if (params.componentType === "series" && params.seriesType === "line" && Number.isInteger(params.dataIndex)) {
+      selectTrendPoint(params.dataIndex);
+    }
+  });
 }
 
 function handleResize() { trendChartInstance?.resize(); }
@@ -484,6 +597,13 @@ onBeforeUnmount(() => {
   trendChartInstance = null;
 });
 
+const showSpecLimits = ref(true);
+const showControlLimits = ref(false);
+
+watch([showSpecLimits, showControlLimits], () => {
+  renderTrendChart();
+});
+
 // Stats computed
 const trendStats = computed(() => {
   if (!chartResult.value) return null;
@@ -493,12 +613,43 @@ const trendStats = computed(() => {
   if (!vals.length) return null;
   const n = vals.length;
   const mean = vals.reduce((a, b) => a + b, 0) / n;
-  const variance = vals.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1);
+  const variance = vals.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, n - 1);
   const std = Math.sqrt(variance);
   const min = Math.min(...vals);
   const max = Math.max(...vals);
   const range = max - min;
-  return { n, mean: mean.toFixed(4), std: std.toFixed(4), min: min.toFixed(4), max: max.toFixed(4), range: range.toFixed(4) };
+
+  const limits = chartResult.value.limits || {};
+  const ucl = limits.ucl ?? (mean + 3 * std);
+  const cl = limits.cl ?? mean;
+  const lcl = limits.lcl ?? (mean - 3 * std);
+
+  let cpk = "N/A";
+  let cp = "N/A";
+  if (limits.usl != null && limits.lsl != null && std > 0) {
+    cp = ((limits.usl - limits.lsl) / (6 * std)).toFixed(3);
+    const cpu = (limits.usl - mean) / (3 * std);
+    const cpl = (mean - limits.lsl) / (3 * std);
+    cpk = Math.min(cpu, cpl).toFixed(3);
+  } else if (limits.usl != null && std > 0) {
+    cpk = ((limits.usl - mean) / (3 * std)).toFixed(3);
+  } else if (limits.lsl != null && std > 0) {
+    cpk = ((mean - limits.lsl) / (3 * std)).toFixed(3);
+  }
+
+  return {
+    n,
+    mean: mean.toFixed(4),
+    std: std.toFixed(4),
+    min: min.toFixed(4),
+    max: max.toFixed(4),
+    range: range.toFixed(4),
+    ucl: ucl != null && !Number.isNaN(ucl) ? ucl.toFixed(4) : "N/A",
+    cl: cl != null && !Number.isNaN(cl) ? cl.toFixed(4) : "N/A",
+    lcl: lcl != null && !Number.isNaN(lcl) ? lcl.toFixed(4) : "N/A",
+    cp,
+    cpk
+  };
 });
 </script>
 
@@ -512,7 +663,7 @@ const trendStats = computed(() => {
         </div>
         <div>
           <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">量測值趨勢圖</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">顯示各量測點原始數值時序趨勢，含工程規格界限 (USL / LSL / Target)</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">顯示各量測點原始數值時序趨勢，含工程規格界限與目標值</p>
         </div>
       </div>
     </div>
@@ -536,38 +687,17 @@ const trendStats = computed(() => {
 
     <!-- Selection Controls -->
     <div class="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-end gap-4">
-      <!-- Fuzzy Search -->
-      <div class="relative w-full md:w-72">
-        <label class="block text-[11px] font-bold text-slate-400 mb-1">🔍 快速搜尋</label>
-        <div class="relative">
-          <input
-            v-model="searchQuery"
-            @focus="showSearchResults = true"
-            @blur="hideSearchResults"
-            placeholder="輸入關鍵字快速搜尋..."
-            class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500"
-          />
-          <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-        </div>
-        <!-- Autocomplete Dropdown -->
-        <div v-if="showSearchResults && filteredMappings.length > 0"
-          class="absolute z-20 top-full mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto">
-          <button
-            v-for="m in filteredMappings"
-            :key="m.id"
-            @mousedown="selectMappingFromSearch(m)"
-            class="w-full text-left px-4 py-2.5 hover:bg-indigo-50 dark:hover:bg-slate-800 text-xs transition-all border-b border-slate-100 dark:border-slate-800 last:border-0"
-          >
-            <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ m.part?.partNo }}</span>
-            <span class="text-slate-400 mx-1">›</span>
-            <span class="text-slate-700 dark:text-slate-200">{{ m.process?.processName }}</span>
-            <span class="text-slate-400 mx-1">›</span>
-            <span class="text-slate-600 dark:text-slate-300">{{ m.characteristic?.characteristicName }}</span>
-          </button>
-        </div>
+      <!-- Cascading Selectors -->
+      <div class="w-40">
+        <label class="block text-[11px] font-bold text-slate-400 mb-1">量測起日</label>
+        <input v-model="startDate" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500" />
       </div>
 
-      <!-- Cascading Selectors -->
+      <div class="w-40">
+        <label class="block text-[11px] font-bold text-slate-400 mb-1">量測迄日</label>
+        <input v-model="endDate" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
       <div v-if="selectedDimension === 'PROD'" class="w-40">
         <label class="block text-[11px] font-bold text-slate-400 mb-1">料號 (Product)</label>
         <select v-model="selectedPartId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500">
@@ -586,23 +716,13 @@ const trendStats = computed(() => {
         </select>
       </div>
 
-      <div class="w-48">
-        <label class="block text-[11px] font-bold text-slate-400 mb-1">檢驗項目 (Inspection Item)</label>
-        <select v-model="selectedCharacteristicId" :disabled="!selectedProcessId || selectedProcessId === 'ALL'"
-          class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500 disabled:opacity-50">
-          <option value="" disabled>選擇管制點...</option>
-          <option value="ALL">全部 (All)</option>
-          <option v-for="c in availableCharacteristics" :key="c.id" :value="c.id">[{{ c.characteristicCode }}] {{ c.characteristicName }}</option>
-        </select>
-      </div>
-
       <button
-        @click="loadChart"
-        :disabled="loading || (!selectedMapping && selectedProcessId !== 'ALL' && selectedCharacteristicId !== 'ALL')"
+        @click="loadSummary"
+        :disabled="loading || !selectedProcessId"
         class="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 disabled:opacity-50 transition-all"
       >
         <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
-        載入趨勢圖
+        查詢總表
       </button>
     </div>
 
@@ -628,6 +748,15 @@ const trendStats = computed(() => {
 
     <!-- Chart Area -->
     <div v-if="chartResult && !loading" class="space-y-5">
+      <button
+        v-if="cachedSummaryData"
+        type="button"
+        data-testid="return-to-summary"
+        @click="returnToSummary"
+        class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-bold text-xs shadow-sm transition-colors"
+      >
+        ← 返回已查詢總表
+      </button>
 
       <!-- Active Chart Display Name -->
       <div
@@ -642,7 +771,7 @@ const trendStats = computed(() => {
       </div>
 
       <!-- Info Strip -->
-      <div v-if="selectedMapping" class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">
+      <div v-if="selectedMapping" class="grid grid-cols-1 sm:grid-cols-5 gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">
         <div class="space-y-1">
           <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">線別</span>
           <span class="text-slate-800 dark:text-slate-200">[{{ selectedMapping.process?.processCode }}] {{ selectedMapping.process?.processName }}</span>
@@ -655,9 +784,15 @@ const trendStats = computed(() => {
           </span>
         </div>
         <div class="space-y-1">
-          <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">規格界限</span>
+          <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">規格界限 (Spec)</span>
           <span class="font-mono text-slate-800 dark:text-slate-200">
-            LSL: {{ selectedMapping.lsl ?? '-∞' }} ｜ Target: {{ selectedMapping.targetValue ?? 'N/A' }} ｜ USL: {{ selectedMapping.usl ?? '+∞' }}
+            LSL: {{ selectedMapping.lsl ?? '-∞' }} ｜ 目標值: {{ selectedMapping.targetValue ?? 'N/A' }} ｜ USL: {{ selectedMapping.usl ?? '+∞' }}
+          </span>
+        </div>
+        <div class="space-y-1">
+          <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">管制界線 (Control)</span>
+          <span class="font-mono text-amber-600 dark:text-amber-400">
+            LCL: {{ trendStats?.lcl ?? 'N/A' }} ｜ CL: {{ trendStats?.cl ?? 'N/A' }} ｜ UCL: {{ trendStats?.ucl ?? 'N/A' }}
           </span>
         </div>
         <div class="space-y-1">
@@ -667,47 +802,161 @@ const trendStats = computed(() => {
       </div>
 
       <!-- Stats Summary Cards -->
-      <div v-if="trendStats" class="grid grid-cols-2 md:grid-cols-6 gap-4">
+      <div v-if="trendStats" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
         <div v-for="(card) in [
           { label: '樣本數 (N)', value: trendStats.n, cls: 'text-slate-200' },
           { label: '平均值 (Mean)', value: trendStats.mean, cls: 'text-blue-400' },
           { label: '標準差 (σ)', value: trendStats.std, cls: 'text-indigo-400' },
-          { label: '最小值 (Min)', value: trendStats.min, cls: 'text-emerald-400' },
-          { label: '最大值 (Max)', value: trendStats.max, cls: 'text-amber-400' },
+          { label: '上管制線 (UCL)', value: trendStats.ucl, cls: 'text-amber-400' },
+          { label: '中心線 (CL)', value: trendStats.cl, cls: 'text-sky-400' },
+          { label: '下管制線 (LCL)', value: trendStats.lcl, cls: 'text-amber-400' },
+          { label: '能力指標 (Cpk)', value: trendStats.cpk, cls: 'text-emerald-400 font-bold' },
           { label: '全距 (Range)', value: trendStats.range, cls: 'text-violet-400' }
         ]" :key="card.label"
-          class="p-4 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 border border-slate-700 shadow-md"
+          class="p-3.5 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 border border-slate-700 shadow-md"
         >
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ card.label }}</p>
-          <h3 class="text-xl font-black mt-1 font-mono" :class="card.cls">{{ card.value }}</h3>
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">{{ card.label }}</p>
+          <h3 class="text-lg font-black mt-1 font-mono truncate" :class="card.cls">{{ card.value }}</h3>
         </div>
       </div>
 
       <!-- Main Chart -->
-      <div v-if="chartResult && !loading" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md p-4 relative">
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+      <div v-if="chartResult && !loading" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md p-4 relative space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
           <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <Sliders class="w-5 h-5 text-indigo-500" />
-            原始量測值趨勢 (Raw Measurement Trend)
+            原始量測值趨勢
           </h2>
-          <div class="flex items-center gap-4 text-xs font-semibold text-slate-500">
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>超出規格 (OOS)</span>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500 inline-block"></span>正常量測值</span>
+          <div class="flex flex-wrap items-center gap-4 text-xs font-semibold">
+            <!-- Line Display Controls -->
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-300">
+              <input type="checkbox" v-model="showSpecLimits" class="rounded border-slate-300 text-red-600 focus:ring-red-500" />
+              <span>顯示工程規格線 (USL / LSL)</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-300">
+              <input type="checkbox" v-model="showControlLimits" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
+              <span>顯示統計管制線 (UCL / LCL)</span>
+            </label>
+
+            <span class="h-4 w-[1px] bg-slate-200 dark:bg-slate-700"></span>
+
+            <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>OOS 超規點</span>
+            <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block"></span>正常量測點</span>
           </div>
         </div>
+
+        <!-- Line Meaning Guide Bar -->
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/60 text-xs flex flex-wrap gap-x-6 gap-y-2 text-slate-600 dark:text-slate-300">
+          <div class="flex items-center gap-1.5 font-medium">
+            <Info class="w-4 h-4 text-indigo-500 flex-shrink-0" />
+            <span class="font-bold text-slate-800 dark:text-slate-200">線條含義對照：</span>
+          </div>
+          <div v-if="showSpecLimits" class="flex items-center gap-1.5">
+            <span class="w-3 h-0.5 border-t-2 border-dashed border-red-500 inline-block"></span>
+            <span><strong class="text-red-500">USL/LSL (工程規格界線)</strong>: 客戶規格上下限，超越即為不良品</span>
+          </div>
+          <div v-if="showSpecLimits" class="flex items-center gap-1.5">
+            <span class="w-3 h-0.5 bg-emerald-500 inline-block"></span>
+            <span><strong class="text-emerald-600 dark:text-emerald-400">目標值</strong>: 理想生產基準</span>
+          </div>
+          <div v-if="showControlLimits" class="flex items-center gap-1.5">
+            <span class="w-3 h-0.5 border-t-2 border-dashed border-amber-500 inline-block"></span>
+            <span><strong class="text-amber-500">UCL/LCL (統計管制界線)</strong>: 3σ 預警邊界，越界代表製程異常漂移</span>
+          </div>
+          <div v-if="showControlLimits" class="flex items-center gap-1.5">
+            <span class="w-3 h-0.5 bg-blue-500 inline-block"></span>
+            <span><strong class="text-blue-500">CL (平均線)</strong>: 目前數據的平均中心點</span>
+          </div>
+        </div>
+
         <div ref="trendChartEl" class="h-[480px] w-full min-h-[320px]"></div>
+
+        <div
+          v-if="selectedPointDetails"
+          data-testid="trend-point-details"
+          class="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/20 p-4 space-y-4"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="text-xs font-bold text-indigo-500">量測點明細</p>
+              <h3 class="mt-1 text-lg font-black text-slate-900 dark:text-white">
+                第 {{ selectedPointIndex + 1 }} 筆・{{ formatPointTime(selectedPointDetails.point.measuredAt) }}
+              </h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                :disabled="selectedPointIndex <= 0"
+                @click="selectTrendPoint(selectedPointIndex - 1)"
+                class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold disabled:opacity-40"
+              >
+                ← 上一筆
+              </button>
+              <button
+                type="button"
+                :disabled="selectedPointIndex >= (chartResult.rawDataPoints?.length || 0) - 1"
+                @click="selectTrendPoint(selectedPointIndex + 1)"
+                class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold disabled:opacity-40"
+              >
+                下一筆 →
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div class="rounded-xl bg-white dark:bg-slate-900 p-3 border border-slate-200 dark:border-slate-800">
+              <p class="text-xs text-slate-400">量測值</p>
+              <p class="mt-1 text-xl font-black font-mono">{{ formatPointValue(selectedPointDetails.point.value) }}</p>
+            </div>
+            <div class="rounded-xl bg-white dark:bg-slate-900 p-3 border border-slate-200 dark:border-slate-800">
+              <p class="text-xs text-slate-400">規格判定</p>
+              <p class="mt-1 font-black" :class="selectedPointDetails.isOos ? 'text-red-600' : 'text-emerald-600'">
+                {{ selectedPointDetails.isOos ? 'OOS 超出規格' : '規格內' }}
+              </p>
+            </div>
+            <div class="rounded-xl bg-white dark:bg-slate-900 p-3 border border-slate-200 dark:border-slate-800">
+              <p class="text-xs text-slate-400">管制判定</p>
+              <p class="mt-1 font-black" :class="selectedPointDetails.isOoc ? 'text-amber-600' : 'text-emerald-600'">
+                {{ selectedPointDetails.isOoc ? 'OOC 超出管制' : '管制內' }}
+              </p>
+            </div>
+            <div class="rounded-xl bg-white dark:bg-slate-900 p-3 border border-slate-200 dark:border-slate-800">
+              <p class="text-xs text-slate-400">統計狀態</p>
+              <p class="mt-1 font-black" :class="selectedPointDetails.point.isExcluded ? 'text-slate-500' : 'text-blue-600'">
+                {{ selectedPointDetails.point.isExcluded ? '已排除' : '納入統計' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div class="rounded-xl bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800">
+              <p class="font-black text-slate-700 dark:text-slate-200 mb-2">資料來源</p>
+              <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                <span class="text-slate-400">批號</span><span>{{ selectedPointDetails.point.lotNo || '未提供' }}</span>
+                <span class="text-slate-400">序號</span><span>{{ selectedPointDetails.point.serialNo || '未提供' }}</span>
+                <span class="text-slate-400">量測人員</span><span>{{ selectedPointDetails.point.operator || '未提供' }}</span>
+              </div>
+            </div>
+            <div class="rounded-xl bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800">
+              <p class="font-black text-slate-700 dark:text-slate-200 mb-2">與界線差距（量測值－界線）</p>
+              <div class="grid grid-cols-2 gap-x-4 gap-y-2 font-mono">
+                <span class="text-slate-400">USL</span><span>{{ formatDifference(selectedPointDetails.value, selectedPointDetails.limits.usl) }}</span>
+                <span class="text-slate-400">LSL</span><span>{{ formatDifference(selectedPointDetails.value, selectedPointDetails.limits.lsl) }}</span>
+                <span class="text-slate-400">UCL</span><span>{{ formatDifference(selectedPointDetails.value, selectedPointDetails.limits.ucl) }}</span>
+                <span class="text-slate-400">LCL</span><span>{{ formatDifference(selectedPointDetails.value, selectedPointDetails.limits.lcl) }}</span>
+                <span class="text-slate-400">目標值</span><span>{{ formatDifference(selectedPointDetails.value, selectedPointDetails.limits.target) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Guide tip -->
-      <ModuleGuide title="模組指南">
-        此趨勢圖顯示的是<strong>每筆原始量測值</strong>的時序折線，不含管制界限（UCL/LCL/CL）。如需查看管制界限與西方電氣判讀，請切換至「SPC 管制圖」頁面。
-      </ModuleGuide>
     </div>
 
     <!-- Empty state -->
     <div v-if="!chartResult && !tableSummaryData && !loading && !error" class="h-64 flex flex-col items-center justify-center space-y-3 text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
       <TrendingUp class="w-12 h-12 text-indigo-300" />
-      <p class="text-sm font-bold">請選擇線別與檢驗項目後按「載入趨勢圖」</p>
+      <p class="text-sm font-bold">請選擇日期與線別後查詢總表，再由總表選擇製圖項目</p>
     </div>
   </section>
 </template>

@@ -5,7 +5,12 @@ namespace MesSpc.Api.SpcEngine.Calculators;
 
 public static class XbarRChartCalculator
 {
-    public static ControlChartResult Calculate(List<Subgroup> subgroups, ControlLimits configuredLimits, int expectedSampleSize, string? formulaConfigJson = null)
+    public static ControlChartResult Calculate(
+        List<Subgroup> subgroups,
+        ControlLimits configuredLimits,
+        int expectedSampleSize,
+        string? formulaConfigJson = null,
+        IReadOnlySet<string>? enabledRuleCodes = null)
     {
         if (subgroups.Count == 0)
         {
@@ -181,7 +186,7 @@ public static class XbarRChartCalculator
         if (uclXbar.HasValue && lclXbar.HasValue && nRef >= 2 && validSubgroups.Count > 0)
         {
             var statLimits = new ControlLimits { CL = validSubgroups.Average(x => x.Mean), UCL = uclXbar, LCL = lclXbar };
-            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(evalPoints, statLimits);
+            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(evalPoints, statLimits, enabledRuleCodes);
         }
         
         // Merge rules back

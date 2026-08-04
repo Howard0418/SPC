@@ -9,7 +9,10 @@ public static class ImrChartCalculator
     private const double D3 = 0.0;
     private const double D4 = 3.267;
 
-    public static ControlChartResult Calculate(List<SpcDataPoint> rawData, ControlLimits configuredLimits)
+    public static ControlChartResult Calculate(
+        List<SpcDataPoint> rawData,
+        ControlLimits configuredLimits,
+        IReadOnlySet<string>? enabledRuleCodes = null)
     {
         var validData = rawData.Where(x => !x.IsExcluded).ToList();
         var values = validData.Select(x => x.Value).ToList();
@@ -32,7 +35,7 @@ public static class ImrChartCalculator
         if (iBar.HasValue && iUclStat.HasValue && iLclStat.HasValue && validData.Count > 0)
         {
             var statLimits = new ControlLimits { CL = iBar, UCL = iUclStat, LCL = iLclStat };
-            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(validData, statLimits);
+            MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(validData, statLimits, enabledRuleCodes);
         }
         var iPoints = new List<object>();
         foreach (var p in rawData)

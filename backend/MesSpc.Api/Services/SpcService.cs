@@ -15,6 +15,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         if (mapping is null || !mapping.ChartTypeId.HasValue) return null;
         var chartType = await db.ControlChartTypes.FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
         if (chartType is null) return null;
+        var characteristic = await db.QualityCharacteristics.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == measurement.CharacteristicId, ct);
+        var recordOnly = string.Equals(characteristic?.InputMode, "RECORD_ONLY", StringComparison.OrdinalIgnoreCase);
 
         var activeSegment = await db.ControlLimitSegments
             .AsNoTracking()
@@ -30,14 +33,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
         var actualValue = measurement.RecheckValue ?? measurement.MeasuredValue;
 
-        var isOutOfSpec = (mapping.USL.HasValue && actualValue > mapping.USL.Value)
-                          || (mapping.LSL.HasValue && actualValue < mapping.LSL.Value);
-        var isOutOfControl = (activeUcl.HasValue && actualValue > activeUcl.Value)
-                             || (activeLcl.HasValue && actualValue < activeLcl.Value);
+        var isOutOfSpec = !recordOnly && ((mapping.USL.HasValue && actualValue > mapping.USL.Value)
+                          || (mapping.LSL.HasValue && actualValue < mapping.LSL.Value));
+        var isOutOfControl = !recordOnly && ((activeUcl.HasValue && actualValue > activeUcl.Value)
+                             || (activeLcl.HasValue && actualValue < activeLcl.Value));
         var ruleGroupId = mapping.RuleGroupId;
 
         List<SpcRuleViolation>? violations = null;
-        if (ruleGroupId.HasValue && activeCl.HasValue && activeUcl.HasValue && activeLcl.HasValue)
+        if (!recordOnly && ruleGroupId.HasValue && activeCl.HasValue && activeUcl.HasValue && activeLcl.HasValue)
         {
             var rules = await db.SpcRules.AsNoTracking().Where(x => x.RuleGroupId == ruleGroupId.Value && x.IsEnabled).ToListAsync(ct);
             if (rules.Count > 0)
@@ -300,6 +303,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
     {
         var mapping = await db.PartProcessCharacteristics
             .Include(x => x.Characteristic)
+            .Include(x => x.Process)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
         if (mapping is null) return null;
@@ -309,6 +313,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         {
             chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
         }
+
+        var effectiveRuleGroupId = mapping.RuleGroupId ?? chartType?.RuleGroupId;
+        var enabledRuleCodes = effectiveRuleGroupId.HasValue
+            ? await db.SpcRules.AsNoTracking()
+                .Where(x => x.RuleGroupId == effectiveRuleGroupId.Value && x.IsEnabled)
+                .Select(x => x.RuleCode)
+                .ToHashSetAsync(StringComparer.OrdinalIgnoreCase, ct)
+            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var segments = await db.ControlLimitSegments
             .AsNoTracking()
@@ -339,6 +351,13 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return null;
+            var contextMeasurement = measurements.LastOrDefault(x => x.LineId.HasValue || x.TankId.HasValue || x.SlotId.HasValue) ?? measurements[^1];
+            var monitorContext = await BuildMonitorContextAsync(
+                mapping,
+                contextMeasurement.LineId,
+                contextMeasurement.TankId,
+                contextMeasurement.SlotId,
+                ct);
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
             var measurementIds = measurements.Select(x => x.Id).ToList();
             var alerts = await db.AlertEvents.AsNoTracking()
@@ -389,7 +408,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             }
             else if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits) with { RawDataPoints = rawPoints };
+                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, enabledRuleCodes) with { RawDataPoints = rawPoints };
             }
             else // XBAR_R / XBAR_S
             {
@@ -427,16 +446,16 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
                 if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
                 {
-                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal) with { RawDataPoints = rawPoints };
+                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, enabledRuleCodes) with { RawDataPoints = rawPoints };
                 }
                 else
                 {
                     var formulaConfigJson = mapping.FormulaConfigJson;
-                    chartResultVal = XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson) with { RawDataPoints = rawPoints };
+                    chartResultVal = XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson, enabledRuleCodes) with { RawDataPoints = rawPoints };
                 }
             }
 
-            return PopulateNormalityAndCurve(chartResultVal, rawPoints, limits);
+            return PopulateNormalityAndCurve(chartResultVal, rawPoints, limits) with { MonitorContext = monitorContext };
         }
         else // Attribute
         {
@@ -451,6 +470,13 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return null;
+            var contextMeasurement = measurements.LastOrDefault(x => x.LineId.HasValue || x.TankId.HasValue || x.SlotId.HasValue) ?? measurements[^1];
+            var monitorContext = await BuildMonitorContextAsync(
+                mapping,
+                contextMeasurement.LineId,
+                contextMeasurement.TankId,
+                contextMeasurement.SlotId,
+                ct);
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
 
             var points = measurements.Select(x => 
@@ -476,8 +502,44 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 };
             }).ToList();
 
-            return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits) with { RawDataPoints = points };
+            return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits, enabledRuleCodes) with
+            {
+                RawDataPoints = points,
+                MonitorContext = monitorContext
+            };
         }
+    }
+
+    private async Task<ChartMonitorContext> BuildMonitorContextAsync(
+        PartProcessCharacteristic mapping,
+        int? lineId,
+        int? tankId,
+        int? slotId,
+        CancellationToken ct)
+    {
+        var line = lineId.HasValue
+            ? await db.ProductionLines.AsNoTracking().FirstOrDefaultAsync(x => x.Id == lineId.Value, ct)
+            : null;
+        var tank = tankId.HasValue
+            ? await db.Tanks.AsNoTracking().FirstOrDefaultAsync(x => x.Id == tankId.Value, ct)
+            : null;
+        var slot = slotId.HasValue
+            ? await db.Slots.AsNoTracking().FirstOrDefaultAsync(x => x.Id == slotId.Value, ct)
+            : null;
+
+        return new ChartMonitorContext
+        {
+            ProcessCode = mapping.Process?.ProcessCode,
+            ProcessName = mapping.Process?.ProcessName,
+            CharacteristicCode = mapping.Characteristic?.CharacteristicCode,
+            CharacteristicName = mapping.Characteristic?.CharacteristicName,
+            LineCode = line?.LineCode,
+            LineName = line?.LineName,
+            TankCode = tank?.TankCode,
+            TankName = tank?.TankName,
+            SlotCode = slot?.SlotCode,
+            SlotName = slot?.SlotName
+        };
     }
 
     private async Task<HashSet<Guid>> GetExcludedUploadBatchIdsAsync(IEnumerable<Guid> uploadBatchIds, CancellationToken ct)
@@ -797,6 +859,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         string? batchNo = null,
         int? partId = null,
         string? groupType = null,
+        int? processId = null,
+        string? comparisonPeriod = null,
         CancellationToken ct = default)
     {
         var normalizedDimension = NormalizeControlScope(dimension);
@@ -840,12 +904,18 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                         && x.ControlScope == normalizedDimension
                         && (normalizedGroupType == null || normalizedGroupType == "CONTROL_CHART"))))
             .Where(x => !partId.HasValue || x.PartId == partId.Value)
+            .Where(x => !processId.HasValue || x.ProcessId == processId.Value)
             .ToListAsync(ct);
 
         var chartTypes = await db.ControlChartTypes.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.ChartTypeName, ct);
         var comparisonEnd = endDate?.Date ?? DateTime.Today;
-        var previousMonthStart = new DateTime(comparisonEnd.Year, comparisonEnd.Month, 1).AddMonths(-1);
-        var previousMonthEnd = previousMonthStart.AddMonths(1).AddDays(-1);
+        var usePreviousWeek = string.Equals(comparisonPeriod, "WEEK", StringComparison.OrdinalIgnoreCase);
+        var previousMonthStart = usePreviousWeek
+            ? (startDate?.Date ?? comparisonEnd.AddDays(-6)).AddDays(-7)
+            : new DateTime(comparisonEnd.Year, comparisonEnd.Month, 1).AddMonths(-1);
+        var previousMonthEnd = usePreviousWeek
+            ? previousMonthStart.AddDays(6)
+            : previousMonthStart.AddMonths(1).AddDays(-1);
 
         var summaries = new List<MesSpc.Api.Controllers.ChartSummaryDto>();
         foreach (var mapping in mappings)
@@ -857,6 +927,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             if (rawPoints.Count == 0) continue;
 
+            var importedCount = rawPoints.Count;
             var includedPoints = rawPoints.Where(x => !x.IsExcluded).ToList();
             if (includedPoints.Count == 0) continue;
 
@@ -918,7 +989,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 Ucl = mapping.UCL ?? calculatedLimits.Ucl ?? result.Limits?.UCL,
                 Lcl = mapping.LCL ?? calculatedLimits.Lcl ?? result.Limits?.LCL,
                 LimitCalculationMethod = calcMethod,
-                TotalCount = totalCount,
+                TotalCount = importedCount,
                 OosCount = oosCount,
                 OosPercentage = Math.Round(oosPercentage, 2),
                 PreviousMonthOosCount = previousMonth.OosCount,
@@ -979,7 +1050,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         return dimension?.Trim().ToUpperInvariant() switch
         {
             "PROC" or "PROCESS" => "PROCESS",
-            "CHEM" or "CHEMICAL" => "CHEMICAL",
+            "CHEM" or "CHEMICAL" => "CHEM",
             "PROD" or "PRODUCT" => "PRODUCT",
             _ => dimension?.Trim().ToUpperInvariant() ?? string.Empty
         };
@@ -990,7 +1061,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         return NormalizeControlScope(scope) switch
         {
             "PROCESS" => "製程管制",
-            "CHEMICAL" => "藥液管制",
+            "CHEM" => "藥液管制",
             "PRODUCT" => "產品管制",
             _ => scope ?? string.Empty
         };

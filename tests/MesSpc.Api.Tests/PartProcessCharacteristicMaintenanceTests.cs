@@ -158,7 +158,9 @@ public class PartProcessCharacteristicMaintenanceTests
             CharacteristicId = 1,
             ChartTypeId = 1,
             RuleGroupId = itemRules.Id,
-            SampleSize = 1
+            SampleSize = 1,
+            LSL = 0,
+            USL = 10
         };
         db.AddRange(chartType, item);
         await db.SaveChangesAsync();
@@ -168,7 +170,8 @@ public class PartProcessCharacteristicMaintenanceTests
             PartProcessCharacteristicId = item.Id,
             ProcessId = 1,
             CharacteristicId = 1,
-            MeasuredValue = 10,
+            MeasuredValue = 20,
+            RecheckValue = 5,
             MeasuredAt = DateTime.UtcNow
         };
         db.VariableMeasurements.Add(measurement);
@@ -183,5 +186,6 @@ public class PartProcessCharacteristicMaintenanceTests
 
         result.Should().NotBeNull();
         result!.RuleGroupId.Should().Be(itemRules.Id);
+        result.IsOutOfSpec.Should().BeFalse("複驗值存在時應以複驗值進行規格判定");
     }
 }

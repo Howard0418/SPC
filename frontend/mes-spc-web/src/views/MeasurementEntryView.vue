@@ -405,7 +405,7 @@ async function submitHandleAlerts() {
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">管制類型</label>
               <select v-model="selectedControlScope" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                 <option value="PROCESS">製程管制</option>
-                <option value="CHEMICAL">藥水管制</option>
+                <option value="CHEM">藥水管制</option>
                 <option value="PRODUCT">產品管制</option>
               </select>
             </div>
@@ -419,7 +419,7 @@ async function submitHandleAlerts() {
             <div v-else>
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">產品料號 (Part)</label>
               <div class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">
-                {{ selectedControlScope === 'CHEMICAL' ? '藥水管制不需料號' : '製程管制不需料號' }}
+                {{ selectedControlScope === 'CHEM' ? '藥水管制不需料號' : '製程管制不需料號' }}
               </div>
             </div>
             <div>

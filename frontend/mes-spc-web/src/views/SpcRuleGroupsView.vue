@@ -6,12 +6,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   Edit,
-  Plus,
   RefreshCw,
   Save,
   Search,
   Settings2,
-  Trash2,
   X,
   XCircle
 } from "lucide-vue-next";
@@ -23,6 +21,11 @@ const successMsg = ref("");
 const loading = ref(false);
 const searchQuery = ref("");
 const statusFilter = ref("all");
+
+function formatRuleCode(value) {
+  const match = String(value || "").match(/^(?:Rule|Nelson)(\d+)/i);
+  return match ? `Rule ${match[1]}` : String(value || "");
+}
 
 const showModal = ref(false);
 const modalMode = ref("create");
@@ -50,7 +53,8 @@ async function loadAll() {
       api.get("/spc-rule-groups")
     ]);
     rules.value = rulesRes.data || [];
-    ruleGroups.value = (groupsRes.data || []).filter(x => !(x.ruleGroupCode || "").startsWith("CT_RULES_"));
+    const visibleGroupIds = new Set(rules.value.map(rule => Number(rule.ruleGroupId)));
+    ruleGroups.value = (groupsRes.data || []).filter(group => visibleGroupIds.has(Number(group.id)));
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -192,8 +196,8 @@ onMounted(loadAll);
           <Activity class="w-7 h-7" />
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">SPC 異常檢驗規則維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">新增與維護可被管制圖小分類勾選套用的異常判定規則</p>
+          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">SPC 八大管制規則維護</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">固定使用西方電氣規則 1～8，可調整參數及啟用狀態</p>
         </div>
       </div>
 
@@ -206,13 +210,6 @@ onMounted(loadAll);
         >
           <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> 重新整理
         </button>
-        <button
-          @click="openCreateModal"
-          type="button"
-          class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 transition-all"
-        >
-          <Plus class="w-4 h-4" /> 新增異常規則
-        </button>
       </div>
     </div>
 
@@ -223,8 +220,7 @@ onMounted(loadAll);
       <div>
         <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">規則庫說明</h4>
         <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
-          這裡維護的是「可套用的異常規則」。到「管制圖配置維護」編輯管制圖小分類時，可用 checkbox 勾選要套用哪些規則。
-          規則代號仍需對應後端判定邏輯；新增尚未實作邏輯的代號會出現在套用清單，但不會產生判異結果。
+          系統只保留西方電氣規則 1～8，不顯示管制圖或管制項目的內部規則群組，也不可新增第 9 種規則。
         </p>
       </div>
     </div>
@@ -293,7 +289,7 @@ onMounted(loadAll);
             <tr v-else v-for="rule in filteredRules" :key="rule.id" class="hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 transition-colors">
               <td class="py-5 px-6 font-mono text-xs text-slate-400 dark:text-slate-500 text-center">#{{ rule.id }}</td>
               <td class="py-5 px-6">
-                <div class="font-mono font-black text-indigo-600 dark:text-indigo-400">{{ rule.ruleCode }}</div>
+                <div class="font-mono font-black text-indigo-600 dark:text-indigo-400">{{ formatRuleCode(rule.ruleCode) }}</div>
                 <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ rule.ruleName }}</div>
               </td>
               <td class="py-5 px-6 text-xs text-slate-500 dark:text-slate-400">
@@ -317,14 +313,6 @@ onMounted(loadAll);
                   title="編輯異常規則"
                 >
                   <Edit class="w-4 h-4" />
-                </button>
-                <button
-                  @click="confirmDelete(rule)"
-                  type="button"
-                  class="inline-flex items-center justify-center p-2 rounded-xl bg-red-50 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-950 text-red-600 dark:text-red-400 transition-all border border-red-200 dark:border-slate-700"
-                  title="刪除異常規則"
-                >
-                  <Trash2 class="w-4 h-4" />
                 </button>
               </td>
             </tr>
@@ -360,7 +348,7 @@ onMounted(loadAll);
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">所屬規則庫</label>
-            <select v-model="form.ruleGroupId" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select v-model="form.ruleGroupId" disabled class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-500 dark:text-slate-400">
               <option v-for="group in ruleGroups" :key="group.id" :value="group.id">{{ group.ruleGroupCode }} - {{ group.ruleGroupName }}</option>
             </select>
           </div>
@@ -368,7 +356,7 @@ onMounted(loadAll);
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">規則代號 <span class="text-red-500">*</span></label>
-              <input v-model="form.ruleCode" type="text" required placeholder="例如：Rule5_2Of3Over2Sigma" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input v-model="form.ruleCode" type="text" readonly class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-sm text-slate-500 dark:text-slate-400" />
             </div>
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">規則名稱 <span class="text-red-500">*</span></label>

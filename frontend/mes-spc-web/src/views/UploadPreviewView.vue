@@ -24,6 +24,25 @@ const err = ref("");
 const loading = ref(false);
 const batchId = computed(() => route.params.batchId);
 const chartPpcId = ref(null);
+const importMode = ref("insertOnly");
+const autoImporting = ref(false);
+const revalidateProgress = ref(null);
+const missingMappingCount = computed(() =>
+  new Set(errors.value
+    .filter(e => e.errorCode === "MAPPING_NOT_FOUND" || e.errorCode === "CHAR_NOT_FOUND")
+    .map(e => e.uploadDetailId)).size
+);
+const blockedSetupCount = computed(() => {
+  const setupIds = new Set(errors.value
+    .filter(e => e.errorCode === "MAPPING_NOT_FOUND" || e.errorCode === "CHAR_NOT_FOUND")
+    .map(e => e.uploadDetailId));
+  const blockedIds = new Set(errors.value
+    .filter(e => ["PROCESS_NOT_FOUND", "MACHINE_NOT_FOUND", "TANK_NOT_FOUND"].includes(e.errorCode))
+    .map(e => e.uploadDetailId));
+  return [...setupIds].filter(id => blockedIds.has(id)).length;
+});
+const actionableSetupCount = computed(() => Math.max(0, missingMappingCount.value - blockedSetupCount.value));
+const errorDetails = computed(() => details.value.filter(d => !d.isValid));
 
 const isImported = computed(() => {
   return batch.value?.importStatus === "Imported" || batch.value?.isConfirmed === true;
@@ -32,7 +51,10 @@ const isImported = computed(() => {
 async function load() {
   err.value = "";
   try {
-    const { data } = await api.get(`/uploads/${batchId.value}/preview`);
+    const { data } = await api.get(`/uploads/${batchId.value}/preview`, {
+      params: { _: Date.now() },
+      headers: { "Cache-Control": "no-cache" }
+    });
     batch.value = data.batch;
     errors.value = data.errors || [];
     details.value = (data.details || []).map(d => {
@@ -48,7 +70,14 @@ async function load() {
         isValid: d.isValid,
         partNo: p.PartNo || p["料號"] || "",
         processCode: p.ProcessCode || p["製程"] || "",
+        machineCode: p.MachineCode || p["機台"] || p["線別"] || "",
+        tankCode: p.TankCode || p["槽位"] || "",
         characteristicCode: p.CharacteristicCode || p["檢驗項目"] || "",
+        resolvedProcessCode: p.ResolvedProcessCode || "",
+        resolvedMachineCode: p.ResolvedMachineCode || "",
+        resolvedTankCode: p.ResolvedTankCode || "",
+        resolvedCharacteristicCode: p.ResolvedCharacteristicCode || "",
+        duplicateStatus: p.DuplicateStatus || "",
         measuredValue: p.MeasuredValue !== undefined ? p.MeasuredValue : (p["測量值"] !== undefined ? p["測量值"] : null),
         recheckValue: p.RecheckValue !== undefined ? p.RecheckValue : (p["複驗"] !== undefined ? p["複驗"] : (p["複驗值"] !== undefined ? p["複驗值"] : "")),
         adjustAction: p.AdjustAction || p["調整"] || p["調整方式"] || "",
@@ -61,6 +90,13 @@ async function load() {
       };
     });
     chartPpcId.value = await resolveChartPpcId();
+    if (!isImported.value &&
+        !autoImporting.value &&
+        Number(batch.value?.validRows || 0) > 0 &&
+        Number(batch.value?.errorRows || 0) === 0) {
+      autoImporting.value = true;
+      await confirmImport();
+    }
   } catch (e) {
     err.value = getApiErrorMessage(e);
   }
@@ -100,15 +136,73 @@ function goToChart() {
   });
 }
 
+function goToMissingMappings() {
+  router.push({
+    path: "/part-process-characteristics",
+    query: { scope: "CHEM", uploadBatchId: batchId.value }
+  });
+}
+
+async function createMissingMappings() {
+  if (!confirm(`確定批次建立缺少的品質特性設定？共影響 ${missingMappingCount.value} 列。`)) return;
+  loading.value = true;
+  err.value = "";
+  revalidateProgress.value = {
+    processed: 0,
+    total: Number(batch.value?.totalRows || 0),
+    percent: 0
+  };
+  const progressTimer = window.setInterval(async () => {
+    try {
+      const { data } = await api.get(`/uploads/${batchId.value}/progress`);
+      const total = Number(data.total || batch.value?.totalRows || 1);
+      const processed = data.importStatus === "Revalidating" ? Number(data.processed || 0) : 0;
+      revalidateProgress.value = {
+        processed,
+        total,
+        percent: Math.min(100, Math.round(processed * 100 / total))
+      };
+    } catch {}
+  }, 1000);
+  try {
+    const { data } = await api.post(`/uploads/${batchId.value}/create-missing-mappings`);
+    if (batch.value) {
+      batch.value.validRows = Number(data.validRows || 0);
+      batch.value.errorRows = Number(data.errorRows || 0);
+    }
+    revalidateProgress.value = {
+      processed: Number(batch.value?.totalRows || 0),
+      total: Number(batch.value?.totalRows || 0),
+      percent: 100
+    };
+    await load();
+    alert([
+      `建立品質特性：${data.createdCharacteristics || 0}`,
+      `建立槽位主檔：${data.createdTanks || 0}`,
+      `建立線別／槽位設定：${data.createdMappings || 0}`,
+      `重用既有設定：${data.reusedMappings || 0}`,
+      `因槽位不存在略過：${data.skippedMissingTank || 0}`,
+      `因其他主檔不存在略過：${data.skippedMissingMasterData || 0}`,
+      `原批次已重新驗證。`
+    ].join("\n"));
+  } catch (e) {
+    err.value = getApiErrorMessage(e);
+  } finally {
+    window.clearInterval(progressTimer);
+    revalidateProgress.value = null;
+    loading.value = false;
+  }
+}
+
 async function confirmImport() {
-  if (errors.value.length > 0 && details.value.filter(d => d.isValid).length === 0) {
+  if (errors.value.length > 0 && Number(batch.value?.validRows || 0) === 0) {
     err.value = "無有效資料可匯入。請先修正錯誤或重新上傳。";
     return;
   }
   loading.value = true;
   err.value = "";
   try {
-    await api.post(`/uploads/${batchId.value}/confirm`);
+    await api.post(`/uploads/${batchId.value}/confirm`, null, { params: { mode: importMode.value } });
     await load();
     if (isImported.value) {
       goToChart();
@@ -149,7 +243,19 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto space-y-6">
+  <div class="w-full max-w-[1920px] mx-auto px-1 sm:px-2 space-y-6">
+    <div v-if="revalidateProgress" class="fixed inset-0 z-[100] bg-slate-950/60 flex items-center justify-center p-4">
+      <div class="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-2xl">
+        <div class="flex justify-between text-sm font-black text-slate-800 dark:text-white mb-3">
+          <span>正在批次建立並重新驗證</span>
+          <span>{{ revalidateProgress.processed }} / {{ revalidateProgress.total }}（{{ revalidateProgress.percent }}%）</span>
+        </div>
+        <div class="h-4 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+          <div class="h-full bg-amber-500 transition-all duration-300" :style="{ width: `${revalidateProgress.percent}%` }"></div>
+        </div>
+        <p class="mt-3 text-xs text-slate-500">請勿關閉頁面，完成後會自動刷新驗證結果。</p>
+      </div>
+    </div>
     <!-- Header -->
     <div class="p-8 rounded-3xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 text-white shadow-xl relative overflow-hidden">
       <div class="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -178,11 +284,11 @@ onMounted(load);
           <button
             v-if="!isImported"
             @click="confirmImport"
-            :disabled="loading || details.filter(d => d.isValid).length === 0"
-            class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-indigo-650 hover:bg-indigo-50 font-black shadow-xl shadow-black/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
+            :disabled="loading || Number(batch?.validRows || 0) === 0"
+            class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-400 font-black shadow-xl shadow-emerald-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
           >
-            <RefreshCw v-if="loading" class="w-4 h-4 animate-spin text-indigo-600" />
-            <ArrowRight v-else class="w-4 h-4 text-indigo-600" />
+            <RefreshCw v-if="loading" class="w-4 h-4 animate-spin text-white" />
+            <ArrowRight v-else class="w-4 h-4 text-white" />
             確認轉入正式 SPC 運算
           </button>
 
@@ -212,6 +318,41 @@ onMounted(load);
     <!-- API Errors -->
     <div v-if="err" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
       <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ err }}
+    </div>
+
+    <div v-if="!isImported && missingMappingCount > 0" class="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div>
+        <p class="font-black text-amber-800 dark:text-amber-300">有 {{ missingMappingCount }} 列缺少品質特性或「線別＋槽位＋管制項目」設定</p>
+        <p class="text-xs text-amber-700 dark:text-amber-400 mt-1">
+          可直接建立：{{ actionableSetupCount }} 列；因線別／槽位主檔不存在而阻擋：{{ blockedSetupCount }} 列。
+        </p>
+        <details class="mt-2 text-xs text-amber-800 dark:text-amber-300">
+          <summary class="cursor-pointer font-bold">查看比對與建立規則</summary>
+          <ol class="list-decimal ml-5 mt-2 space-y-1">
+            <li>線別先比對原代碼；找不到再比對「原代碼＋1」。</li>
+            <li>槽位限定在線別底下，以槽位代碼或名稱比對。</li>
+            <li>管制項目限定 CHEM，以代碼／名稱，再以項目＋單位比對。</li>
+            <li>三者都存在才建立「線別＋槽位＋管制項目」設定；缺少槽位時會略過並保留錯誤。</li>
+          </ol>
+        </details>
+      </div>
+      <div class="flex gap-2">
+        <button @click="createMissingMappings" :disabled="loading" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-black">
+          批次建立並重新驗證
+        </button>
+        <button @click="goToMissingMappings" class="px-4 py-2.5 rounded-xl border border-amber-500 text-amber-700 dark:text-amber-300 text-sm font-bold">
+          手動設定
+        </button>
+      </div>
+    </div>
+
+    <div v-if="!isImported" class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <label class="block text-sm font-black text-slate-800 dark:text-white mb-2">重複資料處理方式</label>
+      <select v-model="importMode" class="w-full md:w-96 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
+        <option value="insertOnly">僅新增，重複資料略過（預設）</option>
+        <option value="upsert">重複資料覆蓋舊資料</option>
+      </select>
+      <p class="mt-2 text-xs text-slate-500">重複鍵值：管制項目＋量測時間＋批號＋樣本號。</p>
     </div>
 
     <!-- Validation Summary Card -->
@@ -255,9 +396,9 @@ onMounted(load);
     <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-850 pb-4">
         <h3 class="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
-          <Table class="w-5 h-5 text-blue-500" /> 上傳資料明細與檢核結果預覽 (Live Preview Workspace)
+          <Table class="w-5 h-5 text-blue-500" /> 未通過資料與錯誤原因
         </h3>
-        <span class="text-xs text-slate-400 font-bold">⚠️ 系統已自動排除不合規點位，點位以紅色高亮示警。</span>
+        <span class="text-xs text-slate-400 font-bold">全部資料皆已驗證；下方顯示所有未通過資料。</span>
       </div>
 
       <div class="overflow-x-auto">
@@ -266,8 +407,10 @@ onMounted(load);
             <tr>
               <th class="p-3 w-16">列號</th>
               <th class="p-3">產品料號 (PartNo)</th>
-              <th class="p-3">製程代碼 (Process)</th>
-              <th class="p-3">檢測項目 (Char)</th>
+              <th class="p-3">製程對應</th>
+              <th class="p-3">線別對應</th>
+              <th class="p-3">槽位對應</th>
+              <th class="p-3">管制項目對應</th>
               <th class="p-3">量測數值 (Value)</th>
               <th class="p-3">複驗 (Recheck)</th>
               <th class="p-3">調整 (Adjust)</th>
@@ -278,7 +421,7 @@ onMounted(load);
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-650 dark:text-slate-300 font-medium">
-            <tr v-for="d in details" :key="d.id" class="transition-colors" :class="d.isValid ? 'hover:bg-slate-50/50 dark:hover:bg-slate-800/40' : 'bg-red-500/5 dark:bg-red-950/20 text-red-700 dark:text-red-300 border-l-4 border-red-500'">
+            <tr v-for="d in errorDetails" :key="d.id" class="transition-colors bg-red-500/5 dark:bg-red-950/20 text-red-700 dark:text-red-300 border-l-4 border-red-500">
               <!-- Row No -->
               <td class="p-3 font-mono font-bold" :class="!d.isValid ? 'text-red-650 dark:text-red-400' : 'text-slate-450'">
                 #{{ d.rowNo }}
@@ -297,17 +440,20 @@ onMounted(load);
               <!-- ProcessCode -->
               <td class="p-3" :class="{ 'relative group': hasCellError(d, 'ProcessCode') }">
                 <span :class="hasCellError(d, 'ProcessCode') ? 'text-red-500 border-b border-dashed border-red-500 font-black' : ''">
-                  {{ d.processCode }}
+                  {{ d.processCode || '-' }} → {{ d.resolvedProcessCode || '-' }}
                 </span>
                 <div v-if="hasCellError(d, 'ProcessCode')" class="absolute z-50 left-10 bottom-6 hidden group-hover:block bg-red-900 text-red-100 text-[10px] p-2 rounded shadow-lg whitespace-nowrap border border-red-500">
                   {{ getCellErrorMessage(d, 'ProcessCode') }}
                 </div>
               </td>
 
+              <td class="p-3">{{ d.machineCode || '-' }} → {{ d.resolvedMachineCode || '-' }}</td>
+              <td class="p-3">{{ d.tankCode || '-' }} → {{ d.resolvedTankCode || '-' }}</td>
+
               <!-- CharacteristicCode -->
               <td class="p-3" :class="{ 'relative group': hasCellError(d, 'CharacteristicCode') || hasCellError(d, 'PartProcessCharacteristic') }">
                 <span :class="hasCellError(d, 'CharacteristicCode') || hasCellError(d, 'PartProcessCharacteristic') ? 'text-red-500 border-b border-dashed border-red-500 font-black' : 'text-blue-600 dark:text-blue-400 font-semibold'">
-                  {{ d.characteristicCode }}
+                  {{ d.characteristicCode }} → {{ d.resolvedCharacteristicCode || '-' }}
                 </span>
                 <div v-if="hasCellError(d, 'CharacteristicCode') || hasCellError(d, 'PartProcessCharacteristic')" class="absolute z-50 left-10 bottom-6 hidden group-hover:block bg-red-900 text-red-100 text-[10px] p-2 rounded shadow-lg border border-red-500">
                   {{ getCellErrorMessage(d, 'CharacteristicCode') || getCellErrorMessage(d, 'PartProcessCharacteristic') }}
@@ -348,8 +494,8 @@ onMounted(load);
 
               <!-- Verification Messages -->
               <td class="p-3 font-semibold">
-                <div v-if="d.isValid" class="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 class="w-3.5 h-3.5" /> 檢驗通過
+                <div v-if="d.isValid && d.duplicateStatus" class="text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  {{ `重複：${d.duplicateStatus}` }}
                 </div>
                 <div v-else class="text-red-500 space-y-1">
                   <div v-for="errItem in d.errorsList" :key="errItem.id" class="flex items-center gap-1 text-[11px]">
@@ -360,9 +506,9 @@ onMounted(load);
             </tr>
 
             <!-- Empty Rows fallback -->
-            <tr v-if="!details || details.length === 0">
-              <td colspan="11" class="p-8 text-center text-slate-400 text-sm">
-                無任何量測上傳數據明細。
+            <tr v-if="errorDetails.length === 0">
+              <td colspan="13" class="p-8 text-center text-slate-400 text-sm">
+                {{ Number(batch?.errorRows || 0) === 0 ? '無未通過資料，系統將直接匯入。' : '仍有未通過資料，請重新整理後查看。' }}
               </td>
             </tr>
           </tbody>

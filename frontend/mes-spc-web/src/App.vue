@@ -66,7 +66,8 @@ const viewerMenuCategories = [
     title: "高階戰情與分析",
     items: [
       { to: "/spc", text: "SPC 管制圖", icon: LineChart },
-      { to: "/trend-chart", text: "量測值趨勢圖", icon: TrendingUp }
+      { to: "/trend-chart", text: "量測值趨勢圖", icon: TrendingUp },
+      { to: "/monthly-control-chart", text: "SPC 週月報表", icon: CalendarClock }
     ]
   }
 ];

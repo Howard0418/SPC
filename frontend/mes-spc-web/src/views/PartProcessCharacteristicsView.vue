@@ -651,6 +651,9 @@ async function save() {
   }
   form.value.displayMode = getControlScopeGroupType(form.value.controlScope);
   if (form.value.displayMode === "CONTROL_CHART" && !form.value.chartTypeId) {
+    form.value.chartTypeId = findDefaultChartTypeId(form.value.displayMode, selectedCharacteristic.value?.dataCategory);
+  }
+  if (form.value.displayMode === "CONTROL_CHART" && !form.value.chartTypeId) {
     formErr.value = `請選擇${selectedDisplayModeLabel.value}類型。`;
     return;
   }
@@ -1776,7 +1779,7 @@ onBeforeUnmount(() => {
                         class="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                       />
                       <span class="min-w-0">
-                        <span class="block text-xs font-black text-slate-800 dark:text-slate-100">{{ rule.ruleCode }} · {{ rule.ruleName }}</span>
+                        <span class="block text-xs font-black text-slate-800 dark:text-slate-100">{{ rule.ruleName }}</span>
                         <span class="block text-[10px] text-slate-400 mt-0.5">優先序 {{ rule.priority }}</span>
                       </span>
                     </label>

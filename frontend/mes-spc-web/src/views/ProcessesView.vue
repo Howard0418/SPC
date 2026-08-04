@@ -26,7 +26,7 @@ const controlScopeOptions = computed(() => {
   const defaults = [
     { id: "PRODUCT", label: "產品管制" },
     { id: "PROCESS", label: "製程管制" },
-    { id: "CHEMICAL", label: "藥液管制" }
+    { id: "CHEM", label: "藥液管制" }
   ];
   const options = new Map(defaults.map(x => [x.id, x]));
   controlChartGroups.value

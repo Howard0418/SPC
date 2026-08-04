@@ -85,11 +85,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Machine>().HasIndex(x => x.ProcessId);
         modelBuilder.Entity<QualityCharacteristic>().HasKey(x => x.Id);
         modelBuilder.Entity<QualityCharacteristic>().HasIndex(x => x.CharacteristicCode).IsUnique();
-        modelBuilder.Entity<PartProcessCharacteristic>().HasIndex(x => new { x.ControlScope, x.PartId, x.ProcessId, x.MachineId, x.TankId, x.CharacteristicId }).IsUnique();
+        modelBuilder.Entity<QualityCharacteristic>().Property(x => x.InputMode).HasMaxLength(20).HasDefaultValue("DIRECT");
+        modelBuilder.Entity<QualityCharacteristic>().Property(x => x.ValueLabel).HasMaxLength(50).HasDefaultValue("量測值");
+        modelBuilder.Entity<PartProcessCharacteristic>().HasIndex(x => new { x.ControlScope, x.PartId, x.ProcessId, x.MachineId, x.TankId, x.SlotId, x.CharacteristicId }).IsUnique();
         modelBuilder.Entity<PartProcessCharacteristic>().Property(x => x.Unit).HasMaxLength(50);
         modelBuilder.Entity<PartProcessCharacteristic>().Property(x => x.DisplayMode).HasMaxLength(30).HasDefaultValue("CONTROL_CHART");
         modelBuilder.Entity<PartProcessCharacteristic>()
-            .HasIndex(x => new { x.ControlScope, x.ProcessId, x.MachineId, x.TankId, x.CharacteristicId })
+            .HasIndex(x => new { x.ControlScope, x.ProcessId, x.MachineId, x.TankId, x.SlotId, x.CharacteristicId })
             .IsUnique()
             .HasFilter("[PartId] IS NULL");
         modelBuilder.Entity<ControlChartGroup>().HasKey(x => x.Id);

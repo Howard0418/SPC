@@ -15,7 +15,7 @@ public class UploadsController(UploadService uploadService)
     : ControllerBase
 {
     [HttpPost("variable")]
-    public async Task<IActionResult> UploadVariable([FromBody] List<Dictionary<string, string?>> rows)
+    public async Task<IActionResult> UploadVariable([FromBody] List<Dictionary<string, string?>> rows, [FromQuery] Guid? clientBatchId = null)
     {
         var jsonStr = System.Text.Json.JsonSerializer.Serialize(rows);
         var hashBytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(jsonStr));
@@ -23,7 +23,7 @@ public class UploadsController(UploadService uploadService)
 
         try
         {
-            var batch = await uploadService.CreateVariableBatchAsync(rows, "Api", "api-user", null, hashStr);
+            var batch = await uploadService.CreateVariableBatchAsync(rows, "Api", "api-user", null, hashStr, uploadBatchId: clientBatchId);
             return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
         }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
@@ -33,7 +33,7 @@ public class UploadsController(UploadService uploadService)
     }
 
     [HttpPost("attribute")]
-    public async Task<IActionResult> UploadAttribute([FromBody] List<Dictionary<string, string?>> rows)
+    public async Task<IActionResult> UploadAttribute([FromBody] List<Dictionary<string, string?>> rows, [FromQuery] Guid? clientBatchId = null)
     {
         var jsonStr = System.Text.Json.JsonSerializer.Serialize(rows);
         var hashBytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(jsonStr));
@@ -41,7 +41,7 @@ public class UploadsController(UploadService uploadService)
 
         try
         {
-            var batch = await uploadService.CreateAttributeBatchAsync(rows, "Api", "api-user", null, hashStr);
+            var batch = await uploadService.CreateAttributeBatchAsync(rows, "Api", "api-user", null, hashStr, uploadBatchId: clientBatchId);
             return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
         }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
@@ -63,16 +63,33 @@ public class UploadsController(UploadService uploadService)
     public async Task<IActionResult> UploadAttributeCsv(IFormFile file) => await UploadCsvLike(file, false);
 
     [HttpGet("{uploadBatchId:guid}/preview")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Preview(Guid uploadBatchId)
     {
         var preview = await uploadService.GetPreviewAsync(uploadBatchId);
         return preview is null ? NotFound() : Ok(preview);
     }
 
-    [HttpPost("{uploadBatchId:guid}/confirm")]
-    public async Task<IActionResult> Confirm(Guid uploadBatchId)
+    [HttpGet("{uploadBatchId:guid}/progress")]
+    public async Task<IActionResult> Progress(Guid uploadBatchId)
     {
-        var result = await uploadService.ConfirmAsync(uploadBatchId);
+        var progress = await uploadService.GetProgressAsync(uploadBatchId);
+        return progress is null ? NotFound() : Ok(progress);
+    }
+
+    [HttpPost("{uploadBatchId:guid}/confirm")]
+    public async Task<IActionResult> Confirm(Guid uploadBatchId, [FromQuery] string mode = "upsert")
+    {
+        if (mode is not ("upsert" or "insertOnly"))
+            return BadRequest(new { message = "不支援的匯入模式。" });
+        var result = await uploadService.ConfirmAsync(uploadBatchId, mode);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpPost("{uploadBatchId:guid}/create-missing-mappings")]
+    public async Task<IActionResult> CreateMissingMappings(Guid uploadBatchId)
+    {
+        var result = await uploadService.CreateMissingMappingsAndRevalidateAsync(uploadBatchId);
         return result is null ? NotFound() : Ok(result);
     }
 
@@ -278,7 +295,7 @@ public class UploadsController(UploadService uploadService)
 
         var headers = new string[]
         {
-            "料號", "製程", "機台", "檢驗項目", "測量值", "複驗", "調整", "調整量", "日期", "作業員", "批號", "樣本編號", "序號"
+            "管制類型", "料號", "製程", "機台", "槽位", "檢驗項目", "測量值", "複驗", "調整", "調整量", "日期", "作業員", "批號", "樣本編號", "序號"
         };
 
         for (int i = 0; i < headers.Length; i++)
@@ -294,9 +311,9 @@ public class UploadsController(UploadService uploadService)
         // Add 3 sample rows
         var samples = new object[][]
         {
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", 100.12, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "LENGTH", 100.08, 100.10, "添加", 0.5, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 2, "WO-101" },
-            new object[] { "PART-A001", "ST-01", "ST-01-M01", "WIDTH", 50.05, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-02", "L20260518-2", 1, "WO-102" }
+            new object[] { "PROCESS", "PART-A001", "ST-01", "ST-01-M01", "", "LENGTH", 100.12, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
+            new object[] { "CHEM", "", "CHEM-PROC", "N2", "C1", "H2SO4", 3.25, 3.10, "添加", 0.5, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "", 1, "" },
+            new object[] { "PROCESS", "PART-A001", "ST-01", "ST-01-M01", "", "WIDTH", 50.05, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-02", "L20260518-2", 1, "WO-102" }
         };
 
         for (int r = 0; r < samples.Length; r++)

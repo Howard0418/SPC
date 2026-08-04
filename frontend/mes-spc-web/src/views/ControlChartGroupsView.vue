@@ -408,7 +408,10 @@ async function saveType() {
 }
 
 async function deleteType(item) {
-  if (!confirm(`確定要刪除管制圖種類「${item.chartTypeCode} (${item.chartTypeName})」嗎？`)) return;
+  const label = ["I_MR", "I-MR"].includes(String(item.chartTypeCode || "").toUpperCase())
+    ? "I_MR"
+    : `${item.chartTypeCode} (${item.chartTypeName})`;
+  if (!confirm(`確定要刪除管制圖種類「${label}」嗎？`)) return;
   loading.value = true;
   try {
     await api.delete(`/control-chart-types/${item.id}`);
@@ -650,7 +653,7 @@ watch(() => route.query.tab, syncTabFromRoute);
                 </td>
                 <td class="py-4 px-6 font-bold text-slate-900 dark:text-white">
                   <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-mono"><Activity class="w-4 h-4 text-blue-500" /> {{ item.chartTypeCode }}</div>
-                  <div class="text-xs text-slate-500 font-sans mt-0.5">{{ item.chartTypeName }}</div>
+                  <div v-if="!['I_MR', 'I-MR'].includes(String(item.chartTypeCode || '').toUpperCase())" class="text-xs text-slate-500 font-sans mt-0.5">{{ item.chartTypeName }}</div>
                 </td>
                 <td class="py-4 px-6">
                   <span :class="[ 'px-2.5 py-1 rounded-lg text-xs font-bold border tracking-wide', item.dataCategory === 'Variable' ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800' : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800' ]">
@@ -717,7 +720,7 @@ watch(() => route.query.tab, syncTabFromRoute);
           </div>
           <div class="space-y-1.5">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">業務範圍代碼 *</label>
-            <input v-model="groupsForm.businessScopeCode" type="text" required placeholder="例如：CHEMICAL" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold uppercase text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input v-model="groupsForm.businessScopeCode" type="text" required placeholder="例如：CHEM" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold uppercase text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <p class="text-[11px] text-slate-500">相同業務流程的管制圖與趨勢圖請使用相同代碼。</p>
           </div>
           <div class="space-y-2">

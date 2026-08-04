@@ -46,6 +46,8 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         [FromQuery] Guid? uploadBatchId,
         [FromQuery] string? batchNo,
         [FromQuery] int? partId,
+        [FromQuery] int? processId,
+        [FromQuery] string? comparisonPeriod,
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate)
     {
@@ -63,7 +65,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             return BadRequest("查詢時間範圍最多不可超過 3 個月。");
         }
 
-        var list = await spcService.GetChartSummaryListAsync(dimension, uploadBatchId, start, end, batchNo, partId, groupType);
+        var list = await spcService.GetChartSummaryListAsync(dimension, uploadBatchId, start, end, batchNo, partId, groupType, processId, comparisonPeriod);
         return Ok(list);
     }
 

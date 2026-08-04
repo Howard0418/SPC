@@ -443,7 +443,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
 
                 var scope = isProductSheet
                     ? "PRODUCT"
-                    : groupId == groupChem.Id ? "CHEMICAL" : "PROCESS";
+                    : groupId == groupChem.Id ? "CHEM" : "PROCESS";
                 int? partId = null;
 
                 // Ensure Part only for product control

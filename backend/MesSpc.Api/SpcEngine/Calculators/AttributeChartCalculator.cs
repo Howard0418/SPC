@@ -5,21 +5,25 @@ namespace MesSpc.Api.SpcEngine.Calculators;
 
 public static class AttributeChartCalculator
 {
-    public static ControlChartResult Calculate(string chartType, List<AttributeDataPoint> rawData, ControlLimits configuredLimits)
+    public static ControlChartResult Calculate(
+        string chartType,
+        List<AttributeDataPoint> rawData,
+        ControlLimits configuredLimits,
+        IReadOnlySet<string>? enabledRuleCodes = null)
     {
         var code = chartType.Trim().ToUpperInvariant();
         
         return code switch
         {
-            "P" or "P_CHART" or "P-CHART" => CalculatePChart(rawData, configuredLimits),
-            "NP" or "NP_CHART" or "NP-CHART" => CalculateNpChart(rawData, configuredLimits),
-            "C" or "C_CHART" or "C-CHART" => CalculateCChart(rawData, configuredLimits),
-            "U" or "U_CHART" or "U-CHART" => CalculateUChart(rawData, configuredLimits),
+            "P" or "P_CHART" or "P-CHART" => CalculatePChart(rawData, configuredLimits, enabledRuleCodes),
+            "NP" or "NP_CHART" or "NP-CHART" => CalculateNpChart(rawData, configuredLimits, enabledRuleCodes),
+            "C" or "C_CHART" or "C-CHART" => CalculateCChart(rawData, configuredLimits, enabledRuleCodes),
+            "U" or "U_CHART" or "U-CHART" => CalculateUChart(rawData, configuredLimits, enabledRuleCodes),
             _ => throw new NotSupportedException($"Attribute chart type {chartType} is not supported.")
         };
     }
 
-    private static ControlChartResult CalculatePChart(List<AttributeDataPoint> data, ControlLimits configuredLimits)
+    private static ControlChartResult CalculatePChart(List<AttributeDataPoint> data, ControlLimits configuredLimits, IReadOnlySet<string>? enabledRuleCodes)
     {
         var chartData = data.Where(d => d.InspectedQty.HasValue && d.InspectedQty > 0 && d.DefectQty.HasValue).ToList();
         var includedData = chartData.Where(d => !d.IsExcluded).ToList();
@@ -87,7 +91,7 @@ public static class AttributeChartCalculator
 
         if (pBar.HasValue && staticUcl.HasValue && staticLcl.HasValue)
         {
-            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = pBar, UCL = staticUcl, LCL = staticLcl });
+            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = pBar, UCL = staticUcl, LCL = staticLcl }, enabledRuleCodes);
             
             for (int i = 0; i < spcPoints.Count; i++)
             {
@@ -106,7 +110,7 @@ public static class AttributeChartCalculator
         };
     }
 
-    private static ControlChartResult CalculateNpChart(List<AttributeDataPoint> data, ControlLimits configuredLimits)
+    private static ControlChartResult CalculateNpChart(List<AttributeDataPoint> data, ControlLimits configuredLimits, IReadOnlySet<string>? enabledRuleCodes)
     {
         var chartData = data.Where(d => d.InspectedQty.HasValue && d.InspectedQty > 0 && d.DefectQty.HasValue).ToList();
         var includedData = chartData.Where(d => !d.IsExcluded).ToList();
@@ -147,7 +151,7 @@ public static class AttributeChartCalculator
 
         if (npBar.HasValue && staticUcl.HasValue && staticLcl.HasValue)
         {
-            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = npBar, UCL = staticUcl, LCL = staticLcl });
+            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = npBar, UCL = staticUcl, LCL = staticLcl }, enabledRuleCodes);
         }
 
         var spcByMeasuredAt = spcPoints.ToDictionary(x => x.MeasuredAt);
@@ -184,7 +188,7 @@ public static class AttributeChartCalculator
         };
     }
 
-    private static ControlChartResult CalculateCChart(List<AttributeDataPoint> data, ControlLimits configuredLimits)
+    private static ControlChartResult CalculateCChart(List<AttributeDataPoint> data, ControlLimits configuredLimits, IReadOnlySet<string>? enabledRuleCodes)
     {
         var chartData = data.Where(d => d.DefectCount.HasValue).ToList();
         var includedData = chartData.Where(d => !d.IsExcluded).ToList();
@@ -217,7 +221,7 @@ public static class AttributeChartCalculator
 
         if (cBar.HasValue && ucl.HasValue && lcl.HasValue)
         {
-            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = cBar, UCL = ucl, LCL = lcl });
+            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = cBar, UCL = ucl, LCL = lcl }, enabledRuleCodes);
         }
 
         var spcByMeasuredAt = spcPoints.ToDictionary(x => x.MeasuredAt);
@@ -253,7 +257,7 @@ public static class AttributeChartCalculator
         };
     }
 
-    private static ControlChartResult CalculateUChart(List<AttributeDataPoint> data, ControlLimits configuredLimits)
+    private static ControlChartResult CalculateUChart(List<AttributeDataPoint> data, ControlLimits configuredLimits, IReadOnlySet<string>? enabledRuleCodes)
     {
         var chartData = data.Where(d => d.UnitCount.HasValue && d.UnitCount > 0 && d.DefectCount.HasValue).ToList();
         var includedData = chartData.Where(d => !d.IsExcluded).ToList();
@@ -319,7 +323,7 @@ public static class AttributeChartCalculator
 
         if (uBar.HasValue && staticUcl.HasValue && staticLcl.HasValue)
         {
-            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = uBar, UCL = staticUcl, LCL = staticLcl });
+            WesternElectricRulesValidator.ApplyRules(spcPoints, new ControlLimits { CL = uBar, UCL = staticUcl, LCL = staticLcl }, enabledRuleCodes);
             
             for (int i = 0; i < spcPoints.Count; i++)
             {

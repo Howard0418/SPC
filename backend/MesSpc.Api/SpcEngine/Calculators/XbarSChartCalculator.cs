@@ -5,7 +5,11 @@ namespace MesSpc.Api.SpcEngine.Calculators;
 
 public static class XbarSChartCalculator
 {
-    public static ControlChartResult Calculate(List<Subgroup> subgroups, ControlLimits configuredLimits, int expectedSampleSize)
+    public static ControlChartResult Calculate(
+        List<Subgroup> subgroups,
+        ControlLimits configuredLimits,
+        int expectedSampleSize,
+        IReadOnlySet<string>? enabledRuleCodes = null)
     {
         if (subgroups.Count == 0)
         {
@@ -60,7 +64,8 @@ public static class XbarSChartCalculator
         {
             MesSpc.Api.SpcEngine.Rules.WesternElectricRulesValidator.ApplyRules(
                 evalPoints,
-                new ControlLimits { CL = xDoubleBar, UCL = uclXbar, LCL = lclXbar });
+                new ControlLimits { CL = xDoubleBar, UCL = uclXbar, LCL = lclXbar },
+                enabledRuleCodes);
         }
         var evalDict = evalPoints.ToDictionary(x => x.MeasuredAt);
 
