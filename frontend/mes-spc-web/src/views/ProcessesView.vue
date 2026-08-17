@@ -20,32 +20,6 @@ import {
 // Data Lists
 const rows = ref([]); // Processes
 const machines = ref([]);
-const controlChartGroups = ref([]);
-
-const controlScopeOptions = computed(() => {
-  const defaults = [
-    { id: "PRODUCT", label: "產品管制" },
-    { id: "PROCESS", label: "製程管制" },
-    { id: "CHEM", label: "藥液管制" }
-  ];
-  const options = new Map(defaults.map(x => [x.id, x]));
-  controlChartGroups.value
-    .filter(group => group.isEnabled !== false)
-    .forEach(group => {
-      const id = String(group.groupCode || "").trim().toUpperCase();
-      if (id) options.set(id, { id, label: group.groupName || id });
-    });
-  rows.value.forEach(process => {
-    const id = String(process.controlScope || "PRODUCT").trim().toUpperCase();
-    if (id && !options.has(id)) options.set(id, { id, label: id });
-  });
-  return [...options.values()];
-});
-
-const controlScopeLabel = scope => {
-  const id = String(scope || "PRODUCT").trim().toUpperCase();
-  return controlScopeOptions.value.find(option => option.id === id)?.label || id;
-};
 
 // Core Page State
 const err = ref("");
@@ -73,14 +47,14 @@ const filteredRows = computed(() => {
   return rows.value.filter(row => {
     const q = searchQuery.value.toLowerCase();
     const matchQuery = !q || 
-      (row.processCode && row.processCode.toLowerCase().includes(q)) ||
       (row.processName && row.processName.toLowerCase().includes(q)) ||
+      (row.processNameEn && row.processNameEn.toLowerCase().includes(q)) ||
       (row.description && row.description.toLowerCase().includes(q));
       
     if (statusFilter.value === "active") return matchQuery && row.isEnabled;
     if (statusFilter.value === "inactive") return matchQuery && !row.isEnabled;
     return matchQuery;
-  });
+  }).sort((a, b) => (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0) || (a.processCode || "").localeCompare(b.processCode || ""));
 });
 
 // Computed values for current selected process machines
@@ -94,14 +68,12 @@ async function load() {
   err.value = "";
   loading.value = true;
   try {
-    const [resProc, resMach, resGroups] = await Promise.all([
+    const [resProc, resMach] = await Promise.all([
       api.get("/processes"),
-      api.get("/machines"),
-      api.get("/control-chart-groups")
+      api.get("/machines")
     ]);
     rows.value = resProc.data || [];
     machines.value = resMach.data || [];
-    controlChartGroups.value = resGroups.data || [];
 
     // Auto-select first process if none selected
     if (!selectedProcessId.value && rows.value.length > 0) {
@@ -123,7 +95,8 @@ const currentId = ref(null);
 const form = ref({
   processCode: "",
   processName: "",
-  controlScope: "PRODUCT",
+  processNameEn: "",
+  sequenceNo: 0,
   description: "",
   isEnabled: true
 });
@@ -135,7 +108,8 @@ function openCreateModal() {
   form.value = {
     processCode: "",
     processName: "",
-    controlScope: "PRODUCT",
+    processNameEn: "",
+    sequenceNo: 0,
     description: "",
     isEnabled: true
   };
@@ -149,7 +123,8 @@ function openEditModal(item) {
   form.value = {
     processCode: item.processCode || "",
     processName: item.processName || "",
-    controlScope: item.controlScope || "PRODUCT",
+    processNameEn: item.processNameEn || "",
+    sequenceNo: item.sequenceNo ?? 0,
     description: item.description || "",
     isEnabled: item.isEnabled ?? true
   };
@@ -158,8 +133,8 @@ function openEditModal(item) {
 }
 
 async function save() {
-  if (!form.value.processCode?.trim() || !form.value.processName?.trim()) {
-    formErr.value = "製程代號與名稱皆為必填欄位。";
+  if (!form.value.processName?.trim()) {
+    formErr.value = "製程中文名稱為必填欄位。";
     return;
   }
   formErr.value = "";
@@ -186,7 +161,7 @@ async function save() {
 }
 
 async function confirmDelete(item) {
-  if (!confirm(`確定要刪除工站製程「${item.processCode} (${item.processName})」嗎？`)) return;
+  if (!confirm(`確定要刪除工站製程「${item.processName}」嗎？`)) return;
   loading.value = true;
   try {
     await api.delete(`/processes/${item.id}`);
@@ -284,6 +259,8 @@ async function openEditMachineModal(item) {
       id: t.id,
       tankCode: (t.tankCode || "").startsWith(prefix) ? t.tankCode.slice(prefix.length) : (t.tankCode || ""),
       tankName: t.tankName || "",
+      tankNameEn: t.tankNameEn || "",
+      sequenceNo: t.sequenceNo ?? 0,
       isActive: t.isActive ?? true
     }));
   } catch (e) {
@@ -296,6 +273,8 @@ function addMachineTank() {
     id: null,
     tankCode: "",
     tankName: "",
+    tankNameEn: "",
+    sequenceNo: 0,
     isActive: true
   });
 }
@@ -322,8 +301,9 @@ async function saveMachine() {
       ...machineForm.value,
       tanks: machineForm.value.tanks.map(t => ({
         ...t,
-        tankCode: t.tankCode?.trim() || t.tankName?.trim(),
         tankName: t.tankName?.trim(),
+        tankNameEn: t.tankNameEn?.trim() || null,
+        sequenceNo: Number(t.sequenceNo) || 0,
         isActive: t.isActive ?? true
       })),
       processId: selectedProcessId.value
@@ -442,7 +422,7 @@ onMounted(load);
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="搜尋製程代號、名稱..."
+              placeholder="搜尋製程中文或英文名稱..."
               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
             />
           </div>
@@ -471,7 +451,7 @@ onMounted(load);
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase border-b border-slate-200 dark:border-slate-700">
-                  <th class="py-3 px-4">工站製程代號 / 名稱</th>
+                  <th class="py-3 px-4">工站製程名稱</th>
                   <th class="py-3 px-3 text-center w-20">狀態</th>
                 </tr>
               </thead>
@@ -497,12 +477,9 @@ onMounted(load);
                   <td class="py-3.5 px-4">
                     <div class="font-bold flex items-center gap-1.5 text-sm">
                       <Layers class="w-3.5 h-3.5" :class="selectedProcessId === item.id ? 'text-blue-500' : 'text-slate-400'" />
-                      <span>{{ item.processCode }}</span>
+                      <span>{{ item.processName }}</span>
                     </div>
-                    <div class="text-[10px] text-slate-400 font-normal mt-0.5">{{ item.processName }}</div>
-                    <div class="text-[9px] font-bold mt-1 text-blue-500">
-                      {{ controlScopeLabel(item.controlScope) }}
-                    </div>
+                    <div v-if="item.processNameEn" class="text-[10px] text-cyan-600 dark:text-cyan-400 font-normal mt-0.5">{{ item.processNameEn }}</div>
                   </td>
                   <td class="py-3.5 px-3 text-center">
                     <span
@@ -543,7 +520,7 @@ onMounted(load);
               <div class="flex items-center gap-2">
                 <span class="text-[10px] font-mono font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">工站製程</span>
                 <h2 class="text-base font-black text-slate-800 dark:text-white flex items-center gap-1.5">
-                  {{ selectedProcess.processCode }} - {{ selectedProcess.processName }}
+                  {{ selectedProcess.processName }}{{ selectedProcess.processNameEn ? ` / ${selectedProcess.processNameEn}` : '' }}
                 </h2>
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{{ selectedProcess.description || '無詳細描述與作業說明。' }}</p>
@@ -683,18 +660,7 @@ onMounted(load);
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">製程代號 <span class="text-red-500">*</span></label>
-                  <input
-                    v-model="form.processCode"
-                    type="text"
-                    required
-                    placeholder="例如：P-100"
-                    class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-                
-                <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">製程名稱 <span class="text-red-500">*</span></label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">製程中文名稱 <span class="text-red-500">*</span></label>
                   <input
                     v-model="form.processName"
                     type="text"
@@ -703,18 +669,15 @@ onMounted(load);
                     class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">製程英文名稱</label>
+                  <input v-model="form.processNameEn" type="text" placeholder="例如：Laser Cutting" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                </div>
               </div>
 
               <div class="space-y-1.5">
-                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制類型 <span class="text-red-500">*</span></label>
-                <select
-                  v-model="form.controlScope"
-                  required
-                  class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option v-for="option in controlScopeOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
-                </select>
-                <p class="text-[11px] text-slate-400">SPC 管制項目會依此設定過濾可選的工站製程。</p>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">排列順序</label>
+                <input v-model.number="form.sequenceNo" type="number" min="0" step="1" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
 
               <div class="space-y-1.5">
@@ -799,7 +762,7 @@ onMounted(load);
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">所屬工站製程</label>
                 <div class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-500">
-                  {{ selectedProcess?.processCode }} - {{ selectedProcess?.processName }}
+                  {{ selectedProcess?.processName }}{{ selectedProcess?.processNameEn ? ` / ${selectedProcess.processNameEn}` : '' }}
                 </div>
               </div>
 
@@ -872,13 +835,13 @@ onMounted(load);
                   <div
                     v-for="(tank, index) in machineForm.tanks"
                     :key="tank.id || index"
-                    class="grid grid-cols-1 md:grid-cols-[1fr_1.5fr_auto_auto] gap-2 items-center"
+                    class="grid grid-cols-1 md:grid-cols-[1fr_1.3fr_1.3fr_6rem_auto_auto] gap-2 items-center"
                   >
                     <input
-                      v-model="tank.tankCode"
+                      :value="tank.id ? tank.tankCode : '自動產生'"
                       type="text"
-                      placeholder="槽體代號，可空白"
-                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                      readonly
+                      class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-sm text-slate-500 dark:text-slate-400"
                     />
                     <input
                       v-model="tank.tankName"
@@ -886,6 +849,20 @@ onMounted(load);
                       required
                       placeholder="槽體名稱，例如：除鈀槽"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                    <input
+                      v-model="tank.tankNameEn"
+                      type="text"
+                      placeholder="英文名稱（選填）"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                    <input
+                      v-model.number="tank.sequenceNo"
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="順序"
+                      class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                     />
                     <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
                       <input v-model="tank.isActive" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
@@ -942,7 +919,7 @@ onMounted(load);
             <div>
               <h3 class="text-base font-black text-slate-800 dark:text-white">工站量測記錄</h3>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {{ measurementProcess?.processCode || selectedProcess?.processCode }} / {{ measurementProcess?.processName || selectedProcess?.processName }}，共 {{ measurementTotal }} 筆
+                {{ measurementProcess?.processName || selectedProcess?.processName }}，共 {{ measurementTotal }} 筆
               </p>
             </div>
             <div class="flex items-center gap-2">

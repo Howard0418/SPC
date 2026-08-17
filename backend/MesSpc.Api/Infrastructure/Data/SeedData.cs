@@ -130,10 +130,11 @@ public static class SeedData
         }
 
         var ruleGrp = EnsureDefaultSpcRules(db);
-        foreach (var chartType in db.ControlChartTypes.Where(x => !x.RuleGroupId.HasValue || x.RuleGroupId == ruleGrp.Id).ToList())
-        {
-            EnsureDefaultChartTypeRules(db, chartType, ruleGrp.Id);
-        }
+        foreach (var chartType in db.ControlChartTypes.ToList())
+            chartType.RuleGroupId = ruleGrp.Id;
+        foreach (var item in db.PartProcessCharacteristics.Where(x => x.RuleGroupId != null).ToList())
+            item.RuleGroupId = null;
+        db.SaveChanges();
         db.SaveChanges();
 
         if (!db.Parts.Any())
@@ -156,8 +157,8 @@ public static class SeedData
 
             var xbarType = db.ControlChartTypes.First(x => x.ChartTypeCode == "XBAR_R");
             var pType = db.ControlChartTypes.First(x => x.ChartTypeCode == "P");
-            var char1 = new QualityCharacteristic { CharacteristicCode = "LEN-001", CharacteristicName = "模組長度", DataCategory = "Variable", Unit = "mm", DefaultChartTypeId = xbarType.Id };
-            var char2 = new QualityCharacteristic { CharacteristicCode = "DEF-001", CharacteristicName = "表面刮傷率", DataCategory = "Attribute", Unit = "%", DefaultChartTypeId = pType.Id };
+            var char1 = new QualityCharacteristic { CharacteristicCode = "LEN-001", CharacteristicName = "模組長度", DataCategory = "Variable", DefaultChartTypeId = xbarType.Id };
+            var char2 = new QualityCharacteristic { CharacteristicCode = "DEF-001", CharacteristicName = "表面刮傷率", DataCategory = "Attribute", DefaultChartTypeId = pType.Id };
             db.QualityCharacteristics.AddRange(char1, char2);
             db.SaveChanges();
 

@@ -3,6 +3,8 @@ import ModuleGuide from "../components/ModuleGuide.vue";
 import { onBeforeUnmount, onMounted, ref, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
+import { isEditor } from "../utils/auth";
+import { CONTROL_SCOPE, normalizeControlScope } from "../utils/controlScope";
 import {
   FolderTree,
   Plus,
@@ -25,6 +27,8 @@ import {
 } from "lucide-vue-next";
 
 const rows = ref([]);
+const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
+const canPermanentlyDelete = computed(() => !authOn || isEditor());
 const parts = ref([]);
 const processes = ref([]);
 const filterProcesses = ref([]);
@@ -54,10 +58,13 @@ const searchQuery = ref("");
 const statusFilter = ref("all");
 const processFilter = ref("all");
 const scopeFilter = ref("all");
+const tankFilter = ref("all");
 
 const showModal = ref(false);
 const modalMode = ref("create");
 const currentId = ref(null);
+const originalDisplayMode = ref("CONTROL_CHART");
+const isHydratingForm = ref(false);
 const advancedMode = ref(localStorage.getItem("ppcAdvancedMode") === "true");
 const formMode = ref("quick"); // 'quick', 'advanced'
 
@@ -68,6 +75,7 @@ const form = ref({
   machineId: null,
   tankId: null,
   characteristicId: null,
+  sequenceNo: 0,
   unit: "",
   usl: null,
   lsl: null,
@@ -85,19 +93,11 @@ const form = ref({
 });
 const formErr = ref("");
 
-function normalizeControlScope(scope) {
-  const value = String(scope || "PRODUCT").trim().toUpperCase();
-  if (["PROD", "PRODUCT"].includes(value)) return "PRODUCT";
-  if (["PROC", "PROCESS"].includes(value)) return "PROCESS";
-  if (["CHEM", "CHEMICAL"].includes(value)) return "CHEMICAL";
-  return value;
-}
-
 const controlScopes = computed(() => {
   const labelDefaults = {
     PRODUCT: "產品管制",
     PROCESS: "製程管制",
-    CHEMICAL: "藥液管制"
+    CHEM: "藥液管制"
   };
   const scopeMap = new Map();
   const enabledGroups = groups.value.filter(g => g.isEnabled !== false);
@@ -110,7 +110,7 @@ const controlScopes = computed(() => {
       const group = enabledGroups.find(g => normalizeControlScope(g.groupCode) === id);
       let tone = "blue";
       if (id === "PROCESS") tone = "purple";
-      else if (id === "CHEMICAL") tone = "teal";
+      else if (id === CONTROL_SCOPE.CHEM) tone = "teal";
       else if (id === "PRODUCT") tone = "blue";
       else if (id.includes("DUST") || group?.groupName?.includes("落塵")) tone = "amber";
       else tone = "slate";
@@ -127,6 +127,16 @@ const controlScopes = computed(() => {
 const filterControlScopes = computed(() => {
   const scopesWithRows = new Set(rows.value.map(row => normalizeControlScope(row.controlScope)));
   return controlScopes.value.filter(scope => scopesWithRows.has(scope.id));
+});
+
+const filterTanks = computed(() => {
+  const tankIds = new Set(rows.value
+    .filter(row => processFilter.value === "all" || row.processId === Number(processFilter.value))
+    .map(row => Number(row.tankId))
+    .filter(Boolean));
+  return tanks.value
+    .filter(tank => tankIds.has(Number(tank.id)))
+    .sort((a, b) => (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0) || String(a.tankName || "").localeCompare(String(b.tankName || "")));
 });
 
 const formulaOptions = [
@@ -213,7 +223,7 @@ async function load() {
     rows.value = resMain.data || [];
     parts.value = resParts.data || [];
     processes.value = resProc.data || [];
-    formProcesses.value = processes.value.filter(p => normalizeControlScope(p.controlScope) === normalizeControlScope(form.value.controlScope));
+    formProcesses.value = processes.value;
     characteristics.value = resChar.data || [];
     chartTypes.value = resTypes.data || [];
     ruleGroups.value = resRules.data || [];
@@ -289,8 +299,7 @@ const selectedCharacteristic = computed(() =>
 const availableCharacteristics = computed(() =>
   characteristics.value.filter(x =>
     x.isEnabled !== false &&
-    x.isSpcEnabled !== false &&
-    normalizeControlScope(x.controlScope) === normalizeControlScope(form.value.controlScope)
+    x.isSpcEnabled !== false
   )
 );
 
@@ -323,10 +332,7 @@ function findDefaultChartTypeId(mode = "CONTROL_CHART", dataCategory = null) {
   )?.id || null;
 }
 
-const effectiveUnit = computed(() => form.value.unit || selectedCharacteristic.value?.unit || "-");
-const isUnitOverridden = computed(() =>
-  !!form.value.unit && !!selectedCharacteristic.value?.unit && form.value.unit !== selectedCharacteristic.value.unit
-);
+const effectiveUnit = computed(() => form.value.unit || "-");
 const isFormulaOverridden = computed(() => !!form.value.formulaConfigJson);
 const hasManualControlLimits = computed(() =>
   form.value.ucl !== null && form.value.ucl !== "" ||
@@ -346,6 +352,7 @@ watch(() => form.value.controlScope, async (newScope) => {
     form.value.characteristicId = null;
     form.value.unit = "";
   }
+  if (isHydratingForm.value) return;
   form.value.displayMode = getControlScopeGroupType(newScope);
   if (form.value.displayMode === "TREND_CHART") {
     form.value.chartTypeId = null;
@@ -360,12 +367,12 @@ watch(() => form.value.controlScope, async (newScope) => {
   if (newScope !== "PRODUCT") {
     form.value.partId = null;
   }
-  if (newScope !== "CHEMICAL") {
+  if (newScope !== CONTROL_SCOPE.CHEM) {
     form.value.machineId = null;
     form.value.tankId = null;
   }
   try {
-    const { data } = await api.get("/processes", { params: { controlScope: newScope, configuredOnly: false } });
+    const { data } = await api.get("/processes");
     formProcesses.value = data || [];
     if (form.value.processId && !formProcesses.value.some(p => p.id === Number(form.value.processId))) {
       form.value.processId = null;
@@ -377,6 +384,7 @@ watch(() => form.value.controlScope, async (newScope) => {
 
 watch(scopeFilter, async (newScope) => {
   processFilter.value = "all";
+  tankFilter.value = "all";
   try {
     const { data } = await api.get("/processes", { params: { controlScope: newScope, configuredOnly: true } });
     filterProcesses.value = data || [];
@@ -385,8 +393,13 @@ watch(scopeFilter, async (newScope) => {
   }
 });
 
+watch(processFilter, () => {
+  if (tankFilter.value !== "all" && !filterTanks.value.some(t => Number(t.id) === Number(tankFilter.value))) {
+    tankFilter.value = "all";
+  }
+});
+
 watch(() => form.value.characteristicId, () => {
-  form.value.displayMode = getControlScopeGroupType(form.value.controlScope);
   if (form.value.displayMode === "TREND_CHART") {
     form.value.chartTypeId = null;
   } else if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
@@ -394,7 +407,22 @@ watch(() => form.value.characteristicId, () => {
   }
 });
 
+watch(() => form.value.displayMode, (newMode) => {
+  if (isHydratingForm.value) return;
+  if (newMode === "TREND_CHART") {
+    form.value.chartTypeId = null;
+    form.value.formulaConfigJson = "";
+    form.value.selectedRuleCodes = [];
+    form.value.ucl = null;
+    form.value.cl = null;
+    form.value.lcl = null;
+  } else if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
+    form.value.chartTypeId = findDefaultChartTypeId("CONTROL_CHART", selectedCharacteristic.value?.dataCategory);
+  }
+});
+
 watch(() => form.value.processId, () => {
+  if (isHydratingForm.value) return;
   if (!availableMachines.value.some(m => m.id === Number(form.value.machineId))) {
     form.value.machineId = null;
   }
@@ -402,6 +430,7 @@ watch(() => form.value.processId, () => {
 });
 
 watch(() => form.value.machineId, async (newMachineId, oldMachineId) => {
+  if (isHydratingForm.value) return;
   if (!newMachineId) {
     availableTanks.value = [];
     form.value.tankId = null;
@@ -424,10 +453,10 @@ const filteredRows = computed(() => {
     const q = searchQuery.value.toLowerCase();
     const pNo = row.part?.partNo || "";
     const pName = row.part?.partName || "";
-    const prCode = row.process?.processCode || "";
     const prName = row.process?.processName || "";
-    const chCode = row.characteristic?.characteristicCode || "";
+    const prNameEn = row.process?.processNameEn || "";
     const chName = row.characteristic?.characteristicName || "";
+    const chNameEn = row.characteristic?.characteristicNameEn || "";
     const machineCode = row.machine?.machineCode || "";
     const machineName = row.machine?.machineName || "";
     const tankCode = row.tank?.tankCode || "";
@@ -435,8 +464,8 @@ const filteredRows = computed(() => {
 
     const matchQuery = !q || 
       pNo.toLowerCase().includes(q) || pName.toLowerCase().includes(q) ||
-      prCode.toLowerCase().includes(q) || prName.toLowerCase().includes(q) ||
-      chCode.toLowerCase().includes(q) || chName.toLowerCase().includes(q) ||
+      prName.toLowerCase().includes(q) || prNameEn.toLowerCase().includes(q) ||
+      chName.toLowerCase().includes(q) || chNameEn.toLowerCase().includes(q) ||
       machineCode.toLowerCase().includes(q) || machineName.toLowerCase().includes(q) ||
       tankCode.toLowerCase().includes(q) || tankName.toLowerCase().includes(q);
 
@@ -446,9 +475,10 @@ const filteredRows = computed(() => {
 
     const matchProc = processFilter.value === "all" || row.processId === parseInt(processFilter.value);
     const matchScope = scopeFilter.value === "all" || normalizeControlScope(row.controlScope) === normalizeControlScope(scopeFilter.value);
+    const matchTank = tankFilter.value === "all" || row.tankId === Number(tankFilter.value);
 
-    return matchQuery && matchStatus && matchProc && matchScope;
-  });
+    return matchQuery && matchStatus && matchProc && matchScope && matchTank;
+  }).sort((a, b) => (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0) || a.id - b.id);
 });
 
 function validateStep(step) {
@@ -466,7 +496,7 @@ function validateStep(step) {
       formErr.value = "請選擇產品料號";
       return false;
     }
-    if (form.value.controlScope === "CHEMICAL") {
+    if (form.value.controlScope === CONTROL_SCOPE.CHEM) {
       if (!form.value.machineId) {
         formErr.value = "請選擇生產設備機台";
         return false;
@@ -524,9 +554,10 @@ async function openCreateModal() {
   availableTanks.value = [];
   const characteristic = characteristics.value[0] || null;
   const displayMode = getControlScopeGroupType("PRODUCT");
+  originalDisplayMode.value = displayMode;
   
   try {
-    const { data } = await api.get("/processes", { params: { controlScope: "PRODUCT", configuredOnly: false } });
+    const { data } = await api.get("/processes");
     formProcesses.value = data || [];
   } catch (e) {
     console.error(e);
@@ -539,6 +570,7 @@ async function openCreateModal() {
     machineId: null,
     tankId: null,
     characteristicId: characteristic?.id || null,
+    sequenceNo: 0,
     unit: characteristic?.unit || "",
     usl: null, lsl: null, ucl: null, cl: null, lcl: null, targetValue: null,
     sampleSize: 5,
@@ -560,15 +592,15 @@ async function openEditModal(item) {
   formMode.value = "quick";
   formErr.value = "";
 
-  const scope = item.controlScope || (item.partId ? "PRODUCT" : "PROCESS");
+  const scope = normalizeControlScope(item.controlScope || (item.partId ? CONTROL_SCOPE.PRODUCT : CONTROL_SCOPE.PROCESS));
   try {
-    const { data } = await api.get("/processes", { params: { controlScope: scope, configuredOnly: false } });
+    const { data } = await api.get("/processes");
     formProcesses.value = data || [];
   } catch (e) {
     console.error(e);
   }
 
-  if (scope === "CHEMICAL" && item.machineId) {
+  if (scope === CONTROL_SCOPE.CHEM && item.machineId) {
     try {
       const { data } = await api.get(`/machines/${item.machineId}/tanks`);
       availableTanks.value = data || [];
@@ -580,10 +612,12 @@ async function openEditModal(item) {
     availableTanks.value = [];
   }
 
-  const displayMode = getControlScopeGroupType(scope);
+  const displayMode = item.displayMode === "TREND_CHART" ? "TREND_CHART" : "CONTROL_CHART";
+  originalDisplayMode.value = displayMode;
   const existingChartTypeId = getChartTypeGroupType(item.chartTypeId) === displayMode ? item.chartTypeId : null;
   const itemDataCategory = item.characteristic?.dataCategory || characteristics.value.find(x => x.id === Number(item.characteristicId))?.dataCategory;
 
+  isHydratingForm.value = true;
   form.value = {
     controlScope: scope,
     partId: item.partId || null,
@@ -591,6 +625,7 @@ async function openEditModal(item) {
     machineId: item.machineId || null,
     tankId: item.tankId || null,
     characteristicId: item.characteristicId || null,
+    sequenceNo: item.sequenceNo ?? 0,
     unit: item.unit ?? item.characteristic?.unit ?? "",
     usl: item.usl ?? null,
     lsl: item.lsl ?? null,
@@ -606,6 +641,8 @@ async function openEditModal(item) {
     isRequired: item.isRequired ?? true,
     isEnabled: item.isEnabled ?? true
   };
+  await nextTick();
+  isHydratingForm.value = false;
   try {
     const { data } = await api.get(`/part-process-characteristics/${item.id}/rules`);
     form.value.selectedRuleCodes = displayMode === "CONTROL_CHART" ? (data?.rules || [])
@@ -615,11 +652,6 @@ async function openEditModal(item) {
     formErr.value = "載入管制規則失敗：" + getApiErrorMessage(e);
   }
   showModal.value = true;
-}
-
-function applyCharacteristicUnit() {
-  const characteristic = characteristics.value.find(x => x.id === Number(form.value.characteristicId));
-  form.value.unit = characteristic?.unit || "";
 }
 
 async function save() {
@@ -645,11 +677,10 @@ async function save() {
     formErr.value = "工站製程與檢驗特性皆為必填項目。";
     return;
   }
-  if (form.value.controlScope === "CHEMICAL" && (!form.value.machineId || !form.value.tankId)) {
+  if (form.value.controlScope === CONTROL_SCOPE.CHEM && (!form.value.machineId || !form.value.tankId)) {
     formErr.value = "藥水管制項目必須選擇線別/機台與槽體。";
     return;
   }
-  form.value.displayMode = getControlScopeGroupType(form.value.controlScope);
   if (form.value.displayMode === "CONTROL_CHART" && !form.value.chartTypeId) {
     form.value.chartTypeId = findDefaultChartTypeId(form.value.displayMode, selectedCharacteristic.value?.dataCategory);
   }
@@ -661,6 +692,20 @@ async function save() {
     formErr.value = `目前選擇的是${selectedDisplayModeLabel.value}，不能同時選擇另一種圖表類型。`;
     return;
   }
+  if (modalMode.value === "edit" && originalDisplayMode.value !== form.value.displayMode) {
+    const fromLabel = originalDisplayMode.value === "TREND_CHART" ? "量測值趨勢圖" : "SPC 管制圖";
+    const toLabel = form.value.displayMode === "TREND_CHART" ? "量測值趨勢圖" : "SPC 管制圖";
+    const cleared = form.value.displayMode === "TREND_CHART"
+      ? "管制圖類型、UCL／CL／LCL、公式、判異規則，以及可重新計算的舊 SPC 計算結果"
+      : "可重新計算的舊圖表計算結果";
+    const confirmed = confirm(
+      `確定將「${fromLabel}」轉換為「${toLabel}」？\n\n` +
+      `保留：所有量測資料、USL／LSL、目標值、單位、製程與槽位。\n` +
+      `清除：${cleared}。\n\n` +
+      "此操作不會刪除原始量測資料。"
+    );
+    if (!confirmed) return;
+  }
   formErr.value = "";
   loading.value = true;
 
@@ -671,7 +716,7 @@ async function save() {
       partId: form.value.controlScope === "PRODUCT" ? parseInt(form.value.partId) : null,
       processId: parseInt(form.value.processId),
       machineId: form.value.machineId ? parseInt(form.value.machineId) : null,
-      tankId: form.value.controlScope === "CHEMICAL" && form.value.tankId ? parseInt(form.value.tankId) : null,
+      tankId: form.value.controlScope === CONTROL_SCOPE.CHEM && form.value.tankId ? parseInt(form.value.tankId) : null,
       characteristicId: parseInt(form.value.characteristicId),
       usl: form.value.usl !== "" && form.value.usl !== null ? parseFloat(form.value.usl) : null,
       lsl: form.value.lsl !== "" && form.value.lsl !== null ? parseFloat(form.value.lsl) : null,
@@ -695,9 +740,6 @@ async function save() {
       savedItem = data;
       successAlert("成功更新檢驗基準");
     }
-    await api.put(`/part-process-characteristics/${savedItem.id}/rules`, {
-      selectedRuleCodes: form.value.displayMode === "CONTROL_CHART" ? form.value.selectedRuleCodes : []
-    });
     showModal.value = false;
     await load();
   } catch (e) {
@@ -716,6 +758,41 @@ async function confirmDelete(item) {
     await api.delete(`/part-process-characteristics/${item.id}`);
     rows.value = rows.value.filter(x => x.id !== item.id);
     successAlert("成功刪除檢驗基準");
+  } catch (e) {
+    err.value = getApiErrorMessage(e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function confirmPurge(item) {
+  const pNo = item.controlScope === "PRODUCT" ? (item.part?.partNo || item.partId) : scopeLabel(item.controlScope);
+  const cName = item.characteristic?.characteristicName || item.characteristicId;
+  const label = `${pNo} - ${cName}`;
+  loading.value = true;
+  err.value = "";
+  try {
+    const { data: impact } = await api.get(`/part-process-characteristics/${item.id}/delete-impact`);
+    const impactText = [
+      `計量量測：${impact.variableMeasurements} 筆`,
+      `計數量測：${impact.attributeMeasurements} 筆`,
+      `SPC 計算結果：${impact.calculationResults} 筆`,
+      `異常警報：${impact.alerts} 筆`,
+      `管制界限分段：${impact.controlLimitSegments} 筆`
+    ].join("\n");
+    if (impact.closedAlerts > 0) {
+      alert(`無法永久清除「${label}」。\n\n此項目包含 ${impact.closedAlerts} 筆已結案異常，請改為停用。`);
+      return;
+    }
+    if (!confirm(`永久清除「${label}」？\n\n${impactText}\n\n此動作無法復原，且不會刪除同一匯入批次的其他管制項目。`)) return;
+    const typed = prompt(`請輸入「${label}」確認永久清除：`);
+    if (typed !== label) {
+      if (typed !== null) alert("輸入內容不符，已取消永久清除。");
+      return;
+    }
+    await api.delete(`/part-process-characteristics/${item.id}`, { params: { purge: true } });
+    rows.value = rows.value.filter(x => x.id !== item.id);
+    successAlert("已永久清除管制項目及其關聯量測資料");
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -1005,7 +1082,7 @@ onBeforeUnmount(() => {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜尋料號、製程或檢驗特性..."
+          placeholder="搜尋料號、製程、槽位或檢驗特性..."
           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all"
         />
       </div>
@@ -1026,7 +1103,19 @@ onBeforeUnmount(() => {
         >
           <option value="all">全廠所有製程</option>
           <option v-for="p in filterProcesses" :key="p.id" :value="p.id">
-            {{ p.processCode }} - {{ p.processName }}
+            {{ p.processName }}
+          </option>
+        </select>
+
+        <select
+          v-model="tankFilter"
+          :disabled="filterTanks.length === 0"
+          class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          title="依槽位篩選 SPC 管制項目"
+        >
+          <option value="all">全部槽位</option>
+          <option v-for="tank in filterTanks" :key="tank.id" :value="tank.id">
+            {{ tank.tankName }}
           </option>
         </select>
 
@@ -1072,10 +1161,10 @@ onBeforeUnmount(() => {
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
               <th class="py-4 px-6 w-16 text-center">ID</th>
-              <th class="py-4 px-6">工站製程與生產機台</th>
+              <th class="py-4 px-6">製程、線別與槽位</th>
               <th class="py-4 px-6">管制類型與檢驗特性</th>
               <th class="py-4 px-6">規格限值與抽樣配置</th>
-              <th class="py-4 px-6">管制圖與規則來源</th>
+              <th class="py-4 px-6">管制圖與判異規則</th>
               <th class="py-4 px-6 text-center">匯入筆數</th>
               <th class="py-4 px-6 text-center">狀態</th>
               <th class="py-4 px-6 text-right">操作</th>
@@ -1098,26 +1187,25 @@ onBeforeUnmount(() => {
               <td class="py-5 px-6">
                 <div class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
                   <Layers class="w-4 h-4 text-cyan-500" />
-                  {{ item.process?.processCode || `Proc #${item.processId}` }}
+                  {{ item.process?.processName || '未命名製程' }}
                   <span class="text-slate-500 text-xs font-normal ml-1">{{ item.process?.processName }}</span>
+                  <span v-if="item.process?.processNameEn" class="text-cyan-600 text-xs font-normal">{{ item.process.processNameEn }}</span>
                 </div>
-                <!-- Associated Machines List -->
-                <div class="mt-2 flex flex-wrap gap-1 items-center">
-                  <span class="text-[10px] text-slate-400 font-bold mr-1">配置機台:</span>
-                  <span v-if="machines.filter(m => m.processId === item.processId).length === 0" class="text-[10px] text-slate-400 italic">無配置機台</span>
-                  <span
-                    v-for="mach in machines.filter(m => m.processId === item.processId)"
-                    :key="mach.id"
-                    class="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono font-bold border border-slate-200 dark:border-slate-700"
-                  >
-                    {{ mach.machineCode }}
-                  </span>
+                <div class="mt-2 flex flex-col gap-1 text-[11px]">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-slate-400 font-bold">線別:</span>
+                    <span class="font-mono font-bold text-teal-700 dark:text-teal-300">{{ item.machine?.machineCode || '-' }}</span>
+                    <span class="text-slate-500 dark:text-slate-400">{{ item.machine?.machineName || '' }}</span>
+                  </div>
+                  <div v-if="normalizeControlScope(item.controlScope) === CONTROL_SCOPE.CHEM" class="flex items-center">
+                    <span class="text-slate-500 dark:text-slate-400 font-bold">槽位:{{ item.tank?.tankName || '-' }}</span>
+                  </div>
                 </div>
               </td>
               <td class="py-5 px-6">
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
                   <Package v-if="(item.controlScope || 'PRODUCT') === 'PRODUCT'" class="w-4 h-4 text-blue-500" />
-                  <Layers v-else class="w-4 h-4" :class="(item.controlScope || 'PRODUCT') === 'CHEMICAL' ? 'text-teal-500' : 'text-purple-500'" />
+                  <Layers v-else class="w-4 h-4" :class="normalizeControlScope(item.controlScope) === CONTROL_SCOPE.CHEM ? 'text-teal-500' : 'text-purple-500'" />
                   {{ scopeLabel(item.controlScope) }}
                   <span v-if="(item.controlScope || 'PRODUCT') === 'PRODUCT'" class="text-slate-500 text-xs font-normal ml-1">
                     {{ item.part?.partNo || `Part #${item.partId}` }} {{ item.part?.partName }}
@@ -1126,17 +1214,9 @@ onBeforeUnmount(() => {
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs mt-2">
                   <Sliders class="w-3.5 h-3.5 text-pink-500 flex-shrink-0" />
                   <span>{{ item.characteristic?.characteristicName || `Char #${item.characteristicId}` }}</span>
-                  <span class="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">[{{ item.characteristic?.characteristicCode }}]</span>
+                  <span v-if="item.characteristic?.characteristicNameEn" class="text-cyan-600 dark:text-cyan-400 font-normal">{{ item.characteristic.characteristicNameEn }}</span>
                   <span v-if="item.unit || item.characteristic?.unit" class="text-xs text-slate-400 font-normal">({{ item.unit || item.characteristic?.unit }})</span>
                   <span v-if="item.isRequired" class="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800 ml-1 tracking-wider">必檢</span>
-                </div>
-                <div v-if="(item.controlScope || 'PRODUCT') === 'CHEMICAL'" class="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
-                  <span class="px-1.5 py-0.5 rounded bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
-                    線別/機台: {{ item.machine?.machineCode || '-' }} {{ item.machine?.machineName || '' }}
-                  </span>
-                  <span class="px-1.5 py-0.5 rounded bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
-                    槽體: {{ item.tank?.tankName || item.tank?.tankCode || '-' }}
-                  </span>
                 </div>
               </td>
               <td class="py-5 px-6">
@@ -1173,9 +1253,9 @@ onBeforeUnmount(() => {
                 <div v-if="item.displayMode !== 'TREND_CHART'" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <AlertTriangle class="w-3 h-3 flex-shrink-0 opacity-70" />
                   <span v-if="getEffectiveRuleGroupId(item)" class="font-semibold">
-                    {{ item.ruleGroupId ? '項目專屬規則' : (ruleGroupMap[getEffectiveRuleGroupId(item)] || `規則 #${getEffectiveRuleGroupId(item)}`) }}
+                    WE 八大規則
                   </span>
-                  <span v-else class="italic opacity-80">此管制圖未套用規則</span>
+                  <span v-else class="font-semibold">WE 八大規則</span>
                 </div>
                 <div v-if="item.displayMode !== 'TREND_CHART'" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <Sliders class="w-3 h-3 flex-shrink-0 opacity-70" />
@@ -1237,6 +1317,15 @@ onBeforeUnmount(() => {
                   title="刪除檢驗基準"
                 >
                   <Trash2 class="w-4 h-4" />
+                </button>
+                <button
+                  v-if="canPermanentlyDelete"
+                  @click="confirmPurge(item)"
+                  type="button"
+                  class="inline-flex items-center justify-center p-2 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-all border border-red-700"
+                  title="永久清除管制項目及關聯量測資料"
+                >
+                  <AlertTriangle class="w-4 h-4" />
                 </button>
               </td>
             </tr>
@@ -1379,7 +1468,7 @@ onBeforeUnmount(() => {
                   class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                 >
                   <option disabled value="null">-- 選擇製程 --</option>
-                  <option v-for="pr in formProcesses" :key="pr.id" :value="pr.id">{{ pr.processCode }} - {{ pr.processName }}</option>
+                  <option v-for="pr in formProcesses" :key="pr.id" :value="pr.id">{{ pr.processName }}</option>
                 </select>
               </div>
 
@@ -1403,7 +1492,7 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <div v-if="form.controlScope === 'CHEMICAL'" class="p-4 bg-teal-50/60 dark:bg-teal-950/10 border border-teal-200 dark:border-teal-900/70 rounded-2xl space-y-4">
+              <div v-if="form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 bg-teal-50/60 dark:bg-teal-950/10 border border-teal-200 dark:border-teal-900/70 rounded-2xl space-y-4">
                 <div class="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300">
                   <Cpu class="w-4 h-4" />
                   <span>藥水管制定位</span>
@@ -1413,7 +1502,7 @@ onBeforeUnmount(() => {
                     <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">線別 / 機台 <span class="text-red-500">*</span></label>
                     <select
                       v-model="form.machineId"
-                      :required="form.controlScope === 'CHEMICAL' && currentStep === 1"
+                      :required="form.controlScope === CONTROL_SCOPE.CHEM && currentStep === 1"
                       class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
                     >
                       <option :value="null">-- 選擇線別/機台 --</option>
@@ -1425,12 +1514,12 @@ onBeforeUnmount(() => {
                     <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">槽體 <span class="text-red-500">*</span></label>
                     <select
                       v-model="form.tankId"
-                      :required="form.controlScope === 'CHEMICAL' && currentStep === 1"
+                      :required="form.controlScope === CONTROL_SCOPE.CHEM && currentStep === 1"
                       :disabled="!form.machineId"
                       class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
                     >
                       <option :value="null">-- 選擇槽體 --</option>
-                      <option v-for="tank in availableTanks" :key="tank.id" :value="tank.id">{{ tank.tankName }} [{{ tank.tankCode }}]</option>
+                      <option v-for="tank in availableTanks" :key="tank.id" :value="tank.id">{{ tank.tankName }}</option>
                     </select>
                   </div>
                 </div>
@@ -1458,7 +1547,7 @@ onBeforeUnmount(() => {
                 <div v-else class="space-y-1.5">
                   <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">產品料號</label>
                   <div class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-500 dark:text-slate-400">
-                    {{ form.controlScope === 'CHEMICAL' ? '藥水管制不需產品料號' : '製程管制不需產品料號' }}
+                    {{ form.controlScope === CONTROL_SCOPE.CHEM ? '藥水管制不需產品料號' : '製程管制不需產品料號' }}
                   </div>
                 </div>
 
@@ -1466,17 +1555,34 @@ onBeforeUnmount(() => {
                   <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">檢驗特性 <span class="text-red-500">*</span></label>
                   <select
                     v-model="form.characteristicId"
-                    @change="applyCharacteristicUnit"
                     :required="currentStep === 1"
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   >
                     <option disabled value="null">-- 選擇特性 --</option>
-                    <option v-for="ch in availableCharacteristics" :key="ch.id" :value="ch.id">{{ ch.characteristicCode }} - {{ ch.characteristicName }}</option>
+                    <option v-for="ch in availableCharacteristics" :key="ch.id" :value="ch.id">{{ ch.characteristicName }}{{ ch.characteristicNameEn ? ` / ${ch.characteristicNameEn}` : '' }}</option>
                   </select>
+                </div>
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">排列順序</label>
+                  <input v-model.number="form.sequenceNo" type="number" min="0" step="1" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" />
                 </div>
               </div>
 
               <!-- ⚡ 快速建檔模式：新增預設管制圖與顯示類型設定 -->
+              <div class="space-y-1.5 pt-2">
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
+                <select
+                  v-model="form.displayMode"
+                  class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                >
+                  <option value="CONTROL_CHART">SPC 管制圖</option>
+                  <option value="TREND_CHART">量測值趨勢圖</option>
+                </select>
+                <p class="text-[11px] text-slate-400">
+                  切換為趨勢圖會保留量測資料、規格界限與目標值，並移除不適用的管制圖類型、管制線、公式與規則設定。
+                </p>
+              </div>
+
               <div v-if="formMode === 'quick'" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
                   <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ selectedDisplayModeLabel }}類型</label>
@@ -1612,9 +1718,7 @@ onBeforeUnmount(() => {
                   <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
                     <div class="text-slate-400 font-bold">量測單位</div>
                     <div class="mt-1 font-black text-slate-800 dark:text-white">{{ effectiveUnit }}</div>
-                    <div class="mt-1 text-[11px]" :class="isUnitOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                      {{ isUnitOverridden ? '此管制項目覆寫' : '繼承品質特性主檔' }}
-                    </div>
+                    <div class="mt-1 text-[11px] text-slate-400">由此管制項目設定</div>
                   </div>
                   <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
                     <div class="text-slate-400 font-bold">管制圖類型</div>
@@ -1630,9 +1734,9 @@ onBeforeUnmount(() => {
                   </div>
                   <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
                     <div class="text-slate-400 font-bold">管制規則</div>
-                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ hasItemRules ? `項目專屬 ${form.selectedRuleCodes.length} 條` : '未啟用規則' }}</div>
+                    <div class="mt-1 font-black text-slate-800 dark:text-white">WE 八大規則</div>
                     <div class="mt-1 text-[11px]" :class="hasItemRules ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                      {{ hasItemRules ? '此管制項目專屬設定' : '此項目不執行異常規則' }}
+                      全部管制項目統一套用，不支援項目專屬設定
                     </div>
                   </div>
                 </div>
@@ -1652,12 +1756,7 @@ onBeforeUnmount(() => {
                     placeholder="例如：mm、μm、%、mg/L"
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   />
-                  <p class="text-[11px] text-slate-400">
-                    <span :class="isUnitOverridden ? 'text-amber-600 dark:text-amber-400 font-bold' : ''">
-                      {{ isUnitOverridden ? '此管制項目已覆寫品質特性單位。' : '目前繼承或沿用品質特性主檔單位。' }}
-                    </span>
-                    切換檢驗特性時會帶入特性主檔的預設單位，之後可自行修改。
-                  </p>
+                  <p class="text-[11px] text-slate-400">單位只屬於此製程／槽體管制項目，可依實際量測方式設定。</p>
                 </div>
 
                 <!-- Custom Control Limits -->
@@ -1760,14 +1859,14 @@ onBeforeUnmount(() => {
                       <AlertTriangle class="w-4 h-4" /> 管制規則
                     </h4>
                     <p class="text-[11px] text-amber-700/70 dark:text-amber-300/70 mt-1">
-                      規則只套用於目前管制項目；全部不勾選時，此項目不執行異常規則。
+                      全部管制項目固定使用 WE 八大規則。
                     </p>
                   </div>
                   <div v-if="ruleLibrary.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label
                       v-for="rule in ruleLibrary"
                       :key="rule.ruleCode"
-                      class="flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all"
+                      class="flex items-start gap-2.5 p-3 rounded-xl border cursor-default transition-all"
                       :class="form.selectedRuleCodes.includes(rule.ruleCode)
                         ? 'bg-white dark:bg-slate-900 border-amber-400 dark:border-amber-700 shadow-sm'
                         : 'bg-amber-50/40 dark:bg-slate-900/40 border-amber-100 dark:border-slate-800 hover:border-amber-300'"
@@ -1776,6 +1875,7 @@ onBeforeUnmount(() => {
                         v-model="form.selectedRuleCodes"
                         type="checkbox"
                         :value="rule.ruleCode"
+                        disabled
                         class="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                       />
                       <span class="min-w-0">
@@ -1856,7 +1956,7 @@ onBeforeUnmount(() => {
                   分段管制線與界線試算
                 </h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" v-if="selectedPpc">
-                  {{ selectedPpc.process?.processCode }} ({{ selectedPpc.process?.processName }}) - {{ selectedPpc.characteristic?.characteristicName }}
+                  {{ selectedPpc.process?.processName }} - {{ selectedPpc.characteristic?.characteristicName }}
                 </p>
               </div>
             </div>

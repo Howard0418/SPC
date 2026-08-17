@@ -113,13 +113,13 @@ const cancelEdit = (list, item, index) => {
     <ModuleGuide title="模組指南：線別槽體設定">
       <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
           此頁面用來設定各線別內有哪些藥水槽體。SPC 資料匯入與藥液管制項目會依照「線別 → 槽體」對應到實際生產位置。<br/>
-          💡 <strong>操作建議：</strong> 請先建立或選擇線別，再新增該線別所包含的槽體。
+          💡 <strong>操作建議：</strong> 請先到「工站製程主檔」建立製程，再於此處選取製程並設定槽體。
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
           <div class="font-black text-blue-900 dark:text-blue-300">線別槽體設定操作說明</div>
-          <p><strong>建立線別：</strong>在左側「線別」區塊按新增，填入線別代號與名稱後儲存。</p>
-          <p><strong>建立槽體：</strong>先點選線別，再於右側「槽體」區塊新增槽體代號與名稱。</p>
-          <p><strong>維護順序：</strong>請依線別、槽體由左至右設定。</p>
+          <p><strong>線別來源：</strong>左側直接顯示「工站製程主檔」，不需要在本頁重複建立線別。</p>
+          <p><strong>建立槽體：</strong>先選取工站製程，再於右側新增槽體；代碼由系統自動產生。</p>
+          <p><strong>顯示順序：</strong>製程沿用工站製程主檔順序；槽體依各槽體的排列順序顯示。</p>
         </div>
     </ModuleGuide>
 
@@ -128,31 +128,22 @@ const cancelEdit = (list, item, index) => {
       <!-- Lines Column -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
         <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
-          <h2 class="font-bold flex items-center gap-2"><Server class="w-5 h-5 text-blue-500" /> 1. 線別 (Lines)</h2>
-          <button @click="addNewItem(lines, { lineCode: '', lineName: '', isActive: true, factoryId: 1 })" class="p-1.5 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-md transition-colors"><Plus class="w-4 h-4" /></button>
+          <div>
+            <h2 class="font-bold flex items-center gap-2"><Server class="w-5 h-5 text-blue-500" /> 1. 工站製程</h2>
+            <p class="text-[10px] text-slate-400 mt-1">資料來源：工站製程主檔</p>
+          </div>
         </div>
         <div class="flex-1 overflow-y-auto p-3 space-y-2">
           <div v-for="(line, idx) in lines" :key="line.id" 
                @click="selectLine(line)"
                :class="['p-3 rounded-xl border transition-all cursor-pointer', selectedLine?.id === line.id ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm' : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 bg-white dark:bg-slate-800']">
-            <div v-if="line._isEditing" class="space-y-2" @click.stop>
-              <input v-model="line.lineCode" placeholder="Line Code" class="w-full text-sm p-1.5 border rounded focus:ring-2 focus:ring-blue-500 outline-none" />
-              <input v-model="line.lineName" placeholder="Line Name" class="w-full text-sm p-1.5 border rounded focus:ring-2 focus:ring-blue-500 outline-none" />
-              <label class="flex items-center gap-2 text-xs text-slate-500 cursor-pointer"><input type="checkbox" v-model="line.isActive" /> 啟用</label>
-              <div class="flex justify-end gap-2 pt-2">
-                <button @click="cancelEdit(lines, line, idx)" class="p-1 text-slate-400 hover:text-slate-600"><X class="w-4 h-4" /></button>
-                <button @click="saveItem('lines', line)" class="p-1 text-emerald-500 hover:text-emerald-700"><Save class="w-4 h-4" /></button>
-              </div>
-            </div>
-            <div v-else class="flex justify-between items-center">
+            <div class="flex justify-between items-center">
               <div>
                 <div class="font-bold text-slate-800 dark:text-slate-100">{{ line.lineCode }}</div>
                 <div class="text-xs text-slate-500">{{ line.lineName || '---' }}</div>
+                <div v-if="line.lineNameEn" class="text-[10px] text-cyan-600 dark:text-cyan-400">{{ line.lineNameEn }}</div>
               </div>
-              <div class="flex gap-1" @click.stop>
-                <button @click="line._isEditing = true" class="p-1.5 text-slate-400 hover:text-blue-500 rounded"><Edit2 class="w-3.5 h-3.5" /></button>
-                <button @click="deleteItem('lines', lines, idx, line.id)" class="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 class="w-3.5 h-3.5" /></button>
-              </div>
+              <span :class="line.isActive ? 'text-emerald-500' : 'text-slate-400'" class="text-[10px] font-bold">{{ line.isActive ? '啟用' : '停用' }}</span>
             </div>
           </div>
           <div v-if="lines.length === 0" class="text-center p-6 text-slate-400 text-sm">無資料</div>
@@ -166,14 +157,16 @@ const cancelEdit = (list, item, index) => {
         </div>
         <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
           <h2 class="font-bold flex items-center gap-2"><Layers class="w-5 h-5 text-indigo-500" /> 2. 槽體 (Tanks)</h2>
-          <button @click="addNewItem(tanks, { tankCode: '', tankName: '', isActive: true, lineId: selectedLine?.id })" class="p-1.5 bg-indigo-100 text-indigo-600 hover:bg-indigo-200 rounded-md transition-colors"><Plus class="w-4 h-4" /></button>
+          <button @click="addNewItem(tanks, { tankCode: '', tankName: '', tankNameEn: '', sequenceNo: 0, isActive: true, lineId: selectedLine?.id })" class="p-1.5 bg-indigo-100 text-indigo-600 hover:bg-indigo-200 rounded-md transition-colors"><Plus class="w-4 h-4" /></button>
         </div>
         <div class="flex-1 overflow-y-auto p-3 space-y-2">
           <div v-for="(tank, idx) in tanks" :key="tank.id" 
                class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 bg-white dark:bg-slate-800 transition-all">
             <div v-if="tank._isEditing" class="space-y-2" @click.stop>
-              <input v-model="tank.tankCode" placeholder="Tank Code" class="w-full text-sm p-1.5 border rounded focus:ring-2 focus:ring-indigo-500 outline-none" />
-              <input v-model="tank.tankName" placeholder="Tank Name" class="w-full text-sm p-1.5 border rounded focus:ring-2 focus:ring-indigo-500 outline-none" />
+              <input :value="tank.id ? tank.tankCode : '儲存後自動產生'" readonly class="w-full text-sm p-1.5 border rounded bg-slate-100 text-slate-500 font-mono" />
+              <input v-model="tank.tankName" required placeholder="槽體中文名稱（必填）" class="w-full text-sm p-1.5 border rounded focus:ring-2 focus:ring-indigo-500 outline-none" />
+              <input v-model="tank.tankNameEn" placeholder="槽體英文名稱（選填）" class="w-full text-sm p-1.5 border rounded focus:ring-2 focus:ring-indigo-500 outline-none" />
+              <input v-model.number="tank.sequenceNo" type="number" min="0" step="1" placeholder="排列順序" class="w-full text-sm p-1.5 border rounded focus:ring-2 focus:ring-indigo-500 outline-none" />
               <label class="flex items-center gap-2 text-xs text-slate-500 cursor-pointer"><input type="checkbox" v-model="tank.isActive" /> 啟用</label>
               <div class="flex justify-end gap-2 pt-2">
                 <button @click="cancelEdit(tanks, tank, idx)" class="p-1 text-slate-400 hover:text-slate-600"><X class="w-4 h-4" /></button>
@@ -184,6 +177,8 @@ const cancelEdit = (list, item, index) => {
               <div>
                 <div class="font-bold text-slate-800 dark:text-slate-100">{{ tank.tankCode }}</div>
                 <div class="text-xs text-slate-500">{{ tank.tankName || '---' }}</div>
+                <div v-if="tank.tankNameEn" class="text-[10px] text-cyan-600 dark:text-cyan-400">{{ tank.tankNameEn }}</div>
+                <div class="text-[10px] text-indigo-500 font-bold">順序 {{ tank.sequenceNo ?? 0 }}</div>
               </div>
               <div class="flex gap-1" @click.stop>
                 <button @click="tank._isEditing = true" class="p-1.5 text-slate-400 hover:text-indigo-500 rounded"><Edit2 class="w-3.5 h-3.5" /></button>

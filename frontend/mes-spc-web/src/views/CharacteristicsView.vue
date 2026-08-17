@@ -23,7 +23,6 @@ const { embedded } = defineProps({
 });
 
 const rows = ref([]);
-const controlGroups = ref([]);
 const err = ref("");
 const successMsg = ref("");
 const loading = ref(false);
@@ -38,9 +37,8 @@ const currentId = ref(null);
 const form = ref({
   characteristicCode: "",
   characteristicName: "",
-  controlScope: "PRODUCT",
+  characteristicNameEn: "",
   dataCategory: "Variable",
-  unit: "",
   inputMode: "DIRECT",
   valueLabel: "濃度",
   decimalPlaces: 3,
@@ -49,31 +47,12 @@ const form = ref({
 });
 const formErr = ref("");
 
-function controlScopeLabel(scope) {
-  const normalized = String(scope || "PRODUCT").trim().toUpperCase();
-  const fixedLabels = {
-    CHEM: "藥液",
-    PRODUCT: "產品管制",
-    PROD: "產品管制",
-    PROCESS: "製程管制",
-    PROC: "製程管制",
-    DUST: "落塵監控"
-  };
-  if (fixedLabels[normalized]) return fixedLabels[normalized];
-  const group = controlGroups.value.find(x => String(x.groupCode).trim().toUpperCase() === normalized);
-  return group?.groupName || normalized;
-}
-
 async function load() {
   err.value = "";
   loading.value = true;
   try {
-    const [characteristicsRes, groupsRes] = await Promise.all([
-      api.get("/characteristics"),
-      api.get("/control-chart-groups")
-    ]);
+    const characteristicsRes = await api.get("/characteristics");
     rows.value = characteristicsRes.data || [];
-    controlGroups.value = (groupsRes.data || []).filter(x => x.isEnabled !== false);
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -85,9 +64,8 @@ const filteredRows = computed(() => {
   return rows.value.filter(row => {
     const q = searchQuery.value.toLowerCase();
     const matchQuery = !q || 
-      (row.characteristicCode && row.characteristicCode.toLowerCase().includes(q)) ||
       (row.characteristicName && row.characteristicName.toLowerCase().includes(q)) ||
-      (row.unit && row.unit.toLowerCase().includes(q));
+      (row.characteristicNameEn && row.characteristicNameEn.toLowerCase().includes(q));
       
     const matchStatus = statusFilter.value === "all" || 
       (statusFilter.value === "active" && row.isEnabled) ||
@@ -105,9 +83,8 @@ function openCreateModal() {
   form.value = {
     characteristicCode: "",
     characteristicName: "",
-    controlScope: controlGroups.value[0]?.groupCode || "PRODUCT",
+    characteristicNameEn: "",
     dataCategory: "Variable",
-    unit: "",
     inputMode: "DIRECT", valueLabel: "濃度", decimalPlaces: 3,
     isSpcEnabled: true,
     isEnabled: true
@@ -122,9 +99,8 @@ function openEditModal(item) {
   form.value = {
     characteristicCode: item.characteristicCode || "",
     characteristicName: item.characteristicName || "",
-    controlScope: item.controlScope || "PRODUCT",
+    characteristicNameEn: item.characteristicNameEn || "",
     dataCategory: item.dataCategory || "Variable",
-    unit: item.unit || "",
     inputMode: item.inputMode || "DIRECT",
     valueLabel: item.valueLabel || "量測值",
     decimalPlaces: item.decimalPlaces ?? 3,
@@ -136,8 +112,8 @@ function openEditModal(item) {
 }
 
 async function save() {
-  if (!form.value.characteristicCode?.trim() || !form.value.characteristicName?.trim()) {
-    formErr.value = "特性代號與名稱皆為必填欄位。";
+  if (!form.value.characteristicName?.trim()) {
+    formErr.value = "特性中文名稱為必填欄位。";
     return;
   }
   formErr.value = "";
@@ -165,7 +141,7 @@ async function save() {
 }
 
 async function confirmDelete(item) {
-  if (!confirm(`確定要刪除品質特性「${item.characteristicCode} (${item.characteristicName})」嗎？`)) return;
+  if (!confirm(`確定要刪除品質特性「${item.characteristicName}」嗎？`)) return;
   loading.value = true;
   try {
     await api.delete(`/characteristics/${item.id}`);
@@ -229,8 +205,8 @@ onMounted(load);
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-pink-700 dark:text-pink-400/80 leading-relaxed">
           <div class="font-black text-pink-900 dark:text-pink-300">品質檢驗特性主檔頁面操作說明</div>
-          <p><strong>查詢特性：</strong>輸入特性代號、名稱或單位，快速篩選檢驗項目。</p>
-          <p><strong>新增特性：</strong>按「新增特性」，填入特性代號、名稱、資料類型與量測單位。</p>
+          <p><strong>查詢特性：</strong>輸入中文或英文名稱，快速篩選檢驗項目。</p>
+          <p><strong>新增特性：</strong>按「新增特性」，填入中英文名稱、資料類型與輸入方式。</p>
           <p><strong>選擇類型：</strong>連續數值請選計量型；不良數、缺點數或比例資料請選計數型。</p>
         </div>
     </ModuleGuide>
@@ -306,10 +282,8 @@ onMounted(load);
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               <th class="py-4 px-6">ID</th>
-              <th class="py-4 px-6">所屬管制類型</th>
-              <th class="py-4 px-6">特性編號 / 名稱</th>
+              <th class="py-4 px-6">品質特性名稱</th>
               <th class="py-4 px-6">資料類型</th>
-              <th class="py-4 px-6">單位</th>
               <th class="py-4 px-6 text-center">SPC 運算</th>
               <th class="py-4 px-6 text-center">啟用狀態</th>
               <th class="py-4 px-6 text-right">操作</th>
@@ -317,10 +291,10 @@ onMounted(load);
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="8" class="py-12 text-center text-slate-400">正在載入品質特性清單...</td>
+              <td colspan="6" class="py-12 text-center text-slate-400">正在載入品質特性清單...</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="8" class="py-12 text-center text-slate-400">找不到相符的品質特性資料</td>
+              <td colspan="6" class="py-12 text-center text-slate-400">找不到相符的品質特性資料</td>
             </tr>
             <tr
               v-else
@@ -330,15 +304,10 @@ onMounted(load);
             >
               <td class="py-6 px-6 font-mono text-xs text-slate-400 dark:text-slate-500">#{{ item.id }}</td>
               <td class="py-6 px-6">
-                <span class="inline-flex px-2.5 py-1 rounded-lg text-xs font-bold border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800">
-                  {{ controlScopeLabel(item.controlScope) }}
-                </span>
-              </td>
-              <td class="py-6 px-6">
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
-                  <Sliders class="w-4 h-4 text-pink-500" /> {{ item.characteristicCode }}
+                  <Sliders class="w-4 h-4 text-pink-500" /> {{ item.characteristicName }}
                 </div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ item.characteristicName }}</div>
+                <div v-if="item.characteristicNameEn" class="text-xs text-cyan-600 dark:text-cyan-400 mt-0.5">{{ item.characteristicNameEn }}</div>
               </td>
               <td class="py-6 px-6">
                 <span :class="[
@@ -349,9 +318,6 @@ onMounted(load);
                 ]">
                   {{ item.dataCategory === 'Variable' ? '計量' : '計數' }}
                 </span>
-              </td>
-              <td class="py-6 px-6 font-semibold text-xs text-slate-600 dark:text-slate-300">
-                {{ item.unit || '無 (N/A)' }}
               </td>
               <td class="py-6 px-6 text-center">
                 <span :class="['inline-flex items-center justify-center w-7 h-7 rounded-lg border font-bold text-xs', item.isSpcEnabled ? 'bg-indigo-50 border-indigo-300 text-indigo-600 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-400' : 'bg-slate-100 border-slate-300 text-slate-400 dark:bg-slate-800 dark:border-slate-700']">
@@ -436,34 +402,9 @@ onMounted(load);
             <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
           </div>
 
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">所屬管制類型 <span class="text-red-500">*</span></label>
-            <select
-              v-model="form.controlScope"
-              required
-              class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-            >
-              <option v-for="group in controlGroups" :key="group.id" :value="group.groupCode">
-                {{ controlScopeLabel(group.groupCode) }}
-              </option>
-            </select>
-            <p class="text-[11px] text-slate-400">SPC 管制項目會依此欄位分流；例如藥液不會顯示落塵監控特性。</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性代號 <span class="text-red-500">*</span></label>
-              <input
-                v-model="form.characteristicCode"
-                type="text"
-                required
-                placeholder="例如：C-101 / CHO"
-                class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-              />
-            </div>
-            
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性名稱 <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性中文名稱 <span class="text-red-500">*</span></label>
               <input
                 v-model="form.characteristicName"
                 type="text"
@@ -472,9 +413,13 @@ onMounted(load);
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
               />
             </div>
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性英文名稱</label>
+              <input v-model="form.characteristicNameEn" type="text" placeholder="例如：Copper Ion Concentration" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all" />
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">資料類型</label>
               <select
@@ -486,15 +431,6 @@ onMounted(load);
               </select>
             </div>
 
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">測量單位</label>
-              <input
-                v-model="form.unit"
-                type="text"
-                placeholder="例如：g/L, mm, kg, %"
-                class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-              />
-            </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

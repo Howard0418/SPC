@@ -1,4 +1,5 @@
 using MesSpc.Api.Domain.Entities;
+using MesSpc.Api.Domain;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,40 +32,42 @@ public class ProcessesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Get([FromQuery] string? controlScope = null, [FromQuery] bool? configuredOnly = null)
     {
         var query = db.Processes.AsQueryable();
-        if (!string.IsNullOrWhiteSpace(controlScope) && !string.Equals(controlScope, "all", StringComparison.OrdinalIgnoreCase))
+        if (configuredOnly == true)
         {
-            var normalizedScope = controlScope.Trim().ToUpperInvariant();
-            query = query.Where(x => x.ControlScope == normalizedScope);
-            if (configuredOnly == true)
+            var processIdsQuery = db.PartProcessCharacteristics.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(controlScope) && !string.Equals(controlScope, "all", StringComparison.OrdinalIgnoreCase))
             {
-                var processIds = await db.PartProcessCharacteristics
-                    .Where(x => x.ControlScope == normalizedScope)
-                    .Select(x => x.ProcessId)
-                    .Distinct()
-                    .ToListAsync();
-                query = query.Where(x => processIds.Contains(x.Id));
+                var normalizedScope = ControlScopeCodes.Normalize(controlScope);
+                processIdsQuery = processIdsQuery.Where(x => x.ControlScope == normalizedScope);
             }
+            var processIds = await processIdsQuery.Select(x => x.ProcessId).Distinct().ToListAsync();
+            query = query.Where(x => processIds.Contains(x.Id));
         }
-        return Ok(await query.OrderBy(x => x.Id).ToListAsync());
+        return Ok(await query.OrderBy(x => x.SequenceNo).ThenBy(x => x.ProcessCode).ThenBy(x => x.Id).ToListAsync());
     }
     [HttpPost] public async Task<IActionResult> Create(Process req)
     {
-        req.ControlScope = NormalizeControlScope(req.ControlScope);
-        db.Processes.Add(req); await db.SaveChangesAsync(); return Ok(req);
+        if (string.IsNullOrWhiteSpace(req.ProcessName)) return BadRequest("製程中文名稱為必填欄位。");
+        req.ProcessCode = $"PROC-TMP-{Guid.NewGuid():N}";
+        req.ProcessName = req.ProcessName.Trim();
+        req.ControlScope = ControlScopeCodes.Process;
+        req.ProcessNameEn = CleanOptional(req.ProcessNameEn);
+        db.Processes.Add(req);
+        await db.SaveChangesAsync();
+        req.ProcessCode = $"PROC-{req.Id:D6}";
+        await db.SaveChangesAsync();
+        return Ok(req);
     }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, Process req)
     {
         var x = await db.Processes.FindAsync(id); if (x is null) return NotFound();
-        x.ProcessCode = req.ProcessCode; x.ProcessName = req.ProcessName; x.ControlScope = NormalizeControlScope(req.ControlScope); x.Description = req.Description; x.IsEnabled = req.IsEnabled;
+        if (string.IsNullOrWhiteSpace(req.ProcessName)) return BadRequest("製程中文名稱為必填欄位。");
+        x.ProcessName = req.ProcessName.Trim(); x.ProcessNameEn = CleanOptional(req.ProcessNameEn); x.SequenceNo = req.SequenceNo; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
 
-    private static string NormalizeControlScope(string? scope)
-    {
-        var normalized = (scope ?? "PRODUCT").Trim().ToUpperInvariant();
-        return string.IsNullOrWhiteSpace(normalized) ? "PRODUCT" : normalized;
-    }
+    private static string? CleanOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     [HttpGet("{id:int}/measurements")]
     public async Task<IActionResult> GetMeasurements(int id, [FromQuery] string type = "variable", [FromQuery] int take = 200)
@@ -218,7 +221,7 @@ public class MachinesController(AppDbContext db) : ControllerBase
         if (machine is null) return NotFound();
         var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == machine.MachineCode);
         if (line is null) return Ok(Array.Empty<Tank>());
-        return Ok(await db.Tanks.Where(x => x.LineId == line.Id).OrderBy(x => x.TankCode).ToListAsync());
+        return Ok(await db.Tanks.Where(x => x.LineId == line.Id).OrderBy(x => x.SequenceNo).ThenBy(x => x.TankCode).ThenBy(x => x.Id).ToListAsync());
     }
 
     [HttpPost("{id:int}/tanks")]
@@ -226,17 +229,14 @@ public class MachinesController(AppDbContext db) : ControllerBase
     {
         var machine = await db.Machines.FindAsync(id);
         if (machine is null) return NotFound("找不到指定機台。");
-        if (string.IsNullOrWhiteSpace(req.TankCode) && string.IsNullOrWhiteSpace(req.TankName))
-            return BadRequest("槽體／槽位代碼或名稱至少填寫一項。");
+        if (string.IsNullOrWhiteSpace(req.TankName)) return BadRequest("槽體中文名稱為必填欄位。");
         var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == machine.MachineCode);
         var existing = line is null ? [] : await db.Tanks.Where(x => x.LineId == line.Id)
-            .Select(x => new MachineTankRequest { Id = x.Id, TankCode = x.TankCode, TankName = x.TankName, IsActive = x.IsActive }).ToListAsync();
+            .Select(x => new MachineTankRequest { Id = x.Id, TankCode = x.TankCode, TankName = x.TankName, TankNameEn = x.TankNameEn, SequenceNo = x.SequenceNo, IsActive = x.IsActive }).ToListAsync();
         existing.Add(req);
         await SyncMachineTanksAsync(machine, existing);
         line = await db.ProductionLines.FirstAsync(x => x.LineCode == machine.MachineCode);
-        var cleanCode = string.IsNullOrWhiteSpace(req.TankCode) ? req.TankName!.Trim() : req.TankCode.Trim();
-        var fullCode = cleanCode.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase) ? cleanCode : $"{machine.MachineCode}-{cleanCode}";
-        return Ok(await db.Tanks.FirstAsync(x => x.LineId == line.Id && x.TankCode == fullCode));
+        return Ok(await db.Tanks.Where(x => x.LineId == line.Id).OrderByDescending(x => x.Id).FirstAsync());
     }
 
     [HttpPost] public async Task<IActionResult> Create(MachineSaveRequest req)
@@ -320,34 +320,37 @@ public class MachinesController(AppDbContext db) : ControllerBase
             db.Tanks.RemoveRange(tanksToRemove);
         }
 
-        foreach (var tankReq in tanks.Where(x => !string.IsNullOrWhiteSpace(x.TankName) || !string.IsNullOrWhiteSpace(x.TankCode)))
+        var newTanks = new List<Tank>();
+        foreach (var tankReq in tanks.Where(x => !string.IsNullOrWhiteSpace(x.TankName)))
         {
-            var cleanName = string.IsNullOrWhiteSpace(tankReq.TankName) ? tankReq.TankCode!.Trim() : tankReq.TankName!.Trim();
-            var cleanCode = string.IsNullOrWhiteSpace(tankReq.TankCode) ? cleanName : tankReq.TankCode!.Trim();
-            var tankCode = cleanCode.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase)
-                ? cleanCode
-                : $"{machine.MachineCode}-{cleanCode}";
+            var cleanName = tankReq.TankName!.Trim();
 
             var tank = tankReq.Id > 0
                 ? await db.Tanks.FirstOrDefaultAsync(x => x.Id == tankReq.Id)
-                : await db.Tanks.FirstOrDefaultAsync(x => x.LineId == line.Id && x.TankCode == tankCode);
+                : null;
 
             if (tank is null)
             {
-                tank = new Tank { LineId = line.Id, TankCode = tankCode, TankName = cleanName, IsActive = tankReq.IsActive };
+                tank = new Tank { LineId = line.Id, TankCode = $"TANK-TMP-{Guid.NewGuid():N}", TankName = cleanName, TankNameEn = CleanOptional(tankReq.TankNameEn), SequenceNo = tankReq.SequenceNo, IsActive = tankReq.IsActive };
                 db.Tanks.Add(tank);
+                newTanks.Add(tank);
             }
             else
             {
                 tank.LineId = line.Id;
-                tank.TankCode = tankCode;
                 tank.TankName = cleanName;
+                tank.TankNameEn = CleanOptional(tankReq.TankNameEn);
+                tank.SequenceNo = tankReq.SequenceNo;
                 tank.IsActive = tankReq.IsActive;
             }
         }
 
         await db.SaveChangesAsync();
+        foreach (var tank in newTanks) tank.TankCode = $"TANK-{tank.Id:D6}";
+        if (newTanks.Count > 0) await db.SaveChangesAsync();
     }
+
+    private static string? CleanOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
 public class MachineSaveRequest
@@ -366,6 +369,8 @@ public class MachineTankRequest
     public int Id { get; set; }
     public string? TankCode { get; set; }
     public string? TankName { get; set; }
+    public string? TankNameEn { get; set; }
+    public int SequenceNo { get; set; }
     public bool IsActive { get; set; } = true;
 }
 
@@ -375,20 +380,34 @@ public class MachineTankRequest
 public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
 {
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.QualityCharacteristics.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(QualityCharacteristic req) { req.ControlScope = NormalizeScope(req.ControlScope); req.InputMode = NormalizeInputMode(req.InputMode); req.ValueLabel = string.IsNullOrWhiteSpace(req.ValueLabel) ? "量測值" : req.ValueLabel.Trim(); req.DecimalPlaces = Math.Clamp(req.DecimalPlaces, 0, 8); db.QualityCharacteristics.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPost]
+    public async Task<IActionResult> Create(QualityCharacteristic req)
+    {
+        if (string.IsNullOrWhiteSpace(req.CharacteristicName)) return BadRequest("特性中文名稱為必填欄位。");
+        req.CharacteristicCode = $"CHAR-TMP-{Guid.NewGuid():N}";
+        req.CharacteristicName = req.CharacteristicName.Trim();
+        req.ControlScope = ControlScopeCodes.Process; req.CharacteristicNameEn = CleanOptional(req.CharacteristicNameEn); req.InputMode = NormalizeInputMode(req.InputMode); req.ValueLabel = string.IsNullOrWhiteSpace(req.ValueLabel) ? "量測值" : req.ValueLabel.Trim(); req.DecimalPlaces = Math.Clamp(req.DecimalPlaces, 0, 8);
+        db.QualityCharacteristics.Add(req);
+        await db.SaveChangesAsync();
+        req.CharacteristicCode = $"CHAR-{req.Id:D6}";
+        await db.SaveChangesAsync();
+        return Ok(req);
+    }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, QualityCharacteristic req)
     {
         var x = await db.QualityCharacteristics.FindAsync(id); if (x is null) return NotFound();
-        x.CharacteristicCode = req.CharacteristicCode; x.CharacteristicName = req.CharacteristicName; x.ControlScope = NormalizeScope(req.ControlScope); x.DataCategory = req.DataCategory; x.Unit = req.Unit;
+        if (string.IsNullOrWhiteSpace(req.CharacteristicName)) return BadRequest("特性中文名稱為必填欄位。");
+        x.CharacteristicName = req.CharacteristicName.Trim(); x.CharacteristicNameEn = CleanOptional(req.CharacteristicNameEn); x.DataCategory = req.DataCategory;
         x.InputMode = NormalizeInputMode(req.InputMode); x.ValueLabel = string.IsNullOrWhiteSpace(req.ValueLabel) ? "量測值" : req.ValueLabel.Trim(); x.DecimalPlaces = Math.Clamp(req.DecimalPlaces, 0, 8);
         x.DefaultChartTypeId = req.DefaultChartTypeId; x.IsSpcEnabled = req.IsSpcEnabled; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.QualityCharacteristics.FindAsync(id); if (x is null) return NotFound(); db.QualityCharacteristics.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
 
-    private static string NormalizeScope(string? scope) => string.IsNullOrWhiteSpace(scope) ? "PRODUCT" : scope.Trim().ToUpperInvariant();
+    private static string NormalizeScope(string? scope) => ControlScopeCodes.Normalize(scope);
     private static string NormalizeInputMode(string? mode) => mode?.Trim().ToUpperInvariant() switch { "FORMULA" => "FORMULA", "RECORD_ONLY" => "RECORD_ONLY", _ => "DIRECT" };
+    private static string? CleanOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
 [ApiController]
@@ -410,7 +429,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
             .Include(x => x.Tank)
             .Include(x => x.Slot)
             .Include(x => x.Characteristic)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.SequenceNo).ThenBy(x => x.Id)
             .ToListAsync();
 
         var ids = items.Select(x => x.Id).ToList();
@@ -441,6 +460,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
                 x.TankId,
                 x.SlotId,
                 x.CharacteristicId,
+                x.SequenceNo,
                 x.Unit,
                 x.USL,
                 x.LSL,
@@ -476,6 +496,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         if (displayValidation is not null) return BadRequest(displayValidation);
         req.Unit = CleanUnit(req.Unit);
         req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
+        req.RuleGroupId = null;
         db.PartProcessCharacteristics.Add(req);
         await db.SaveChangesAsync();
         return Ok(req);
@@ -485,15 +506,28 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
     public async Task<IActionResult> Update(int id, PartProcessCharacteristic req)
     {
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
+        var previousDisplayMode = x.DisplayMode;
         var validation = await ValidateScopeAsync(req);
         if (validation is not null) return BadRequest(validation);
         var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
         if (displayValidation is not null) return BadRequest(displayValidation);
-        x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = req.PartId; x.ProcessId = req.ProcessId; x.MachineId = req.MachineId; x.TankId = req.TankId; x.SlotId = req.SlotId; x.CharacteristicId = req.CharacteristicId;
+        x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = req.PartId; x.ProcessId = req.ProcessId; x.MachineId = req.MachineId; x.TankId = req.TankId; x.SlotId = req.SlotId; x.CharacteristicId = req.CharacteristicId; x.SequenceNo = req.SequenceNo;
         x.Unit = CleanUnit(req.Unit);
         x.USL = req.USL; x.LSL = req.LSL; x.UCL = req.UCL; x.CL = req.CL; x.LCL = req.LCL; x.TargetValue = req.TargetValue;
         x.SampleSize = req.SampleSize; x.DisplayMode = req.DisplayMode; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson); x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
-        await db.SaveChangesAsync(); return Ok(x);
+        x.RuleGroupId = null;
+
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase))
+        {
+            var staleResults = await db.SpcCalculationResults
+                .Where(result => result.PartProcessCharacteristicId == id)
+                .ToListAsync();
+            db.SpcCalculationResults.RemoveRange(staleResults);
+        }
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return Ok(x);
     }
 
     [HttpGet("{id:int}/rules")]
@@ -502,16 +536,15 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         var item = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (item is null) return NotFound();
 
-        var selectedRules = item.RuleGroupId.HasValue
-            ? await db.SpcRules.AsNoTracking()
-                .Where(x => x.RuleGroupId == item.RuleGroupId.Value && x.IsEnabled)
-                .Select(x => x.RuleCode)
-                .ToHashSetAsync(StringComparer.OrdinalIgnoreCase)
-            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var weGroup = await db.SpcRuleGroups.AsNoTracking().FirstOrDefaultAsync(x => x.RuleGroupCode == "WE" && x.IsEnabled);
+        var selectedRules = weGroup is null
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : await db.SpcRules.AsNoTracking().Where(x => x.RuleGroupId == weGroup.Id && x.IsEnabled)
+                .Select(x => x.RuleCode).ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
 
         return Ok(new ItemRulesResponse(
             item.Id,
-            item.RuleGroupId,
+            weGroup?.Id,
             (await GetRuleLibraryAsync()).Select(x => new ItemRuleOption(
                 x.RuleCode,
                 x.RuleName,
@@ -527,15 +560,89 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         return BadRequest(new { message = "所有管制項目統一使用 WE 八大規則，不支援項目專屬規則。" });
     }
 
-    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound(); db.PartProcessCharacteristics.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+    [HttpGet("{id:int}/delete-impact")]
+    public async Task<IActionResult> GetDeleteImpact(int id, CancellationToken ct)
+    {
+        var item = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (item is null) return NotFound();
+
+        var variableIds = db.VariableMeasurements.AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == id)
+            .Select(x => x.Id);
+        var attributeIds = db.AttributeMeasurements.AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == id)
+            .Select(x => x.Id);
+
+        var impact = new
+        {
+            variableMeasurements = await variableIds.CountAsync(ct),
+            attributeMeasurements = await attributeIds.CountAsync(ct),
+            calculationResults = await db.SpcCalculationResults.CountAsync(x => x.PartProcessCharacteristicId == id, ct),
+            alerts = await db.AlertEvents.CountAsync(x =>
+                (x.VariableMeasurementId.HasValue && variableIds.Contains(x.VariableMeasurementId.Value)) ||
+                (x.AttributeMeasurementId.HasValue && attributeIds.Contains(x.AttributeMeasurementId.Value)), ct),
+            closedAlerts = await db.AlertEvents.CountAsync(x => x.Status == "Closed" &&
+                ((x.VariableMeasurementId.HasValue && variableIds.Contains(x.VariableMeasurementId.Value)) ||
+                 (x.AttributeMeasurementId.HasValue && attributeIds.Contains(x.AttributeMeasurementId.Value))), ct),
+            controlLimitSegments = await db.ControlLimitSegments.CountAsync(x => x.PartProcessCharacteristicId == id, ct)
+        };
+
+        return Ok(impact);
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id, [FromQuery] bool purge = false, CancellationToken ct = default)
+    {
+        var item = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (item is null) return NotFound();
+
+        var hasMeasurements = await db.VariableMeasurements.AnyAsync(x => x.PartProcessCharacteristicId == id, ct)
+            || await db.AttributeMeasurements.AnyAsync(x => x.PartProcessCharacteristicId == id, ct);
+        var hasCalculations = await db.SpcCalculationResults.AnyAsync(x => x.PartProcessCharacteristicId == id, ct);
+
+        if (!purge && (hasMeasurements || hasCalculations))
+        {
+            return Conflict(new
+            {
+                message = "此管制項目已有量測或 SPC 計算資料。請改為停用；若確定是錯誤或測試資料，請使用永久清除。"
+            });
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        if (purge)
+        {
+            var variableIds = await db.VariableMeasurements
+                .Where(x => x.PartProcessCharacteristicId == id)
+                .Select(x => x.Id).ToListAsync(ct);
+            var attributeIds = await db.AttributeMeasurements
+                .Where(x => x.PartProcessCharacteristicId == id)
+                .Select(x => x.Id).ToListAsync(ct);
+
+            var linkedAlerts = await db.AlertEvents.Where(x =>
+                (x.VariableMeasurementId.HasValue && variableIds.Contains(x.VariableMeasurementId.Value)) ||
+                (x.AttributeMeasurementId.HasValue && attributeIds.Contains(x.AttributeMeasurementId.Value))).ToListAsync(ct);
+            if (linkedAlerts.Any(x => string.Equals(x.Status, "Closed", StringComparison.OrdinalIgnoreCase)))
+            {
+                return Conflict(new { message = "此管制項目包含已結案異常，為保留品質追溯紀錄，只能停用，不能永久清除。" });
+            }
+
+            db.AlertEvents.RemoveRange(linkedAlerts);
+            db.SpcCalculationResults.RemoveRange(await db.SpcCalculationResults.Where(x => x.PartProcessCharacteristicId == id).ToListAsync(ct));
+            db.VariableMeasurements.RemoveRange(await db.VariableMeasurements.Where(x => x.PartProcessCharacteristicId == id).ToListAsync(ct));
+            db.AttributeMeasurements.RemoveRange(await db.AttributeMeasurements.Where(x => x.PartProcessCharacteristicId == id).ToListAsync(ct));
+        }
+
+        db.PartProcessCharacteristics.Remove(item);
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+        return NoContent();
+    }
 
     private async Task<List<ItemRuleTemplate>> GetRuleLibraryAsync()
     {
         var rules = await db.SpcRules.AsNoTracking()
             .Where(x => x.IsEnabled)
-            .Join(db.SpcRuleGroups.AsNoTracking().Where(g => g.IsEnabled
-                    && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)
-                    && !g.RuleGroupCode.StartsWith(ItemRuleGroupCodePrefix)),
+            .Join(db.SpcRuleGroups.AsNoTracking().Where(g => g.IsEnabled && g.RuleGroupCode == "WE"),
                 rule => rule.RuleGroupId,
                 group => group.Id,
                 (rule, group) => rule)
@@ -562,8 +669,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
 
     private static string NormalizeScope(string? scope)
     {
-        var normalized = (scope ?? "PRODUCT").Trim().ToUpperInvariant();
-        return string.IsNullOrWhiteSpace(normalized) ? "PRODUCT" : normalized;
+        return ControlScopeCodes.Normalize(scope);
     }
 
     private async Task<string?> ValidateScopeAsync(PartProcessCharacteristic req)
@@ -611,18 +717,13 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.CharacteristicId);
         if (characteristic is null) return "找不到指定的品質特性。";
-        if (!string.Equals(characteristic.ControlScope, req.ControlScope, StringComparison.OrdinalIgnoreCase))
-            return "品質特性與所選管制類型不一致。";
+        req.DisplayMode = string.Equals(req.DisplayMode?.Trim(), "TREND_CHART", StringComparison.OrdinalIgnoreCase)
+            ? "TREND_CHART"
+            : "CONTROL_CHART";
 
-        var selectedGroup = await ResolveSelectedGroupAsync(req);
-        if (selectedGroup is null) return "找不到管制類型對應的管制圖大類別。";
-        if (!GroupMatchesScope(selectedGroup, req.ControlScope))
-            return "管制圖大類與所選業務範圍不一致。";
-        req.DisplayMode = selectedGroup.GroupType == "TREND_CHART" ? "TREND_CHART" : "CONTROL_CHART";
-
-        var processMatchesScope = await db.Processes.AsNoTracking()
-            .AnyAsync(x => x.Id == req.ProcessId && x.ControlScope == req.ControlScope && x.IsEnabled);
-        if (!processMatchesScope) return "工站製程與所選管制類型不一致。";
+        var processExists = await db.Processes.AsNoTracking()
+            .AnyAsync(x => x.Id == req.ProcessId && x.IsEnabled);
+        if (!processExists) return "找不到指定的啟用中工站製程。";
 
         if (req.DisplayMode == "TREND_CHART")
         {
@@ -631,6 +732,11 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
             req.UCL = null;
             req.CL = null;
             req.LCL = null;
+
+            var trendGroup = await ResolveSelectedGroupAsync(req);
+            if (trendGroup is null) return "此業務範圍尚未設定啟用中的趨勢圖大類別。";
+            if (!GroupMatchesScope(trendGroup, req.ControlScope))
+                return "趨勢圖大類與所選業務範圍不一致。";
             return null;
         }
 
@@ -647,6 +753,10 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
                 select new { Type = type, groupInfo.GroupType }
             ).FirstOrDefaultAsync();
             if (chartType is null) return "找不到指定的 SPC 管制圖類型。";
+            var selectedGroup = await ResolveSelectedGroupAsync(req);
+            if (selectedGroup is null) return "找不到管制類型對應的管制圖大類別。";
+            if (!GroupMatchesScope(selectedGroup, req.ControlScope))
+                return "管制圖大類與所選業務範圍不一致。";
             if (!chartType.Type.DataCategory.Equals(characteristic.DataCategory, StringComparison.OrdinalIgnoreCase))
                 return "管制圖類型與品質特性的資料型態不一致。";
             if (!string.Equals(chartType.GroupType, req.DisplayMode, StringComparison.OrdinalIgnoreCase))
@@ -673,7 +783,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         var mode = (req.DisplayMode ?? "CONTROL_CHART").Trim().ToUpperInvariant();
         var legacyGroupCode = scope switch
         {
-            "CHEMICAL" or "CHEM" => "CHEM",
+            "CHEM" => "CHEM",
             "PRODUCT" => "PROD",
             "PROCESS" => "PROC",
             _ => scope
@@ -696,7 +806,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
                 "PROC" => "PROCESS",
                 var code => code
             }
-            : group.BusinessScopeCode.Trim().ToUpperInvariant();
+            : ControlScopeCodes.Normalize(group.BusinessScopeCode);
         return string.Equals(configuredScope, NormalizeScope(scope), StringComparison.OrdinalIgnoreCase);
     }
 
@@ -726,6 +836,8 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Create(ControlChartGroup req)
     {
         NormalizeBusinessRules(req);
+        var conflict = await FindEnabledConflictAsync(req);
+        if (conflict is not null) return Conflict(new { message = conflict });
         db.ControlChartGroups.Add(req); await db.SaveChangesAsync(); return Ok(req);
     }
     [HttpPut("{id:int}")]
@@ -733,6 +845,8 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
     {
         var x = await db.ControlChartGroups.FindAsync(id); if (x is null) return NotFound();
         NormalizeBusinessRules(req);
+        var conflict = await FindEnabledConflictAsync(req, id);
+        if (conflict is not null) return Conflict(new { message = conflict });
         x.GroupCode = req.GroupCode; x.GroupName = req.GroupName; x.GroupType = req.GroupType;
         x.BusinessScopeCode = req.BusinessScopeCode; x.RequiresPart = req.RequiresPart;
         x.RequiresMachine = req.RequiresMachine; x.RequiresTank = req.RequiresTank;
@@ -751,8 +865,21 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
         group.GroupCode = group.GroupCode.Trim().ToUpperInvariant();
         group.GroupType = string.IsNullOrWhiteSpace(group.GroupType)
             ? "CONTROL_CHART" : group.GroupType.Trim().ToUpperInvariant();
-        group.BusinessScopeCode = string.IsNullOrWhiteSpace(group.BusinessScopeCode)
-            ? group.GroupCode : group.BusinessScopeCode.Trim().ToUpperInvariant();
+        group.BusinessScopeCode = ControlScopeCodes.Normalize(
+            string.IsNullOrWhiteSpace(group.BusinessScopeCode) ? group.GroupCode : group.BusinessScopeCode);
+    }
+
+    private async Task<string?> FindEnabledConflictAsync(ControlChartGroup group, int? excludeId = null)
+    {
+        if (!group.IsEnabled) return null;
+        var exists = await db.ControlChartGroups.AsNoTracking().AnyAsync(x =>
+            x.IsEnabled
+            && x.Id != excludeId
+            && x.BusinessScopeCode == group.BusinessScopeCode
+            && x.GroupType == group.GroupType);
+        return exists
+            ? $"業務範圍「{group.BusinessScopeCode}」已有啟用中的「{group.GroupType}」大類別；同一範圍與圖表模式只能啟用一個。"
+            : null;
     }
 }
 
@@ -869,12 +996,12 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     private const string ItemRuleGroupCodePrefix = "PPC_RULES_";
 
     [HttpGet] public async Task<IActionResult> Get() => Ok(await db.ControlChartTypes.OrderBy(x => x.Id).ToListAsync());
-    [HttpPost] public async Task<IActionResult> Create(ControlChartType req) { db.ControlChartTypes.Add(req); await db.SaveChangesAsync(); return Ok(req); }
+    [HttpPost] public async Task<IActionResult> Create(ControlChartType req) { req.RuleGroupId = await GetWeRuleGroupIdAsync(); db.ControlChartTypes.Add(req); await db.SaveChangesAsync(); return Ok(req); }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, ControlChartType req)
     {
         var x = await db.ControlChartTypes.FindAsync(id); if (x is null) return NotFound();
-        x.ChartGroupId = req.ChartGroupId; x.ChartTypeCode = req.ChartTypeCode; x.ChartTypeName = req.ChartTypeName; x.DataCategory = req.DataCategory; x.RequiredSampleSize = req.RequiredSampleSize; x.RuleGroupId = req.RuleGroupId; x.Description = req.Description; x.FormulaConfigJson = req.FormulaConfigJson; x.IsEnabled = req.IsEnabled;
+        x.ChartGroupId = req.ChartGroupId; x.ChartTypeCode = req.ChartTypeCode; x.ChartTypeName = req.ChartTypeName; x.DataCategory = req.DataCategory; x.RequiredSampleSize = req.RequiredSampleSize; x.RuleGroupId = await GetWeRuleGroupIdAsync(); x.Description = req.Description; x.FormulaConfigJson = req.FormulaConfigJson; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
     [HttpPatch("{id:int}/name")]
@@ -894,18 +1021,13 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
         var chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (chartType is null) return NotFound();
 
-        var selectedRules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (chartType.RuleGroupId.HasValue)
-        {
-            selectedRules = await db.SpcRules.AsNoTracking()
-                .Where(x => x.RuleGroupId == chartType.RuleGroupId.Value && x.IsEnabled)
-                .Select(x => x.RuleCode)
-                .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
-        }
+        var weGroupId = await GetWeRuleGroupIdAsync();
+        var selectedRules = await db.SpcRules.AsNoTracking().Where(x => x.RuleGroupId == weGroupId && x.IsEnabled)
+            .Select(x => x.RuleCode).ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
 
         return Ok(new ChartTypeRulesResponse(
             chartType.Id,
-            chartType.RuleGroupId,
+            weGroupId,
             (await GetRuleLibraryAsync()).Select(x => new ChartTypeRuleOption(
                 x.RuleCode,
                 x.RuleName,
@@ -927,9 +1049,7 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     {
         var rules = await db.SpcRules.AsNoTracking()
             .Where(x => x.IsEnabled)
-            .Join(db.SpcRuleGroups.AsNoTracking().Where(g => g.IsEnabled
-                    && !g.RuleGroupCode.StartsWith(ChartTypeRuleGroupCodePrefix)
-                    && !g.RuleGroupCode.StartsWith(ItemRuleGroupCodePrefix)),
+            .Join(db.SpcRuleGroups.AsNoTracking().Where(g => g.IsEnabled && g.RuleGroupCode == "WE"),
                 rule => rule.RuleGroupId,
                 group => group.Id,
                 (rule, group) => rule)
@@ -945,6 +1065,8 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     }
 
     private sealed record SpcRuleTemplate(string RuleCode, string RuleName, int Priority, string? RuleConfigJson);
+    private async Task<int> GetWeRuleGroupIdAsync() =>
+        await db.SpcRuleGroups.Where(x => x.RuleGroupCode == "WE" && x.IsEnabled).Select(x => x.Id).SingleAsync();
     public sealed record ChartTypeRuleOption(string RuleCode, string RuleName, int Priority, bool IsSelected);
     public sealed record ChartTypeRulesResponse(int ChartTypeId, int? RuleGroupId, List<ChartTypeRuleOption> Rules);
     public sealed record ChartTypeRulesUpdateRequest(List<string>? SelectedRuleCodes);
@@ -963,10 +1085,12 @@ public class SpcRuleGroupsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Update(int id, SpcRuleGroup req)
     {
         var x = await db.SpcRuleGroups.FindAsync(id); if (x is null) return NotFound();
+        if (string.Equals(x.RuleGroupCode, "WE", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("WE 八大規則為全系統固定規則群組，不可停用、改碼或刪除。");
         x.RuleGroupCode = req.RuleGroupCode; x.RuleGroupName = req.RuleGroupName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
-    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.SpcRuleGroups.FindAsync(id); if (x is null) return NotFound(); db.SpcRuleGroups.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.SpcRuleGroups.FindAsync(id); if (x is null) return NotFound(); if (string.Equals(x.RuleGroupCode, "WE", StringComparison.OrdinalIgnoreCase)) return BadRequest("WE 八大規則為全系統固定規則群組，不可刪除。"); db.SpcRuleGroups.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
 }
 
 [ApiController]
@@ -1031,7 +1155,7 @@ public class SpcRulesController(AppDbContext db) : ControllerBase
         x.RuleName = req.RuleName;
         x.RuleConfigJson = req.RuleConfigJson;
         x.Priority = req.Priority;
-        x.IsEnabled = req.IsEnabled;
+        x.IsEnabled = true;
         await db.SaveChangesAsync(); 
         return Ok(x);
     }

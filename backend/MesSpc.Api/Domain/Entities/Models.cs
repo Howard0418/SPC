@@ -265,7 +265,9 @@ public class Process : BaseEntity<int>
 {
     public string ProcessCode { get; set; } = string.Empty;
     public string ProcessName { get; set; } = string.Empty;
+    public string? ProcessNameEn { get; set; }
     public string ControlScope { get; set; } = "PRODUCT";
+    public int SequenceNo { get; set; }
     public string? Description { get; set; }
     public bool IsEnabled { get; set; } = true;
 }
@@ -284,9 +286,9 @@ public class QualityCharacteristic : BaseEntity<int>
 {
     public string CharacteristicCode { get; set; } = string.Empty;
     public string CharacteristicName { get; set; } = string.Empty;
+    public string? CharacteristicNameEn { get; set; }
     public string ControlScope { get; set; } = "PRODUCT";
     public string DataCategory { get; set; } = "Variable";
-    public string? Unit { get; set; }
     public string InputMode { get; set; } = "DIRECT";
     public string ValueLabel { get; set; } = "量測值";
     public int DecimalPlaces { get; set; } = 3;
@@ -304,6 +306,7 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public int? TankId { get; set; }
     public int? SlotId { get; set; }
     public int CharacteristicId { get; set; }
+    public int SequenceNo { get; set; }
     public string? Unit { get; set; }
     public double? USL { get; set; }
     public double? LSL { get; set; }
@@ -565,6 +568,8 @@ public class Tank : BaseEntity<int>
     public int LineId { get; set; }
     public string TankCode { get; set; } = string.Empty;
     public string TankName { get; set; } = string.Empty;
+    public string? TankNameEn { get; set; }
+    public int SequenceNo { get; set; }
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
 

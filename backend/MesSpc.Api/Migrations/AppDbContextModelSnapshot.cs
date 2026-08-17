@@ -1299,6 +1299,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<int>("SampleSize")
                         .HasColumnType("int");
 
+                    b.Property<int>("SequenceNo")
+                        .HasColumnType("int");
+
                     b.Property<int?>("SlotId")
                         .HasColumnType("int");
 
@@ -1342,13 +1345,13 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("TankId");
 
-                    b.HasIndex("ControlScope", "ProcessId", "MachineId", "TankId", "SlotId", "CharacteristicId")
+                    b.HasIndex("ControlScope", "ProcessId", "MachineId", "TankId", "SlotId", "CharacteristicId", "Unit")
                         .IsUnique()
                         .HasFilter("[PartId] IS NULL");
 
-                    b.HasIndex("ControlScope", "PartId", "ProcessId", "MachineId", "TankId", "SlotId", "CharacteristicId")
+                    b.HasIndex("ControlScope", "PartId", "ProcessId", "MachineId", "TankId", "SlotId", "CharacteristicId", "Unit")
                         .IsUnique()
-                        .HasFilter("[PartId] IS NOT NULL AND [MachineId] IS NOT NULL AND [TankId] IS NOT NULL AND [SlotId] IS NOT NULL");
+                        .HasFilter("[PartId] IS NOT NULL AND [MachineId] IS NOT NULL AND [TankId] IS NOT NULL AND [SlotId] IS NOT NULL AND [Unit] IS NOT NULL");
 
                     b.ToTable("PartProcessCharacteristics");
                 });
@@ -1438,10 +1441,16 @@ namespace MesSpc.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ProcessNameEn")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
+
+                    b.Property<int>("SequenceNo")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1624,6 +1633,9 @@ namespace MesSpc.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CharacteristicNameEn")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ControlScope")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1664,9 +1676,6 @@ namespace MesSpc.Api.Migrations
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
-
-                    b.Property<string>("Unit")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -2320,12 +2329,18 @@ namespace MesSpc.Api.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<int>("SequenceNo")
+                        .HasColumnType("int");
+
                     b.Property<string>("TankCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("TankName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TankNameEn")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")

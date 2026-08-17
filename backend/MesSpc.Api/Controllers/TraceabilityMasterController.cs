@@ -13,7 +13,18 @@ public class TraceabilityMasterController(AppDbContext db) : ControllerBase
     [HttpGet("lines")]
     public async Task<IActionResult> GetLines()
     {
-        return Ok(await db.ProductionLines.OrderBy(x => x.LineCode).ToListAsync());
+        return Ok(await db.Processes.AsNoTracking()
+            .OrderBy(x => x.SequenceNo).ThenBy(x => x.ProcessCode).ThenBy(x => x.Id)
+            .Select(x => new
+            {
+                x.Id,
+                LineCode = x.ProcessCode,
+                LineName = x.ProcessName,
+                LineNameEn = x.ProcessNameEn,
+                IsActive = x.IsEnabled,
+                x.SequenceNo
+            })
+            .ToListAsync());
     }
 
     [HttpPost("lines")]
@@ -71,14 +82,38 @@ public class TraceabilityMasterController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetTanks([FromQuery] int? lineId)
     {
         var query = db.Tanks.AsQueryable();
-        if (lineId.HasValue) query = query.Where(t => t.LineId == lineId.Value);
-        return Ok(await query.OrderBy(x => x.TankCode).ToListAsync());
+        if (lineId.HasValue)
+        {
+            var process = await db.Processes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == lineId.Value);
+            if (process is null) return NotFound("找不到指定的工站製程。");
+            var lineCodes = await db.Machines.AsNoTracking()
+                .Where(x => x.ProcessId == process.Id)
+                .Select(x => x.MachineCode)
+                .ToListAsync();
+            lineCodes.Add(process.ProcessCode);
+            var productionLineIds = await db.ProductionLines.AsNoTracking()
+                .Where(x => lineCodes.Contains(x.LineCode))
+                .Select(x => x.Id)
+                .ToListAsync();
+            query = query.Where(t => productionLineIds.Contains(t.LineId));
+        }
+        return Ok(await query.OrderBy(x => x.SequenceNo).ThenBy(x => x.TankCode).ThenBy(x => x.Id).ToListAsync());
     }
 
     [HttpPost("tanks")]
     public async Task<IActionResult> CreateTank(Tank req)
     {
+        if (string.IsNullOrWhiteSpace(req.TankName)) return BadRequest("槽體中文名稱為必填欄位。");
+        var process = await db.Processes.FirstOrDefaultAsync(x => x.Id == req.LineId);
+        if (process is null) return BadRequest("找不到指定的工站製程。");
+        var line = await GetOrCreateProcessLineAsync(process);
+        req.LineId = line.Id;
+        req.TankCode = $"TANK-TMP-{Guid.NewGuid():N}";
+        req.TankName = req.TankName.Trim();
+        req.TankNameEn = CleanOptional(req.TankNameEn);
         db.Tanks.Add(req);
+        await db.SaveChangesAsync();
+        req.TankCode = $"TANK-{req.Id:D6}";
         await db.SaveChangesAsync();
         return Ok(req);
     }
@@ -88,8 +123,10 @@ public class TraceabilityMasterController(AppDbContext db) : ControllerBase
     {
         var x = await db.Tanks.FindAsync(id);
         if (x is null) return NotFound();
-        x.TankCode = req.TankCode;
-        x.TankName = req.TankName;
+        if (string.IsNullOrWhiteSpace(req.TankName)) return BadRequest("槽體中文名稱為必填欄位。");
+        x.TankName = req.TankName.Trim();
+        x.TankNameEn = CleanOptional(req.TankNameEn);
+        x.SequenceNo = req.SequenceNo;
         x.Description = req.Description;
         x.IsActive = req.IsActive;
         await db.SaveChangesAsync();
@@ -105,6 +142,34 @@ public class TraceabilityMasterController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    private async Task<ProductionLine> GetOrCreateProcessLineAsync(Process process)
+    {
+        var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == process.ProcessCode);
+        if (line is not null) return line;
+
+        var factory = await db.Factories.FirstOrDefaultAsync();
+        if (factory is null)
+        {
+            var plant = await db.Plants.FirstOrDefaultAsync();
+            if (plant is null)
+            {
+                plant = new Plant { PlantCode = "PLT-01", PlantName = "Main Plant" };
+                db.Plants.Add(plant);
+                await db.SaveChangesAsync();
+            }
+            factory = new Factory { FactoryCode = "FAC-01", FactoryName = "Main Factory", PlantId = plant.Id };
+            db.Factories.Add(factory);
+            await db.SaveChangesAsync();
+        }
+
+        line = new ProductionLine { FactoryId = factory.Id, LineCode = process.ProcessCode, LineName = process.ProcessName, IsActive = process.IsEnabled };
+        db.ProductionLines.Add(line);
+        await db.SaveChangesAsync();
+        return line;
+    }
+
+    private static string? CleanOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     // --- Slots ---
     [HttpGet("slots")]
