@@ -2,6 +2,7 @@
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, computed, onMounted, watch } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
+import { normalizeControlScope as normalizeScope } from "../utils/controlScope";
 import {
   Activity,
   CheckCircle2,
@@ -85,7 +86,7 @@ function saveBinding() {
 const boundStationName = computed(() => {
   if (!boundStationId.value || stations.value.length === 0) return "尚未綁定";
   const st = stations.value.find(s => s.id === boundStationId.value);
-  return st ? `[${st.processCode}] ${st.processName}` : "未知製程";
+  return st ? `${st.processName}${st.processNameEn ? ` / ${st.processNameEn}` : ""}` : "未知製程";
 });
 
 async function loadMetadata() {
@@ -102,7 +103,10 @@ async function loadMetadata() {
       if (m.isEnabled && m.process && !processMap.has(m.processId)) processMap.set(m.processId, { ...m.process, id: m.processId });
     });
     products.value = [...partMap.values()].sort((a, b) => (a.partNo || "").localeCompare(b.partNo || ""));
-    stations.value = [...processMap.values()].sort((a, b) => (a.processCode || "").localeCompare(b.processCode || ""));
+    stations.value = [...processMap.values()].sort((a, b) =>
+      (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0) ||
+      (a.processName || "").localeCompare(b.processName || "", "zh-Hant")
+    );
   } catch (e) {
     error.value = "載入主檔資料失敗：" + getApiErrorMessage(e);
   } finally {
@@ -153,24 +157,38 @@ const filteredItems = computed(() => {
   if ((selectedControlScope.value === "PRODUCT" && !selectedProductId.value) || !boundStationId.value) return [];
   return mappings.value
     .filter(m =>
-      (m.controlScope || "PRODUCT") === selectedControlScope.value &&
+      normalizeScope(m.controlScope) === normalizeScope(selectedControlScope.value) &&
       (selectedControlScope.value !== "PRODUCT" || m.partId === Number(selectedProductId.value)) &&
       m.processId === Number(boundStationId.value) &&
       m.isEnabled &&
       m.characteristic?.isEnabled !== false &&
       m.characteristic?.isSpcEnabled !== false
     )
-    .map(m => ({ ...m.characteristic, id: m.characteristicId, mappingId: m.id }))
-    .sort((a, b) => (a.characteristicCode || "").localeCompare(b.characteristicCode || ""));
+    .map(m => ({
+      ...m.characteristic,
+      id: m.characteristicId,
+      mappingId: m.id,
+      sequenceNo: m.sequenceNo ?? 0,
+      tankSequenceNo: m.tank?.sequenceNo ?? 0,
+      tankName: m.tank?.tankName || "",
+      tankNameEn: m.tank?.tankNameEn || "",
+      unit: m.unit || m.characteristic?.unit || ""
+    }))
+    .sort((a, b) =>
+      a.tankSequenceNo - b.tankSequenceNo ||
+      a.sequenceNo - b.sequenceNo ||
+      (a.tankName || "").localeCompare(b.tankName || "", "zh-Hant") ||
+      (a.characteristicName || "").localeCompare(b.characteristicName || "", "zh-Hant")
+    );
 });
 
 const selectedMapping = computed(() => {
   if ((selectedControlScope.value === "PRODUCT" && !selectedProductId.value) || !boundStationId.value || !selectedItemId.value) return null;
   return mappings.value.find(m => 
-    (m.controlScope || "PRODUCT") === selectedControlScope.value &&
+    normalizeScope(m.controlScope) === normalizeScope(selectedControlScope.value) &&
     (selectedControlScope.value !== "PRODUCT" || m.partId === Number(selectedProductId.value)) &&
     m.processId === Number(boundStationId.value) &&
-    m.characteristicId === Number(selectedItemId.value) &&
+    m.id === Number(selectedItemId.value) &&
     m.isEnabled
   );
 });
@@ -405,7 +423,7 @@ async function submitHandleAlerts() {
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">管制類型</label>
               <select v-model="selectedControlScope" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                 <option value="PROCESS">製程管制</option>
-                <option value="CHEM">藥水管制</option>
+                <option value="CHEM">藥液管制</option>
                 <option value="PRODUCT">產品管制</option>
               </select>
             </div>
@@ -419,7 +437,7 @@ async function submitHandleAlerts() {
             <div v-else>
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">產品料號 (Part)</label>
               <div class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">
-                {{ selectedControlScope === 'CHEM' ? '藥水管制不需料號' : '製程管制不需料號' }}
+                {{ selectedControlScope === 'CHEM' ? '藥液管制不需料號' : '製程管制不需料號' }}
               </div>
             </div>
             <div>
@@ -435,7 +453,9 @@ async function submitHandleAlerts() {
             <label class="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2">請選擇檢驗項目 (Inspection Item) *</label>
             <select v-model="selectedItemId" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
               <option value="">-- 請選擇 --</option>
-              <option v-for="i in filteredItems" :key="i.id" :value="i.id">[{{ i.characteristicCode }}] {{ i.characteristicName }}</option>
+              <option v-for="i in filteredItems" :key="i.mappingId" :value="i.mappingId">
+                {{ selectedControlScope === 'CHEM' ? `${i.tankName} · ` : '' }}{{ i.characteristicName }}{{ i.characteristicNameEn ? ` / ${i.characteristicNameEn}` : '' }}{{ i.unit ? `（${i.unit}）` : '' }}
+              </option>
             </select>
           </div>
 
@@ -584,7 +604,7 @@ async function submitHandleAlerts() {
           <div>
             <select v-model="boundStationId" class="w-full px-4 py-3 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition-all">
               <option :value="null">-- 請選擇固定製程 --</option>
-              <option v-for="s in stations" :key="s.id" :value="s.id">[{{ s.processCode }}] {{ s.processName }}</option>
+              <option v-for="s in stations" :key="s.id" :value="s.id">{{ s.processName }}{{ s.processNameEn ? ` / ${s.processNameEn}` : '' }}</option>
             </select>
           </div>
           <button @click="saveBinding" :disabled="!boundStationId" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-50">
