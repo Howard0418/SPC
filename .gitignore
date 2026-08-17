@@ -28,6 +28,9 @@ backend/MesSpc.Api/appsettings.Development.json
 *.log
 EmailOutbox/
 test-artifacts/
+.codex-tmp/
+publish_stage/
+reports/
 
 # OS
 Thumbs.db
