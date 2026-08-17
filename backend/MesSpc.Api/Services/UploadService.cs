@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MesSpc.Api.Domain;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -116,6 +117,32 @@ public class UploadService(AppDbContext db, SpcService spcService)
             .FirstOrDefaultAsync(ct);
     }
 
+    public async Task<object?> GetChartTargetsAsync(Guid uploadBatchId, CancellationToken ct = default)
+    {
+        var batch = await db.UploadBatches.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
+        if (batch is null) return null;
+
+        var mappingIds = batch.UploadType == "Attribute"
+            ? await db.AttributeMeasurements.AsNoTracking()
+                .Where(x => x.UploadBatchId == uploadBatchId)
+                .Select(x => x.PartProcessCharacteristicId)
+                .Distinct()
+                .ToListAsync(ct)
+            : await db.VariableMeasurements.AsNoTracking()
+                .Where(x => x.UploadBatchId == uploadBatchId)
+                .Select(x => x.PartProcessCharacteristicId)
+                .Distinct()
+                .ToListAsync(ct);
+
+        return new
+        {
+            uploadBatchId,
+            batch.ImportStatus,
+            targets = mappingIds.OrderBy(x => x).Select(x => new { partProcessCharacteristicId = x })
+        };
+    }
+
     public async Task<object?> CreateMissingMappingsAndRevalidateAsync(Guid uploadBatchId, CancellationToken ct = default)
     {
         var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
@@ -125,12 +152,23 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
         var missingDetailIds = await db.UploadErrors
             .Where(x => x.UploadBatchId == uploadBatchId &&
-                (x.ErrorCode == "MAPPING_NOT_FOUND" || x.ErrorCode == "CHAR_NOT_FOUND") &&
+                (x.ErrorCode == "MAPPING_NOT_FOUND" || x.ErrorCode == "UNIT_MISMATCH" || x.ErrorCode == "MAPPING_AMBIGUOUS" ||
+                 x.ErrorCode == "CHAR_NOT_FOUND" || x.ErrorCode == "TANK_NOT_FOUND") &&
                 x.UploadDetailId != null)
             .Select(x => x.UploadDetailId!.Value)
             .Distinct()
             .ToListAsync(ct);
         var details = await db.UploadDetails.Where(x => missingDetailIds.Contains(x.Id)).ToListAsync(ct);
+        var pendingRows = details
+            .Select(x => JsonSerializer.Deserialize<Dictionary<string, string?>>(x.PayloadJson) ?? [])
+            .GroupBy(row => string.Join("|",
+                ResolveScope(row),
+                NormalizeMasterLookup(Get(row, "MachineCode"), "MACHINE"),
+                NormalizeTankName(Get(row, "TankCode")),
+                NormalizeCharacteristicToken(Get(row, "CharacteristicCode") ?? ""),
+                NormalizeUnit(Get(row, "Unit"))))
+            .Select(x => x.First())
+            .ToList();
         var created = 0;
         var createdCharacteristics = 0;
         var reusedMappings = 0;
@@ -140,9 +178,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var createdTanks = 0;
         var handled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var detail in details)
+        foreach (var row in pendingRows)
         {
-            var row = JsonSerializer.Deserialize<Dictionary<string, string?>>(detail.PayloadJson) ?? [];
             var scope = ResolveScope(row);
             var group = await FindScopeGroupAsync(scope, ct);
             if (group is null) { skippedMissingMasterData++; continue; }
@@ -167,33 +204,23 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 ?? await FindCharacteristicAsync(Get(row, "CharacteristicCode"), Get(row, "Unit"), scope, ct);
             if (characteristic is null)
             {
-                var rawName = Get(row, "CharacteristicCode")?.Trim();
+                var rawName = (Get(row, "CharacteristicName") ?? Get(row, "CharacteristicCode"))?.Trim();
                 if (string.IsNullOrWhiteSpace(rawName)) continue;
-                var unit = Get(row, "Unit")?.Trim();
                 var cleanName = string.Join(" / ", rawName.Replace("\r", "\n")
                     .Split(['\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-                var baseCode = !string.IsNullOrWhiteSpace(unit) && !cleanName.Contains($"({unit})", StringComparison.OrdinalIgnoreCase)
-                    ? $"{cleanName} ({unit})"
-                    : cleanName;
+                var englishName = Get(row, "CharacteristicNameEn")?.Trim();
                 characteristic = await db.QualityCharacteristics.FirstOrDefaultAsync(x =>
-                    x.ControlScope == scope &&
-                    (x.CharacteristicCode == baseCode || x.CharacteristicCode == $"{baseCode}_CHEM"), ct);
+                    x.IsEnabled && (x.CharacteristicName == cleanName ||
+                        (!string.IsNullOrWhiteSpace(englishName) && x.CharacteristicNameEn == englishName)), ct);
                 if (characteristic is null)
                 {
-                    var code = baseCode;
-                    var suffix = 0;
-                    while (await db.QualityCharacteristics.AnyAsync(x => x.CharacteristicCode == code, ct))
-                    {
-                        suffix++;
-                        code = suffix == 1 ? $"{baseCode}_CHEM" : $"{baseCode}_CHEM{suffix}";
-                    }
                     characteristic = new QualityCharacteristic
                     {
-                        CharacteristicCode = code,
+                        CharacteristicCode = $"CHAR-TMP-{Guid.NewGuid():N}",
                         CharacteristicName = cleanName,
+                        CharacteristicNameEn = string.IsNullOrWhiteSpace(englishName) ? null : englishName,
                         ControlScope = scope,
                         DataCategory = "Variable",
-                        Unit = unit,
                         InputMode = "DIRECT",
                         ValueLabel = "量測值",
                         DecimalPlaces = 3,
@@ -202,18 +229,57 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     };
                     db.QualityCharacteristics.Add(characteristic);
                     await db.SaveChangesAsync(ct);
+                    characteristic.CharacteristicCode = $"CHAR-{characteristic.Id:D6}";
+                    await db.SaveChangesAsync(ct);
                     createdCharacteristics++;
                 }
             }
 
-            var key = $"{scope}|{process.Id}|{machine?.Id}|{tank?.Id}|{characteristic.Id}";
+            var sourceUnit = Get(row, "Unit");
+            var effectiveUnit = string.IsNullOrWhiteSpace(sourceUnit) ? Get(row, "ResolvedUnit") : sourceUnit;
+            var importedUnit = NormalizeUnit(effectiveUnit);
+            var key = $"{scope}|{process.Id}|{machine?.Id}|{tank?.Id}|{characteristic.Id}|{importedUnit}";
             if (!handled.Add(key)) continue;
-            var exists = await db.PartProcessCharacteristics.AnyAsync(x =>
+            var existingMappings = await db.PartProcessCharacteristics.Where(x =>
                 x.ControlScope == scope && x.PartId == null && x.ProcessId == process.Id &&
                 x.MachineId == (group.RequiresMachine ? machine!.Id : null) &&
                 x.TankId == (group.RequiresTank ? tank!.Id : null) &&
-                x.CharacteristicId == characteristic.Id && x.IsEnabled, ct);
-            if (exists) { reusedMappings++; continue; }
+                x.SlotId == null && x.CharacteristicId == characteristic.Id).ToListAsync(ct);
+            var existingSameUnit = existingMappings.FirstOrDefault(x => NormalizeUnit(x.Unit) == importedUnit);
+            if (existingSameUnit is not null)
+            {
+                if (!existingSameUnit.IsEnabled)
+                {
+                    existingSameUnit.IsEnabled = true;
+                    await db.SaveChangesAsync(ct);
+                }
+                reusedMappings++;
+                continue;
+            }
+
+            // Use SQL Server's collation as the final uniqueness check. Excel may contain
+            // invisible/compatibility characters that normalize differently in .NET while
+            // the database unique index still treats the unit text as the same value.
+            PartProcessCharacteristic? databaseEquivalent = null;
+            if (!string.IsNullOrWhiteSpace(effectiveUnit))
+            {
+                var databaseUnit = effectiveUnit.Trim();
+                databaseEquivalent = await db.PartProcessCharacteristics
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(x =>
+                        x.ControlScope == scope && x.PartId == null && x.ProcessId == process.Id &&
+                        x.MachineId == (group.RequiresMachine ? machine!.Id : null) &&
+                        x.TankId == (group.RequiresTank ? tank!.Id : null) && x.SlotId == null &&
+                        x.CharacteristicId == characteristic.Id && x.Unit == databaseUnit, ct);
+            }
+            if (databaseEquivalent is not null)
+            {
+                databaseEquivalent.IsDeleted = false;
+                databaseEquivalent.IsEnabled = true;
+                await db.SaveChangesAsync(ct);
+                reusedMappings++;
+                continue;
+            }
 
             var template = await db.PartProcessCharacteristics
                 .Where(x => x.ControlScope == scope && x.CharacteristicId == characteristic.Id && x.IsEnabled)
@@ -228,7 +294,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             if (chartType is null) { skippedMissingChartType++; continue; }
             characteristic.DefaultChartTypeId ??= chartType.Id;
 
-            db.PartProcessCharacteristics.Add(new PartProcessCharacteristic
+            var newMapping = new PartProcessCharacteristic
             {
                 ControlScope = scope,
                 PartId = null,
@@ -236,7 +302,10 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 MachineId = group.RequiresMachine ? machine!.Id : null,
                 TankId = group.RequiresTank ? tank!.Id : null,
                 CharacteristicId = characteristic.Id,
-                Unit = template?.Unit ?? characteristic.Unit ?? Get(row, "Unit"),
+                // The same characteristic can use different units in different tanks.
+                // Prefer the unit from the uploaded row; only inherit a template unit
+                // when the source row does not provide one.
+                Unit = string.IsNullOrWhiteSpace(effectiveUnit) ? template?.Unit : effectiveUnit!.Trim(),
                 USL = template?.USL,
                 LSL = template?.LSL,
                 UCL = template?.UCL,
@@ -247,12 +316,23 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 DisplayMode = template?.DisplayMode ?? "CONTROL_CHART",
                 ChartTypeId = chartType.Id,
                 FormulaConfigJson = template?.FormulaConfigJson,
-                RuleGroupId = template?.RuleGroupId ?? chartType.RuleGroupId,
+                RuleGroupId = null,
                 IsRequired = true,
                 IsEnabled = true
-            });
-            await db.SaveChangesAsync(ct);
-            created++;
+            };
+            db.PartProcessCharacteristics.Add(newMapping);
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                created++;
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx && sqlEx.Number is 2601 or 2627)
+            {
+                // A SQL collation-equivalent unit already exists. Treat it as reusable;
+                // this also protects concurrent or repeated repair requests.
+                db.Entry(newMapping).State = EntityState.Detached;
+                reusedMappings++;
+            }
         }
 
         await RevalidateBatchAsync(batch, ct);
@@ -286,6 +366,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         {
             var row = JsonSerializer.Deserialize<Dictionary<string, string?>>(detail.PayloadJson) ?? [];
             var validationErrors = await ValidateRowAsync(row, batch.UploadType, ct);
+            detail.PayloadJson = JsonSerializer.Serialize(row);
             detail.IsValid = validationErrors.Count == 0;
             if (detail.IsValid)
             {
@@ -678,6 +759,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             await db.SaveChangesAsync(ct);
 
             var errors = await ValidateRowAsync(row, expectedDataCategory, ct);
+            detail.PayloadJson = JsonSerializer.Serialize(row);
             if (errors.Count > 0)
             {
                 detail.IsValid = false;
@@ -759,6 +841,10 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 errors.Add(("MeasuredValue", "INVALID_MEASURED_VALUE", "MeasuredValue must be numeric."));
             }
         }
+
+        var measuredAtRaw = Get(row, "MeasuredAt");
+        if (!string.IsNullOrWhiteSpace(measuredAtRaw) && !TryParseMeasurementDate(measuredAtRaw, out _))
+            errors.Add(("MeasuredAt", "INVALID_MEASURED_AT", "量測日期時間格式無法辨識，請使用 yyyy-MM-dd HH:mm:ss 或 yyyyMMdd HH:mm:ss。"));
         else if (string.Equals(expectedDataCategory, "Attribute", StringComparison.OrdinalIgnoreCase))
         {
             AddIntegerErrorIfInvalid("InspectedQty", "INSPECTED_QTY_REQUIRED");
@@ -778,6 +864,12 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var machine = await FindMachineAsync(machineCode, process, ct);
         if (process is null && machine is not null)
             process = await db.Processes.FirstOrDefaultAsync(x => x.Id == machine.ProcessId, ct);
+        if (process is not null) row["ResolvedProcessCode"] = process.ProcessCode;
+        if (machine is not null)
+        {
+            row["ResolvedMachineCode"] = machine.MachineCode;
+            row["ResolvedMachineName"] = machine.MachineName;
+        }
         if (process is null) errors.Add(("ProcessCode", "PROCESS_NOT_FOUND", "製程代碼／名稱不存在，且無法由線別取得所屬製程。"));
         if (requiresMachine && machine is null) errors.Add(("MachineCode", "MACHINE_NOT_FOUND", "線別代碼／名稱不存在。"));
         else if (process is not null && machine is not null && machine.ProcessId != process.Id)
@@ -796,7 +888,19 @@ public class UploadService(AppDbContext db, SpcService spcService)
             else if (machine is not null)
             {
                 tank = await FindTankAsync(machine, tankName, ct);
-                if (tank is null) errors.Add(("TankCode", "TANK_NOT_FOUND", "此線別底下找不到指定槽位。"));
+                if (tank is not null)
+                {
+                    row["ResolvedTankCode"] = tank.TankCode;
+                    row["ResolvedTankName"] = tank.TankName;
+                }
+                if (tank is null)
+                {
+                    var suggestions = await GetTankSuggestionsAsync(machine, tankName, ct);
+                    var suffix = suggestions.Count == 0
+                        ? ""
+                        : $" 候選槽位：{string.Join("、", suggestions)}；請確認後建立名稱對照。";
+                    errors.Add(("TankCode", "TANK_NOT_FOUND", $"此線別底下找不到指定槽位。{suffix}"));
+                }
             }
         }
 
@@ -804,6 +908,11 @@ public class UploadService(AppDbContext db, SpcService spcService)
             Get(row, "CharacteristicCode"), Get(row, "Unit"), scope,
             process, machine, tank, requiresMachine, requiresTank, ct)
             ?? await FindCharacteristicAsync(Get(row, "CharacteristicCode"), Get(row, "Unit"), scope, ct);
+        if (characteristic is not null)
+        {
+            row["ResolvedCharacteristicCode"] = characteristic.CharacteristicCode;
+            row["ResolvedCharacteristicName"] = characteristic.CharacteristicName;
+        }
         if (characteristic is null) errors.Add(("CharacteristicCode", "CHAR_NOT_FOUND", "管制項目代碼／名稱不存在，請先建立品質特性。"));
         if (characteristic is not null && !string.Equals(characteristic.DataCategory, expectedDataCategory, StringComparison.OrdinalIgnoreCase))
         {
@@ -827,10 +936,50 @@ public class UploadService(AppDbContext db, SpcService spcService)
             mappingQuery = mappingQuery.Where(x => x.MachineId == (requiresMachine ? machine!.Id : null));
             mappingQuery = mappingQuery.Where(x => x.TankId == (requiresTank ? tank!.Id : null));
 
-            var mapping = await mappingQuery.FirstOrDefaultAsync(ct);
-            if (mapping is null)
+            var mappings = await mappingQuery.ToListAsync(ct);
+            var mappingsBeforeUnit = mappings.ToList();
+            var sourceUnit = Get(row, "Unit");
+            var effectiveUnit = string.IsNullOrWhiteSpace(sourceUnit) ? Get(row, "ResolvedUnit") : sourceUnit;
+            var importedUnit = NormalizeUnit(effectiveUnit);
+            if (!string.IsNullOrWhiteSpace(importedUnit))
+                mappings = mappings.Where(x => NormalizeUnit(x.Unit) == importedUnit).ToList();
+            else if (mappings.Count > 1)
             {
-                errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", "此線別、槽位與管制項目尚未建立品質特性設定。"));
+                var parsedSpecification = SpecificationRangeParser.Parse(
+                    Get(row, "Specification"), Get(row, "SpecificationRange"));
+                var specificationMatches = mappings.Where(x =>
+                    (!parsedSpecification.TargetValue.HasValue || NearlyEqual(x.TargetValue, parsedSpecification.TargetValue)) &&
+                    (!parsedSpecification.Lsl.HasValue || NearlyEqual(x.LSL, parsedSpecification.Lsl)) &&
+                    (!parsedSpecification.Usl.HasValue || NearlyEqual(x.USL, parsedSpecification.Usl))).ToList();
+                if (specificationMatches.Count == 1)
+                {
+                    mappings = specificationMatches;
+                    row["ResolvedUnit"] = mappings[0].Unit;
+                }
+            }
+            if (mappings.Count == 0)
+            {
+                if (mappingsBeforeUnit.Count > 0 && !string.IsNullOrWhiteSpace(importedUnit))
+                {
+                    var configuredUnits = mappingsBeforeUnit
+                        .Select(x => string.IsNullOrWhiteSpace(x.Unit) ? "（空白）" : x.Unit!.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase);
+                    errors.Add(("Unit", "UNIT_MISMATCH",
+                        $"線別、槽位與品質特性已找到，但 Excel 單位「{Get(row, "Unit") ?? "（空白）"}」與主檔不同；主檔單位：{string.Join("、", configuredUnits)}。"));
+                }
+                else
+                {
+                    errors.Add(("PartProcessCharacteristic", "MAPPING_NOT_FOUND", "線別、槽位與品質特性已找到，但尚未建立此單位的 SPC 管制項目。"));
+                }
+            }
+            else if (mappings.Count > 1)
+            {
+                errors.Add(("PartProcessCharacteristic", "MAPPING_AMBIGUOUS", "此線別、槽位、管制項目與單位對應到多筆設定，請先整理重複主檔。"));
+            }
+            else
+            {
+                row["ResolvedUnit"] = mappings[0].Unit;
+                row["ResolvedMappingId"] = mappings[0].Id.ToString();
             }
         }
 
@@ -894,11 +1043,16 @@ public class UploadService(AppDbContext db, SpcService spcService)
         mappingQuery = mappingQuery.Where(x => x.MachineId == (requiresMachine ? machine!.Id : null));
         mappingQuery = mappingQuery.Where(x => x.TankId == (requiresTank ? tank!.Id : null));
 
-        var mapping = slot is null
-            ? await mappingQuery.Where(x => x.SlotId == null).FirstOrDefaultAsync(ct)
+        var mappings = slot is null
+            ? await mappingQuery.Where(x => x.SlotId == null).ToListAsync(ct)
             : await mappingQuery.Where(x => x.SlotId == slot.Id || x.SlotId == null)
-                .OrderByDescending(x => x.SlotId == slot.Id).FirstOrDefaultAsync(ct);
-        if (mapping is null) return null;
+                .OrderByDescending(x => x.SlotId == slot.Id).ToListAsync(ct);
+        var payloadUnit = Get(payload, "Unit");
+        var importedUnit = NormalizeUnit(string.IsNullOrWhiteSpace(payloadUnit) ? Get(payload, "ResolvedUnit") : payloadUnit);
+        if (!string.IsNullOrWhiteSpace(importedUnit))
+            mappings = mappings.Where(x => NormalizeUnit(x.Unit) == importedUnit).ToList();
+        if (mappings.Count != 1) return null;
+        var mapping = mappings[0];
         return (part, process, machine, tank, slot, characteristic, mapping);
     }
 
@@ -906,11 +1060,13 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         var raw = Get(row, "ControlScope") ?? Get(row, "管制類型");
         var normalized = (raw ?? "").Trim().ToUpperInvariant();
-        if (normalized is "PROCESS" or "PROC" or "製程" or "製程管制") return "PROCESS";
-        if (normalized is "CHEMICAL" or "CHEM" or "藥水" or "藥液" or "藥水管制" or "藥液管制") return "CHEM";
-        if (normalized is "PRODUCT" or "PROD" or "產品" or "產品管制") return "PRODUCT";
-        if (!string.IsNullOrWhiteSpace(normalized)) return normalized;
-        return string.IsNullOrWhiteSpace(Get(row, "PartNo")) ? "PROCESS" : "PRODUCT";
+        if (normalized is "製程" or "製程管制") return ControlScopeCodes.Process;
+        if (normalized is "藥水" or "藥液" or "藥水管制" or "藥液管制") return ControlScopeCodes.Chemical;
+        if (normalized is "產品" or "產品管制") return ControlScopeCodes.Product;
+        if (!string.IsNullOrWhiteSpace(normalized)) return ControlScopeCodes.Normalize(normalized);
+        return string.IsNullOrWhiteSpace(Get(row, "PartNo"))
+            ? ControlScopeCodes.Process
+            : ControlScopeCodes.Product;
     }
 
     private Task<ControlChartGroup?> FindScopeGroupAsync(string scope, CancellationToken ct)
@@ -922,36 +1078,39 @@ public class UploadService(AppDbContext db, SpcService spcService)
     private static string? Get(Dictionary<string, string?> row, string key)
     {
         if (row.TryGetValue(key, out var val) && !string.IsNullOrWhiteSpace(val)) return val;
-        var altKey = key.ToLowerInvariant() switch
+        var altKeys = key.ToLowerInvariant() switch
         {
-            "partno" => "料號",
-            "controlscope" => "管制類型",
-            "processcode" => "製程",
-            "machinecode" => "機台",
-            "tankcode" => "槽位",
-            "characteristiccode" => "檢驗項目",
-            "characteristicname" => "檢驗項目名稱",
-            "usl" => "上限",
-            "lsl" => "下限",
-            "measuredvalue" => "測量值",
-            "measuredat" => "日期",
-            "operator" => "作業員",
-            "lotno" => "lot",
-            "serialno" => "工單",
-            "sampleno" => "樣本編號",
-            "inspectedqty" => "總數",
-            "defectqty" => "不良數",
-            "defectcount" => "缺點數",
-            "unitcount" => "單位數",
-            "recheckvalue" => "複驗",
-            "adjustaction" => "調整",
-            "adjustamount" => "調整量",
-            "specification" => "規格",
-            "specificationrange" => "範圍",
-            _ => null
+            "partno" => new[] { "料號" },
+            "controlscope" => new[] { "管制類型", "類別" },
+            "processcode" => new[] { "製程" },
+            "machinecode" => new[] { "機台", "線別" },
+            "tankcode" => new[] { "槽位" },
+            "characteristiccode" => new[] { "檢驗項目", "管制項目" },
+            "characteristicname" => new[] { "檢驗項目名稱", "分析項目中文名稱" },
+            "characteristicnameen" => new[] { "分析項目英文名稱" },
+            "unit" => new[] { "單位" },
+            "usl" => new[] { "上限" },
+            "lsl" => new[] { "下限" },
+            "measuredvalue" => new[] { "測量值", "量測值" },
+            "measuredat" => new[] { "日期", "量測日期" },
+            "operator" => new[] { "作業員", "量測員" },
+            "lotno" => new[] { "lot" },
+            "serialno" => new[] { "工單" },
+            "sampleno" => new[] { "樣本編號" },
+            "inspectedqty" => new[] { "總數" },
+            "defectqty" => new[] { "不良數" },
+            "defectcount" => new[] { "缺點數" },
+            "unitcount" => new[] { "單位數" },
+            "recheckvalue" => new[] { "複驗" },
+            "adjustaction" => new[] { "調整" },
+            "adjustamount" => new[] { "調整量" },
+            "specification" => new[] { "規格" },
+            "specificationrange" => new[] { "範圍" },
+            _ => Array.Empty<string>()
         };
-        if (altKey != null && row.TryGetValue(altKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;
-        var matchedKey = row.Keys.FirstOrDefault(k => k.Equals(key, StringComparison.OrdinalIgnoreCase) || (altKey != null && k.Equals(altKey, StringComparison.OrdinalIgnoreCase)));
+        foreach (var altKey in altKeys)
+            if (row.TryGetValue(altKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;
+        var matchedKey = row.Keys.FirstOrDefault(k => k.Equals(key, StringComparison.OrdinalIgnoreCase) || altKeys.Any(x => k.Equals(x, StringComparison.OrdinalIgnoreCase)));
         if (matchedKey != null && row.TryGetValue(matchedKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;
         return null;
     }
@@ -970,9 +1129,22 @@ public class UploadService(AppDbContext db, SpcService spcService)
         if (parsed.Lsl.HasValue) mapping.LSL = parsed.Lsl;
         if (parsed.Usl.HasValue) mapping.USL = parsed.Usl;
     }
+    private static bool NearlyEqual(double? actual, double? expected)
+        => actual.HasValue && expected.HasValue && Math.Abs(actual.Value - expected.Value) < 0.000001;
     private static int TryInt(string? raw, int fallback) => int.TryParse(raw, out var value) ? value : fallback;
     private static int? TryNullableInt(string? raw) => int.TryParse(raw, out var value) ? value : null;
-    private static DateTime TryDateTime(string? raw, DateTime fallback) => DateTime.TryParse(raw, out var value) ? value : fallback;
+    private static bool TryParseMeasurementDate(string? raw, out DateTime value)
+    {
+        var text = (raw ?? "").Trim();
+        string[] compactFormats = ["yyyyMMdd", "yyyyMMdd H:mm", "yyyyMMdd HH:mm", "yyyyMMdd H:mm:ss", "yyyyMMdd HH:mm:ss"];
+        return DateTime.TryParseExact(text, compactFormats,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   System.Globalization.DateTimeStyles.AllowWhiteSpaces, out value)
+               || DateTime.TryParse(text, out value);
+    }
+
+    private static DateTime TryDateTime(string? raw, DateTime fallback)
+        => TryParseMeasurementDate(raw, out var value) ? value : fallback;
 
     private async Task<Process?> FindProcessAsync(string? codeOrName, CancellationToken ct)
     {
@@ -986,10 +1158,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var normalized = NormalizeMasterLookup(value, "PROCESS");
         if (normalized.Length < 2) return null;
         var fuzzyMatches = (await db.Processes.Where(x => x.IsEnabled).ToListAsync(ct))
-            .Where(x => IsUniqueFuzzyMatch(
-                normalized,
-                NormalizeMasterLookup(x.ProcessCode, "PROCESS"),
-                NormalizeMasterLookup(x.ProcessName, "PROCESS")))
+            .Where(x => normalized == NormalizeMasterLookup(x.ProcessCode, "PROCESS") ||
+                        normalized == NormalizeMasterLookup(x.ProcessName, "PROCESS"))
             .Take(2)
             .ToList();
         return fuzzyMatches.Count == 1 ? fuzzyMatches[0] : null;
@@ -1023,22 +1193,12 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var fuzzyQuery = db.Machines.Where(x => x.IsEnabled);
         if (process is not null) fuzzyQuery = fuzzyQuery.Where(x => x.ProcessId == process.Id);
         var fuzzyMatches = (await fuzzyQuery.ToListAsync(ct))
-            .Where(x => IsUniqueFuzzyMatch(
-                normalized,
-                NormalizeMasterLookup(x.MachineCode, "MACHINE"),
-                NormalizeMasterLookup(x.MachineName, "MACHINE")))
+            .Where(x => normalized == NormalizeMasterLookup(x.MachineCode, "MACHINE") ||
+                        normalized == NormalizeMasterLookup(x.MachineName, "MACHINE"))
             .Take(2)
             .ToList();
         return fuzzyMatches.Count == 1 ? fuzzyMatches[0] : null;
     }
-
-    private static bool IsUniqueFuzzyMatch(string input, params string[] candidates)
-        => candidates.Any(candidate =>
-            candidate == input ||
-            candidate.StartsWith(input, StringComparison.OrdinalIgnoreCase) ||
-            input.StartsWith(candidate, StringComparison.OrdinalIgnoreCase) ||
-            candidate.Contains(input, StringComparison.OrdinalIgnoreCase) ||
-            input.Contains(candidate, StringComparison.OrdinalIgnoreCase));
 
     private static string NormalizeMasterLookup(string? value, string kind)
     {
@@ -1057,7 +1217,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
     {
         if (string.IsNullOrWhiteSpace(codeOrName)) return null;
         var value = codeOrName.Trim();
-        var scopedQuery = db.QualityCharacteristics.Where(x => x.ControlScope == scope && x.IsEnabled);
+        var scopedQuery = db.QualityCharacteristics.Where(x => x.IsEnabled);
         var byCode = await scopedQuery.FirstOrDefaultAsync(x => x.CharacteristicCode == value, ct);
         if (byCode is not null) return byCode;
         var cleanName = string.Join(" / ", value.Replace("\r", "\n")
@@ -1069,26 +1229,18 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var importedMatch = await scopedQuery.FirstOrDefaultAsync(x =>
             x.CharacteristicCode == importedCode || x.CharacteristicCode == $"{importedCode}_CHEM", ct);
         if (importedMatch is not null) return importedMatch;
-        var byName = await scopedQuery.Where(x => x.CharacteristicName == value).Take(2).ToListAsync(ct);
+        var byName = await scopedQuery.Where(x => x.CharacteristicName == value || x.CharacteristicNameEn == value).Take(2).ToListAsync(ct);
         if (byName.Count == 1) return byName[0];
 
         var inputTokens = GetCharacteristicTokens(value);
         var candidates = (await scopedQuery.ToListAsync(ct))
             .Where(x => GetCharacteristicTokens(x.CharacteristicCode)
                     .Concat(GetCharacteristicTokens(x.CharacteristicName))
+                    .Concat(GetCharacteristicTokens(x.CharacteristicNameEn))
                     .Any(candidate => inputTokens.Contains(candidate, StringComparer.OrdinalIgnoreCase)))
             .ToList();
         if (candidates.Count == 1) return candidates[0];
 
-        if (!string.IsNullOrWhiteSpace(normalizedUnit))
-        {
-            var unitMatches = candidates.Where(x =>
-                NormalizeUnit(x.Unit) == normalizedUnit ||
-                GetParenthesizedUnits(x.CharacteristicCode).Contains(normalizedUnit, StringComparer.OrdinalIgnoreCase) ||
-                GetParenthesizedUnits(x.CharacteristicName).Contains(normalizedUnit, StringComparer.OrdinalIgnoreCase))
-                .ToList();
-            if (unitMatches.Count == 1) return unitMatches[0];
-        }
         return null;
     }
 
@@ -1115,28 +1267,22 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 x.IsEnabled && x.Characteristic != null && x.Characteristic.IsEnabled)
             .ToListAsync(ct);
         var inputTokens = ExpandChemicalAliases(GetCharacteristicTokens(codeOrName));
-        var candidates = mappings
-            .Select(x => x.Characteristic!)
+        var candidateMappings = mappings
             .Where(x => ExpandChemicalAliases(
-                    GetCharacteristicTokens(x.CharacteristicCode)
-                        .Concat(GetCharacteristicTokens(x.CharacteristicName))
+                    GetCharacteristicTokens(x.Characteristic!.CharacteristicCode)
+                        .Concat(GetCharacteristicTokens(x.Characteristic.CharacteristicName))
+                        .Concat(GetCharacteristicTokens(x.Characteristic.CharacteristicNameEn))
                         .Distinct(StringComparer.OrdinalIgnoreCase)
                         .ToList())
                 .Any(token => inputTokens.Contains(token, StringComparer.OrdinalIgnoreCase)))
-            .DistinctBy(x => x.Id)
             .ToList();
-        if (candidates.Count == 1) return candidates[0];
-
         var normalizedUnit = NormalizeUnit(unit);
         if (!string.IsNullOrWhiteSpace(normalizedUnit))
         {
-            var unitMatches = candidates.Where(x =>
-                NormalizeUnit(x.Unit) == normalizedUnit ||
-                GetParenthesizedUnits(x.CharacteristicCode).Contains(normalizedUnit, StringComparer.OrdinalIgnoreCase) ||
-                GetParenthesizedUnits(x.CharacteristicName).Contains(normalizedUnit, StringComparer.OrdinalIgnoreCase))
-                .ToList();
-            if (unitMatches.Count == 1) return unitMatches[0];
+            candidateMappings = candidateMappings.Where(x => NormalizeUnit(x.Unit) == normalizedUnit).ToList();
         }
+        if (candidateMappings.Select(x => x.CharacteristicId).Distinct().Count() == 1)
+            return candidateMappings[0].Characteristic;
         return null;
     }
 
@@ -1209,19 +1355,37 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var normalizedRaw = NormalizeTankName(raw);
         if (normalizedRaw.Length < 2) return null;
         var tanks = await db.Tanks.Where(x => x.LineId == line.Id && x.IsActive).ToListAsync(ct);
-        var fuzzyMatches = tanks.Where(x =>
+        var normalizedMatches = tanks.Where(x =>
         {
             var normalizedName = NormalizeTankName(x.TankName);
             var codeWithoutLine = x.TankCode.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase)
                 ? x.TankCode[(machine.MachineCode.Length + 1)..]
                 : x.TankCode;
             var normalizedCode = NormalizeTankName(codeWithoutLine);
-            return normalizedName == normalizedRaw ||
-                   normalizedCode == normalizedRaw ||
-                   normalizedName.StartsWith(normalizedRaw, StringComparison.OrdinalIgnoreCase) ||
-                   normalizedCode.StartsWith(normalizedRaw, StringComparison.OrdinalIgnoreCase);
+            return normalizedName == normalizedRaw || normalizedCode == normalizedRaw;
         }).Take(2).ToList();
-        return fuzzyMatches.Count == 1 ? fuzzyMatches[0] : null;
+        if (normalizedMatches.Count == 1) return normalizedMatches[0];
+        if (normalizedMatches.Count > 1) return null;
+
+        var ranked = TankNameMatcher.Rank(raw, tanks, x => x.TankName, x => x.TankCode);
+        return TankNameMatcher.SelectUniqueAutoMatch(ranked);
+    }
+
+    private async Task<List<string>> GetTankSuggestionsAsync(
+        Machine machine, string? tankNameOrCode, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(tankNameOrCode)) return [];
+        var line = await db.ProductionLines.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.LineCode == machine.MachineCode, ct);
+        if (line is null) return [];
+        var tanks = await db.Tanks.AsNoTracking()
+            .Where(x => x.LineId == line.Id && x.IsActive)
+            .ToListAsync(ct);
+        return TankNameMatcher.Rank(tankNameOrCode, tanks, x => x.TankName, x => x.TankCode)
+            .Where(x => x.Score >= TankNameMatcher.SuggestionThreshold)
+            .Take(3)
+            .Select(x => $"{x.Item.TankName}（{x.Score:P0}）")
+            .ToList();
     }
 
     private async Task<(Tank? Tank, bool Created)> CreateTankIfNoSimilarAsync(
@@ -1241,40 +1405,32 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 ? x.TankCode[(machine.MachineCode.Length + 1)..]
                 : x.TankCode;
             var normalizedCode = NormalizeTankName(codeWithoutLine);
-            return normalizedName.Contains(normalizedRaw, StringComparison.OrdinalIgnoreCase) ||
-                   normalizedRaw.Contains(normalizedName, StringComparison.OrdinalIgnoreCase) ||
-                   normalizedCode.Contains(normalizedRaw, StringComparison.OrdinalIgnoreCase) ||
-                   normalizedRaw.Contains(normalizedCode, StringComparison.OrdinalIgnoreCase);
+            return normalizedName == normalizedRaw || normalizedCode == normalizedRaw;
         }).Take(2).ToList();
         if (similar.Count == 1) return (similar[0], false);
         if (similar.Count > 1) return (null, false);
 
-        var tankCode = raw.StartsWith(machine.MachineCode + "-", StringComparison.OrdinalIgnoreCase)
-            ? raw
-            : $"{machine.MachineCode}-{raw}";
-        var existingByCode = await db.Tanks.FirstOrDefaultAsync(x => x.TankCode == tankCode, ct);
-        if (existingByCode is not null)
-            return existingByCode.LineId == line.Id ? (existingByCode, false) : (null, false);
+        var ranked = TankNameMatcher.Rank(raw, tanks, x => x.TankName, x => x.TankCode);
+        var autoMatch = TankNameMatcher.SelectUniqueAutoMatch(ranked);
+        if (autoMatch is not null) return (autoMatch, false);
+        if (ranked.Any(x => x.Score >= TankNameMatcher.SuggestionThreshold))
+            return (null, false);
 
         var tank = new Tank
         {
             LineId = line.Id,
-            TankCode = tankCode,
+            TankCode = $"TANK-TMP-{Guid.NewGuid():N}",
             TankName = raw,
             Description = "由匯入批次自動建立",
             IsActive = true
         };
         db.Tanks.Add(tank);
         await db.SaveChangesAsync(ct);
+        tank.TankCode = $"TANK-{tank.Id:D6}";
+        await db.SaveChangesAsync(ct);
         return (tank, true);
     }
 
     private static string NormalizeTankName(string? value)
-    {
-        var normalized = string.Concat((value ?? "").Where(c =>
-            !char.IsWhiteSpace(c) && c is not '-' and not '_' and not '(' and not ')'))
-            .Replace("TANK", "", StringComparison.OrdinalIgnoreCase)
-            .Trim();
-        return normalized == "表處" ? "表面處理" : normalized;
-    }
+        => TankNameMatcher.Normalize(value);
 }

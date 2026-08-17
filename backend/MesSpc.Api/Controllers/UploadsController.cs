@@ -77,6 +77,13 @@ public class UploadsController(UploadService uploadService)
         return progress is null ? NotFound() : Ok(progress);
     }
 
+    [HttpGet("{uploadBatchId:guid}/chart-targets")]
+    public async Task<IActionResult> ChartTargets(Guid uploadBatchId)
+    {
+        var result = await uploadService.GetChartTargetsAsync(uploadBatchId);
+        return result is null ? NotFound() : Ok(result);
+    }
+
     [HttpPost("{uploadBatchId:guid}/confirm")]
     public async Task<IActionResult> Confirm(Guid uploadBatchId, [FromQuery] string mode = "upsert")
     {

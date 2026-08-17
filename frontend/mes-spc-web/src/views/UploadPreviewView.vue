@@ -25,16 +25,25 @@ const loading = ref(false);
 const batchId = computed(() => route.params.batchId);
 const chartPpcId = ref(null);
 const importMode = ref("insertOnly");
-const autoImporting = ref(false);
+
+function formatMeasuredAt(value) {
+  if (!value) return "即時";
+  const text = String(value).trim();
+  const normalized = /^(\d{4})(\d{2})(\d{2})(.*)$/.test(text)
+    ? text.replace(/^(\d{4})(\d{2})(\d{2})(.*)$/, "$1-$2-$3$4")
+    : text;
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? text : parsed.toLocaleString();
+}
 const revalidateProgress = ref(null);
 const missingMappingCount = computed(() =>
   new Set(errors.value
-    .filter(e => e.errorCode === "MAPPING_NOT_FOUND" || e.errorCode === "CHAR_NOT_FOUND")
+    .filter(e => ["MAPPING_NOT_FOUND", "UNIT_MISMATCH", "CHAR_NOT_FOUND"].includes(e.errorCode))
     .map(e => e.uploadDetailId)).size
 );
 const blockedSetupCount = computed(() => {
   const setupIds = new Set(errors.value
-    .filter(e => e.errorCode === "MAPPING_NOT_FOUND" || e.errorCode === "CHAR_NOT_FOUND")
+    .filter(e => ["MAPPING_NOT_FOUND", "UNIT_MISMATCH", "CHAR_NOT_FOUND"].includes(e.errorCode))
     .map(e => e.uploadDetailId));
   const blockedIds = new Set(errors.value
     .filter(e => ["PROCESS_NOT_FOUND", "MACHINE_NOT_FOUND", "TANK_NOT_FOUND"].includes(e.errorCode))
@@ -72,41 +81,44 @@ async function load() {
         processCode: p.ProcessCode || p["製程"] || "",
         machineCode: p.MachineCode || p["機台"] || p["線別"] || "",
         tankCode: p.TankCode || p["槽位"] || "",
-        characteristicCode: p.CharacteristicCode || p["檢驗項目"] || "",
+        characteristicCode: p.CharacteristicCode || p["檢驗項目"] || p["管制項目"] || "",
+        unit: p.Unit || p["單位"] || "",
         resolvedProcessCode: p.ResolvedProcessCode || "",
         resolvedMachineCode: p.ResolvedMachineCode || "",
+        resolvedMachineName: p.ResolvedMachineName || "",
         resolvedTankCode: p.ResolvedTankCode || "",
+        resolvedTankName: p.ResolvedTankName || "",
         resolvedCharacteristicCode: p.ResolvedCharacteristicCode || "",
+        resolvedCharacteristicName: p.ResolvedCharacteristicName || "",
+        resolvedUnit: p.ResolvedUnit || "",
+        resolvedMappingId: p.ResolvedMappingId || "",
         duplicateStatus: p.DuplicateStatus || "",
-        measuredValue: p.MeasuredValue !== undefined ? p.MeasuredValue : (p["測量值"] !== undefined ? p["測量值"] : null),
+        measuredValue: p.MeasuredValue !== undefined ? p.MeasuredValue : (p["測量值"] !== undefined ? p["測量值"] : (p["量測值"] !== undefined ? p["量測值"] : null)),
         recheckValue: p.RecheckValue !== undefined ? p.RecheckValue : (p["複驗"] !== undefined ? p["複驗"] : (p["複驗值"] !== undefined ? p["複驗值"] : "")),
         adjustAction: p.AdjustAction || p["調整"] || p["調整方式"] || "",
         adjustAmount: p.AdjustAmount !== undefined ? p.AdjustAmount : (p["調整量"] !== undefined ? p["調整量"] : ""),
         defectQty: p.DefectQty !== undefined ? p.DefectQty : (p["不良數"] !== undefined ? p["不良數"] : null),
         inspectedQty: p.InspectedQty !== undefined ? p.InspectedQty : (p["總數"] !== undefined ? p["總數"] : null),
-        measuredAt: p.MeasuredAt || p["日期"] || "",
-        operator: p.Operator || p["作業員"] || "",
+        measuredAt: p.MeasuredAt || p["日期"] || p["量測日期"] || "",
+        operator: p.Operator || p["作業員"] || p["量測員"] || "",
         errorsList: rowErrors
       };
     });
     chartPpcId.value = await resolveChartPpcId();
-    if (!isImported.value &&
-        !autoImporting.value &&
-        Number(batch.value?.validRows || 0) > 0 &&
-        Number(batch.value?.errorRows || 0) === 0) {
-      autoImporting.value = true;
-      await confirmImport();
-    }
   } catch (e) {
     err.value = getApiErrorMessage(e);
   }
 }
 
 async function resolveChartPpcId() {
-  const firstValid = details.value.find(d => d.isValid && d.partNo && d.processCode && d.characteristicCode);
-  if (!firstValid) return null;
-
   try {
+    const { data: targetData } = await api.get(`/uploads/${batchId.value}/chart-targets`);
+    const targetId = Number(targetData?.targets?.[0]?.partProcessCharacteristicId || 0);
+    if (targetId) return targetId;
+
+    // Legacy product batches may not have measurements linked by upload batch.
+    const firstValid = details.value.find(d => d.isValid && d.partNo && d.processCode && d.characteristicCode);
+    if (!firstValid) return null;
     const { data } = await api.get("/v1/part-process-characteristics");
     const match = (data || []).find(x => {
       const partNo = x.part?.partNo || x.Part?.partNo || x.Part?.PartNo;
@@ -239,6 +251,36 @@ function getCellErrorMessage(detailItem, fieldName) {
   return matched ? matched.errorMessage : "";
 }
 
+function hasAnyCellError(detailItem, fieldNames) {
+  return fieldNames.some(field => hasCellError(detailItem, field));
+}
+
+function matchState(detailItem, section) {
+  const configs = {
+    line: { fields: ["MachineCode", "ProcessCode"], resolved: detailItem.resolvedMachineCode },
+    tank: { fields: ["TankCode"], resolved: detailItem.resolvedTankName || detailItem.resolvedTankCode, blockedBy: ["MachineCode", "ProcessCode"] },
+    characteristic: { fields: ["CharacteristicCode"], resolved: detailItem.resolvedCharacteristicName || detailItem.resolvedCharacteristicCode },
+    unit: { fields: ["Unit"], resolved: detailItem.resolvedMappingId ? (detailItem.resolvedUnit || "（空白）") : detailItem.resolvedUnit, blockedBy: ["TankCode", "CharacteristicCode"] },
+    mapping: { fields: ["PartProcessCharacteristic"], resolved: detailItem.resolvedMappingId, blockedBy: ["MachineCode", "ProcessCode", "TankCode", "CharacteristicCode", "Unit"] }
+  };
+  const config = configs[section];
+  if (hasAnyCellError(detailItem, config.fields)) return "error";
+  if (config.blockedBy && hasAnyCellError(detailItem, config.blockedBy) && !config.resolved) return "skipped";
+  return config.resolved ? "success" : "skipped";
+}
+
+function matchStateClass(state) {
+  return state === "success"
+    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800"
+    : state === "error"
+      ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800"
+      : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
+}
+
+function matchStateLabel(state) {
+  return state === "success" ? "已對應" : state === "error" ? "未通過" : "待前項確認";
+}
+
 onMounted(load);
 </script>
 
@@ -332,6 +374,7 @@ onMounted(load);
             <li>線別先比對原代碼；找不到再比對「原代碼＋1」。</li>
             <li>槽位限定在線別底下，以槽位代碼或名稱比對。</li>
             <li>管制項目限定 CHEM，以代碼／名稱，再以項目＋單位比對。</li>
+            <li>線別、槽位及管制項目已存在但單位不同時，可複製同項目設定並建立該單位的 SPC 管制項目。</li>
             <li>三者都存在才建立「線別＋槽位＋管制項目」設定；缺少槽位時會略過並保留錯誤。</li>
           </ol>
         </details>
@@ -410,7 +453,9 @@ onMounted(load);
               <th class="p-3">製程對應</th>
               <th class="p-3">線別對應</th>
               <th class="p-3">槽位對應</th>
-              <th class="p-3">管制項目對應</th>
+              <th class="p-3">品質特性對應</th>
+              <th class="p-3">單位對應</th>
+              <th class="p-3">SPC 管制項目</th>
               <th class="p-3">量測數值 (Value)</th>
               <th class="p-3">複驗 (Recheck)</th>
               <th class="p-3">調整 (Adjust)</th>
@@ -421,7 +466,7 @@ onMounted(load);
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-650 dark:text-slate-300 font-medium">
-            <tr v-for="d in errorDetails" :key="d.id" class="transition-colors bg-red-500/5 dark:bg-red-950/20 text-red-700 dark:text-red-300 border-l-4 border-red-500">
+            <tr v-for="d in errorDetails" :key="d.id" class="transition-colors bg-white dark:bg-slate-900 border-l-4 border-amber-400">
               <!-- Row No -->
               <td class="p-3 font-mono font-bold" :class="!d.isValid ? 'text-red-650 dark:text-red-400' : 'text-slate-450'">
                 #{{ d.rowNo }}
@@ -447,16 +492,50 @@ onMounted(load);
                 </div>
               </td>
 
-              <td class="p-3">{{ d.machineCode || '-' }} → {{ d.resolvedMachineCode || '-' }}</td>
-              <td class="p-3">{{ d.tankCode || '-' }} → {{ d.resolvedTankCode || '-' }}</td>
+              <td class="p-3 align-top">
+                <div class="font-bold">{{ d.machineCode || '-' }} → {{ d.resolvedMachineName || d.resolvedMachineCode || '-' }}</div>
+                <span class="inline-flex mt-1 px-2 py-0.5 rounded border text-[10px] font-black" :class="matchStateClass(matchState(d, 'line'))">
+                  {{ matchStateLabel(matchState(d, 'line')) }}
+                </span>
+              </td>
+              <td class="p-3 align-top relative group">
+                <div class="font-bold">{{ d.tankCode || '-' }} → {{ d.resolvedTankName || d.resolvedTankCode || '-' }}</div>
+                <span class="inline-flex mt-1 px-2 py-0.5 rounded border text-[10px] font-black" :class="matchStateClass(matchState(d, 'tank'))">
+                  {{ matchStateLabel(matchState(d, 'tank')) }}
+                </span>
+                <div v-if="hasCellError(d, 'TankCode')" class="mt-1 text-[10px] text-red-600 dark:text-red-300">
+                  {{ getCellErrorMessage(d, 'TankCode') }}
+                </div>
+              </td>
 
               <!-- CharacteristicCode -->
-              <td class="p-3" :class="{ 'relative group': hasCellError(d, 'CharacteristicCode') || hasCellError(d, 'PartProcessCharacteristic') }">
-                <span :class="hasCellError(d, 'CharacteristicCode') || hasCellError(d, 'PartProcessCharacteristic') ? 'text-red-500 border-b border-dashed border-red-500 font-black' : 'text-blue-600 dark:text-blue-400 font-semibold'">
-                  {{ d.characteristicCode }} → {{ d.resolvedCharacteristicCode || '-' }}
+              <td class="p-3 align-top">
+                <div class="font-bold">{{ d.characteristicCode || '-' }} → {{ d.resolvedCharacteristicName || d.resolvedCharacteristicCode || '-' }}</div>
+                <span class="inline-flex mt-1 px-2 py-0.5 rounded border text-[10px] font-black" :class="matchStateClass(matchState(d, 'characteristic'))">
+                  {{ matchStateLabel(matchState(d, 'characteristic')) }}
                 </span>
-                <div v-if="hasCellError(d, 'CharacteristicCode') || hasCellError(d, 'PartProcessCharacteristic')" class="absolute z-50 left-10 bottom-6 hidden group-hover:block bg-red-900 text-red-100 text-[10px] p-2 rounded shadow-lg border border-red-500">
-                  {{ getCellErrorMessage(d, 'CharacteristicCode') || getCellErrorMessage(d, 'PartProcessCharacteristic') }}
+                <div v-if="hasCellError(d, 'CharacteristicCode')" class="mt-1 text-[10px] text-red-600 dark:text-red-300">
+                  {{ getCellErrorMessage(d, 'CharacteristicCode') }}
+                </div>
+              </td>
+
+              <td class="p-3 align-top">
+                <div class="font-bold">{{ d.unit || '（空白）' }} → {{ d.resolvedMappingId ? (d.resolvedUnit || '（空白）') : '-' }}</div>
+                <span class="inline-flex mt-1 px-2 py-0.5 rounded border text-[10px] font-black" :class="matchStateClass(matchState(d, 'unit'))">
+                  {{ matchStateLabel(matchState(d, 'unit')) }}
+                </span>
+                <div v-if="hasCellError(d, 'Unit')" class="mt-1 text-[10px] text-red-600 dark:text-red-300">
+                  {{ getCellErrorMessage(d, 'Unit') }}
+                </div>
+              </td>
+
+              <td class="p-3 align-top">
+                <div class="font-bold">{{ d.resolvedMappingId ? `#${d.resolvedMappingId}` : '-' }}</div>
+                <span class="inline-flex mt-1 px-2 py-0.5 rounded border text-[10px] font-black" :class="matchStateClass(matchState(d, 'mapping'))">
+                  {{ matchStateLabel(matchState(d, 'mapping')) }}
+                </span>
+                <div v-if="hasCellError(d, 'PartProcessCharacteristic')" class="mt-1 text-[10px] text-red-600 dark:text-red-300">
+                  {{ getCellErrorMessage(d, 'PartProcessCharacteristic') }}
                 </div>
               </td>
 
@@ -484,7 +563,7 @@ onMounted(load);
 
               <!-- MeasuredAt -->
               <td class="p-3 font-mono text-slate-400">
-                {{ d.measuredAt ? new Date(d.measuredAt).toLocaleString() : '即時' }}
+                {{ formatMeasuredAt(d.measuredAt) }}
               </td>
 
               <!-- Operator -->
@@ -507,7 +586,7 @@ onMounted(load);
 
             <!-- Empty Rows fallback -->
             <tr v-if="errorDetails.length === 0">
-              <td colspan="13" class="p-8 text-center text-slate-400 text-sm">
+              <td colspan="15" class="p-8 text-center text-slate-400 text-sm">
                 {{ Number(batch?.errorRows || 0) === 0 ? '無未通過資料，系統將直接匯入。' : '仍有未通過資料，請重新整理後查看。' }}
               </td>
             </tr>

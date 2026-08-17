@@ -82,7 +82,7 @@ const systemFields = computed(() => [
   { key: "TankCode", label: "槽位 (TankCode)", required: selectedGroup.value?.requiresTank === true || selectedControlScope.value === "CHEM", altNames: ["槽位", "槽體", "tank", "tankcode", "tank_code"] },
   { key: "Specification", label: "規格／目標值 (Specification)", required: false, altNames: ["規格", "規格值", "目標值", "spec", "specification", "target"] },
   { key: "SpecificationRange", label: "規格範圍 (SpecificationRange)", required: false, altNames: ["範圍", "規格範圍", "上下限", "range", "specificationrange", "specification_range"] },
-  { key: "MeasuredValue", label: "量測數值 (MeasuredValue) *", required: true, altNames: ["測量值", "數值", "值", "measuredvalue", "measured_value", "value", "val"] },
+  { key: "MeasuredValue", label: "量測數值 (MeasuredValue) *", required: true, altNames: ["量測值", "測量值", "測定值", "分析值", "檢測值", "數值", "measuredvalue", "measured_value", "value", "val", "值"] },
   { key: "RecheckValue", label: "複驗值 (RecheckValue)", required: false, altNames: ["複驗", "複驗值", "recheck", "recheckvalue", "recheck_value", "review_value"] },
   { key: "AdjustAction", label: "調整 (AdjustAction)", required: false, altNames: ["調整", "調整方式", "調整動作", "adjust", "adjustaction", "adjust_action", "action"] },
   { key: "AdjustAmount", label: "調整量 (AdjustAmount)", required: false, altNames: ["調整量", "添加量", "稀釋量", "adjustamount", "adjust_amount", "amount"] },
@@ -236,17 +236,28 @@ async function handleFileChange(e) {
 }
 
 function runFuzzyAutoMapping() {
+  const normalizeHeader = value => String(value || "").toLowerCase().trim().replace(/[\s-_]/g, "");
+  const usedHeaders = new Set();
   systemFields.value.forEach(field => {
-    // Try to find a matching file header using altNames or exact match
-    const match = fileHeaders.value.find(h => {
-      const hClean = h.toLowerCase().trim().replace(/[\s-_]/g, "");
-      return field.altNames.some(alt => {
-        const altClean = alt.toLowerCase().trim().replace(/[\s-_]/g, "");
-        return hClean === altClean || hClean.includes(altClean) || altClean.includes(hClean);
+    const candidates = [field.key, ...field.altNames]
+      .map(normalizeHeader)
+      .filter(Boolean);
+    // Exact names win. This prevents generic aliases such as "值" from stealing
+    // columns like 規格值 before MeasuredValue gets a chance to map 量測值.
+    let match = fileHeaders.value.find(h =>
+      !usedHeaders.has(h) && candidates.includes(normalizeHeader(h)));
+    if (!match) {
+      const fuzzyCandidates = candidates.filter(x => x.length >= 2 && !["value", "val"].includes(x));
+      match = fileHeaders.value.find(h => {
+        if (usedHeaders.has(h)) return false;
+        const normalized = normalizeHeader(h);
+        return fuzzyCandidates.some(candidate =>
+          normalized.includes(candidate) || candidate.includes(normalized));
       });
-    });
+    }
     if (match) {
       columnMappings.value[field.key] = match;
+      usedHeaders.add(match);
     } else {
       columnMappings.value[field.key] = "";
     }
