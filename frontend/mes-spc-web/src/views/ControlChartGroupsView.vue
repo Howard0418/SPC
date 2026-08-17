@@ -241,9 +241,9 @@ function syncTabFromRoute() {
 }
 
 function defaultTypeRuleCodes() {
-  const firstRule = [...ruleLibraryRows.value]
-    .sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0) || (Number(a.id) || 0) - (Number(b.id) || 0))[0];
-  return firstRule ? [firstRule.ruleCode] : [];
+  return [...ruleLibraryRows.value]
+    .sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0) || (Number(a.id) || 0) - (Number(b.id) || 0))
+    .map(rule => rule.ruleCode);
 }
 
 async function loadTypeRules(chartTypeId) {
@@ -393,8 +393,6 @@ async function saveType() {
       savedType = data;
       successAlert("成功更新管制圖種類：" + data.chartTypeName);
     }
-    const rulesResult = await saveTypeRules(savedType.id);
-    savedType.ruleGroupId = rulesResult?.ruleGroupId || null;
     const idx = typesRows.value.findIndex(x => x.id === savedType.id);
     if (idx !== -1) typesRows.value[idx] = savedType;
     else typesRows.value.push(savedType);
@@ -795,11 +793,11 @@ watch(() => route.query.tab, syncTabFromRoute);
           </div>
           <!-- Rule Selection -->
           <div class="space-y-2 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl">
-            <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-2"><Sliders class="w-4 h-4" /> 管制規則設定（預設套用規則）</label>
-            <p class="text-[11px] text-amber-700 dark:text-amber-400/80">勾選此管制圖類型預設啟用的 SPC 管制規則。</p>
+            <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-2"><Sliders class="w-4 h-4" /> 管制規則</label>
+            <p class="text-[11px] text-amber-700 dark:text-amber-400/80">全部管制項目固定使用 WE 八大規則，不支援管制圖或項目專屬規則。</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               <label v-for="rule in typeRuleOptions" :key="rule.ruleCode" class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 cursor-pointer hover:border-amber-400 transition-colors">
-                <input type="checkbox" :value="rule.ruleCode" v-model="selectedTypeRuleCodes" class="mt-0.5 w-4 h-4 rounded accent-amber-500" />
+                <input type="checkbox" :value="rule.ruleCode" v-model="selectedTypeRuleCodes" disabled class="mt-0.5 w-4 h-4 rounded accent-amber-500" />
                 <div>
                   <div class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ rule.ruleName }}</div>
                   <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{{ rule.description }}</div>

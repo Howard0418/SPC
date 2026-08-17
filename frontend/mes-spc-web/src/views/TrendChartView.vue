@@ -75,6 +75,7 @@ const filteredMappingsByDimension = computed(() =>
   mappings.value.filter(m =>
     m.isEnabled &&
     m.characteristic?.dataCategory === "Variable" &&
+    ((m.controlScope || "").toUpperCase() !== "CHEM" || m.displayMode === "TREND_CHART") &&
     getDimensionForMapping(m) === selectedDimension.value
   )
 );
@@ -100,7 +101,7 @@ const availableProcesses = computed(() => {
     .forEach(m => { if (!byId.has(m.processId)) byId.set(m.processId, m.process); });
   return [...byId.entries()]
     .map(([id, process]) => ({ ...process, id }))
-    .sort((a, b) => (a.processCode || "").localeCompare(b.processCode || ""));
+    .sort((a, b) => (Number(a.sequenceNo) || 0) - (Number(b.sequenceNo) || 0) || a.id - b.id);
 });
 
 const availableCharacteristics = computed(() => {
@@ -136,10 +137,7 @@ function uniqueNonEmptyParts(parts) {
 
 function formatTankLabel(tank) {
   if (!tank) return "";
-  const name = tank.tankName || "";
-  const code = tank.tankCode || "";
-  if (name && code) return `${name} (${code})`;
-  return name || code;
+  return tank.tankName || tank.tankCode || "";
 }
 
 const activeChartDisplayName = computed(() => {
@@ -153,10 +151,7 @@ const activeChartDisplayName = computed(() => {
 
   const mapping = selectedMapping.value;
   const mappingTitleParts = uniqueNonEmptyParts([
-    ...uniqueNonEmptyParts([
-      mapping?.process?.processName,
-      mapping?.machine?.machineName
-    ]),
+    mapping?.process?.processName || mapping?.machine?.machineName,
     formatTankLabel(mapping?.tank),
     mapping?.characteristic?.characteristicName
   ]);
@@ -287,6 +282,7 @@ async function loadChart() {
       const res = await api.get("/v1/spc/summary", {
         params: {
           dimension: selectedDimension.value,
+          groupType: selectedDimension.value === "CHEM" ? "TREND_CHART" : undefined,
           partId: selectedPartId.value || undefined,
           processId: selectedProcessId.value !== "ALL" ? Number(selectedProcessId.value) : undefined,
           startDate: startDate.value || undefined,
@@ -458,8 +454,8 @@ function renderTrendChart() {
   };
 
   if (showSpecLimits.value) {
-    addLine(limits.usl, "USL (工程上限)", "#ef4444", "dashed", 2);
-    addLine(limits.lsl, "LSL (工程下限)", "#ef4444", "dashed", 2);
+    addLine(limits.usl, "USL", "#ef4444", "dashed", 2);
+    addLine(limits.lsl, "LSL", "#ef4444", "dashed", 2);
     addLine(limits.target, "目標值", "#10b981", "solid", 2);
   }
 
@@ -469,9 +465,9 @@ function renderTrendChart() {
     const clVal = limits.cl ?? (stats && stats.cl !== "N/A" ? Number(stats.cl) : null);
     const lclVal = limits.lcl ?? (stats && stats.lcl !== "N/A" ? Number(stats.lcl) : null);
 
-    addLine(uclVal, "UCL (管制上限)", "#f59e0b", "dashed", 2);
-    addLine(clVal, "CL (平均線)", "#3b82f6", "solid", 1.5);
-    addLine(lclVal, "LCL (管制下限)", "#f59e0b", "dashed", 2);
+    addLine(uclVal, "UCL", "#f59e0b", "dashed", 2);
+    addLine(clVal, "CL", "#3b82f6", "solid", 1.5);
+    addLine(lclVal, "LCL", "#f59e0b", "dashed", 2);
   }
 
   const yAxisValues = [
@@ -712,7 +708,7 @@ const trendStats = computed(() => {
           class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500 disabled:opacity-50">
           <option value="">選擇線別...</option>
           <option value="ALL">全部 (All)</option>
-          <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">[{{ pr.processCode }}] {{ pr.processName }}</option>
+          <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.processName || pr.processCode }}</option>
         </select>
       </div>
 
@@ -774,13 +770,13 @@ const trendStats = computed(() => {
       <div v-if="selectedMapping" class="grid grid-cols-1 sm:grid-cols-5 gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">
         <div class="space-y-1">
           <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">線別</span>
-          <span class="text-slate-800 dark:text-slate-200">[{{ selectedMapping.process?.processCode }}] {{ selectedMapping.process?.processName }}</span>
+          <span class="text-slate-800 dark:text-slate-200">{{ selectedMapping.process?.processName || selectedMapping.process?.processCode }}</span>
         </div>
         <div class="space-y-1">
           <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">檢驗特性</span>
           <span class="text-slate-800 dark:text-slate-200">
-            [{{ selectedMapping.characteristic?.characteristicCode }}] {{ selectedMapping.characteristic?.characteristicName }}
-            <span v-if="selectedMapping.unit || selectedMapping.characteristic?.unit" class="text-slate-400">({{ selectedMapping.unit || selectedMapping.characteristic.unit }})</span>
+            {{ selectedMapping.characteristic?.characteristicName }}
+            <span v-if="selectedMapping.unit" class="text-slate-400">({{ selectedMapping.unit }})</span>
           </span>
         </div>
         <div class="space-y-1">
@@ -807,9 +803,9 @@ const trendStats = computed(() => {
           { label: '樣本數 (N)', value: trendStats.n, cls: 'text-slate-200' },
           { label: '平均值 (Mean)', value: trendStats.mean, cls: 'text-blue-400' },
           { label: '標準差 (σ)', value: trendStats.std, cls: 'text-indigo-400' },
-          { label: '上管制線 (UCL)', value: trendStats.ucl, cls: 'text-amber-400' },
-          { label: '中心線 (CL)', value: trendStats.cl, cls: 'text-sky-400' },
-          { label: '下管制線 (LCL)', value: trendStats.lcl, cls: 'text-amber-400' },
+          { label: 'UCL', value: trendStats.ucl, cls: 'text-amber-400' },
+          { label: 'CL', value: trendStats.cl, cls: 'text-sky-400' },
+          { label: 'LCL', value: trendStats.lcl, cls: 'text-amber-400' },
           { label: '能力指標 (Cpk)', value: trendStats.cpk, cls: 'text-emerald-400 font-bold' },
           { label: '全距 (Range)', value: trendStats.range, cls: 'text-violet-400' }
         ]" :key="card.label"

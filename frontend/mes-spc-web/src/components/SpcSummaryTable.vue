@@ -22,7 +22,7 @@
 
     <div v-if="data.length > 0" ref="summaryScroll" class="spc-summary-scroll overflow-x-scroll overflow-y-hidden pb-3"
       @scroll="syncSummaryScroll('body')">
-      <table class="min-w-[1960px] w-full text-left text-xs border-collapse">
+      <table :class="isSpc ? 'min-w-[1960px]' : 'min-w-[1280px]'" class="w-full text-left text-xs border-collapse">
         <thead>
           <tr
             class="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
@@ -102,7 +102,7 @@
                 </span>
               </div>
             </th>
-            <th
+            <th v-if="isSpc"
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('ucl')">
               <div class="flex items-center justify-end gap-1">
@@ -114,7 +114,7 @@
                 </span>
               </div>
             </th>
-            <th
+            <th v-if="isSpc"
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('lcl')">
               <div class="flex items-center justify-end gap-1">
@@ -134,7 +134,7 @@
                   <ArrowUp v-if="sortKey === 'oosCount' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                   <ArrowDown v-else-if="sortKey === 'oosCount' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                   <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>本期OOS</span>
+                  <span>OOS</span>
                 </span>
               </div>
             </th>
@@ -153,7 +153,7 @@
                   <ArrowUp v-if="sortKey === 'oosPercentage' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                   <ArrowDown v-else-if="sortKey === 'oosPercentage' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                   <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>本期%OOS</span>
+                  <span>%OOS</span>
                 </span>
               </div>
             </th>
@@ -164,7 +164,7 @@
               </span>
             </th>
             <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">%OOS 差異</th>
-            <th
+            <th v-if="isSpc"
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('ca')">
               <div class="flex items-center justify-end gap-1">
@@ -176,7 +176,7 @@
                 </span>
               </div>
             </th>
-            <th
+            <th v-if="isSpc"
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('pp')">
               <div class="flex items-center justify-end gap-1">
@@ -188,7 +188,7 @@
                 </span>
               </div>
             </th>
-            <th
+            <th v-if="isSpc"
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('ppk')">
               <div class="flex items-center justify-end gap-1">
@@ -200,13 +200,13 @@
                 </span>
               </div>
             </th>
-            <th v-if="comparisonPeriod" class="px-4 py-3 text-right cursor-pointer select-none" @click="handleSort('previousMonthPpk')">
+            <th v-if="isSpc && comparisonPeriod" class="px-4 py-3 text-right cursor-pointer select-none" @click="handleSort('previousMonthPpk')">
               <span class="flex items-center justify-end gap-1">
                 <ArrowUpDown class="w-3.5 h-3.5 opacity-60" />
                 <span>{{ comparisonPrefix }}Cpk</span>
               </span>
             </th>
-            <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">Cpk 差異</th>
+            <th v-if="isSpc && comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">Cpk 差異</th>
             <th class="px-4 py-3 text-center sticky right-0 bg-slate-50 dark:bg-slate-800">製圖</th>
           </tr>
         </thead>
@@ -220,8 +220,8 @@
             <td class="px-4 py-3 text-right font-mono font-bold">{{ row.totalCount ?? 0 }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.usl) }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.lsl) }}</td>
-            <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.ucl) }}</td>
-            <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.lcl) }}</td>
+            <td v-if="isSpc" class="px-4 py-3 text-right font-mono">{{ formatLimit(row.ucl) }}</td>
+            <td v-if="isSpc" class="px-4 py-3 text-right font-mono">{{ formatLimit(row.lcl) }}</td>
             <td class="px-4 py-3 text-right font-bold"
               :class="row.oosCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
               {{ row.oosCount }}
@@ -246,11 +246,11 @@
               :class="differenceClass(row.oosPercentage, row.previousMonthOosPercentage, false)">
               {{ formatDifference(row.oosPercentage, row.previousMonthOosPercentage, 2) }}%
             </td>
-            <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.ca) }}</td>
-            <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.pp) }}</td>
-            <td class="px-4 py-3 text-right font-mono">{{ formatNumber(row.ppk) }}</td>
-            <td v-if="comparisonPeriod" class="px-4 py-3 text-right font-mono">{{ formatNumber(row.previousMonthPpk) }}</td>
-            <td v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right font-mono font-bold"
+            <td v-if="isSpc" class="px-4 py-3 text-right font-mono">{{ formatNumber(row.ca) }}</td>
+            <td v-if="isSpc" class="px-4 py-3 text-right font-mono">{{ formatNumber(row.pp) }}</td>
+            <td v-if="isSpc" class="px-4 py-3 text-right font-mono">{{ formatNumber(row.ppk) }}</td>
+            <td v-if="isSpc && comparisonPeriod" class="px-4 py-3 text-right font-mono">{{ formatNumber(row.previousMonthPpk) }}</td>
+            <td v-if="isSpc && comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right font-mono font-bold"
               :class="differenceClass(row.ppk, row.previousMonthPpk, true)">
               {{ formatDifference(row.ppk, row.previousMonthPpk, 2) }}
             </td>

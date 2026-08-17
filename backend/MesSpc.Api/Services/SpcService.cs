@@ -1,3 +1,4 @@
+using MesSpc.Api.Domain;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
 using MesSpc.Api.Infrastructure.Data;
@@ -37,7 +38,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                           || (mapping.LSL.HasValue && actualValue < mapping.LSL.Value));
         var isOutOfControl = !recordOnly && ((activeUcl.HasValue && actualValue > activeUcl.Value)
                              || (activeLcl.HasValue && actualValue < activeLcl.Value));
-        var ruleGroupId = mapping.RuleGroupId;
+        var ruleGroupId = await GetWeRuleGroupIdAsync(ct);
 
         List<SpcRuleViolation>? violations = null;
         if (!recordOnly && ruleGroupId.HasValue && activeCl.HasValue && activeUcl.HasValue && activeLcl.HasValue)
@@ -142,7 +143,29 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var statisticValue = CalculateAttributeStatistic(chartType.ChartTypeCode, measurement);
         var isOutOfControl = (activeUcl.HasValue && statisticValue.HasValue && statisticValue.Value > activeUcl.Value)
                              || (activeLcl.HasValue && statisticValue.HasValue && statisticValue.Value < activeLcl.Value);
-        var ruleGroupId = mapping.RuleGroupId;
+        var ruleGroupId = await GetWeRuleGroupIdAsync(ct);
+
+        List<SpcRuleViolation>? violations = null;
+        if (ruleGroupId.HasValue && statisticValue.HasValue && activeCl.HasValue && activeUcl.HasValue && activeLcl.HasValue)
+        {
+            var rules = await db.SpcRules.AsNoTracking()
+                .Where(x => x.RuleGroupId == ruleGroupId.Value && x.IsEnabled)
+                .ToListAsync(ct);
+            var priorValues = await db.AttributeMeasurements.AsNoTracking()
+                .Where(x => x.PartProcessCharacteristicId == mapping.Id && x.Id != measurement.Id)
+                .OrderByDescending(x => x.MeasuredAt)
+                .Take(29)
+                .ToListAsync(ct);
+            var values = priorValues
+                .Select(x => CalculateAttributeStatistic(chartType.ChartTypeCode, x))
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .Reverse()
+                .Append(statisticValue.Value)
+                .ToList();
+            violations = SpcRuleEngine.EvaluateRules(values, rules, activeCl.Value, activeUcl.Value, activeLcl.Value);
+            isOutOfControl |= violations.Count > 0;
+        }
 
         var result = new SpcCalculationResult
         {
@@ -160,7 +183,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             CL = activeCl,
             LCL = activeLcl,
             IsOutOfSpec = false,
-            IsOutOfControl = isOutOfControl
+            IsOutOfControl = isOutOfControl,
+            ViolatedRulesJson = violations?.Count > 0 ? System.Text.Json.JsonSerializer.Serialize(violations) : null
         };
         db.SpcCalculationResults.Add(result);
         await db.SaveChangesAsync(ct);
@@ -177,7 +201,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 AttributeMeasurementId = measurement.Id,
                 ActualValue = statisticValue,
                 AlertType = AlertType.OutOfControl,
-                Message = $"Attribute measurement violates control limit. Chart={chartType.ChartTypeCode}, Value={statisticValue}"
+                Message = violations?.Count > 0
+                    ? "SPC Rules Violated: " + string.Join(", ", violations.Select(x => x.RuleName))
+                    : $"Attribute measurement violates control limit. Chart={chartType.ChartTypeCode}, Value={statisticValue}"
             };
             db.AlertEvents.Add(alert);
             await db.SaveChangesAsync(ct);
@@ -314,7 +340,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
         }
 
-        var effectiveRuleGroupId = mapping.RuleGroupId ?? chartType?.RuleGroupId;
+        var effectiveRuleGroupId = await GetWeRuleGroupIdAsync(ct);
         var enabledRuleCodes = effectiveRuleGroupId.HasValue
             ? await db.SpcRules.AsNoTracking()
                 .Where(x => x.RuleGroupId == effectiveRuleGroupId.Value && x.IsEnabled)
@@ -509,6 +535,12 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             };
         }
     }
+
+    private async Task<int?> GetWeRuleGroupIdAsync(CancellationToken ct) =>
+        await db.SpcRuleGroups.AsNoTracking()
+            .Where(x => x.RuleGroupCode == "WE" && x.IsEnabled)
+            .Select(x => (int?)x.Id)
+            .SingleOrDefaultAsync(ct);
 
     private async Task<ChartMonitorContext> BuildMonitorContextAsync(
         PartProcessCharacteristic mapping,
@@ -896,13 +928,12 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             .Include(x => x.Machine)
             .Include(x => x.Tank)
             .Where(x => x.IsEnabled
+                && (normalizedGroupType == null || x.DisplayMode == normalizedGroupType)
                 && ((x.ChartTypeId.HasValue && chartTypeIds.Contains(x.ChartTypeId.Value))
                     || (chartTypeIds.Count == 0
-                        && x.ControlScope == normalizedDimension
-                        && (normalizedGroupType == null || normalizedGroupType == "CONTROL_CHART"))
+                        && x.ControlScope == normalizedDimension)
                     || (!x.ChartTypeId.HasValue
-                        && x.ControlScope == normalizedDimension
-                        && (normalizedGroupType == null || normalizedGroupType == "CONTROL_CHART"))))
+                        && x.ControlScope == normalizedDimension)))
             .Where(x => !partId.HasValue || x.PartId == partId.Value)
             .Where(x => !processId.HasValue || x.ProcessId == processId.Value)
             .ToListAsync(ct);
@@ -952,12 +983,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 .OrderByDescending(x => x.MeasuredAt)
                 .FirstOrDefault();
 
-            var lineParts = new[]
-            {
-                mapping.Process?.ProcessName,
-                mapping.Machine?.MachineName
-            }.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
-            var lineName = string.Join(" / ", lineParts);
+            var lineName = mapping.Process?.ProcessName
+                ?? mapping.Machine?.MachineName
+                ?? string.Empty;
 
             var calculatedLimits = ReadPrimaryControlLimits(result.StatControlLimits);
             var usesManualLimits = mapping.UCL.HasValue || mapping.LCL.HasValue;
@@ -1046,15 +1074,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
     }
 
     private static string NormalizeControlScope(string? dimension)
-    {
-        return dimension?.Trim().ToUpperInvariant() switch
-        {
-            "PROC" or "PROCESS" => "PROCESS",
-            "CHEM" or "CHEMICAL" => "CHEM",
-            "PROD" or "PRODUCT" => "PRODUCT",
-            _ => dimension?.Trim().ToUpperInvariant() ?? string.Empty
-        };
-    }
+        => ControlScopeCodes.Normalize(dimension, string.Empty);
 
     private static string FormatControlScope(string? scope)
     {
@@ -1080,8 +1100,6 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
     private static string FormatSlotName(Tank? tank)
     {
         if (tank is null) return string.Empty;
-        if (!string.IsNullOrWhiteSpace(tank.TankName) && !string.IsNullOrWhiteSpace(tank.TankCode))
-            return $"{tank.TankName} ({tank.TankCode})";
         return tank.TankName ?? tank.TankCode ?? string.Empty;
     }
 

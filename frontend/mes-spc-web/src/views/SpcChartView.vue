@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue"
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
+import { normalizeControlScope } from "../utils/controlScope";
 import {
   LineChart,
   TrendingUp,
@@ -130,6 +131,7 @@ const ocapActionTypes = ["確認輸入是否正確", "確認機台是否正常",
 const filteredMappingsByDimension = computed(() => {
   return mappings.value.filter(m => {
     if (!m.isEnabled) return false;
+    if (normalizeControlScope(m.controlScope, "") === "CHEM" && m.displayMode === "TREND_CHART") return false;
     const dim = getDimensionForMapping(m);
     return dim === selectedDimension.value;
   });
@@ -161,7 +163,7 @@ const availableProcesses = computed(() => {
     });
   return [...byId.entries()]
     .map(([id, process]) => ({ ...process, id }))
-    .sort((a, b) => (a.processCode || "").localeCompare(b.processCode || ""));
+    .sort((a, b) => (Number(a.sequenceNo) || 0) - (Number(b.sequenceNo) || 0) || a.id - b.id);
 });
 
 const selectedMapping = computed(() => {
@@ -189,26 +191,41 @@ function formatMonitorMaster(code, name, fallbackName) {
   return displayName || code || "未提供";
 }
 
-const monitorProcessLabel = computed(() => formatMonitorMaster(
-  chartResult.value?.monitorContext?.lineCode || chartResult.value?.monitorContext?.processCode || monitorMapping.value?.process?.processCode,
-  chartResult.value?.monitorContext?.lineName || chartResult.value?.monitorContext?.processName || monitorMapping.value?.process?.processName,
-  selectedSummaryRow.value?.lineOrProcessName
-));
-const monitorCharacteristicLabel = computed(() => formatMonitorMaster(
-  chartResult.value?.monitorContext?.characteristicCode || monitorMapping.value?.characteristic?.characteristicCode,
-  chartResult.value?.monitorContext?.characteristicName || monitorMapping.value?.characteristic?.characteristicName,
-  selectedSummaryRow.value?.chartName
-));
-const monitorMachineLabel = computed(() => formatMonitorMaster(
-  chartResult.value?.monitorContext?.lineCode || monitorMapping.value?.machine?.machineCode || monitorMapping.value?.process?.processCode,
-  chartResult.value?.monitorContext?.lineName || monitorMapping.value?.machine?.machineName || monitorMapping.value?.process?.processName,
-  selectedSummaryRow.value?.lineOrProcessName
-));
-const monitorSlotLabel = computed(() => formatMonitorMaster(
-  chartResult.value?.monitorContext?.slotCode || chartResult.value?.monitorContext?.tankCode || monitorMapping.value?.slot?.slotCode || monitorMapping.value?.tank?.tankCode,
-  chartResult.value?.monitorContext?.slotName || chartResult.value?.monitorContext?.tankName || monitorMapping.value?.slot?.slotName || monitorMapping.value?.tank?.tankName,
-  selectedSummaryRow.value?.slotName
-));
+const monitorProcessLabel = computed(() =>
+  chartResult.value?.monitorContext?.lineName
+  || chartResult.value?.monitorContext?.processName
+  || monitorMapping.value?.process?.processName
+  || selectedSummaryRow.value?.lineOrProcessName
+  || "未提供"
+);
+const monitorCharacteristicLabel = computed(() =>
+  chartResult.value?.monitorContext?.characteristicName
+  || monitorMapping.value?.characteristic?.characteristicName
+  || selectedSummaryRow.value?.chartName
+  || "未提供"
+);
+const monitorMachineLabel = computed(() =>
+  chartResult.value?.monitorContext?.lineName
+  || monitorMapping.value?.machine?.machineName
+  || monitorMapping.value?.process?.processName
+  || selectedSummaryRow.value?.lineOrProcessName
+  || chartResult.value?.monitorContext?.lineCode
+  || monitorMapping.value?.machine?.machineCode
+  || monitorMapping.value?.process?.processCode
+  || "未提供"
+);
+const monitorSlotLabel = computed(() =>
+  chartResult.value?.monitorContext?.slotName
+  || chartResult.value?.monitorContext?.tankName
+  || monitorMapping.value?.slot?.slotName
+  || monitorMapping.value?.tank?.tankName
+  || selectedSummaryRow.value?.slotName
+  || chartResult.value?.monitorContext?.slotCode
+  || chartResult.value?.monitorContext?.tankCode
+  || monitorMapping.value?.slot?.slotCode
+  || monitorMapping.value?.tank?.tankCode
+  || "未提供"
+);
 
 function uniqueNonEmptyParts(parts) {
   return [...new Set(parts
@@ -218,10 +235,7 @@ function uniqueNonEmptyParts(parts) {
 
 function formatTankLabel(tank) {
   if (!tank) return "";
-  const name = tank.tankName || "";
-  const code = tank.tankCode || "";
-  if (name && code) return `${name} (${code})`;
-  return name || code;
+  return tank.tankName || tank.tankCode || "";
 }
 
 const activeChartDisplayName = computed(() => {
@@ -235,10 +249,7 @@ const activeChartDisplayName = computed(() => {
 
   const mapping = selectedMapping.value;
   const mappingTitleParts = uniqueNonEmptyParts([
-    ...uniqueNonEmptyParts([
-      mapping?.process?.processName,
-      mapping?.machine?.machineName
-    ]),
+    mapping?.process?.processName || mapping?.machine?.machineName,
     formatTankLabel(mapping?.tank),
     mapping?.characteristic?.characteristicName
   ]);
@@ -300,9 +311,10 @@ const getDimensionForMapping = (m) => {
     const group = type ? groups.value.find(g => g.id === type.chartGroupId) : null;
     return group?.groupCode || "";
   }
-  if (m.controlScope === "PROCESS") return "PROCESS";
-  if (m.controlScope === "CHEM" || m.controlScope === "CHEMICAL") return "CHEM";
-  if (m.controlScope === "PRODUCT") return "PRODUCT";
+  const scope = normalizeControlScope(m.controlScope, "");
+  if (scope === "PROCESS") return "PROCESS";
+  if (scope === "CHEM") return "CHEM";
+  if (scope === "PRODUCT") return "PRODUCT";
   return m.partId ? "PRODUCT" : "PROCESS";
 };
 
@@ -1573,42 +1585,48 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-3">
+  <section class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="flex items-center gap-4">
+        <div class="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/20">
+          <Activity class="w-7 h-7" />
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-slate-800 dark:text-white">
+            {{ isMonthlyChartPage ? 'SPC 週月報表' : 'SPC 即時互動管制圖' }}
+          </h1>
+          <p class="mt-1 text-xs font-semibold text-slate-400 dark:text-slate-500">
+            {{ isMonthlyChartPage ? '依週期檢視 SPC 管制結果與前期比較' : '使用統計管制界線與規則監控製程穩定性' }}
+          </p>
+        </div>
+      </div>
+      <button
+        v-if="selectedMapping"
+        @click="router.push({ path: '/part-process-characteristics', query: { editId: selectedMapping.id } })"
+        type="button"
+        class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-orange-600 dark:text-orange-400 text-xs font-bold transition-all border border-orange-200 dark:border-slate-700"
+        title="編輯此項檢驗基準與規格"
+      >
+        <Sliders class="w-4 h-4" /> 編輯此基準
+      </button>
+    </div>
+
     <!-- 🌟 三大類管制項目維度選擇器 -->
-    <div class="flex flex-wrap gap-2 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="flex flex-wrap gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
       <button
         v-for="dimension in dimensionOptions"
         :key="dimension.id"
         @click="selectedDimension = dimension.id"
         :class="dimensionButtonClass(dimension.id)"
-        class="flex-1 min-w-40 py-2 px-3 rounded-lg text-center text-xs md:text-sm font-semibold transition-all duration-200"
+        class="flex-1 min-w-40 py-3 px-4 rounded-xl text-center text-xs md:text-sm font-semibold transition-all duration-200"
       >
         {{ dimension.label }}
       </button>
     </div>
 
-    <!-- Header Controls -->
-    <div class="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-      <div class="flex items-center gap-3">
-        <div class="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300">
-          <Activity class="w-5 h-5" />
-        </div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-lg font-black text-slate-800 dark:text-white whitespace-nowrap">
-            {{ isMonthlyChartPage ? 'SPC 週月報表' : 'SPC 即時互動管制圖' }}
-          </h1>
-          <button
-            v-if="selectedMapping"
-            @click="router.push({ path: '/part-process-characteristics', query: { editId: selectedMapping.id } })"
-            type="button"
-            class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-orange-600 dark:text-orange-400 text-[11px] font-bold transition-all border border-orange-200 dark:border-slate-700"
-            title="編輯此項檢驗基準與規格"
-          >
-            <Sliders class="w-3.5 h-3.5" /> 編輯此基準
-          </button>
-        </div>
-      </div>
-
+    <!-- Selection Controls -->
+    <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
       <div class="flex flex-wrap items-end gap-2 w-full">
         <!-- Query Conditions -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 items-end flex-1">
@@ -1671,24 +1689,24 @@ onBeforeUnmount(() => {
             <select v-model="selectedProcessId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
               <option value="">選擇線別...</option>
               <option value="ALL">全部 (All)</option>
-              <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">[{{ pr.processCode }}] {{ pr.processName }}</option>
+              <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.processName || pr.processCode }}</option>
             </select>
           </div>
 
         </div>
 
-        <button @click="loadActiveChart" :disabled="loading" class="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md shadow-blue-500/20 disabled:opacity-50 transition-all text-sm h-[38px] min-w-32">
-          <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" /> 重新計算
+        <button @click="loadActiveChart" :disabled="loading" class="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all text-sm h-[38px] min-w-32">
+          <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" /> 查詢總表
         </button>
       </div>
     </div>
 
     <!-- Error Display -->
-    <div v-if="error" class="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
+    <div v-if="error" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
       <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ error }}
     </div>
 
-    <div v-if="loading && !chartResult" class="h-48 flex flex-col items-center justify-center space-y-2 text-slate-400">
+    <div v-if="loading && !chartResult" class="h-64 flex flex-col items-center justify-center space-y-2 text-slate-400">
       <Activity class="w-8 h-8 animate-bounce text-blue-500" />
       <p class="text-sm font-bold">查詢中...</p>
     </div>
@@ -1703,7 +1721,7 @@ onBeforeUnmount(() => {
     />
 
     <!-- Main Chart & Capability Workspace -->
-    <div v-if="chartResult && !loading" class="space-y-3">
+    <div v-if="chartResult && !loading" class="space-y-5">
       <button
         v-if="cachedSummaryData"
         type="button"
@@ -1736,8 +1754,8 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Monitor Detail Summary -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-2">
-        <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="p-1">
           <h3 class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
             <Info class="w-4 h-4 text-blue-500" /> 管制圖監控明細
           </h3>
@@ -1769,7 +1787,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="p-1 xl:border-l xl:border-slate-200 xl:dark:border-slate-800 xl:pl-5">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
               <Sliders class="w-4 h-4 text-amber-500" /> 管制界線
@@ -1791,7 +1809,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="p-1 xl:border-l xl:border-slate-200 xl:dark:border-slate-800 xl:pl-5">
           <h3 class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
             <Activity class="w-4 h-4 text-emerald-500" /> 能力指標
           </h3>
@@ -2148,5 +2166,5 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
