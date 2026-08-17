@@ -1,5 +1,7 @@
 # MES + SPC MVP
 
+> **現行需求基準**：所有 SPC、PMR Portal 藥液量測及 TransFiles 整合開發，請先閱讀 [SPC 現行需求基準](docs/SPC_REQUIREMENTS_BASELINE_2026-08-07.md)。舊架構、提示詞或測試文件與其衝突時，以需求基準為準。
+
 第一版目標是「可用」的品質量測與 SPC 管制系統，採最小可行範圍。
 
 ## 技術
