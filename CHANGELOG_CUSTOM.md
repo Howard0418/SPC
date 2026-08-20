@@ -249,3 +249,4 @@
 
 - 新增 `POST /api/v1/auth/portal-sso`，以 Portal 與 SPC 共用的 HMAC 金鑰驗證帳號、時間戳與一次性隨機值，核發 60 分鐘個人 SPC JWT。
 - SSO 僅允許已啟用且帳號相符的 SPC 操作者，不傳遞 Portal 密碼、不使用共用管理員身分，請求超過 60 秒即拒絕。
+- Portal SSO 帳號統一移除網域前綴與 Email 後綴並轉為小寫；具 Portal 品保權限的簽章使用者首次進入時自動建立個人的 SPC `Editor` 操作者，已停用帳號仍拒絕登入。

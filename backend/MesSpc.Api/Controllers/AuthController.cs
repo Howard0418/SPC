@@ -32,8 +32,9 @@ public class AuthController(
             || Math.Abs(now - req.Timestamp) > 60)
             return Unauthorized(new { message = "Portal SSO 請求已失效。" });
 
-        var normalizedUsername = req.Username.Trim();
-        var payload = $"{normalizedUsername}|{req.Timestamp}|{req.Nonce}";
+        var normalizedUsername = NormalizeAccount(req.Username);
+        var displayName = string.IsNullOrWhiteSpace(req.DisplayName) ? normalizedUsername : req.DisplayName.Trim();
+        var payload = $"{normalizedUsername}|{displayName}|{req.Timestamp}|{req.Nonce}";
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(sharedKey));
         var expected = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
         byte[] supplied;
@@ -43,9 +44,22 @@ public class AuthController(
             return Unauthorized(new { message = "Portal SSO 簽章不正確。" });
 
         var systemUser = await db.Operators.FirstOrDefaultAsync(x =>
-            x.IsActive && x.Username != null && x.Username == normalizedUsername);
+            x.Username != null && x.Username.ToLower() == normalizedUsername);
+        if (systemUser is not null && !systemUser.IsActive)
+            return Unauthorized(new { message = "此 SPC 操作者帳號已停用。" });
         if (systemUser is null)
-            return Unauthorized(new { message = "此帳號尚未建立 SPC 操作者或已停用。" });
+        {
+            systemUser = new MesSpc.Api.Domain.Entities.Operator
+            {
+                OperatorCode = normalizedUsername.ToUpperInvariant(),
+                OperatorName = displayName,
+                Username = normalizedUsername,
+                Role = UserRoles.Editor,
+                IsActive = true
+            };
+            db.Operators.Add(systemUser);
+            await db.SaveChangesAsync();
+        }
 
         return CreateTokenResult(systemUser, normalizedUsername, TimeSpan.FromMinutes(60));
     }
@@ -99,5 +113,15 @@ public class AuthController(
     }
 
     public record LoginRequest(string Username, string Password);
-    public record PortalSsoRequest(string Username, long Timestamp, string Nonce, string Signature);
+    private static string NormalizeAccount(string account)
+    {
+        var value = account.Trim();
+        var slash = value.LastIndexOf('\\');
+        if (slash >= 0 && slash < value.Length - 1) value = value[(slash + 1)..];
+        var at = value.IndexOf('@');
+        if (at > 0) value = value[..at];
+        return value.ToLowerInvariant();
+    }
+
+    public record PortalSsoRequest(string Username, string? DisplayName, long Timestamp, string Nonce, string Signature);
 }
