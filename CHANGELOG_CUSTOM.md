@@ -244,3 +244,8 @@
 - 測試後端固定連線 `PMR_SPC_TEST`，正式後端固定連線 `PMR_SPC_2026`；每套後端只保留一個 `ConnectionStrings.SqlServer`，不在主機上切換資料庫。
 - 測試與正式前端分別以 `testhost`、`production` 模式建置，每套前端只含一個 `VITE_API_BASE`。
 - 新增 `scripts/publish-environments.ps1`，一次重建兩套可直接複製的交付包並產生版本清單。
+
+# 2026-08-20 — Portal 單一登入按需交換 SPC Token
+
+- 新增 `POST /api/v1/auth/portal-sso`，以 Portal 與 SPC 共用的 HMAC 金鑰驗證帳號、時間戳與一次性隨機值，核發 60 分鐘個人 SPC JWT。
+- SSO 僅允許已啟用且帳號相符的 SPC 操作者，不傳遞 Portal 密碼、不使用共用管理員身分，請求超過 60 秒即拒絕。
