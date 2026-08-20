@@ -24,10 +24,19 @@ import {
   CalendarClock
 } from "lucide-vue-next";
 import { clearAuthSession, getCurrentUser } from "./utils/auth";
+import { api } from "./api/client";
 import pkg from "../package.json";
 
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
 const appVersion = pkg.version;
+const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
+const apiVersion = ref("--");
+const apiEnvironment = ref("unknown");
+const apiOnline = ref(false);
+const environmentLabel = (value) => value === "production" ? "正式" : value === "test" ? "測試" : "未知";
+const environmentMismatch = computed(() =>
+  apiOnline.value && apiEnvironment.value !== "unknown" && apiEnvironment.value !== webEnvironment
+);
 const route = useRoute();
 const router = useRouter();
 const showNav = computed(() => !authOn || route.path !== "/login");
@@ -59,6 +68,16 @@ onMounted(() => {
     isDark.value = false;
     document.documentElement.classList.remove("dark");
   }
+
+  api.get("/version", { timeout: 5000 })
+    .then(({ data }) => {
+      apiVersion.value = data?.version || "--";
+      apiEnvironment.value = data?.environment || "unknown";
+      apiOnline.value = true;
+    })
+    .catch(() => {
+      apiOnline.value = false;
+    });
 });
 
 const viewerMenuCategories = [
@@ -190,9 +209,22 @@ function logout() {
         </div>
 
         <!-- Footer Info -->
-        <div class="pt-4 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-400 dark:text-slate-500 text-center space-y-1 font-medium">
-          <p>© 2026 PMR Quality System</p>
-          <p class="text-[10px] text-slate-500/70">v{{ appVersion }} Enterprise SPC Edition</p>
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 space-y-2 font-medium">
+          <div
+            class="rounded-lg border px-3 py-2 space-y-1.5"
+            :class="webEnvironment === 'production'
+              ? 'border-red-300 bg-red-50 dark:border-red-900/70 dark:bg-red-950/30'
+              : 'border-amber-300 bg-amber-50 dark:border-amber-900/70 dark:bg-amber-950/30'"
+          >
+            <div class="flex items-center justify-between">
+              <span class="font-black tracking-wider">{{ environmentLabel(webEnvironment) }}環境</span>
+              <span class="h-2 w-2 rounded-full" :class="apiOnline ? 'bg-emerald-500' : 'bg-red-500'"></span>
+            </div>
+            <div class="flex justify-between"><span>WEB</span><span class="font-mono">v{{ appVersion }}</span></div>
+            <div class="flex justify-between"><span>API</span><span class="font-mono">{{ apiOnline ? `v${apiVersion}` : '離線' }}</span></div>
+            <p v-if="environmentMismatch" class="font-bold text-red-600 dark:text-red-400">⚠ WEB／API 環境不一致</p>
+          </div>
+          <p class="text-center">© 2026 PMR Quality System</p>
         </div>
       </aside>
 

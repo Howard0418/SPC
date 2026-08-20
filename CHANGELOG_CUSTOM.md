@@ -1,6 +1,48 @@
 # 客製需求與回歸檢查
 
+## 2026-08-18（SPC 401 自動導回登入）
+
+- SPC 任一 API 回傳 401 時會清除失效登入狀態並立即導向登入頁，不再停留於管制圖顯示「無法載入總覽資料：未授權」。
+- 登入網址保留原頁面路徑、查詢參數與錨點，重新登入後可返回原操作頁；登入 API 本身回傳 401 時不重複導頁。
+- 回歸檢查：失效 Token 進入 SPC 總覽會導至登入頁；正常 Token 可載入；登入失敗仍停留登入頁顯示錯誤。
+
+## 2026-08-17（管制項目圖表顯示方式 400 修正）
+
+- 正式 SPC 啟用 CHEM `CHEM_TREND`，並建立 PROCESS `PROCESS_TREND` 趨勢圖大類；既有 114 個 CHEM 與 12 個 PROCESS 管制項目未被自動切換，量測資料不變。
+- 管制項目編輯頁依業務範圍與資料型態過濾管制圖類型，避免 CHEM 誤選 PROCESS 圖型或 PROCESS 誤選 CHEM 圖型而回傳 400。
+- 沒有啟用趨勢圖大類的業務範圍會停用趨勢圖選項並顯示原因；CHEM／PROCESS 現已可個別切換趨勢圖。
+- 管制項目建立／更新的後端 400 統一回傳中文 `message`，前端亦支援純文字錯誤，不再只顯示 `Request failed with status code 400`。
+
+## 2026-08-17（咬蝕量 PROCESS 管制項目）
+
+- 正式 SPC 的 PROCESS 群組新增單值－移動全距圖 `I-MR`，供每日單筆製程摘要量測使用，不影響原 CHEM `I_MR`。
+- 建立 `ETCH_A_AVG`、`ETCH_B_AVG`、`ETCH_RATE` 三個計量型品質特性，並為 PT1、PT2、QE1、QE2 建立共 12 個啟用的 PROCESS 管制項目。
+- A/B 平均咬蝕量與 ER 規格依 `PD-3-581-06B-咬蝕量_2026.xlsx` 四條線標準設定，樣本數為 1。
+
+## 2026-08-17（非對稱規格上下公差顯示）
+
+- 非對稱規格改以目標值右側上下兩行小字顯示，例如 `18.5` 右側上方 `+0.5`、下方 `-1.5`；對稱規格維持單行 `8.5 ± 0.2`。
+
+## 2026-08-17（藥液規格上下限修正）
+
+- 修正正式 SPC 18 個藥液項目將 LSL／USL 存反的主檔資料；17 項交換上下限，DP 抗氧化 PH 改為單邊 `USL=5、LSL=null`。
+- N2 化鎳槽次磷酸鈉由錯誤 `LSL 19～USL 17` 修正為 `LSL 17～USL 19`，量測錄入規格與 SPC 判定同步使用正確界限。
+- 修正前備份：`.codex-tmp/ChemicalFormulaImporter/spec-backup-20260817_101252.json`；修正後啟用藥液項目 `USL < LSL` 數量為 0。
+
+## 2026-08-17（藥液分析項目專屬公式）
+
+- 藥液管制項目可在檢驗基準進階設定中個別啟用濃度、調整動作及調整量公式，並設定輸入名稱、公式版本與小數位。
+- 藥液設定獨立保存於 PartProcessCharacteristic 的 `ChemicalAnalysisConfigJson`；`FormulaConfigJson` 僅保存 SPC 管制圖計算公式，兩者不共用欄位。Portal 優先使用項目專屬藥液公式，未設定時沿用 Excel 公式目錄。
+- 公式僅允許受限的數值、比較、IF／IFERROR／ROUND 運算，不執行 JavaScript 或任意程式碼。
+- 已將 `sample-data/藥液分析日報表.xlsx` 轉換規則依線別、槽體與分析項目匯入正式 SPC：114 個啟用項目中 84 項唯一配對並寫入；20 項無對應公式、10 項有開線／收線歧義而保留未設定，避免錯誤覆寫。
+- 匯入前原設定備份：`.codex-tmp/ChemicalFormulaImporter/formula-backup-20260817_094447.json`。
+
 修改 Portal 或 SPC 前必須先閱讀本檔；已確認功能不可自行恢復、改名或移除。
+
+## 2026-08-17：Portal 藥液量測每日唯一資料
+
+- Portal 藥液量測以管制項目與台北日期每日唯一；同日再次送出更新原量測、重算 SPC 與警報，不新增重複量測點。
+- 新增 `PortalDailyDate` 與條件式唯一索引；Excel、TransFiles 及一般 API 匯入不受每日覆寫規則影響。
 
 ## 2026-08-14：管制項目製程下拉選單簡化
 
@@ -195,3 +237,10 @@
 - 新增、編輯與匯入管制項目時不再建立項目專屬規則綁定；系統啟動時會清除既有項目綁定，並將所有管制圖類型統一指向 `WE`。
 - 管制項目與管制圖設定頁的八大規則改為唯讀顯示，儲存時不再送出專屬規則設定。
 - `WE` 規則群組禁止停用、改碼或刪除，八條固定規則禁止停用。
+
+# 2026-08-20 — SPC 正式／測試交付包分離
+
+- SPC 發布統一為 `release/test/backend`、`release/test/frontend`、`release/production/backend`、`release/production/frontend`。
+- 測試後端固定連線 `PMR_SPC_TEST`，正式後端固定連線 `PMR_SPC_2026`；每套後端只保留一個 `ConnectionStrings.SqlServer`，不在主機上切換資料庫。
+- 測試與正式前端分別以 `testhost`、`production` 模式建置，每套前端只含一個 `VITE_API_BASE`。
+- 新增 `scripts/publish-environments.ps1`，一次重建兩套可直接複製的交付包並產生版本清單。

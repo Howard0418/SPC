@@ -137,6 +137,12 @@ if (authEnabled)
     app.UseMiddleware<ViewerWriteGuardMiddleware>();
 }
 
+app.MapGet("/api/version", (IConfiguration configuration) => Results.Ok(new
+{
+    version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "unknown",
+    environment = configuration["AppEnvironment"] ?? "unknown"
+})).AllowAnonymous();
+
 var controllers = app.MapControllers();
 if (authEnabled)
 {

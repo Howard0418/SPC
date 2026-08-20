@@ -87,11 +87,98 @@ const form = ref({
   displayMode: "CONTROL_CHART",
   chartTypeId: null,
   formulaConfigJson: "",
+  chemicalAnalysisConfigJson: "",
+  chemicalAnalysis: { enabled: false, version: "1", primaryInputLabel: "滴定值", secondaryInputLabel: "", concentrationFormula: "", adjustmentFormula: "", adjustmentAmountFormula: "", decimalPlaces: 2 },
   selectedRuleCodes: [],
   isRequired: true,
   isEnabled: true
 });
+
+const emptyChemicalAnalysis = () => ({ enabled: false, version: "1", primaryInputLabel: "滴定值", secondaryInputLabel: "", concentrationFormula: "", adjustmentFormula: "", adjustmentAmountFormula: "", decimalPlaces: 2 });
+
+function parseChemicalAnalysisConfig(raw) {
+  if (!raw) return emptyChemicalAnalysis();
+  try {
+    const parsed = JSON.parse(raw);
+    return { ...emptyChemicalAnalysis(), ...(parsed || {}) };
+  } catch {
+    return emptyChemicalAnalysis();
+  }
+}
+
+function chemicalAnalysisDisplay(item) {
+  if (normalizeControlScope(item?.controlScope) !== CONTROL_SCOPE.CHEM) return null;
+  const config = parseChemicalAnalysisConfig(item?.chemicalAnalysisConfigJson || "");
+  if (!config.enabled || !String(config.concentrationFormula || "").trim()) return { enabled: false };
+  return {
+    enabled: true,
+    primaryInputLabel: String(config.primaryInputLabel || "滴定值").trim(),
+    secondaryInputLabel: String(config.secondaryInputLabel || "").trim(),
+    concentrationFormula: String(config.concentrationFormula || "").trim(),
+    adjustmentFormula: String(config.adjustmentFormula || "").trim(),
+    adjustmentAmountFormula: String(config.adjustmentAmountFormula || "").trim(),
+    decimalPlaces: Number(config.decimalPlaces ?? 2)
+  };
+}
+
+function buildChemicalAnalysisConfigJson() {
+  const chemical = form.value.chemicalAnalysis;
+  if (form.value.controlScope === CONTROL_SCOPE.CHEM && chemical?.enabled) {
+    return JSON.stringify({
+      enabled: true, version: String(chemical.version || "1").trim(),
+      primaryInputLabel: String(chemical.primaryInputLabel || "滴定值").trim(),
+      secondaryInputLabel: String(chemical.secondaryInputLabel || "").trim(),
+      concentrationFormula: String(chemical.concentrationFormula || "").trim(),
+      adjustmentFormula: String(chemical.adjustmentFormula || "").trim(),
+      adjustmentAmountFormula: String(chemical.adjustmentAmountFormula || "").trim(),
+      decimalPlaces: Math.max(0, Math.min(8, Number(chemical.decimalPlaces) || 0))
+    });
+  }
+  return "";
+}
 const formErr = ref("");
+
+function finiteSpecNumber(value) {
+  if (value === "" || value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function roundedSpecNumber(value) {
+  return Math.round((value + Number.EPSILON) * 1e10) / 1e10;
+}
+
+function formatSpecNumber(value) {
+  return new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 10 }).format(roundedSpecNumber(value));
+}
+
+function specificationDisplay(source) {
+  const lsl = finiteSpecNumber(source?.lsl);
+  const usl = finiteSpecNumber(source?.usl);
+  const savedTarget = finiteSpecNumber(source?.targetValue);
+  if (lsl === null || usl === null || usl <= lsl) return null;
+
+  const target = savedTarget ?? roundedSpecNumber((lsl + usl) / 2);
+  const upperTolerance = roundedSpecNumber(usl - target);
+  const lowerTolerance = roundedSpecNumber(target - lsl);
+  const toleranceScale = Math.max(1, Math.abs(upperTolerance), Math.abs(lowerTolerance));
+  const symmetric = Math.abs(upperTolerance - lowerTolerance) <= toleranceScale * 1e-10;
+  const text = symmetric
+    ? `${formatSpecNumber(target)} ± ${formatSpecNumber(upperTolerance)}`
+    : `${formatSpecNumber(target)} +${formatSpecNumber(upperTolerance)} / -${formatSpecNumber(lowerTolerance)}`;
+
+  return {
+    text,
+    target,
+    asymmetric: !symmetric,
+    upperTolerance,
+    lowerTolerance,
+    detail: `LSL ${formatSpecNumber(lsl)}｜Target ${formatSpecNumber(target)}｜USL ${formatSpecNumber(usl)}`,
+    targetIsCalculated: savedTarget === null
+  };
+}
+
+const formSpecificationDisplay = computed(() => specificationDisplay(form.value));
 
 const controlScopes = computed(() => {
   const labelDefaults = {
@@ -102,12 +189,13 @@ const controlScopes = computed(() => {
   const scopeMap = new Map();
   const enabledGroups = groups.value.filter(g => g.isEnabled !== false);
   const scopeIds = new Set([
-    ...enabledGroups.map(g => normalizeControlScope(g.groupCode)),
+    ...enabledGroups.map(g => getGroupScope(g)),
     ...rows.value.map(row => normalizeControlScope(row.controlScope))
   ]);
   scopeIds.forEach(id => {
       if (scopeMap.has(id)) return;
-      const group = enabledGroups.find(g => normalizeControlScope(g.groupCode) === id);
+      const group = enabledGroups.find(g => getGroupScope(g) === id && g.groupType === "CONTROL_CHART")
+        || enabledGroups.find(g => getGroupScope(g) === id);
       let tone = "blue";
       if (id === "PROCESS") tone = "purple";
       else if (id === CONTROL_SCOPE.CHEM) tone = "teal";
@@ -293,6 +381,26 @@ function getChartTypeGroupType(chartTypeId) {
   return group?.groupType || "CONTROL_CHART";
 }
 
+function getGroupScope(group) {
+  return normalizeControlScope(group?.businessScopeCode || group?.groupCode || "");
+}
+
+function groupMatchesCurrentScope(group, scope = form.value.controlScope) {
+  return getGroupScope(group) === normalizeControlScope(scope);
+}
+
+function chartTypeMatchesScope(chartTypeId, scope = form.value.controlScope) {
+  const type = chartTypes.value.find(t => t.id === Number(chartTypeId));
+  const group = type ? groups.value.find(g => g.id === type.chartGroupId) : null;
+  return !!group && group.isEnabled !== false && groupMatchesCurrentScope(group, scope);
+}
+
+function hasDisplayModeGroup(mode, scope = form.value.controlScope) {
+  return groups.value.some(group => group.isEnabled !== false
+    && group.groupType === mode
+    && groupMatchesCurrentScope(group, scope));
+}
+
 const selectedCharacteristic = computed(() =>
   characteristics.value.find(x => x.id === Number(form.value.characteristicId)) || null
 );
@@ -309,7 +417,9 @@ const selectedChartType = computed(() =>
 
 function getControlScopeGroupType(scope) {
   const normalizedScope = normalizeControlScope(scope);
-  return groups.value.find(group => normalizeControlScope(group.groupCode) === normalizedScope)?.groupType || "CONTROL_CHART";
+  return groups.value.find(group => group.isEnabled !== false
+    && group.groupType === "CONTROL_CHART"
+    && getGroupScope(group) === normalizedScope)?.groupType || "CONTROL_CHART";
 }
 
 const selectedDisplayModeLabel = computed(() =>
@@ -321,13 +431,15 @@ const availableChartTypes = computed(() =>
     const groupType = getChartTypeGroupType(type.id);
     const dataCategory = selectedCharacteristic.value?.dataCategory;
     return groupType === form.value.displayMode
+      && chartTypeMatchesScope(type.id)
       && (!dataCategory || type.dataCategory === dataCategory);
   })
 );
 
-function findDefaultChartTypeId(mode = "CONTROL_CHART", dataCategory = null) {
+function findDefaultChartTypeId(mode = "CONTROL_CHART", dataCategory = null, scope = form.value.controlScope) {
   return chartTypes.value.find(type =>
     getChartTypeGroupType(type.id) === mode
+    && chartTypeMatchesScope(type.id, scope)
     && (!dataCategory || type.dataCategory === dataCategory)
   )?.id || null;
 }
@@ -417,7 +529,7 @@ watch(() => form.value.displayMode, (newMode) => {
     form.value.cl = null;
     form.value.lcl = null;
   } else if (!availableChartTypes.value.some(type => type.id === Number(form.value.chartTypeId))) {
-    form.value.chartTypeId = findDefaultChartTypeId("CONTROL_CHART", selectedCharacteristic.value?.dataCategory);
+    form.value.chartTypeId = findDefaultChartTypeId("CONTROL_CHART", selectedCharacteristic.value?.dataCategory, form.value.controlScope);
   }
 });
 
@@ -515,8 +627,19 @@ function validateStep(step) {
       formErr.value = "子組大小必須大於 0";
       return false;
     }
-    if (form.value.usl !== null && form.value.lsl !== null && Number(form.value.usl) <= Number(form.value.lsl)) {
+    const usl = finiteSpecNumber(form.value.usl);
+    const lsl = finiteSpecNumber(form.value.lsl);
+    if (usl !== null && lsl !== null && usl <= lsl) {
       formErr.value = "規格上限 (USL) 必須大於規格下限 (LSL)";
+      return false;
+    }
+    const target = finiteSpecNumber(form.value.targetValue);
+    if (target !== null && lsl !== null && target < lsl) {
+      formErr.value = "目標值不可小於規格下限 (LSL)";
+      return false;
+    }
+    if (target !== null && usl !== null && target > usl) {
+      formErr.value = "目標值不可大於規格上限 (USL)";
       return false;
     }
   }
@@ -575,8 +698,10 @@ async function openCreateModal() {
     usl: null, lsl: null, ucl: null, cl: null, lcl: null, targetValue: null,
     sampleSize: 5,
     displayMode,
-    chartTypeId: displayMode === "CONTROL_CHART" ? findDefaultChartTypeId(displayMode, characteristic?.dataCategory) : null,
+    chartTypeId: displayMode === "CONTROL_CHART" ? findDefaultChartTypeId(displayMode, characteristic?.dataCategory, "PRODUCT") : null,
     formulaConfigJson: "",
+    chemicalAnalysisConfigJson: "",
+    chemicalAnalysis: emptyChemicalAnalysis(),
     selectedRuleCodes: displayMode === "CONTROL_CHART" ? defaultSelectedRuleCodes() : [],
     isRequired: true,
     isEnabled: true
@@ -614,10 +739,11 @@ async function openEditModal(item) {
 
   const displayMode = item.displayMode === "TREND_CHART" ? "TREND_CHART" : "CONTROL_CHART";
   originalDisplayMode.value = displayMode;
-  const existingChartTypeId = getChartTypeGroupType(item.chartTypeId) === displayMode ? item.chartTypeId : null;
+  const existingChartTypeId = getChartTypeGroupType(item.chartTypeId) === displayMode && chartTypeMatchesScope(item.chartTypeId, scope) ? item.chartTypeId : null;
   const itemDataCategory = item.characteristic?.dataCategory || characteristics.value.find(x => x.id === Number(item.characteristicId))?.dataCategory;
 
   isHydratingForm.value = true;
+  const chemicalAnalysis = parseChemicalAnalysisConfig(item.chemicalAnalysisConfigJson || "");
   form.value = {
     controlScope: scope,
     partId: item.partId || null,
@@ -635,8 +761,10 @@ async function openEditModal(item) {
     targetValue: item.targetValue ?? null,
     sampleSize: item.sampleSize ?? 5,
     displayMode,
-    chartTypeId: displayMode === "CONTROL_CHART" ? (existingChartTypeId || findDefaultChartTypeId(displayMode, itemDataCategory)) : null,
+    chartTypeId: displayMode === "CONTROL_CHART" ? (existingChartTypeId || findDefaultChartTypeId(displayMode, itemDataCategory, scope)) : null,
     formulaConfigJson: displayMode === "CONTROL_CHART" ? (item.formulaConfigJson || "") : "",
+    chemicalAnalysisConfigJson: item.chemicalAnalysisConfigJson || "",
+    chemicalAnalysis,
     selectedRuleCodes: [],
     isRequired: item.isRequired ?? true,
     isEnabled: item.isEnabled ?? true
@@ -655,6 +783,10 @@ async function openEditModal(item) {
 }
 
 async function save() {
+  if (!hasDisplayModeGroup(form.value.displayMode)) {
+    formErr.value = `目前「${scopeLabel(form.value.controlScope)}」尚未啟用${selectedDisplayModeLabel.value}大類別。`;
+    return;
+  }
   if (formMode.value === "quick") {
     form.value.displayMode = form.value.displayMode || "CONTROL_CHART";
     if (form.value.displayMode === "CONTROL_CHART") {
@@ -668,6 +800,8 @@ async function save() {
       form.value.selectedRuleCodes = defaultSelectedRuleCodes();
     }
   }
+
+  if (!validateStep(1) || !validateStep(2)) return;
 
   if (form.value.controlScope === "PRODUCT" && !form.value.partId) {
     formErr.value = "產品管制項目必須選擇產品料號。";
@@ -690,6 +824,11 @@ async function save() {
   }
   if (form.value.displayMode === "CONTROL_CHART" && getChartTypeGroupType(form.value.chartTypeId) !== form.value.displayMode) {
     formErr.value = `目前選擇的是${selectedDisplayModeLabel.value}，不能同時選擇另一種圖表類型。`;
+    return;
+  }
+  if (form.value.controlScope === CONTROL_SCOPE.CHEM && form.value.chemicalAnalysis?.enabled
+      && !String(form.value.chemicalAnalysis.concentrationFormula || "").trim()) {
+    formErr.value = "啟用藥液分析公式時，濃度公式為必填。";
     return;
   }
   if (modalMode.value === "edit" && originalDisplayMode.value !== form.value.displayMode) {
@@ -723,11 +862,12 @@ async function save() {
       ucl: form.value.displayMode === "CONTROL_CHART" && form.value.ucl !== "" && form.value.ucl !== null ? parseFloat(form.value.ucl) : null,
       cl: form.value.displayMode === "CONTROL_CHART" && form.value.cl !== "" && form.value.cl !== null ? parseFloat(form.value.cl) : null,
       lcl: form.value.displayMode === "CONTROL_CHART" && form.value.lcl !== "" && form.value.lcl !== null ? parseFloat(form.value.lcl) : null,
-      targetValue: form.value.targetValue !== "" && form.value.targetValue !== null ? parseFloat(form.value.targetValue) : null,
+      targetValue: finiteSpecNumber(form.value.targetValue) ?? formSpecificationDisplay.value?.target ?? null,
       sampleSize: parseInt(form.value.sampleSize) || 1,
       displayMode: form.value.displayMode,
       chartTypeId: form.value.displayMode === "CONTROL_CHART" && form.value.chartTypeId ? parseInt(form.value.chartTypeId) : null,
-      formulaConfigJson: form.value.displayMode === "CONTROL_CHART" ? form.value.formulaConfigJson : null
+      formulaConfigJson: form.value.displayMode === "CONTROL_CHART" ? form.value.formulaConfigJson : null,
+      chemicalAnalysisConfigJson: form.value.controlScope === CONTROL_SCOPE.CHEM ? buildChemicalAnalysisConfigJson() : null
     };
 
     let savedItem;
@@ -1164,6 +1304,7 @@ onBeforeUnmount(() => {
               <th class="py-4 px-6">製程、線別與槽位</th>
               <th class="py-4 px-6">管制類型與檢驗特性</th>
               <th class="py-4 px-6">規格限值與抽樣配置</th>
+              <th class="py-4 px-6 text-center whitespace-nowrap">藥液分析公式</th>
               <th class="py-4 px-6">管制圖與判異規則</th>
               <th class="py-4 px-6 text-center">匯入筆數</th>
               <th class="py-4 px-6 text-center">狀態</th>
@@ -1172,10 +1313,10 @@ onBeforeUnmount(() => {
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="8" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
+              <td colspan="9" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="8" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
+              <td colspan="9" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
             </tr>
             <tr
               v-else
@@ -1220,6 +1361,22 @@ onBeforeUnmount(() => {
                 </div>
               </td>
               <td class="py-5 px-6">
+                <div
+                  v-if="specificationDisplay(item)"
+                  class="mb-2 inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 font-mono text-sm font-black text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+                  :title="specificationDisplay(item).detail"
+                >
+                  <template v-if="specificationDisplay(item).asymmetric">
+                    <span class="inline-flex items-center gap-1 whitespace-nowrap">
+                      <span>{{ formatSpecNumber(specificationDisplay(item).target) }}</span>
+                      <span class="inline-flex flex-col items-start text-[9px] leading-none font-bold">
+                        <span>+{{ formatSpecNumber(specificationDisplay(item).upperTolerance) }}</span>
+                        <span class="mt-1">-{{ formatSpecNumber(specificationDisplay(item).lowerTolerance) }}</span>
+                      </span>
+                    </span>
+                  </template>
+                  <template v-else>{{ specificationDisplay(item).text }}</template>
+                </div>
                 <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
                   <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm">
                     <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold border-r border-slate-200 dark:border-slate-700">LSL</span>
@@ -1241,6 +1398,15 @@ onBeforeUnmount(() => {
                   <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800/80">
                     N={{ item.sampleSize || 1 }}
                   </span>
+                </div>
+              </td>
+              <td class="py-5 px-6 text-center align-middle">
+                <div v-if="normalizeControlScope(item.controlScope) !== CONTROL_SCOPE.CHEM" class="text-xs text-slate-400 italic">不適用</div>
+                <div v-else-if="!chemicalAnalysisDisplay(item)?.enabled" class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                  未設定
+                </div>
+                <div v-else class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" title="點擊右側編輯按鈕查看或修改藥液分析公式">
+                  有設定
                 </div>
               </td>
               <td class="py-5 px-6 text-xs space-y-2">
@@ -1576,10 +1742,13 @@ onBeforeUnmount(() => {
                   class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                 >
                   <option value="CONTROL_CHART">SPC 管制圖</option>
-                  <option value="TREND_CHART">量測值趨勢圖</option>
+                  <option value="TREND_CHART" :disabled="!hasDisplayModeGroup('TREND_CHART')">量測值趨勢圖</option>
                 </select>
                 <p class="text-[11px] text-slate-400">
                   切換為趨勢圖會保留量測資料、規格界限與目標值，並移除不適用的管制圖類型、管制線、公式與規則設定。
+                </p>
+                <p v-if="!hasDisplayModeGroup('TREND_CHART')" class="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                  此業務範圍尚未啟用趨勢圖大類別，因此暫不可選擇。
                 </p>
               </div>
 
@@ -1615,12 +1784,12 @@ onBeforeUnmount(() => {
                 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">上限 (USL)</label>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">下限 (LSL)</label>
                     <input
-                      v-model="form.usl"
+                      v-model="form.lsl"
                       type="number"
                       step="any"
-                      placeholder="如: 10.2"
+                      placeholder="如: 8.3"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
                     />
                   </div>
@@ -1631,18 +1800,18 @@ onBeforeUnmount(() => {
                       v-model="form.targetValue"
                       type="number"
                       step="any"
-                      placeholder="如: 10.0"
+                      :placeholder="formSpecificationDisplay?.targetIsCalculated ? `自動: ${formatSpecNumber(formSpecificationDisplay.target)}` : '留空則自動計算'"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
                     />
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">下限 (LSL)</label>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">上限 (USL)</label>
                     <input
-                      v-model="form.lsl"
+                      v-model="form.usl"
                       type="number"
                       step="any"
-                      placeholder="如: 9.8"
+                      placeholder="如: 8.7"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
                     />
                   </div>
@@ -1657,6 +1826,22 @@ onBeforeUnmount(() => {
                       :required="currentStep === 2"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-xl text-sm font-mono font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
                     />
+                  </div>
+                </div>
+                <div
+                  v-if="formSpecificationDisplay"
+                  class="rounded-xl border border-amber-200 bg-white px-3 py-2.5 dark:border-amber-800 dark:bg-slate-900"
+                >
+                  <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">規格預覽</div>
+                  <div class="mt-0.5 font-mono text-lg font-black text-amber-700 dark:text-amber-300">
+                    <span v-if="formSpecificationDisplay.asymmetric" class="inline-flex items-center gap-1.5 whitespace-nowrap">
+                      <span>{{ formatSpecNumber(formSpecificationDisplay.target) }}</span>
+                      <span class="inline-flex flex-col items-start text-[10px] leading-none"><span>+{{ formatSpecNumber(formSpecificationDisplay.upperTolerance) }}</span><span class="mt-1">-{{ formatSpecNumber(formSpecificationDisplay.lowerTolerance) }}</span></span>
+                    </span>
+                    <template v-else>{{ formSpecificationDisplay.text }}</template>
+                  </div>
+                  <div class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    {{ formSpecificationDisplay.detail }}{{ formSpecificationDisplay.targetIsCalculated ? '（目標值將自動帶入）' : '' }}
                   </div>
                 </div>
               </div>
@@ -1809,6 +1994,25 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Formula Config -->
+                <div v-if="form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 space-y-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/70">
+                  <div class="flex items-center justify-between gap-3">
+                    <div><h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">藥液分析公式</h4><p class="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">只套用目前線別、槽體與分析項目；可用 Primary、Secondary、LSL、USL、Target、Concentration。</p></div>
+                    <label class="flex items-center gap-2 text-xs font-bold"><input v-model="form.chemicalAnalysis.enabled" type="checkbox" class="w-4 h-4">啟用</label>
+                  </div>
+                  <div v-if="form.chemicalAnalysis.enabled" class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <label class="text-xs font-bold text-slate-600">版本<input v-model="form.chemicalAnalysis.version" class="mt-1 w-full px-3 py-2 rounded-lg border"></label>
+                      <label class="text-xs font-bold text-slate-600">主要輸入名稱<input v-model="form.chemicalAnalysis.primaryInputLabel" class="mt-1 w-full px-3 py-2 rounded-lg border" placeholder="滴定值"></label>
+                      <label class="text-xs font-bold text-slate-600">第二輸入名稱（選填）<input v-model="form.chemicalAnalysis.secondaryInputLabel" class="mt-1 w-full px-3 py-2 rounded-lg border" placeholder="留空代表不使用"></label>
+                    </div>
+                    <label class="block text-xs font-bold text-slate-600">濃度公式 *<input v-model="form.chemicalAnalysis.concentrationFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" placeholder="例如 Primary * 24.5 * 0.995"></label>
+                    <label class="block text-xs font-bold text-slate-600">調整公式（選填）<input v-model="form.chemicalAnalysis.adjustmentFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" placeholder='例如 IF(Concentration&lt;LSL,"添加",IF(Concentration&gt;USL,"稀釋",""))'></label>
+                    <label class="block text-xs font-bold text-slate-600">調整量公式（選填）<input v-model="form.chemicalAnalysis.adjustmentAmountFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" placeholder='例如 IF(Concentration&lt;LSL,ROUND((Target-Concentration)*10,1)&" L","")'></label>
+                    <label class="block text-xs font-bold text-slate-600">濃度小數位<input v-model.number="form.chemicalAnalysis.decimalPlaces" type="number" min="0" max="8" class="mt-1 w-28 px-3 py-2 rounded-lg border"></label>
+                    <p class="text-[11px] text-slate-500">支援 +、-、*、/、括號、IF、IFERROR、ROUND；公式由受限解析器執行，不會執行程式碼。</p>
+                  </div>
+                </div>
+
                 <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-4 space-y-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/15 border border-indigo-200 dark:border-indigo-900/70">
                   <div>
                     <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-2">

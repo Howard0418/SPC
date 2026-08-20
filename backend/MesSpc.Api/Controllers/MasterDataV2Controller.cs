@@ -473,6 +473,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
                 x.ChartTypeId,
                 x.RuleGroupId,
                 x.FormulaConfigJson,
+                x.ChemicalAnalysisConfigJson,
                 x.IsRequired,
                 x.IsEnabled,
                 x.Part,
@@ -491,11 +492,12 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
     public async Task<IActionResult> Create(PartProcessCharacteristic req)
     {
         var validation = await ValidateScopeAsync(req);
-        if (validation is not null) return BadRequest(validation);
+        if (validation is not null) return BadRequest(new { message = validation });
         var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
-        if (displayValidation is not null) return BadRequest(displayValidation);
+        if (displayValidation is not null) return BadRequest(new { message = displayValidation });
         req.Unit = CleanUnit(req.Unit);
         req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
+        req.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson);
         req.RuleGroupId = null;
         db.PartProcessCharacteristics.Add(req);
         await db.SaveChangesAsync();
@@ -508,13 +510,13 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
         var previousDisplayMode = x.DisplayMode;
         var validation = await ValidateScopeAsync(req);
-        if (validation is not null) return BadRequest(validation);
+        if (validation is not null) return BadRequest(new { message = validation });
         var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
-        if (displayValidation is not null) return BadRequest(displayValidation);
+        if (displayValidation is not null) return BadRequest(new { message = displayValidation });
         x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = req.PartId; x.ProcessId = req.ProcessId; x.MachineId = req.MachineId; x.TankId = req.TankId; x.SlotId = req.SlotId; x.CharacteristicId = req.CharacteristicId; x.SequenceNo = req.SequenceNo;
         x.Unit = CleanUnit(req.Unit);
         x.USL = req.USL; x.LSL = req.LSL; x.UCL = req.UCL; x.CL = req.CL; x.LCL = req.LCL; x.TargetValue = req.TargetValue;
-        x.SampleSize = req.SampleSize; x.DisplayMode = req.DisplayMode; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson); x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
+        x.SampleSize = req.SampleSize; x.DisplayMode = req.DisplayMode; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson); x.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson); x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
         x.RuleGroupId = null;
 
         await using var transaction = await db.Database.BeginTransactionAsync();
@@ -707,6 +709,11 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
             {
                 return "公式配置格式不正確。";
             }
+        }
+        if (!string.IsNullOrWhiteSpace(req.ChemicalAnalysisConfigJson))
+        {
+            try { using var _ = System.Text.Json.JsonDocument.Parse(req.ChemicalAnalysisConfigJson); }
+            catch (System.Text.Json.JsonException) { return "藥液分析公式配置格式不正確。"; }
         }
         return null;
     }

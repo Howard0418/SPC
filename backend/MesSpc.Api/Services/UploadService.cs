@@ -454,12 +454,17 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 ApplyImportedSpecification(payload, ctx.Mapping);
                 var measuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow);
                 var sampleNo = TryInt(Get(payload, "SampleNo"), 1);
+                var isPortalDaily = string.Equals(batch.SourceType, "PortalDaily", StringComparison.OrdinalIgnoreCase);
+                var portalDailyDate = isPortalDaily ? ToTaipeiDate(measuredAt) : (DateTime?)null;
 
-                var existingVm = await db.VariableMeasurements.FirstOrDefaultAsync(x => 
-                    x.PartProcessCharacteristicId == ctx.Mapping.Id && 
-                    x.MeasuredAt == measuredAt && 
-                    x.LotNo == Get(payload, "LotNo") &&
-                    x.SampleNo == sampleNo, ct);
+                var existingVm = isPortalDaily
+                    ? await db.VariableMeasurements.FirstOrDefaultAsync(x =>
+                        x.PartProcessCharacteristicId == ctx.Mapping.Id && x.PortalDailyDate == portalDailyDate, ct)
+                    : await db.VariableMeasurements.FirstOrDefaultAsync(x =>
+                        x.PartProcessCharacteristicId == ctx.Mapping.Id &&
+                        x.MeasuredAt == measuredAt &&
+                        x.LotNo == Get(payload, "LotNo") &&
+                        x.SampleNo == sampleNo, ct);
 
                 if (existingVm != null)
                 {
@@ -472,6 +477,30 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     db.AlertEvents.RemoveRange(oldAlerts);
                     var oldCalcs = db.SpcCalculationResults.Where(c => c.VariableMeasurementId == existingVm.Id);
                     db.SpcCalculationResults.RemoveRange(oldCalcs);
+                    if (isPortalDaily)
+                    {
+                        existingVm.UploadBatchId = batch.UploadBatchId;
+                        existingVm.MeasuredValue = measuredValue;
+                        existingVm.MeasuredAt = measuredAt;
+                        existingVm.Operator = Get(payload, "Operator");
+                        existingVm.RecheckValue = double.TryParse(Get(payload, "RecheckValue"), out var dailyRecheck) ? dailyRecheck : null;
+                        existingVm.AdjustAction = Get(payload, "AdjustAction");
+                        existingVm.AdjustAmount = double.TryParse(Get(payload, "AdjustAmount"), out var dailyAdjust) ? dailyAdjust : null;
+                        existingVm.LotNo = Get(payload, "LotNo");
+                        existingVm.SampleNo = sampleNo;
+                        existingVm.UpdatedAt = DateTime.UtcNow;
+                        existingVm.UpdatedBy = Get(payload, "Operator");
+                        await db.SaveChangesAsync(ct);
+                        updated++;
+                        imported++;
+                        var updatedResult = await spcService.CalculateVariableAsync(existingVm, ct);
+                        if (updatedResult is not null)
+                        {
+                            spcCount++;
+                            if (updatedResult.IsOutOfControl || updatedResult.IsOutOfSpec) alertCount++;
+                        }
+                        continue;
+                    }
                     db.VariableMeasurements.Remove(existingVm);
                     await db.SaveChangesAsync(ct);
                     updated++;
@@ -495,6 +524,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     SampleNo = sampleNo,
                     MeasuredValue = measuredValue,
                     MeasuredAt = measuredAt,
+                    PortalDailyDate = portalDailyDate,
                     Operator = Get(payload, "Operator"),
                     RecheckValue = double.TryParse(Get(payload, "RecheckValue"), out var rVal) ? rVal : null,
                     AdjustAction = Get(payload, "AdjustAction"),
@@ -574,6 +604,13 @@ public class UploadService(AppDbContext db, SpcService spcService)
         batch.ConfirmedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return new { batch, mode, imported, inserted, updated, skipped, spcCount, alertCount };
+    }
+
+    private static DateTime ToTaipeiDate(DateTime value)
+    {
+        var utc = value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
+        var taipei = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(utc, "Taipei Standard Time");
+        return DateTime.SpecifyKind(taipei.Date, DateTimeKind.Unspecified);
     }
 
     private async Task EnsureImportedOperatorsAsync(IEnumerable<UploadDetail> validDetails, CancellationToken ct)

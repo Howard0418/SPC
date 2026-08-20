@@ -17,20 +17,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-if (import.meta.env.VITE_AUTH_ENABLED === "true") {
-  api.interceptors.response.use(
-    (r) => r,
-    (err) => {
-      if (err?.response?.status === 401 && typeof window !== "undefined") {
-        clearAuthSession();
-        if (!window.location.pathname.includes("/login")) {
-          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
-        }
+api.interceptors.response.use(
+  (r) => r,
+  (err) => {
+    if (err?.response?.status === 401 && typeof window !== "undefined") {
+      clearAuthSession();
+      if (!window.location.pathname.includes("/login")) {
+        const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        window.location.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
       }
-      return Promise.reject(err);
     }
-  );
-}
+    return Promise.reject(err);
+  }
+);
 
 export function getStoredToken() {
   return localStorage.getItem(tokenKey);
@@ -57,5 +56,6 @@ export function getApiErrorMessage(err) {
   if (err?.response?.status === 403) {
     return err?.response?.data?.message || "權限不足（403）。檢視者只能查看與查詢資料。";
   }
-  return err?.response?.data?.title || err?.response?.data?.message || msg || "請求失敗";
+  const responseData = err?.response?.data;
+  return (typeof responseData === "string" && responseData.trim()) || responseData?.title || responseData?.message || msg || "請求失敗";
 }

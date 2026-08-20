@@ -318,6 +318,7 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public string DisplayMode { get; set; } = "CONTROL_CHART";
     public int? ChartTypeId { get; set; }
     public string? FormulaConfigJson { get; set; }
+    public string? ChemicalAnalysisConfigJson { get; set; }
     public int? RuleGroupId { get; set; }
     public bool IsRequired { get; set; } = true;
     public bool IsEnabled { get; set; } = true;
@@ -432,6 +433,7 @@ public class VariableMeasurement : BaseEntity<long>
     public int SampleNo { get; set; }
     public double MeasuredValue { get; set; }
     public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
+    public DateTime? PortalDailyDate { get; set; }
     public string? Operator { get; set; }
     
     public double? RecheckValue { get; set; }

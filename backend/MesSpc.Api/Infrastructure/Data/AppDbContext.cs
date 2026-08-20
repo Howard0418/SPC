@@ -112,6 +112,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<UploadError>().HasIndex(x => x.UploadBatchId);
         modelBuilder.Entity<VariableMeasurement>().HasKey(x => x.Id);
         modelBuilder.Entity<VariableMeasurement>().HasIndex(x => new { x.PartId, x.ProcessId, x.CharacteristicId, x.MeasuredAt });
+        modelBuilder.Entity<VariableMeasurement>()
+            .HasIndex(x => new { x.PartProcessCharacteristicId, x.PortalDailyDate })
+            .IsUnique()
+            .HasFilter("[PortalDailyDate] IS NOT NULL");
         modelBuilder.Entity<AttributeMeasurement>().HasKey(x => x.Id);
         modelBuilder.Entity<AttributeMeasurement>().HasIndex(x => new { x.PartId, x.ProcessId, x.CharacteristicId, x.MeasuredAt });
         modelBuilder.Entity<SpcCalculationResult>().HasKey(x => x.Id);

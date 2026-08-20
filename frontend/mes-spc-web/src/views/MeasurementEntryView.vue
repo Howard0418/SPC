@@ -13,7 +13,8 @@ import {
   Scan,
   MonitorCheck,
   ArrowRight,
-  Settings
+  Settings,
+  Search
 } from "lucide-vue-next";
 
 // V1 Master Data
@@ -50,6 +51,8 @@ const submitting = ref(false);
 const error = ref("");
 const successResult = ref(null);
 const successPpcId = ref(null);
+const editBatchId = ref(null);
+const loadingExisting = ref(false);
 
 // Soft Hold State
 const softHoldActive = ref(false);
@@ -141,6 +144,7 @@ function resetForm() {
   selectedItemId.value = "";
   successResult.value = null;
   successPpcId.value = null;
+  editBatchId.value = null;
   error.value = "";
 }
 
@@ -206,6 +210,7 @@ const selectedItemDetails = computed(() => {
 const sampleSize = computed(() => selectedMapping.value ? selectedMapping.value.sampleSize : 1);
 
 watch(selectedItemId, () => {
+  editBatchId.value = null;
   if (selectedItemId.value) {
     inputRefs.value = [];
     payload.value.values = Array.from({ length: sampleSize.value }, (_, i) => ({
@@ -216,6 +221,46 @@ watch(selectedItemId, () => {
     payload.value.values = [];
   }
 });
+
+function toLocalDateTimeInput(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offset = date.getTimezoneOffset();
+  return new Date(date.getTime() - offset * 60000).toISOString().substring(0, 16);
+}
+
+async function loadExistingBatch() {
+  if (!selectedMapping.value || !payload.value.measuredAt) {
+    error.value = "請先選擇檢驗項目與量測日期。";
+    return;
+  }
+  loadingExisting.value = true;
+  error.value = "";
+  successResult.value = null;
+  try {
+    const date = payload.value.measuredAt.substring(0, 10);
+    const { data } = await api.get("/v1/manual-measurements/latest", {
+      params: {
+        ppcId: selectedMapping.value.id,
+        date,
+        timezoneOffsetMinutes: -new Date().getTimezoneOffset()
+      }
+    });
+    editBatchId.value = data.batchId;
+    payload.value.batchNo = data.batchNo || payload.value.batchNo;
+    payload.value.workOrderNo = data.workOrderNo || "";
+    payload.value.lotNo = data.lotNo || "";
+    payload.value.serialNo = data.serialNo || "";
+    payload.value.measuredAt = toLocalDateTimeInput(data.measuredAt);
+    payload.value.operatorName = data.operatorName || payload.value.operatorName;
+    payload.value.values = (data.values || []).map(v => ({ sampleNo: v.sampleNo, valueNumeric: v.valueNumeric }));
+  } catch (e) {
+    editBatchId.value = null;
+    error.value = getApiErrorMessage(e);
+  } finally {
+    loadingExisting.value = false;
+  }
+}
 
 watch(selectedControlScope, () => {
   selectedProductId.value = null;
@@ -280,10 +325,13 @@ const submitBatch = async () => {
       }))
     };
 
-    const res = await api.post("/v1/manual-measurements", finalPayload);
+    const res = editBatchId.value
+      ? await api.put(`/v1/manual-measurements/${editBatchId.value}`, finalPayload)
+      : await api.post("/v1/manual-measurements", finalPayload);
     
     successResult.value = res.data.batch || res.data;
     successPpcId.value = selectedMapping.value.id;
+    editBatchId.value = res.data?.batch?.uploadBatchId || res.data?.batch?.id || editBatchId.value;
     
     if (res.data.alerts && res.data.alerts.length > 0) {
       activeAlerts.value = res.data.alerts;
@@ -474,6 +522,21 @@ async function submitHandleAlerts() {
               <input type="datetime-local" v-model="payload.measuredAt" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              @click="loadExistingBatch"
+              :disabled="loadingExisting || !selectedItemId || !payload.measuredAt"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-xs font-black hover:bg-indigo-100 disabled:opacity-50"
+            >
+              <RefreshCw v-if="loadingExisting" class="w-4 h-4 animate-spin" />
+              <Search v-else class="w-4 h-4" />
+              {{ loadingExisting ? '查詢中...' : '載入當日既有資料' }}
+            </button>
+            <span v-if="editBatchId" class="px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-black">
+              編輯既有批次
+            </span>
+          </div>
         </div>
       </transition>
 
@@ -521,7 +584,7 @@ async function submitHandleAlerts() {
           class="flex items-center gap-2 px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all text-sm"
         >
           <RefreshCw v-if="submitting" class="w-4 h-4 animate-spin" />
-          {{ submitting ? "正在儲存點位..." : "儲存並上傳批次" }}
+          {{ submitting ? "正在儲存點位..." : (editBatchId ? "更新量測資料" : "儲存並上傳批次") }}
         </button>
       </div>
     </div>

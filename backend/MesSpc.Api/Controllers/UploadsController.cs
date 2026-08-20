@@ -15,7 +15,7 @@ public class UploadsController(UploadService uploadService)
     : ControllerBase
 {
     [HttpPost("variable")]
-    public async Task<IActionResult> UploadVariable([FromBody] List<Dictionary<string, string?>> rows, [FromQuery] Guid? clientBatchId = null)
+    public async Task<IActionResult> UploadVariable([FromBody] List<Dictionary<string, string?>> rows, [FromQuery] Guid? clientBatchId = null, [FromQuery] bool portalDaily = false)
     {
         var jsonStr = System.Text.Json.JsonSerializer.Serialize(rows);
         var hashBytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(jsonStr));
@@ -23,7 +23,7 @@ public class UploadsController(UploadService uploadService)
 
         try
         {
-            var batch = await uploadService.CreateVariableBatchAsync(rows, "Api", "api-user", null, hashStr, uploadBatchId: clientBatchId);
+            var batch = await uploadService.CreateVariableBatchAsync(rows, portalDaily ? "PortalDaily" : "Api", "api-user", null, hashStr, uploadBatchId: clientBatchId);
             return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
         }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")

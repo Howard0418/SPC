@@ -31,6 +31,10 @@ test-artifacts/
 .codex-tmp/
 publish_stage/
 reports/
+release/
+.tmp_edge_tts/
+.tmp_lameenc/
+__pycache__/
 
 # OS
 Thumbs.db
