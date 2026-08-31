@@ -1,15 +1,23 @@
 import axios from "axios";
 import { clearAuthSession } from "../utils/auth";
 
-const baseURL = import.meta.env.DEV
-  ? "/api"
-  : import.meta.env.VITE_API_BASE || "http://172.16.110.27:8082/api";
+const baseURL = import.meta.env.VITE_API_BASE
+  || (import.meta.env.DEV ? "/api" : "http://172.16.110.27:8082/api");
+const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
+let apiEnvironment = "unknown";
 
 export const api = axios.create({ baseURL });
 
 const tokenKey = "mes_spc_token";
 
 api.interceptors.request.use((config) => {
+  const method = (config.method || "get").toLowerCase();
+  const isWrite = !["get", "head", "options"].includes(method);
+  if (isWrite && apiEnvironment !== "unknown" && apiEnvironment !== webEnvironment) {
+    const error = new Error(`安全性阻擋：WEB 為 ${webEnvironment}，API 為 ${apiEnvironment}，環境不一致，禁止寫入。`);
+    error.code = "ENVIRONMENT_MISMATCH";
+    return Promise.reject(error);
+  }
   const t = localStorage.getItem(tokenKey);
   if (t) {
     config.headers.Authorization = `Bearer ${t}`;
@@ -40,10 +48,15 @@ export function setStoredToken(token) {
   else localStorage.removeItem(tokenKey);
 }
 
+export function setApiEnvironment(value) {
+  apiEnvironment = value || "unknown";
+}
+
 /** 附帶於 catch，讓頁面顯示可讀訊息（含後端未啟動） */
 export function getApiErrorMessage(err) {
   const msg = err?.message || "";
   const code = err?.code || "";
+  if (code === "ENVIRONMENT_MISMATCH") return msg;
   if (!err?.response && (code === "ERR_NETWORK" || code === "ECONNREFUSED" || /Network Error/i.test(msg))) {
     return `無法連線到後端 API。請確認後端服務已在 ${baseURL} 啟動，再重新整理此頁。`;
   }

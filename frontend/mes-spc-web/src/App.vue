@@ -24,7 +24,7 @@ import {
   CalendarClock
 } from "lucide-vue-next";
 import { clearAuthSession, getCurrentUser } from "./utils/auth";
-import { api } from "./api/client";
+import { api, setApiEnvironment } from "./api/client";
 import pkg from "../package.json";
 
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
@@ -73,9 +73,11 @@ onMounted(() => {
     .then(({ data }) => {
       apiVersion.value = data?.version || "--";
       apiEnvironment.value = data?.environment || "unknown";
+      setApiEnvironment(apiEnvironment.value);
       apiOnline.value = true;
     })
     .catch(() => {
+      setApiEnvironment("unknown");
       apiOnline.value = false;
     });
 });

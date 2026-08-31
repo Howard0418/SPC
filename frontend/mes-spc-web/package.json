@@ -4,8 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode testhost",
+    "dev:test": "vite --mode testhost",
     "build": "vite build",
+    "build:test": "vite build --mode testhost",
+    "build:production": "vite build --mode production",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:ui": "playwright test --ui"
