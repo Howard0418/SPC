@@ -485,7 +485,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                         existingVm.Operator = Get(payload, "Operator");
                         existingVm.RecheckValue = double.TryParse(Get(payload, "RecheckValue"), out var dailyRecheck) ? dailyRecheck : null;
                         existingVm.AdjustAction = Get(payload, "AdjustAction");
-                        existingVm.AdjustAmount = double.TryParse(Get(payload, "AdjustAmount"), out var dailyAdjust) ? dailyAdjust : null;
+                        existingVm.AdjustAmount = NormalizeAdjustmentAmount(Get(payload, "AdjustAmount"));
                         existingVm.LotNo = Get(payload, "LotNo");
                         existingVm.SampleNo = sampleNo;
                         existingVm.UpdatedAt = DateTime.UtcNow;
@@ -528,7 +528,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     Operator = Get(payload, "Operator"),
                     RecheckValue = double.TryParse(Get(payload, "RecheckValue"), out var rVal) ? rVal : null,
                     AdjustAction = Get(payload, "AdjustAction"),
-                    AdjustAmount = double.TryParse(Get(payload, "AdjustAmount"), out var aVal) ? aVal : null
+                    AdjustAmount = NormalizeAdjustmentAmount(Get(payload, "AdjustAmount"))
                 };
                 db.VariableMeasurements.Add(vm);
                 await db.SaveChangesAsync(ct);
@@ -1470,4 +1470,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
     private static string NormalizeTankName(string? value)
         => TankNameMatcher.Normalize(value);
+
+    private static string? NormalizeAdjustmentAmount(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

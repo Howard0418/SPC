@@ -54,8 +54,7 @@ public class PartProcessCharacteristicMaintenanceTests
         {
             CharacteristicCode = "C1",
             CharacteristicName = "厚度",
-            ControlScope = "PROCESS",
-            Unit = "mm"
+            ControlScope = "PROCESS"
         };
         var chartGroup = new ControlChartGroup
         {

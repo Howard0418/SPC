@@ -29,6 +29,7 @@ backend/MesSpc.Api/appsettings.Development.json
 EmailOutbox/
 test-artifacts/
 .codex-tmp/
+**/.codex-npm-cache/
 publish_stage/
 reports/
 release/

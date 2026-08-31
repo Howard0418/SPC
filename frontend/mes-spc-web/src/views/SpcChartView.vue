@@ -227,6 +227,16 @@ const monitorSlotLabel = computed(() =>
   || "未提供"
 );
 
+const monitorSpecLimits = computed(() => {
+  const configuredLimits = chartResult.value?.limits || {};
+  const mapping = monitorMapping.value || {};
+  return {
+    usl: configuredLimits.usl ?? mapping.usl ?? null,
+    target: configuredLimits.target ?? mapping.targetValue ?? mapping.target ?? null,
+    lsl: configuredLimits.lsl ?? mapping.lsl ?? null
+  };
+});
+
 function uniqueNonEmptyParts(parts) {
   return [...new Set(parts
     .map(x => (x ?? "").toString().trim())
@@ -292,6 +302,7 @@ const formatNumber = (value, digits = 4) => {
 };
 
 const formatLimit = (value) => value === null || value === undefined ? "N/A" : Number(value).toFixed(4);
+const formatSpecLimit = (value) => value === null || value === undefined ? "N/A" : Number(value).toFixed(2);
 const formatPercentage = (value) => value === null || value === undefined ? "N/A" : `${Number(value).toFixed(2)}%`;
 const formatRuleCode = (value) => {
   const match = String(value || "").match(/^(?:Rule|Nelson)(\d+)/i);
@@ -1754,7 +1765,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Monitor Detail Summary -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="grid grid-cols-1 xl:grid-cols-4 gap-5 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="p-1">
           <h3 class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
             <Info class="w-4 h-4 text-blue-500" /> 管制圖監控明細
@@ -1796,16 +1807,27 @@ onBeforeUnmount(() => {
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div class="space-y-1">
               <p class="text-slate-400 font-bold">I / Xbar</p>
-              <p class="font-mono text-slate-700 dark:text-slate-200">UCL {{ formatLimit(topControlStat?.ucl ?? chartResult.limits?.ucl) }}</p>
-              <p class="font-mono text-slate-700 dark:text-slate-200">CL {{ formatLimit(topControlStat?.cl ?? chartResult.limits?.cl) }}</p>
-              <p class="font-mono text-slate-700 dark:text-slate-200">LCL {{ formatLimit(topControlStat?.lcl ?? chartResult.limits?.lcl) }}</p>
+              <p class="font-mono text-slate-700 dark:text-slate-200">UCL {{ formatSpecLimit(topControlStat?.ucl ?? chartResult.limits?.ucl) }}</p>
+              <p class="font-mono text-slate-700 dark:text-slate-200">CL {{ formatSpecLimit(topControlStat?.cl ?? chartResult.limits?.cl) }}</p>
+              <p class="font-mono text-slate-700 dark:text-slate-200">LCL {{ formatSpecLimit(topControlStat?.lcl ?? chartResult.limits?.lcl) }}</p>
             </div>
             <div class="space-y-1">
               <p class="text-slate-400 font-bold">MR / R / S</p>
-              <p class="font-mono text-slate-700 dark:text-slate-200">UCL {{ formatLimit(bottomControlStat?.ucl) }}</p>
-              <p class="font-mono text-slate-700 dark:text-slate-200">CL {{ formatLimit(bottomControlStat?.cl) }}</p>
-              <p class="font-mono text-slate-700 dark:text-slate-200">LCL {{ formatLimit(bottomControlStat?.lcl) }}</p>
+              <p class="font-mono text-slate-700 dark:text-slate-200">UCL {{ formatSpecLimit(bottomControlStat?.ucl) }}</p>
+              <p class="font-mono text-slate-700 dark:text-slate-200">CL {{ formatSpecLimit(bottomControlStat?.cl) }}</p>
+              <p class="font-mono text-slate-700 dark:text-slate-200">LCL {{ formatSpecLimit(bottomControlStat?.lcl) }}</p>
             </div>
+          </div>
+        </div>
+
+        <div class="p-1 xl:border-l xl:border-slate-200 xl:dark:border-slate-800 xl:pl-5">
+          <h3 class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+            <ShieldAlert class="w-4 h-4 text-red-500" /> 規格界線
+          </h3>
+          <div data-testid="monitor-spec-limits" class="space-y-1 text-xs">
+            <p class="font-mono text-slate-700 dark:text-slate-200">USL {{ formatSpecLimit(monitorSpecLimits.usl) }}</p>
+            <p class="font-mono text-slate-700 dark:text-slate-200">Target {{ formatSpecLimit(monitorSpecLimits.target) }}</p>
+            <p class="font-mono text-slate-700 dark:text-slate-200">LSL {{ formatSpecLimit(monitorSpecLimits.lsl) }}</p>
           </div>
         </div>
 

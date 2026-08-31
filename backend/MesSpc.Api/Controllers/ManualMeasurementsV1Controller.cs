@@ -24,7 +24,7 @@ public record UpdateManualMeasurementItemReq(
     double MeasuredValue,
     double? RecheckValue,
     string? AdjustAction,
-    double? AdjustAmount,
+    string? AdjustAmount,
     DateTime MeasuredAt,
     string? OperatorName);
 
@@ -75,7 +75,9 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 row.MeasuredAt,
                 operatorName = row.Operator,
                 titrationValue = payload?.GetValueOrDefault("TitrationValue"),
-                recheckTitrationValue = payload?.GetValueOrDefault("RecheckTitrationValue")
+                secondaryTitrationValue = payload?.GetValueOrDefault("SecondaryTitrationValue"),
+                recheckTitrationValue = payload?.GetValueOrDefault("RecheckTitrationValue"),
+                recheckSecondaryTitrationValue = payload?.GetValueOrDefault("RecheckSecondaryTitrationValue")
             };
         }).ToList();
         return Ok(new { date, machineId, exists = true, rows = result });
@@ -375,7 +377,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         row.MeasuredValue = req.MeasuredValue;
         row.RecheckValue = req.RecheckValue;
         row.AdjustAction = req.AdjustAction?.Trim();
-        row.AdjustAmount = req.AdjustAmount;
+        row.AdjustAmount = string.IsNullOrWhiteSpace(req.AdjustAmount) ? null : req.AdjustAmount.Trim();
         row.MeasuredAt = req.MeasuredAt;
         row.Operator = req.OperatorName?.Trim();
         row.UpdatedAt = DateTime.UtcNow;

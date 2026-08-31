@@ -438,7 +438,7 @@ public class VariableMeasurement : BaseEntity<long>
     
     public double? RecheckValue { get; set; }
     public string? AdjustAction { get; set; }
-    public double? AdjustAmount { get; set; }
+    public string? AdjustAmount { get; set; }
 
     public SourceType SourceType { get; set; } = SourceType.Manual;
     public string? SourceReference { get; set; }

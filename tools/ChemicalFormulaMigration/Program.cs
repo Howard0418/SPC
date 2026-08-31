@@ -8,7 +8,9 @@ using Microsoft.EntityFrameworkCore;
 Console.OutputEncoding = Encoding.UTF8;
 var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 var apply = args.Contains("--apply", StringComparer.OrdinalIgnoreCase);
+var patchC5Cleaner = args.Contains("--patch-c5-cleaner", StringComparer.OrdinalIgnoreCase);
 var configArg = args.FirstOrDefault(x => x.StartsWith("--config=", StringComparison.OrdinalIgnoreCase));
+var ruleArg = args.FirstOrDefault(x => x.StartsWith("--rule=", StringComparison.OrdinalIgnoreCase));
 var configPath = configArg?[9..] ?? Path.Combine(root, "release", "test", "backend", "appsettings.json");
 var rulesPath = Path.GetFullPath(Path.Combine(root, "..", "PmrPortal", "src", "PmrPortal.Api", "ChemicalAnalysisRules.json"));
 var reportPath = Path.Combine(root, "reports", "chemical-formula-migration", "formula-migration.csv");
@@ -24,6 +26,12 @@ if (apply && !args.Contains($"--confirm-database={database}", StringComparer.Ord
 
 var rules = JsonSerializer.Deserialize<List<LegacyRule>>(File.ReadAllText(rulesPath),
     new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+if (ruleArg is not null)
+{
+    var ruleId = ruleArg[7..];
+    rules = rules.Where(x => string.Equals(x.Id, ruleId, StringComparison.OrdinalIgnoreCase)).ToList();
+    if (rules.Count != 1) throw new InvalidOperationException($"找不到唯一規則：{ruleId}。");
+}
 var candidates = await db.PartProcessCharacteristics.AsNoTracking()
     .Where(x => x.IsEnabled && (x.ControlScope == "CHEM" || x.ControlScope == "CHEMICAL" || x.ControlScope == "CHEM_TREND"))
     .Include(x => x.Machine).Include(x => x.Tank).Include(x => x.Characteristic)
@@ -33,6 +41,68 @@ var candidates = await db.PartProcessCharacteristics.AsNoTracking()
         x.Characteristic != null ? x.Characteristic.CharacteristicCode : "",
         x.Characteristic != null ? x.Characteristic.CharacteristicName : "", x.Unit,
         x.LSL, x.USL, x.TargetValue, x.ChemicalAnalysisConfigJson)).ToListAsync();
+if (patchC5Cleaner)
+{
+    const string adjustmentFormula = "IF(Concentration<LSL,\"添加\",IF(Concentration>USL,\"稀釋\",\"\"))";
+    const string adjustmentAmountFormula = "IFERROR(IF(Concentration>USL,\"排液：\"&ROUND(1100*(1-Target/Concentration),0)&\" L\"&\" 補水：\"&ROUND(1100*(1-Target/Concentration),0)&\" L\",IF(Concentration<LSL,\"DP333：\"&ROUND((Target-Concentration)*1100/1000,1)&\" L\",\"\")),\"\")";
+    foreach (var test in new[]
+    {
+        (Concentration: 70m, Adjustment: "添加", Amount: "DP333：33 L"),
+        (Concentration: 100m, Adjustment: "", Amount: ""),
+        (Concentration: 130m, Adjustment: "稀釋", Amount: "排液：254 L 補水：254 L")
+    })
+    {
+        var cells = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+            { ["CONCENTRATION"] = test.Concentration, ["LSL"] = 90m, ["TARGET"] = 100m, ["USL"] = 110m };
+        if (Formula.EvaluateText(adjustmentFormula, cells) != test.Adjustment
+            || Formula.EvaluateText(adjustmentAmountFormula, cells) != test.Amount)
+            throw new InvalidOperationException($"C5 公式邊界驗證失敗：Concentration={test.Concentration}。");
+    }
+    var matches = candidates.Where(x => string.Equals(x.MachineCode, "C5", StringComparison.OrdinalIgnoreCase)
+        && Canon(x.TankName) == Canon("清潔") && Canon(x.CharacteristicName) == Canon("硫酸")
+        && Canon(x.Unit) == Canon("ml/L")).ToList();
+    if (matches.Count != 1) throw new InvalidOperationException($"C5／清潔／硫酸／ml/L 應唯一對應，實際為 {matches.Count} 筆。");
+    var target = matches[0];
+    var desiredConfig = JsonSerializer.Serialize(new
+    {
+        enabled = true,
+        version = "2",
+        primaryInputLabel = "滴定值",
+        secondaryInputLabel = "",
+        concentrationFormula = "Primary * 8.48 * 0.995",
+        adjustmentFormula,
+        adjustmentAmountFormula,
+        decimalPlaces = 2
+    });
+    Console.WriteLine($"資料庫：{database}；PPC：{target.Id}；模式：{(apply ? "APPLY" : "DRY-RUN")}");
+    var alreadyMatches = string.Equals(target.ExistingConfig, desiredConfig, StringComparison.Ordinal)
+        && target.Lsl == 90d && target.Target == 100d && target.Usl == 110d;
+    Console.WriteLine(alreadyMatches
+        ? "狀態：已符合" : "狀態：需要更新");
+    if (apply && !alreadyMatches)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
+        var rollbackPath = Path.Combine(Path.GetDirectoryName(reportPath)!,
+            $"{database}-C5-cleaner-rollback-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+        await File.WriteAllTextAsync(rollbackPath, JsonSerializer.Serialize(new
+        {
+            database,
+            ppcId = target.Id,
+            previousConfig = target.ExistingConfig,
+            previousLsl = target.Lsl,
+            previousTarget = target.Target,
+            previousUsl = target.Usl
+        }, new JsonSerializerOptions { WriteIndented = true }));
+        var entity = await db.PartProcessCharacteristics.SingleAsync(x => x.Id == target.Id);
+        entity.ChemicalAnalysisConfigJson = desiredConfig;
+        entity.LSL = 90d;
+        entity.TargetValue = 100d;
+        entity.USL = 110d;
+        await db.SaveChangesAsync();
+        Console.WriteLine($"已更新；回復檔：{rollbackPath}");
+    }
+    return;
+}
 if (args.Contains("--inventory", StringComparer.OrdinalIgnoreCase))
 {
     foreach (var group in candidates.GroupBy(x => new { x.MachineCode, x.MachineName }).OrderBy(x => x.Key.MachineCode))

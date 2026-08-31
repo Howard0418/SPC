@@ -1,5 +1,47 @@
 # 客製需求與回歸檢查
 
+## 2026-08-27（C3 清潔槽硫酸濃度公式修正）
+
+- C3／清潔／硫酸（PPC 2539）的濃度公式依原始藥液日報表修正為 `Primary * 6.2 * 0.995`；滴定值 3.1 應得到 19.12，不再錯算為 26.16。
+- 藥液公式同步工具新增 `--rule=<規則 ID>` 單筆篩選，避免修正特定項目時連帶覆寫其他已客製化公式。
+- 回歸檢查：以 `C3:7` 單筆乾跑及套用後驗證，確認對應唯一 PPC、公式驗證一致，且其他管制項目不變。
+
+## 2026-08-27（C5 清潔槽調整公式修正）
+
+- C5／清潔／硫酸（PPC 2425）規格修正為 LSL 90、Target 100、USL 110；分析值低於 LSL 時添加 DP333，高於 USL 時稀釋並計算等量排液／補水，規格內不調整。
+- 調整與調整量公式改用 `LSL`、`Target`、`USL`，避免日後主檔規格變更卻仍使用寫死門檻；公式同步至測試及正式 SPC 資料庫，更新前各自保存欄位級回復檔。
+- 回歸檢查：分析值 70 得到「添加／DP333：33 L」、100 不調整、130 得到「稀釋／排液：254 L 補水：254 L」。
+
+## 2026-08-25（測試藥液公式同步至正式環境）
+
+- 以線別／機台、槽體／槽位及品質特性代碼自然鍵比對，將測試資料庫已確認設定同步至正式資料庫：54 項 `ChemicalAnalysisConfigJson`、15 項 LSL／Target／USL 規格及 8 種品質特性的 InputMode／ValueLabel／DecimalPlaces。
+- 正式環境缺少的 PT1／TANK-000289／CHAR-000856 維持排除，未自動新增主檔；量測、SPC 計算、上傳批次／明細／錯誤及警示資料均未同步且筆數不變。
+- 同步前建立並通過 `RESTORE VERIFYONLY ... WITH CHECKSUM` 的正式資料庫 `COPY_ONLY` 完整備份 `PMR_SPC_2026_pre_formula_sync_20260825_114442.bak`，另保存欄位級回復檔 `.codex-tmp/ChemicalFormulaSyncAudit/production-rollback-20260825_114442.json`。
+- 更新使用單一資料庫交易；提交後所有測試／正式已配對藥液項目逐欄比對為零差異。
+
+## 2026-08-25（管制圖明細顯示規格界線區塊）
+
+- SPC 管制圖查詢明細摘要新增「規格界線」區塊，直接顯示 USL、Target、LSL 數值；本次只增加摘要資訊，不新增或變更圖表上的規格線。
+- 規格值優先使用本次管制圖回傳界線，缺值時回退至管制項目主檔設定。
+- 規格界線摘要統一顯示至小數點後兩位；其他能力指標等統計數值的小數位維持不變。
+- 管制圖摘要中的 I／Xbar 與 MR／R／S 管制界線亦統一顯示至小數點後兩位；只調整文字格式，不改變界線計算精度。
+
+## 2026-08-24（Portal 藥液雙滴定值追溯）
+
+- Portal 藥液日報上傳明細可保存 `SecondaryTitrationValue` 與 `RecheckSecondaryTitrationValue`；量測主值、SPC 計算及管制圖資料結構不變。
+- 每日日報查詢同步回傳主要／第二滴定值及其複驗值，供 Portal 修改既有日報時完整還原原始輸入。
+- 未提供第二滴定值的既有匯入、單滴定項目及歷史資料維持相容。
+- 測試資料庫更新前已備份 PPC 2594、2595 至 `PartProcessCharacteristics_formula_backup_20260824`；兩項改為 `Secondary - Primary`，失效的 Excel 儲存格 `U18／U19` 依來源規則改為明確門檻 20／100。
+- SPC API 已發布至 IIS 測試站 `release/test/backend`；部署 DLL 與 Release 建置雜湊一致，`http://172.16.110.27:8081/health` 回應 200。
+- 經確認修正測試環境 N2 化鎳槽規格對調：亞磷酸鈉（PPC 2594）改為 LSL 17、Target 18.5、USL 20；次磷酸鈉（PPC 2595）改為單邊 USL 100。更新前完整備份至 `PartProcessCharacteristics_spec_backup_20260824`。
+- 次磷酸鈉（QualityCharacteristic 824）與亞磷酸鈉（825）輸入模式由 `DIRECT` 修正為 `FORMULA`、值標籤改為「分析值」，讓兩項顯示滴定值 1／2 並套用 `Secondary - Primary`；更新前備份至 `QualityCharacteristics_inputmode_backup_20260824`。
+
+## 2026-08-20（測試主檔同步至正式環境）
+
+- 將測試資料庫 `PMR_SPC_TEST` 已確認的主檔調整同步至正式資料庫 `PMR_SPC_2026`：更新 4 筆品質特性（其中 `P500A` 的輸入模式調整為 `FORMULA`）及 40 筆 SPC 管制項目的化學分析設定。
+- 未同步測試環境的量測、SPC 計算、匯入批次／明細及警示等交易資料；正式庫原有 `VariableMeasurements` 2 筆、`UploadBatches` 1 筆、`UploadDetails` 2 筆、`AlertEvents` 2 筆均維持不變。
+- 同步前建立並通過 SQL Server `RESTORE VERIFYONLY ... WITH CHECKSUM` 驗證的完整 `COPY_ONLY` 備份：`PMR_SPC_2026_pre_test_master_sync_20260820_154126.bak`；同步後 14 個維護主檔逐欄比對皆無差異。
+
 ## 2026-08-18（SPC 401 自動導回登入）
 
 - SPC 任一 API 回傳 401 時會清除失效登入狀態並立即導向登入頁，不再停留於管制圖顯示「無法載入總覽資料：未授權」。

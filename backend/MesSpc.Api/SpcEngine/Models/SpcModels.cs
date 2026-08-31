@@ -27,7 +27,7 @@ public record SpcDataPoint
     public string? ResponsibleUser { get; init; }
     public double? RecheckValue { get; init; }
     public string? AdjustAction { get; init; }
-    public double? AdjustAmount { get; init; }
+    public string? AdjustAmount { get; init; }
 }
 
 public record Subgroup
@@ -60,7 +60,7 @@ public record Subgroup
     public string? ResponsibleUser { get; init; }
     public double? RecheckValue { get; init; }
     public string? AdjustAction { get; init; }
-    public double? AdjustAmount { get; init; }
+    public string? AdjustAmount { get; init; }
 }
 
 public record AttributeDataPoint
