@@ -14,8 +14,9 @@ namespace MesSpc.Api.Tests
         [Fact(Skip = "Developer-only workbook inspection utility; not an automated test.")]
         public void Analyze()
         {
-            var filePath = @"D:\SPC\sample-data\SPC系統建置.xlsx";
-            var outputPath = @"C:\Users\ihao_ting.PMR.000\.gemini\antigravity-ide\brain\8f12be77-2494-4512-a774-a316b1044a57\scratch\excel_analysis_result.txt";
+            var filePath = Environment.GetEnvironmentVariable("SPC_ANALYZE_WORKBOOK")
+                ?? throw new InvalidOperationException("請設定 SPC_ANALYZE_WORKBOOK。");
+            var outputPath = Path.Combine(Path.GetTempPath(), "spc_excel_analysis_result.txt");
 
             var sb = new StringBuilder();
             sb.AppendLine("==================================================");
@@ -79,12 +80,13 @@ namespace MesSpc.Api.Tests
         [Fact(Skip = "Developer-only live database dump; excluded from automated tests.")]
         public void DumpDatabaseData()
         {
-            var connString = "Server=172.16.110.16;Database=PMR_SPC_2026;User Id=sa;Password=a@t123;Encrypt=True;TrustServerCertificate=True;";
-            var outputPath = @"C:\Users\ihao_ting.PMR.000\.gemini\antigravity-ide\brain\8f12be77-2494-4512-a774-a316b1044a57\scratch\database_dump.txt";
+            var connString = Environment.GetEnvironmentVariable("SPC_TEST_DATABASE_CONNECTION")
+                ?? throw new InvalidOperationException("請設定 SPC_TEST_DATABASE_CONNECTION。");
+            var outputPath = Path.Combine(Path.GetTempPath(), "spc_database_dump.txt");
 
             var sb = new StringBuilder();
             sb.AppendLine("==================================================");
-            sb.AppendLine($"Database Dump: PMR_SPC_2026");
+            sb.AppendLine("Database Dump");
             sb.AppendLine($"Time: {DateTime.Now}");
             sb.AppendLine("==================================================");
 
@@ -129,9 +131,9 @@ namespace MesSpc.Api.Tests
                 }
 
                 sb.AppendLine();
-                sb.AppendLine("--- PartProcessCharacteristics (CHEMICAL scope) ---");
+                sb.AppendLine("--- PartProcessCharacteristics (CHEM scope) ---");
                 var ppcs = db.PartProcessCharacteristics.AsNoTracking()
-                    .Where(x => x.ControlScope == "CHEMICAL")
+                    .Where(x => x.ControlScope == "CHEM")
                     .ToList();
                 foreach (var ppc in ppcs)
                 {

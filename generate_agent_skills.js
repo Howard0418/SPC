@@ -102,7 +102,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+      MSSQL_SA_PASSWORD: "\${MSSQL_SA_PASSWORD}"
     ports:
       - "1433:1433"
   
@@ -113,7 +113,7 @@ services:
     ports:
       - "5243:80"
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=MES;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=MES;User Id=sa;Password=\${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
 
   frontend:
     build:

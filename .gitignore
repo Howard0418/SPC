@@ -21,8 +21,18 @@ publish-backups/
 
 # Local environment and secrets
 frontend/mes-spc-web/.env
+frontend/mes-spc-web/.env.*
+!frontend/mes-spc-web/.env.example
+frontend/mes-spc-web/.playwright/
 backend/MesSpc.Api/appsettings.json
 backend/MesSpc.Api/appsettings.Development.json
+**/*.csproj.user
+*.pfx
+*.pem
+*.key
+*.bak
+*.db
+*.sqlite
 
 # Logs and generated output
 *.log
@@ -30,12 +40,19 @@ EmailOutbox/
 test-artifacts/
 .codex-tmp/
 **/.codex-npm-cache/
+outputs/
+**/test-results/
+**/playwright-report/
 publish_stage/
 reports/
 release/
 .tmp_edge_tts/
 .tmp_lameenc/
 __pycache__/
+
+# Business data and local workbooks
+*.xlsx
+*.xls
 
 # OS
 Thumbs.db
