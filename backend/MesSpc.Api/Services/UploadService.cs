@@ -451,7 +451,6 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 {
                     continue;
                 }
-                ApplyImportedSpecification(payload, ctx.Mapping);
                 var measuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow);
                 var sampleNo = TryInt(Get(payload, "SampleNo"), 1);
                 var isPortalDaily = string.Equals(batch.SourceType, "PortalDaily", StringComparison.OrdinalIgnoreCase);
@@ -1152,20 +1151,6 @@ public class UploadService(AppDbContext db, SpcService spcService)
         return null;
     }
 
-    private static void ApplyImportedSpecification(
-        Dictionary<string, string?> payload,
-        PartProcessCharacteristic mapping)
-    {
-        if (ResolveScope(payload) != "CHEM") return;
-
-        var parsed = SpecificationRangeParser.Parse(
-            Get(payload, "Specification"),
-            Get(payload, "SpecificationRange"));
-
-        if (parsed.TargetValue.HasValue) mapping.TargetValue = parsed.TargetValue;
-        if (parsed.Lsl.HasValue) mapping.LSL = parsed.Lsl;
-        if (parsed.Usl.HasValue) mapping.USL = parsed.Usl;
-    }
     private static bool NearlyEqual(double? actual, double? expected)
         => actual.HasValue && expected.HasValue && Math.Abs(actual.Value - expected.Value) < 0.000001;
     private static int TryInt(string? raw, int fallback) => int.TryParse(raw, out var value) ? value : fallback;
