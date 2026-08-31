@@ -969,10 +969,22 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     x.CharacteristicId == characteristic.Id &&
                     x.IsEnabled);
 
-            mappingQuery = mappingQuery.Where(x => x.MachineId == (requiresMachine ? machine!.Id : null));
-            mappingQuery = mappingQuery.Where(x => x.TankId == (requiresTank ? tank!.Id : null));
+            mappingQuery = requiresMachine
+                ? mappingQuery.Where(x => x.MachineId == machine!.Id)
+                : machine is not null
+                    ? mappingQuery.Where(x => x.MachineId == machine.Id || x.MachineId == null)
+                    : mappingQuery.Where(x => x.MachineId == null);
+            mappingQuery = requiresTank
+                ? mappingQuery.Where(x => x.TankId == tank!.Id)
+                : tank is not null
+                    ? mappingQuery.Where(x => x.TankId == tank.Id || x.TankId == null)
+                    : mappingQuery.Where(x => x.TankId == null);
 
             var mappings = await mappingQuery.ToListAsync(ct);
+            if (!requiresMachine && machine is not null && mappings.Any(x => x.MachineId == machine.Id))
+                mappings = mappings.Where(x => x.MachineId == machine.Id).ToList();
+            if (!requiresTank && tank is not null && mappings.Any(x => x.TankId == tank.Id))
+                mappings = mappings.Where(x => x.TankId == tank.Id).ToList();
             var mappingsBeforeUnit = mappings.ToList();
             var sourceUnit = Get(row, "Unit");
             var effectiveUnit = string.IsNullOrWhiteSpace(sourceUnit) ? Get(row, "ResolvedUnit") : sourceUnit;
@@ -1076,13 +1088,25 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 x.ProcessId == process.Id &&
                 x.CharacteristicId == characteristic.Id &&
                 x.IsEnabled);
-        mappingQuery = mappingQuery.Where(x => x.MachineId == (requiresMachine ? machine!.Id : null));
-        mappingQuery = mappingQuery.Where(x => x.TankId == (requiresTank ? tank!.Id : null));
+        mappingQuery = requiresMachine
+            ? mappingQuery.Where(x => x.MachineId == machine!.Id)
+            : machine is not null
+                ? mappingQuery.Where(x => x.MachineId == machine.Id || x.MachineId == null)
+                : mappingQuery.Where(x => x.MachineId == null);
+        mappingQuery = requiresTank
+            ? mappingQuery.Where(x => x.TankId == tank!.Id)
+            : tank is not null
+                ? mappingQuery.Where(x => x.TankId == tank.Id || x.TankId == null)
+                : mappingQuery.Where(x => x.TankId == null);
 
         var mappings = slot is null
             ? await mappingQuery.Where(x => x.SlotId == null).ToListAsync(ct)
             : await mappingQuery.Where(x => x.SlotId == slot.Id || x.SlotId == null)
                 .OrderByDescending(x => x.SlotId == slot.Id).ToListAsync(ct);
+        if (!requiresMachine && machine is not null && mappings.Any(x => x.MachineId == machine.Id))
+            mappings = mappings.Where(x => x.MachineId == machine.Id).ToList();
+        if (!requiresTank && tank is not null && mappings.Any(x => x.TankId == tank.Id))
+            mappings = mappings.Where(x => x.TankId == tank.Id).ToList();
         var payloadUnit = Get(payload, "Unit");
         var importedUnit = NormalizeUnit(string.IsNullOrWhiteSpace(payloadUnit) ? Get(payload, "ResolvedUnit") : payloadUnit);
         if (!string.IsNullOrWhiteSpace(importedUnit))
