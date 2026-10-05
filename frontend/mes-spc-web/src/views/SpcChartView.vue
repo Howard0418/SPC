@@ -67,6 +67,7 @@ const batchId = ref("");
 const ppcId = ref("");
 const uploadBatchId = ref("");
 const loading = ref(false);
+const rawDataDownloading = ref(false);
 const error = ref("");
 
 // Initialize dates: defaults to today and 3 months ago
@@ -542,6 +543,7 @@ watch([showSpecLimits, showControlLimits, showPointValues], () => {
 const getChartQueryParams = (activePpcId) => {
   const params = { ppcId: activePpcId };
   if (uploadBatchId.value) params.uploadBatchId = uploadBatchId.value;
+  if (batchId.value) params.batchNo = batchId.value;
   if (selectedDimension.value === "PRODUCT" && productQueryMode.value === "PART") {
     if (productPartId.value && productPartId.value !== "ALL") params.partId = Number(productPartId.value);
   } else {
@@ -711,6 +713,37 @@ async function drawSingleChart(row) {
   selectedSummaryRow.value = row;
   tableSummaryData.value = null;
   await loadInteractiveChart();
+}
+
+async function downloadRawData() {
+  const activePpcId = ppcId.value || selectedMapping.value?.id;
+  if (!activePpcId) {
+    error.value = "請先查詢一張管制圖後再下載 raw data。";
+    return;
+  }
+
+  rawDataDownloading.value = true;
+  try {
+    const res = await api.get("/v1/spc/chart/raw-data", {
+      params: getChartQueryParams(activePpcId),
+      responseType: "blob"
+    });
+    const disposition = res.headers?.["content-disposition"] || "";
+    const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i);
+    const fileName = decodeURIComponent(match?.[1] || match?.[2] || `SPC_RawData_${activePpcId}_${new Date().toISOString().slice(0, 10)}.csv`);
+    const url = URL.createObjectURL(new Blob([res.data], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    error.value = "下載 raw data 失敗：" + getApiErrorMessage(e);
+  } finally {
+    rawDataDownloading.value = false;
+  }
 }
 
 async function returnToSummary() {
@@ -1906,15 +1939,26 @@ onBeforeUnmount(() => {
 
     <!-- Main Chart & Capability Workspace -->
     <div v-if="chartResult && !loading" class="space-y-5">
-      <button
-        v-if="cachedSummaryData"
-        type="button"
-        data-testid="return-to-summary"
-        @click="returnToSummary"
-        class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-bold text-xs shadow-sm transition-colors"
-      >
-        ← 返回已查詢總表
-      </button>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          v-if="cachedSummaryData"
+          type="button"
+          data-testid="return-to-summary"
+          @click="returnToSummary"
+          class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-bold text-xs shadow-sm transition-colors"
+        >
+          ← 返回已查詢總表
+        </button>
+        <button
+          type="button"
+          data-testid="download-raw-data"
+          @click="downloadRawData"
+          :disabled="rawDataDownloading"
+          class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-bold text-xs shadow-sm transition-colors disabled:opacity-50"
+        >
+          <Download class="w-4 h-4" /> {{ rawDataDownloading ? '下載中...' : '下載 raw data' }}
+        </button>
+      </div>
 
       <div
         v-if="activeChartDisplayName"

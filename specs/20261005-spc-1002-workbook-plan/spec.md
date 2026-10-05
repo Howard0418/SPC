@@ -169,6 +169,8 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 
 ### SPC-1002-TASK-005：raw data 下載（製程/藥液）
 
+狀態：完成；2026-10-05 已實作、測試並發布 SPC 測試站 backend/frontend。
+
 優先級：中，資料追溯與驗算。
 
 修改範圍：
@@ -186,6 +188,18 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 確認結果：
 
 - 使用者可下載目前查詢條件對應 raw data，並用 Excel 重新驗算常態檢定。
+
+完成紀錄：
+
+- 實作：新增 `GET /api/v1/spc/chart/raw-data`，回傳 UTF-8 BOM CSV，可由 Excel 開啟。
+- 實作：CSV 沿用既有管制圖查詢條件與 93 天限制，欄位包含 `MeasuredAt`、`PortalDailyDate`、`SamplingPhase`、`SamplingStage`、`Value`、`LotNo`、`LineId`、`TankId`、`SlotId`、`SideCode`、`IsOutOfSpec`、`IsOutOfControl` 等。
+- 實作：前端 `SpcChartView.vue` 在圖表結果區新增「下載 raw data」按鈕，使用目前查詢條件下載。
+- 不變更：資料庫 schema、量測資料、統計計算與權限模型不變；下載權限沿用 API 既有登入/授權。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- 驗證：`npm run build -- --mode testhost` 通過，僅保留既有大型 chunk 警示。
+- 發布：SPC 測試站 backend/frontend 已發布；備份 `release/test/backend.backup-raw-data-download-20261005-135341`、`release/test/frontend.backup-raw-data-download-20261005-135341`。
+- Smoke：`http://172.16.110.27:8081/api/version` 回 `version=0.1.59`、`environment=test`；`http://172.16.110.27:8083/` 與 `index-BEkeUYvV.js` 皆 HTTP 200；未登入 raw data 端點回 401。
+- 限制：我無 AD 帳號代登入，製程/藥液實際有資料 CSV 內容需由使用者在測試站登入後抽樣核對。
 
 ### SPC-1002-TASK-006：趨勢圖增加直方圖等管制圖相關功能
 

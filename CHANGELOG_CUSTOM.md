@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-05（SPC-1002-TASK-005 raw data 下載）
+- 新增管制圖 raw data CSV 下載端點與前端下載按鈕，沿用目前管制圖查詢條件與 93 天限制，支援製程/藥液 raw data 對帳。
+- CSV 包含量測時間、日報日期、班別、取樣階段、量測值、批號、線別/槽位 ID、板面、OOS/OOC 等欄位；不改資料庫、不改統計計算。
+- 後端 build 0 warnings / 0 errors；前端 testhost build 通過；未登入 raw data 端點回 401。
+- 已發布 SPC 測試站 backend/frontend，備份 `backend.backup-raw-data-download-20261005-135341`、`frontend.backup-raw-data-download-20261005-135341`；正式站未發布。
+
 ## 2026-10-05（SPC-1002-TASK-004 班別管制圖合併呈現）
 - Xbar-R/Xbar-S 子組點位補帶班別與取樣階段 metadata，讓合併同圖檢視不同班別時，座標標籤、Tooltip 與點位詳細卡可顯示正確班別資訊。
 - 保留既有 N1/N2 開收線排序、資料表結構、歷史資料與統計公式；未改 MR/Xbar/Cpk/Ppk 計算。

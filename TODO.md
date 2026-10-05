@@ -131,7 +131,7 @@
 
 #### SPC-1002-TASK-005：raw data 下載（製程/藥液）
 
-狀態：待規格
+狀態：完成；SPC 測試站 backend/frontend 已發布
 
 理由：可支援使用者自行驗算常態檢定與後續問題追溯，但屬新增功能。
 
@@ -149,6 +149,16 @@
 確認結果：
 
 - 使用者可下載目前查詢條件的 raw data 並用 Excel 驗算。
+
+完成紀錄：
+
+- 修改：新增 `GET /api/v1/spc/chart/raw-data` CSV 下載端點，沿用管制圖 `ppcId`、`uploadBatchId`、`batchNo`、`partId`、`startDate`、`endDate` 查詢條件與 93 天限制。
+- 修改：管制圖頁新增「下載 raw data」按鈕；下載內容包含製程/檢驗項目、量測時間、日報日期、班別、取樣階段、原始值、批號、線別/槽位 ID、板面與 OOS/OOC 等欄位。
+- 範圍：不改資料庫、不改量測資料、不放大查詢權限；未登入端點回 401。
+- 驗證：後端 build 0 warnings / 0 errors；前端 `npm run build -- --mode testhost` 通過。
+- 發布：SPC 測試站 backend/frontend 已發布；備份 `backend.backup-raw-data-download-20261005-135341`、`frontend.backup-raw-data-download-20261005-135341`。正式站未發布。
+- Smoke：`/api/version` 回 `environment=test`；前端首頁與 `index-BEkeUYvV.js` 資產 HTTP 200；未登入 raw data 端點回 401。
+- 待使用者登入確認：使用有資料的製程/藥液管制圖下載 CSV，核對內容是否符合現場欄位期待。
 
 #### SPC-1002-TASK-006：趨勢圖增加直方圖等分布功能
 

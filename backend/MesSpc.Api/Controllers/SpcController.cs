@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
+using System.Globalization;
+using System.Reflection;
+using System.Text;
 
 namespace MesSpc.Api.Controllers;
 
@@ -37,6 +40,48 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId, start, end, batchNo, partId);
         if (chart is null) return NotFound("Chart data not found or invalid part process characteristic.");
         return Ok(chart);
+    }
+
+    [HttpGet("chart/raw-data")]
+    public async Task<IActionResult> DownloadRawData(
+        [FromQuery] int ppcId,
+        [FromQuery] Guid? uploadBatchId,
+        [FromQuery] string? batchNo,
+        [FromQuery] int? partId,
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate)
+    {
+        var useAlternateFilter = !string.IsNullOrWhiteSpace(batchNo) || partId.HasValue;
+        var start = useAlternateFilter ? startDate : startDate ?? DateTime.Today.AddMonths(-3);
+        var end = useAlternateFilter ? endDate : endDate ?? DateTime.Today;
+
+        if (start.HasValue && end.HasValue && start.Value.Date > end.Value.Date)
+        {
+            return BadRequest("量測起日不可晚於量測迄日。");
+        }
+
+        if (start.HasValue && end.HasValue && (end.Value.Date - start.Value.Date).TotalDays > 93)
+        {
+            return BadRequest("查詢時間範圍最多不可超過 3 個月。");
+        }
+
+        var mapping = await db.PartProcessCharacteristics
+            .Include(x => x.Process)
+            .Include(x => x.Characteristic)
+            .Include(x => x.Machine)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == ppcId && x.IsEnabled);
+        if (mapping is null) return NotFound("Part process characteristic not found.");
+
+        var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId, start, end, batchNo, partId);
+        if (chart?.RawDataPoints is null) return NotFound("Raw data not found.");
+
+        var rows = ToEnumerable(chart.RawDataPoints).ToList();
+        if (rows.Count == 0) return NotFound("Raw data not found.");
+
+        var csv = BuildRawDataCsv(rows, mapping);
+        var fileName = $"SPC_RawData_{ppcId}_{DateTime.Now:yyyyMMddHHmmss}.csv";
+        return File(Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray(), "text/csv; charset=utf-8", fileName);
     }
 
     [HttpGet("summary")]
@@ -196,6 +241,84 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             .Select(x => x!.Trim())
             .ToList();
         return parts.Count == 0 ? null : string.Join(" / ", parts);
+    }
+
+    private static IEnumerable<object> ToEnumerable(object source) =>
+        source is System.Collections.IEnumerable items
+            ? items.Cast<object>()
+            : [];
+
+    private static string BuildRawDataCsv(IEnumerable<object> rows, PartProcessCharacteristic mapping)
+    {
+        var sb = new StringBuilder();
+        AppendCsvRow(sb,
+            "PartProcessCharacteristicId",
+            "Process",
+            "Characteristic",
+            "Machine",
+            "MeasuredAt",
+            "PortalDailyDate",
+            "SamplingPhase",
+            "SamplingStage",
+            "Value",
+            "LotNo",
+            "SerialNo",
+            "Operator",
+            "LineId",
+            "TankId",
+            "SlotId",
+            "SideCode",
+            "IsExcluded",
+            "IsOutOfSpec",
+            "IsOutOfControl",
+            "VariableMeasurementId");
+
+        foreach (var row in rows)
+        {
+            AppendCsvRow(sb,
+                mapping.Id,
+                mapping.Process?.ProcessName ?? mapping.Process?.ProcessCode ?? "",
+                mapping.Characteristic?.CharacteristicName ?? mapping.Characteristic?.CharacteristicCode ?? "",
+                mapping.Machine?.MachineName ?? mapping.Machine?.MachineCode ?? "",
+                FormatValue(ReadProperty(row, "MeasuredAt")),
+                FormatValue(ReadProperty(row, "PortalDailyDate")),
+                ReadProperty(row, "SamplingPhase") ?? "",
+                ReadProperty(row, "SamplingStage") ?? "",
+                FormatValue(ReadProperty(row, "Value")),
+                ReadProperty(row, "LotNo") ?? "",
+                ReadProperty(row, "SerialNo") ?? "",
+                ReadProperty(row, "Operator") ?? "",
+                ReadProperty(row, "LineId") ?? "",
+                ReadProperty(row, "TankId") ?? "",
+                ReadProperty(row, "SlotId") ?? "",
+                ReadProperty(row, "SideCode") ?? "",
+                ReadProperty(row, "IsExcluded") ?? "",
+                ReadProperty(row, "IsOutOfSpec") ?? "",
+                ReadProperty(row, "IsOutOfControl") ?? "",
+                ReadProperty(row, "VariableMeasurementId") ?? "");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string? ReadProperty(object source, string name)
+    {
+        var prop = source.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        return prop?.GetValue(source) is { } value ? Convert.ToString(value, CultureInfo.InvariantCulture) : null;
+    }
+
+    private static string FormatValue(string? value) =>
+        DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt)
+            ? dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
+            : value ?? "";
+
+    private static void AppendCsvRow(StringBuilder sb, params object?[] values)
+    {
+        sb.AppendLine(string.Join(",", values.Select(value =>
+        {
+            var text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? "";
+            return "\"" + text.Replace("\"", "\"\"") + "\"";
+        })));
     }
 }
 
