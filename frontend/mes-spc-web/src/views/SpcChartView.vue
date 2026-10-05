@@ -185,6 +185,9 @@ const availableProcesses = computed(() => {
   filteredMappingsByDimension.value
     .filter(m =>
       (selectedDimension.value !== "PRODUCT" || m.partId === Number(selectedPartId.value)) &&
+      m.processId &&
+      m.process &&
+      (m.process.processName || m.process.processCode) &&
       m.process?.isEnabled !== false
     )
     .forEach(m => {

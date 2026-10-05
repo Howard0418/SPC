@@ -23,6 +23,29 @@
 
 原則：先處理統計正確性與可驗證資料，再處理呈現增強；疑似已完成項目先驗證，不重複改動。
 
+#### SPC-TEST-20261005-TASK-001：製程總覽下拉與資料數口徑修正
+
+狀態：完成；SPC 測試站 backend/frontend 已發布
+
+來源：`D:\SPC\docs\SPC測試問題_20261005.xlsx`
+
+問題：
+
+- 製程的管制項目總覽「線別」下拉混入非線別項目，如製程、檢驗項目、總數、日期、作業員、lot、樣本編號。
+- 總表「匯入資料數」與管制圖明細「管制點數」口徑不同，Xbar 類項目顯示 raw sample 數，與畫面管制點數不一致。
+
+修改：
+
+- 前端線別下拉只納入有 `processId`、`process` 與製程名稱/代碼的有效線別。
+- 後端總表 `TotalCount` 改採 chart data 的管制點數；若取不到 chart points 才回退 raw data 筆數。
+
+驗證：
+
+- 後端 build 0 warnings / 0 errors。
+- 前端 `npm run build -- --mode testhost` 通過。
+- SPC 測試站 backend/frontend 已發布；備份 `backend.backup-test-issues-20261005-144947`、`frontend.backup-test-issues-20261005-144947`。
+- Smoke：`/api/version` 回 `environment=test`；前端首頁 HTTP 200；新 JS `index-Hc-aHFuY.js` 回 `application/javascript`，CSS 回 `text/css`。
+
 #### SPC-1002-TASK-001：常態分布檢定 P-value 修正
 
 狀態：完成；SPC 測試站 backend 已發布

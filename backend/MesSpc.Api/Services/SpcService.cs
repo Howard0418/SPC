@@ -1045,7 +1045,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             if (rawPoints.Count == 0) continue;
 
-            var importedCount = rawPoints.Count;
+            var importedCount = CountChartPoints(result.ChartData) ?? rawPoints.Count;
             var includedPoints = rawPoints.Where(x => !x.IsExcluded).ToList();
             if (includedPoints.Count == 0) continue;
 
@@ -1141,6 +1141,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var oosCount = includedPoints.Count(x => x.IsOutOfSpec);
         var oosPercentage = (double)oosCount / includedPoints.Count * 100;
         return (oosCount, oosPercentage, result.Capability?.Ppk);
+    }
+
+    private static int? CountChartPoints(object? chartData)
+    {
+        if (chartData is null) return null;
+        var points = chartData.GetType().GetProperty("points", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase)
+            ?.GetValue(chartData);
+        return points is System.Collections.IEnumerable items ? items.Cast<object>().Count() : null;
     }
 
     private static List<SpcDataPoint> ToSpcDataPoints(object rawDataPoints)
