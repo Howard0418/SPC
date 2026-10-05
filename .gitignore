@@ -46,8 +46,11 @@ outputs/
 publish_stage/
 reports/
 release/
+release-staging/
+release-packages/
 .tmp_edge_tts/
 .tmp_lameenc/
+tmp_particle_video_frames/
 __pycache__/
 
 # Business data and local workbooks

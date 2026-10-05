@@ -129,6 +129,8 @@ public static class SeedData
             db.SaveChanges();
         }
 
+        EnsureDustMonitoringChartTypes(db);
+
         var ruleGrp = EnsureDefaultSpcRules(db);
         foreach (var chartType in db.ControlChartTypes.ToList())
             chartType.RuleGroupId = ruleGrp.Id;
@@ -305,6 +307,67 @@ public static class SeedData
             IsBuiltIn = true,
             IsActive = true
         };
+
+    private static void EnsureDustMonitoringChartTypes(AppDbContext db)
+    {
+        var group = db.ControlChartGroups.FirstOrDefault(x => x.GroupCode == "DUST");
+        if (group is null)
+        {
+            group = new ControlChartGroup
+            {
+                GroupCode = "DUST",
+                GroupName = "落塵監控",
+                GroupType = "CONTROL_CHART",
+                BusinessScopeCode = "DUST",
+                RequiresMachine = false,
+                Description = "落塵監控計數型管制圖。固定支援 C-chart 與 U-chart；0.5um/1um/5um/10um 匯入由 TransFiles 專用流程提供。",
+                IsEnabled = true
+            };
+            db.ControlChartGroups.Add(group);
+            db.SaveChanges();
+        }
+        else
+        {
+            group.GroupName = "落塵監控";
+            group.GroupType = "CONTROL_CHART";
+            group.BusinessScopeCode = "DUST";
+            group.RequiresMachine = false;
+            group.Description ??= "落塵監控計數型管制圖。固定支援 C-chart 與 U-chart；0.5um/1um/5um/10um 匯入由 TransFiles 專用流程提供。";
+            group.IsEnabled = true;
+            db.SaveChanges();
+        }
+
+        EnsureChartType(db, group.Id, "DUST_C", "落塵缺點數圖", "Attribute", "落塵監控 C-chart，適用固定檢查單位的顆數監控。");
+        EnsureChartType(db, group.Id, "DUST_U", "落塵單位缺點數圖", "Attribute", "落塵監控 U-chart，需由匯入資料提供 UnitCount 分母。");
+    }
+
+    private static void EnsureChartType(AppDbContext db, int groupId, string code, string name, string dataCategory, string description)
+    {
+        var chartType = db.ControlChartTypes.FirstOrDefault(x => x.ChartTypeCode == code);
+        if (chartType is null)
+        {
+            db.ControlChartTypes.Add(new ControlChartType
+            {
+                ChartGroupId = groupId,
+                ChartTypeCode = code,
+                ChartTypeName = name,
+                DataCategory = dataCategory,
+                RequiredSampleSize = 1,
+                Description = description,
+                IsEnabled = true
+            });
+            db.SaveChanges();
+            return;
+        }
+
+        chartType.ChartGroupId = groupId;
+        chartType.ChartTypeName = name;
+        chartType.DataCategory = dataCategory;
+        chartType.RequiredSampleSize = 1;
+        chartType.Description = description;
+        chartType.IsEnabled = true;
+        db.SaveChanges();
+    }
 
     private static SpcRuleGroup EnsureDefaultSpcRules(AppDbContext db)
     {

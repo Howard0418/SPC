@@ -13,6 +13,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MeasurementBatch> MeasurementBatches => Set<MeasurementBatch>();
     public DbSet<MeasurementValue> MeasurementValues => Set<MeasurementValue>();
     public DbSet<FormulaDefinition> FormulaDefinitions => Set<FormulaDefinition>();
+    public DbSet<ChemicalFTableVersion> ChemicalFTableVersions => Set<ChemicalFTableVersion>();
+    public DbSet<ChemicalFTableCell> ChemicalFTableCells => Set<ChemicalFTableCell>();
+    public DbSet<ChemicalFTableReference> ChemicalFTableReferences => Set<ChemicalFTableReference>();
     public DbSet<AlertEvent> AlertEvents => Set<AlertEvent>();
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
     public DbSet<StationOperationSession> StationOperationSessions => Set<StationOperationSession>();
@@ -28,6 +31,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<UploadError> UploadErrors => Set<UploadError>();
     public DbSet<VariableMeasurement> VariableMeasurements => Set<VariableMeasurement>();
     public DbSet<AttributeMeasurement> AttributeMeasurements => Set<AttributeMeasurement>();
+    public DbSet<ParticleMeasurement> ParticleMeasurements => Set<ParticleMeasurement>();
     public DbSet<SpcRuleGroup> SpcRuleGroups => Set<SpcRuleGroup>();
     public DbSet<SpcRule> SpcRules => Set<SpcRule>();
     public DbSet<SpcCalculationResult> SpcCalculationResults => Set<SpcCalculationResult>();
@@ -41,9 +45,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Shift> Shifts => Set<Shift>();
     public DbSet<Operator> Operators => Set<Operator>();
     public DbSet<SpcReportSchedule> SpcReportSchedules => Set<SpcReportSchedule>();
+    public DbSet<SpcAlertNotificationSetting> SpcAlertNotificationSettings => Set<SpcAlertNotificationSetting>();
+    public DbSet<ChameleonSourceSetting> ChameleonSourceSettings => Set<ChameleonSourceSetting>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<Chemical> Chemicals => Set<Chemical>();
+    public DbSet<EquipmentPointMapping> EquipmentPointMappings => Set<EquipmentPointMapping>();
     public DbSet<MesSyncMessage> MesSyncMessages => Set<MesSyncMessage>();
     public DbSet<LotMaster> LotMasters => Set<LotMaster>();
     public DbSet<LotSplitHistory> LotSplitHistories => Set<LotSplitHistory>();
@@ -54,10 +61,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.ConfigureCalibration();
         modelBuilder.Entity<Product>().HasIndex(x => x.ProductCode).IsUnique();
         modelBuilder.Entity<Station>().HasIndex(x => x.StationCode).IsUnique();
         modelBuilder.Entity<InspectionItem>().HasIndex(x => x.ItemCode).IsUnique();
         modelBuilder.Entity<FormulaDefinition>().HasIndex(x => x.FormulaCode).IsUnique();
+        modelBuilder.Entity<ChemicalFTableVersion>().HasIndex(x => x.VersionCode).IsUnique();
+        modelBuilder.Entity<ChemicalFTableVersion>().Property(x => x.VersionCode).HasMaxLength(50);
+        modelBuilder.Entity<ChemicalFTableVersion>().Property(x => x.DisplayName).HasMaxLength(100);
+        modelBuilder.Entity<ChemicalFTableVersion>().Property(x => x.SourceName).HasMaxLength(100);
+        modelBuilder.Entity<ChemicalFTableVersion>().Property(x => x.SourcePath).HasMaxLength(500);
+        modelBuilder.Entity<ChemicalFTableCell>().HasIndex(x => new { x.VersionId, x.NormalizedCellAddress }).IsUnique();
+        modelBuilder.Entity<ChemicalFTableCell>().Property(x => x.SheetName).HasMaxLength(50);
+        modelBuilder.Entity<ChemicalFTableCell>().Property(x => x.CellAddress).HasMaxLength(50);
+        modelBuilder.Entity<ChemicalFTableCell>().Property(x => x.NormalizedCellAddress).HasMaxLength(50);
+        modelBuilder.Entity<ChemicalFTableCell>().Property(x => x.StandardSolution).HasMaxLength(100);
+        modelBuilder.Entity<ChemicalFTableCell>().Property(x => x.NumericValue).HasColumnType("decimal(18,6)");
+        modelBuilder.Entity<ChemicalFTableReference>().HasIndex(x => new { x.VersionId, x.NormalizedCellAddress });
+        modelBuilder.Entity<ChemicalFTableReference>().HasIndex(x => x.PartProcessCharacteristicId);
+        modelBuilder.Entity<ChemicalFTableReference>()
+            .HasIndex(x => new { x.VersionId, x.PartProcessCharacteristicId, x.NormalizedCellAddress })
+            .IsUnique();
+        modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.CellAddress).HasMaxLength(50);
+        modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.NormalizedCellAddress).HasMaxLength(50);
+        modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.SourceSheet).HasMaxLength(100);
+        modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.ReferenceContext).HasMaxLength(200);
         modelBuilder.Entity<WorkOrder>().HasIndex(x => x.WorkOrderNo).IsUnique();
         modelBuilder.Entity<ProductStationItem>()
             .HasIndex(x => new { x.ProductId, x.StationId, x.InspectionItemId })
@@ -112,13 +140,41 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<UploadError>().HasIndex(x => x.UploadBatchId);
         modelBuilder.Entity<VariableMeasurement>().HasKey(x => x.Id);
         modelBuilder.Entity<VariableMeasurement>().Property(x => x.AdjustAmount).HasMaxLength(1000);
+        modelBuilder.Entity<VariableMeasurement>().Property(x => x.SamplingPhase).HasMaxLength(16).HasDefaultValue("GENERAL");
+        modelBuilder.Entity<VariableMeasurement>().Property(x => x.SamplingStage).HasMaxLength(16).HasDefaultValue("GENERAL");
         modelBuilder.Entity<VariableMeasurement>().HasIndex(x => new { x.PartId, x.ProcessId, x.CharacteristicId, x.MeasuredAt });
         modelBuilder.Entity<VariableMeasurement>()
-            .HasIndex(x => new { x.PartProcessCharacteristicId, x.PortalDailyDate })
+            .HasIndex(x => new { x.PartProcessCharacteristicId, x.PortalDailyDate, x.SamplingPhase, x.SamplingStage })
             .IsUnique()
             .HasFilter("[PortalDailyDate] IS NOT NULL");
         modelBuilder.Entity<AttributeMeasurement>().HasKey(x => x.Id);
         modelBuilder.Entity<AttributeMeasurement>().HasIndex(x => new { x.PartId, x.ProcessId, x.CharacteristicId, x.MeasuredAt });
+        modelBuilder.Entity<ParticleMeasurement>().ToTable("ParticleMeasurements", table =>
+        {
+            table.HasComment("Particle monitoring measurements stored in long format.");
+            table.HasCheckConstraint("CK_ParticleMeasurements_Count_NonNegative", "[Count] >= 0");
+        });
+        modelBuilder.Entity<ParticleMeasurement>().HasKey(x => x.Id);
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.UploadBatchId).HasComment("Upload batch that produced this measurement.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.MeasurementTime).HasColumnType("datetime2").HasComment("Measurement timestamp normalized to UTC.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.Location).HasMaxLength(16).HasComment("Particle monitoring location code, such as R1.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.ParticleSize).HasColumnType("decimal(6,3)").HasComment("Particle size in micrometers.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.Count).HasComment("Non-negative particle count.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.SamplingVolume).HasColumnType("decimal(18,6)").HasComment("Optional sampling volume.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.SamplingVolumeUnit).HasMaxLength(32).HasComment("Unit of the optional sampling volume.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.SamplingDurationSeconds).HasColumnType("decimal(18,3)").HasComment("Optional sampling duration in seconds.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.DeviceCode).HasMaxLength(64).HasComment("Optional particle counter device code.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.Remark).HasMaxLength(500).HasComment("Optional measurement remark.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.SourceSheet).HasMaxLength(128).HasComment("Original Excel worksheet name.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.SourceRow).HasComment("Original Excel row number.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.SourceColumn).HasMaxLength(16).HasComment("Original Excel column label.");
+        modelBuilder.Entity<ParticleMeasurement>().Property(x => x.RawValue).HasMaxLength(256).HasComment("Original cell value before normalization.");
+        modelBuilder.Entity<ParticleMeasurement>().HasIndex(x => new { x.Location, x.ParticleSize, x.MeasurementTime });
+        modelBuilder.Entity<ParticleMeasurement>().HasIndex(x => new { x.ParticleSize, x.MeasurementTime, x.Location });
+        modelBuilder.Entity<ParticleMeasurement>().HasIndex(x => x.UploadBatchId);
+        modelBuilder.Entity<ParticleMeasurement>()
+            .HasIndex(x => new { x.UploadBatchId, x.SourceSheet, x.SourceRow, x.SourceColumn })
+            .IsUnique();
         modelBuilder.Entity<SpcCalculationResult>().HasKey(x => x.Id);
         modelBuilder.Entity<SpcCalculationResult>().HasIndex(x => new { x.PartProcessCharacteristicId, x.CalculatedAt });
 
@@ -132,11 +188,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Operator>().HasIndex(x => x.Username).IsUnique().HasFilter("[Username] IS NOT NULL");
         modelBuilder.Entity<Operator>().Property(x => x.Role).HasMaxLength(20).HasDefaultValue("Editor");
         modelBuilder.Entity<Operator>().Property(x => x.Username).HasMaxLength(100);
+        if (Database.IsSqlServer())
+        {
+            modelBuilder.Entity<Operator>().Property(x => x.PagePermissionsJson).HasColumnType("nvarchar(max)");
+        }
         modelBuilder.Entity<SpcReportSchedule>().Property(x => x.ScheduleName).HasMaxLength(100);
         modelBuilder.Entity<SpcReportSchedule>().Property(x => x.Department).HasMaxLength(100);
+        modelBuilder.Entity<ChameleonSourceSetting>().HasIndex(x => x.SourceId).IsUnique();
+        modelBuilder.Entity<ChameleonSourceSetting>().Property(x => x.SourceId).HasMaxLength(64);
+        modelBuilder.Entity<ChameleonSourceSetting>().Property(x => x.DisplayName).HasMaxLength(120);
+        modelBuilder.Entity<ChameleonSourceSetting>().Property(x => x.BaseUrl).HasMaxLength(500);
         modelBuilder.Entity<Customer>().HasIndex(x => x.CustomerCode).IsUnique();
         modelBuilder.Entity<Supplier>().HasIndex(x => x.SupplierCode).IsUnique();
         modelBuilder.Entity<Chemical>().HasIndex(x => x.ChemicalCode).IsUnique();
+        modelBuilder.Entity<EquipmentPointMapping>().HasIndex(x => new { x.SourceId, x.EquipmentId, x.ChannelId }).IsUnique();
+        modelBuilder.Entity<EquipmentPointMapping>().Property(x => x.SourceId).HasMaxLength(64);
+        modelBuilder.Entity<EquipmentPointMapping>().Property(x => x.EquipmentId).HasMaxLength(128);
+        modelBuilder.Entity<EquipmentPointMapping>().Property(x => x.ChannelId).HasMaxLength(128);
+        modelBuilder.Entity<EquipmentPointMapping>().Property(x => x.DisplayName).HasMaxLength(200);
+        modelBuilder.Entity<EquipmentPointMapping>().Property(x => x.Unit).HasMaxLength(30);
+        modelBuilder.Entity<EquipmentPointMapping>().Property(x => x.StatusRole).HasMaxLength(20);
+        modelBuilder.Entity<EquipmentPointMapping>().Property(x => x.ActiveWhen).HasMaxLength(20);
 
         // Traceability Indexes
         modelBuilder.Entity<LotMaster>().HasIndex(x => x.LotNo).IsUnique();
@@ -208,6 +280,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(x => x.RuleGroupId)
             .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ChemicalFTableCell>()
+            .HasOne(x => x.Version)
+            .WithMany()
+            .HasForeignKey(x => x.VersionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ChemicalFTableReference>()
+            .HasOne(x => x.Version)
+            .WithMany()
+            .HasForeignKey(x => x.VersionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ChemicalFTableReference>()
+            .HasOne(x => x.PartProcessCharacteristic)
+            .WithMany()
+            .HasForeignKey(x => x.PartProcessCharacteristicId)
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<UploadDetail>()
             .HasOne<UploadBatch>()
             .WithMany()
@@ -242,6 +329,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne<PartProcessCharacteristic>()
             .WithMany()
             .HasForeignKey(x => x.PartProcessCharacteristicId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ParticleMeasurement>()
+            .HasOne<UploadBatch>()
+            .WithMany()
+            .HasForeignKey(x => x.UploadBatchId)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<SpcCalculationResult>()
             .HasOne<UploadBatch>()

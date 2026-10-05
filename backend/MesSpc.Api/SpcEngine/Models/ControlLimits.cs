@@ -53,6 +53,7 @@ public record ControlChartResult
     public string? SubgroupSizeNote { get; init; }
     public CapabilityResult? Capability { get; init; }
     public object? RawDataPoints { get; init; }
+    public object? SpecLimitSegments { get; init; }
     public NormalityTestResult? Normality { get; init; }
     public List<NormalCurvePoint>? NormalCurve { get; init; }
     public ChartMonitorContext? MonitorContext { get; init; }

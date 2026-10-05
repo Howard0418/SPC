@@ -76,6 +76,22 @@ public class SpcEngineBaselineTests
     }
 
     [Fact]
+    public void Capability_Ca_ShouldKeepSignAndLeaveCpkPpkUnchanged()
+    {
+        var groups = new List<Subgroup>
+        {
+            new() { Values = [6, 7, 8] },
+            new() { Values = [7, 8, 9] }
+        };
+
+        var result = ProcessCapabilityCalculator.Calculate(groups, 14, 6)!;
+
+        result.Ca.Should().Be(-0.625);
+        result.Cpk!.Value.Should().BeApproximately((7.5d - 6d) / (3 * (2d / 1.693)), 0.0001);
+        result.Ppk!.Value.Should().BeApproximately((7.5d - 6d) / (3 * Math.Sqrt(5.5 / 5)), 0.0001);
+    }
+
+    [Fact]
     public void PChart_GoldenValues_ShouldWeightPBarByInspectedQuantity()
     {
         var points = new List<AttributeDataPoint>
@@ -88,6 +104,24 @@ public class SpcEngineBaselineTests
 
         Number(result.StatControlLimits!, "cl").Should().BeApproximately(25d / 400d, 1e-12);
         Number(result.StatControlLimits!, "nBar").Should().Be(200);
+    }
+
+    [Fact]
+    public void DustAttributeChartCodes_ShouldMapToCAndUCharts()
+    {
+        var points = new List<AttributeDataPoint>
+        {
+            new() { MeasuredAt = new DateTime(2026, 9, 1), DefectCount = 4, UnitCount = 2 },
+            new() { MeasuredAt = new DateTime(2026, 9, 2), DefectCount = 6, UnitCount = 3 }
+        };
+
+        var cResult = AttributeChartCalculator.Calculate("DUST_C", points, new ControlLimits());
+        var uResult = AttributeChartCalculator.Calculate("DUST_U", points, new ControlLimits());
+
+        cResult.ChartType.Should().Be("C_CHART");
+        Number(cResult.StatControlLimits!, "cl").Should().Be(5);
+        uResult.ChartType.Should().Be("U_CHART");
+        Number(uResult.StatControlLimits!, "cl").Should().Be(2);
     }
 
     [Fact]

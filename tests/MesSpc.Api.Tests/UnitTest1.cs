@@ -14,6 +14,30 @@ namespace MesSpc.Api.Tests;
 public class UnitTest1
 {
     [Fact]
+    public async Task SeedData_ShouldProvideDustMonitoringCAndUChartTypes()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        await using var context = new AppDbContext(options);
+
+        SeedData.Initialize(context);
+
+        var dustGroup = await context.ControlChartGroups.SingleAsync(x => x.GroupCode == "DUST");
+        dustGroup.GroupName.Should().Be("落塵監控");
+        dustGroup.BusinessScopeCode.Should().Be("DUST");
+        dustGroup.RequiresMachine.Should().BeFalse();
+
+        var chartTypes = await context.ControlChartTypes
+            .Where(x => x.ChartGroupId == dustGroup.Id)
+            .OrderBy(x => x.ChartTypeCode)
+            .ToListAsync();
+        chartTypes.Select(x => x.ChartTypeCode).Should().Contain(["DUST_C", "DUST_U"]);
+        chartTypes.Should().OnlyContain(x => x.DataCategory == "Attribute");
+    }
+
+    [Fact]
     public async Task TestImportCustomSpc_SucceedsAndSeedsDatabase()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -44,7 +68,7 @@ public class UnitTest1
 
         var ppcs = await context.PartProcessCharacteristics.ToListAsync();
         ppcs.Should().HaveCount(3);
-        ppcs.Select(x => x.ControlScope).Should().BeEquivalentTo("PROCESS", "CHEMICAL", "PRODUCT");
+        ppcs.Select(x => x.ControlScope).Should().BeEquivalentTo("PROCESS", "CHEM", "PRODUCT");
     }
 
     private static MemoryStream BuildPortableWorkbook()

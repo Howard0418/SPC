@@ -1,3 +1,4 @@
+using MesSpc.Api.Domain.Enums;
 using System.Text.Json;
 using MesSpc.Api.Domain;
 using MesSpc.Api.Domain.Entities;
@@ -183,24 +184,27 @@ public class UploadService(AppDbContext db, SpcService spcService)
             var scope = ResolveScope(row);
             var group = await FindScopeGroupAsync(scope, ct);
             if (group is null) { skippedMissingMasterData++; continue; }
+            var expectedDataCategory = batch.UploadType;
+            var requiresMachine = RequiresMachineForScope(scope, group);
+            var requiresTank = RequiresTankForScope(scope, group);
             var process = await FindProcessAsync(Get(row, "ProcessCode"), ct);
             var machine = await FindMachineAsync(Get(row, "MachineCode"), process, ct);
             if (process is null && machine is not null)
                 process = await db.Processes.FirstOrDefaultAsync(x => x.Id == machine.ProcessId, ct);
-            if (process is null || (group.RequiresMachine && machine is null)) { skippedMissingMasterData++; continue; }
-            var tank = group.RequiresTank && machine is not null
+            if (process is null || (requiresMachine && machine is null)) { skippedMissingMasterData++; continue; }
+            var tank = requiresTank && machine is not null
                 ? await FindTankAsync(machine, Get(row, "TankCode"), ct)
                 : null;
-            if (group.RequiresTank && machine is not null && tank is null)
+            if (requiresTank && machine is not null && tank is null)
             {
                 var tankResult = await CreateTankIfNoSimilarAsync(machine, Get(row, "TankCode"), ct);
                 tank = tankResult.Tank;
                 if (tankResult.Created) createdTanks++;
             }
-            if (group.RequiresTank && tank is null) { skippedMissingTank++; continue; }
+            if (requiresTank && tank is null) { skippedMissingTank++; continue; }
             var characteristic = await FindMappedCharacteristicAsync(
                 Get(row, "CharacteristicCode"), Get(row, "Unit"), scope,
-                process, machine, tank, group.RequiresMachine, group.RequiresTank, ct)
+                process, machine, tank, requiresMachine, requiresTank, ct)
                 ?? await FindCharacteristicAsync(Get(row, "CharacteristicCode"), Get(row, "Unit"), scope, ct);
             if (characteristic is null)
             {
@@ -220,7 +224,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                         CharacteristicName = cleanName,
                         CharacteristicNameEn = string.IsNullOrWhiteSpace(englishName) ? null : englishName,
                         ControlScope = scope,
-                        DataCategory = "Variable",
+                        DataCategory = expectedDataCategory,
                         InputMode = "DIRECT",
                         ValueLabel = "量測值",
                         DecimalPlaces = 3,
@@ -242,8 +246,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
             if (!handled.Add(key)) continue;
             var existingMappings = await db.PartProcessCharacteristics.Where(x =>
                 x.ControlScope == scope && x.PartId == null && x.ProcessId == process.Id &&
-                x.MachineId == (group.RequiresMachine ? machine!.Id : null) &&
-                x.TankId == (group.RequiresTank ? tank!.Id : null) &&
+                x.MachineId == (requiresMachine ? machine!.Id : null) &&
+                x.TankId == (requiresTank ? tank!.Id : null) &&
                 x.SlotId == null && x.CharacteristicId == characteristic.Id).ToListAsync(ct);
             var existingSameUnit = existingMappings.FirstOrDefault(x => NormalizeUnit(x.Unit) == importedUnit);
             if (existingSameUnit is not null)
@@ -268,8 +272,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(x =>
                         x.ControlScope == scope && x.PartId == null && x.ProcessId == process.Id &&
-                        x.MachineId == (group.RequiresMachine ? machine!.Id : null) &&
-                        x.TankId == (group.RequiresTank ? tank!.Id : null) && x.SlotId == null &&
+                        x.MachineId == (requiresMachine ? machine!.Id : null) &&
+                        x.TankId == (requiresTank ? tank!.Id : null) && x.SlotId == null &&
                         x.CharacteristicId == characteristic.Id && x.Unit == databaseUnit, ct);
             }
             if (databaseEquivalent is not null)
@@ -287,10 +291,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 .FirstOrDefaultAsync(ct);
             var chartType = template?.ChartTypeId is not null
                 ? await db.ControlChartTypes.FirstOrDefaultAsync(x => x.Id == template.ChartTypeId, ct)
-                : await db.ControlChartTypes
-                    .Where(x => x.ChartGroupId == group.Id && x.IsEnabled && x.DataCategory == "Variable")
-                    .OrderBy(x => x.ChartTypeCode == "I_MR" ? 0 : x.RequiredSampleSize == 1 ? 1 : 2)
-                    .FirstOrDefaultAsync(ct);
+                : await ResolveDefaultChartTypeAsync(scope, expectedDataCategory, group.Id, ct);
             if (chartType is null) { skippedMissingChartType++; continue; }
             characteristic.DefaultChartTypeId ??= chartType.Id;
 
@@ -299,8 +300,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 ControlScope = scope,
                 PartId = null,
                 ProcessId = process.Id,
-                MachineId = group.RequiresMachine ? machine!.Id : null,
-                TankId = group.RequiresTank ? tank!.Id : null,
+                MachineId = requiresMachine ? machine!.Id : null,
+                TankId = requiresTank ? tank!.Id : null,
                 CharacteristicId = characteristic.Id,
                 // The same characteristic can use different units in different tanks.
                 // Prefer the unit from the uploaded row; only inherit a template unit
@@ -455,10 +456,20 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 var sampleNo = TryInt(Get(payload, "SampleNo"), 1);
                 var isPortalDaily = string.Equals(batch.SourceType, "PortalDaily", StringComparison.OrdinalIgnoreCase);
                 var portalDailyDate = isPortalDaily ? ToTaipeiDate(measuredAt) : (DateTime?)null;
+                var nextDailyDate = portalDailyDate?.AddDays(1);
+                var samplingPhase = NormalizeSamplingPhase(Get(payload, "SamplingPhase"));
+                if(!ChemicalSamplingStage.TryNormalize(ctx.Machine?.MachineCode,Get(payload,"SamplingStage"),out var samplingStage))
+                    throw new InvalidOperationException(ChemicalSamplingStage.Error);
 
+                var dailyMatches = isPortalDaily
+                    ? await db.VariableMeasurements.Where(x => x.PartProcessCharacteristicId == ctx.Mapping.Id && x.SourceType == SourceType.Manual
+                        && (x.PortalDailyDate == portalDailyDate || (x.PortalDailyDate == null && x.MeasuredAt >= portalDailyDate && x.MeasuredAt < nextDailyDate))
+                        && (x.SamplingPhase == samplingPhase || (samplingPhase == "OPEN" && (x.SamplingPhase == "GENERAL" || x.SamplingPhase.Trim() == "" || x.SamplingPhase == null)))
+                        && x.SamplingStage == samplingStage).Take(2).ToListAsync(ct)
+                    : [];
+                if (dailyMatches.Count > 1) throw new InvalidOperationException("同一項目有多筆早班或舊班別資料，請先確認重複紀錄。");
                 var existingVm = isPortalDaily
-                    ? await db.VariableMeasurements.FirstOrDefaultAsync(x =>
-                        x.PartProcessCharacteristicId == ctx.Mapping.Id && x.PortalDailyDate == portalDailyDate, ct)
+                    ? dailyMatches.SingleOrDefault()
                     : await db.VariableMeasurements.FirstOrDefaultAsync(x =>
                         x.PartProcessCharacteristicId == ctx.Mapping.Id &&
                         x.MeasuredAt == measuredAt &&
@@ -478,9 +489,25 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     db.SpcCalculationResults.RemoveRange(oldCalcs);
                     if (isPortalDaily)
                     {
+                        var before = new
+                        {
+                            existingVm.Id,
+                            existingVm.MeasuredValue,
+                            existingVm.RecheckValue,
+                            existingVm.AdjustAction,
+                            existingVm.AdjustAmount,
+                            existingVm.MeasuredAt,
+                            existingVm.Operator,
+                            existingVm.PortalDailyDate,
+                            existingVm.SamplingPhase,
+                            existingVm.SamplingStage
+                        };
                         existingVm.UploadBatchId = batch.UploadBatchId;
                         existingVm.MeasuredValue = measuredValue;
                         existingVm.MeasuredAt = measuredAt;
+                        existingVm.PortalDailyDate = portalDailyDate;
+                        existingVm.SamplingPhase = samplingPhase;
+                        existingVm.SamplingStage = samplingStage;
                         existingVm.Operator = Get(payload, "Operator");
                         existingVm.RecheckValue = double.TryParse(Get(payload, "RecheckValue"), out var dailyRecheck) ? dailyRecheck : null;
                         existingVm.AdjustAction = Get(payload, "AdjustAction");
@@ -490,6 +517,13 @@ public class UploadService(AppDbContext db, SpcService spcService)
                         existingVm.UpdatedAt = DateTime.UtcNow;
                         existingVm.UpdatedBy = Get(payload, "Operator");
                         await db.SaveChangesAsync(ct);
+                        await AddPortalDailyAuditAsync(batch.UploadBatchId, "ManualMeasurementUpdated", Get(payload, "Operator"), new
+                        {
+                            measurementId = existingVm.Id,
+                            changedAt = DateTime.UtcNow,
+                            before,
+                            after = payload
+                        }, ct);
                         updated++;
                         imported++;
                         var updatedResult = await spcService.CalculateVariableAsync(existingVm, ct);
@@ -524,6 +558,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     MeasuredValue = measuredValue,
                     MeasuredAt = measuredAt,
                     PortalDailyDate = portalDailyDate,
+                    SamplingPhase = samplingPhase,
+                    SamplingStage = samplingStage,
                     Operator = Get(payload, "Operator"),
                     RecheckValue = double.TryParse(Get(payload, "RecheckValue"), out var rVal) ? rVal : null,
                     AdjustAction = Get(payload, "AdjustAction"),
@@ -531,6 +567,15 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 };
                 db.VariableMeasurements.Add(vm);
                 await db.SaveChangesAsync(ct);
+                if (isPortalDaily)
+                {
+                    await AddPortalDailyAuditAsync(batch.UploadBatchId, "ManualMeasurementCreated", Get(payload, "Operator"), new
+                    {
+                        measurementId = vm.Id,
+                        createdAt = DateTime.UtcNow,
+                        value = payload
+                    }, ct);
+                }
                 imported++;
                 var result = await spcService.CalculateVariableAsync(vm, ct);
                 if (result is not null)
@@ -605,6 +650,36 @@ public class UploadService(AppDbContext db, SpcService spcService)
         return new { batch, mode, imported, inserted, updated, skipped, spcCount, alertCount };
     }
 
+    private static string NormalizeSamplingPhase(string? value) => value?.Trim().ToUpperInvariant() switch
+    {
+        "OPEN" => "OPEN",
+        "MIDDLE" => "MIDDLE",
+        "CLOSE" => "CLOSE",
+        _ => "OPEN"
+    };
+
+    private async Task AddPortalDailyAuditAsync(Guid uploadBatchId, string action, string? actor, object details, CancellationToken ct)
+    {
+        var nextRow = (await db.UploadDetails
+            .Where(x => x.UploadBatchId == uploadBatchId)
+            .MaxAsync(x => (int?)x.RowNo, ct) ?? 0) + 1;
+        db.UploadDetails.Add(new UploadDetail
+        {
+            UploadBatchId = uploadBatchId,
+            RowNo = nextRow,
+            IsValid = false,
+            CreatedBy = actor,
+            PayloadJson = JsonSerializer.Serialize(new
+            {
+                action,
+                actor,
+                recordedAt = DateTime.UtcNow,
+                details
+            })
+        });
+        await db.SaveChangesAsync(ct);
+    }
+
     private static DateTime ToTaipeiDate(DateTime value)
     {
         var utc = value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
@@ -649,16 +724,17 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
     private async Task EnsureMasterDataAsync(IEnumerable<Dictionary<string, string?>> rows, string expectedDataCategory, CancellationToken ct)
     {
-        var chartTypeMeta = await db.ControlChartTypes.FirstOrDefaultAsync(x => x.ChartTypeCode == "XBAR_R" || x.ChartTypeCode == "I_MR" || x.DataCategory == expectedDataCategory, ct);
-
         foreach (var r in rows)
         {
             var partNo = Get(r, "PartNo");
             var scope = ResolveScope(r);
+            var group = await FindScopeGroupAsync(scope, ct);
+            var requiresMachine = RequiresMachineForScope(scope, group);
             var procCode = Get(r, "ProcessCode");
             var machCode = Get(r, "MachineCode");
             var charCode = Get(r, "CharacteristicCode");
             var charName = Get(r, "CharacteristicName") ?? charCode;
+            var chartTypeMeta = await ResolveDefaultChartTypeAsync(scope, expectedDataCategory, group?.Id, ct);
 
             if (scope == "CHEM")
             {
@@ -668,7 +744,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             if (scope == "PRODUCT" && string.IsNullOrWhiteSpace(partNo)) continue;
             if (string.IsNullOrWhiteSpace(procCode) || string.IsNullOrWhiteSpace(charCode)) continue;
 
-            if (string.IsNullOrWhiteSpace(machCode)) machCode = $"{procCode}-M01";
+            if (requiresMachine && string.IsNullOrWhiteSpace(machCode)) machCode = $"{procCode}-M01";
 
             Part? part = null;
             if (scope == "PRODUCT")
@@ -690,42 +766,46 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 await db.SaveChangesAsync(ct);
             }
 
-            var mach = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == machCode, ct);
-            if (mach is null)
+            Machine? mach = null;
+            if (!string.IsNullOrWhiteSpace(machCode))
             {
-                mach = new Machine { MachineCode = machCode, MachineName = machCode, ProcessId = proc.Id, IsEnabled = true };
-                db.Machines.Add(mach);
-                await db.SaveChangesAsync(ct);
-            }
-
-            var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == mach.MachineCode, ct);
-            if (line is null)
-            {
-                var factory = await db.Factories.FirstOrDefaultAsync(ct);
-                if (factory is null)
+                mach = await db.Machines.FirstOrDefaultAsync(x => x.MachineCode == machCode, ct);
+                if (mach is null)
                 {
-                    var plant = await db.Plants.FirstOrDefaultAsync(ct);
-                    if (plant is null)
-                    {
-                        plant = new Plant { PlantCode = "PLT-01", PlantName = "Main Plant" };
-                        db.Plants.Add(plant);
-                        await db.SaveChangesAsync(ct);
-                    }
-
-                    factory = new Factory { FactoryCode = "FAC-01", FactoryName = "Main Factory", PlantId = plant.Id };
-                    db.Factories.Add(factory);
+                    mach = new Machine { MachineCode = machCode, MachineName = machCode, ProcessId = proc.Id, IsEnabled = true };
+                    db.Machines.Add(mach);
                     await db.SaveChangesAsync(ct);
                 }
 
-                line = new ProductionLine
+                var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == mach.MachineCode, ct);
+                if (line is null)
                 {
-                    LineCode = mach.MachineCode,
-                    LineName = mach.MachineName,
-                    FactoryId = factory.Id,
-                    IsActive = mach.IsEnabled
-                };
-                db.ProductionLines.Add(line);
-                await db.SaveChangesAsync(ct);
+                    var factory = await db.Factories.FirstOrDefaultAsync(ct);
+                    if (factory is null)
+                    {
+                        var plant = await db.Plants.FirstOrDefaultAsync(ct);
+                        if (plant is null)
+                        {
+                            plant = new Plant { PlantCode = "PLT-01", PlantName = "Main Plant" };
+                            db.Plants.Add(plant);
+                            await db.SaveChangesAsync(ct);
+                        }
+
+                        factory = new Factory { FactoryCode = "FAC-01", FactoryName = "Main Factory", PlantId = plant.Id };
+                        db.Factories.Add(factory);
+                        await db.SaveChangesAsync(ct);
+                    }
+
+                    line = new ProductionLine
+                    {
+                        LineCode = mach.MachineCode,
+                        LineName = mach.MachineName,
+                        FactoryId = factory.Id,
+                        IsActive = mach.IsEnabled
+                    };
+                    db.ProductionLines.Add(line);
+                    await db.SaveChangesAsync(ct);
+                }
             }
 
             var chr = await db.QualityCharacteristics.FirstOrDefaultAsync(x => x.CharacteristicCode == charCode, ct);
@@ -735,6 +815,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 {
                     CharacteristicCode = charCode,
                     CharacteristicName = charName ?? "",
+                    ControlScope = scope,
                     DataCategory = expectedDataCategory,
                     DefaultChartTypeId = chartTypeMeta?.Id,
                     IsEnabled = true,
@@ -760,7 +841,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     ControlScope = scope,
                     PartId = mappingPartId,
                     ProcessId = proc.Id,
-                    MachineId = null,
+                    MachineId = requiresMachine ? mach?.Id : null,
                     TankId = null,
                     CharacteristicId = chr.Id,
                     USL = uslVal > 0 || lslVal > 0 ? uslVal : null,
@@ -826,9 +907,16 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     var measuredAt = TryDateTime(Get(row, "MeasuredAt"), DateTime.UtcNow);
                     var sampleNo = TryInt(Get(row, "SampleNo"), 1);
                     var lotNo = Get(row, "LotNo") ?? "";
-                    var duplicateKey = $"{ctx.Mapping.Id}|{measuredAt:O}|{lotNo}|{sampleNo}";
+                    var isDaily=expectedDataCategory=="Variable" && string.Equals(batch.SourceType,"PortalDaily",StringComparison.OrdinalIgnoreCase);
+                    var dailyDate=ToTaipeiDate(measuredAt);
+                    var nextDailyDate=dailyDate.AddDays(1);
+                    var shift=NormalizeSamplingPhase(Get(row,"SamplingPhase"));
+                    var stage=Get(row,"SamplingStage")??"GENERAL";
+                    var duplicateKey = isDaily ? $"{ctx.Mapping.Id}|{dailyDate:yyyy-MM-dd}|{shift}|{stage}" : $"{ctx.Mapping.Id}|{measuredAt:O}|{lotNo}|{sampleNo}";
                     var duplicateInFile = !batchKeys.Add(duplicateKey);
-                    var duplicateInDatabase = expectedDataCategory == "Variable"
+                    var duplicateInDatabase = isDaily
+                        ? await db.VariableMeasurements.AnyAsync(x=>x.PartProcessCharacteristicId==ctx.Mapping.Id && x.SourceType==SourceType.Manual && (x.PortalDailyDate==dailyDate || (x.PortalDailyDate==null && x.MeasuredAt>=dailyDate && x.MeasuredAt<nextDailyDate)) && (x.SamplingPhase==shift || (shift=="OPEN" && (x.SamplingPhase=="GENERAL" || x.SamplingPhase.Trim()=="" || x.SamplingPhase==null))) && x.SamplingStage==stage,ct)
+                        : expectedDataCategory == "Variable"
                         ? await db.VariableMeasurements.AnyAsync(x =>
                             x.PartProcessCharacteristicId == ctx.Mapping.Id &&
                             x.MeasuredAt == measuredAt &&
@@ -862,8 +950,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
         if (scopeGroup is null)
             errors.Add(("ControlScope", "SCOPE_NOT_CONFIGURED", "ControlScope has no enabled control-chart group configuration."));
         var requiresPart = scopeGroup?.RequiresPart ?? scope == "PRODUCT";
-        var requiresMachine = scopeGroup?.RequiresMachine ?? true;
-        var requiresTank = scopeGroup?.RequiresTank ?? scope == "CHEM";
+        var requiresMachine = RequiresMachineForScope(scope, scopeGroup);
+        var requiresTank = RequiresTankForScope(scope, scopeGroup);
 
         if (string.Equals(expectedDataCategory, "Variable", StringComparison.OrdinalIgnoreCase))
         {
@@ -906,6 +994,9 @@ public class UploadService(AppDbContext db, SpcService spcService)
             row["ResolvedMachineCode"] = machine.MachineCode;
             row["ResolvedMachineName"] = machine.MachineName;
         }
+        if(!ChemicalSamplingStage.TryNormalize(machine?.MachineCode,Get(row,"SamplingStage"),out var samplingStage))
+            errors.Add(("SamplingStage","INVALID_SAMPLING_STAGE",ChemicalSamplingStage.Error));
+        else row["SamplingStage"]=samplingStage;
         if (process is null) errors.Add(("ProcessCode", "PROCESS_NOT_FOUND", "製程代碼／名稱不存在，且無法由線別取得所屬製程。"));
         if (requiresMachine && machine is null) errors.Add(("MachineCode", "MACHINE_NOT_FOUND", "線別代碼／名稱不存在。"));
         else if (process is not null && machine is not null && machine.ProcessId != process.Id)
@@ -1054,8 +1145,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var scope = ResolveScope(payload);
         var scopeGroup = await FindScopeGroupAsync(scope, ct);
         var requiresPart = scopeGroup?.RequiresPart ?? scope == "PRODUCT";
-        var requiresMachine = scopeGroup?.RequiresMachine ?? true;
-        var requiresTank = scopeGroup?.RequiresTank ?? scope == "CHEM";
+        var requiresMachine = RequiresMachineForScope(scope, scopeGroup);
+        var requiresTank = RequiresTankForScope(scope, scopeGroup);
         Part? part = null;
         if (requiresPart)
         {
@@ -1157,6 +1248,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             "lotno" => new[] { "lot" },
             "serialno" => new[] { "工單" },
             "sampleno" => new[] { "樣本編號" },
+            "samplingphase" => new[] { "採樣階段", "開收線" },
             "inspectedqty" => new[] { "總數" },
             "defectqty" => new[] { "不良數" },
             "defectcount" => new[] { "缺點數" },
@@ -1415,6 +1507,37 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
         var ranked = TankNameMatcher.Rank(raw, tanks, x => x.TankName, x => x.TankCode);
         return TankNameMatcher.SelectUniqueAutoMatch(ranked);
+    }
+
+    private static bool RequiresMachineForScope(string scope, ControlChartGroup? group)
+        => string.Equals(scope, ControlScopeCodes.Dust, StringComparison.OrdinalIgnoreCase)
+            ? false
+            : group?.RequiresMachine ?? true;
+
+    private static bool RequiresTankForScope(string scope, ControlChartGroup? group)
+        => group?.RequiresTank ?? string.Equals(scope, ControlScopeCodes.Chemical, StringComparison.OrdinalIgnoreCase);
+
+    private async Task<ControlChartType?> ResolveDefaultChartTypeAsync(
+        string scope,
+        string expectedDataCategory,
+        int? groupId,
+        CancellationToken ct)
+    {
+        if (string.Equals(scope, ControlScopeCodes.Dust, StringComparison.OrdinalIgnoreCase))
+        {
+            var dustType = await db.ControlChartTypes
+                .FirstOrDefaultAsync(x => x.ChartTypeCode == "DUST_U" && x.IsEnabled, ct);
+            if (dustType is not null) return dustType;
+        }
+
+        var query = db.ControlChartTypes.Where(x =>
+            x.IsEnabled && x.DataCategory == expectedDataCategory);
+        if (groupId.HasValue)
+            query = query.Where(x => x.ChartGroupId == groupId.Value);
+
+        return await query
+            .OrderBy(x => x.ChartTypeCode == "I_MR" ? 0 : x.RequiredSampleSize == 1 ? 1 : 2)
+            .FirstOrDefaultAsync(ct);
     }
 
     private async Task<List<string>> GetTankSuggestionsAsync(

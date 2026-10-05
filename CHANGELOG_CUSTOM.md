@@ -1,5 +1,488 @@
 # 客製需求與回歸檢查
 
+## 2026-10-02（TASK-001 設定與密鑰安全）
+- SMTP 設定 GET 改為只回傳是否已設定密碼；留白更新保留既有密碼。
+- 範例設定檔的 JWT、SSO、SMTP 與資料庫欄位改為環境注入 placeholder。
+- 新增設定安全回歸測試 2 項；後端測試與前端 production build 通過。
+- 實際環境密鑰輪替尚未自動執行，需依部署環境另行完成。
+
+## 2026-10-01（Particle Monitoring 完成）
+- 完成 Particle Long Format 資料模型、preview/confirm、原始查詢、趨勢、R1-R9 比較、C/U-chart、TransFiles payload 與前端工作台。
+- 最終回歸：Particle 後端 12 passed、build 0 warnings／0 errors；TransFiles 39 passed；前端 testhost build 通過。
+- 測試站 frontend hash 一致，Particle 頁面與資產 200；API health 200、version `0.1.59/test`。正式站未發布，TransFiles EXE 未打包。
+- Playwright runner 未正常結束；測試站登入後資料串接因未持有測試帳密尚待人工驗收。
+- 後續已打包 TransFiles `2026.10.01.1`：新版主 EXE GUI 啟動正常，SHA-256 `2994FCE75F21A6495C75B05E3304099E9CE57C6A074AD36E29FC33D4DC01AD81`；測試站發布內容維持最新 build。[驗收指南](specs/20260930-particle-monitoring/acceptance-guide.md)
+
+## 2026-10-01（Particle Monitoring 前端工作台）
+- 新增 `/particle-monitoring` 與側邊導覽，整合 Particle C/U 圖型、時間趨勢、R1-R9 比較、原始資料及來源追溯。
+- 支援日期、位置、粒徑與儀器條件；顯示固定／體積抽樣基準、20 點門檻及 U-chart 後端驗證訊息。
+- `npm run build:test` 通過；已發布測試站前端，備份 `release-staging/particle-frontend-20261001-103955/frontend-backup`。頁面與新資產 HTTP 200，API 為 `0.1.59/test`；正式站未發布。
+- Particle Playwright runner 兩次未正常結束，且 SSO 頁缺測試帳密，登入後人工畫面驗收待最後回歸處理。
+
+## 2026-10-01（Particle Monitoring TransFiles Long Format 串接）
+- TransFiles 落塵預覽改送 Particle Long Format JSON，保留來源座標、原值、檔名與 SHA-256；舊 Attribute Excel 僅保留相容匯出。
+- R1-R9 與四種粒徑納入 payload；無真實抽樣體積時保持空值，因此 C-chart 可用、U-chart 需來源提供同單位正值。
+- TransFiles 相關測試 39 passed、Python compile 通過；本次未打包 EXE，SPC 測試站與正式站皆未變更。
+- 完整 TransFiles unittest discover 為 44 passed／2 failed；失敗皆因既有 `2026-4-24-0910.xlsx` fixture 不存在。
+
+## 2026-09-30（藥液 F 表維護與公式動態取值）
+- SPC 新增藥液 F 表資料模型、API 與「藥液 F 表維護」畫面，可維護 `F!B3`～`F!B10`、Dry-run、套用新版與查詢受影響線別/槽體/分析項目。
+- 藥液濃度公式可直接引用 `F!B3` 或 `F!$B$3`，計算時由目前啟用 F 表取值，後續修改 F 表不需逐一回管制項目改固定常數。
+- 測試站補 SQL Server 自我修復，若 F 表三張表不存在會自動建立；受影響項目查詢改為分段查詢，避免 EF LINQ 轉譯失敗。
+- `dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter ChemicalFTableServiceTests --no-restore -p:UseSharedCompilation=false` 通過；`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；`npm run build -- --mode testhost` 通過。
+- 已發布 SPC 測試站 backend/frontend；`/api/version` 回 `environment=test`，首頁載入 `index-mBOvEGxD.js`。正式站未發布。
+
+## 2026-09-30（管制圖規格線與管制線顯示穩定化）
+- 分段 USL/Target/LSL markLine 的 y 值納入圖表 y 軸範圍計算，避免線超出資料點範圍時看似未顯示。
+- 動態 UCL/CL/LCL 資料點不足時，回退顯示固定 UCL/CL/LCL。
+- `npm run build` 通過；已發布 SPC 測試站前端，備份 `frontend.backup-limit-line-visibility-20260930-141614`；首頁載入新資產 `index-BlUMHcJE.js`，API `/api/version` 回 `environment=test`。
+
+## 2026-09-30（SPC SSO 重導迴圈保護）
+- 前端 API 401 攔截加入 5 秒 redirect 防抖，避免多個失敗請求重複導 `/login`。
+- `/portal-sso` 成功寫入 token 後加入 8 秒 grace window，避免舊 401 請求立即清掉新 token 造成 Portal/SPC 反覆跳轉。
+- `npm run build` 通過；已發布 SPC 測試站前端，備份 `frontend.backup-sso-loop-guard-20260930-140731`；首頁載入新資產 `index-CUp_gYIn.js`，API `/api/version` 回 `environment=test`。
+
+## 2026-09-30（分段規格保存與管制圖顯示）
+- `ControlLimitSegments` 擴充 `USL/LSL/TargetValue`，管制項目分段維護可設定不同日期區間的規格與管制界線。
+- SPC 計算與圖表資料依量測日期套用分段規格，圖表回傳 `specLimitSegments` 供前端顯示分段 USL/Target/LSL。
+- `dotnet build backend/MesSpc.Api/MesSpc.Api.csproj` 通過；`npm run build` 通過。
+- `dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --no-restore`：24 passed / 6 skipped / 6 failed；失敗為既有測試期待值與 InMemory transaction/SSO 相關，已列入本次進度限制。
+- 已發布 SPC 測試站 backend/frontend，備份 `segment-spec-20260930-132447`；`/api/version` 回 `environment=test`，前端首頁載入新資產。正式站未發布。
+- 修正分段新增/更新 API 改用 DTO，避免 Entity 導覽屬性觸發 `One or more validation errors occurred.`；後端重新發布測試站，備份 `backend.backup-segment-spec-validation-20260930-133551`。
+
+## 2026-09-30（落塵監控 Attribute 預覽匯入支援）
+- SPC 補主檔流程將 `DUST` 視為不需機台，落塵 Attribute 預覽可自動建立 `R#_0.5um`、`R#_1um`、`R#_5um`、`R#_10um` 的 `DUST_U` 管制項目。
+- DUST 種子與受控 SQL 改為 `RequiresMachine=0`，描述同步四種粒徑。
+- `dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter "SeedData_ShouldProvideDustMonitoringCAndUChartTypes|SpcEngineBaselineTests" --no-restore -p:UseSharedCompilation=false`：8 passed。
+- `dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過。
+- 已發布 SPC 測試站 backend，備份 `backend.backup-dust-attribute-upload-20260930-084101`；`8081/api/version` 回 `environment=test`，`8081/health` HTTP 200。正式站未發布。
+
+## 2026-09-30（落塵監控 DUST_C/DUST_U 圖型計算）
+- SPC Attribute chart 計算器支援 `DUST_C`、`DUST_U`，分別銜接既有 C-chart、U-chart。
+- 單筆 Attribute 即時計算同步辨識 `DUST_C`、`DUST_U`，避免匯入/查詢落塵資料時無統計值。
+- `dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter SpcEngineBaselineTests --no-restore`：7 passed。
+- `dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；原平行 build 曾被 `VBCSCompiler` 鎖檔，重跑後通過。
+- 已發布 SPC 測試站 backend，備份 `backend.backup-dust-chart-codes-20260930-080553`；`8081/api/version` 回 `environment=test`，`8081/health` HTTP 200。正式站未發布。
+
+## 2026-09-29（落塵監控查詢維度支援）
+- SPC 管制圖頁與 summary API 補上 `DUST` scope 辨識、落塵監控 fallback 名稱與前端 DUST 維度配色。
+- 新增前端 scope 測試，避免落塵監控被誤歸到製程。
+- `dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore` 通過；`node --test frontend/mes-spc-web/tests/control-scope.test.mjs`：1 passed；`npm run build` 通過。
+- 已發布 SPC 測試站 backend/frontend，備份 `chemical-dust-20260929-213750`；`8081/api/version` 回 `environment=test`，API/前端 HTTP 200。正式站未發布。
+- 測試站 `SeedDatabase=false`，本次發布不自動寫入 DUST 主檔資料；若測試庫尚未有 `DUST` 群組，需另行受控套用。
+
+## 2026-09-29（落塵監控 C/U 管制圖主檔種子）
+- 新增 idempotent `DUST` 落塵監控群組與 `DUST_C`、`DUST_U` 計數型圖表主檔種子，供 SPC 後續落塵監控使用。
+- 本次僅補主檔支援；未建立落塵量測資料、未處理 TransFiles 匯入。已隨 `chemical-dust-20260929-213750` 發布 SPC 測試站。
+- `dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter UnitTest1 --no-restore`：2 passed。
+
+## 2026-09-29（PPC 重複鍵儲存防護）
+- 編輯／新增 SPC 管制項目前先檢查同鍵其他列，重複時回 409 與可讀訊息，避免 SQL Server 唯一索引錯誤直接顯示到畫面。
+- 補上 PPC business key 單元測試；既有 Chameleon 測試補齊 DbContext 建構參數。`dotnet test backend/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj`：43 passed / 1 skipped。
+- API Release publish 成功並已發布 SPC 測試站 backend；`/api/version` 回 `environment=test`，DLL hash 與 staging 相同。正式站未發布。
+
+## 2026-09-25（咬蝕平均量顯示管制點數）
+- 僅 `ETCH_A_AVG`／`ETCH_B_AVG` 顯示子組形成的管制點數；藥液與其他特性維持原始量測筆數。
+- 班別測試 6 項與測試建置通過，已發布測試站。
+
+## 2026-09-25（MR 圖班別資料對齊）
+- 修正 I-MR 底圖使用完整 X 軸標籤造成 MR 點與班別錯位；改用第 2 筆起的日期／班別標籤。
+- 班別測試 6 項與測試建置通過，已發布測試站。
+
+## 2026-09-25（管制界限預設關閉）
+- 規格界限與管制界限初始均不勾選，使用者仍可手動開啟。
+- 班別測試 6 項與測試建置通過，已發布測試站。
+
+## 2026-09-25（管制圖班別軸標籤）
+- X 軸改顯示日期與班別，不再顯示具體時間；N1/N2 區分早／中班開收線，移除上方早班圖例。
+- 班別測試 6 項與測試建置通過，已發布測試站。
+
+## 2026-09-25（個別管制圖班別時間序列）
+- 個別管制圖改依量測時間以單一線連接班別點；N1/N2 顯示早班開線、早班收線、中班，其他線別顯示早班、中班。
+- 前端班別測試 6 項及測試建置通過，尚未發布測試站。
+
+## 2026-09-24（咬蝕管制項目調整）
+- 咬蝕匯入改為只要求 A 平均、B 平均、整體速率 3 個 PROCESS 管制項目；線速不再是必要項目。
+- 化學測試 49 項通過。[規格](specs/20260924-etch-required-codes/spec.md)
+- SPC 測試庫已補上 8 筆 A/B 映射 `MachineId`；正式庫未修改。
+
+## 2026-09-24（咬蝕量逐份匯入）
+- 預覽衝突改為逐份標示；相同資料略過，新增日報仍可匯入，衝突資料不覆寫。
+- Portal／SPC 測試 API 與 TransFiles 工具已同步；規格：`specs/20260924-etch-partial-import/spec.md`。
+
+## 2026-09-22（藥液 GENERAL 視同早班）
+
+- 使用者確認：班別 GENERAL 都算早班，沒有「一般」；其他線別沒有開線／收線，僅 N1／N2 才分。
+- 非 N1／N2 管制圖不再因出現 OPEN 而過濾掉 GENERAL；DP 混班案例早班序列含歷史日期。Portal 班別標籤 GENERAL 改顯示早班。
+- Node 6 例通過；SPC 測試前端與 Portal 測試 Web 已發布。
+- 使用者同意後，正式 SPC 前端已發布至 `PMR-SPC-SRV` `C:\inetpub\wwwroot\production\frontend`（`index-DVUw7DcK.js`）；未改後端、資料與正式 Portal。[驗證](specs/20260922-chemical-general-as-open/verification.md)
+
+## 2026-09-22（正式 N1／N2 舊 CLOSE 轉收線）
+
+- 使用者授權後，正式 PMR_SPC_2026 198 筆 CHEM N1／N2 舊 CLOSE＋GENERAL 改為 OPEN＋CLOSE；N1=16、N2=182。
+- 備份 set 5098 通過 COPY_ONLY＋CHECKSUM＋VERIFYONLY；其他業務欄位不變，MIDDLE 37 筆未改，剩餘候選 0。未發布網站。[驗證](specs/20260922-chemical-close-stage-apply/verification.md)
+
+## 2026-09-22（N1／N2 9 月前僅開收線）
+
+- 使用者確認：N1／N2 9 月前只有開線／收線，沒有早班／中班；9 月後才分早班／中班。
+- 正式庫 9 月前僅 OPEN／CLOSE 且階段 GENERAL，無 MIDDLE；MIDDLE 自 N1 9/10、N2 9/11 出現。
+- 其後已授權僅轉換舊 CLOSE 198 筆；OPEN＋GENERAL 開線列仍不改。[規則](specs/20260922-chemical-n1n2-shift-cutoff/verification.md)
+
+## 2026-09-22（咬蝕正式匯入規格）
+
+- 使用者確認 `PMR_PORTAL_UAT` 為正式 Portal，並授權建立正式匯入規格；SPC 目標為 `PMR_SPC_2026`。
+- 規格限定由固定 SHA256 的 Excel／48 份 manifest 重匯；不複製測試庫資料列，隔離 8 個負值／未完整鍵。
+- 已新增 production dry-run、雙重資料庫確認與連線守衛；48 個 .NET 測試、7 個解析測試及建置通過。
+- 正式 dry-run：48 份／3,650 點、正式既有 0，輸出 15 項主檔變更計畫。
+- 後續依使用者同意建立兩庫正式備份：Portal backup set 5096、SPC 5097，均為 COPY_ONLY＋CHECKSUM 並通過 VERIFYONLY；備份證據守衛驗證通過，.NET 測試增至 48 項。
+- 使用者明確授權 apply 後，正式匯入 Portal 48 份／3,650 點、SPC 3,746 筆；16 mappings、16 圖表 API、逐點／平均／樣本 S／速率／線速、隔離 0 筆全部對帳通過。
+- 第二次重跑 48 份皆 Unchanged，ReportId／BatchId 不變。未發布 API／Web。[驗證](specs/20260922-etch-production-import/verification.md)
+
+## 2026-09-22（咬蝕正式庫唯讀盤點）
+
+- 使用者選 A：只讀比對測試 48 份與正式目標；未寫入、未發布。
+- Portal 測試 48／3650 點；正式連線庫 PMR_PORTAL_UAT 為 0。SPC 測試 ETCH 量測 3698（缺 LINE_SPEED）；正式 PMR_SPC_2026 為 0。
+- 正式缺 PT2 與 LINE_SPEED 等主檔；Portal 目標庫後續已確認為 `PMR_PORTAL_UAT`。見 [盤點](specs/20260922-etch-production-inventory/verification.md)。
+
+## 2026-09-21（校正管理列表隱藏保管人欄位）
+- 儀器校正到期管理列表移除「保管人」欄位；新增／編輯表單、通知收件邏輯與後端資料契約不變。
+- `npm run build:test` 通過；2026-10-05 已發布 SPC 測試站前端，備份 `release-staging/calibration-hide-custodian-20261005-075314/frontend-backup`；`8083/calibration-instruments` 載入 `index-Cpses5Qc.js` 且資產 200，API `8081` health/version 正常。正式站未發布。[規格](specs/20260921-calibration-hide-custodian-column/spec.md)
+
+## 2026-09-21（啟用測試站校正通知投遞）
+- 測試站 `release/test/backend/appsettings.json` 新增 `Calibration:DeliveryEnabled=true`；未修改 SMTP、收件人或通知規則。
+- JSON 設定驗證通過，已回收 `SpcApi` 測試 App Pool；未寄送真實通知或發布正式站。[規格](specs/20260921-calibration-delivery-enabled/spec.md)
+
+## 2026-09-17（SPC AD／工號登入防重複）
+- 完整 SSO 配對 canonical AD 與可信工號，連結既有工號主檔並保留 ID/權限；含停用/刪除檢查及交易身分鎖定。
+- legacy 只准既有 AD 登入、不准首次另建，忽略未簽章工號/部門/Email，阻止完整交換衝突後降級重試新增第二筆。
+- 12 核心測試及 SQL Server 5 次實際交換通過；臨時資料清理，真實 Operators 前後 23 筆。API 測試站已發布，備份 sso-single-operator-20260917-105440；正式站未發布。
+- 既有 Daniel/daniel_teng 是否同人待確認，未自動合併。[驗證](specs/20260917-sso-single-operator/verification.md)。
+
+## 2026-09-17（SPC 直接導向入口登入）
+- 移除「使用 AD 帳號或工號登入」按鈕及過渡卡片，掛載前導向 Portal /Spc/Launch；既有身份驗證與原頁返回保留。
+- 3 個 Playwright 案例、build:test 通過；真實未登入瀏覽器由 SPC /login 直達 Portal /Login?ReturnUrl=%2FSpc%2FLaunch。
+- 已發布 SPC 測試前端，備份 direct-portal-login-20260917-102853；正式站未發布，真人帳密登入未執行。
+- [規格與驗證](specs/20260917-direct-portal-login/spec.md)。
+
+## 2026-09-17（設備即時狀態缺表修復）
+- 補上 ChameleonSourceSettings 專屬 EF migration 與 SourceId 唯一索引，修復既有來源讀取程式所需表未建立的 SQL 例外；空表沿用原設定，不變更設備。
+- 3 個回歸通過、API publish 成功；發布 SPC 測試站，備份 chameleon-source-schema-20260917-083916。
+- 短效 Viewer 狀態請求由 500 修復為 200，3 來源中 2 online、1 unavailable；測試庫原有 1,838 筆量測保留。正式站未發布。
+- [驗證紀錄](specs/20260917-chameleon-source-schema/verification.md)。
+
+## 2026-09-17（Portal 藥液班別與取樣階段）
+- 原取樣階段改標班別，早班/中班保留；僅 N1/N2 可另選開線/收線，其他線别停用並清空。
+- 新增 SamplingStage 與日報四維唯一鍵；查詢/確認/upsert/預覽重複判斷納入階段，歷史 GENERAL 保留。切換清除草稿、忽略過期載入。
+- 12 核心及 3 UI 案通過，三專案建置成功；SPC/Portal 測試站已發布，備份 chemical-shift-stage-20260917-082711。測試庫 1,838 筆既有值/班別檢核不變。
+- 真人登入端到端待驗收；正式站未發布。[驗證](specs/20260917-chemical-shift-stage/verification.md)。
+
+## 2026-09-16（一句話需求預設流程）
+
+- AGENTS.md 新增簡短開發需求自動套用 SDD、最小範圍、必要讀取/測試與精簡回覆；一般問答不觸發修改。
+- 文字與連結檢查通過；純文件，發布不適用。
+
+## 2026-09-16（儀器列表捲動改善）
+
+- 表格限制 60dvh、固定表頭、上方左右按鈕，資料多時不必拉到最後一筆找水平捲軸。手機僅本路由改導覽/內容上下排列。
+- 6 項介面案例通過（含桌面/手機 100 筆捲動），build:test 成功；備份 calibration-scroll-20260916-132959，已發布 SPC 測試站前端，頁面/資產 200。正式站未發布。
+
+## 2026-09-16（儀器量測與校驗資訊）
+
+- 新增量測規格、精度、備註、校驗規範、允收標準；列表/新增編輯/Excel 預覽與匯入均支援，單欄 2000 字、保留換行。
+- EF migration 新增五欄；原 Excel F/G/AB/AC/AD 補回測試庫 59 筆空白資料，逐筆稽核且重跑 0 筆，日期/狀態/週期識別未變。
+- 120 個後端案例分次通過、12 項 UI 案例回報通過；API/前端建置成功。測試站備份 calibration-details-20260916-111017，API/Web/JS 200。正式站未發布、未發通知。
+
+## 2026-09-15（校正通知選用 Synology Chat）
+
+- 提醒設定可選 Email／Synology Chat，支援加密 Webhook 儲存、保留及手動測試。Chat 依儀器／階段群組防重，切換取消不適用待送工作。
+- 115 後端測試通過、8 項介面案例回報通過；API publish、build:test 成功。
+- 已發布 SPC 測試站，備份 calibration-chat-20260915-131936；三個新欄已透過 migration 套用 PMR_SPC_TEST；API／Web／資產 200。
+- 真實 NAS 發送未驗證；自動排程未啟用、未寄通知、正式站未發布。
+
+## 2026-09-15（校正提醒天數簡化設定）
+
+- 逗號輸入改為常用天數勾選、自訂加入及恢復預設；保留原有自訂值，最多 12 個提醒時間。
+- 6 項 Playwright 案例回報通過、build:test 成功，手機設定視窗檢視通過。
+- 已發布 SPC 測試站前端，備份 reminder-picker-20260915-110645；頁面與資產 200。正式站未發布、未寄通知。
+
+## 2026-09-12（儀器校正到期管理亮色配色）
+
+- 校正管理頁改為亮底青／天空／琥珀卡片與按鍵，解決過暗過重。不改欄位、權限、匯入或通知。
+- 回歸：校正匯入 Playwright 4 通過。已發布 SPC 測試站前端（備份 `20260912-215320`）。正式站未發布。
+
+## 2026-09-12（未校／免校列先建主檔、日期後補）
+
+- 剩下 12 筆可匯入：未校、預計、-、-- 日期留空，不轉成到期日；免校／`--` 週期先以 12 月建檔並警示。
+- 下次到期日可空；編輯可後補。無到期日不列入摘要、不寄提醒。既有 47 筆重匯仍略過。
+- 回歸：校正測試 80 通過。已發布 SPC 測試站（備份 `20260912-170311`）；測試庫下次日期已可空。正式庫／正式站未發布。
+
+## 2026-09-12（校驗方式公式改讀儲存值）
+
+- 正式 Excel J 欄為公式，改讀已儲存的外校／內校／免校，不再因此擋下可匯入列。
+- 未校／預計日期與免校／`--`／`-` 仍不匯入、不推定。
+- 回歸：校正測試 82 通過；實際範本 47 可匯入、12 不合格。
+- 已發布 SPC 測試站（備份 `20260912-164138`）。正式庫／正式站未發布。
+
+## 2026-09-12（儀器列表依編號排序）
+
+- 儀器校正管理列表改依儀器設備編號排序，不再先依下次校正日。
+- 到期摘要與測試寄信仍依到期日，不改提醒規則。
+- 回歸：校正測試 82 通過、SPC API 建置 0 警告／0 錯誤。
+- 已發布 SPC 測試站 API（備份 `20260912-162830`）。正式庫／正式站未發布。
+
+## 2026-09-12（儀器主檔顯示校驗方式）
+
+- 主檔新增可選「校驗方式」（最多 100 字）。列表、新增／編輯與 Excel 匯入預覽均顯示。
+- 匯入讀第一工作表 J 欄，J5 須為「校驗方式」；不拿校驗方式改週期或免校判定。既有編號仍略過不覆寫。
+- 回歸：校正測試 81 通過、Playwright 4 通過、SPC API 建置 0 警告／0 錯誤。
+- 已發布 SPC 測試站（備份 `20260912-161409`）；測試庫已套用 `CalibrationMethod` 欄。正式庫／正式站未發布。
+
+## 2026-09-12（儀器主檔顯示放置地點）
+
+- 主檔新增可選「放置地點」（最多 100 字）。列表、新增／編輯與 Excel 匯入預覽均顯示。
+- 匯入讀第一工作表 H 欄，H5 須為「放置地點」；不拿放置地點推定部門。既有編號仍略過不覆寫。
+- 回歸：校正測試 79 通過、Playwright 4 通過、SPC API 建置 0 警告／0 錯誤。
+- 已發布 SPC 測試站（備份 `20260912-160201`）；測試庫已套用 `Location` 欄。正式庫／正式站未發布。
+
+## 2026-09-12（儀器校正測試通知按鍵）
+
+- 儀器校正「提醒天數設定」新增手動測試寄信：指定 Email、主旨含【測試】、沿用 SMTP／本機備份。
+- 不寫入到期通知紀錄、不開啟 `Calibration:DeliveryEnabled`、不對保管人清單群發。
+- 回歸：校正測試 77 通過（含 5 項測試寄信 HTTP）、Playwright 4 通過、SPC API 建置 0 警告／0 錯誤。
+- 已發布 SPC 測試站 IIS（備份 `20260912-154446`）；`test-email` 未登入 401；未開啟自動寄信。實際 SMTP 端到端待操作。
+- 正式庫／正式站未發布。
+
+## 2026-09-12（儀器 Excel 批次匯入：發布 SPC 測試站 IIS）
+
+- 已發布 `D:\SPC\release\test\backend` 與 `frontend`（IIS `SpcApi`／`SpcWeb`）；備份識別碼 `20260912-145908`。
+- 以 `app_offline.htm` 確認 IIS 指向測試目錄；保留測試 `appsettings.json`／`web.config`；`AppEnvironment=test`，`Calibration:DeliveryEnabled` 未開啟，資料庫 `PMR_SPC_TEST`。
+- Smoke：`8081/api/version` 200（0.1.57／test）；匯入 access 未登入 401；preview/commit 無檔 415；校正摘要未登入 401；SPC Web `8083/calibration-instruments` 與新資產 200。
+- 無 pending migration。Portal、正式環境、`D:\PmrPortal\publish`、`D:\Sites\PmrPortal` 未發布。未寄真信、未寫入儀器資料。
+- 登入後匯入與品保摘要端到端仍待驗證，不標上線完成。
+
+## 2026-09-12（儀器 Excel 批次匯入：本機實作與驗證）
+
+- 在既有儀器校正頁新增 Excel 上傳、第一工作表預覽、逐列錯誤/公式警示、有效列勾選，以及部門/保管人/狀態批次補齊。
+- 新增 import/access、preview、commit API；提交重讀檔案並檢查 SHA256/列號/權限。既有編號略過，同檔重複拒絕；主檔與稽核同交易，失敗全部回復。
+- 保留 Excel 明確到期日與公式儲存值；未知週期、未校、預計日期不猜測。無 schema 變更、不建立合格校正歷史、不直接寄信。
+- 依 SDD 先建立規格與核心測試；[規格](specs/20260911-instrument-calibration-import/spec.md)、[驗證](specs/20260911-instrument-calibration-import/verification.md)。
+- 回歸：72 後端測試、3 隔離瀏覽器測試通過；SPC API 建置 0 警告/0 錯誤，Web build:test 成功。來源 Excel 59 筆，測試前後未修改。
+- HTTP 使用真實 MVC/JWT 與隔離 SQLite；UI API 為 mock，桌面/手機已檢視。實際 IIS/AD/SQL Server 端到端尚未執行，不標上線完成。
+- **本次未發布任何 IIS、不寫正式資料庫、不寄真信**；保留既有工作區修改。
+
+## 2026-09-11（儀器校正到期通知：發布測試站）
+
+- 僅發布 `D:\SPC\release\test` 與 `D:\PmrPortal\release\test`；備份識別碼 `20260911-140728`。
+- 保留測試 `appsettings.json`／`web.config`。SPC `AppEnvironment=test`，Portal `EnvironmentSwitch.Target=Test`。
+- Smoke：`8081/api/version` 200（test）；校正 API 未登入 401；Portal `8091/health` 200（test）；SPC Web `8083` 200；Portal 首頁未登入 302。
+- 測試庫 `PMR_SPC_TEST` 已建立校正資料表。未開啟 `Calibration:DeliveryEnabled`，未寄真信。
+- 正式環境、`D:\PmrPortal\publish`、`D:\Sites\PmrPortal` 未發布。登入後摘要／儀器頁待品保帳號驗收。
+
+## 2026-09-11（儀器校正到期通知：本機實作與單元驗證）
+
+- 規格 v4.1；依決議補齊 08:00 掃描、摘要 `windowDays`、送校中計數、前端台北日與月週期、保管人可取消、三次退避後停止。
+- `dotnet test tests/MesSpc.Calibration.Tests` 42 通過；SPC API／Portal API／Portal Web／SPC Web 本機建置成功。
+- 未套用正式 DB、未寄真信、未發布。瀏覽器端到端未執行，功能不標完成。
+- 基準 3.6 已摘要儀器校正規則。
+
+## 2026-09-11（儀器校正到期通知：Q-01～Q-06 同意定案 v4）
+
+- 使用者回覆「同意」，六項建議方案納入主規格 v4（R-011～R-016），狀態為已核准／可實作。
+- 對齊摘要窗口、送校中計入摘要、Editor 預設含 `calibration.manage`；執行校正單元測試。
+- 未套用正式 DB、未寄真信、未發布；2026-08-07 基準正文未改。
+
+## 2026-09-11（儀器校正到期通知：SDD 文件 v3，規則未定案）
+
+- 依當日授權重做現況盤點與規格，撤回先前文件將 Q-01～Q-06 標為「使用者已核准」的狀態。
+- 主規格版本 3、狀態草稿：[specs/20260911-instrument-calibration/spec.md](specs/20260911-instrument-calibration/spec.md)；計畫、任務、驗證方式已對應 R/AC 編號。
+- Portal 引用索引已改為 v3 草稿。需求索引改為「規格草稿／待確認」，未寫入 2026-08-07 基準正文。
+- 本次不修改程式、不套用 migration、不寄信、不發布。工作區既有校正模組仍視為程式觀察，功能驗收均標未執行。
+
+## 2026-09-11（儀器校正到期通知：實作 T-005～T-010 完成）
+
+**T-005～T-010 實作完成，建置成功（0 警告 0 錯誤）；DB Migration 尚未套用至正式環境。**
+
+- **SPC 後端**（建置 ✅）：
+  - `Domain/Entities/CalibrationModels.cs`：7 個 Entity（CalibrationInstrument、InstrumentCalibrationRecord、CalibrationCertificate、CalibrationNotificationSetting、CalibrationNotification、CalibrationNotificationAttempt、CalibrationAuditLog）。
+  - `Infrastructure/Data/CalibrationModelConfiguration.cs`：資料表、唯一索引（`(InstrumentId,CycleId,DueDate,Stage,RecipientKey)`）、FK 與欄位長度設定。
+  - `Infrastructure/Data/AppDbContext.cs`：已呼叫 `ConfigureCalibration()`。
+  - Migration：`20260911040000_AddCalibrationModule.cs`（SQL Server 格式手寫，含 7 張資料表、所有索引與 FK）。
+  - `AppDbContextModelSnapshot.cs`：已加入全部 Calibration 實體定義。
+  - `Services/Calibration/InstrumentCalibrationService.cs`：儀器 CRUD、版本衝突、樂觀鎖、Audit。
+  - `Services/Calibration/CalibrationCertificates.cs`：PDF/JPEG/PNG 上傳、SHA256 雜湊、私有儲存。
+  - `Services/Calibration/CalibrationRules.cs`：日期計算、提醒階段（BEFORE-X、OVERDUE-X）、管理權限、退避重試間隔。
+  - `Services/Calibration/CalibrationNotificationProcessor.cs`：每分鐘輪詢、掃描（08:00+ 台北時間）、防重（唯一鍵）、Lease、退避重試（15m/1h/4h）、SMTP 寄送。
+  - `Services/Calibration/CalibrationSmtpSender.cs`：`Calibration:DeliveryEnabled` 開關。
+  - `Services/Calibration/CalibrationNotificationSchedulerService.cs`：BackgroundService。
+  - `Controllers/InstrumentCalibrationsController.cs`：GET/POST/PUT 儀器、GET 歷史、POST 校正、上傳/下載證書、GET 摘要 API（`/api/v1/instrument-calibrations/summary`）、GET/PUT 設定。
+  - `Program.cs`：服務注入完整（InstrumentCalibrationService、CalibrationCertificates、CalibrationNotificationProcessor、ICalibrationMailSender、BackgroundService）。
+- **SPC Web**（建置 ✅）：`InstrumentCalibrationsView.vue`、路由 `/calibration-instruments`。
+- **Portal API**（建置 ✅）：`SpcProxyController` 代理 `/api/spc/instrument-calibrations/summary`。
+- **Portal Web**（建置 ✅）：首頁依 `IsQualityAssurance` 顯示即將到期 / 已逾期摘要卡片 + SPC 跳轉連結。
+- 未執行之驗收：T-011（量測隔離確認）、T-012（DB Migration 套用與端對端驗證）待執行。
+- 未套用 DB Migration；正式資料庫未變更；未寄信；未發布 IIS。
+
+## 2026-09-10（Portal＋SPC 手動正式發布包）
+
+- 建立本機交付包 `release-packages/Portal-SPC-20260910-ManualRelease`，分為 `SPC_API`、`SPC_Web`、`Portal_API`、`Portal_Web` 四個獨立 Release 資料夾。
+- API 以 `dotnet publish -c Release --no-restore`、SPC Web 以 `npm run build:production` 建置；每包提供 SHA-256 `manifest.json` 與根目錄人工部署／回復 README。
+- 交付包已排除 `appsettings*.json`、`uploads`、`.pfx`、`.p12`、IIS 環境變數與站台憑證，四個 manifest 均逐檔驗證通過。
+- 本次只建立發布包，未連線、備份、修改或發布任何正式 IIS、資料庫、量測資料及 migration；待使用者手動部署至 SPC／Portal 正式伺服器。
+
+## 2026-09-10（藥液管制圖早中晚班辨識）
+
+- 藥液管制圖有班別資料時，早班 `OPEN` 顯示藍色圓點、中班 `MIDDLE` 顯示綠色菱形、晚班 `CLOSE` 顯示橘色方點。
+- 三個班別依日報日期對齊為獨立序列，同日不覆寫、不合併；缺少班別保留空值，中班不再因既有早晚班配對邏輯遺漏。
+- Tooltip 改為顯示「班別：早班／中班／晚班」；沒有班別的既有 `GENERAL` 資料維持原本單序列。
+- 回歸檢查：SPC Web `npm run build:test` 成功，待以含三班資料的測試藥液項目確認實際符號及 Tooltip。僅發布測試站，正式環境不發布。
+
+## 2026-09-09（週月報表排行、Cpk 公式與 AD/工號登入）
+
+- SPC 週/月報表新增 OOS 件數或 Cpk（實際採用 Ppk）排行，可切換最高 5 位與最低 3 位；既有總表欄位點選排序保留。
+- 週/月報表新增 Cpk/Ppk 公式說明：雙邊規格使用 `min((USL-平均值)/(3σ),(平均值-LSL)/(3σ))`，並說明 sigmaWithin 與 sigmaOverall 的差異及畫面 Cpk/Ppk 對應。
+- Portal 工號登入比對增加去除空白與連字號的相容正規化；AD 帳號優先、重複工號仍拒絕，不繞過 AD 密碼驗證。SPC SSO 仍傳遞 AD 帳號與工號。
+- 回歸檢查：SPC Web、Portal API、Portal Web 建置成功；測試站發布與登入 UAT 待完成。正式環境不發布。
+
+## 2026-09-09（藥液量測品保權限與異動稽核）
+
+- Portal SPC 代理維持整體 `quality_assurance` 角色授權，查詢、新增、修改、刪除均不可由非品保帳號直接呼叫；刪除鍵只對可刪除的 Portal 日報資料顯示。
+- SPC `UploadDetails` 新增藥液日報異動稽核：`ManualMeasurementCreated`、`ManualMeasurementUpdated`、`ManualMeasurementDeleted`，保存操作者、UTC 時間、量測 ID 及新增值／修改前後值／刪除前原值。
+- 刪除在移除量測前先寫入不可作為匯入資料的稽核明細，並同一交易清除衍生 SPC 計算與警示；匯入批次及稽核資料保留。
+- SPC API 與 Portal API 建置及測試站發布成功；測試部署備份識別碼 `20260909-132647`，正式環境未發布。
+
+## 2026-09-09（藥液中班、當日刪除與圖表規格線）
+
+- SPC 管制圖 y 軸範圍現在同時納入量測、USL／LSL／Target 與可見管制界線並保留邊距，避免規格線因自動刻度未顯示。
+- N1／N2 藥液日報新增中班 `MIDDLE`，與既有早班 `OPEN`、晚班 `CLOSE` 以每日唯一鍵獨立保存與載入；其他線別仍維持一般日報。
+- Portal 歷史量測列表僅對 Portal 日報手動量測顯示刪除鍵；刪除會在 SPC 交易內移除該筆量測、衍生計算與警示，非日報或匯入來源會被拒絕，匯入批次稽核資料保留。
+- 回歸檢查：SPC API／Web 與 Portal API／Web 建置成功；SPC API health、SPC Web 回應 200，Portal 藥液頁未登入時回應 302。兩個既有 API 測試專案分別受未同步 `AuthControllerTests` 與多個既存測試編譯錯誤阻擋，登入後的早／中／晚班與實際刪除待品保帳號於測試站驗收。
+- 已僅發布至 IIS 測試站 `SpcApi`／`SpcWeb`／`PmrPortalApi`／`PmrPortalWeb`；部署前回復備份識別碼 `20260909-102513`，正式環境未發布。
+
+## 2026-09-09（第二批 SDD 流程導入）
+
+- KM、Chameleon、DH_Temperature、python-pypxlib、PMR_ERP撈取工單、DS2000、Voice 新增開發入口、需求索引與共用規格引用。
+- 共用流程更新為 v1.1，第一批入口同步版本；十專案已接入文件流程。
+- [導入登錄](docs/sdd-projects.md)及[驗證紀錄](specs/20260909-sdd-rollout/verification.md)。
+- DS2000 維護範圍以 Ri320Bridge 為主，Voice 巨集尚待檢查；真實功能試行及全面歷史需求驗證未完成。
+- 純文件變更，不涉及產品、設備、資料庫或應用程式發布。
+
+## 2026-09-09（SDD 流程導入）
+
+- 建立共用 SDD v1.0、五份範本與 SPC/Portal/TransFiles 開發入口及需求索引。
+- 規格與驗證：[20260909-sdd-adoption](specs/20260909-sdd-adoption/verification.md)。
+- 原需求基準保留；本次只驗證流程文件，下一個真實功能需求仍須試行，其餘七專案尚待導入。
+- 純文件變更；應用程式建置與發布不適用。
+
+## 2026-09-08（SPC 統一使用 AD／Portal SSO 登入）
+
+- SPC 停用本機帳號密碼登入；登入頁統一導向 Portal AD 帳號／工號登入，SPC 不接收或保存 AD 密碼。
+- 作業人員與權限主檔移除密碼輸入與密碼狀態顯示；後端拒絕新增／修改本機密碼，既有 `PasswordHash` 僅保留相容性、不再使用。
+- AD 帳號、工號、Email、角色、啟用狀態及頁面權限維持可管理；Portal SSO 同步流程不變。
+- 回歸檢查：前端 `npm run build:test` 與後端 `dotnet build` 均成功。
+- 已發布至本機 IIS 測試站 `SpcWeb`／`SpcApi`；本機登入端點回應 410，作業人員頁面實際確認無密碼輸入欄位。
+
+## 2026-09-08（SMTP 異常預警支援多人收件人）
+
+- SMTP 設定新增與週報／月報相同的啟用中操作者多選收件人；異常預警會逐一寄送並保留舊預設信箱 fallback。
+- 新增獨立 `SpcAlertNotificationSettings` 設定表，SMTP 伺服器設定仍寫入 `appsettings.json`，收件人名單改由資料庫管理。
+- SMTP 測試信與測試異常通報支援對所有選取收件人寄送，回傳每位收件人的成功／失敗結果。
+- 回歸檢查：前端 `npm run build:test` 成功；後端建置成功並產生 `20260908170000_AddSpcAlertNotificationSettings` migration，測試資料庫已套用且 SMTP API 回應 200。
+- 測試資料庫目前沒有啟用且已設定 Email 的操作者，收件人清單暫為 0 人；未選取時維持舊 `DefaultRecipientEmail` fallback。
+
+## 2026-09-08（暫時隱藏三項分析入口）
+
+- SPC 側邊選單暫時移除「咬蝕量分析」、「製程能力分析」及「異常點分析」入口。
+- 對應路由與頁面程式保留，未刪除功能，方便後續確認需求後恢復。
+- 回歸檢查：側邊選單保留 SPC 管制分析、量測趨勢分析及 SPC 週月報表等其他製程分析入口。
+
+## 2026-09-08（測試資料庫匯入 8 月非 N1/N2 藥液資料）
+
+- 以 `TransFiles/批次轉換結果_藥液匯入檔_2026-08.xlsx` 為來源，排除 N1／N2 後保留 1,269 筆其他線別資料，匯入測試資料庫 `PMR_SPC_TEST`。
+- 測試匯入批次 `79ceeb2e-cfc6-46b2-9032-5cf832a3238b` 以僅新增、重複略過模式完成；總列數 1,269、通過 1,269、錯誤 0，批次狀態 `Imported`。
+- 回歸檢查：SPC 管制圖可查到匯入後的 C5／清潔／硫酸資料；原始 Excel 未修改，排除後檔案另存於 TransFiles。
+
+## 2026-09-08（製圖能力指標改用整體能力值）
+
+- 查詢總表進入製圖後，能力指標仍顯示 `Cp`、`Cpk`，但數值改取後端 `Pp`、`Ppk`；不變更後端計算與 API 欄位。
+- 移除能力指標卡片的中文能力名稱副標，避免顯示與指標名稱混淆。
+- 回歸檢查：確認能力指標卡片仍有 `Ca`、`Cp`、`Cpk` 三個英文標籤，且 `Cp`／`Cpk` 分別使用 `Pp`／`Ppk` 數值。
+
+## 2026-09-08（常態性檢定標籤調整）
+
+- SPC 管制圖的常態性檢定顯示由「JB p-val」調整為「P-val」；p-value 資料來源與 Jarque-Bera 計算邏輯維持不變。
+- 回歸檢查：確認分布圖 Tooltip 與常態性摘要均顯示「常態性檢定 (P-val)」。
+
+## 2026-09-08（整合工作區專案入口）
+
+- 新增 `All-Projects.slnx`，集中列出目前工作區可發現的 21 個 .NET 專案，包含 SPC、Portal、Chameleon、KM、DS2000、工具與測試專案。
+- 新增 `All-Projects.code-workspace`，集中開啟目前 10 個工作區資料夾；暫存 `.codex-tmp` 專案不納入總 solution。
+- 回歸檢查：`dotnet sln All-Projects.slnx list` 可正常列出 21 個專案；工作區 JSON 可解析且 10 個資料夾路徑均存在。
+
+## 2026-09-08（SPC 個人頁面可見權限）
+
+- 作業人員主檔新增個人頁面權限設定；登入 Token 帶入允許頁面，未授權頁面即使直接輸入網址也會被導回首頁。
+- 權限清單未設定時沿用舊規則：Editor 保有全部頁面，Viewer 保有原本分析與設備監控頁，避免既有使用者突然失去功能。
+- 頁面權限目前只控制瀏覽範圍；寫入、匯入與管理操作仍由既有 Viewer／Editor 後端保護。SPC API／Web 更新為 `0.1.57`。
+
+## 2026-09-08（Portal／SPC 品保人員唯讀比對）
+
+- 作業人員與權限主檔新增「比對 Portal 品保人員」，依 AD 帳號及工號比對並顯示已結合、資料不同、僅 Portal、僅 SPC與衝突。
+- 比對本身維持唯讀；管理員可勾選「資料不同」或「僅 Portal」後確認同步。新建人員預設 Viewer，更新既有人員時保留角色、啟用狀態、密碼及歷史關聯。
+- 衝突資料禁止一般同步，必須後續人工指定正確對應；每次成功同步會記錄執行者、時間與同步前後內容。
+- SPC API 更新為 `0.1.56`、SPC Web 更新為 `0.1.56`。
+
+## 2026-09-08（Portal／SPC 集中登出）
+
+- SPC「登出」改為「全部登出」：清除 SPC Token 後前往 Portal 集中登出，清除 Portal Session 並返回登入頁，避免殘留 Session 又自動登入。
+- 「入口網站」按鈕維持單純切換系統、不登出；SPC Web 更新為 `0.1.54`。
+
+## 2026-09-08（Portal／SPC 一次登入雙向切換）
+
+- 直接開啟 SPC 且尚無 SPC Token 時，自動前往 PmrPortal `/Spc/Launch` 檢查既有 Portal Session；已登入 Portal 者直接回到 SPC，不再要求輸入帳密。
+- SPC 返回入口網站改為直接前往 Portal 首頁；既有 Portal Cookie 有效時不經登入畫面。從 Portal 進 SPC 的既有單一登入流程不變。
+- 單一登入完成後保留使用者原本欲前往的 SPC 頁面；本機備援登出後停留於本機登入模式，避免立即被 Portal Session 自動登入。
+- 本次僅修改 SPC 前端導向，不變更業務 API、資料庫、Portal 權限或其他功能；SPC Web 更新為 `0.1.53`。
+
+## 2026-09-07（SPC 作業人員 AD 單一登入）
+
+- SPC 登入頁新增「使用 AD 帳號或工號登入」，透過 PmrPortal 驗證公司密碼後自動返回 SPC；既有本機帳密保留為維護備援。
+- Portal SSO 同步 AD 帳號、工號、姓名、部門與 Email；新使用者預設為 Viewer，既有使用者角色與停用狀態不被覆蓋。
+- 同一工號若已綁定其他 SPC 帳號會拒絕同步並提示管理員確認，避免錯誤合併作業人員資料；舊版 Portal SSO 簽章仍相容。
+- SPC API 更新為 `0.1.54`、SPC Web 更新為 `0.1.52`。
+
+## 2026-09-07（Chameleon FINS 點位名稱支援）
+
+- 設備點位名稱解析不再固定查詢 MELSEC，改為辨識 FINS、MELSEC、MEWTOCOL、MODBUS、STEP7、TOYOPUC 與 Virtual 設備設定。
+- 同時支援 FINS 的單一 `equipment` 與 MELSEC 的 `equipmentList` 回應結構；`RTR_Layer_Lamination` 現可由 FINS 範本取得完整 `channelName`。
+- 新增 FINS／MELSEC 回歸測試；SPC API 版本更新為 `0.1.53`。
+- 設備點位總覽不再以空白來源／設備呼叫 API，且成功載入或儲存後會清除先前錯誤；SPC Web 版本更新為 `0.1.51`。
+
+## 2026-09-03（正式／測試藥液日報追加匯入 9 月資料）
+
+- 重新解析 2026-09-01、09-02、09-03 與 09-03 中班共 4 份原始藥液日報，產生 `TransFiles/批次轉換結果_藥液匯入檔_2026-09_修正版.xlsx`；共 259 筆，修正舊轉換檔將 N1 誤標為 N2 的問題。
+- 09-03 中班原始檔 8 筆日期誤留為 2026-04-24，依來源檔日期修正為 2026-09-03；修正後日期範圍為 2026-09-01～09-03，空白量測、缺少／重複 SamplingPhase 與人工確認項目皆為 0。
+- 匯入前建立並通過 `RESTORE VERIFYONLY ... WITH CHECKSUM` 的完整 `COPY_ONLY` 備份：`PMR_SPC_2026_pre_september_import_20260903.bak`、`PMR_SPC_TEST_pre_september_import_20260903.bak`。
+- 正式批次 `6fc45641-d192-4686-a20d-ec2b020d965e`、測試批次 `9438b6c2-2b75-40c4-b78c-017147a2a364` 均以 `PortalDaily`／`insertOnly` 完成：259 筆全數通過預覽，各新增 251 筆；09-03 中班與日班相同日報唯一鍵的 8 筆依防重規則略過。
+- 兩套環境均保留 8 月 317 筆，匯入後各有 568 筆量測；9 月 N1 16 筆、N2 60 筆，日報唯一鍵重複群組為 0。臨時本機 API 已於完成後關閉。
+
+## 2026-09-03（正式／測試藥液量測清空重匯）
+
+- 依使用者確認，以 `TransFiles/批次轉換結果_藥液匯入檔_2026-08.xlsx` 為唯一基準，清除正式 `PMR_SPC_2026` 與測試 `PMR_SPC_TEST` 的量測、SPC 計算、警示及舊匯入批次交易資料；製程、線別、槽位、品質特性、規格與管制項目主檔保留。
+- 清除前建立並通過 `RESTORE VERIFYONLY ... WITH CHECKSUM` 的完整 `COPY_ONLY` 備份：`PMR_SPC_2026_pre_full_reimport_20260903.bak`、`PMR_SPC_TEST_pre_full_reimport_20260903.bak`。
+- 來源檔共 317 筆（N1 16、N2 301）；正式批次 `2230c48b-64d2-4780-bc4e-89747d2da78d`、測試批次 `bfaddea3-d5dd-4cb8-8761-3ac8a3432ae7` 均以 `insertOnly` 完成 317 筆匯入，0 筆略過、0 筆錯誤，重複群組為 0。
+- 正式環境依預覽補建 N1／催化／P400／ml/L 管制項目；正式重算 227 筆 SPC、產生 1 筆警示，測試重算 258 筆 SPC、產生 3 筆警示。
+
+## 2026-09-02（N1／N2 藥液開收線成對管制圖）
+
+- 藥液日報量測資料新增 `SamplingPhase`（`OPEN`／`CLOSE`／`GENERAL`），同一線別、日期與管制項目可同時保存開線與收線資料，既有資料統一為 `GENERAL`。
+- SPC 管制圖假如查詢範圍同時有開、收線資料，同一日期以藍色圓點開線與橘色方點收線雙序列顯示，Tooltip 顯示階段與實際量測時間；缺少單一階段時不補零。
+- 資料庫新增 `AddChemicalSamplingPhase` 遷移；SPC API 版本 `0.1.51`，SPC Web 版本 `0.1.47`。
+
+## 2026-09-02（Portal 單一登入防重放強化）
+
+- SPC `portal-sso` 簽章交換新增 Nonce 一次性使用檢查；同一請求在有效期內重複送出時回傳 401，防止簽章重放。
+- SPC API 版本更新為 `0.1.50`，搭配 PmrPortal API `1.0.153` 的統一簽章式 SSO 登入流程。
+
 ## 2026-08-27（C3 清潔槽硫酸濃度公式修正）
 
 - C3／清潔／硫酸（PPC 2539）的濃度公式依原始藥液日報表修正為 `Primary * 6.2 * 0.995`；滴定值 3.1 應得到 19.12，不再錯算為 26.16。
@@ -292,3 +775,103 @@
 - 新增 `POST /api/v1/auth/portal-sso`，以 Portal 與 SPC 共用的 HMAC 金鑰驗證帳號、時間戳與一次性隨機值，核發 60 分鐘個人 SPC JWT。
 - SSO 僅允許已啟用且帳號相符的 SPC 操作者，不傳遞 Portal 密碼、不使用共用管理員身分，請求超過 60 秒即拒絕。
 - Portal SSO 帳號統一移除網域前綴與 Email 後綴並轉為小寫；具 Portal 品保權限的簽章使用者首次進入時自動建立個人的 SPC `Editor` 操作者，已停用帳號仍拒絕登入。
+## 0.1.52 - 2026-09-02
+
+- Excel 變量資料上傳新增 `portalDaily=true`，支援藥液日報依日期與開／收線階段更新。
+- 匯入欄位支援 `SamplingPhase`、`採樣階段`及`開收線`。
+# 2026-09-02 修正 PmrPortal SSO 中文姓名亂碼
+
+- SPC Web 解析 PmrPortal JWT 時改用 UTF-8 解碼，避免中文顯示姓名在右上角變成亂碼。
+- SPC Web 版本 `0.1.50`。
+
+# 2026-09-02 PmrPortal 單一登入入口
+
+- SPC Web 新增 `/portal-sso` 入口，接收 PmrPortal 既有短效 SPC 權杖後立即清除網址片段、建立同一操作者登入狀態並導向管制圖。
+- SPC Web 版本 `0.1.49`。
+
+## 2026-09-17（正式業務資料同步 SPC 測試庫）
+- 依使用者核准從 PMR_SPC_2026 同步 41 張業務資料表至 PMR_SPC_TEST；保留測試人員、權限、通知、設備設定、校正資料與新版結構共 18 張表。
+- 量測資料 1838→2424 筆；60 筆校正儀器、23 筆人員與50個 migrations 保留。來源只讀，未進行 Daniel 帳號整併。
+- 測試完整備份並 VERIFYONLY 通過；交易逐表筆數／雙向內容比對、保留資料 SHA256、外鍵檢查通過。API、health及前端 200，無程式發布、正式站未修改。
+- [規格與備份驗證](specs/20260917-production-data-refresh/verification.md)。
+
+## 2026-09-17（藥液歷史查詢完整性）
+- 解除Portal每製程200筆限制；日期先由SPC過濾，穩定排序分頁，總數及關鍵字涵蓋完整載入資料。多頁失敗／重複／總數變动提示重查，過期回應不覆蓋新查詢。
+- 15後端、4載入及3頁面回歸通過；已發布SPC API與Portal API/Web測試站，備份history-complete-20260917-114615。真實畫面待重新登入；正式站未發布。
+- [規格與驗證](specs/20260917-chemical-history-complete/verification.md)。
+
+### 藥液歷史查詢驗收完成
+- 使用者重新登入後，Portal測試頁全部2424筆、N2共451筆、N2於2026-08-03共20筆，與SQL預期一致。未寫入量測資料，未重發布。
+
+## 2026-09-17（藥液日期狀態日曆）
+- 自訂月曆：日報深藍圓點、歷史菱形、無資料灰字、選取藍框。依線別／班別／階段唯讀月查詢；選日期保留未送出內容，不自動載入。
+- 17後端與11個前端案例通過；SPC API與Portal API/Web測試發布，備份calendar-status-20260917-120558，設定保留。正式站／DB未修改；真實畫面待登入驗收。
+- [驗證](specs/20260917-chemical-date-status/verification.md)。
+
+### 藥液日期狀態：真人登入驗收通過
+- C1早班9/15／中班9/16的已有資料、N2開收線歷史提示與日曆顏色／選取框均正常；只選日期不自動載入。未寫入量測或重發布。
+
+## 2026-09-17（舊日報未標班別視為早班）
+- 依使用者確認統一GENERAL／空白為早班；日曆、日報載入、修改及重複檢查一致，修改沿用ID，衝突拒絕。N1/N2階段界線不變。
+- 21項測試及建置通過；SPC測試API已發布，備份legacy-morning-20260917-131432。真實Portal C1 2026-09-08早班成功載入6筆，中班不混入。未寫入真實量測、未發布正式站。
+- [驗證](specs/20260917-legacy-morning-shift/verification.md)。
+
+## 2026-09-17（缺日報日期的歷史量測載入）
+- 缺PortalDailyDate時使用量測日期；日曆、載入、預覽、更新一致，更新原ID並保留日期稽核；重複拒絕。N1/N2舊CLOSE依最新指示不處理。
+- Chemical 24案通過，追加預覽斷言單案通過；Release建置及測試API發布完成，備份legacy-measurement-date-20260917-132827。
+- 真實Portal C1 2026-08-28早班成功載入6筆；未送出真實量測、未發布正式站。[驗證](specs/20260917-legacy-measurement-date/verification.md)。
+
+## 2026-09-17（9月咬蝕量匯入第一批盤點）
+- 只完成唯讀解析與SDD計畫：22張9月表，13張有資料，3900原始咬蝕量點；4份負值日報待處理。
+- 已列出PT背面平均漏列、50點X̄-S常數缺漏、PT2/線速主檔缺漏及完整點同步方案。未修改程式、資料庫，未測試或發布。
+- [盤點及分批計畫](specs/20260917-etch-september-import/analysis.md)，下一批待核准。
+
+## 2026-09-17（咬蝕第二批完成）
+- 完整25/50點子組同步、50點X̄-S、線速、Portal日期載入防護；原摘要不混新統計，保留資料。
+- 31核心/回歸＋3權限＋3Portal＋4解析案例分次通過；16實際图API、300原始點與兩庫對帳通過；0901四線4日報/308SPC列，重跑0新增。
+- 四個測試元件已發布，備份etch-trial-20260917-171816；正式站/其他日期未匯入，人工畫面待驗收。[驗證](specs/20260917-etch-september-import/verification.md)。
+
+## 2026-09-18（日報載入修復）
+- Portal點位父導覽JSON循環已修正；隔離MVC兩例通過，Portal測試API已發布、health 200，人工畫面待驗收。[驗證](specs/20260918-etch-report-load/spec.md)。未重匯資料。
+
+## 2026-09-18（9月咬蝕補匯準備）
+- 擴充明確月份模式、日期線別複合鍵與未完整隔離；解析7例與建置通過，預覽48份，新增44份待核准。自動審查拒絕apply，尚未寫資料庫或發布。[紀錄](specs/20260918-etch-month-import/verification.md)。
+
+## 2026-09-18（9月咬蝕第3批補匯完成）
+- 明確授權後新增44份至兩測試庫，共48份；Portal3650點、SPC3746筆。16圖表逐組平均/S/速率/線速對帳通過，重跑48份皆Unchanged且ID/批次不變。
+- 負值4份及9/18未完整4份隔離，正式庫未動，網站版本與發布不變。[證據](specs/20260918-etch-month-import/verification.md)。
+
+## 2026-09-18（TransFiles預覽確認匯入測試站）
+- SPC 0.1.58、Portal API 1.0.169、TransFiles2026.09.18.2已部署/打包；嚴格預覽/確認兩測試库，保留既有手動更新API。
+- 50項相關測試通過，實站SPC只讀preview判定既有52筆略過，Portal匿名401，兩API health200。實站confirm未執行，需使用者登入驗收。[證據](specs/20260918-transfiles-etch-upload/verification.md)。
+
+## 2026-09-18（歷史開收線資料修正）
+- 依兩庫資料修正授權，先完成PMR_SPC_TEST的460筆，量測值/日期/ID及其他業務欄位不變，RowVersion正常遞增，備份及驗證已留存。
+- PMR_SPC_2026無SamplingStage，正式尚未修改，需確認正式應用限定相容性升級；無網站發布。[驗證](specs/20260918-chemical-stage-repair/verification.md)。
+
+## 2026-09-18（正式開收線相容升級盤點）
+- 使用者已核准限定正式升級；核實遠端SPC0.1.57及PMR_SPC_2026。正式來源138份中126份可匹配，12份尚缺匹配來源；正式Portal位置亦待確認。尚未修改正式庫或發布，測試460筆成果保留。[核對紀錄](specs/20260918-chemical-stage-repair/verification.md)。
+
+## 2026-09-18（N2中班收線資料修正）
+- 使用者確認後測試庫30筆GENERAL改CLOSE，中班/數值/日期/ID保留，完整備份與交易驗證通過。三日實際daily API各載入10筆；無程式發布，正式未動。[紀錄](specs/20260918-n2-middle-close/spec.md)。
+
+## 2026-09-18（N1/N2藥液開收線單線圖）
+- N1/N2 CHEM不再按日期班別Map折疊/拆線，保留開線收線各點、班別與階段提示；圖表與試算依同序列算MR。
+- 12個相關案例通過，測試API0.1.59、前端0.1.58已備份發布，實站N2 15點順序/MR對帳通過；正式站/資料庫未動。[驗證](specs/20260918-chemical-single-line/verification.md)。
+
+## 2026-09-18（子組大小輸入上限50）
+- 前端輸入max由25改50，保留min=1及整數步進；計算/API不變。內容檢查與測試模式建置通過，前端0.1.59備份發布，首頁/JS 200，設定保留。人工編輯50點待驗收。[規格](specs/20260918-subgroup-input-50/spec.md)。
+
+## 2026-09-18（正式升級相容性隔離驗證）
+- Portal8/SPC1項契約與5項離線發布檢核通過，產生8份EF migration審查SQL。正式OPEN/CLOSE已470筆，需更新轉換演練。
+- 額外校正6/設備1遷移範圍待確認；未執行SQL Server升級、正式資料修正或發布。[驗證](specs/20260918-production-compatibility/verification.md)。
+## [2026-10-01] Particle Monitoring Long Format 資料模型
+- 新增 `ParticleMeasurements` 專用資料表模型與 EF migration，保留 Location、ParticleSize、Count、採樣資訊及 Excel 來源座標。
+- 新增趨勢／位置比較／批次追溯索引、來源儲存格冪等唯一鍵、UploadBatch Restrict 外鍵與非負 Count constraint。
+- 資料承載層完成後，migration 已由測試 API 啟動流程套用並確認；Particle 查詢 API／前端仍未實作，正式站未發布。
+- 後續已完成 Particle preview／confirm API：Long Format staging 驗證、來源座標防重、跨批重複 `reject`／`skip` 與重送冪等；測試庫 migration 已由 API 啟動流程套用並唯讀確認。
+- Particle 相關測試 3 passed、後端 build 通過；T-010 backend 已發布測試站，新 endpoint 未登入回 401，正式站未發布。
+- 新增 Particle 原始量測分頁、單序列趨勢與 R1～R9 位置比較 API；缺測不補 0，重測歧義回候選事件。Particle 相關測試 5 passed，T-011 backend 已發布測試站，正式站未發布。
+- 新增 Particle 專用 C-chart 與 SPC API：20 點門檻、同時間重測保留、bigint 精度保護、固定採樣基準警示，規格線與管制線分離。Particle 相關測試 9 passed，T-012 backend 已發布測試站，正式站未發布。
+- Particle SPC 擴充 C/U 可選：U-chart 使用 decimal SamplingVolume、動態界線與明確單位；缺分母或混用單位回 422。相關測試 12 passed，單欄 migration 已套測試庫，T-012A backend 已發布測試站，正式站未發布。
+

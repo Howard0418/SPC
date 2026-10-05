@@ -1,0 +1,21 @@
+# 任務
+- 功能 ID：20260930-particle-monitoring
+- 規格版本：6
+- [規格](spec.md)｜[計畫](plan.md)
+
+- [x] T-001：建立 SDD 草稿文件，不修改程式與資料庫。
+- [x] T-002：使用者已確認草稿方向並要求開始 Particle Monitoring 小工作。
+- [x] T-003：盤點既有 DUST 資料與 `R#_粒徑` 管制項目相容策略。
+- [x] T-004：決定 Particle DB schema、欄位型別、查詢索引與來源儲存格冪等唯一鍵。
+- [x] T-005：設計 Excel 橫向轉 Long Format、SPC preview／confirm、錯誤碼與重複處理契約。
+- [x] T-006：設計原始量測查詢 API、趨勢與位置比較資料契約、時區／分頁／歧義處理。
+- [x] T-007：評估 C／U／I-MR chart engine 接法；第一版採 C-chart，定義基準點門檻、採樣警示與引擎相容邊界。
+- [x] T-008：使用者已確認完整設計並授權進入實作。
+- [x] T-009：先建立模型測試，再實作 ParticleMeasurement entity、EF schema／索引、非負 Count constraint 與 migration。
+- [x] T-010：實作 Particle preview／confirm API 與驗證、重複處理測試。
+- [x] T-011：實作 Particle 原始量測、趨勢與位置比較 API 及測試。
+- [x] T-012：實作 Particle C-chart adapter／SPC API 與測試。
+- [x] T-012A：擴充 Particle U-chart decimal 分母 adapter、SPC API 圖型選擇與測試。
+- [x] T-013：調整 TransFiles 產生 Particle Long Format preview payload，保留舊 DUST 相容路徑並測試。
+- [x] T-014：實作 SPC Web Particle 查詢、趨勢、位置比較、C/U 圖型選擇與 SPC 畫面。
+- [x] T-015：整體回歸、同步需求／變更紀錄並發布 SPC 測試站。

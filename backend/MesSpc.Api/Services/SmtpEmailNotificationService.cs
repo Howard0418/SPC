@@ -37,6 +37,9 @@ public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEma
         return await SendEmailInternalAsync(recipientEmail, "品管測試員", subject, body, overrideSettings);
     }
 
+    public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null)
+        => SendEmailInternalAsync(recipientEmail, recipientName, subject, htmlBody, overrideSettings);
+
     public async Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName)
     {
         var host = config["SmtpSettings:Host"] ?? "localhost";

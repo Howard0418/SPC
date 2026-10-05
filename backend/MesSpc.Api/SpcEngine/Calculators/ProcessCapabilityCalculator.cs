@@ -21,6 +21,8 @@ public static class ProcessCapabilityCalculator
         if (nRef >= 2)
         {
             var validSubgroups = subgroups.Where(x => x.N == nRef).ToList();
+            if(nRef==50 && validSubgroups.Count>0 && SpcConstants.TryGetStandardDeviationFactor(nRef,out var c4))
+                sigmaWithin=validSubgroups.Average(g=>Math.Sqrt(g.Values.Sum(v=>Math.Pow(v-g.Mean,2))/(g.N-1)))/c4;
             if (validSubgroups.Count > 0 && SpcConstants.TryGetCapabilityFactors(nRef, out var d2, out _))
             {
                 double rBar = validSubgroups.Average(x => x.Range);
@@ -65,7 +67,7 @@ public static class ProcessCapabilityCalculator
             if (halfWidth > 0)
             {
                 var target = (usl.Value + lsl.Value) / 2;
-                ca = Math.Abs(mean - target) / halfWidth;
+                ca = (mean - target) / halfWidth;
             }
 
             ppm = (double)allValues.Count(x => x > usl.Value || x < lsl.Value) / allValues.Count * 1_000_000;

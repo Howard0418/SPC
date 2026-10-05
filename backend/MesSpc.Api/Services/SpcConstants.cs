@@ -53,12 +53,17 @@ public static class SpcConstants
         return true;
     }
 
+    /// <summary>c4 = sqrt(2/(n-1))*Gamma(n/2)/Gamma((n-1)/2); preserve legacy table values.</summary>
+    public static bool TryGetStandardDeviationFactor(int n,out double c4)
+    {
+        c4=n==50 ? 0.994911304669732 : Table.TryGetValue(n,out var row)?row.c4:0;
+        return c4>0;
+    }
+
     public static bool TryGetXbarSFactors(int subgroupSize, out double a3, out double b3, out double b4)
     {
         a3 = b3 = b4 = 0;
-        if (subgroupSize < 2 || !Table.TryGetValue(subgroupSize, out var row) || row.c4 <= 0) return false;
-
-        var c4 = row.c4;
+        if (!TryGetStandardDeviationFactor(subgroupSize, out var c4)) return false;
         var factor = 3 * Math.Sqrt(1 - c4 * c4) / c4;
         a3 = 3 / (c4 * Math.Sqrt(subgroupSize));
         b3 = Math.Max(0, 1 - factor);

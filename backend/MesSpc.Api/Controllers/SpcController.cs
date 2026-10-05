@@ -274,3 +274,93 @@ public class FormulaController(AppDbContext db, FormulaEngineService formulaEngi
 
     public record EvaluateFormulaReq(string FormulaCode, List<double> Values, double? Usl, double? Lsl);
 }
+
+[ApiController]
+[Route("api/v1/chemical-f-table")]
+public class ChemicalFTableController(ChemicalFTableService fTableService) : ControllerBase
+{
+    [HttpGet("active")]
+    public async Task<IActionResult> GetActive(CancellationToken ct)
+    {
+        var detail = await fTableService.GetActiveDetailAsync(ct);
+        return detail is null ? NotFound(new { message = "尚未啟用 F 表版本。" }) : Ok(detail);
+    }
+
+    [HttpPost("sync-default")]
+    public async Task<IActionResult> SyncDefault([FromBody] ChemicalFTableSyncRequest req, CancellationToken ct)
+    {
+        var result = await fTableService.SyncDefaultAsync(req.Apply, req.VersionCode, req.DisplayName, ct);
+        return Ok(result);
+    }
+
+    [HttpPost("apply")]
+    public async Task<IActionResult> Apply([FromBody] ChemicalFTableApplyRequest req, CancellationToken ct)
+    {
+        if (req.Cells is null || req.Cells.Count == 0)
+            return BadRequest(new { message = "F 表儲存格不可空白。" });
+
+        try
+        {
+            var cells = req.Cells
+                .Select(x => new ChemicalFTableSeedCell(x.CellAddress, x.StandardSolution ?? "", x.NumericValue))
+                .ToList();
+            var result = await fTableService.SyncCellsAsync(cells, req.Apply, req.VersionCode, req.DisplayName, "SPC_F_TABLE_MAINTENANCE", ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("impact")]
+    public async Task<IActionResult> GetImpact([FromQuery] string cellAddress, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(cellAddress))
+            return BadRequest(new { message = "請指定 F 表儲存格。" });
+
+        try
+        {
+            var result = await fTableService.GetImpactAsync(cellAddress, ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("evaluate")]
+    public async Task<IActionResult> Evaluate([FromBody] ChemicalFTableEvaluateRequest req, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(req.Expression))
+            return BadRequest(new { message = "公式不可空白。" });
+
+        try
+        {
+            var result = await fTableService.EvaluateChemicalFormulaAsync(req.Expression, req.Variables, ct);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("references")]
+    public IActionResult ExtractReferences([FromBody] ChemicalFTableReferenceRequest req)
+    {
+        var refs = ChemicalFTableService.ExtractCellReferences(req.Expression);
+        return Ok(new { references = refs });
+    }
+
+    public record ChemicalFTableSyncRequest(bool Apply, string? VersionCode, string? DisplayName);
+    public record ChemicalFTableApplyRequest(bool Apply, string? VersionCode, string? DisplayName, List<ChemicalFTableApplyCell> Cells);
+    public record ChemicalFTableApplyCell(string CellAddress, string? StandardSolution, decimal NumericValue);
+    public record ChemicalFTableEvaluateRequest(string Expression, Dictionary<string, decimal>? Variables);
+    public record ChemicalFTableReferenceRequest(string? Expression);
+}

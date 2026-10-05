@@ -227,6 +227,463 @@ namespace MesSpc.Api.Migrations
                     b.ToTable("AttributeMeasurements");
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasComment("校正模組 Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 Action");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 Actor");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 AfterJson");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 BeforeJson");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasComment("校正模組 CreatedAt");
+
+                    b.Property<int?>("InstrumentId")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 InstrumentId");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 Reason");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CalibrationAuditLogs", null, t =>
+                        {
+                            t.HasComment("校正異動稽核");
+                        });
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationCertificate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasComment("校正模組 Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CalibrationRecordId")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 CalibrationRecordId");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 ContentType");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasComment("校正模組 CreatedAt");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 CreatedBy");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 Hash");
+
+                    b.Property<string>("OriginalName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 OriginalName");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint")
+                        .HasComment("校正模組 Size");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 StorageKey");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CalibrationRecordId");
+
+                    b.ToTable("CalibrationCertificates", null, t =>
+                        {
+                            t.HasComment("校正證書私有檔案索引");
+                        });
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationInstrument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasComment("校正模組 Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AcceptanceCriteria")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasComment("校正模組 AcceptanceCriteria");
+
+                    b.Property<string>("CalibrationMethod")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("校正模組 CalibrationMethod");
+
+                    b.Property<string>("CalibrationStandard")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasComment("校正模組 CalibrationStandard");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)")
+                        .HasComment("校正模組 Code");
+
+                    b.Property<Guid>("CurrentCycleId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("校正模組 CurrentCycleId");
+
+                    b.Property<int>("CustodianOperatorId")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 CustodianOperatorId");
+
+                    b.Property<int>("CycleMonths")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 CycleMonths");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("校正模組 Department");
+
+                    b.Property<bool>("IncludeCustodian")
+                        .HasColumnType("bit")
+                        .HasComment("校正模組 IncludeCustodian");
+
+                    b.Property<DateOnly?>("LastCalibrationDate")
+                        .HasColumnType("date")
+                        .HasComment("校正模組 LastCalibrationDate");
+
+                    b.Property<string>("LatestResult")
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 LatestResult");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("校正模組 Location");
+
+                    b.Property<string>("MeasurementSpecification")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasComment("校正模組 MeasurementSpecification");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasComment("校正模組 Name");
+
+                    b.Property<DateOnly?>("NextCalibrationDate")
+                        .HasColumnType("date")
+                        .HasComment("校正模組 NextCalibrationDate");
+
+                    b.Property<string>("NotificationIssue")
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 NotificationIssue");
+
+                    b.Property<string>("Precision")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasComment("校正模組 Precision");
+
+                    b.Property<string>("RecipientOperatorIdsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 RecipientOperatorIdsJson");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasComment("校正模組 Remarks");
+
+                    b.Property<string>("UsageStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasComment("校正模組 UsageStatus");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("校正模組 Version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("CustodianOperatorId");
+
+                    b.ToTable("CalibrationInstruments", null, t =>
+                        {
+                            t.HasComment("儀器校正主檔");
+                        });
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasComment("校正模組 Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 AttemptCount");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Email")
+                        .HasComment("校正模組 Channel");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasComment("校正模組 CreatedAt");
+
+                    b.Property<Guid>("CycleId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("校正模組 CycleId");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date")
+                        .HasComment("校正模組 DueDate");
+
+                    b.Property<string>("ErrorCode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 ErrorCode");
+
+                    b.Property<int>("InstrumentId")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 InstrumentId");
+
+                    b.Property<DateTime?>("LeaseUntil")
+                        .HasColumnType("datetime2")
+                        .HasComment("校正模組 LeaseUntil");
+
+                    b.Property<DateTime?>("NextAttemptAt")
+                        .HasColumnType("datetime2")
+                        .HasComment("校正模組 NextAttemptAt");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 RecipientEmail");
+
+                    b.Property<string>("RecipientKey")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)")
+                        .HasComment("校正模組 RecipientKey");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2")
+                        .HasComment("校正模組 SentAt");
+
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasComment("校正模組 Stage");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasComment("校正模組 State");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("校正模組 Version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("State", "NextAttemptAt");
+
+                    b.HasIndex("InstrumentId", "CycleId", "DueDate", "Stage", "RecipientKey")
+                        .IsUnique();
+
+                    b.ToTable("CalibrationNotifications", null, t =>
+                        {
+                            t.HasComment("逐收件人校正通知工作");
+                        });
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationNotificationAttempt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasComment("校正模組 Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AttemptedAt")
+                        .HasColumnType("datetime2")
+                        .HasComment("校正模組 AttemptedAt");
+
+                    b.Property<string>("ErrorCode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 ErrorCode");
+
+                    b.Property<int>("NotificationId")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 NotificationId");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 Result");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationId");
+
+                    b.ToTable("CalibrationNotificationAttempts", null, t =>
+                        {
+                            t.HasComment("通知逐次嘗試與結果");
+                        });
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationNotificationSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 Id");
+
+                    b.Property<string>("ChatWebhookProtected")
+                        .HasMaxLength(8192)
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 ChatWebhookProtected");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit")
+                        .HasComment("校正模組 IsEnabled");
+
+                    b.Property<string>("NotificationChannel")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Email")
+                        .HasComment("校正模組 NotificationChannel");
+
+                    b.Property<string>("ReminderDaysJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 ReminderDaysJson");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("校正模組 Version");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CalibrationNotificationSettings", null, t =>
+                        {
+                            t.HasComment("校正提醒設定");
+                        });
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChameleonSourceSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BaseUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceId")
+                        .IsUnique();
+
+                    b.ToTable("ChameleonSourceSettings");
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Chemical", b =>
                 {
                     b.Property<int>("Id")
@@ -275,6 +732,212 @@ namespace MesSpc.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Chemicals");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFTableCell", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CellAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FormulaText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NormalizedCellAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal?>("NumericValue")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<string>("RawValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SheetName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("StandardSolution")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TextValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VersionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VersionId", "NormalizedCellAddress")
+                        .IsUnique();
+
+                    b.ToTable("ChemicalFTableCells");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFTableReference", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CellAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NormalizedCellAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("PartProcessCharacteristicId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReferenceContext")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SourceFormula")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SourceRow")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceSheet")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VersionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartProcessCharacteristicId");
+
+                    b.HasIndex("VersionId", "NormalizedCellAddress");
+
+                    b.HasIndex("VersionId", "PartProcessCharacteristicId", "NormalizedCellAddress")
+                        .IsUnique();
+
+                    b.ToTable("ChemicalFTableReferences");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFTableVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("EffectiveAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SourceName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SourcePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VersionCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VersionCode")
+                        .IsUnique();
+
+                    b.ToTable("ChemicalFTableVersions");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ControlChartGroup", b =>
@@ -443,6 +1106,9 @@ namespace MesSpc.Api.Migrations
                     b.Property<double?>("LCL")
                         .HasColumnType("float");
 
+                    b.Property<double?>("LSL")
+                        .HasColumnType("float");
+
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
@@ -457,7 +1123,13 @@ namespace MesSpc.Api.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<double?>("TargetValue")
+                        .HasColumnType("float");
+
                     b.Property<double?>("UCL")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("USL")
                         .HasColumnType("float");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -524,6 +1196,88 @@ namespace MesSpc.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.EquipmentPointMapping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActiveWhen")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ChannelId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("EquipmentId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("StatusRole")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("WarningHigh")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("WarningLow")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceId", "EquipmentId", "ChannelId")
+                        .IsUnique();
+
+                    b.ToTable("EquipmentPointMappings");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Factory", b =>
@@ -699,6 +1453,76 @@ namespace MesSpc.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("InspectionItems");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.InstrumentCalibrationRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasComment("校正模組 Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("CalibrationDate")
+                        .HasColumnType("date")
+                        .HasComment("校正模組 CalibrationDate");
+
+                    b.Property<int?>("CorrectsRecordId")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 CorrectsRecordId");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasComment("校正模組 CreatedAt");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 CreatedBy");
+
+                    b.Property<int>("InstrumentId")
+                        .HasColumnType("int")
+                        .HasComment("校正模組 InstrumentId");
+
+                    b.Property<DateOnly>("NextDueDate")
+                        .HasColumnType("date")
+                        .HasComment("校正模組 NextDueDate");
+
+                    b.Property<DateOnly>("PreviousDueDate")
+                        .HasColumnType("date")
+                        .HasComment("校正模組 PreviousDueDate");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 Reason");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 RequestHash");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("校正模組 RequestId");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("校正模組 Result");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CorrectsRecordId");
+
+                    b.HasIndex("InstrumentId", "RequestId")
+                        .IsUnique();
+
+                    b.ToTable("InstrumentCalibrationRecords", null, t =>
+                        {
+                            t.HasComment("不可覆寫的校正歷史");
+                        });
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotMaster", b =>
@@ -1137,6 +1961,9 @@ namespace MesSpc.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PagePermissionsJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
@@ -1357,6 +2184,120 @@ namespace MesSpc.Api.Migrations
                         .HasFilter("[PartId] IS NOT NULL AND [MachineId] IS NOT NULL AND [TankId] IS NOT NULL AND [SlotId] IS NOT NULL AND [Unit] IS NOT NULL");
 
                     b.ToTable("PartProcessCharacteristics");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ParticleMeasurement", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("Count")
+                        .HasColumnType("bigint")
+                        .HasComment("Non-negative particle count.");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DeviceCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasComment("Optional particle counter device code.");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)")
+                        .HasComment("Particle monitoring location code, such as R1.");
+
+                    b.Property<DateTime>("MeasurementTime")
+                        .HasColumnType("datetime2")
+                        .HasComment("Measurement timestamp normalized to UTC.");
+
+                    b.Property<decimal>("ParticleSize")
+                        .HasColumnType("decimal(6,3)")
+                        .HasComment("Particle size in micrometers.");
+
+                    b.Property<string>("RawValue")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasComment("Original cell value before normalization.");
+
+                    b.Property<string>("Remark")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasComment("Optional measurement remark.");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<decimal?>("SamplingDurationSeconds")
+                        .HasColumnType("decimal(18,3)")
+                        .HasComment("Optional sampling duration in seconds.");
+
+                    b.Property<decimal?>("SamplingVolume")
+                        .HasColumnType("decimal(18,6)")
+                        .HasComment("Optional sampling volume.");
+
+                    b.Property<string>("SamplingVolumeUnit")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasComment("Unit of the optional sampling volume.");
+
+                    b.Property<string>("SourceColumn")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)")
+                        .HasComment("Original Excel column label.");
+
+                    b.Property<int>("SourceRow")
+                        .HasColumnType("int")
+                        .HasComment("Original Excel row number.");
+
+                    b.Property<string>("SourceSheet")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)")
+                        .HasComment("Original Excel worksheet name.");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UploadBatchId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("Upload batch that produced this measurement.");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UploadBatchId");
+
+                    b.HasIndex("Location", "ParticleSize", "MeasurementTime");
+
+                    b.HasIndex("ParticleSize", "MeasurementTime", "Location");
+
+                    b.HasIndex("UploadBatchId", "SourceSheet", "SourceRow", "SourceColumn")
+                        .IsUnique();
+
+                    b.ToTable("ParticleMeasurements", null, t =>
+                        {
+                            t.HasComment("Particle monitoring measurements stored in long format.");
+
+                            t.HasCheckConstraint("CK_ParticleMeasurements_Count_NonNegative", "[Count] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Plant", b =>
@@ -1864,6 +2805,46 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("SlotId");
 
                     b.ToTable("SlotParameters");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpcAlertNotificationSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("RecipientOperatorIdsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SpcAlertNotificationSettings");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpcCalculationResult", b =>
@@ -2656,6 +3637,20 @@ namespace MesSpc.Api.Migrations
                     b.Property<int>("SampleNo")
                         .HasColumnType("int");
 
+                    b.Property<string>("SamplingPhase")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)")
+                        .HasDefaultValue("GENERAL");
+
+                    b.Property<string>("SamplingStage")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)")
+                        .HasDefaultValue("GENERAL");
+
                     b.Property<string>("SerialNo")
                         .HasColumnType("nvarchar(max)");
 
@@ -2701,11 +3696,11 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("UploadBatchId");
 
-                    b.HasIndex("PartProcessCharacteristicId", "PortalDailyDate")
+                    b.HasIndex("PartId", "ProcessId", "CharacteristicId", "MeasuredAt");
+
+                    b.HasIndex("PartProcessCharacteristicId", "PortalDailyDate", "SamplingPhase", "SamplingStage")
                         .IsUnique()
                         .HasFilter("[PortalDailyDate] IS NOT NULL");
-
-                    b.HasIndex("PartId", "ProcessId", "CharacteristicId", "MeasuredAt");
 
                     b.ToTable("VariableMeasurements");
                 });
@@ -2814,6 +3809,72 @@ namespace MesSpc.Api.Migrations
                     b.Navigation("Tank");
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationCertificate", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.InstrumentCalibrationRecord", null)
+                        .WithMany()
+                        .HasForeignKey("CalibrationRecordId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationInstrument", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.Operator", null)
+                        .WithMany()
+                        .HasForeignKey("CustodianOperatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationNotification", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.CalibrationInstrument", null)
+                        .WithMany()
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationNotificationAttempt", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.CalibrationNotification", null)
+                        .WithMany()
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFTableCell", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalFTableVersion", "Version")
+                        .WithMany()
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Version");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFTableReference", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.PartProcessCharacteristic", "PartProcessCharacteristic")
+                        .WithMany()
+                        .HasForeignKey("PartProcessCharacteristicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalFTableVersion", "Version")
+                        .WithMany()
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PartProcessCharacteristic");
+
+                    b.Navigation("Version");
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ControlChartType", b =>
                 {
                     b.HasOne("MesSpc.Api.Domain.Entities.ControlChartGroup", null)
@@ -2837,6 +3898,20 @@ namespace MesSpc.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("PartProcessCharacteristic");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.InstrumentCalibrationRecord", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.InstrumentCalibrationRecord", null)
+                        .WithMany()
+                        .HasForeignKey("CorrectsRecordId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.CalibrationInstrument", null)
+                        .WithMany()
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotMaster", b =>
@@ -2958,6 +4033,15 @@ namespace MesSpc.Api.Migrations
                     b.Navigation("Slot");
 
                     b.Navigation("Tank");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ParticleMeasurement", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.UploadBatch", null)
+                        .WithMany()
+                        .HasForeignKey("UploadBatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.QualityCharacteristic", b =>

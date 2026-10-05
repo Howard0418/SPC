@@ -5,6 +5,7 @@ public static class ControlScopeCodes
     public const string Product = "PRODUCT";
     public const string Process = "PROCESS";
     public const string Chemical = "CHEM";
+    public const string Dust = "DUST";
 
     public static string Normalize(string? scope, string fallback = Product)
     {

@@ -17,8 +17,8 @@ public static class AttributeChartCalculator
         {
             "P" or "P_CHART" or "P-CHART" => CalculatePChart(rawData, configuredLimits, enabledRuleCodes),
             "NP" or "NP_CHART" or "NP-CHART" => CalculateNpChart(rawData, configuredLimits, enabledRuleCodes),
-            "C" or "C_CHART" or "C-CHART" => CalculateCChart(rawData, configuredLimits, enabledRuleCodes),
-            "U" or "U_CHART" or "U-CHART" => CalculateUChart(rawData, configuredLimits, enabledRuleCodes),
+            "C" or "C_CHART" or "C-CHART" or "DUST_C" => CalculateCChart(rawData, configuredLimits, enabledRuleCodes),
+            "U" or "U_CHART" or "U-CHART" or "DUST_U" => CalculateUChart(rawData, configuredLimits, enabledRuleCodes),
             _ => throw new NotSupportedException($"Attribute chart type {chartType} is not supported.")
         };
     }

@@ -20,6 +20,46 @@
       <p class="font-bold">此條件下沒有可計算之量測點</p>
     </div>
 
+    <div v-if="isMonthlyReport && data.length > 0" class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-4 space-y-4">
+      <div class="flex flex-wrap items-end gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">排行指標</label>
+          <select v-model="rankingMetric" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold">
+            <option value="oos">OOS 件數</option>
+            <option value="cpk">Cpk（實際 Ppk）</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">排行範圍</label>
+          <select v-model="rankingMode" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold">
+            <option value="high5">最高 5 位</option>
+            <option value="low3">最低 3 位</option>
+          </select>
+        </div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 pb-2">排行只依目前週報/月報查詢結果計算。</div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div v-for="(row, index) in rankingRows" :key="`${row.partProcessCharacteristicId}-${index}`" class="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
+          <span class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs font-black">{{ index + 1 }}</span>
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">{{ row.chartName || 'N/A' }}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ formatLineName(row.lineOrProcessName) }}／{{ formatSlotName(row.slotName) }}</div>
+          </div>
+          <span class="font-mono font-black text-sm" :class="rankingMetric === 'oos' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'">{{ rankingValue(row) }}</span>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-blue-100 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/20 px-3 py-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 space-y-1">
+        <strong class="text-blue-700 dark:text-blue-300">Cpk／Ppk 計算說明：</strong>
+        <div>雙邊規格：Cpk = min((USL − 平均值) / (3 × σwithin), (平均值 − LSL) / (3 × σwithin))；Ppk 使用 σoverall。</div>
+        <div>只有 USL：Cpk = (USL − 平均值) / (3 × σwithin)；Ppk = (USL − 平均值) / (3 × σoverall)。</div>
+        <div>只有 LSL：Cpk = (平均值 − LSL) / (3 × σwithin)；Ppk = (平均值 − LSL) / (3 × σoverall)。</div>
+        <div>σwithin 是組內短期變異；σoverall 是所有報表量測值的整體長期變異。</div>
+        <div class="font-semibold text-blue-700 dark:text-blue-300">本報表欄位雖標示 Cpk，但實際顯示後端 Ppk 數值，代表整段週期的整體能力。</div>
+      </div>
+    </div>
+
     <div v-if="data.length > 0" ref="summaryScroll" class="spc-summary-scroll overflow-x-scroll overflow-y-hidden pb-3"
       @scroll="syncSummaryScroll('body')">
       <table :class="isSpc ? 'min-w-[1960px]' : 'min-w-[1280px]'" class="w-full text-left text-xs border-collapse">
@@ -342,6 +382,19 @@ const props = defineProps({
 });
 
 const comparisonPrefix = computed(() => props.comparisonPeriod === "WEEK" ? "上週" : "上月");
+const isMonthlyReport = computed(() => props.comparisonPeriod === "WEEK" || props.comparisonPeriod === "MONTH");
+const rankingMetric = ref("oos");
+const rankingMode = ref("high5");
+
+const rankingRows = computed(() => {
+  const rows = props.data
+    .filter(row => props.isSpc && (rankingMetric.value === "oos" ? Number.isFinite(Number(row.oosCount)) : Number.isFinite(Number(row.ppk))))
+    .map(row => ({ row, value: rankingMetric.value === "oos" ? Number(row.oosCount) : Number(row.ppk) }));
+  rows.sort((a, b) => rankingMode.value === "high5" ? b.value - a.value : a.value - b.value);
+  return rows.slice(0, rankingMode.value === "high5" ? 5 : 3).map(item => item.row);
+});
+
+const rankingValue = row => rankingMetric.value === "oos" ? `${row.oosCount ?? 0} 件` : formatNumber(row.ppk);
 
 defineEmits(["draw-chart"]);
 

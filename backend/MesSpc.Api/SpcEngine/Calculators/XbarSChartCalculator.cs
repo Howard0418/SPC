@@ -27,11 +27,8 @@ public static class XbarSChartCalculator
 
         var includedSubgroups = subgroups.Where(x => !x.IsExcluded).ToList();
         var validSubgroups = includedSubgroups.Where(x => x.N == nRef).ToList();
-        if (validSubgroups.Count == 0 && includedSubgroups.Count > 0)
-        {
-            validSubgroups = includedSubgroups;
-            nRef = validSubgroups.First().N;
-        }
+        if (includedSubgroups.Any(x => x.N != nRef))
+            return EmptyExcludedResult(subgroups, configuredLimits, nRef, "子組樣本數不完整或不一致，未估算管制線；請核對原始點位。");
 
         if (validSubgroups.Count == 0)
         {

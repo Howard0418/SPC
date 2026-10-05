@@ -1,0 +1,13 @@
+# 驗證與發布（2026-09-17）
+- 根因：測試库 `OBJECT_ID(dbo.ChameleonSourceSettings)` 不存在；服務既有查詢未配套 migration。前次藥液發布未納入該表建立，設備狀態因此失敗。
+- 修正前短效 Viewer 權杖 GET `http://172.16.110.27:8081/api/equipment-status`：500，回應含 ChameleonSourceSettings。未輸出/保存 JWT，不新增帳號。
+- 先建立 [回歸測試](../../tests/MesSpc.Equipment.Tests/SourceSchemaTests.cs)，因 migration 缺失而編譯失敗；實作後 3/3 通過：migration 僅表+唯一索引，SQLite 空表回退設定，資料庫來源優先。
+- `dotnet test tests/MesSpc.Equipment.Tests --no-restore --nologo -v quiet` 成功；`dotnet publish backend/MesSpc.Api/MesSpc.Api.csproj -c Release --no-restore` 成功。沒有業務服務改動。
+- migration `20260917003704_AddChameleonSourceSettings` 僅建立來源表與 SourceId 唯一索引；原有校正模型 Id 註解差異未納入。
+- 發布前確認 IIS SpcApi 實際目錄 D:/SPC/release/test/backend、AppEnvironment=test、PMR_SPC_TEST，且只有本次 migration 待套用。
+- 備份 `chameleon-source-schema-20260917-083916`：應用目錄 `.backup-` 同層備份；SQL Server 預設備份目錄的 `PMR_SPC_TEST_chameleon-source-schema-20260917-083916.bak`，COPY_ONLY/CHECKSUM 且 VERIFYONLY 成功。
+- API 測試站發布完成，原 appsettings*.json/web.config hash 不變，DLL 與建置產物一致，app_offline 已移除。版本端點 200/test。
+- 發布後同一 Viewer 狀態請求 200，不再含無效物件錯誤；3 個來源，2 online、1 unavailable。後者為來源連線狀態，不是缺表錯誤，未宣稱所有設備上線。
+- SQL 驗證：migration 記錄 1、新表可查且 0 筆（沿用原設定）、唯一索引存在；既有量測仍 1,838 筆。
+- AC-001～003 通過上述必要驗證；未執行真人瀏覽器登入驗收。未發布正式站、Portal 或前端；未變更 PLC、Chameleon 來源內容或量測資料。
+- SDD/需求索引/變更已同步，本次文件連結檢查通過；保留工作區其他修改，未提交 Git。

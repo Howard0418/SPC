@@ -56,6 +56,9 @@ public static class ImrChartCalculator
             iPoints.Add(new
             {
                 measuredAt = p.MeasuredAt,
+                portalDailyDate = p.PortalDailyDate,
+                samplingPhase = p.SamplingPhase,
+                samplingStage = p.SamplingStage,
                 value = v,
                 outOfSpec,
                 outOfControl,

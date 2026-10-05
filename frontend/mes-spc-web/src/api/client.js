@@ -9,6 +9,23 @@ let apiEnvironment = "unknown";
 export const api = axios.create({ baseURL });
 
 const tokenKey = "mes_spc_token";
+const redirectGuardKey = "mes_spc_auth_redirecting_until";
+const ssoGraceUntilKey = "mes_spc_sso_grace_until";
+const redirectCooldownMs = 5000;
+const ssoGraceMs = 8000;
+
+function nowMs() {
+  return Date.now();
+}
+
+function readSessionTimestamp(key) {
+  const value = Number(sessionStorage.getItem(key) || "0");
+  return Number.isFinite(value) ? value : 0;
+}
+
+function isWithinSessionWindow(key) {
+  return readSessionTimestamp(key) > nowMs();
+}
 
 api.interceptors.request.use((config) => {
   const method = (config.method || "get").toLowerCase();
@@ -29,6 +46,10 @@ api.interceptors.response.use(
   (r) => r,
   (err) => {
     if (err?.response?.status === 401 && typeof window !== "undefined") {
+      if (isWithinSessionWindow(ssoGraceUntilKey) || isWithinSessionWindow(redirectGuardKey)) {
+        return Promise.reject(err);
+      }
+      sessionStorage.setItem(redirectGuardKey, String(nowMs() + redirectCooldownMs));
       clearAuthSession();
       if (!window.location.pathname.includes("/login")) {
         const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -50,6 +71,11 @@ export function setStoredToken(token) {
 
 export function setApiEnvironment(value) {
   apiEnvironment = value || "unknown";
+}
+
+export function markSsoGracePeriod() {
+  sessionStorage.setItem(ssoGraceUntilKey, String(nowMs() + ssoGraceMs));
+  sessionStorage.removeItem(redirectGuardKey);
 }
 
 /** 附帶於 catch，讓頁面顯示可讀訊息（含後端未啟動） */

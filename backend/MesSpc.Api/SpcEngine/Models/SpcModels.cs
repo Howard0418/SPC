@@ -3,6 +3,9 @@ namespace MesSpc.Api.SpcEngine.Models;
 public record SpcDataPoint
 {
     public DateTime MeasuredAt { get; init; }
+    public DateTime? PortalDailyDate { get; init; }
+    public string SamplingPhase { get; init; } = "GENERAL";
+    public string SamplingStage { get; init; } = "GENERAL";
     public double Value { get; init; }
     public double? UCL { get; set; }
     public double? CL { get; set; }

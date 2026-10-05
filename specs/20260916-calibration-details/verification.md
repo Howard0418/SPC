@@ -1,0 +1,13 @@
+# 驗證
+- AC-001：DetailsPersistClearAndAuditWithoutChangingDates、CreateReturnsDetailsInListAndSingleInstrument 通過，新增/讀取/修改/清空、換行、稽核、日期不變。
+- AC-002／003：DetailsParseImportAndRejectLongValues、DetailsValidateHeadersAndCachedFormulaValues 通過；原 59 筆 Excel 解析與既有匯入回歸通過。
+- AC-004：BackfillOnlyMatchesAndFillsBlanksWithAuditAndReplaySafety 通過，dry-run、不覆蓋、名稱不符跳過、重跑、無通知工作。
+- 後端：全套 118 通過，後續新增 HTTP 與公式/表頭測試各 1 通過（共 120 個不同案例，分次執行）。
+- 介面：12 項 Playwright 案例回報 ok；列表欄寬調整後重跑兩項 details 案例皆 ok。桌面/手機截圖已檢視。
+- API Release publish、前端 build:test、補值工具 build 成功；NU1900 為 NuGet 弱點資料來源不可達，另有既有 bundle 大小及 EquipmentPointsView 表格警告。
+- EF migration AddCalibrationInstrumentDetails 僅新增 CalibrationInstruments 五個 nullable nvarchar(2000)；保留原 snapshot，只加入本案屬性。
+- 發布：D:/SPC/release/test/backend 與 frontend；IIS 路徑核對、app_offline marker 核對、API/Web/JS 200。
+- 備份：D:/SPC/release-staging/calibration-details-20260916-111017；保留 config/private-data，正式站未發布。
+- PMR_SPC_TEST 補值：dry-run 59、apply 59、逐筆稽核 59、再 dry-run 0；新欄位 5。完整比對 Id/Code/LastCalibrationDate/NextCalibrationDate/UsageStatus/CurrentCycleId 前後相同。
+- 原 Excel SHA256：604CA8F6E6CC0D12ED64B45E2EEF6A13F09357E0C206405B2E790F74212E5B81。
+- 未發送通知；DeliveryEnabled=false，未變更投遞設定。實際使用者登入畫面仍可由使用者驗收，本次瀏覽器使用隔離 mock API。

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.DataProtection;
+using MesSpc.Api.Services.Calibration;
 using System.Text;
 using Scalar.AspNetCore;
 using MesSpc.Api.Infrastructure.Data;
@@ -36,6 +38,12 @@ if (authEnabled)
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<ChameleonStatusService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddHttpClient();
 builder.Services.AddDbContext<AppDbContext>(opt =>
 {
     var provider = builder.Configuration["DatabaseProvider"]?.Trim().ToLowerInvariant() ?? "sqlserver";
@@ -54,8 +62,12 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 });
 builder.Services.AddScoped<FormulaEngineService>();
+builder.Services.AddScoped<ChemicalFTableService>();
 builder.Services.AddScoped<SpcService>();
 builder.Services.AddScoped<UploadService>();
+builder.Services.AddScoped<ParticleUploadService>();
+builder.Services.AddScoped<ParticleQueryService>();
+builder.Services.AddScoped<EtchReportSyncService>();
 builder.Services.AddScoped<ChemicalDailyReportParser>();
 builder.Services.AddScoped<ChemicalImportService>();
 builder.Services.AddScoped<IEmailNotificationService, SmtpEmailNotificationService>();
@@ -69,6 +81,27 @@ builder.Services.AddScoped<SpcOverviewReportService>();
 builder.Services.AddSingleton<UserPasswordHasher>();
 builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddHostedService<SpcReportSchedulerService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<MesSpc.Api.Services.Calibration.InstrumentCalibrationService>();
+builder.Services.AddScoped<MesSpc.Api.Services.Calibration.CalibrationImportService>();
+builder.Services.AddScoped<MesSpc.Api.Services.Calibration.CalibrationCertificates>();
+builder.Services.AddScoped<MesSpc.Api.Services.Calibration.CalibrationNotificationProcessor>();
+builder.Services.AddScoped<MesSpc.Api.Services.Calibration.ICalibrationMailSender, MesSpc.Api.Services.Calibration.CalibrationSmtpSender>();
+builder.Services.AddSingleton<CalibrationChatSecrets>(_ =>
+{
+    var keyRoot = new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "private-data", "data-protection-keys"));
+    var provider = DataProtectionProvider.Create(keyRoot, options =>
+    {
+        options.SetApplicationName("SPC.Calibration.Chat");
+        if (OperatingSystem.IsWindows()) options.ProtectKeysWithDpapi(protectToLocalMachine: true);
+    });
+    return new CalibrationChatSecrets(provider);
+});
+builder.Services.AddSingleton<ICalibrationChatSender>(services =>
+    new CalibrationChatSender(
+        new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(30), MaxResponseContentBufferSize = 65536 },
+        services.GetRequiredService<ILogger<CalibrationChatSender>>()));
+builder.Services.AddHostedService<MesSpc.Api.Services.Calibration.CalibrationNotificationSchedulerService>();
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("dev", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
@@ -187,6 +220,9 @@ using (var scope = app.Services.CreateScope())
                     [UCL] REAL NULL,
                     [CL] REAL NULL,
                     [LCL] REAL NULL,
+                    [USL] REAL NULL,
+                    [LSL] REAL NULL,
+                    [TargetValue] REAL NULL,
                     [Note] TEXT NULL,
                     [CreatedAt] TEXT NOT NULL,
                     [CreatedBy] TEXT NULL,
@@ -199,6 +235,9 @@ using (var scope = app.Services.CreateScope())
                 );
                 CREATE INDEX IF NOT EXISTS [IX_ControlLimitSegments_PartProcessCharacteristicId] ON [ControlLimitSegments] ([PartProcessCharacteristicId]);
             ");
+            db.Database.ExecuteSqlRaw("ALTER TABLE [ControlLimitSegments] ADD COLUMN [USL] REAL NULL;");
+            db.Database.ExecuteSqlRaw("ALTER TABLE [ControlLimitSegments] ADD COLUMN [LSL] REAL NULL;");
+            db.Database.ExecuteSqlRaw("ALTER TABLE [ControlLimitSegments] ADD COLUMN [TargetValue] REAL NULL;");
         }
         else
         {
@@ -213,6 +252,9 @@ using (var scope = app.Services.CreateScope())
                         [UCL] float NULL,
                         [CL] float NULL,
                         [LCL] float NULL,
+                        [USL] float NULL,
+                        [LSL] float NULL,
+                        [TargetValue] float NULL,
                         [Note] nvarchar(max) NULL,
                         [CreatedAt] datetime2 NOT NULL,
                         [CreatedBy] nvarchar(max) NULL,
@@ -225,6 +267,100 @@ using (var scope = app.Services.CreateScope())
                             FOREIGN KEY ([PartProcessCharacteristicId]) REFERENCES [PartProcessCharacteristics] ([Id]) ON DELETE CASCADE
                     );
                     CREATE INDEX [IX_ControlLimitSegments_PartProcessCharacteristicId] ON [ControlLimitSegments] ([PartProcessCharacteristicId]);
+                END
+                IF COL_LENGTH('ControlLimitSegments', 'USL') IS NULL ALTER TABLE [ControlLimitSegments] ADD [USL] float NULL;
+                IF COL_LENGTH('ControlLimitSegments', 'LSL') IS NULL ALTER TABLE [ControlLimitSegments] ADD [LSL] float NULL;
+                IF COL_LENGTH('ControlLimitSegments', 'TargetValue') IS NULL ALTER TABLE [ControlLimitSegments] ADD [TargetValue] float NULL;
+            ");
+        }
+    }
+    catch { }
+
+    try
+    {
+        if (provider != "sqlite")
+        {
+            db.Database.ExecuteSqlRaw(@"
+                IF OBJECT_ID(N'[ChemicalFTableVersions]') IS NULL
+                BEGIN
+                    CREATE TABLE [ChemicalFTableVersions] (
+                        [Id] int NOT NULL IDENTITY(1,1),
+                        [VersionCode] nvarchar(50) NOT NULL,
+                        [DisplayName] nvarchar(100) NOT NULL,
+                        [SourceName] nvarchar(100) NULL,
+                        [SourcePath] nvarchar(500) NULL,
+                        [EffectiveAt] datetime2 NOT NULL,
+                        [ImportedAt] datetime2 NOT NULL,
+                        [IsActive] bit NOT NULL,
+                        [Note] nvarchar(max) NULL,
+                        [CreatedAt] datetime2 NOT NULL,
+                        [CreatedBy] nvarchar(max) NULL,
+                        [UpdatedAt] datetime2 NULL,
+                        [UpdatedBy] nvarchar(max) NULL,
+                        [IsDeleted] bit NOT NULL DEFAULT 0,
+                        [RowVersion] rowversion NULL,
+                        CONSTRAINT [PK_ChemicalFTableVersions] PRIMARY KEY ([Id])
+                    );
+                    CREATE UNIQUE INDEX [IX_ChemicalFTableVersions_VersionCode] ON [ChemicalFTableVersions] ([VersionCode]);
+                END
+
+                IF OBJECT_ID(N'[ChemicalFTableCells]') IS NULL
+                BEGIN
+                    CREATE TABLE [ChemicalFTableCells] (
+                        [Id] int NOT NULL IDENTITY(1,1),
+                        [VersionId] int NOT NULL,
+                        [SheetName] nvarchar(50) NOT NULL,
+                        [CellAddress] nvarchar(50) NOT NULL,
+                        [NormalizedCellAddress] nvarchar(50) NOT NULL,
+                        [StandardSolution] nvarchar(100) NULL,
+                        [NumericValue] decimal(18,6) NULL,
+                        [TextValue] nvarchar(max) NULL,
+                        [FormulaText] nvarchar(max) NULL,
+                        [RawValue] nvarchar(max) NULL,
+                        [CreatedAt] datetime2 NOT NULL,
+                        [CreatedBy] nvarchar(max) NULL,
+                        [UpdatedAt] datetime2 NULL,
+                        [UpdatedBy] nvarchar(max) NULL,
+                        [IsDeleted] bit NOT NULL DEFAULT 0,
+                        [RowVersion] rowversion NULL,
+                        CONSTRAINT [PK_ChemicalFTableCells] PRIMARY KEY ([Id]),
+                        CONSTRAINT [FK_ChemicalFTableCells_ChemicalFTableVersions_VersionId]
+                            FOREIGN KEY ([VersionId]) REFERENCES [ChemicalFTableVersions] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE UNIQUE INDEX [IX_ChemicalFTableCells_VersionId_NormalizedCellAddress]
+                        ON [ChemicalFTableCells] ([VersionId], [NormalizedCellAddress]);
+                END
+
+                IF OBJECT_ID(N'[ChemicalFTableReferences]') IS NULL
+                BEGIN
+                    CREATE TABLE [ChemicalFTableReferences] (
+                        [Id] int NOT NULL IDENTITY(1,1),
+                        [VersionId] int NOT NULL,
+                        [PartProcessCharacteristicId] int NOT NULL,
+                        [CellAddress] nvarchar(50) NOT NULL,
+                        [NormalizedCellAddress] nvarchar(50) NOT NULL,
+                        [SourceFormula] nvarchar(max) NULL,
+                        [SourceSheet] nvarchar(100) NULL,
+                        [SourceRow] int NULL,
+                        [ReferenceContext] nvarchar(200) NULL,
+                        [CreatedAt] datetime2 NOT NULL,
+                        [CreatedBy] nvarchar(max) NULL,
+                        [UpdatedAt] datetime2 NULL,
+                        [UpdatedBy] nvarchar(max) NULL,
+                        [IsDeleted] bit NOT NULL DEFAULT 0,
+                        [RowVersion] rowversion NULL,
+                        CONSTRAINT [PK_ChemicalFTableReferences] PRIMARY KEY ([Id]),
+                        CONSTRAINT [FK_ChemicalFTableReferences_ChemicalFTableVersions_VersionId]
+                            FOREIGN KEY ([VersionId]) REFERENCES [ChemicalFTableVersions] ([Id]) ON DELETE CASCADE,
+                        CONSTRAINT [FK_ChemicalFTableReferences_PartProcessCharacteristics_PartProcessCharacteristicId]
+                            FOREIGN KEY ([PartProcessCharacteristicId]) REFERENCES [PartProcessCharacteristics] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE INDEX [IX_ChemicalFTableReferences_PartProcessCharacteristicId]
+                        ON [ChemicalFTableReferences] ([PartProcessCharacteristicId]);
+                    CREATE INDEX [IX_ChemicalFTableReferences_VersionId_NormalizedCellAddress]
+                        ON [ChemicalFTableReferences] ([VersionId], [NormalizedCellAddress]);
+                    CREATE UNIQUE INDEX [IX_ChemicalFTableReferences_VersionId_PartProcessCharacteristicId_NormalizedCellAddress]
+                        ON [ChemicalFTableReferences] ([VersionId], [PartProcessCharacteristicId], [NormalizedCellAddress]);
                 END
             ");
         }

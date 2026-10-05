@@ -21,7 +21,7 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(ControlLimitSegment req)
+    public async Task<IActionResult> Create(ControlLimitSegmentRequest req)
     {
         var ppcExists = await db.PartProcessCharacteristics.AnyAsync(x => x.Id == req.PartProcessCharacteristicId && x.IsEnabled);
         if (!ppcExists) return BadRequest("SPC 管制項目設定不存在。");
@@ -41,13 +41,27 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
             return BadRequest("分段時間區間不可重疊，請調整起迄日期。");
         }
 
-        db.ControlLimitSegments.Add(req);
+        var segment = new ControlLimitSegment
+        {
+            PartProcessCharacteristicId = req.PartProcessCharacteristicId,
+            StartDate = req.StartDate,
+            EndDate = req.EndDate,
+            UCL = req.UCL,
+            CL = req.CL,
+            LCL = req.LCL,
+            USL = req.USL,
+            LSL = req.LSL,
+            TargetValue = req.TargetValue,
+            Note = req.Note
+        };
+
+        db.ControlLimitSegments.Add(segment);
         await db.SaveChangesAsync();
-        return Ok(req);
+        return Ok(segment);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, ControlLimitSegment req)
+    public async Task<IActionResult> Update(int id, ControlLimitSegmentRequest req)
     {
         var x = await db.ControlLimitSegments.FindAsync(id);
         if (x is null) return NotFound("此分段設定不存在。");
@@ -73,6 +87,9 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
         x.UCL = req.UCL;
         x.CL = req.CL;
         x.LCL = req.LCL;
+        x.USL = req.USL;
+        x.LSL = req.LSL;
+        x.TargetValue = req.TargetValue;
         x.Note = req.Note;
 
         await db.SaveChangesAsync();
@@ -89,4 +106,18 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+}
+
+public sealed class ControlLimitSegmentRequest
+{
+    public int PartProcessCharacteristicId { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public double? UCL { get; set; }
+    public double? CL { get; set; }
+    public double? LCL { get; set; }
+    public double? USL { get; set; }
+    public double? LSL { get; set; }
+    public double? TargetValue { get; set; }
+    public string? Note { get; set; }
 }

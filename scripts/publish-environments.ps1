@@ -1,4 +1,4 @@
-param(
+﻿param(
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release",
     [string]$OutputRoot = ""
@@ -38,11 +38,22 @@ foreach ($environment in @("test", "production")) {
         throw "缺少 $environment 後端固定設定：$settingsPath"
     }
 
-    $settingsBackup = Get-Content -LiteralPath $settingsPath -Raw
+    $settingsBackup = Get-Content -LiteralPath $settingsPath -Raw -Encoding utf8
     New-Item -ItemType Directory -Path $backendOutput -Force | Out-Null
-    Write-Host "[Publish] $environment backend -> $backendOutput" -ForegroundColor Cyan
-    dotnet publish $apiProject -c $Configuration -o $backendOutput --no-restore
-    if ($LASTEXITCODE -ne 0) { throw "$environment backend publish failed." }
+
+    $offline = Join-Path $backendOutput "app_offline.htm"
+    Set-Content -LiteralPath $offline -Value "<html><body>Updating</body></html>" -Encoding utf8
+    try { Invoke-WebRequest -Uri "http://172.16.110.27:8081/" -TimeoutSec 2 -UseBasicParsing -ErrorAction SilentlyContinue } catch {}
+    Start-Sleep -Seconds 3
+
+    try {
+        Write-Host "[Publish] $environment backend -> $backendOutput" -ForegroundColor Cyan
+        dotnet publish $apiProject -c $Configuration -o $backendOutput --no-restore
+        if ($LASTEXITCODE -ne 0) { throw "$environment backend publish failed." }
+    }
+    finally {
+        Remove-Item -LiteralPath $offline -Force -ErrorAction SilentlyContinue
+    }
     Set-Content -LiteralPath $settingsPath -Value $settingsBackup -Encoding utf8
 
     $viteMode = if ($environment -eq "production") { "production" } else { "testhost" }
@@ -59,11 +70,11 @@ foreach ($environment in @("test", "production")) {
     Reset-FrontendOutput -Path $frontendOutput
     Copy-Item -Path (Join-Path $webRoot "dist\*") -Destination $frontendOutput -Recurse -Force
 
-    $settings = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+    $settings = Get-Content -LiteralPath $settingsPath -Raw -Encoding utf8 | ConvertFrom-Json
     $connection = [string]$settings.ConnectionStrings.SqlServer
     $database = if ($connection -match '(?i)(Initial Catalog|Database)\s*=\s*([^;]+)') { $Matches[2] } else { "unknown" }
     $apiVersion = (Get-Item (Join-Path $backendOutput "MesSpc.Api.dll")).VersionInfo.ProductVersion
-    $webVersion = (Get-Content (Join-Path $webRoot "package.json") -Raw | ConvertFrom-Json).version
+    $webVersion = (Get-Content (Join-Path $webRoot "package.json") -Raw -Encoding utf8 | ConvertFrom-Json).version
 
     @"
 SPC $environment release

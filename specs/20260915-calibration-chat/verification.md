@@ -1,0 +1,13 @@
+# 驗證
+- 功能 ID：20260915-calibration-chat
+- AC-001／002：HTTP 測試確認管道驗證、加密儲存、空白保留、回應/稽核不含 token、401/403。
+- AC-003：排程測試確認無 Email 可送 Chat、重掃僅一次、DeliveryEnabled 關閉不送、切換取消 Email；沿用重試與 Unknown 回歸。
+- AC-004：sender mock 驗證 form payload、success=true/false、HTTP 拒絕/5xx、不明回應、傳輸例外；手動 draft/saved webhook 不寫通知工作也不啟用排程。
+- AC-005：8 項 Playwright 案例皆回報 ok；Chat 切換、draft payload、錯誤顯示、儲存與手機操作；截圖 test-results/calibration-import/chat-mobile.png 已檢視。測試 API 均 mock。
+- dotnet test tests/MesSpc.Calibration.Tests：115 通過；API Release publish 成功；build:test 成功。既有前端 bundle 大小與 EquipmentPointsView table 結構警告。
+- EF 工具生成 migration 後排除工作區既有 Chameleon 與 Id 註解差異，本案只新增三欄。
+- 發布：20260915-131936；IIS SpcApi/SpcWeb 指向 D:/SPC/release/test/backend、frontend；資料庫 PMR_SPC_TEST。
+- 備份：D:/SPC/release-staging/calibration-chat-20260915-131936。保留 appsettings/web.config/private-data；key 目錄授予 SpcApi 修改，SYSTEM/Administrators 完全控制。
+- 唯讀驗證：migration 20260915031225_AddCalibrationChatChannel 已套用、新欄 3、EnabledSettings=0、GET settings=401、API/Web/JS=200。
+- 測試站 test-chat POST smoke 被自動審核拒絕（可能觸發真實通知），未執行；以唯讀 SQL/GET 完成發布確認。真實 NAS 群組發送待使用者設定 webhook 後自行按測試，不以 mock 標為真實端到端通過。
+- 未發送真實通知；正式站/Portal 未發布。

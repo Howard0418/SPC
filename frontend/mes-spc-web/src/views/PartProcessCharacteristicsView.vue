@@ -966,6 +966,9 @@ const segmentForm = ref({
   ucl: null,
   cl: null,
   lcl: null,
+  usl: null,
+  lsl: null,
+  targetValue: null,
   note: ""
 });
 
@@ -1014,6 +1017,9 @@ function resetSegmentForm() {
     ucl: null,
     cl: null,
     lcl: null,
+    usl: null,
+    lsl: null,
+    targetValue: null,
     note: ""
   };
   isEditingSegment.value = false;
@@ -1029,6 +1035,9 @@ async function saveSegment() {
     ucl: segmentForm.value.ucl !== "" && segmentForm.value.ucl !== null ? parseFloat(segmentForm.value.ucl) : null,
     cl: segmentForm.value.cl !== "" && segmentForm.value.cl !== null ? parseFloat(segmentForm.value.cl) : null,
     lcl: segmentForm.value.lcl !== "" && segmentForm.value.lcl !== null ? parseFloat(segmentForm.value.lcl) : null,
+    usl: segmentForm.value.usl !== "" && segmentForm.value.usl !== null ? parseFloat(segmentForm.value.usl) : null,
+    lsl: segmentForm.value.lsl !== "" && segmentForm.value.lsl !== null ? parseFloat(segmentForm.value.lsl) : null,
+    targetValue: segmentForm.value.targetValue !== "" && segmentForm.value.targetValue !== null ? parseFloat(segmentForm.value.targetValue) : null,
     endDate: segmentForm.value.endDate ? segmentForm.value.endDate : null
   };
 
@@ -1054,6 +1063,9 @@ function editSegment(seg) {
     ucl: seg.ucl,
     cl: seg.cl,
     lcl: seg.lcl,
+    usl: seg.usl,
+    lsl: seg.lsl,
+    targetValue: seg.targetValue,
     note: seg.note || ""
   };
   isEditingSegment.value = true;
@@ -1822,7 +1834,7 @@ onBeforeUnmount(() => {
                       v-model="form.sampleSize"
                       type="number"
                       min="1"
-                      max="25"
+                      max="50"
                       :required="currentStep === 2"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-xl text-sm font-mono font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
                     />
@@ -2268,7 +2280,7 @@ onBeforeUnmount(() => {
                   <Sliders class="w-4 h-4 text-purple-500" /> 分段管制界線設定
                 </h4>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-                  定義不同時間區間的管制界線，系統會根據量測時間自動套用對應區間的 UCL/CL/LCL 進行規則檢驗。
+                  定義不同時間區間的規格與管制界線，系統會根據量測時間自動套用對應區間的 USL/Target/LSL 與 UCL/CL/LCL。
                 </p>
               </div>
 
@@ -2300,6 +2312,21 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Limits values -->
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">USL</label>
+                    <input v-model="segmentForm.usl" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Target</label>
+                    <input v-model="segmentForm.targetValue" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">LSL</label>
+                    <input v-model="segmentForm.lsl" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                  </div>
+                </div>
+
                 <div class="grid grid-cols-3 gap-3">
                   <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">UCL <span class="text-red-500">*</span></label>
@@ -2358,6 +2385,7 @@ onBeforeUnmount(() => {
                     <thead>
                       <tr class="bg-slate-50 dark:bg-slate-800 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
                         <th class="py-2.5 px-4">生效日期區間</th>
+                        <th class="py-2.5 px-4">USL/Target/LSL</th>
                         <th class="py-2.5 px-4">UCL/CL/LCL</th>
                         <th class="py-2.5 px-4">備註說明</th>
                         <th class="py-2.5 px-4 text-right">操作</th>
@@ -2368,6 +2396,11 @@ onBeforeUnmount(() => {
                         <td class="py-3 px-4 font-sans font-semibold">
                           <div>{{ seg.startDate?.split('T')[0] }}</div>
                           <div class="text-[10px] text-slate-400 mt-0.5">至 {{ seg.endDate ? seg.endDate.split('T')[0] : '永久' }}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                          <div>USL: {{ formatNumber(seg.usl, 3) }}</div>
+                          <div class="text-emerald-600 dark:text-emerald-500 font-bold">T: {{ formatNumber(seg.targetValue, 3) }}</div>
+                          <div>LSL: {{ formatNumber(seg.lsl, 3) }}</div>
                         </td>
                         <td class="py-3 px-4">
                           <div>U: {{ formatNumber(seg.ucl, 3) }}</div>

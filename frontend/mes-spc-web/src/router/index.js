@@ -18,22 +18,45 @@ import SmtpSettingsView from "../views/SmtpSettingsView.vue";
 import OperatorsView from "../views/OperatorsView.vue";
 import TrendChartView from "../views/TrendChartView.vue";
 import SpcReportSettingsView from "../views/SpcReportSettingsView.vue";
+import PortalSsoView from "../views/PortalSsoView.vue";
+import ChemicalAnalysisOverviewView from "../views/ChemicalAnalysisOverviewView.vue";
+import ChemicalFTableView from "../views/ChemicalFTableView.vue";
+import EquipmentStatusView from "../views/EquipmentStatusView.vue";
+import EquipmentPointsView from "../views/EquipmentPointsView.vue";
+import EquipmentMonitorView from "../views/EquipmentMonitorView.vue";
+import EtchAnalysisView from "../views/EtchAnalysisView.vue";
+import InstrumentCalibrationsView from "../views/InstrumentCalibrationsView.vue";
+import ParticleMonitoringView from "../views/ParticleMonitoringView.vue";
 
 import GenealogyView from "../views/GenealogyView.vue";
 import TraceabilityMasterView from "../views/TraceabilityMasterView.vue";
 import { getCurrentUser } from "../utils/auth";
 
 const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
+const pagePermissionByPath = {
+  "/etch-analysis": "analysis.etch", "/spc": "analysis.spc", "/process-analysis/capability": "analysis.capability",
+  "/trend-chart": "analysis.trend", "/process-analysis/violations": "analysis.violations", "/monthly-control-chart": "analysis.reports",
+  "/equipment-status": "equipment.status", "/equipment-points": "equipment.points", "/equipment-monitor": "equipment.monitor",
+  "/measurements": "data.measurements", "/uploads": "data.upload", "/operators": "admin.operators",
+  "/calibration-instruments": "calibration.manage"
+  , "/particle-monitoring": "analysis.spc"
+};
 
 const routes = [
   { path: "/login", component: LoginView },
+  { path: "/portal-sso", component: PortalSsoView },
   { path: "/", redirect: "/spc" },
+  { path: "/calibration-instruments", component: InstrumentCalibrationsView },
   { path: "/products", redirect: "/parts" },
   { path: "/stations", redirect: "/processes" },
   { path: "/inspection-items", redirect: "/characteristics" },
   { path: "/measurements", component: MeasurementEntryView, meta: { editorOnly: true } },
   { path: "/csv-import", redirect: "/uploads" },
   { path: "/spc", component: SpcChartView },
+  { path: "/particle-monitoring", component: ParticleMonitoringView },
+  { path: "/etch-analysis", component: EtchAnalysisView },
+  { path: "/process-analysis/capability", component: SpcChartView },
+  { path: "/process-analysis/violations", component: SpcChartView },
   { path: "/spc/control-chart/:ppcId?", component: SpcChartView },
   { path: "/trend-chart", component: TrendChartView },
   { path: "/spc/trend/:ppcId?", component: TrendChartView },
@@ -49,6 +72,11 @@ const routes = [
   { path: "/machines", redirect: "/processes" },
   { path: "/characteristics", component: CharacteristicsView, meta: { editorOnly: true } },
   { path: "/part-process-characteristics", component: PartProcessCharacteristicsView, meta: { editorOnly: true } },
+  { path: "/chemical-analysis-overview", component: ChemicalAnalysisOverviewView, meta: { editorOnly: true } },
+  { path: "/chemical-f-table", component: ChemicalFTableView, meta: { editorOnly: true } },
+  { path: "/equipment-status", component: EquipmentStatusView },
+  { path: "/equipment-points", component: EquipmentPointsView },
+  { path: "/equipment-monitor", component: EquipmentMonitorView },
   { path: "/control-chart-groups", component: ControlChartGroupsView, props: { groupsOnly: true }, meta: { editorOnly: true } },
   { path: "/control-chart-categories", redirect: "/part-process-characteristics" },
   { path: "/control-chart-types", redirect: "/part-process-characteristics" },
@@ -75,11 +103,15 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   if (!authRequired) return true;
-  if (to.path === "/login") return true;
+  if (to.path === "/login" || to.path === "/portal-sso") return true;
   if (!localStorage.getItem("mes_spc_token")) {
     return { path: "/login", query: { redirect: to.fullPath } };
   }
-  if (to.meta.editorOnly && getCurrentUser()?.role !== "Editor") {
+  const user = getCurrentUser();
+  const requiredPermission = pagePermissionByPath[to.path];
+  if (requiredPermission && Array.isArray(user?.permissions) && user.permissions.length && !user.permissions.includes(requiredPermission))
+    return { path: "/", query: { access: "page" } };
+  if (to.meta.editorOnly && user?.role !== "Editor") {
     return { path: "/", query: { access: "viewer" } };
   }
   return true;

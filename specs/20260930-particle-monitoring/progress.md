@@ -1,0 +1,88 @@
+# Progress
+
+## 2026-09-30
+- 小工作 1 完成：建立 Particle Monitoring Long Format SDD 草稿文件。
+- 範圍：僅文件草稿；未修改程式、未修改資料庫、未發布。
+- 主要結論：新 Particle 監控需以 Long Format 為主，不再以 `R#_粒徑` 固定管制項目作為主要資料模型；Location + ParticleSize 形成獨立 sequence。
+- 下一步：等待使用者確認後，盤點既有 DUST 資料與相容策略。
+- 小工作 2 完成：盤點既有 DUST 與 `R#_粒徑` 相容策略；未修改程式、未修改資料庫、未發布。
+- 發現：TransFiles `dust_reports.py` 目前輸出 `CharacteristicCode = R#_粒徑um`，例如 `R1_0.5um`；SPC `UploadService` 對 DUST 會預設補建 `DUST_U` Attribute PPC，因此舊方案會形成大量品質特性 / 管制項目。
+- 發現：SPC Web `VariableUploadView.vue` 也有舊 DUST parser，但走 variable upload，與 TransFiles Attribute 路徑不一致。
+- 建議：保留 DUST group、DUST_C/DUST_U 與舊資料查詢能力；新 Particle Long Format 另走新表 / 新 API，不再以 `R#_粒徑` PPC 作為主模型。既有舊資料若需轉換，另開 backfill 任務。
+- 下一步：等待使用者確認後，決定 Particle DB schema 與索引。
+
+## 2026-10-01
+- 使用者已確認 Particle Monitoring 草稿方向，T-002 完成。
+- 小工作 3 完成：決定新增專用 `ParticleMeasurements` Long Format 表，不擴充 `AttributeMeasurements`，也不以 `R#_粒徑` PPC 作為新資料主模型。
+- 定案核心欄位、來源追溯欄位與未來採樣／儀器擴充欄位；Count 使用非負 `bigint`，ParticleSize 使用 `decimal(6,3)`。
+- 定案趨勢、位置比較、批次追溯索引，以及同批次來源工作表／列／欄的冪等唯一鍵。
+- 為保留不同儀器與合法重測，不對 `MeasurementTime + Location + ParticleSize` 建唯一索引；跨批次重複策略留待匯入預覽契約決定。
+- 本小工作僅更新設計文件；未修改程式、未修改資料庫、未測試、未發布。
+- 下一步：設計 Excel 橫向轉 Long Format 的預覽與確認契約（T-005）。
+- 小工作 4 完成：定義 TransFiles 為第一版原始 Excel 解析入口，SPC 使用專用 Particle preview API 接收 Long Format rows 並再次驗證。
+- 定案來源版型映射、最多 36 筆展開規則、空白格略過、非空非法值保留來源座標並列為錯誤。
+- 定案 preview response、最低錯誤碼集合、同批次來源座標硬錯誤與跨批次疑似重複規則。
+- confirm 預設 `duplicateMode=reject`；可明確選 `skip`，第一版不提供覆蓋模式，並要求 transaction 與重送冪等。
+- 本小工作僅更新設計文件；未修改程式、未修改資料庫、未執行程式測試、未發布。
+- 下一步：設計查詢 API 與趨勢／位置比較資料契約（T-006）。
+- 小工作 5 完成：定義原始量測清單、單一序列趨勢與同事件位置比較三類 API 契約。
+- 定案時間採含時區 ISO 8601 並正規化 UTC、清單穩定排序與分頁、趨勢上限及不做靜默降採樣。
+- 定案位置比較使用 batch／工作表／來源列鎖定事件；同時間有重測時回 409 與候選清單，不任意取值或平均。
+- 定案 R1～R9 缺測回 null 而非 0，並保持 USL／LSL 與後續 UCL／CL／LCL response 欄位分離。
+- 本小工作僅更新設計文件；未修改程式、未修改資料庫、未執行程式測試、未發布。
+- 下一步：評估 C／U／I-MR chart engine 接法並定義第一版 SPC 圖型策略（T-007）。
+- 小工作 6 完成：第一版 Particle SPC 採 C-chart，序列依 Location／ParticleSize／DeviceCode 隔離，並清楚標示固定採樣基準假設。
+- U-chart 延後至 SamplingVolume 單位與 decimal 分母算法定案；I-MR 不作為離散計數的自動 fallback。
+- 少於 20 個有效點只顯示資料與規格，不計算統計管制線或執行管制規則。
+- 現有 C-chart 公式與 Western Electric 規則可沿用，但需 Particle adapter 保護 bigint Count，並改用 measurement id 關聯同時間重測，不能直接以 MeasuredAt 作唯一 key。
+- 本小工作僅更新設計文件；未修改程式、未修改資料庫、未執行程式測試、未發布。
+- 下一步：使用者確認完整設計後，才進入實作（T-008）。
+
+## 2026-10-01 實作階段
+- 使用者已確認完整設計，T-008 完成並進入實作。
+- 實作拆分為資料模型、匯入、查詢、SPC engine、TransFiles、前端及整體發布七個小工作（T-009～T-015）。
+- 目前進行 T-009：先建立模型測試，再新增 ParticleMeasurement entity、EF schema／索引與 migration。
+- 小工作 7 完成：新增 `ParticleMeasurement` Long Format entity、`DbSet`、欄位型別、三組查詢／追溯索引、來源座標唯一鍵及 UploadBatch Restrict 外鍵。
+- DB 層新增 `CK_ParticleMeasurements_Count_NonNegative`，避免負數 Count 繞過 API 寫入。
+- EF migration `20261001002307_AddParticleMeasurements` 已產生並收斂檢查，只包含 ParticleMeasurements 建表／索引／外鍵／constraint，未夾帶工作區其他未發布 schema 差異。
+- `ParticleMeasurementModelTests` 通過 1 項；後端 build 通過，0 warnings／0 errors。
+- 測試 API 啟動流程已自動套用 migration；後續唯讀確認 `ParticleMeasurements`、Count constraint 與 migration history 各存在 1 筆。已依規範發布 SPC 測試站 backend，備份位於 `release-staging/particle-model-20261001/backend-backup`。
+- 發布後 DLL SHA-256 與 staging 相同，`/api/version` 為 `0.1.59`／`test`，`/health` HTTP 200，維護檔已移除；正式站未發布。
+- 下一步 T-010 實作 Particle preview／confirm API。
+- 小工作 8 完成：新增 `ParticleUploadService` 與 `POST /api/v1/uploads/particle/preview`，沿用既有 staging 並驗證時間、Location、ParticleSize、Count、採樣值與來源座標。
+- generic confirm 對 Particle batch 支援 `duplicateMode=reject|skip`；格式錯誤阻擋、跨批疑似重複預設拒絕、skip 只寫入非重複列，Imported 重送保持冪等。
+- `ParticleUploadServiceTests` 與模型測試共 3 passed；後端 build 0 warnings／0 errors。曾因 test/build 平行爭用 obj DLL 失敗，單獨重跑 build 通過。
+- 已發布 SPC 測試站 backend，備份 `release-staging/particle-upload-20261001/backend-backup`；DLL hash 一致，version `0.1.59/test`、health 200、Particle preview 未登入 401，正式站未發布。
+- 下一步 T-011 實作原始量測、趨勢與位置比較 API。
+- 小工作 9 完成：新增 Particle 原始量測分頁、單一序列趨勢及同事件 R1～R9 位置比較 API。
+- 趨勢依 Location／ParticleSize／DeviceCode 隔離並以時間＋Id 穩定排序；位置比較缺測回 null，同時間多事件回 409 候選。
+- Particle 相關測試 5 passed；後端 build 0 warnings／0 errors。
+- 已發布測試 backend，備份 `release-staging/particle-query-20261001/backend-backup`；DLL hash 一致、version `0.1.59/test`、health 200、trend 未登入 401。正式站未發布。
+- 下一步 T-012 實作 Particle C-chart adapter／SPC API。
+- 小工作 10 完成：新增 Particle 專用 C-chart calculator 與 `/api/v1/particles/spc`，不經 int 型 AttributeDataPoint/PPC。
+- 少於 20 點回 insufficientData；20 點以上計算 cBar ± 3√cBar 且 LCL 不小於 0，Western Electric 規則依穩定序列執行。
+- 同時間重測依 measurement id 保留；超過 double 可精確表示範圍的 bigint Count 回 422，不靜默轉型。
+- response 分開 specification 與 statControlLimits，並標示 samplingBasis=constant-assumed 及未依採樣體積正規化警示。
+- Particle 相關測試 9 passed；後端 build 0 warnings／0 errors。
+- 已發布測試 backend，備份 `release-staging/particle-spc-20261001/backend-backup`；DLL hash 一致、version `0.1.59/test`、health 200、SPC endpoint 未登入 401。正式站未發布。
+- 下一步 T-013 調整 TransFiles 產生 Particle Long Format preview payload。
+- 小工作 10A 完成：依使用者確認，Particle SPC API 支援 `chartType=C|U`；C 圖使用 Count，U 圖使用 Count／SamplingVolume 與逐點動態界線。
+- 新增 `SamplingVolumeUnit` 與獨立 migration；U 圖要求每點分母大於 0、單位非空且整段一致，否則回 422，不以 1 代替。
+- C/U Particle 相關測試 12 passed；後端 build 0 warnings／0 errors；migration 稽核只新增單一 nullable 欄位。
+- 已發布測試 backend，備份 `release-staging/particle-u-chart-20261001/backend-backup`；DLL hash 一致、version `0.1.59/test`、health 200、U-chart endpoint 未登入 401。
+- 測試庫唯讀確認 `SamplingVolumeUnit` 欄位與 `20261001015422_AddParticleSamplingVolumeUnit` history 各 1；正式站未發布。
+- 前端 C/U 選擇器列入 T-014；下一步仍為 T-013 TransFiles Long Format payload。
+- 小工作 11 完成：TransFiles 落塵預覽改送 `/v1/uploads/particle/preview` Long Format JSON，包含原始檔名、SHA-256、client batch id、來源工作表／列／欄與原值；舊 Attribute Excel 僅保留相容匯出。
+- 僅納入 R1-R9 與 0.5/1/5/10um；無效非空值交由 SPC preview 逐筆報錯。未提供真實抽樣體積時保持 null，不以固定 1 冒充 U-chart 分母；體積與單位須成對提供。
+- TransFiles 相關測試 39 passed，Python compile 通過；未打包 EXE，未變更或發布 SPC／正式站。
+- TransFiles 完整 discover 另確認 46 項中 44 passed；2 項既有歷史測試因缺少 `2026-4-24-0910.xlsx` fixture 失敗，非本次功能回歸。
+- 下一步 T-014 實作 SPC Web Particle 查詢、趨勢、位置比較與 C/U 圖型選擇畫面。
+- 小工作 12 完成：新增 `/particle-monitoring` 工作台與側邊導覽，支援日期、R1-R9、0.5/1/5/10 µm、儀器與 C/U 圖型條件。
+- 畫面整合 Particle 管制趨勢、最新事件 R1-R9 比較、抽樣基準／資料不足警示及最近 50 筆原始量測來源追溯。
+- `npm run build:test` 通過；Particle Playwright 測試已建立，但本機 runner 啟動頁面後兩次未正常結束，未取得 assertion 結果。部署後 HTTP 驗證頁面與新 JS 皆 200，資產包含 Particle 畫面及 endpoint，API version 為 `0.1.59/test`。
+- 已發布 SPC 測試站前端，備份 `release-staging/particle-frontend-20261001-103955/frontend-backup`；瀏覽器依 SSO 導向 Portal 登入，缺測試帳密故未執行登入後人工驗收。正式站未發布。
+- 下一步 T-015 整體回歸、文件同步與最終測試站確認。
+- 小工作 13／T-015 完成：Particle 後端 12 passed、build 0 warnings／0 errors；TransFiles 39 passed；前端 testhost build 通過。
+- 本機免登入頁面實際確認控制列、C/U 選擇、錯誤提示、圖表區及原始資料表版面正常。Playwright runner 未正常結束，未將其列為通過。
+- 最終測試站確認 frontend hash 一致、Particle 頁面與資產 200、API health 200、version `0.1.59/test`；正式站未發布。
+- 功能規格、任務、驗證、需求索引與變更紀錄已同步，Particle Monitoring 工作完成。

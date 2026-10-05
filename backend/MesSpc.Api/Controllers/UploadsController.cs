@@ -11,7 +11,7 @@ namespace MesSpc.Api.Controllers;
 [ApiController]
 [Route("api/uploads")]
 [Route("api/v1/uploads")]
-public class UploadsController(UploadService uploadService)
+public class UploadsController(UploadService uploadService, ParticleUploadService particleUploadService)
     : ControllerBase
 {
     [HttpPost("variable")]
@@ -50,11 +50,31 @@ public class UploadsController(UploadService uploadService)
         }
     }
 
+    /// <summary>建立 Particle Long Format 匯入預覽，驗證來源座標、粒徑、位置、計數與跨批重複。</summary>
+    [HttpPost("particle/preview")]
+    public async Task<IActionResult> UploadParticlePreview([FromBody] ParticlePreviewRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var result = await particleUploadService.CreatePreviewAsync(request, User.Identity?.Name ?? "api-user", ct);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
+        {
+            return Conflict(new { code = "DUPLICATE_FILE", message = "檔案已完成匯入，不可重複上傳。" });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { code = "INVALID_REQUEST", message = ex.Message });
+        }
+    }
+
     [HttpPost("variable/excel")]
-    public async Task<IActionResult> UploadVariableExcel(IFormFile file) => await UploadExcelFileAsync(file, true);
+    public async Task<IActionResult> UploadVariableExcel(IFormFile file, [FromQuery] bool portalDaily = false)
+        => await UploadExcelFileAsync(file, true, portalDaily);
 
     [HttpPost("attribute/excel")]
-    public async Task<IActionResult> UploadAttributeExcel(IFormFile file) => await UploadExcelFileAsync(file, false);
+    public async Task<IActionResult> UploadAttributeExcel(IFormFile file) => await UploadExcelFileAsync(file, false, false);
 
     [HttpPost("variable/csv")]
     public async Task<IActionResult> UploadVariableCsv(IFormFile file) => await UploadCsvLike(file, true);
@@ -85,8 +105,17 @@ public class UploadsController(UploadService uploadService)
     }
 
     [HttpPost("{uploadBatchId:guid}/confirm")]
-    public async Task<IActionResult> Confirm(Guid uploadBatchId, [FromQuery] string mode = "upsert")
+    public async Task<IActionResult> Confirm(Guid uploadBatchId, [FromQuery] string mode = "upsert", [FromQuery] string duplicateMode = "reject")
     {
+        if (await particleUploadService.IsParticleBatchAsync(uploadBatchId))
+        {
+            if (duplicateMode is not ("reject" or "skip"))
+                return BadRequest(new { message = "duplicateMode 僅支援 reject 或 skip。" });
+            var particleResult = await particleUploadService.ConfirmAsync(uploadBatchId, duplicateMode);
+            if (particleResult is null) return NotFound();
+            if (particleResult.ConflictCode is not null) return Conflict(particleResult);
+            return Ok(particleResult);
+        }
         if (mode is not ("upsert" or "insertOnly"))
             return BadRequest(new { message = "不支援的匯入模式。" });
         var result = await uploadService.ConfirmAsync(uploadBatchId, mode);
@@ -107,7 +136,7 @@ public class UploadsController(UploadService uploadService)
         return deleted ? NoContent() : NotFound();
     }
 
-    private async Task<IActionResult> UploadExcelFileAsync(IFormFile file, bool isVariable)
+    private async Task<IActionResult> UploadExcelFileAsync(IFormFile file, bool isVariable, bool portalDaily)
     {
         if (file.Length == 0) return BadRequest("File is empty.");
         
@@ -237,7 +266,7 @@ public class UploadsController(UploadService uploadService)
         try
         {
             var batch = isVariable
-                ? await uploadService.CreateVariableBatchAsync(rows, "File", "excel-user", file.FileName, fileHash)
+                ? await uploadService.CreateVariableBatchAsync(rows, portalDaily ? "PortalDaily" : "File", "excel-user", file.FileName, fileHash)
                 : await uploadService.CreateAttributeBatchAsync(rows, "File", "excel-user", file.FileName, fileHash);
             return Ok(new { batch.UploadBatchId, batch.ImportStatus, batch.TotalRows, batch.ValidRows, batch.ErrorRows });
         }

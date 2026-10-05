@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import { Sliders, Mail, Save, CheckCircle2, ShieldAlert, RefreshCw, Send, HardDrive, Server, Key, User, AlertTriangle } from "lucide-vue-next";
 
@@ -12,23 +12,60 @@ const form = ref({
   defaultRecipientEmail: "ihao_ting@pmr.com.tw",
   enableSsl: false,
   saveToLocalDisk: true,
-  localDiskFolder: "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\EmailOutbox"
+  localDiskFolder: "C:\\Users\\ihao_ting.PMR.000\\Desktop\\MES\\EmailOutbox",
+  recipientOperatorIds: [],
+  recipientDepartment: ""
 });
 
 const loading = ref(false);
 const saving = ref(false);
 const testLoading = ref(false);
 const testEmail = ref("");
+const operators = ref([]);
+const departments = ref([]);
 const successMsg = ref("");
 const errorMsg = ref("");
 const testResult = ref(null);
+
+const filteredOperators = computed(() => operators.value.filter(user =>
+  !form.value.recipientDepartment || user.department === form.value.recipientDepartment));
+const selectedRecipientCount = computed(() => form.value.recipientOperatorIds.length);
+
+function toggleRecipient(id) {
+  const ids = new Set(form.value.recipientOperatorIds);
+  if (ids.has(id)) ids.delete(id);
+  else ids.add(id);
+  form.value.recipientOperatorIds = Array.from(ids);
+}
+
+function selectAllRecipients() {
+  form.value.recipientOperatorIds = filteredOperators.value.map(x => x.id);
+}
+
+function clearRecipients() {
+  form.value.recipientOperatorIds = [];
+}
+
+function buildTestSettings() {
+  const rawPort = String(form.value.port).trim().toLowerCase();
+  if (rawPort.includes("s") || rawPort.includes("ssl")) form.value.enableSsl = true;
+  const cleanPort = parseInt(rawPort.replace(/\D/g, "")) || 25;
+  form.value.port = cleanPort;
+  return {
+    host: form.value.host, port: cleanPort, username: form.value.username, password: form.value.password,
+    senderEmail: form.value.senderEmail, defaultRecipientEmail: form.value.defaultRecipientEmail,
+    enableSsl: form.value.enableSsl, saveToLocalDisk: form.value.saveToLocalDisk, localDiskFolder: form.value.localDiskFolder
+  };
+}
 
 async function loadSettings() {
   loading.value = true;
   errorMsg.value = "";
   try {
     const res = await api.get("/settings/smtp");
-    form.value = res.data;
+    form.value = { ...res.data.smtp, password: "", recipientOperatorIds: res.data.recipientOperatorIds || [], recipientDepartment: "" };
+    operators.value = res.data.operators || [];
+    departments.value = res.data.departments || [];
     if (form.value.defaultRecipientEmail) {
       testEmail.value = form.value.defaultRecipientEmail;
     }
@@ -62,7 +99,8 @@ async function saveSettings() {
       defaultRecipientEmail: form.value.defaultRecipientEmail,
       enableSsl: form.value.enableSsl,
       saveToLocalDisk: form.value.saveToLocalDisk,
-      localDiskFolder: form.value.localDiskFolder
+      localDiskFolder: form.value.localDiskFolder,
+      recipientOperatorIds: form.value.recipientOperatorIds
     };
     const res = await api.post("/settings/smtp", payload);
     successMsg.value = res.data?.message || "SMTP 設定已成功更新並生效！";
@@ -79,33 +117,16 @@ async function sendTestEmail() {
   testResult.value = null;
   errorMsg.value = "";
 
-  // Parse 's' or 'ssl' suffix in port
-  const rawPort = String(form.value.port).trim().toLowerCase();
-  if (rawPort.includes("s") || rawPort.includes("ssl")) {
-    form.value.enableSsl = true;
-  }
-  const cleanPort = parseInt(rawPort.replace(/\D/g, "")) || 25;
-  form.value.port = cleanPort;
-
   try {
     const payload = {
       recipientEmail: testEmail.value,
-      settings: {
-        host: form.value.host,
-        port: cleanPort,
-        username: form.value.username,
-        password: form.value.password,
-        senderEmail: form.value.senderEmail,
-        defaultRecipientEmail: form.value.defaultRecipientEmail,
-        enableSsl: form.value.enableSsl,
-        saveToLocalDisk: form.value.saveToLocalDisk,
-        localDiskFolder: form.value.localDiskFolder
-      }
+      recipientOperatorIds: form.value.recipientOperatorIds,
+      settings: buildTestSettings()
     };
     const res = await api.post("/settings/smtp/test", payload);
     testResult.value = {
       success: res.data.success,
-      recipient: res.data.recipient,
+      recipients: res.data.recipients || [],
       host: res.data.host,
       port: res.data.port,
       outboxFolder: res.data.outboxFolder
@@ -122,33 +143,16 @@ async function sendTestAlertEmail() {
   testResult.value = null;
   errorMsg.value = "";
 
-  // Parse 's' or 'ssl' suffix in port
-  const rawPort = String(form.value.port).trim().toLowerCase();
-  if (rawPort.includes("s") || rawPort.includes("ssl")) {
-    form.value.enableSsl = true;
-  }
-  const cleanPort = parseInt(rawPort.replace(/\D/g, "")) || 25;
-  form.value.port = cleanPort;
-
   try {
     const payload = {
       recipientEmail: testEmail.value,
-      settings: {
-        host: form.value.host,
-        port: cleanPort,
-        username: form.value.username,
-        password: form.value.password,
-        senderEmail: form.value.senderEmail,
-        defaultRecipientEmail: form.value.defaultRecipientEmail,
-        enableSsl: form.value.enableSsl,
-        saveToLocalDisk: form.value.saveToLocalDisk,
-        localDiskFolder: form.value.localDiskFolder
-      }
+      recipientOperatorIds: form.value.recipientOperatorIds,
+      settings: buildTestSettings()
     };
     const res = await api.post("/settings/smtp/test-alert", payload);
     testResult.value = {
       success: res.data.success,
-      recipient: res.data.recipient,
+      recipients: res.data.recipients || [],
       host: res.data.host,
       port: res.data.port,
       outboxFolder: res.data.outboxFolder
@@ -213,6 +217,30 @@ onMounted(() => {
             </div>
           </div>
 
+          <div class="space-y-3 rounded-2xl border border-indigo-100 dark:border-slate-700 bg-indigo-50/50 dark:bg-slate-950/50 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-white">異常預警收件人</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">已選 {{ selectedRecipientCount }} 位；未選時沿用預設收件人信箱。</p>
+              </div>
+              <div class="flex gap-2">
+                <button type="button" @click="selectAllRecipients" class="text-xs font-bold text-indigo-600 dark:text-indigo-300">全選</button>
+                <button type="button" @click="clearRecipients" class="text-xs font-bold text-slate-500">清除</button>
+              </div>
+            </div>
+            <select v-model="form.recipientDepartment" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm">
+              <option value="">全部部門</option>
+              <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
+            </select>
+            <div class="max-h-48 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label v-for="user in filteredOperators" :key="user.id" class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white dark:hover:bg-slate-800 text-xs cursor-pointer">
+                <input type="checkbox" :checked="form.recipientOperatorIds.includes(user.id)" @change="toggleRecipient(user.id)" class="w-4 h-4 accent-indigo-600" />
+                <span class="truncate text-slate-700 dark:text-slate-200">{{ user.operatorName }} ({{ user.operatorCode }})</span>
+              </label>
+            </div>
+            <p v-if="filteredOperators.length === 0" class="text-xs text-slate-500">目前沒有已設定 Email 的啟用中使用者。</p>
+          </div>
+
           <div class="flex items-center gap-3 pt-2">
             <input v-model="form.enableSsl" type="checkbox" id="ssl" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300" />
             <label for="ssl" class="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">啟用 SSL / TLS 安全連線加密</label>
@@ -230,7 +258,7 @@ onMounted(() => {
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">登入密碼 (Password)</label>
-              <input v-model="form.password" type="password" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
+              <input v-model="form.password" type="password" :placeholder="form.hasPassword ? '已設定，留白可保留原密碼' : '請輸入密碼'" autocomplete="new-password" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
             </div>
           </div>
 
@@ -300,7 +328,7 @@ onMounted(() => {
             </div>
             <button
               @click="sendTestEmail"
-              :disabled="testLoading || !testEmail"
+              :disabled="testLoading || (!testEmail && selectedRecipientCount === 0)"
               class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all text-sm"
             >
               <RefreshCw v-if="testLoading" class="w-4 h-4 animate-spin" />
@@ -309,7 +337,7 @@ onMounted(() => {
             </button>
             <button
               @click="sendTestAlertEmail"
-              :disabled="testLoading || !testEmail"
+              :disabled="testLoading || (!testEmail && selectedRecipientCount === 0)"
               class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow-lg shadow-rose-500/20 disabled:opacity-50 transition-all text-sm"
             >
               <RefreshCw v-if="testLoading" class="w-4 h-4 animate-spin" />
@@ -326,9 +354,16 @@ onMounted(() => {
               {{ testResult.success ? '測試派發作業成功' : '外部 SMTP 伺服器傳送連線未建立' }}
             </div>
             <p class="text-xs leading-relaxed text-slate-300">
-              <span v-if="testResult.success">已成功向 <strong>{{ testResult.recipient }}</strong> 發出測試通報信件。</span>
+              <span v-if="testResult.success">已完成 {{ testResult.recipients?.length || 0 }} 位收件人的測試通報信件派送。</span>
               <span v-else>由於測試主機位置 (<strong>{{ testResult.host }}:{{ testResult.port }}</strong>) 拒絕連線或未回應 (伺服器可能未執行或遭防火牆阻擋)，無法完成外部網路派發。</span>
             </p>
+
+            <div v-if="testResult.recipients?.length" class="space-y-1 text-xs">
+              <div v-for="recipient in testResult.recipients" :key="recipient.email" class="flex justify-between gap-2">
+                <span class="truncate">{{ recipient.name }} ({{ recipient.email }})</span>
+                <span :class="recipient.success ? 'text-emerald-300' : 'text-rose-300'">{{ recipient.success ? '成功' : (recipient.errorMessage || '失敗') }}</span>
+              </div>
+            </div>
 
             <div v-if="!testResult.success && form.saveToLocalDisk" class="p-3.5 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-200 text-xs space-y-1.5">
               <p class="font-bold flex items-center gap-1.5 text-cyan-300 text-sm">

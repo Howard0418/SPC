@@ -306,6 +306,15 @@ async function loadChart() {
   const mapping = selectedMapping.value;
   if (!mapping) return;
 
+  router.replace({
+    path: route.path,
+    query: {
+      ppcId: mapping.id,
+      ...(startDate.value ? { startDate: startDate.value } : {}),
+      ...(endDate.value ? { endDate: endDate.value } : {}),
+    },
+  });
+
   if (selectedSummaryRow.value && selectedSummaryRow.value.partProcessCharacteristicId !== mapping.id) {
     selectedSummaryRow.value = null;
   }
@@ -550,7 +559,7 @@ function renderTrendChart() {
       nameTextStyle: { color: "#94a3b8", fontSize: 11 },
       splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } },
       axisLine: { lineStyle: { color: "#64748b" } },
-      axisLabel: { color: "#94a3b8", fontSize: 10 },
+      axisLabel: { color: "#94a3b8", fontSize: 10, formatter: value => Number(value).toFixed(3) },
       scale: true
     },
     series: [{
@@ -583,6 +592,8 @@ function renderTrendChart() {
 function handleResize() { trendChartInstance?.resize(); }
 
 onMounted(() => {
+  if (route.query.startDate) startDate.value = String(route.query.startDate);
+  if (route.query.endDate) endDate.value = String(route.query.endDate);
   loadMappings();
   window.addEventListener("resize", handleResize);
 });

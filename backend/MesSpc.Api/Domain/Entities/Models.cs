@@ -78,6 +78,7 @@ public class Operator : BaseEntity<int>
     public string? PasswordHash { get; set; }
     public string Role { get; set; } = "Editor";
     public bool IsActive { get; set; } = true;
+    public string? PagePermissionsJson { get; set; }
 }
 
 public class SpcReportSchedule : BaseEntity<int>
@@ -93,6 +94,21 @@ public class SpcReportSchedule : BaseEntity<int>
     public DateTime? LastWeeklySentAt { get; set; }
     public DateTime? LastMonthlySentAt { get; set; }
     public bool IsEnabled { get; set; } = true;
+}
+
+public class SpcAlertNotificationSetting : BaseEntity<int>
+{
+    public string RecipientOperatorIdsJson { get; set; } = "[]";
+    public bool IsEnabled { get; set; } = true;
+}
+
+public class ChameleonSourceSetting : BaseEntity<int>
+{
+    public string SourceId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string BaseUrl { get; set; } = string.Empty;
+    public bool IsEnabled { get; set; } = true;
+    public int SortOrder { get; set; }
 }
 
 public class Customer : BaseEntity<int>
@@ -119,6 +135,22 @@ public class Chemical : BaseEntity<int>
     public string ChemicalName { get; set; } = string.Empty;
     public string? ChemicalType { get; set; }
     public bool IsActive { get; set; } = true;
+}
+
+public class EquipmentPointMapping : BaseEntity<int>
+{
+    public string SourceId { get; set; } = string.Empty;
+    public string EquipmentId { get; set; } = string.Empty;
+    public string ChannelId { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
+    public string? Unit { get; set; }
+    public bool IsEnabled { get; set; } = true;
+    public bool IsPinned { get; set; }
+    public double? WarningLow { get; set; }
+    public double? WarningHigh { get; set; }
+    public int SortOrder { get; set; }
+    public string? StatusRole { get; set; }
+    public string? ActiveWhen { get; set; }
 }
 
 public class MesSyncMessage : BaseEntity
@@ -204,6 +236,52 @@ public class FormulaDefinition : BaseEntity<int>
     public string Expression { get; set; } = string.Empty;
     public bool IsBuiltIn { get; set; } = true;
     public bool IsActive { get; set; } = true;
+}
+
+public class ChemicalFTableVersion : BaseEntity<int>
+{
+    public string VersionCode { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? SourceName { get; set; }
+    public string? SourcePath { get; set; }
+    public DateTime EffectiveAt { get; set; } = DateTime.UtcNow;
+    public DateTime ImportedAt { get; set; } = DateTime.UtcNow;
+    public bool IsActive { get; set; } = true;
+    public string? Note { get; set; }
+}
+
+public class ChemicalFTableCell : BaseEntity<int>
+{
+    public int VersionId { get; set; }
+    public string SheetName { get; set; } = "F";
+    public string CellAddress { get; set; } = string.Empty;
+    public string NormalizedCellAddress { get; set; } = string.Empty;
+    public string? StandardSolution { get; set; }
+    public decimal? NumericValue { get; set; }
+    public string? TextValue { get; set; }
+    public string? FormulaText { get; set; }
+    public string? RawValue { get; set; }
+
+    [ForeignKey("VersionId")]
+    public virtual ChemicalFTableVersion? Version { get; set; }
+}
+
+public class ChemicalFTableReference : BaseEntity<int>
+{
+    public int VersionId { get; set; }
+    public int PartProcessCharacteristicId { get; set; }
+    public string CellAddress { get; set; } = string.Empty;
+    public string NormalizedCellAddress { get; set; } = string.Empty;
+    public string? SourceFormula { get; set; }
+    public string? SourceSheet { get; set; }
+    public int? SourceRow { get; set; }
+    public string? ReferenceContext { get; set; }
+
+    [ForeignKey("VersionId")]
+    public virtual ChemicalFTableVersion? Version { get; set; }
+
+    [ForeignKey("PartProcessCharacteristicId")]
+    public virtual PartProcessCharacteristic? PartProcessCharacteristic { get; set; }
 }
 
 public class AlertEvent : BaseEntity<int>
@@ -347,6 +425,9 @@ public class ControlLimitSegment : BaseEntity<int>
     public double? UCL { get; set; }
     public double? CL { get; set; }
     public double? LCL { get; set; }
+    public double? USL { get; set; }
+    public double? LSL { get; set; }
+    public double? TargetValue { get; set; }
     
     public string? Note { get; set; }
     
@@ -434,6 +515,8 @@ public class VariableMeasurement : BaseEntity<long>
     public double MeasuredValue { get; set; }
     public DateTime MeasuredAt { get; set; } = DateTime.UtcNow;
     public DateTime? PortalDailyDate { get; set; }
+    public string SamplingPhase { get; set; } = "GENERAL"; // Legacy shift: OPEN=早班, MIDDLE=中班
+    public string SamplingStage { get; set; } = "GENERAL";
     public string? Operator { get; set; }
     
     public double? RecheckValue { get; set; }
@@ -491,6 +574,24 @@ public class AttributeMeasurement : BaseEntity<long>
     public virtual Tank? Tank { get; set; }
     [ForeignKey("SlotId")]
     public virtual Slot? Slot { get; set; }
+}
+
+public class ParticleMeasurement : BaseEntity<long>
+{
+    public Guid UploadBatchId { get; set; }
+    public DateTime MeasurementTime { get; set; }
+    public string Location { get; set; } = string.Empty;
+    public decimal ParticleSize { get; set; }
+    public long Count { get; set; }
+    public decimal? SamplingVolume { get; set; }
+    public string? SamplingVolumeUnit { get; set; }
+    public decimal? SamplingDurationSeconds { get; set; }
+    public string? DeviceCode { get; set; }
+    public string? Remark { get; set; }
+    public string SourceSheet { get; set; } = string.Empty;
+    public int SourceRow { get; set; }
+    public string SourceColumn { get; set; } = string.Empty;
+    public string RawValue { get; set; } = string.Empty;
 }
 
 public class SpcRuleGroup : BaseEntity<int>

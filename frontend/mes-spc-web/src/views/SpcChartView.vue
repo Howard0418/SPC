@@ -5,6 +5,16 @@ import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
 import { normalizeControlScope } from "../utils/controlScope";
 import {
+  useSingleChemicalLine,
+  stageLabel,
+  normalizeChemicalShift,
+  isRecordedChemicalShift,
+  shiftLabel,
+  chartShiftLabel,
+  chemicalDateKey,
+  buildPairedShiftLookup
+} from "../utils/chemicalChart";
+import {
   LineChart,
   TrendingUp,
   Search,
@@ -31,7 +41,25 @@ import SpcSummaryTable from "../components/SpcSummaryTable.vue";
 
 const route = useRoute();
 const router = useRouter();
+const analysisSectionByPath = {
+  "/process-analysis/capability": "process-capability-analysis",
+  "/process-analysis/violations": "violation-analysis",
+};
+
+function focusRequestedAnalysis() {
+  const sectionId = analysisSectionByPath[route.path];
+  if (!sectionId) return;
+  window.requestAnimationFrame(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+}
 const isMonthlyChartPage = computed(() => route.path.startsWith("/monthly-control-chart"));
+const pageHeading = computed(() => ({
+  "/process-analysis/capability": "製程能力分析",
+  "/process-analysis/violations": "異常點分析",
+}[route.path] || (isMonthlyChartPage.value ? "SPC 週月報表" : "SPC 即時互動管制圖")));
+const pageDescription = computed(() => ({
+  "/process-analysis/capability": "檢視 Cp、Cpk、Pp、Ppk 與製程變異能力",
+  "/process-analysis/violations": "定位 OOS、OOC、違規點與 OCAP 處置狀態",
+}[route.path] || (isMonthlyChartPage.value ? "依週期檢視 SPC 管制結果與前期比較" : "使用統計管制界線與規則監控製程穩定性")));
 
 // SPC master data source: PartProcessCharacteristics
 const mappings = ref([]);
@@ -109,7 +137,7 @@ const chartEl = ref(null);
 const selectedPoint = ref(null);
 const selectedPointIndex = ref(-1);
 const showSpecLimits = ref(false);
-const showControlLimits = ref(true);
+const showControlLimits = ref(false);
 const showPointValues = ref(false);
 const savingControlLimits = ref(false);
 const savingOcap = ref(false);
@@ -285,14 +313,22 @@ const violationRows = computed(() => {
 });
 
 const rawPointCount = computed(() => chartResult.value?.rawDataPoints?.length || 0);
+const isEtchAverageChart = computed(() => {
+  const mapping = selectedMapping.value || {};
+  const characteristic = mapping.characteristic || {};
+  const code = String(characteristic.characteristicCode || characteristic.code || characteristic.itemCode || mapping.characteristicCode || mapping.code || '').toUpperCase();
+  const name = String(characteristic.characteristicName || characteristic.name || mapping.characteristicName || '').toLowerCase();
+  return ['ETCH_A_AVG', 'ETCH_B_AVG'].includes(code) || (name.includes('咬蝕量') && name.includes('平均')) || monitorCharacteristicLabel.value.includes('咬蝕量');
+});
+const displayedMeasurementCount = computed(() => isEtchAverageChart.value ? chartPoints.value.length : rawPointCount.value);
 
 const capabilityRows = computed(() => {
   const c = chartResult.value?.capability;
   if (!c) return [];
   return [
-    { label: "Ca", value: c.ca, note: "準確度" },
-    { label: "Cp", value: c.cp, note: "短期能力" },
-    { label: "Cpk", value: c.cpk, note: "短期能力下限" }
+    { label: "Ca", value: c.ca },
+    { label: "Cp", value: c.pp },
+    { label: "Cpk", value: c.ppk }
   ];
 });
 
@@ -312,7 +348,8 @@ const formatRuleCode = (value) => {
 const summaryDimensionMap = {
   PROCESS: "PROCESS",
   CHEM: "CHEM",
-  PRODUCT: "PRODUCT"
+  PRODUCT: "PRODUCT",
+  DUST: "DUST"
 };
 const pageGroupType = "CONTROL_CHART";
 
@@ -326,6 +363,7 @@ const getDimensionForMapping = (m) => {
   if (scope === "PROCESS") return "PROCESS";
   if (scope === "CHEM") return "CHEM";
   if (scope === "PRODUCT") return "PRODUCT";
+  if (scope === "DUST") return "DUST";
   return m.partId ? "PRODUCT" : "PROCESS";
 };
 
@@ -344,6 +382,7 @@ const dimensionButtonClass = (dimensionId) => {
     return "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800";
   }
   if (dimensionId === "CHEM") return "bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold shadow-lg shadow-teal-500/25";
+  if (dimensionId === "DUST") return "bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25";
   if (dimensionId === "PRODUCT") return "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-bold shadow-lg shadow-purple-500/25";
   return "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-lg shadow-blue-500/25";
 };
@@ -609,6 +648,7 @@ async function loadUploadBatchChart() {
     loading.value = false;
     await nextTick();
     renderECharts();
+    focusRequestedAnalysis();
   } catch (e) {
     if (e?.response?.status === 404) {
       error.value = "找不到該 Excel/匯入批次的管制圖資料，可能尚未確認匯入或檢驗基準不存在。";
@@ -639,6 +679,7 @@ async function loadInteractiveChart() {
     loading.value = false;
     await nextTick();
     renderECharts();
+    focusRequestedAnalysis();
   } catch (e) {
     if (e?.response?.status === 404) {
       error.value = "找不到該檢驗項目的管制圖資料，可能尚無量測數據或尚未配置管制圖。";
@@ -855,8 +896,15 @@ function renderECharts() {
 
   // Build spec & control marklines
   const markLinesTop = [];
+  const rawTopPoints = data.chartData?.points || [];
+  const topLimitValues = [];
+  const addTopLimitValue = value => {
+    if (value == null || Number.isNaN(Number(value))) return;
+    topLimitValues.push(Number(value));
+  };
   const addLine = (y, name, color, style = "solid", width = 1.5) => {
     if (y == null || Number.isNaN(y)) return;
+    addTopLimitValue(y);
     markLinesTop.push({
       name,
       yAxis: y,
@@ -864,21 +912,69 @@ function renderECharts() {
       label: { formatter: `${name}: ${Number(y).toFixed(3)}`, color, position: "end" }
     });
   };
+  const addSegmentedSpecLines = () => {
+    const segments = Array.isArray(data.specLimitSegments) ? data.specLimitSegments : [];
+    if (!segments.length || !rawTopPoints.length) return false;
+    const findStartIndex = (startDate) => {
+      const start = startDate ? new Date(startDate).getTime() : -Infinity;
+      const idx = rawTopPoints.findIndex(p => p.measuredAt && new Date(p.measuredAt).getTime() >= start);
+      return idx >= 0 ? idx : rawTopPoints.length - 1;
+    };
+    const findEndIndex = (endDate) => {
+      if (!endDate) return rawTopPoints.length - 1;
+      const end = new Date(endDate).getTime();
+      for (let i = rawTopPoints.length - 1; i >= 0; i--) {
+        if (rawTopPoints[i].measuredAt && new Date(rawTopPoints[i].measuredAt).getTime() <= end) return i;
+      }
+      return 0;
+    };
+    const addSegmentLine = (segment, field, name, color, style, width) => {
+      const value = segment[field];
+      if (value == null || Number.isNaN(Number(value))) return;
+      const startIndex = findStartIndex(segment.startDate);
+      const endIndex = findEndIndex(segment.endDate);
+      if (startIndex > endIndex) return;
+      addTopLimitValue(value);
+      markLinesTop.push([
+        {
+          name,
+          xAxis: startIndex,
+          yAxis: Number(value),
+          lineStyle: { color, width, type: style },
+          label: { formatter: `${name}: ${Number(value).toFixed(3)}`, color, position: "insideEndTop" }
+        },
+        { xAxis: endIndex, yAxis: Number(value) }
+      ]);
+    };
+    segments.forEach(segment => {
+      addSegmentLine(segment, "usl", "USL", "#ef4444", "dashed", 2);
+      addSegmentLine(segment, "lsl", "LSL", "#ef4444", "dashed", 2);
+      addSegmentLine(segment, "target", "Target", "#10b981", "solid", 2);
+    });
+    return true;
+  };
 
   if (showSpecLimits.value) {
-    addLine(limits.usl, "USL", "#ef4444", "dashed", 2);
-    addLine(limits.lsl, "LSL", "#ef4444", "dashed", 2);
-    addLine(limits.target, "Target", "#10b981", "solid", 2);
+    const hasSegmentedSpecLines = addSegmentedSpecLines();
+    if (!hasSegmentedSpecLines) {
+      addLine(limits.usl, "USL", "#ef4444", "dashed", 2);
+      addLine(limits.lsl, "LSL", "#ef4444", "dashed", 2);
+      addLine(limits.target, "Target", "#10b981", "solid", 2);
+    }
   }
 
   // Control limits (Static, for Variables)
-  const hasDynamicLimits = (data.chartData?.points || []).some(p => p.uclStat != null || p.lclStat != null);
-  if (!hasDynamicLimits && showControlLimits.value) {
+  const singleChemicalLine = useSingleChemicalLine(mapping);
+  const pairedPhaseMode = rawTopPoints.some(p => isRecordedChemicalShift(p.samplingPhase));
+  const hasDynamicLimits = !pairedPhaseMode && rawTopPoints.some(p => p.uclStat != null || p.lclStat != null);
+  const dynamicLimitPointCount = rawTopPoints.filter(p => p.uclStat != null || p.clStat != null || p.lclStat != null).length;
+  const useDynamicControlLimitSeries = hasDynamicLimits && dynamicLimitPointCount >= 2;
+  if (!useDynamicControlLimitSeries && showControlLimits.value) {
     addLine(effectiveTopLimits.ucl, "UCL", "#f59e0b", "solid", 1.5);
     addLine(effectiveTopLimits.cl, "CL", "#3b82f6", "solid", 1.5);
     addLine(effectiveTopLimits.lcl, "LCL", "#f59e0b", "solid", 1.5);
   }
-  if (hasDynamicLimits && showControlLimits.value) {
+  if (useDynamicControlLimitSeries && showControlLimits.value) {
     // UCL/CL/LCL are rendered as point-wise stepped line series.
   }
 
@@ -917,10 +1013,19 @@ function renderECharts() {
 
   const bottomMarkLineObj = markLinesBottom.length > 0 ? { symbol: "none", data: markLinesBottom, animation: false } : undefined;
 
-  const pointsTop = data.chartData?.points || [];
+  const pointsTop = rawTopPoints;
   const pointsBottom = data.secondaryChartData?.points || [];
 
   const labels = pointsTop.map((p, i) => {
+    if (pairedPhaseMode && p.samplingPhase) {
+      const date = chemicalDateKey(p).slice(5).replace("-", "/");
+      const phase = normalizeChemicalShift(p.samplingPhase);
+      const chartPhaseLabel = singleChemicalLine
+        ? ({ OPEN: '早班開線', MIDDLE: '中班', CLOSE: '早班收線' })[phase]
+        : shiftLabel(phase);
+      return `${date} ${chartPhaseLabel}${singleChemicalLine && p.samplingStage ? `（${stageLabel(p.samplingStage)}）` : ''}`;
+    }
+    if (singleChemicalLine) return `${chemicalDateKey(p).slice(5).replace("-", "/")} ${stageLabel(p.samplingStage)}`;
     if (p.measuredAt) {
       return new Date(p.measuredAt).toLocaleString('zh-TW', { 
         month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false 
@@ -929,13 +1034,45 @@ function renderECharts() {
     return `P#${i + 1}`;
   });
 
+  const buildPointDatum = (p, phase = null) => {
+    if (!p) return null;
+    const isErr = p.outOfSpec || p.outOfControl || (p.violatedRules && p.violatedRules.length > 0);
+    const isExcluded = p.isExcluded;
+    const phaseStyles = {
+      OPEN: { color: "#3b82f6", borderColor: "#2563eb", symbol: "circle" },
+      MIDDLE: { color: "#10b981", borderColor: "#047857", symbol: "diamond" },
+      CLOSE: { color: "#f97316", borderColor: "#c2410c", symbol: "rect" }
+    };
+    const phaseStyle = phase ? phaseStyles[phase] : null;
+    let color = phaseStyle?.color || (isErr ? "#ef4444" : "#3b82f6");
+    let borderColor = phaseStyle?.borderColor || (isErr ? "#991b1b" : "#2563eb");
+    let symbol = phaseStyle?.symbol || "circle";
+    let symbolSize = isErr ? 12 : 8;
+    if (isExcluded) {
+      color = "#94a3b8";
+      borderColor = "#64748b";
+      symbol = "path://M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z";
+      symbolSize = 14;
+    }
+    return {
+      value: p.value !== undefined ? p.value : p.xbar !== undefined ? p.xbar : null,
+      itemStyle: { color, borderColor, borderWidth: 2 },
+      symbol,
+      symbolSize,
+      violatedRules: p.violatedRules,
+      meta: p
+    };
+  };
+
   const seriesTopData = pointsTop.map((p, i) => {
     const isErr = p.outOfSpec || p.outOfControl || (p.violatedRules && p.violatedRules.length > 0);
     const isExcluded = p.isExcluded;
     
-    let color = isErr ? "#ef4444" : "#3b82f6";
-    let borderColor = isErr ? "#991b1b" : "#2563eb";
-    let symbol = "circle";
+    const phase = pairedPhaseMode ? normalizeChemicalShift(p.samplingPhase) : null;
+    const phaseStyles = { OPEN: ["#3b82f6", "#2563eb", "circle"], MIDDLE: ["#10b981", "#047857", "diamond"], CLOSE: ["#f97316", "#c2410c", "rect"] };
+    let color = phaseStyles[phase]?.[0] || (isErr ? "#ef4444" : "#3b82f6");
+    let borderColor = phaseStyles[phase]?.[1] || (isErr ? "#991b1b" : "#2563eb");
+    let symbol = phaseStyles[phase]?.[2] || "circle";
     let symbolSize = isErr ? 12 : 8;
     
     if (isExcluded) {
@@ -980,7 +1117,7 @@ function renderECharts() {
 
   const seriesTopList = [
     {
-      name: primarySeriesName,
+      name: pairedPhaseMode ? "早班" : primarySeriesName,
       type: "line",
       xAxisIndex: 0,
       yAxisIndex: 0,
@@ -988,12 +1125,23 @@ function renderECharts() {
       showSymbol: true,
       label: { show: showPointValues.value, formatter: p => formatNumber(p.value, 3), fontSize: 10 },
       markLine: topMarkLineObj,
-      markArea: !hasDynamicLimits && showControlLimits.value ? markAreaTop : undefined,
+      markArea: !useDynamicControlLimitSeries && showControlLimits.value ? markAreaTop : undefined,
       smooth: false
     }
   ];
 
-  if (hasDynamicLimits && showControlLimits.value) {
+
+  router.replace({
+    path: route.path,
+    query: {
+      ppcId: ppcId.value,
+      ...(startDate.value ? { startDate: startDate.value } : {}),
+      ...(endDate.value ? { endDate: endDate.value } : {}),
+      ...(batchId.value ? { batchId: batchId.value } : {}),
+    },
+  });
+
+  if (useDynamicControlLimitSeries && showControlLimits.value) {
     seriesTopList.push({
       name: "UCL",
       type: "line",
@@ -1029,6 +1177,28 @@ function renderECharts() {
     });
   }
 
+  const calculateAxisRange = values => {
+    const finiteValues = values.map(Number).filter(Number.isFinite);
+    if (finiteValues.length === 0) return {};
+    const minimum = Math.min(...finiteValues);
+    const maximum = Math.max(...finiteValues);
+    const padding = maximum > minimum
+      ? (maximum - minimum) * 0.08
+      : Math.max(Math.abs(minimum) * 0.08, 1);
+    return { min: minimum - padding, max: maximum + padding };
+  };
+  const topAxisRange = calculateAxisRange([
+    ...seriesTopData.map(point => point?.value),
+    ...topLimitValues,
+    ...(useDynamicControlLimitSeries && showControlLimits.value
+      ? pointsTop.flatMap(point => [point.uclStat, point.clStat, point.lclStat])
+      : [])
+  ]);
+  const bottomAxisRange = calculateAxisRange([
+    ...seriesBottomData.map(point => point?.value),
+    ...markLinesBottom.map(line => line.yAxis)
+  ]);
+
   const option = {
     backgroundColor: "transparent",
     title: isDual
@@ -1042,7 +1212,7 @@ function renderECharts() {
           {
             top: 27,
             left: "center",
-            data: [primarySeriesName, "UCL", "CL", "LCL"],
+            data: pairedPhaseMode ? ["UCL", "CL", "LCL"] : [primarySeriesName, "UCL", "CL", "LCL"],
             itemWidth: 22,
             itemHeight: 9,
             textStyle: { color: "#64748b", fontSize: 11 },
@@ -1084,10 +1254,17 @@ function renderECharts() {
           if (meta.lineId) res += `<div>產線: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>槽體: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
           if (meta.slotId) res += `<div>槽位: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
+          const phase = normalizeChemicalShift(meta.samplingPhase);
+          const phaseColors = { OPEN: "text-blue-300", MIDDLE: "text-emerald-300", CLOSE: "text-orange-300" };
+          res += `<div>班別: <span class="font-bold ${phaseColors[phase]}">${shiftLabel(meta.samplingPhase)}</span></div>`;
+          if (singleChemicalLine) res += `<div>取樣階段: ${stageLabel(meta.samplingStage)}</div>`;
+          if (meta.measuredAt) res += `<div>實際量測: <span class="text-slate-200">${new Date(meta.measuredAt).toLocaleString("zh-TW", { hour12: false })}</span></div>`;
           res += `</div>`;
         }
         params.forEach(p => {
-          res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> ${p.seriesName}: <strong>${p.data?.value !== undefined ? Number(p.data?.value).toFixed(4) : Number(p.value).toFixed(4)}</strong></div>`;
+          const rawValue = p.data?.value !== undefined ? p.data?.value : p.value;
+          if (rawValue === null || rawValue === undefined || Number.isNaN(Number(rawValue))) return;
+          res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> ${p.seriesName}: <strong>${Number(rawValue).toFixed(4)}</strong></div>`;
           if (p.data?.violatedRules?.length > 0) {
             res += `<div class="mt-1.5 px-2 py-0.5 rounded bg-red-900/50 border border-red-500/50 text-red-300 text-[11px] font-bold">⚠️ 西方電氣規則違規：<br>${p.data.violatedRules.map(formatRuleCode).join("<br>")}</div>`;
           }
@@ -1126,7 +1303,7 @@ function renderECharts() {
           },
           {
             type: "category",
-            data: labels,
+            data: (type === "I-MR" || type === "I_MR") ? labels.slice(1) : labels,
             boundaryGap: false,
             gridIndex: 1,
             axisLine: { lineStyle: { color: "#64748b" } },
@@ -1136,10 +1313,10 @@ function renderECharts() {
       : [{ type: "category", data: labels, boundaryGap: false, axisLine: { lineStyle: { color: "#64748b" } } }],
     yAxis: isDual
       ? [
-          { type: "value", gridIndex: 0, name: type === "XBAR_R" || type === "XBAR_S" ? "Xbar 平均值" : "單值 (I)", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true },
-          { type: "value", gridIndex: 1, name: type === "XBAR_R" ? "全距 (R)" : type === "XBAR_S" ? "標準差 (S)" : "移動全距 (MR)", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true }
+          { type: "value", gridIndex: 0, name: type === "XBAR_R" || type === "XBAR_S" ? "Xbar 平均值" : "單值 (I)", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, axisLabel: { formatter: value => formatNumber(value, 3) }, scale: true, ...topAxisRange },
+          { type: "value", gridIndex: 1, name: type === "XBAR_R" ? "全距 (R)" : type === "XBAR_S" ? "標準差 (S)" : "移動全距 (MR)", splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, axisLabel: { formatter: value => formatNumber(value, 3) }, scale: true, ...bottomAxisRange }
         ]
-      : [{ type: "value", name: `${type} 數值`, splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, scale: true }],
+      : [{ type: "value", name: `${type} 數值`, splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } }, axisLine: { lineStyle: { color: "#64748b" } }, axisLabel: { formatter: value => formatNumber(value, 3) }, scale: true, ...topAxisRange }],
     series: isDual
       ? [
           ...seriesTopList,
@@ -1165,11 +1342,7 @@ function renderECharts() {
     if (params.componentType === "series") {
       const idx = params.dataIndex;
       selectedPointIndex.value = idx;
-      if (params.seriesIndex === 0) {
-        selectedPoint.value = pointsTop[idx];
-      } else {
-        selectedPoint.value = pointsBottom[idx];
-      }
+      selectedPoint.value = params.data?.meta || (params.seriesIndex < seriesTopList.length ? pointsTop[idx] : pointsBottom[idx]);
       prepareOcapForm(selectedPoint.value);
     }
   });
@@ -1518,7 +1691,7 @@ function renderHistogramChart() {
           const normalStatus = data.normality.isNormal
             ? "<span style='color:#34d399;font-weight:bold'>符合常態</span>"
             : "<span style='color:#f87171;font-weight:bold'>偏離常態</span>";
-          normalityInfo = `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">常態性檢定 (JB p-val): <strong style="color:#fbbf24">${pValStr}</strong> (${normalStatus})</div>`;
+          normalityInfo = `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">常態性檢定 (P-val): <strong style="color:#fbbf24">${pValStr}</strong> (${normalStatus})</div>`;
         }
 
         return [
@@ -1605,10 +1778,10 @@ onBeforeUnmount(() => {
         </div>
         <div>
           <h1 class="text-2xl font-black text-slate-800 dark:text-white">
-            {{ isMonthlyChartPage ? 'SPC 週月報表' : 'SPC 即時互動管制圖' }}
+            {{ pageHeading }}
           </h1>
           <p class="mt-1 text-xs font-semibold text-slate-400 dark:text-slate-500">
-            {{ isMonthlyChartPage ? '依週期檢視 SPC 管制結果與前期比較' : '使用統計管制界線與規則監控製程穩定性' }}
+            {{ pageDescription }}
           </p>
         </div>
       </div>
@@ -1765,7 +1938,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Monitor Detail Summary -->
-      <div class="grid grid-cols-1 xl:grid-cols-4 gap-5 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div id="process-capability-analysis" class="scroll-mt-4 grid grid-cols-1 xl:grid-cols-4 gap-5 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="p-1">
           <h3 class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
             <Info class="w-4 h-4 text-blue-500" /> 管制圖監控明細
@@ -1788,8 +1961,8 @@ onBeforeUnmount(() => {
               <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorSlotLabel }}</p>
             </div>
             <div>
-              <p class="text-slate-400 font-bold">量測筆數</p>
-              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ rawPointCount }} 筆</p>
+              <p class="text-slate-400 font-bold">{{ isEtchAverageChart ? '管制點數' : '量測筆數' }}</p>
+              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ displayedMeasurementCount }} {{ isEtchAverageChart ? '點' : '筆' }}</p>
             </div>
             <div>
               <p class="text-slate-400 font-bold">異常點數</p>
@@ -1839,7 +2012,6 @@ onBeforeUnmount(() => {
             <div v-for="row in capabilityRows" :key="row.label" class="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <p class="text-slate-400 font-bold">{{ row.label }}</p>
               <p class="text-base font-black text-slate-800 dark:text-white">{{ formatNumber(row.value, row.label === 'Ppm' ? 1 : 4) }}</p>
-              <p class="text-[10px] text-slate-400">{{ row.note }}</p>
             </div>
           </div>
         </div>
@@ -1888,7 +2060,7 @@ onBeforeUnmount(() => {
           <div ref="chartEl" data-testid="primary-spc-chart" class="h-[620px] w-full min-h-[500px]"></div>
         </div>
 
-        <div class="mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+        <div id="violation-analysis" class="scroll-mt-4 mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
               <ShieldAlert class="w-4 h-4 text-red-500" /> SPC 異常 / 違規點清單
@@ -1942,7 +2114,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 量測值分布直方圖 (Histogram) -->
-        <div class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-800">
+        <div id="distribution-analysis" class="scroll-mt-4 mt-5 pt-5 border-t border-slate-200 dark:border-slate-800">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
             <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <BarChart3 class="w-5 h-5 text-amber-500" />
@@ -1959,7 +2131,7 @@ onBeforeUnmount(() => {
             <div class="space-y-1">
               <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">納入樣本數</span>
               <span class="text-slate-800 dark:text-slate-200 font-mono">
-                {{ (chartResult.rawDataPoints || []).filter(p => !p.isExcluded && p.value !== null && p.value !== undefined).length }} 筆
+                {{ isEtchAverageChart ? chartPoints.length : (chartResult.rawDataPoints || []).filter(p => !p.isExcluded && p.value !== null && p.value !== undefined).length }} {{ isEtchAverageChart ? '點' : '筆' }}
               </span>
             </div>
             <div class="space-y-1">
@@ -1993,7 +2165,7 @@ onBeforeUnmount(() => {
               </span>
             </div>
             <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">常態性檢定 (JB p-val)</span>
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">常態性檢定 (P-val)</span>
               <span class="text-slate-800 dark:text-slate-200 font-mono">
                 {{ chartResult.normality && chartResult.normality.pValue !== null ? formatNumber(chartResult.normality.pValue, 4) : 'N/A' }}
               </span>

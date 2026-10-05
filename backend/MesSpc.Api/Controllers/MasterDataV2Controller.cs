@@ -45,6 +45,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         }
         return Ok(await query.OrderBy(x => x.SequenceNo).ThenBy(x => x.ProcessCode).ThenBy(x => x.Id).ToListAsync());
     }
+
     [HttpPost] public async Task<IActionResult> Create(Process req)
     {
         if (string.IsNullOrWhiteSpace(req.ProcessName)) return BadRequest("製程中文名稱為必填欄位。");
@@ -69,19 +70,26 @@ public class ProcessesController(AppDbContext db) : ControllerBase
 
     private static string? CleanOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+    /// <summary>依製程與包含端點的日期範圍查詢量測；skip/take 穩定分頁，total 為篩選後總數。</summary>
     [HttpGet("{id:int}/measurements")]
-    public async Task<IActionResult> GetMeasurements(int id, [FromQuery] string type = "variable", [FromQuery] int take = 200)
+    public async Task<IActionResult> GetMeasurements(int id, [FromQuery] string type = "variable", [FromQuery] int take = 200,
+        [FromQuery] int skip = 0, [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null)
     {
+        if (skip < 0 || (start.HasValue && end.HasValue && start > end))
+            return BadRequest("分頁起點不可為負數，開始日期不可晚於結束日期。");
         var process = await db.Processes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (process is null) return NotFound();
 
         take = Math.Clamp(take, 1, 1000);
         if (string.Equals(type, "attribute", StringComparison.OrdinalIgnoreCase))
         {
-            var rows = await db.AttributeMeasurements
-                .AsNoTracking()
-                .Where(x => x.ProcessId == id)
+            var query = db.AttributeMeasurements.AsNoTracking().Where(x => x.ProcessId == id);
+            if (start.HasValue) query = query.Where(x => x.MeasuredAt >= start.Value);
+            if (end.HasValue) query = query.Where(x => x.MeasuredAt <= end.Value);
+            var rows = await query
                 .OrderByDescending(x => x.MeasuredAt)
+                .ThenByDescending(x => x.Id)
+                .Skip(skip)
                 .Take(take)
                 .Select(x => new
                 {
@@ -105,13 +113,16 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 })
                 .ToListAsync();
 
-            return Ok(new { process, total = await db.AttributeMeasurements.CountAsync(x => x.ProcessId == id), rows });
+            return Ok(new { process, total = await query.CountAsync(), rows });
         }
 
-        var variableRows = await db.VariableMeasurements
-            .AsNoTracking()
-            .Where(x => x.ProcessId == id)
+        var variableQuery = db.VariableMeasurements.AsNoTracking().Where(x => x.ProcessId == id);
+        if (start.HasValue) variableQuery = variableQuery.Where(x => x.MeasuredAt >= start.Value);
+        if (end.HasValue) variableQuery = variableQuery.Where(x => x.MeasuredAt <= end.Value);
+        var variableRows = await variableQuery
             .OrderByDescending(x => x.MeasuredAt)
+            .ThenByDescending(x => x.Id)
+            .Skip(skip)
             .Take(take)
             .Select(x => new
             {
@@ -132,6 +143,9 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 defectCount = (int?)null,
                 unitCount = (int?)null,
                 x.MeasuredAt,
+                x.PortalDailyDate,
+                x.SamplingPhase,
+                x.SourceType,
                 x.Operator,
                 x.RecheckValue,
                 x.AdjustAction,
@@ -139,7 +153,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(new { process, total = await db.VariableMeasurements.CountAsync(x => x.ProcessId == id), rows = variableRows });
+        return Ok(new { process, total = await variableQuery.CountAsync(), rows = variableRows });
     }
 
     [HttpDelete("{id:int}")]
@@ -499,6 +513,8 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
         req.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson);
         req.RuleGroupId = null;
+        if (await HasDuplicateBusinessKeyAsync(req, null))
+            return Conflict(new { message = BuildDuplicateBusinessKeyMessage() });
         db.PartProcessCharacteristics.Add(req);
         await db.SaveChangesAsync();
         return Ok(req);
@@ -513,10 +529,15 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         if (validation is not null) return BadRequest(new { message = validation });
         var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
         if (displayValidation is not null) return BadRequest(new { message = displayValidation });
+        req.Unit = CleanUnit(req.Unit);
+        req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
+        req.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson);
+        if (await HasDuplicateBusinessKeyAsync(req, id))
+            return Conflict(new { message = BuildDuplicateBusinessKeyMessage() });
         x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = req.PartId; x.ProcessId = req.ProcessId; x.MachineId = req.MachineId; x.TankId = req.TankId; x.SlotId = req.SlotId; x.CharacteristicId = req.CharacteristicId; x.SequenceNo = req.SequenceNo;
-        x.Unit = CleanUnit(req.Unit);
+        x.Unit = req.Unit;
         x.USL = req.USL; x.LSL = req.LSL; x.UCL = req.UCL; x.CL = req.CL; x.LCL = req.LCL; x.TargetValue = req.TargetValue;
-        x.SampleSize = req.SampleSize; x.DisplayMode = req.DisplayMode; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson); x.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson); x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
+        x.SampleSize = req.SampleSize; x.DisplayMode = req.DisplayMode; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = req.FormulaConfigJson; x.ChemicalAnalysisConfigJson = req.ChemicalAnalysisConfigJson; x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
         x.RuleGroupId = null;
 
         await using var transaction = await db.Database.BeginTransactionAsync();
@@ -661,6 +682,33 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
 
     private static string? CleanUnit(string? unit) =>
         string.IsNullOrWhiteSpace(unit) ? null : unit.Trim();
+
+    public static bool HasSameBusinessKey(PartProcessCharacteristic left, PartProcessCharacteristic right) =>
+        string.Equals(NormalizeScope(left.ControlScope), NormalizeScope(right.ControlScope), StringComparison.OrdinalIgnoreCase)
+        && left.PartId == right.PartId
+        && left.ProcessId == right.ProcessId
+        && left.MachineId == right.MachineId
+        && left.TankId == right.TankId
+        && left.SlotId == right.SlotId
+        && left.CharacteristicId == right.CharacteristicId
+        && string.Equals(CleanUnit(left.Unit), CleanUnit(right.Unit), StringComparison.Ordinal);
+
+    private async Task<bool> HasDuplicateBusinessKeyAsync(PartProcessCharacteristic req, int? currentId)
+    {
+        return await db.PartProcessCharacteristics.AsNoTracking().AnyAsync(x =>
+            (!currentId.HasValue || x.Id != currentId.Value) &&
+            x.ControlScope == req.ControlScope &&
+            x.PartId == req.PartId &&
+            x.ProcessId == req.ProcessId &&
+            x.MachineId == req.MachineId &&
+            x.TankId == req.TankId &&
+            x.SlotId == req.SlotId &&
+            x.CharacteristicId == req.CharacteristicId &&
+            x.Unit == req.Unit);
+    }
+
+    private static string BuildDuplicateBusinessKeyMessage() =>
+        "此 SPC 管制項目已存在相同的管制類型、料號、工站製程、線別、槽體、槽位、檢驗特性與單位；請改為編輯既有項目，或調整其中一個識別欄位。";
 
     private static string? CleanFormulaConfig(string? formulaConfigJson)
     {
@@ -896,9 +944,11 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
 [Route("api/operators")]
 [Route("api/v1/operators")]
 public class OperatorsController(
-    AppDbContext db,
-    MesSpc.Api.Services.Security.UserPasswordHasher passwordHasher) : ControllerBase
+    AppDbContext db) : ControllerBase
 {
+    [HttpGet("permissions-catalog")]
+    public IActionResult PermissionsCatalog() => Ok(MesSpc.Api.Services.Security.SpcPagePermissions.Catalog);
+
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -912,6 +962,9 @@ public class OperatorsController(
         var validation = await ValidateRequestAsync(req);
         if (validation is not null) return validation;
 
+        if (!string.IsNullOrWhiteSpace(req.Password))
+            return BadRequest(new { message = "SPC 不再設定本機密碼，請使用 AD 帳號或工號登入。" });
+
         var user = new Operator
         {
             OperatorCode = req.OperatorCode.Trim(),
@@ -921,8 +974,9 @@ public class OperatorsController(
             Username = NullIfWhiteSpace(req.Username),
             Role = MesSpc.Api.Services.Security.UserRoles.Normalize(req.Role),
             IsActive = req.IsActive,
-            PasswordHash = string.IsNullOrWhiteSpace(req.Password) ? null : passwordHasher.Hash(req.Password)
+            PasswordHash = null
         };
+        user.PagePermissionsJson = req.PagePermissions is null ? null : System.Text.Json.JsonSerializer.Serialize(req.PagePermissions.Distinct());
         db.Operators.Add(user);
         await db.SaveChangesAsync();
         return Ok(ToResponse(user));
@@ -934,6 +988,8 @@ public class OperatorsController(
         var x = await db.Operators.FindAsync(id); if (x is null) return NotFound();
         var validation = await ValidateRequestAsync(req, id);
         if (validation is not null) return validation;
+        if (!string.IsNullOrWhiteSpace(req.Password))
+            return BadRequest(new { message = "SPC 不再修改本機密碼，請使用 AD 帳號或工號登入。" });
 
         x.OperatorCode = req.OperatorCode.Trim();
         x.OperatorName = req.OperatorName.Trim();
@@ -942,7 +998,7 @@ public class OperatorsController(
         x.Username = NullIfWhiteSpace(req.Username);
         x.Role = MesSpc.Api.Services.Security.UserRoles.Normalize(req.Role);
         x.IsActive = req.IsActive;
-        if (!string.IsNullOrWhiteSpace(req.Password)) x.PasswordHash = passwordHasher.Hash(req.Password);
+        x.PagePermissionsJson = req.PagePermissions is null ? x.PagePermissionsJson : System.Text.Json.JsonSerializer.Serialize(req.PagePermissions.Distinct());
         x.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         return Ok(ToResponse(x));
@@ -976,7 +1032,7 @@ public class OperatorsController(
         x.Username,
         Role = MesSpc.Api.Services.Security.UserRoles.Normalize(x.Role),
         x.IsActive,
-        HasPassword = !string.IsNullOrWhiteSpace(x.PasswordHash),
+        PagePermissions = MesSpc.Api.Services.Security.SpcPagePermissions.Resolve(x.Role, x.PagePermissionsJson),
         x.CreatedAt,
         x.UpdatedAt
     };
@@ -989,7 +1045,8 @@ public class OperatorsController(
         string? Username,
         string? Password,
         string? Role,
-        bool IsActive = true);
+        bool IsActive = true,
+        List<string>? PagePermissions = null);
 }
 
 

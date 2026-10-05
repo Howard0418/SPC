@@ -1,0 +1,122 @@
+# Progress
+
+## 2026-09-29
+- 小工作 1 完成：建立 SDD 草稿文件，未修改程式與資料庫。
+- 小工作 2 完成：唯讀盤點 SPC 現有管制圖、落塵資料入口、U-chart/C-chart 支援。
+- 發現：後端已有 C/U Attribute chart 計算與查詢路徑；前端已有落塵上傳雛形，但目前走 variable 匯入且粒徑包含 0.5/1/5/10um，需依本案改為固定 1um/5um 並銜接 Attribute/C/U 圖。
+- 小工作 3 完成：唯讀盤點 TransFiles 現有 Excel 匯入架構。
+- 發現：TransFiles 目前分為藥液 variable 上傳與咬蝕 Portal preview/confirm；落塵需新增獨立資料類型/分流，並銜接 SPC Attribute/C/U 圖入口。
+- 小工作 4 完成：唯讀盤點 CA/CPK 計算與顯示位置。
+- 發現：CA 在 `ProcessCapabilityCalculator` 已取絕對值；Cpk/Ppk 未依賴 CA，而是直接由 mean、規格與 sigma 計算。後續可改 CA 符號並補測試保護 Cpk/Ppk。
+- 小工作 5 完成：唯讀盤點既有規格資料模型與歷史規格支援。
+- 發現：現行只支援 `UCL/CL/LCL` 依日期分段；`USL/LSL/TargetValue` 仍是 PPC 單一值，OOS 與 CA/CPK 未依日期切換規格。
+- 小工作 6 完成：唯讀盤點藥液 F 表公式來源與既有公式保存方式。
+- 發現：現行藥液公式保存於 PPC `ChemicalAnalysisConfigJson`，Portal 舊規則檔有 `SourceFormula`/`GlobalValues` 可看出 F 表引用，但 SPC 端沒有獨立 F 表、版本與受影響線別反查。
+- 小工作 7 完成：彙整盤點結論，細化實作/測試順序與未決問題；未修改程式與資料庫。
+- 發現：後續可先處理 CA 測試/顯示，再處理分段規格與 F 表資料模型，最後銜接落塵 TransFiles 匯入；但落塵 Excel 版型、U-chart 分母、F 表正式來源仍需確認。
+- 小工作 8 完成：已整理實作前業務答案與測試資料清單；未修改程式與資料庫。
+- 發現：目前 SPC 與 TransFiles 工作區未找到落塵範例 Excel；落塵匯入與 U-chart 需先補範例檔與分母規則。CA 有號顯示可作為低風險第一個實作項目。
+- 小工作 9 完成：已新增 CA 負值與 CPK/Ppk 回歸測試，並實作 CA 保留正負號。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore` 通過；解除既有 `AuthControllerTests` 建構式錯誤後，`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter SpcEngineBaselineTests --no-restore` 通過 6 項。
+- 小工作 10 完成：已補齊 SPC 落塵監控 `DUST` 群組與 `DUST_C`/`DUST_U` 主檔種子。
+- 驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter UnitTest1 --no-restore` 通過 2 項。
+- 小工作 11 完成：SPC 管制圖查詢/畫面已補 DUST 維度辨識、fallback 名稱、前端配色與 scope 測試。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore` 通過；`node --test frontend/mes-spc-web/tests/control-scope.test.mjs` 通過；`npm run build` 通過。
+- 測試站發布完成：已發布 `release/test/backend` 與 `release/test/frontend`，備份 `chemical-dust-20260929-213750`；API version/health 與前端首頁 smoke 通過。正式站未發布。
+- 注意：測試站 `SeedDatabase=false`，程式發布不會自動寫入 `DUST` 主檔；目前本機無法連線測試庫確認/套用。若畫面未出現落塵監控，需另行授權受控資料套用。
+- 小工作 12 完成（受限）：已嘗試確認/套用測試庫 DUST 主檔，但 API 需登入且本機無法連線 `PMR_SPC_TEST`；未修改資料庫。已補受控 SQL `ensure-dust-master.sql` 供具 DB 權限環境執行。
+- 規則補充完成：若我因權限、環境或資料缺口無法完成測試，回報需列出未測項目、無法測試原因、使用者可執行步驟與預期結果。
+- 小工作 12 使用者端確認完成：使用者回報測試庫查詢已看到兩筆落塵監控資料，視為 `DUST_C`、`DUST_U` 主檔已在測試庫可見。
+
+## 2026-09-30
+- 小工作 13 完成：SPC Attribute chart 計算器與即時計算已支援 `DUST_C`、`DUST_U`，可分別產生 C-chart、U-chart；既有 DUST 維度查詢/畫面路徑可銜接落塵 Attribute 資料。
+- 驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter SpcEngineBaselineTests --no-restore` 通過 7 項；`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過。
+- 測試站發布完成：已發布 `release/test/backend`，備份 `backend.backup-dust-chart-codes-20260930-080553`；`/api/version` 回 `environment=test`，`/health` HTTP 200。正式站未發布。
+- 注意：尚未有落塵量測資料與落塵 Excel 範例檔，因此無法由我完成測試站畫面實資料驗證；後續需由 TransFiles 匯入或測試資料建立後再驗證實際曲線。
+- 待確認：是否進入下一小工作（TransFiles 落塵 Excel 預覽與確認匯入，仍需落塵範例檔與 U-chart 分母規則）。
+- 使用者提供落塵 Excel：`D:\SPC\docs\PD-3-257-04A-製造部落塵監控表單(黃光室) - 2026.xlsx`。
+- 版型盤點：單一工作表，資料列自第 26 列起；B 欄為日期時間；R1～R12 各有 0.5/1/5/10um 欄位，四種粒徑都要匯入。
+- TransFiles 匯入方向：可轉成 SPC Attribute rows，欄位需含 `ControlScope=DUST`、製程/機台、檢驗項目、日期、`DefectCount`，U-chart 另需 `UnitCount`。
+- 使用者確認：R1～R12 是區域，與機台無關；R1～R12 可作為管制項目名稱進行 U-chart 製圖。
+- 使用者確認：U-chart `UnitCount` 先固定 1，但後續需提供可修改設定點。
+- 待確認：落塵監控在 SPC 的製程/流程主檔名稱與 TransFiles 設定檔位置。
+- 小工作 14 完成：TransFiles 新增「落塵監控」資料類型，解析 `PD-3-257-04A` 版型 R1～R12 的 0.5um/1um/5um/10um，輸出 SPC Attribute 計數型匯入 Excel。
+- 實作：新增 `dust_reports.py`；GUI 可掃描檔名含「落塵」的 Excel 並輸出 `批次轉換結果_落塵監控_計數型匯入檔*.xlsx`。
+- 輸出規則：`ControlScope=DUST`、`ProcessCode=DUST`、檢驗項目 `R#_0.5um`/`R#_1um`/`R#_5um`/`R#_10um`、`DefectCount=Excel 數值`、`UnitCount=1`。
+- 驗證：範例檔實測轉出 33,703 筆；`python -m unittest test_batch_convert_gui.py` 通過 29 項。
+- 注意：本次只做 TransFiles 轉檔，不直接上傳/確認 SPC，不打包 EXE，不寫資料庫。
+- 待確認：下一小工作是否串接 SPC Attribute 預覽/確認匯入；若要製圖，SPC 測試庫需先有 `DUST` 製程與 `R#_1um`/`R#_5um` 對應管制項目。
+- 小工作 14A 完成：TransFiles「轉換並上傳 SPC 預覽」支援落塵監控，落塵輸出改走 SPC `/v1/uploads/attribute/excel`，並沿用補主檔與零錯誤後確認匯入流程。
+- SPC 後端補強：`DUST` 明確視為不需機台；補建主檔時會為 `DUST` Attribute 資料建立 `DUST_U` 管制項目，品質特性保留 `ControlScope=DUST`。
+- 輸出規則修正：落塵 Attribute 匯入檔的 `總數` 與 `單位數` 皆填入目前固定設定 `1`，避免 SPC Attribute 預覽必填檢核失敗。
+- 驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter "SeedData_ShouldProvideDustMonitoringCAndUChartTypes|SpcEngineBaselineTests" --no-restore -p:UseSharedCompilation=false` 通過 8 項；`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；`python -m unittest test_batch_convert_gui.py` 通過 29 項。
+- 實測抽查：來源落塵 Excel 轉出 33,703 筆；1um、5um、10um 各 8,426 筆，0.5um 8,425 筆；第一筆為 `R1_0.5um`，`總數=1`、`缺點數=27`、`單位數=1`。
+- 測試站發布完成：已發布 `release/test/backend`，備份 `backend.backup-dust-attribute-upload-20260930-084101`；`/api/version` 回 `environment=test`，`/health` HTTP 200。正式站未發布。
+- 未完成測試：無法由我登入 TransFiles GUI 並以真實帳密完成 SPC 預覽/確認匯入；使用者可測方式見 `verification.md` 小工作 14A。
+- 小工作 14B 完成：修正 TransFiles SPC 登入失敗；根因為 SPC `/api/v1/auth/login` 已停用並固定回 410。
+- 實作：TransFiles 改先登入 Portal 測試站 `/api/auth/login`，再呼叫 `/api/spc-launch` 取得 Portal 核發的 SPC token，後續沿用此 token 上傳 SPC 預覽。
+- 驗證：`python -m unittest test_etch_upload.py test_batch_convert_gui.py` 通過 35 項。
+- 未完成測試：我無法代輸入真實 AD 帳密驗證 Portal 登入；使用者可測方式為重新執行「轉換並上傳 SPC 預覽」，登入視窗輸入 AD 帳號或工號與密碼，預期不再出現 SPC 舊登入 410。
+- 小工作 14C 完成：已重新打包 TransFiles 測試版 EXE，並更新主執行檔 `藥液分析轉檔工具.exe`。
+- 打包驗證：`python -m unittest test_etch_upload.py test_batch_convert_gui.py` 通過 35 項；PyInstaller 產出 `dist/BatchConvertTool.exe`；啟動存活檢查 5 秒未退出。
+- 備份：舊主執行檔備份為 `藥液分析轉檔工具.exe.bak-before-dust-sso-20260930-104044`。
+- 雜湊：新版 `dist/BatchConvertTool.exe` 與主執行檔 SHA256 皆為 `6A37BC7F2A34CA371D45D56216A2EEB3A8D53B31A6E0CAFA4F92DB7B7B74EB9E`。
+- 注意：我仍無法代測真人 AD/Portal 登入與 SPC 正式確認匯入；需使用者用新版 EXE 驗證。
+- 小工作 14D 完成：修正 TransFiles 開啟 SPC 預覽頁時未把 SSO token 帶入瀏覽器，造成前端顯示「無法連線到後端 API」的問題。
+- 檢查：SPC 測試 API `/api/version` 回 200/test；CORS preflight 回 204；後端服務正常。
+- 實作：預覽頁開啟改為 `SPC /portal-sso#token=...&target=/uploads/{batchId}/preview`。
+- 驗證：`python -m unittest test_etch_upload.py test_batch_convert_gui.py` 通過 36 項；新版主 EXE 啟動存活檢查 5 秒未退出。
+- 打包：`dist/BatchConvertTool.exe` 當時仍被鎖住，改產出 `dist-dust-sso-fix/BatchConvertTool.exe` 並覆蓋主執行檔 `藥液分析轉檔工具.exe`。
+- 備份：覆蓋前主執行檔備份為 `藥液分析轉檔工具.exe.bak-before-preview-token-20260930-105813`。
+- 雜湊：新版 `dist-dust-sso-fix/BatchConvertTool.exe` 與主執行檔 SHA256 皆為 `B300530689F83741C85D691149808E7751281647A0FF1D08C2802FE96C53FE1C`。
+- 小工作 15 完成：SPC 分段管制界線新增 `USL/LSL/TargetValue`，管制項目分段維護畫面可輸入/編輯規格；SPC 計算與圖表依量測日期套用分段規格。
+- 實作：`ControlLimitSegments` 新增規格欄位與 migration；Variable/Attribute 計算結果保存當期規格；管制圖回傳 `specLimitSegments`，前端以分段水平線顯示不同日期區間的 USL/Target/LSL。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj` 通過；`npm run build` 通過。
+- 受限驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --no-restore` 有 6 個既有失敗，集中於 Portal SSO replay、PPC controller 測試期待值、EF InMemory transaction 與既有 summary/rule group 斷言；非本次分段規格編譯阻擋。
+- 手動測試方式：在 SPC 測試站進入「管制項目」選一個既有項目，開啟分段設定，建立 7/1 `LSL=80 USL=120`、8/1 `LSL=90 USL=130`、9/1 `LSL=100 USL=150`、10/1 `LSL=80 USL=120` 等不重疊區間；匯入或使用既有跨日期量測後開管制圖，勾選規格界限，預期 USL/Target/LSL 依日期分段顯示，OOS 判斷依當期 LSL/USL。
+- 測試站發布完成：已發布 `release/test/backend` 與 `release/test/frontend`，備份 `backend.backup-segment-spec-20260930-132447`、`frontend.backup-segment-spec-20260930-132447`；`/api/version` 回 `environment=test`，前端首頁載入新資產 `index-Dk_SkBG_.js`。正式站未發布。
+- 小工作 15 修正完成：使用者回報新增分段出現 `One or more validation errors occurred.`；根因為分段新增/更新 API 直接接收 Entity，ASP.NET 會驗證導覽屬性。已改為 `ControlLimitSegmentRequest` DTO，避免前端不需送出的導覽屬性造成模型驗證失敗。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj` 通過；`npm run build` 通過。
+- 測試站發布完成：已重新發布 `release/test/backend`，備份 `backend.backup-segment-spec-validation-20260930-133551`；`/api/version` 回 `environment=test`，前端首頁 HTTP 200。正式站未發布。
+- 小工作 16A 完成：已確認 F 表第一版來源與現有公式引用落點；未修改程式與資料庫，未發布。
+- 來源：Portal `src/PmrPortal.Api/ChemicalAnalysisRules.json` 目前保存 `GlobalValues` 與 `SourceFormula`，可作為 SPC F 表第一版匯入/同步來源。
+- 現況：SPC `PartProcessCharacteristic.ChemicalAnalysisConfigJson` 已保存藥液公式設定，但尚無 F 表版本、儲存格資料表、公式引用索引或受影響線別查詢。
+- 建議下一步：先建立 F 表版本/儲存格/引用索引模型與 migration；匯入流程先做 dry-run 比對，不覆蓋既有 PPC 公式。
+- 使用者補充 F 表基準資料：`F!B3=1N NaOH/1.02`、`F!B4=0.2N HCl/0.983`、`F!B5=0.4N HCl/0.983`、`F!B6=0.05N EDTA/1`、`F!B7=0.1N KMnO4/1`、`F!B8=0.1N H2SO4/1`、`F!B9=0.1N I2/1`、`F!B10=0.1ml Na2S2O3/1`。
+- 小工作 16B 完成：新增 F 表版本、儲存格與引用索引資料模型，尚未匯入實際資料。
+- 實作：新增 `ChemicalFTableVersion`、`ChemicalFTableCell`、`ChemicalFTableReference` 與對應 DbSet/索引/FK；migration `20260930150000_AddChemicalFTableModels` 建立三張資料表。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過，0 warning/0 error。
+- 注意：本小工作只建立承載結構，不覆寫既有 PPC `ChemicalAnalysisConfigJson`，不寫入 F 表資料，不發布測試站；下一步才做 dry-run/apply API。
+- 使用者補充規則：藥液分析的濃度公式需可直接引用 F 表值；以後修改 F 表後，引用該儲存格的公式應連動使用新值，不需逐一回管制項目改常數。
+- 後續 T-016C 調整：除 F 表 dry-run/apply 外，需加入公式引用解析與運算取值能力；公式仍可保留 `F!B3` / `F!$B$3` 參照。
+- 小工作 16C 完成：新增 F 表 dry-run/apply API、啟用版本查詢、公式參照解析與公式取值測試 API。
+- 實作：新增 `ChemicalFTableService` 與 `/api/v1/chemical-f-table`；`sync-default` 可 dry-run 或 apply 第一版 `F!B3`～`F!B10`，apply 時會停用其他版本、寫入儲存格並重建 PPC `ChemicalAnalysisConfigJson` 的 F 表引用索引。
+- 公式能力：`evaluate` 可計算包含 `F!B3` / `F!$B$3` 的公式，運算時由目前啟用的 F 表版本取值，不需把 F 值複製成各管制項目的固定常數。
+- 驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter ChemicalFTableServiceTests --no-restore -p:UseSharedCompilation=false` 通過 1 項；`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過。
+- 測試站發布完成：已發布 `release/test/backend`，備份 `backend.backup-chemical-f-table-final-20260930-144756`；`/api/version` 回 `environment=test`。正式站未發布。
+- 受限驗證：測試站 F 表 API 需登入 token，未帶 token 呼叫 `/api/v1/chemical-f-table/active` 回 401，符合權限預期；需使用者登入後或由前端頁面在 T-016D 測試 dry-run/apply。
+- 小工作 16D 完成：新增 SPC 前端「藥液 F 表維護」畫面，並補齊 F 表套用新版與受影響項目查詢 API。
+- 實作：新增 `/chemical-f-table` 路由與企業品質主檔設定選單；畫面可查看啟用版本、編輯 `F!B3`～`F!B10`、Dry-run、套用新版、公式試算與依儲存格查受影響線別/槽體/分析項目。
+- 後端補強：新增 `POST /api/v1/chemical-f-table/apply` 可由畫面送自訂 F 值；新增 `GET /api/v1/chemical-f-table/impact` 查啟用版本下引用該 F 儲存格的 PPC。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter ChemicalFTableServiceTests --no-restore -p:UseSharedCompilation=false` 通過；`npm run build -- --mode testhost` 通過。
+- 測試站發布完成：已發布 `release/test/backend` 與 `release/test/frontend`；備份 `backend.backup-chemical-f-table-ui-20260930-145442`、`frontend.backup-chemical-f-table-ui-20260930-145442`；`/api/version` 回 `environment=test`，首頁載入 `index-mBOvEGxD.js` 且前端 API base 指向 `172.16.110.27:8081`。正式站未發布。
+- 使用者測試方式：登入測試站後到「企業品質主檔設定 > 藥液 F 表維護」，先按 Dry-run，確認異動格數；再按「套用新版」，預期顯示已套用並可在「目前啟用版本」看到新版本。選擇 `F!B3` 後按查詢，若既有藥液公式含 `F!B3`，下方會列出受影響線別/槽體/分析項目。
+- 小工作 16D 修正：使用者回報 F 表套用新版出現 `無效的物件名稱 'ChemicalFTableVersions'`；根因為手寫 migration 少 EF migration id 標記，測試站啟動時未套用新表 migration。
+- 修正：已為 `20260930150000_AddChemicalFTableModels` 補上 `[Migration("20260930150000_AddChemicalFTableModels")]`，重新 build 並發布測試站 backend。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；測試站 `/api/version` 回 `environment=test`。目前本機 shell 無法直連測試 SQL Server 查表，需使用者重新整理頁面後重試「套用新版」確認。
+- 修正發布備份：`backend.backup-chemical-f-table-migration-fix-20260930-145843`。正式站未發布。
+- 小工作 16D 第二次修正：使用者重新整理後仍出現 `ChemicalFTableVersions` 不存在；已補 SQL Server 自我修復，測試站 backend 啟動時若 F 表三張表不存在會直接建立表、索引與 FK，不再只依賴 EF migration。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；已重新發布測試站 backend；`/api/version` 回 `environment=test`。
+- 第二次修正發布備份：`backend.backup-chemical-f-table-selfheal-20260930-150748`。正式站未發布。
+- 小工作 16D 第三次修正：使用者回報受影響項目查詢發生 EF LINQ 無法轉譯；根因為 `GroupJoin(... FirstOrDefault())` left join 寫法無法轉 SQL。
+- 修正：`GetImpactAsync` 改為先查引用清單，再分別載入 PPC、製程、線別、槽體、分析項目字典後於記憶體組合結果。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter ChemicalFTableServiceTests --no-restore -p:UseSharedCompilation=false` 通過；已發布測試站 backend，`/api/version` 回 `environment=test`。
+- 第三次修正發布備份：`backend.backup-chemical-f-table-impact-fix-20260930-151458`。正式站未發布。
+- 小工作 16E 完成：F 表功能收尾驗證與文件同步完成；T-016 全部小工作已完成。
+- 收尾驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter ChemicalFTableServiceTests --no-restore -p:UseSharedCompilation=false` 通過；`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；`npm run build -- --mode testhost` 通過。
+- 測試站狀態：`/api/version` 回 `environment=test`，首頁載入 `index-mBOvEGxD.js`；F 表套用與儲存格取值已由使用者確認正常。
+- 使用方式確認：藥液濃度公式可填 `F!B3` 或 `F!$B$3`，運算時取目前啟用 F 表值；F 表改版後不用逐一修改管制項目公式。
+- 小工作 17 完成：執行 SPC 大項總收尾回歸、文件同步與測試站狀態確認。
+- 回歸驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter ChemicalFTableServiceTests --no-restore -p:UseSharedCompilation=false` 通過；`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 通過；`npm run build -- --mode testhost` 通過。
+- 文件同步：已更新 `CHANGELOG_CUSTOM.md`、`tasks.md`、`progress.md`、`verification.md`。
+- 測試站確認：`/api/version` 回 `environment=test`，首頁載入 `index-mBOvEGxD.js`；目前最新測試站發布包含 F 表、分段規格、CA 顯示、落塵 SPC/TransFiles 前置支援。正式站未發布。

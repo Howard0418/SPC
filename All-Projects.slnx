@@ -1,0 +1,35 @@
+<Solution>
+  <Folder Name="/SPC/">
+    <Project Path="backend/MesSpc.Api/MesSpc.Api.csproj" />
+    <Project Path="backend/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj" />
+    <Project Path="tests/MES.SPC.E2ETests/MES.SPC.E2ETests.csproj" />
+    <Project Path="tools/SpcChartModeClassifier/SpcChartModeClassifier.csproj" />
+    <Project Path="tools/ChemicalFormulaMigration/ChemicalFormulaMigration.csproj" />
+  </Folder>
+  <Folder Name="/SPC Tests/">
+    <Project Path="tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj" />
+  </Folder>
+  <Folder Name="/PmrPortal/">
+    <Project Path="../PmrPortal/src/PmrPortal.Api/PmrPortal.Api.csproj" />
+    <Project Path="../PmrPortal/src/PmrPortal.Web/PmrPortal.Web.csproj" />
+    <Project Path="../PmrPortal/tests/PmrPortal.Api.Tests/PmrPortal.Api.Tests.csproj" />
+    <Project Path="../PmrPortal/tests/Mes.Web.Tests/Mes.Web.Tests.csproj" />
+    <Project Path="../PmrPortal/tmp/LdapDiagApp/LdapDiagApp.csproj" />
+    <Project Path="../PmrPortal/TestProject1/TestApi.csproj" />
+    <Project Path="../PmrPortal/MyProject.UiTests/MyProject.UiTests.csproj" />
+    <Project Path="../PmrPortal/tools/ChemicalAdjustmentDump/ChemicalAdjustmentDump.csproj" />
+    <Project Path="../PmrPortal/tools/StationeryCategoryMigration/StationeryCategoryMigration.csproj" />
+    <Project Path="../PmrPortal/tools/PmrContactsEmailSync/PmrContactsEmailSync.csproj" />
+    <Project Path="../PmrPortal/tools/SerialPortTester/SerialPortTester.csproj" />
+    <Project Path="../PmrPortal/MyProject.AutoDocs/MyProject.AutoDocs.csproj" />
+  </Folder>
+  <Folder Name="/Chameleon/">
+    <Project Path="../Chameleon/Chameleon.SerialMonitor/Chameleon.SerialMonitor.csproj" />
+  </Folder>
+  <Folder Name="/KM/">
+    <Project Path="C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\src\PMR.KnowledgeHub\PMR.KnowledgeHub.csproj" />
+  </Folder>
+  <Folder Name="/DS2000/">
+    <Project Path="C:\Users\ihao_ting.PMR.000\Desktop\DS2000\Ri320Bridge\Ri320Bridge.csproj" />
+  </Folder>
+</Solution>

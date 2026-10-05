@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import {
   LineChart,
   TrendingUp,
@@ -16,18 +16,33 @@ import {
   Activity,
   Sun,
   Moon,
+  House,
   LogOut,
   ChevronDown,
   ChevronRight,
   Users,
   Map,
   CalendarClock
+  ,FlaskConical, Wind
 } from "lucide-vue-next";
 import { clearAuthSession, getCurrentUser } from "./utils/auth";
 import { api, setApiEnvironment } from "./api/client";
 import pkg from "../package.json";
 
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
+const portalUrl = import.meta.env.VITE_PORTAL_URL || "http://172.16.110.27/";
+const portalHomeUrl = (() => {
+  const url = new URL(portalUrl, window.location.origin);
+  url.pathname = url.pathname.replace(/\/login\/?$/i, "/");
+  url.search = "";
+  return url.toString();
+})();
+const portalLogoutUrl = (() => {
+  const url = new URL(portalUrl, window.location.origin);
+  url.pathname = `${url.pathname.replace(/\/login\/?$/i, "").replace(/\/$/, "")}/Spc/Logout`;
+  url.search = "";
+  return url.toString();
+})();
 const appVersion = pkg.version;
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 const apiVersion = ref("--");
@@ -38,7 +53,6 @@ const environmentMismatch = computed(() =>
   apiOnline.value && apiEnvironment.value !== "unknown" && apiEnvironment.value !== webEnvironment
 );
 const route = useRoute();
-const router = useRouter();
 const showNav = computed(() => !authOn || route.path !== "/login");
 const currentUser = computed(() => {
   route.fullPath;
@@ -84,11 +98,20 @@ onMounted(() => {
 
 const viewerMenuCategories = [
   {
-    title: "高階戰情與分析",
+    title: "製程分析",
     items: [
-      { to: "/spc", text: "SPC 管制圖", icon: LineChart },
-      { to: "/trend-chart", text: "量測值趨勢圖", icon: TrendingUp },
+      { to: "/spc", text: "SPC 管制分析", icon: LineChart },
+      { to: "/particle-monitoring", text: "Particle Monitoring", icon: Wind },
+      { to: "/trend-chart", text: "量測趨勢分析", icon: TrendingUp },
       { to: "/monthly-control-chart", text: "SPC 週月報表", icon: CalendarClock }
+    ]
+  },
+  {
+    title: "設備監控",
+    items: [
+      { to: "/equipment-status", text: "設備即時狀態", icon: Activity },
+      { to: "/equipment-points", text: "設備點位總覽", icon: Search },
+      { to: "/equipment-monitor", text: "重點點位監控", icon: Activity }
     ]
   }
 ];
@@ -105,6 +128,8 @@ const editorMenuCategories = [
     title: "企業品質主檔設定",
     items: [
       { to: "/part-process-characteristics", text: "SPC 管制項目設定", icon: FolderTree },
+      { to: "/chemical-analysis-overview", text: "線別分析項目總覽", icon: FlaskConical },
+      { to: "/chemical-f-table", text: "藥液 F 表維護", icon: FlaskConical },
       { to: "/processes", text: "工站製程主檔", icon: Layers },
       { to: "/parts", text: "產品料號主檔", icon: Package },
       { to: "/characteristics", text: "品質特性項目", icon: Sliders },
@@ -126,6 +151,7 @@ const editorMenuCategories = [
     title: "系統管理與通報設定",
     items: [
       { to: "/guide", text: "系統操作手冊", icon: BookOpen },
+      { to: "/calibration-instruments", text: "儀器校正管理", icon: CalendarClock },
       { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders },
       { to: "/settings/spc-reports", text: "SPC 週報月報設定", icon: CalendarClock },
       { to: "/operators", text: "系統使用者管理", icon: Users }
@@ -137,7 +163,11 @@ const menuCategories = computed(() => canEdit.value ? editorMenuCategories : vie
 
 function logout() {
   clearAuthSession();
-  router.push("/login");
+  window.location.assign(portalLogoutUrl);
+}
+
+function returnToPortal() {
+  window.location.assign(portalHomeUrl);
 }
 </script>
 
@@ -171,6 +201,14 @@ function logout() {
 
         <!-- Auth info -->
         <div v-if="authOn" class="flex items-center gap-3 text-sm pl-4 border-l border-slate-700/80">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-blue-600/80 hover:text-white border border-slate-700 transition-all text-slate-300"
+            title="返回 PMR 入口網站"
+            @click="returnToPortal"
+          >
+            <House class="w-3.5 h-3.5" /> 入口網站
+          </button>
           <div v-if="currentUser" class="text-right leading-tight">
             <div class="text-xs font-bold text-white">{{ currentUser.displayName || currentUser.username }}</div>
             <div class="text-[10px] text-blue-300">{{ currentUser.role === 'Viewer' ? '檢視者' : '編輯者' }}</div>
@@ -180,15 +218,15 @@ function logout() {
             class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-red-600/80 hover:text-white border border-slate-700 transition-all text-slate-300"
             @click="logout"
           >
-            <LogOut class="w-3.5 h-3.5" /> 登出
+            <LogOut class="w-3.5 h-3.5" /> 全部登出
           </button>
         </div>
       </div>
     </header>
 
-    <div v-if="showNav" class="flex flex-1 overflow-hidden">
+    <div v-if="showNav" class="flex flex-1 overflow-hidden" :class="route.path === '/calibration-instruments' ? 'flex-col md:flex-row' : ''">
       <!-- Premium Collapsible/Stylized Sidebar -->
-      <aside class="w-64 flex-shrink-0 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800/80 p-4 space-y-6 overflow-y-auto backdrop-blur-sm shadow-xl flex flex-col justify-between">
+      <aside :class="route.path === '/calibration-instruments' ? 'max-md:w-full max-md:max-h-40' : ''" class="w-64 flex-shrink-0 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800/80 p-4 space-y-6 overflow-y-auto backdrop-blur-sm shadow-xl flex flex-col justify-between">
         <div class="space-y-6">
           <div v-for="cat in menuCategories" :key="cat.title" class="space-y-1.5">
             <h3 class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
@@ -239,14 +277,14 @@ function logout() {
           class="w-full mx-auto space-y-6"
           :class="route.path === '/spc' ? 'max-w-none' : 'max-w-[1800px]'"
         >
-          <router-view />
+          <router-view :key="$route.path" />
         </div>
       </main>
     </div>
 
     <!-- No Nav View (e.g. Login) -->
     <main v-else class="flex-1 p-6 flex items-center justify-center bg-slate-900/40">
-      <router-view />
+      <router-view :key="$route.path" />
     </main>
   </div>
 </template>

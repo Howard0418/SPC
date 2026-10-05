@@ -1,4 +1,4 @@
-using MesSpc.Api.Domain.Entities;
+﻿using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
@@ -32,15 +32,56 @@ public record UpdateManualMeasurementItemReq(
 [Route("api/v1/manual-measurements")]
 public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcService) : ControllerBase
 {
+    /// <summary>唯讀查詢指定月份的日報／歷史日期狀態；僅精確符合班別階段的手動日報可直接載入。</summary>
+    [HttpGet("calendar")]
+    public async Task<IActionResult> GetCalendar([FromQuery] int machineId, [FromQuery] int year, [FromQuery] int month,
+        [FromQuery] string samplingPhase = "OPEN", [FromQuery] string samplingStage = "GENERAL", CancellationToken ct = default)
+    {
+        samplingPhase = samplingPhase.Trim().ToUpperInvariant();
+        if (machineId <= 0 || year < 1900 || year > 9998 || month < 1 || month > 12 || samplingPhase is not ("OPEN" or "MIDDLE"))
+            return BadRequest("線別、月份或班別無效。");
+        var code = await db.Machines.Where(x => x.Id == machineId).Select(x => x.MachineCode).FirstOrDefaultAsync(ct);
+        if (code is null) return NotFound();
+        if (!ChemicalSamplingStage.TryNormalize(code, samplingStage, out samplingStage))
+            return BadRequest(new { message = ChemicalSamplingStage.Error });
+        var start = new DateTime(year, month, 1);
+        var end = start.AddMonths(1);
+        var rows = await db.VariableMeasurements.AsNoTracking()
+            .Where(x => x.MachineId == machineId && (x.PortalDailyDate ?? x.MeasuredAt) >= start && (x.PortalDailyDate ?? x.MeasuredAt) < end
+                && (x.SamplingPhase == samplingPhase || (samplingPhase == "OPEN" && (x.SamplingPhase == "GENERAL" || x.SamplingPhase.Trim() == "" || x.SamplingPhase == null)))
+                && (x.SamplingStage == samplingStage || x.SamplingStage == "GENERAL"))
+            .Select(x => new { date = x.PortalDailyDate ?? x.MeasuredAt, x.PortalDailyDate, x.SourceType, x.SamplingPhase, x.SamplingStage })
+            .ToListAsync(ct);
+        var days = rows.GroupBy(x => x.date.Date).OrderBy(x => x.Key).Select(g => new
+        {
+            date = g.Key.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+            hasData = g.Any(x => x.SourceType == SourceType.Manual && (x.SamplingPhase == samplingPhase || (samplingPhase == "OPEN" && string.IsNullOrWhiteSpace(x.SamplingPhase)) || (samplingPhase == "OPEN" && x.SamplingPhase == "GENERAL")) && x.SamplingStage == samplingStage),
+            hasHistory = g.Any(x => x.SourceType != SourceType.Manual || (x.SamplingPhase != samplingPhase && !(samplingPhase == "OPEN" && (string.IsNullOrWhiteSpace(x.SamplingPhase) || x.SamplingPhase == "GENERAL"))) || x.SamplingStage != samplingStage)
+        });
+        return Ok(new { year, month, machineId, samplingPhase, samplingStage, days });
+    }
+
+    /// <summary>依線別、日期、班別與取樣階段取得日報，未帶階段保留歷史 GENERAL 查詢。</summary>
     [HttpGet("daily")]
-    public async Task<IActionResult> GetDaily([FromQuery] int machineId, [FromQuery] DateOnly date, CancellationToken ct = default)
+    public async Task<IActionResult> GetDaily([FromQuery] int machineId, [FromQuery] DateOnly date,
+        [FromQuery] string samplingPhase = "GENERAL", CancellationToken ct = default,
+        [FromQuery] string samplingStage = "GENERAL")
     {
         if (machineId <= 0) return BadRequest("machineId is required.");
+        var machineCode = await db.Machines.Where(x => x.Id == machineId).Select(x => x.MachineCode).FirstOrDefaultAsync(ct);
+        if(!ChemicalSamplingStage.TryNormalize(machineCode,samplingStage,out samplingStage))
+            return BadRequest(new { message=ChemicalSamplingStage.Error });
         var dailyDate = date.ToDateTime(TimeOnly.MinValue);
+        var nextDate = dailyDate.AddDays(1);
+        samplingPhase = NormalizeSamplingPhase(samplingPhase);
         var rows = await db.VariableMeasurements.AsNoTracking()
-            .Where(x => x.MachineId == machineId && x.PortalDailyDate == dailyDate && x.SourceType == SourceType.Manual)
+            .Where(x => x.MachineId == machineId && (x.PortalDailyDate == dailyDate || (x.PortalDailyDate == null && x.MeasuredAt >= dailyDate && x.MeasuredAt < nextDate))
+                && (x.SamplingPhase == samplingPhase || (samplingPhase == "OPEN" && (x.SamplingPhase == "GENERAL" || x.SamplingPhase.Trim() == "" || x.SamplingPhase == null))) && x.SamplingStage == samplingStage && x.SourceType == SourceType.Manual)
             .OrderBy(x => x.PartProcessCharacteristicId).ThenBy(x => x.SampleNo).ToListAsync(ct);
         if (rows.Count == 0) return Ok(new { date, machineId, exists = false, rows = Array.Empty<object>() });
+
+        if (rows.GroupBy(x => x.PartProcessCharacteristicId).Any(g => g.Count() > 1))
+            return Conflict(new { message = "同一項目有多筆早班或舊班別資料，請先確認重複紀錄。" });
 
         var ppcIds = rows.Select(x => x.PartProcessCharacteristicId).Distinct().ToList();
         var mappings = await db.PartProcessCharacteristics.AsNoTracking()
@@ -80,7 +121,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 recheckSecondaryTitrationValue = payload?.GetValueOrDefault("RecheckSecondaryTitrationValue")
             };
         }).ToList();
-        return Ok(new { date, machineId, exists = true, rows = result });
+        return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });
     }
 
     [HttpGet("latest")]
@@ -397,4 +438,69 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         await tx.CommitAsync(ct);
         return Ok(new { row.Id, row.UploadBatchId, row.MeasuredValue, row.RecheckValue, row.AdjustAction, row.AdjustAmount, row.MeasuredAt, operatorName = row.Operator });
     }
+
+    /// <summary>刪除單筆 Portal 藥液日報量測與其衍生 SPC 結果及警示。</summary>
+    [HttpDelete("items/{id:long}")]
+    public async Task<IActionResult> DeleteItem(long id, [FromQuery] string? operatorName = null, CancellationToken ct = default)
+    {
+        var row = await db.VariableMeasurements.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (row is null) return NotFound("找不到要刪除的量測資料。");
+        if (row.SourceType != SourceType.Manual || !row.PortalDailyDate.HasValue)
+            return Conflict("只允許刪除 Portal 藥液日報的單筆量測資料。");
+
+        var actor = string.IsNullOrWhiteSpace(operatorName)
+            ? User.Identity?.Name ?? row.Operator
+            : operatorName.Trim();
+
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var calculations = await db.SpcCalculationResults
+            .Where(x => x.VariableMeasurementId == id).ToListAsync(ct);
+        var alerts = await db.AlertEvents
+            .Where(x => x.VariableMeasurementId == id).ToListAsync(ct);
+        db.SpcCalculationResults.RemoveRange(calculations);
+        db.AlertEvents.RemoveRange(alerts);
+        var nextAuditRow = (await db.UploadDetails
+            .Where(x => x.UploadBatchId == row.UploadBatchId)
+            .MaxAsync(x => (int?)x.RowNo, ct) ?? 0) + 1;
+        db.UploadDetails.Add(new UploadDetail
+        {
+            UploadBatchId = row.UploadBatchId,
+            RowNo = nextAuditRow,
+            IsValid = false,
+            CreatedBy = actor,
+            PayloadJson = JsonSerializer.Serialize(new
+            {
+                action = "ManualMeasurementDeleted",
+                actor,
+                recordedAt = DateTime.UtcNow,
+                before = new
+                {
+                    row.Id,
+                    row.PartProcessCharacteristicId,
+                    row.MeasuredValue,
+                    row.RecheckValue,
+                    row.AdjustAction,
+                    row.AdjustAmount,
+                    row.MeasuredAt,
+                    row.Operator,
+                    row.PortalDailyDate,
+                    row.SamplingPhase,
+                    row.SamplingStage
+                }
+            })
+        });
+        db.VariableMeasurements.Remove(row);
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
+        return Ok(new { id, deleted = true });
+    }
+
+    private static string NormalizeSamplingPhase(string? value) => value?.Trim().ToUpperInvariant() switch
+    {
+        "OPEN" => "OPEN",
+        "MIDDLE" => "MIDDLE",
+        "CLOSE" => "CLOSE",
+        _ => "OPEN"
+    };
 }

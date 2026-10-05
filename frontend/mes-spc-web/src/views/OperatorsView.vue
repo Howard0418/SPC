@@ -24,6 +24,10 @@ const rows = ref([]);
 const err = ref("");
 const successMsg = ref("");
 const loading = ref(false);
+const comparison = ref(null);
+const comparing = ref(false);
+const selectedPortalIds = ref([]);
+const permissionCatalog = ref([]);
 
 const searchQuery = ref("");
 const statusFilter = ref("all");
@@ -37,9 +41,9 @@ const form = ref({
   department: "",
   email: "",
   username: "",
-  password: "",
   role: "Viewer",
   isActive: true
+  ,pagePermissions: []
 });
 const formErr = ref("");
 
@@ -47,14 +51,52 @@ async function load() {
   err.value = "";
   loading.value = true;
   try {
-    const res = await api.get("/operators");
+    const [res, catalog] = await Promise.all([api.get("/operators"), api.get("/operators/permissions-catalog")]);
     rows.value = res.data || [];
+    permissionCatalog.value = catalog.data || [];
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
     loading.value = false;
   }
 }
+
+async function comparePortalUsers() {
+  err.value = "";
+  comparing.value = true;
+  try {
+    const { data } = await api.get("/v1/operators/directory-comparison");
+    comparison.value = data;
+    selectedPortalIds.value = [];
+  } catch (e) {
+    err.value = getApiErrorMessage(e);
+  } finally {
+    comparing.value = false;
+  }
+}
+
+async function syncSelected() {
+  if (!selectedPortalIds.value.length) return;
+  if (!confirm(`確定同步選取的 ${selectedPortalIds.value.length} 位人員？既有 SPC 權限與狀態會保留。`)) return;
+  comparing.value = true;
+  err.value = "";
+  try {
+    const { data } = await api.post("/v1/operators/directory-comparison/sync", {
+      items: selectedPortalIds.value.map(portalUserId => ({ portalUserId }))
+    });
+    successAlert(`同步完成：${data.succeeded || 0} 位成功。`);
+    await load();
+    await comparePortalUsers();
+  } catch (e) {
+    err.value = getApiErrorMessage(e);
+  } finally {
+    comparing.value = false;
+  }
+}
+
+const comparisonLabel = status => ({
+  Matched: "已結合", Different: "資料不同", PortalOnly: "僅 Portal", SpcOnly: "僅 SPC", Conflict: "衝突"
+}[status] || status);
 
 const filteredRows = computed(() => {
   return rows.value.filter(row => {
@@ -82,9 +124,9 @@ function openCreateModal() {
     department: "",
     email: "",
     username: "",
-    password: "",
     role: "Viewer",
     isActive: true
+    ,pagePermissions: permissionCatalog.value.filter(x => x.viewerDefault).map(x => x.code)
   };
   formErr.value = "";
   showModal.value = true;
@@ -99,9 +141,9 @@ function openEditModal(item) {
     department: item.department || "",
     email: item.email || "",
     username: item.username || "",
-    password: "",
     role: item.role || "Viewer",
     isActive: item.isActive ?? true
+    ,pagePermissions: [...(item.pagePermissions || [])]
   };
   formErr.value = "";
   showModal.value = true;
@@ -163,6 +205,14 @@ onMounted(load);
     <!-- Title & Actions -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
       <div class="flex items-center gap-3">
+        <button
+          @click="comparePortalUsers"
+          type="button"
+          :disabled="comparing"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-all disabled:opacity-60"
+        >
+          <RefreshCw :class="['w-4 h-4', comparing ? 'animate-spin' : '']" /> 比對 Portal 品保人員
+        </button>
         <div class="p-3 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/30 text-white">
           <Users class="w-7 h-7" />
         </div>
@@ -214,6 +264,33 @@ onMounted(load);
     <div v-if="successMsg" class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl shadow-sm animate-fade-in">
       <CheckCircle2 class="w-6 h-6 flex-shrink-0 text-emerald-500" />
       <div class="text-sm font-semibold">{{ successMsg }}</div>
+    </div>
+
+    <div v-if="comparison" class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="p-5 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="font-black text-slate-800 dark:text-white">Portal／SPC 人員比對結果</h2>
+          <button @click="syncSelected" :disabled="!selectedPortalIds.length || comparing" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold disabled:opacity-40">
+            同步選取人員（{{ selectedPortalIds.length }}）
+          </button>
+        </div>
+        <p class="mt-1 text-xs text-slate-500">唯讀比對：Portal 品保 {{ comparison.portalCount }} 人、SPC {{ comparison.spcCount }} 人；不會修改基本資料或權限。</p>
+      </div>
+      <div class="overflow-x-auto max-h-[32rem]">
+        <table class="w-full text-left text-xs">
+          <thead class="sticky top-0 bg-slate-50 dark:bg-slate-800"><tr><th class="p-3">選取</th><th class="p-3">狀態</th><th class="p-3">AD 帳號／工號</th><th class="p-3">Portal</th><th class="p-3">SPC</th><th class="p-3">說明</th></tr></thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tr v-for="item in comparison.rows" :key="`${item.status}-${item.portalUserId || 0}-${item.spcOperatorId || 0}`">
+              <td class="p-3"><input v-if="item.portalUserId && item.status !== 'Matched' && item.status !== 'Conflict'" v-model="selectedPortalIds" type="checkbox" :value="item.portalUserId" class="h-4 w-4" /><span v-else>-</span></td>
+              <td class="p-3 font-bold" :class="item.status === 'Matched' ? 'text-emerald-600' : item.status === 'Conflict' ? 'text-red-600' : 'text-amber-600'">{{ comparisonLabel(item.status) }}</td>
+              <td class="p-3"><div>{{ item.adAccount || '-' }}</div><div class="text-slate-500">{{ item.employeeNo || '-' }}</div></td>
+              <td class="p-3"><div>{{ item.portalName || '-' }}</div><div class="text-slate-500">{{ item.portalDepartment || '-' }}／{{ item.portalEmail || '-' }}</div></td>
+              <td class="p-3"><div>{{ item.spcName || '-' }}</div><div class="text-slate-500">{{ item.spcDepartment || '-' }}／{{ item.spcEmail || '-' }}</div><div v-if="item.spcRole">{{ item.spcRole }}</div></td>
+              <td class="p-3 text-slate-500">{{ item.message || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Filters & Search Bar -->
@@ -298,7 +375,6 @@ onMounted(load);
                 ]">
                   {{ item.role === 'Editor' ? '編輯者' : '檢視者' }}
                 </span>
-                <span v-if="item.username && !item.hasPassword" class="ml-1 text-amber-600">未設密碼</span>
               </td>
               <td class="py-4 px-6 font-mono text-xs text-slate-600 dark:text-slate-300">
                 <div class="flex items-center gap-1.5">
@@ -406,6 +482,17 @@ onMounted(load);
             </div>
           </div>
 
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">可瀏覽頁面</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <label v-for="permission in permissionCatalog" :key="permission.code" class="flex items-center gap-2 text-xs">
+                <input v-model="form.pagePermissions" type="checkbox" :value="permission.code" class="h-4 w-4" />
+                <span>{{ permission.name }}</span>
+              </label>
+            </div>
+            <p class="text-xs text-slate-500">這裡只控制頁面可見範圍；編輯、匯入與管理操作仍受 Viewer／Editor 保護。</p>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">登入帳號</label>
@@ -414,16 +501,6 @@ onMounted(load);
                 type="text"
                 autocomplete="off"
                 placeholder="留空表示不可登入"
-                class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white"
-              />
-            </div>
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">登入密碼</label>
-              <input
-                v-model="form.password"
-                type="password"
-                autocomplete="new-password"
-                :placeholder="modalMode === 'edit' ? '留空表示不變更' : '設定後才可登入'"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white"
               />
             </div>

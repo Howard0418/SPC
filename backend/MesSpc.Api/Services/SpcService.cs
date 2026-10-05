@@ -31,11 +31,13 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var activeUcl = activeSegment?.UCL ?? mapping.UCL;
         var activeCl = activeSegment?.CL ?? mapping.CL;
         var activeLcl = activeSegment?.LCL ?? mapping.LCL;
+        var activeUsl = activeSegment?.USL ?? mapping.USL;
+        var activeLsl = activeSegment?.LSL ?? mapping.LSL;
 
         var actualValue = measurement.RecheckValue ?? measurement.MeasuredValue;
 
-        var isOutOfSpec = !recordOnly && ((mapping.USL.HasValue && actualValue > mapping.USL.Value)
-                          || (mapping.LSL.HasValue && actualValue < mapping.LSL.Value));
+        var isOutOfSpec = !recordOnly && ((activeUsl.HasValue && actualValue > activeUsl.Value)
+                          || (activeLsl.HasValue && actualValue < activeLsl.Value));
         var isOutOfControl = !recordOnly && ((activeUcl.HasValue && actualValue > activeUcl.Value)
                              || (activeLcl.HasValue && actualValue < activeLcl.Value));
         var ruleGroupId = await GetWeRuleGroupIdAsync(ct);
@@ -76,8 +78,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             RuleGroupId = ruleGroupId,
             StatisticName = chartType.ChartTypeCode,
             StatisticValue = actualValue,
-            USL = mapping.USL,
-            LSL = mapping.LSL,
+            USL = activeUsl,
+            LSL = activeLsl,
             UCL = activeUcl,
             CL = activeCl,
             LCL = activeLcl,
@@ -114,8 +116,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             db.AlertEvents.Add(alert);
             await db.SaveChangesAsync(ct);
 
-            var defaultEmail = config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw";
-            await emailService.SendAlertEmailAsync(alert, defaultEmail, "品管工程師");
+            await SendAlertEmailAsync(alert, "品管工程師");
         }
 
         return result;
@@ -139,6 +140,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var activeUcl = activeSegment?.UCL ?? mapping.UCL;
         var activeCl = activeSegment?.CL ?? mapping.CL;
         var activeLcl = activeSegment?.LCL ?? mapping.LCL;
+        var activeUsl = activeSegment?.USL ?? mapping.USL;
+        var activeLsl = activeSegment?.LSL ?? mapping.LSL;
 
         var statisticValue = CalculateAttributeStatistic(chartType.ChartTypeCode, measurement);
         var isOutOfControl = (activeUcl.HasValue && statisticValue.HasValue && statisticValue.Value > activeUcl.Value)
@@ -177,8 +180,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             RuleGroupId = ruleGroupId,
             StatisticName = chartType.ChartTypeCode,
             StatisticValue = statisticValue,
-            USL = mapping.USL,
-            LSL = mapping.LSL,
+            USL = activeUsl,
+            LSL = activeLsl,
             UCL = activeUcl,
             CL = activeCl,
             LCL = activeLcl,
@@ -208,8 +211,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             db.AlertEvents.Add(alert);
             await db.SaveChangesAsync(ct);
 
-            var defaultEmail = config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw";
-            await emailService.SendAlertEmailAsync(alert, defaultEmail, "品管工程師");
+            await SendAlertEmailAsync(alert, "品管工程師");
         }
 
         return result;
@@ -241,13 +243,48 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             await db.AlertEvents.AddRangeAsync(alerts, ct);
             await db.SaveChangesAsync(ct);
 
-            var defaultEmail = config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw";
             foreach (var alert in alerts)
             {
-                await emailService.SendAlertEmailAsync(alert, defaultEmail, "品管工程師");
+                await SendAlertEmailAsync(alert, "品管工程師");
             }
         }
         return alerts;
+    }
+
+    private async Task SendAlertEmailAsync(AlertEvent alert, string fallbackName)
+    {
+        var setting = await db.SpcAlertNotificationSettings.AsNoTracking().OrderBy(x => x.Id).FirstOrDefaultAsync();
+        var ids = ParseRecipientIds(setting?.RecipientOperatorIdsJson);
+        List<(string Email, string OperatorName)> recipients;
+        if (ids.Count > 0)
+        {
+            var operatorRecipients = await db.Operators.AsNoTracking()
+                .Where(x => ids.Contains(x.Id) && x.IsActive && x.Email != null && x.Email != "")
+                .Select(x => new { x.Email, x.OperatorName })
+                .ToListAsync();
+            recipients = operatorRecipients.Select(x => (x.Email!, x.OperatorName)).ToList();
+        }
+        else
+        {
+            recipients = [];
+        }
+
+        if (recipients.Count == 0)
+        {
+            recipients = [(config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw", fallbackName)];
+        }
+
+        foreach (var recipient in recipients)
+        {
+            try { await emailService.SendAlertEmailAsync(alert, recipient.Email!, recipient.OperatorName); }
+            catch { /* Alert persistence must not fail because one notification failed. */ }
+        }
+    }
+
+    private static List<int> ParseRecipientIds(string? json)
+    {
+        try { return System.Text.Json.JsonSerializer.Deserialize<List<int>>(json ?? "[]") ?? []; }
+        catch { return []; }
     }
 
     public async Task<object?> GetImrChartAsync(int inspectionItemId, int productId, int stationId, CancellationToken ct = default)
@@ -328,6 +365,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         CancellationToken ct = default)
     {
         var mapping = await db.PartProcessCharacteristics
+            .Include(x => x.Machine)
             .Include(x => x.Characteristic)
             .Include(x => x.Process)
             .AsNoTracking()
@@ -363,6 +401,16 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             CL = mapping.CL,
             LCL = mapping.LCL
         };
+        var specLimitSegments = segments
+            .Select(x => new
+            {
+                x.StartDate,
+                x.EndDate,
+                USL = x.USL ?? mapping.USL,
+                LSL = x.LSL ?? mapping.LSL,
+                Target = x.TargetValue ?? mapping.TargetValue
+            })
+            .ToList();
 
         var dataCategory = chartType?.DataCategory ?? mapping.Characteristic?.DataCategory ?? "Variable";
 
@@ -375,8 +423,15 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             if (startDate.HasValue) query = query.Where(x => x.MeasuredAt >= startDate.Value.Date);
             if (endDate.HasValue) query = query.Where(x => x.MeasuredAt < endDate.Value.Date.AddDays(1));
 
-            var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
+            var isEtchSubgroup = mapping.Characteristic?.CharacteristicCode is "ETCH_A_AVG" or "ETCH_B_AVG"
+                && chartType?.ChartTypeCode is "XBAR_S" or "XBAR-S";
+            var measurements = isEtchSubgroup
+                ? await query.Where(x => x.SourceReference != null && x.SourceReference.StartsWith("ETCH:"))
+                    .OrderBy(x => x.MeasuredAt).ThenBy(x => x.SampleNo).ToListAsync(ct)
+                : await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return null;
+            if (mapping.ControlScope == "CHEM" && mapping.Machine?.MachineCode is "N1" or "N2")
+                measurements = ChemicalStageChart.Order(measurements);
             var contextMeasurement = measurements.LastOrDefault(x => x.LineId.HasValue || x.TankId.HasValue || x.SlotId.HasValue) ?? measurements[^1];
             var monitorContext = await BuildMonitorContextAsync(
                 mapping,
@@ -397,10 +452,16 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             {
                 alertLookup.TryGetValue(x.Id, out var alert);
                 var activeSegment = segments.LastOrDefault(s => s.StartDate <= x.MeasuredAt && (s.EndDate == null || s.EndDate >= x.MeasuredAt));
+                var activeUsl = activeSegment?.USL ?? mapping.USL;
+                var activeLsl = activeSegment?.LSL ?? mapping.LSL;
+                var value = x.RecheckValue ?? x.MeasuredValue;
                 return new SpcDataPoint
                 {
                     MeasuredAt = x.MeasuredAt,
-                    Value = x.RecheckValue ?? x.MeasuredValue,
+                    PortalDailyDate = x.PortalDailyDate,
+                    SamplingPhase = x.SamplingPhase,
+                    SamplingStage = x.SamplingStage,
+                    Value = value,
                     UCL = activeSegment?.UCL ?? mapping.UCL,
                     CL = activeSegment?.CL ?? mapping.CL,
                     LCL = activeSegment?.LCL ?? mapping.LCL,
@@ -412,8 +473,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     SlotId = x.SlotId,
                     SideCode = x.SideCode.ToString(),
                     IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId),
-                    IsOutOfSpec = (mapping.USL.HasValue && (x.RecheckValue ?? x.MeasuredValue) > mapping.USL.Value)
-                        || (mapping.LSL.HasValue && (x.RecheckValue ?? x.MeasuredValue) < mapping.LSL.Value),
+                    IsOutOfSpec = (activeUsl.HasValue && value > activeUsl.Value)
+                        || (activeLsl.HasValue && value < activeLsl.Value),
                     IsOutOfControl = alert?.AlertType == AlertType.OutOfControl,
                     RootCause = alert?.RootCause,
                     CorrectiveAction = alert?.CorrectiveAction,
@@ -430,11 +491,11 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             ControlChartResult chartResultVal;
             if (chartType == null)
             {
-                chartResultVal = new ControlChartResult { RawDataPoints = rawPoints, Limits = limits };
+                chartResultVal = new ControlChartResult { RawDataPoints = rawPoints, Limits = limits, SpecLimitSegments = specLimitSegments };
             }
             else if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, enabledRuleCodes) with { RawDataPoints = rawPoints };
+                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, enabledRuleCodes) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
             }
             else // XBAR_R / XBAR_S
             {
@@ -472,16 +533,16 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
                 if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
                 {
-                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, enabledRuleCodes) with { RawDataPoints = rawPoints };
+                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, enabledRuleCodes) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
                 }
                 else
                 {
                     var formulaConfigJson = mapping.FormulaConfigJson;
-                    chartResultVal = XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson, enabledRuleCodes) with { RawDataPoints = rawPoints };
+                    chartResultVal = XbarRChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson, enabledRuleCodes) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
                 }
             }
 
-            return PopulateNormalityAndCurve(chartResultVal, rawPoints, limits) with { MonitorContext = monitorContext };
+            return PopulateNormalityAndCurve(chartResultVal, rawPoints, limits) with { MonitorContext = monitorContext, SpecLimitSegments = specLimitSegments };
         }
         else // Attribute
         {
@@ -531,6 +592,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             return AttributeChartCalculator.Calculate(chartType.ChartTypeCode, points, limits, enabledRuleCodes) with
             {
                 RawDataPoints = points,
+                SpecLimitSegments = specLimitSegments,
                 MonitorContext = monitorContext
             };
         }
@@ -607,8 +669,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 ? (double)measurement.DefectQty.Value / measurement.InspectedQty.Value
                 : null,
             "NP" or "NP_CHART" or "NP-CHART" => measurement.DefectQty,
-            "C" or "C_CHART" or "C-CHART" => measurement.DefectCount,
-            "U" or "U_CHART" or "U-CHART" => measurement.UnitCount > 0 && measurement.DefectCount.HasValue
+            "C" or "C_CHART" or "C-CHART" or "DUST_C" => measurement.DefectCount,
+            "U" or "U_CHART" or "U-CHART" or "DUST_U" => measurement.UnitCount > 0 && measurement.DefectCount.HasValue
                 ? (double)measurement.DefectCount.Value / measurement.UnitCount.Value
                 : null,
             _ => null
@@ -1083,6 +1145,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             "PROCESS" => "製程管制",
             "CHEM" => "藥液管制",
             "PRODUCT" => "產品管制",
+            "DUST" => "落塵監控",
             _ => scope ?? string.Empty
         };
     }
@@ -1154,7 +1217,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         DateTime endDate,
         CancellationToken ct = default)
     {
-        var mapping = await db.PartProcessCharacteristics.AsNoTracking().FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
+        var mapping = await db.PartProcessCharacteristics.AsNoTracking().Include(x=>x.Characteristic).Include(x=>x.Machine).FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
         if (mapping is null || !mapping.ChartTypeId.HasValue) return null;
 
         var chartType = await db.ControlChartTypes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mapping.ChartTypeId.Value && x.IsEnabled, ct);
@@ -1180,8 +1243,15 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                          && x.MeasuredAt >= startDate.Date
                          && x.MeasuredAt < endDate.Date.AddDays(1));
 
-            var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
+            var isEtchSubgroup = mapping.Characteristic?.CharacteristicCode is "ETCH_A_AVG" or "ETCH_B_AVG"
+                && chartType.ChartTypeCode is "XBAR_S" or "XBAR-S";
+            var measurements = isEtchSubgroup
+                ? await query.Where(x => x.SourceReference != null && x.SourceReference.StartsWith("ETCH:"))
+                    .OrderBy(x => x.MeasuredAt).ThenBy(x => x.SampleNo).ToListAsync(ct)
+                : await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
             if (measurements.Count == 0) return new TrialCalculateResult(null, null, null, 0, "在此區間內無量測數據。");
+            if (mapping.ControlScope == "CHEM" && mapping.Machine?.MachineCode is "N1" or "N2")
+                measurements = ChemicalStageChart.Order(measurements);
 
             var rawPoints = measurements.Select(x => new SpcDataPoint
             {
