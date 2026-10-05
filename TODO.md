@@ -46,6 +46,7 @@
 - SPC 測試站 backend/frontend 已發布；備份 `backend.backup-test-issues-20261005-144947`、`frontend.backup-test-issues-20261005-144947`。
 - 2026-10-05 補充：依使用者提醒，`TotalCount` 口徑修正已收斂為只套用製程 `PROC`；藥液 `CHEM` 維持原 raw data 筆數。測試站 backend 已重新發布，備份 `backend.backup-proc-total-count-20261005-150540`。
 - 2026-10-05 再修正：製程標準代碼為 `PROCESS`，已改用標準化 control scope 判斷，避免製程總覽仍回退 raw data 筆數；藥液 `CHEM` 維持不變。後端 build 通過並已發布測試站 backend，備份 `backend.backup-process-total-count-scope-170030`。
+- 2026-10-05 OOS 再確認：製程總覽 `OosCount/OocCount` 同樣需用製圖管制點口徑；已調整為製程 `PROCESS` 使用 `chartData.points` 旗標計算，藥液 `CHEM` 維持 raw data 口徑。後端 build 通過並已發布測試站 backend，備份 `backend.backup-process-oos-scope-193639`。
 - Smoke：`/api/version` 回 `environment=test`；前端首頁 HTTP 200；新 JS `index-Hc-aHFuY.js` 回 `application/javascript`，CSS 回 `text/css`。
 
 #### SPC-1002-TASK-001：常態分布檢定 P-value 修正

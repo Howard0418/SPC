@@ -1045,15 +1045,20 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             if (rawPoints.Count == 0) continue;
 
-            var importedCount = string.Equals(NormalizeControlScope(mapping.ControlScope), ControlScopeCodes.Process, StringComparison.OrdinalIgnoreCase)
+            var isProcessScope = string.Equals(NormalizeControlScope(mapping.ControlScope), ControlScopeCodes.Process, StringComparison.OrdinalIgnoreCase);
+            var importedCount = isProcessScope
                 ? CountChartPoints(result.ChartData) ?? rawPoints.Count
                 : rawPoints.Count;
             var includedPoints = rawPoints.Where(x => !x.IsExcluded).ToList();
             if (includedPoints.Count == 0) continue;
 
-            var oosCount = includedPoints.Count(x => x.IsOutOfSpec);
-            var oocCount = includedPoints.Count(x => x.IsOutOfControl || (x.ViolatedRules != null && x.ViolatedRules.Count > 0));
-            var totalCount = includedPoints.Count;
+            var oosCount = isProcessScope
+                ? CountChartPoints(result.ChartData, IsChartPointOutOfSpec) ?? includedPoints.Count(x => x.IsOutOfSpec)
+                : includedPoints.Count(x => x.IsOutOfSpec);
+            var oocCount = isProcessScope
+                ? CountChartPoints(result.ChartData, IsChartPointOutOfControl) ?? includedPoints.Count(x => x.IsOutOfControl || (x.ViolatedRules != null && x.ViolatedRules.Count > 0))
+                : includedPoints.Count(x => x.IsOutOfControl || (x.ViolatedRules != null && x.ViolatedRules.Count > 0));
+            var totalCount = isProcessScope ? importedCount : includedPoints.Count;
             var oosPercentage = totalCount > 0 ? (double)oosCount / totalCount * 100 : 0;
             var oocPercentage = totalCount > 0 ? (double)oocCount / totalCount * 100 : 0;
             var previousMonth = await CalculateSummaryPeriodStatsAsync(
@@ -1063,6 +1068,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 previousMonthEnd,
                 batchNo,
                 partId,
+                NormalizeControlScope(mapping.ControlScope),
                 ct);
 
             var latestAlert = includedPoints
@@ -1131,6 +1137,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         DateTime endDate,
         string? batchNo,
         int? partId,
+        string controlScope,
         CancellationToken ct)
     {
         var result = await GetInteractiveChartAsync(partProcessCharacteristicId, uploadBatchId, startDate, endDate, batchNo, partId, ct);
@@ -1140,17 +1147,77 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var includedPoints = rawPoints.Where(x => !x.IsExcluded).ToList();
         if (includedPoints.Count == 0) return (0, 0, result.Capability?.Ppk);
 
-        var oosCount = includedPoints.Count(x => x.IsOutOfSpec);
-        var oosPercentage = (double)oosCount / includedPoints.Count * 100;
+        var isProcessScope = string.Equals(NormalizeControlScope(controlScope), ControlScopeCodes.Process, StringComparison.OrdinalIgnoreCase);
+        var chartPointCount = isProcessScope ? CountChartPoints(result.ChartData) : null;
+        var oosCount = isProcessScope
+            ? CountChartPoints(result.ChartData, IsChartPointOutOfSpec) ?? includedPoints.Count(x => x.IsOutOfSpec)
+            : includedPoints.Count(x => x.IsOutOfSpec);
+        var denominator = isProcessScope ? chartPointCount ?? includedPoints.Count : includedPoints.Count;
+        var oosPercentage = denominator > 0 ? (double)oosCount / denominator * 100 : 0;
         return (oosCount, oosPercentage, result.Capability?.Ppk);
     }
 
-    private static int? CountChartPoints(object? chartData)
+    private static int? CountChartPoints(object? chartData, Func<object, bool>? predicate = null)
     {
         if (chartData is null) return null;
         var points = chartData.GetType().GetProperty("points", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase)
             ?.GetValue(chartData);
-        return points is System.Collections.IEnumerable items ? items.Cast<object>().Count() : null;
+        if (points is not System.Collections.IEnumerable items) return null;
+        var chartPoints = items.Cast<object>();
+        return predicate is null ? chartPoints.Count() : chartPoints.Count(predicate);
+    }
+
+    private static bool IsChartPointOutOfSpec(object point)
+        => ReadBooleanProperty(point, "outOfSpec");
+
+    private static bool IsChartPointOutOfControl(object point)
+        => ReadBooleanProperty(point, "outOfControl") || HasAnyPropertyItems(point, "violatedRules");
+
+    private static bool ReadBooleanProperty(object source, string name)
+    {
+        if (source is System.Collections.IDictionary dictionary)
+        {
+            foreach (System.Collections.DictionaryEntry entry in dictionary)
+            {
+                if (string.Equals(Convert.ToString(entry.Key), name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return entry.Value is bool dictionaryValue
+                        ? dictionaryValue
+                        : bool.TryParse(Convert.ToString(entry.Value), out var parsedDictionaryValue) && parsedDictionaryValue;
+                }
+            }
+
+            return false;
+        }
+
+        var prop = source.GetType().GetProperty(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        var propValue = prop?.GetValue(source);
+        return propValue is bool propertyValue
+            ? propertyValue
+            : bool.TryParse(Convert.ToString(propValue), out var parsedPropertyValue) && parsedPropertyValue;
+    }
+
+    private static bool HasAnyPropertyItems(object source, string name)
+    {
+        object? value = null;
+        if (source is System.Collections.IDictionary dictionary)
+        {
+            foreach (System.Collections.DictionaryEntry entry in dictionary)
+            {
+                if (string.Equals(Convert.ToString(entry.Key), name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = entry.Value;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            value = source.GetType().GetProperty(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase)
+                ?.GetValue(source);
+        }
+
+        return value is System.Collections.IEnumerable items && items.Cast<object>().Any();
     }
 
     private static List<SpcDataPoint> ToSpcDataPoints(object rawDataPoints)

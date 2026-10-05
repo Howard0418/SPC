@@ -5,6 +5,7 @@
 - 目的：依 `docs/SPC測試問題_20261005.xlsx` 修正製程總覽線別下拉混入非線別項目，以及 Xbar 類項目總表資料數與管制圖管制點數口徑不一致。
 - 補充：`TotalCount` 口徑修正只套用製程 `PROC`，藥液 `CHEM` 維持 raw data 筆數，避免影響藥液功能與資料計算。
 - 再修正：製程標準代碼為 `PROCESS`，已改用標準化 control scope 判斷，避免總覽資料數仍回退 raw data 筆數；已發布 SPC 測試站 backend，備份 `backend.backup-process-total-count-scope-170030`。
+- OOS 再確認：製程總覽 `OosCount/OocCount` 同樣改用製圖 `chartData.points` 口徑；藥液 `CHEM` 維持 raw data 口徑。已發布 SPC 測試站 backend，備份 `backend.backup-process-oos-scope-193639`。
 
 ## [2026-10-05] - SPC-1002-TASK-001 常態檢定 P-value 修正
 - 目的：修正小樣本 raw data 常態性檢定 P-value 偏高的問題；以 adjusted Jarque-Bera 統計量取代一般漸近 Jarque-Bera 統計量，讓類似系統顯示約 0.10 但實際應判定 `<0.05` 的資料可正確標示偏離常態。
