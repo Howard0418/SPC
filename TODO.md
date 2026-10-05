@@ -37,13 +37,14 @@
 修改：
 
 - 前端線別下拉只納入有 `processId`、`process` 與製程名稱/代碼的有效線別。
-- 後端總表 `TotalCount` 改採 chart data 的管制點數；若取不到 chart points 才回退 raw data 筆數。
+- 後端總表 `TotalCount` 僅在製程 `PROC` 改採 chart data 的管制點數；藥液 `CHEM` 維持 raw data 筆數，不影響藥液功能與計算。
 
 驗證：
 
 - 後端 build 0 warnings / 0 errors。
 - 前端 `npm run build -- --mode testhost` 通過。
 - SPC 測試站 backend/frontend 已發布；備份 `backend.backup-test-issues-20261005-144947`、`frontend.backup-test-issues-20261005-144947`。
+- 2026-10-05 補充：依使用者提醒，`TotalCount` 口徑修正已收斂為只套用製程 `PROC`；藥液 `CHEM` 維持原 raw data 筆數。測試站 backend 已重新發布，備份 `backend.backup-proc-total-count-20261005-150540`。
 - Smoke：`/api/version` 回 `environment=test`；前端首頁 HTTP 200；新 JS `index-Hc-aHFuY.js` 回 `application/javascript`，CSS 回 `text/css`。
 
 #### SPC-1002-TASK-001：常態分布檢定 P-value 修正

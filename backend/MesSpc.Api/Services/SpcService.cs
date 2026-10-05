@@ -1045,7 +1045,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             if (rawPoints.Count == 0) continue;
 
-            var importedCount = CountChartPoints(result.ChartData) ?? rawPoints.Count;
+            var importedCount = string.Equals(mapping.ControlScope, "PROC", StringComparison.OrdinalIgnoreCase)
+                ? CountChartPoints(result.ChartData) ?? rawPoints.Count
+                : rawPoints.Count;
             var includedPoints = rawPoints.Where(x => !x.IsExcluded).ToList();
             if (includedPoints.Count == 0) continue;
 

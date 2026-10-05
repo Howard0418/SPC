@@ -3,8 +3,9 @@
 ## 2026-10-05（SPC 測試問題：總覽下拉與資料數口徑）
 - 依 `docs/SPC測試問題_20261005.xlsx` 修正兩項測試問題。
 - 製程總覽線別下拉排除無效 process 資料，避免混入「製程、檢驗項目、總數、日期、作業員、lot、樣本編號」等非線別項目。
-- 總表 `匯入資料數` 改以 chart points 管制點數為主，Xbar 類項目不再顯示 raw sample 數造成與管制圖明細口徑不一致。
+- 總表 `匯入資料數` 僅針對製程 `PROC` 改以 chart points 管制點數為主，Xbar 類項目不再顯示 raw sample 數造成與管制圖明細口徑不一致；藥液 `CHEM` 維持原 raw data 筆數。
 - 後端 build 0 warnings / 0 errors；前端 testhost build 通過；已發布 SPC 測試站 backend/frontend，備份 `backend.backup-test-issues-20261005-144947`、`frontend.backup-test-issues-20261005-144947`。正式站未發布。
+- 2026-10-05 追加收斂修正：依使用者提醒，重新發布 backend，確認 `TotalCount` 口徑修正只影響製程，不影響藥液功能與資料計算；備份 `backend.backup-proc-total-count-20261005-150540`。
 
 ## 2026-10-05（SPC-1002-TASK-005 raw data 下載）
 - 新增管制圖 raw data CSV 下載端點與前端下載按鈕，沿用目前管制圖查詢條件與 93 天限制，支援製程/藥液 raw data 對帳。
