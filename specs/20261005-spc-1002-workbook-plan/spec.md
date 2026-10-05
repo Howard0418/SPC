@@ -72,6 +72,8 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 
 ### SPC-1002-TASK-002：管制圖預設界線關閉現況驗證
 
+狀態：完成；2026-10-05 現況驗證通過。
+
 優先級：高，但先驗證。
 
 修改範圍：
@@ -87,6 +89,13 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 確認結果：
 
 - 使用者進入管制圖時界線預設未勾選；手動勾選仍可顯示。
+
+驗證紀錄：
+
+- `frontend/mes-spc-web/src/views/SpcChartView.vue` 第 139～140 行：`showSpecLimits` 與 `showControlLimits` 初始值皆為 `false`。
+- 同檔第 2031、2035 行：管制圖畫面的規格界限與管制界限 checkbox 分別綁定上述兩個狀態。
+- `TrendChartView.vue` 的規格線初始值為 `true`，但趨勢圖屬 `SPC-1002-TASK-006`，不納入本項。
+- 本項未修改產品程式碼、資料庫或發布內容。
 
 ### SPC-1002-TASK-003：Ca 呈現移除絕對值現況驗證/補修
 

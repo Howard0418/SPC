@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-05（SPC-1002-TASK-002 管制圖界限預設關閉驗證）
+- 依 `docs/SPC 修正-1002.xlsx` 待辦第 1 項，只驗證 SPC 管制圖現況，未重複改程式。
+- `SpcChartView.vue` 的 `showSpecLimits` 與 `showControlLimits` 初始值皆為 `false`，checkbox 綁定同狀態；進入管制圖時規格界限與管制界限預設關閉，手動勾選仍可顯示。
+- 趨勢圖規格線初始值另屬後續 `SPC-1002-TASK-006`，本項不混入。未建置、未發布。
+
 ## 2026-10-02（TASK-001 設定與密鑰安全）
 - SMTP 設定 GET 改為只回傳是否已設定密碼；留白更新保留既有密碼。
 - 範例設定檔的 JWT、SSO、SMTP 與資料庫欄位改為環境注入 placeholder。
