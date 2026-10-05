@@ -7,6 +7,10 @@
 - 再修正：製程標準代碼為 `PROCESS`，已改用標準化 control scope 判斷，避免總覽資料數仍回退 raw data 筆數；已發布 SPC 測試站 backend，備份 `backend.backup-process-total-count-scope-170030`。
 - OOS 再確認：製程總覽 `OosCount/OocCount` 同樣改用製圖 `chartData.points` 口徑；藥液 `CHEM` 維持 raw data 口徑。已發布 SPC 測試站 backend，備份 `backend.backup-process-oos-scope-193639`。
 
+## [2026-10-05] - SPC-1002-TASK-006 趨勢圖直方圖
+- 目的：依 `docs/SPC 修正-1002.xlsx` 第 4 項，讓趨勢圖頁也能查看 raw data 分布、常態曲線與 P-value，但不顯示管制界線、不套用規則管理。
+- 發布：前端 testhost build 通過，已發布 SPC 測試站 frontend，備份 `frontend.backup-trend-histogram-203651`。
+
 ## [2026-10-05] - SPC-1002-TASK-001 常態檢定 P-value 修正
 - 目的：修正小樣本 raw data 常態性檢定 P-value 偏高的問題；以 adjusted Jarque-Bera 統計量取代一般漸近 Jarque-Bera 統計量，讓類似系統顯示約 0.10 但實際應判定 `<0.05` 的資料可正確標示偏離常態。
 

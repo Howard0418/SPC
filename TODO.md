@@ -188,7 +188,7 @@
 
 #### SPC-1002-TASK-006：趨勢圖增加直方圖等分布功能
 
-狀態：待規格；相依 SPC-1002-TASK-001/005
+狀態：完成；SPC 測試站 frontend 已發布
 
 理由：屬呈現增強，需等常態檢定與 raw data 對帳可信後再做。
 
@@ -205,6 +205,14 @@
 確認結果：
 
 - 趨勢圖可看分布與常態檢定，但不出現管制線與規則管理。
+
+完成紀錄：
+
+- 規格：`specs/20261005-trend-histogram/spec.md`。
+- 修改：趨勢圖頁新增 raw data 分布直方圖、常態分布曲線、P-value、偏態、峰度與常態判定；直方圖只標示 LSL/USL/Target/Mean，不顯示 UCL/LCL/CL，不套用 OOC 規則管理。
+- 驗證：前端 `npm run build -- --mode testhost` 通過。
+- 發布：SPC 測試站 frontend 已發布，備份 `frontend.backup-trend-histogram-203651`；首頁 HTTP 200，新版 JS `index-DVVeXuQK.js` 回 `application/javascript`。
+- 待使用者登入確認：開啟有資料的趨勢圖項目，確認直方圖、常態曲線與 P-value 顯示。
 
 ### 第二順位：Portal 公告權限與公告格式（安全與高頻操作）
 

@@ -9,6 +9,11 @@
 - 2026-10-05 再修正：製程標準代碼為 `PROCESS`，`TotalCount` 已改用標準化 control scope 判斷，避免 `PROC`/`PROCESS` 別名差異造成製程總覽仍顯示 raw data 筆數；藥液 `CHEM` 維持原邏輯。後端 build 通過並已發布測試站 backend，備份 `backend.backup-process-total-count-scope-170030`。
 - 2026-10-05 OOS 再確認：製程總覽 `OosCount/OocCount` 同樣改用 `chartData.points` 的 `outOfSpec/outOfControl/violatedRules` 點位旗標計算，百分比分母使用製程管制點數；藥液 `CHEM` 維持 raw data 口徑。後端 build 通過並已發布測試站 backend，備份 `backend.backup-process-oos-scope-193639`。
 
+## 2026-10-05（SPC-1002-TASK-006 趨勢圖直方圖）
+- 趨勢圖頁新增 raw data 分布直方圖、常態分布曲線、P-value、偏態、峰度與常態判定，沿用既有 `/v1/spc/chart` 回傳的 normality/normalCurve。
+- 趨勢圖直方圖只標示 LSL/USL/Target/Mean，不顯示 UCL/LCL/CL，不套用 OOC 規則管理。
+- 前端 testhost build 通過；已發布 SPC 測試站 frontend，備份 `frontend.backup-trend-histogram-203651`；首頁 HTTP 200，新版 JS `index-DVVeXuQK.js` 回 `application/javascript`。正式站未發布。
+
 ## 2026-10-05（SPC-1002-TASK-005 raw data 下載）
 - 新增管制圖 raw data CSV 下載端點與前端下載按鈕，沿用目前管制圖查詢條件與 93 天限制，支援製程/藥液 raw data 對帳。
 - CSV 包含量測時間、日報日期、班別、取樣階段、量測值、批號、線別/槽位 ID、板面、OOS/OOC 等欄位；不改資料庫、不改統計計算。

@@ -47,7 +47,9 @@ const loading = ref(false);
 const error = ref("");
 const chartResult = ref(null);
 const trendChartEl = ref(null);
+const histogramChartEl = ref(null);
 let trendChartInstance = null;
+let histogramChartInstance = null;
 const selectedPointIndex = ref(-1);
 
 const tableSummaryData = ref(null);
@@ -368,6 +370,10 @@ function formatPointValue(value) {
   return value == null || Number.isNaN(Number(value)) ? "未提供" : Number(value).toFixed(4);
 }
 
+function formatNumber(value, digits = 4) {
+  return value === null || value === undefined || Number.isNaN(Number(value)) ? "N/A" : Number(value).toFixed(digits);
+}
+
 function formatDifference(value, limit) {
   if (value == null || limit == null || Number.isNaN(Number(value)) || Number.isNaN(Number(limit))) return "未設定";
   const difference = Number(value) - Number(limit);
@@ -587,9 +593,198 @@ function renderTrendChart() {
       selectTrendPoint(params.dataIndex);
     }
   });
+
+  renderHistogramChart();
 }
 
-function handleResize() { trendChartInstance?.resize(); }
+function buildHistogramBins(values, preferredBins = 12, domainValues = values) {
+  if (!values.length) return [];
+  const numericDomainValues = domainValues
+    .filter(value => value !== null && value !== undefined && !Number.isNaN(Number(value)))
+    .map(value => Number(value));
+  const min = Math.min(...numericDomainValues);
+  const max = Math.max(...numericDomainValues);
+  if (min === max) {
+    const pad = Math.abs(min) > 0 ? Math.abs(min) * 0.05 : 0.5;
+    return [{ min: min - pad, max: max + pad, count: values.length, values }];
+  }
+
+  const binCount = Math.max(5, Math.min(preferredBins, Math.ceil(Math.sqrt(values.length)) + 3));
+  const width = (max - min) / binCount;
+  const bins = Array.from({ length: binCount }, (_, idx) => ({
+    min: min + idx * width,
+    max: idx === binCount - 1 ? max : min + (idx + 1) * width,
+    count: 0,
+    values: []
+  }));
+
+  values.forEach(value => {
+    const rawIndex = Math.floor((value - min) / width);
+    const index = Math.max(0, Math.min(binCount - 1, rawIndex));
+    bins[index].count += 1;
+    bins[index].values.push(value);
+  });
+
+  return bins;
+}
+
+function renderHistogramChart() {
+  if (!histogramChartEl.value || !chartResult.value) return;
+
+  if (histogramChartInstance) {
+    histogramChartInstance.dispose();
+    histogramChartInstance = null;
+  }
+
+  histogramChartInstance = echarts.init(histogramChartEl.value);
+  const data = chartResult.value;
+  const limits = data.limits || {};
+  const values = (data.rawDataPoints || [])
+    .filter(p => !p.isExcluded && p.value !== null && p.value !== undefined && !Number.isNaN(Number(p.value)))
+    .map(p => Number(p.value));
+
+  if (values.length === 0) {
+    histogramChartInstance.setOption({
+      backgroundColor: "transparent",
+      graphic: [{
+        type: "text",
+        left: "center",
+        top: "middle",
+        style: { text: "此期間無可納入直方圖的量測值", fontSize: 14, fill: "#94a3b8" }
+      }]
+    });
+    return;
+  }
+
+  const histogramBoundaries = [limits.lsl, limits.usl, limits.target];
+  const bins = buildHistogramBins(values, 12, [...values, ...histogramBoundaries]);
+  const min = bins[0]?.min ?? 0;
+  const max = bins[bins.length - 1]?.max ?? 0;
+  const labels = bins.map(bin => `${formatNumber(bin.min, 3)} - ${formatNumber(bin.max, 3)}`);
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const variance = values.length > 1
+    ? values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (values.length - 1)
+    : 0;
+  const std = Math.sqrt(variance);
+
+  const markLines = [];
+  const findBinIndexForValue = value => {
+    if (value == null || Number.isNaN(Number(value))) return null;
+    const numericValue = Number(value);
+    const index = bins.findIndex(bin => numericValue >= bin.min && numericValue <= bin.max);
+    return index >= 0 ? index : null;
+  };
+  const addXAxisLine = (value, name, color, style = "dashed") => {
+    const index = findBinIndexForValue(value);
+    if (index === null) return;
+    markLines.push({
+      name,
+      xAxis: index,
+      lineStyle: { color, width: 2, type: style },
+      label: {
+        formatter: `${name}: ${formatNumber(value, 3)}`,
+        color,
+        position: "end",
+        fontSize: 10,
+        fontWeight: "bold",
+        backgroundColor: "rgba(255,255,255,0.88)",
+        borderRadius: 4,
+        padding: [2, 4]
+      }
+    });
+  };
+
+  addXAxisLine(limits.lsl, "LSL", "#ef4444", "dashed");
+  addXAxisLine(limits.usl, "USL", "#ef4444", "dashed");
+  addXAxisLine(limits.target, "Target", "#10b981", "solid");
+  addXAxisLine(mean, "Mean", "#0ea5e9", "dotted");
+
+  const hasNormality = data.normality && data.normalCurve && data.normalCurve.length > 0;
+  const xAxisList = [{
+    type: "category",
+    data: labels,
+    axisLine: { lineStyle: { color: "#64748b" } },
+    axisTick: { alignWithLabel: true, lineStyle: { color: "#334155" } },
+    axisLabel: { color: "#94a3b8", fontSize: 10, rotate: labels.length > 8 ? 28 : 0 }
+  }];
+  if (hasNormality) {
+    xAxisList.push({ type: "value", min, max, show: false, axisLine: { show: false } });
+  }
+
+  const seriesList = [{
+    name: "量測值分布",
+    type: "bar",
+    xAxisIndex: 0,
+    data: bins.map(bin => ({
+      value: bin.count,
+      itemStyle: { color: "rgba(99, 102, 241, 0.75)", borderRadius: [4, 4, 0, 0] }
+    })),
+    barMaxWidth: 42,
+    markLine: markLines.length > 0 ? { symbol: "none", data: markLines, animation: false } : undefined
+  }];
+
+  if (hasNormality) {
+    seriesList.push({
+      name: "常態分布曲線",
+      type: "line",
+      xAxisIndex: 1,
+      yAxisIndex: 0,
+      data: data.normalCurve.map(pt => [pt.x, pt.scaledPdf]),
+      showSymbol: false,
+      smooth: true,
+      lineStyle: { color: "#10b981", width: 2.5 },
+      areaStyle: { color: "rgba(16, 185, 129, 0.08)" }
+    });
+  }
+
+  histogramChartInstance.setOption({
+    backgroundColor: "transparent",
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      backgroundColor: "rgba(15, 23, 42, 0.95)",
+      borderColor: "#334155",
+      textStyle: { color: "#fff", fontSize: 12 },
+      formatter: params => {
+        const point = params.find(p => p.seriesName === "量測值分布");
+        if (!point) return "";
+        const bin = bins[point.dataIndex];
+        if (!bin) return "";
+        const pValue = data.normality?.pValue !== null && data.normality?.pValue !== undefined
+          ? formatNumber(data.normality.pValue, 4)
+          : "N/A";
+        return [
+          `<div style="font-weight:700;border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px">量測值區間</div>`,
+          `<div>${formatNumber(bin.min, 4)} &lt;= X ${point.dataIndex === bins.length - 1 ? "&lt;=" : "&lt;"} ${formatNumber(bin.max, 4)}</div>`,
+          `<div style="margin-top:4px">區間筆數: <strong style="color:#a5b4fc">${bin.count}</strong></div>`,
+          `<div style="margin-top:4px;color:#94a3b8;font-size:11px">總樣本數 N=${values.length}, 平均值=${formatNumber(mean, 4)}, 標準差=${formatNumber(std, 4)}</div>`,
+          data.normality ? `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">常態性檢定 P-value: <strong style="color:#fbbf24">${pValue}</strong></div>` : ""
+        ].join("");
+      }
+    },
+    toolbox: {
+      feature: { restore: {}, saveAsImage: { name: "Trend_Histogram" } },
+      iconStyle: { borderColor: "#64748b" }
+    },
+    grid: { left: 58, right: 80, top: 48, bottom: 74 },
+    xAxis: xAxisList,
+    yAxis: {
+      type: "value",
+      name: "筆數",
+      minInterval: 1,
+      nameTextStyle: { color: "#94a3b8", fontSize: 11 },
+      splitLine: { lineStyle: { color: "rgba(100,116,139,0.15)" } },
+      axisLine: { lineStyle: { color: "#64748b" } },
+      axisLabel: { color: "#94a3b8", fontSize: 10 }
+    },
+    series: seriesList
+  });
+}
+
+function handleResize() {
+  trendChartInstance?.resize();
+  histogramChartInstance?.resize();
+}
 
 onMounted(() => {
   if (route.query.startDate) startDate.value = String(route.query.startDate);
@@ -602,6 +797,8 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
   trendChartInstance?.dispose();
   trendChartInstance = null;
+  histogramChartInstance?.dispose();
+  histogramChartInstance = null;
 });
 
 const showSpecLimits = ref(true);
@@ -877,6 +1074,49 @@ const trendStats = computed(() => {
         </div>
 
         <div ref="trendChartEl" class="h-[480px] w-full min-h-[320px]"></div>
+
+        <!-- Distribution Histogram -->
+        <div class="pt-5 border-t border-slate-200 dark:border-slate-800 space-y-4">
+          <div class="flex flex-col md:flex-row md:items-start justify-between gap-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Activity class="w-5 h-5 text-indigo-500" />
+                量測值分布直方圖
+              </h2>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">依目前趨勢圖 raw data 計算，不套用管制界線與規則判定</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 border-t-2 border-dashed border-red-500 inline-block"></span>規格界限</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-emerald-500 inline-block"></span>Target</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 border-t-2 border-dotted border-sky-500 inline-block"></span>Mean</span>
+            </div>
+          </div>
+
+          <div v-if="chartResult.normality" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3">
+              <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">偏態 Skewness</span>
+              <p class="mt-1 text-sm font-black font-mono text-slate-800 dark:text-slate-100">{{ formatNumber(chartResult.normality.skewness, 4) }}</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3">
+              <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">峰度 Kurtosis</span>
+              <p class="mt-1 text-sm font-black font-mono text-slate-800 dark:text-slate-100">{{ formatNumber(chartResult.normality.kurtosis, 4) }}</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3">
+              <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">常態性檢定 P-value</span>
+              <p class="mt-1 text-sm font-black font-mono text-amber-600 dark:text-amber-400">{{ chartResult.normality.pValue !== null ? formatNumber(chartResult.normality.pValue, 4) : 'N/A' }}</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3">
+              <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">常態判定</span>
+              <p class="mt-1">
+                <span v-if="chartResult.normality.pValue === null" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">無法檢定</span>
+                <span v-else-if="chartResult.normality.isNormal" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">符合常態</span>
+                <span v-else class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">偏離常態</span>
+              </p>
+            </div>
+          </div>
+
+          <div ref="histogramChartEl" class="h-[300px] w-full min-h-[240px]"></div>
+        </div>
 
         <div
           v-if="selectedPointDetails"
