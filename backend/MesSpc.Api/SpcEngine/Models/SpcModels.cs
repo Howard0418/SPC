@@ -36,6 +36,9 @@ public record SpcDataPoint
 public record Subgroup
 {
     public DateTime MeasuredAt { get; init; }
+    public DateTime? PortalDailyDate { get; init; }
+    public string SamplingPhase { get; init; } = "GENERAL";
+    public string SamplingStage { get; init; } = "GENERAL";
     public List<double> Values { get; init; } = new();
     public double? UCL { get; set; }
     public double? CL { get; set; }

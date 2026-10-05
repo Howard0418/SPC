@@ -102,7 +102,7 @@
 
 #### SPC-1002-TASK-004：班別管制圖合併呈現需求釐清與最小調整
 
-狀態：待規格
+狀態：完成；SPC 測試站 backend/frontend 已發布
 
 理由：會碰時間序列、班別與開收線既有規則，需在統計核心修正後處理。
 
@@ -119,6 +119,15 @@
 確認結果：
 
 - 使用者可在同一張管制圖查看班別資料，標籤與統計結果正確。
+
+完成紀錄：
+
+- 修改：Xbar-R/Xbar-S 子組點位補帶 `portalDailyDate`、`samplingPhase`、`samplingStage`，讓同一張管制圖合併顯示不同班別時，座標標籤、Tooltip 與點位詳細卡可顯示班別/取樣階段。
+- 範圍：未修改資料庫、未改歷史量測資料、未改 `ChemicalStageChart` 排序、未改 MR/Xbar/Cpk/Ppk 統計公式。
+- 測試：`XbarR_ShouldKeepChemicalShiftMetadataOnChartPoints` 與 `Capability_Ca_ShouldKeepSignAndLeaveCpkPpkUnchanged` 通過，2 passed。
+- 建置：後端 build 0 warnings / 0 errors；前端 `npm run build -- --mode testhost` 通過。
+- 發布：SPC 測試站 backend/frontend 已發布；備份 `backend.backup-shift-chart-20261005-130812`、`frontend.backup-shift-chart-20261005-130812`。正式站未發布。
+- Smoke：`/api/version` 回 `environment=test`；前端首頁與 `index-x4DbX-TX.js` 資產 HTTP 200。
 
 #### SPC-1002-TASK-005：raw data 下載（製程/藥液）
 

@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-05（SPC-1002-TASK-004 班別管制圖合併呈現）
+- Xbar-R/Xbar-S 子組點位補帶班別與取樣階段 metadata，讓合併同圖檢視不同班別時，座標標籤、Tooltip 與點位詳細卡可顯示正確班別資訊。
+- 保留既有 N1/N2 開收線排序、資料表結構、歷史資料與統計公式；未改 MR/Xbar/Cpk/Ppk 計算。
+- 測試：Xbar metadata 與 Ca 回歸共 2 passed；後端 build 0 warnings / 0 errors；前端 testhost build 通過。
+- 已發布 SPC 測試站 backend/frontend，備份 `backend.backup-shift-chart-20261005-130812`、`frontend.backup-shift-chart-20261005-130812`；正式站未發布。
+
 ## 2026-10-05（SPC-1002-TASK-003 Ca 顯示正負號驗證）
 - 依 `docs/SPC 修正-1002.xlsx` 待辦第 3 項，只驗證現況，未重複修改功能程式。
 - 後端 Ca 已用 `(mean - target) / halfWidth` 計算，前端直接顯示 `capability.ca` 並保留負號。

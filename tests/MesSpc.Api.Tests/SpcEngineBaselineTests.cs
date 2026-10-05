@@ -92,6 +92,40 @@ public class SpcEngineBaselineTests
     }
 
     [Fact]
+    public void XbarR_ShouldKeepChemicalShiftMetadataOnChartPoints()
+    {
+        var dailyDate = new DateTime(2026, 10, 5);
+        var groups = new List<Subgroup>
+        {
+            new()
+            {
+                MeasuredAt = new DateTime(2026, 10, 5, 8, 0, 0),
+                PortalDailyDate = dailyDate,
+                SamplingPhase = "OPEN",
+                SamplingStage = "CLOSE",
+                Values = [10, 11, 12]
+            },
+            new()
+            {
+                MeasuredAt = new DateTime(2026, 10, 5, 12, 0, 0),
+                PortalDailyDate = dailyDate,
+                SamplingPhase = "MIDDLE",
+                SamplingStage = "OPEN",
+                Values = [11, 12, 13]
+            }
+        };
+
+        var result = XbarRChartCalculator.Calculate(groups, new ControlLimits(), 3);
+        var points = Property(result.ChartData!, "points") as System.Collections.IEnumerable
+            ?? throw new InvalidOperationException("Missing Xbar-R chart points.");
+        var firstPoint = points.Cast<object>().First();
+
+        Property(firstPoint, "portalDailyDate").Should().Be(dailyDate);
+        Property(firstPoint, "samplingPhase").Should().Be("OPEN");
+        Property(firstPoint, "samplingStage").Should().Be("CLOSE");
+    }
+
+    [Fact]
     public void PChart_GoldenValues_ShouldWeightPBarByInspectedQuantity()
     {
         var points = new List<AttributeDataPoint>

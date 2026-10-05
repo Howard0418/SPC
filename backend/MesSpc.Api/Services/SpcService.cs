@@ -507,6 +507,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     return new Subgroup
                     {
                         MeasuredAt = g.Key,
+                        PortalDailyDate = first.PortalDailyDate,
+                        SamplingPhase = first.SamplingPhase,
+                        SamplingStage = first.SamplingStage,
                         Values = g.Select(m => m.RecheckValue ?? m.MeasuredValue).ToList(),
                         UCL = activeSegment?.UCL ?? mapping.UCL,
                         CL = activeSegment?.CL ?? mapping.CL,

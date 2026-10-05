@@ -2251,6 +2251,19 @@ onBeforeUnmount(() => {
                 </p>
               </div>
             </div>
+
+            <div v-if="selectedPoint.samplingPhase || selectedPoint.samplingStage" class="flex items-start gap-2.5">
+              <Calendar class="w-4 h-4 text-slate-400 mt-1" />
+              <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">班別 / 取樣階段</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  {{ shiftLabel(selectedPoint.samplingPhase) }}
+                  <span v-if="selectedPoint.samplingStage && selectedPoint.samplingStage !== 'GENERAL'" class="text-xs text-slate-400">
+                    / {{ stageLabel(selectedPoint.samplingStage) }}
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- Bottom detailed measurements & violation rules -->

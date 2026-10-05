@@ -138,6 +138,8 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 
 ### SPC-1002-TASK-004：班別管制圖合併呈現需求釐清與最小調整
 
+狀態：完成；2026-10-05 已實作、測試並發布 SPC 測試站 backend/frontend。
+
 優先級：中高，會影響圖表時間序列。
 
 修改範圍：
@@ -153,6 +155,17 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 確認結果：
 
 - 使用者可在同一張管制圖看到班別資料，不需要分開切圖；點位順序與標籤正確。
+
+完成紀錄：
+
+- 實作：後端 `Subgroup` 與 Xbar-R/Xbar-S chart points 補帶 `portalDailyDate`、`samplingPhase`、`samplingStage`；`SpcService.GetInteractiveChartAsync` 建立子組時由第一筆量測帶入上述欄位。
+- 實作：前端點位詳細卡新增「班別 / 取樣階段」顯示；既有 Tooltip 與座標標籤可使用 Xbar 點位 metadata。
+- 不變更：資料庫 schema、歷史資料、N1/N2 `ChemicalStageChart` 排序、MR/Xbar/Cpk/Ppk 統計公式皆不變。
+- 驗證：新增 `XbarR_ShouldKeepChemicalShiftMetadataOnChartPoints`；與 Ca 回歸一起執行通過，2 passed。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- 驗證：`npm run build -- --mode testhost` 通過，僅保留既有大型 chunk 警示。
+- 發布：SPC 測試站 backend/frontend 已發布；備份 `release/test/backend.backup-shift-chart-20261005-130812`、`release/test/frontend.backup-shift-chart-20261005-130812`。
+- Smoke：`http://172.16.110.27:8081/api/version` 回 `version=0.1.59`、`environment=test`；`http://172.16.110.27:8083/` 與 `index-x4DbX-TX.js` 皆 HTTP 200。
 
 ### SPC-1002-TASK-005：raw data 下載（製程/藥液）
 
