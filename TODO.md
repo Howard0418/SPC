@@ -25,7 +25,7 @@
 
 #### SPC-1002-TASK-001：常態分布檢定 P-value 修正
 
-狀態：待規格細化/實作；本輪只規劃
+狀態：完成；SPC 測試站 backend 已發布
 
 理由：Excel 指出 raw data 實際 P-value `<0.05`，系統顯示 `0.0986`，屬核心統計正確性。
 
@@ -42,6 +42,13 @@
 確認結果：
 
 - 測試站同一組資料 P-value 與 raw data 驗算一致。
+
+完成紀錄：
+
+- 修改：後端常態性檢定由一般 Jarque-Bera 改為 adjusted Jarque-Bera，修正小樣本 P-value 偏高。
+- 測試：`NormalityTest` 4 passed；後端 build 0 warnings / 0 errors。
+- 發布：SPC 測試站 backend 已發布，備份 `backend.backup-normality-20261005-123245`；正式站未發布。
+- 限制：Excel 未附原始 raw data，因此以可重現的小樣本差異案例驗證；使用者仍可後續用真實 raw data 再對帳。
 
 #### SPC-1002-TASK-002：管制圖預設界線關閉現況驗證
 

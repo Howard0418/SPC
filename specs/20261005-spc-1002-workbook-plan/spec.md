@@ -54,6 +54,8 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 
 ### SPC-1002-TASK-001：常態分布檢定 P-value 修正
 
+狀態：完成；2026-10-05 已實作、測試並發布 SPC 測試站 backend。
+
 優先級：最高，統計正確性。
 
 修改範圍：
@@ -69,6 +71,15 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 確認結果：
 
 - 測試站同一組資料常態檢定 P-value 顯示與 raw data 驗算一致。
+
+完成紀錄：
+
+- 實作：`SpcService.PopulateNormalityAndCurve` 改用 adjusted Jarque-Bera 統計量，修正小樣本 raw data 常態性檢定 P-value 偏高。
+- 測試：新增小樣本案例，鎖定一般 Jarque-Bera 約 `0.10`、校正後 `<0.05` 的情境。
+- 驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter NormalityTest --no-restore -p:UseSharedCompilation=false`：4 passed。
+- 驗證：`dotnet build backend/MesSpc.Api/MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- 發布：已發布 SPC 測試站 backend；備份 `release/test/backend.backup-normality-20261005-123245`，保留既有 `appsettings.json` 與 `private-data`。
+- Smoke：`/api/version` 回 `version=0.1.59`、`environment=test`；`/health` 在目前 IIS 綁定回前端 HTML，未列為 API health 通過。
 
 ### SPC-1002-TASK-002：管制圖預設界線關閉現況驗證
 

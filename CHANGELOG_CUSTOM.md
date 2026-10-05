@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-05（SPC-1002-TASK-001 常態檢定 P-value 修正）
+- 常態性檢定由一般 Jarque-Bera 統計量改為 adjusted Jarque-Bera，修正小樣本 raw data P-value 偏高，避免類似系統顯示約 `0.10` 但應判定 `<0.05` 的情境被誤判為符合常態。
+- 新增小樣本回歸案例；`NormalityTest` 4 passed，後端 build 0 warnings / 0 errors。
+- 已發布 SPC 測試站 backend，備份 `release/test/backend.backup-normality-20261005-123245`；`/api/version` 回 `environment=test`。正式站未發布。
+
 ## 2026-10-05（SPC-1002-TASK-002 管制圖界限預設關閉驗證）
 - 依 `docs/SPC 修正-1002.xlsx` 待辦第 1 項，只驗證 SPC 管制圖現況，未重複改程式。
 - `SpcChartView.vue` 的 `showSpecLimits` 與 `showControlLimits` 初始值皆為 `false`，checkbox 綁定同狀態；進入管制圖時規格界限與管制界限預設關閉，手動勾選仍可顯示。
@@ -414,7 +419,7 @@
 
 ## 2026-09-08（常態性檢定標籤調整）
 
-- SPC 管制圖的常態性檢定顯示由「JB p-val」調整為「P-val」；p-value 資料來源與 Jarque-Bera 計算邏輯維持不變。
+- SPC 管制圖的常態性檢定顯示由「JB p-val」調整為「P-val」；2026-10-05 起 p-value 改採 adjusted Jarque-Bera，修正小樣本 P-value 偏高。
 - 回歸檢查：確認分布圖 Tooltip 與常態性摘要均顯示「常態性檢定 (P-val)」。
 
 ## 2026-09-08（整合工作區專案入口）

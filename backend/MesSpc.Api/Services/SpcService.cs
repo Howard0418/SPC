@@ -846,14 +846,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         {
             skewness = m3 / Math.Pow(m2, 1.5);
             kurtosis = m4 / (m2 * m2);
-            jbStatistic = (n / 6.0) * (skewness * skewness + Math.Pow(kurtosis - 3.0, 2) / 4.0);
+            jbStatistic = CalculateAdjustedJarqueBeraStatistic(n, skewness, kurtosis);
             pValue = Math.Exp(-jbStatistic / 2.0);
             isNormal = pValue >= 0.05;
         }
 
         var normality = new NormalityTestResult
         {
-            TestName = "Jarque-Bera",
+            TestName = "Adjusted Jarque-Bera",
             Statistic = jbStatistic,
             PValue = m2 < 1e-15 || stdDev < 1e-15 ? null : pValue,
             Skewness = skewness,
@@ -943,6 +943,28 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         }
 
         return result with { Normality = normality, NormalCurve = curvePoints };
+    }
+
+    private static double CalculateAdjustedJarqueBeraStatistic(int n, double skewness, double kurtosis)
+    {
+        if (n <= 3)
+        {
+            return (n / 6.0) * (skewness * skewness + Math.Pow(kurtosis - 3.0, 2) / 4.0);
+        }
+
+        var skewnessVariance = 6.0 * (n - 2) / ((n + 1.0) * (n + 3.0));
+        var expectedKurtosis = 3.0 * (n - 1) / (n + 1.0);
+        var kurtosisVariance = 24.0 * n * (n - 2) * (n - 3) /
+            (Math.Pow(n + 1.0, 2) * (n + 3.0) * (n + 5.0));
+
+        if (skewnessVariance <= 0 || kurtosisVariance <= 0)
+        {
+            return (n / 6.0) * (skewness * skewness + Math.Pow(kurtosis - 3.0, 2) / 4.0);
+        }
+
+        return (n / 6.0) *
+            ((skewness * skewness / skewnessVariance) +
+             (Math.Pow(kurtosis - expectedKurtosis, 2) / kurtosisVariance));
     }
 
     public async Task<List<MesSpc.Api.Controllers.ChartSummaryDto>> GetChartSummaryListAsync(

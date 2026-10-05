@@ -25,7 +25,7 @@ public class NormalityTest
         // THEN: It should calculate stats
         result.Should().NotBeNull();
         result.Normality.Should().NotBeNull();
-        result.Normality!.TestName.Should().Be("Jarque-Bera");
+        result.Normality!.TestName.Should().Be("Adjusted Jarque-Bera");
         result.Normality.PValue.Should().NotBeNull();
         
         // P-value should be high (>= 0.05) because the dataset is symmetric
@@ -64,6 +64,26 @@ public class NormalityTest
         
         // Skewness and kurtosis should reflect non-normal distributions
         Math.Abs(result.Normality.Skewness).Should().BeGreaterThan(0.5);
+    }
+
+    [Fact]
+    public void TestSmallSampleAdjustedJarqueBera_FailsWhenClassicPValueWouldPass()
+    {
+        // GIVEN: Small raw dataset where the asymptotic Jarque-Bera p-value is about 0.10,
+        // but the adjusted Jarque-Bera test detects non-normality.
+        var values = new List<double> { 0.1602, -1.2352, 0.4644, -0.5592, -2.4591, -0.2133, -0.9788, -0.5206, -0.1523, 3.7510 };
+        var rawPoints = values.Select(v => new SpcDataPoint { Value = v }).ToList();
+        var limits = new ControlLimits { USL = 5, LSL = -5, Target = 0 };
+        var initialResult = new ControlChartResult();
+
+        // WHEN: Calling PopulateNormalityAndCurve
+        var result = SpcService.PopulateNormalityAndCurve(initialResult, rawPoints, limits);
+
+        // THEN: The adjusted statistic should mark it as non-normal.
+        result.Normality.Should().NotBeNull();
+        result.Normality!.PValue.Should().NotBeNull();
+        result.Normality.PValue.Value.Should().BeLessThan(0.05);
+        result.Normality.IsNormal.Should().BeFalse();
     }
 
     [Fact]
