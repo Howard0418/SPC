@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-05（SPC-1002-TASK-003 Ca 顯示正負號驗證）
+- 依 `docs/SPC 修正-1002.xlsx` 待辦第 3 項，只驗證現況，未重複修改功能程式。
+- 後端 Ca 已用 `(mean - target) / halfWidth` 計算，前端直接顯示 `capability.ca` 並保留負號。
+- `Capability_Ca_ShouldKeepSignAndLeaveCpkPpkUnchanged` 通過：1 passed；本項無程式異動，未重新發布測試站。
+
 ## 2026-10-05（SPC-1002-TASK-001 常態檢定 P-value 修正）
 - 常態性檢定由一般 Jarque-Bera 統計量改為 adjusted Jarque-Bera，修正小樣本 raw data P-value 偏高，避免類似系統顯示約 `0.10` 但應判定 `<0.05` 的情境被誤判為符合常態。
 - 新增小樣本回歸案例；`NormalityTest` 4 passed，後端 build 0 warnings / 0 errors。

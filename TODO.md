@@ -76,7 +76,7 @@
 
 #### SPC-1002-TASK-003：Ca 呈現移除絕對值現況驗證/補修
 
-狀態：待驗證；疑似已有目的紀錄
+狀態：完成；現況驗證通過
 
 理由：`ai_docs/10_change_log.md` 已有 2026-09-29「CA 顯示保留正負號」目的，需確認目前程式/測試站是否完成。
 
@@ -92,6 +92,13 @@
 確認結果：
 
 - Ca 不再被絕對值化，正負號符合 mean 相對 target 的方向。
+
+完成紀錄：
+
+- 現況：後端 `ProcessCapabilityCalculator` 已用 `(mean - target) / halfWidth` 計算 Ca，未再取絕對值。
+- 現況：前端 `SpcChartView.vue` 的能力指標列直接顯示 `chartResult.capability.ca`，`formatNumber` 只做小數格式化，會保留負號。
+- 測試：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter Capability_Ca_ShouldKeepSignAndLeaveCpkPpkUnchanged --no-restore -p:UseSharedCompilation=false` 通過，1 passed。
+- 發布：本項未修改功能程式，故不重新發布；沿用目前 SPC 測試站。
 
 #### SPC-1002-TASK-004：班別管制圖合併呈現需求釐清與最小調整
 

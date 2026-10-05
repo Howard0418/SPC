@@ -110,6 +110,8 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 
 ### SPC-1002-TASK-003：Ca 呈現移除絕對值現況驗證/補修
 
+狀態：完成；2026-10-05 現況驗證通過，未修改功能程式。
+
 優先級：高，但先驗證。
 
 修改範圍：
@@ -125,6 +127,14 @@ Excel 來源：`docs/SPC 修正-1002.xlsx`。
 確認結果：
 
 - 畫面與 API 的 Ca 不再被取絕對值，正負號符合 mean 相對 target 的方向。
+
+完成紀錄：
+
+- 後端 `ProcessCapabilityCalculator` 已用 `(mean - target) / halfWidth` 保留 Ca 正負號。
+- 前端 `SpcChartView.vue` 直接顯示後端 `capability.ca`，未做絕對值處理。
+- 既有測試 `Capability_Ca_ShouldKeepSignAndLeaveCpkPpkUnchanged` 已驗證平均值低於 target 時 Ca 為負，且 Cpk/Ppk 維持既有公式。
+- 驗證：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter Capability_Ca_ShouldKeepSignAndLeaveCpkPpkUnchanged --no-restore -p:UseSharedCompilation=false`：1 passed。
+- 發布：本項只補驗收紀錄，無功能程式異動，不重新發布測試站。
 
 ### SPC-1002-TASK-004：班別管制圖合併呈現需求釐清與最小調整
 
