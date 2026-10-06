@@ -72,6 +72,7 @@ const chemicalFormulaVersions = ref([]);
 const chemicalFormulaVersionsVisible = ref(false);
 const chemicalFormulaVersionsLoading = ref(false);
 const chemicalFormulaVersionsErr = ref("");
+const restoringChemicalFormulaVersionId = ref(null);
 
 const form = ref({
   controlScope: "PRODUCT",
@@ -186,6 +187,34 @@ async function loadChemicalFormulaVersions() {
     chemicalFormulaVersionsErr.value = getApiErrorMessage(e);
   } finally {
     chemicalFormulaVersionsLoading.value = false;
+  }
+}
+
+async function restoreChemicalFormulaVersion(version) {
+  if (!currentId.value || !version?.id) return;
+  const confirmed = confirm(
+    `確定要回復到公式版本 v${version.versionNo}？\n\n` +
+    "目前表單中的藥液分析公式會被此版本覆蓋，系統會新增一筆回復紀錄。"
+  );
+  if (!confirmed) return;
+
+  restoringChemicalFormulaVersionId.value = version.id;
+  chemicalFormulaVersionsErr.value = "";
+  try {
+    await api.post(
+      `/part-process-characteristics/${currentId.value}/chemical-analysis-formula-versions/${version.id}/restore`,
+      { reason: `由前端回復至 v${version.versionNo}` }
+    );
+    await load();
+    const updated = rows.value.find(row => row.id === currentId.value);
+    form.value.chemicalAnalysisConfigJson = updated?.chemicalAnalysisConfigJson || "";
+    form.value.chemicalAnalysis = parseChemicalAnalysisConfig(form.value.chemicalAnalysisConfigJson);
+    await loadChemicalFormulaVersions();
+    successAlert(`已回復藥液公式至 v${version.versionNo}`);
+  } catch (e) {
+    chemicalFormulaVersionsErr.value = getApiErrorMessage(e);
+  } finally {
+    restoringChemicalFormulaVersionId.value = null;
   }
 }
 
@@ -761,6 +790,7 @@ async function openCreateModal() {
   chemicalFormulaVersions.value = [];
   chemicalFormulaVersionsVisible.value = false;
   chemicalFormulaVersionsErr.value = "";
+  restoringChemicalFormulaVersionId.value = null;
   showModal.value = true;
 }
 
@@ -773,6 +803,7 @@ async function openEditModal(item) {
   chemicalFormulaVersions.value = [];
   chemicalFormulaVersionsVisible.value = false;
   chemicalFormulaVersionsErr.value = "";
+  restoringChemicalFormulaVersionId.value = null;
 
   const scope = normalizeControlScope(item.controlScope || (item.partId ? CONTROL_SCOPE.PRODUCT : CONTROL_SCOPE.PROCESS));
   try {
@@ -2105,7 +2136,17 @@ onBeforeUnmount(() => {
                       >
                         <div class="flex flex-wrap items-center justify-between gap-2">
                           <span class="font-black text-slate-800 dark:text-slate-100">v{{ version.versionNo }}｜{{ version.changeType === 'Restore' ? '回復' : '修改' }}</span>
-                          <span class="font-semibold text-slate-400">{{ formatFormulaVersionDate(version.changedAt) }}</span>
+                          <div class="flex items-center gap-2">
+                            <span class="font-semibold text-slate-400">{{ formatFormulaVersionDate(version.changedAt) }}</span>
+                            <button
+                              type="button"
+                              @click="restoreChemicalFormulaVersion(version)"
+                              :disabled="restoringChemicalFormulaVersionId === version.id"
+                              class="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+                            >
+                              {{ restoringChemicalFormulaVersionId === version.id ? '回復中' : '回復此版' }}
+                            </button>
+                          </div>
                         </div>
                         <div class="mt-1 text-slate-500 dark:text-slate-400">
                           {{ version.changedBy || 'System' }}<span v-if="version.reason">｜{{ version.reason }}</span>
