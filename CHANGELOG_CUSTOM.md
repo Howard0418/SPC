@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式版本測試站發布）
+- 藥液公式版本紀錄與回復已發布 SPC 測試站 backend/frontend；正式站未發布。
+- 備份：`backend.backup-chemical-formula-versioning-20261006-130824`、`frontend.backup-chemical-formula-versioning-20261006-130824`。
+- 驗證：後端 Release publish 通過；前端 `npm run build -- --mode testhost` 通過；測試站 `/api/version` 回 200/test；首頁回 200/text-html；新版 JS `index-DiDDfgPE.js` 回 200/application-javascript；版本查詢/回復端點未登入回 401。
+- 修正發布過程：初次手動複製前端 assets 位置不正確，造成 JS asset 回 HTML；已修正為複製 `dist/assets/*` 至測試站 `assets` 目錄並重測通過。
+
 ## 2026-10-06（SPC 藥液公式版本前端驗證）
 - 藥液公式版本紀錄與回復前端完成 build 與靜態檢查。
 - 確認管制項目編輯頁存在「版本紀錄」入口、版本查詢 API 呼叫、「回復此版」按鈕與版本回復 API 呼叫。

@@ -21,5 +21,5 @@
 
 ## 階段 4：發布與文件
 
-- [ ] TASK-011：發布 SPC 測試站 backend/frontend 並 smoke test。
-- [ ] TASK-012：同步 `CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與驗證紀錄。
+- [x] TASK-011：發布 SPC 測試站 backend/frontend 並 smoke test。
+- [x] TASK-012：同步 `CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與驗證紀錄。

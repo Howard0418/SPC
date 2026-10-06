@@ -126,3 +126,25 @@
   - 「回復此版」按鈕。
   - `POST /part-process-characteristics/{id}/chemical-analysis-formula-versions/{versionId}/restore` 呼叫。
 - 本階段未發布測試站。
+
+## 2026-10-06 TASK-011/TASK-012 測試站發布與文件同步
+
+- 狀態：完成。
+- 發布：SPC 測試站 backend/frontend 已發布；正式站未發布。
+- 備份：
+  - `release/test/backend.backup-chemical-formula-versioning-20261006-130824`
+  - `release/test/frontend.backup-chemical-formula-versioning-20261006-130824`
+- 備註：第一次後端完整備份嘗試因 `private-data\data-protection-keys` 權限拒絕中止，未進入覆蓋；正式備份改排除 `private-data` 與 `logs`，保留程式與設定檔 rollback 所需內容。
+
+### 驗證
+
+- `dotnet publish backend\MesSpc.Api\MesSpc.Api.csproj -c Release --no-restore -o release-staging\chemical-formula-versioning-20261006\backend-publish -p:UseSharedCompilation=false`：通過。
+- `npm run build -- --mode testhost`：通過，產出 `index-DiDDfgPE.js`、`index-CIBT_RHI.css`。
+- Smoke：`http://172.16.110.27:8081/api/version` 回 200，`environment=test`。
+- Smoke：`http://172.16.110.27:8083/` 回 200，`text/html`。
+- Smoke：`/assets/index-DiDDfgPE.js` 回 200，`application/javascript`。
+- Smoke：藥液公式版本查詢/回復端點未登入回 401，確認測試站已接到新路由且權限保護存在。
+
+### 發布修正紀錄
+
+- 初次手動複製前端時，assets 被放到 `assets/assets`，導致新版 JS 回傳 `text/html`；已立即將 `dist/assets/*` 補到正確的 `release/test/frontend/assets`，重測 JS MIME 為 `application/javascript`。

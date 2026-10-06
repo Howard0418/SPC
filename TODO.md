@@ -449,7 +449,7 @@
 
 #### SPC-TASK-001：藥液分析公式版本記錄與回復
 
-狀態：後端資料模型、migration、版本服務、既有 PUT 整合、查詢/回復 API、後端測試、前端版本紀錄入口、回復操作與前端 build/UI 靜態檢查完成；待測試站發布
+狀態：完成；SPC 測試站 backend/frontend 已發布
 
 理由：公式會影響計算結果，需先建立版本、稽核與回復，才適合做大量編輯頁。
 
@@ -485,11 +485,13 @@
 - TASK-008：藥液公式編輯區新增只讀「版本紀錄」入口；前端 testhost build 通過。
 - TASK-009：版本紀錄清單新增「回復此版」操作與確認提示；前端 testhost build 通過。
 - TASK-010：前端 testhost build 通過，靜態檢查確認版本紀錄入口、查詢 API、回復按鈕與回復 API 呼叫存在。
-- 本階段尚未發布測試站。
+- TASK-011/TASK-012：SPC 測試站 backend/frontend 已發布，文件已同步；備份 `backend.backup-chemical-formula-versioning-20261006-130824`、`frontend.backup-chemical-formula-versioning-20261006-130824`。
+- Smoke：`/api/version` 200/test；前端首頁 200/text-html；新版 JS `index-DiDDfgPE.js` 200/application-javascript；版本查詢/回復端點未登入 401。
+- 發布修正：初次手動複製前端 assets 位置錯誤導致 JS MIME 回 HTML，已補正 `dist/assets/*` 至測試站 `assets` 目錄並重測通過。
 
 #### SPC-TASK-002：藥液公式總覽與批次儲存頁
 
-狀態：待規格；相依 SPC-TASK-001
+狀態：待規格；相依 SPC-TASK-001 已完成
 
 理由：一次儲存多筆公式風險較高，須先有版本/回復保護。
 
