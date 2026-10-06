@@ -144,6 +144,9 @@ const pointContextMenu = ref({
   point: null
 });
 const pointExclusionSaving = ref(false);
+const excludedPoints = ref([]);
+const excludedPointsLoading = ref(false);
+const showExcludedPointsPanel = ref(false);
 const showSpecLimits = ref(false);
 const showControlLimits = ref(false);
 const showPointValues = ref(false);
@@ -333,6 +336,7 @@ const isEtchAverageChart = computed(() => {
 });
 const displayedMeasurementCount = computed(() => isEtchAverageChart.value ? chartPoints.value.length : rawPointCount.value);
 const activePpcIdValue = computed(() => Number(ppcId.value || selectedSummaryRow.value?.ppcId || selectedMapping.value?.id || 0));
+const activeExclusionCount = computed(() => excludedPoints.value.length);
 
 const capabilityRows = computed(() => {
   const c = chartResult.value?.capability;
@@ -352,6 +356,26 @@ const formatNumber = (value, digits = 4) => {
 const formatLimit = (value) => value === null || value === undefined ? "N/A" : Number(value).toFixed(4);
 const formatSpecLimit = (value) => value === null || value === undefined ? "N/A" : Number(value).toFixed(2);
 const formatPercentage = (value) => value === null || value === undefined ? "N/A" : `${Number(value).toFixed(2)}%`;
+const readField = (row, camelName, pascalName) => row?.[camelName] ?? row?.[pascalName];
+const formatExclusionState = (row) => {
+  const state = readField(row, "state", "State");
+  if (state === "ExcludedHidden") return "隱藏且不列入計算";
+  if (state === "ExcludedVisible") return "顯示但不列入計算";
+  return state || "已排除";
+};
+const formatExclusionPointLabel = (row) => {
+  const variableId = readField(row, "variableMeasurementId", "VariableMeasurementId");
+  const attributeId = readField(row, "attributeMeasurementId", "AttributeMeasurementId");
+  const pointKey = readField(row, "pointKey", "PointKey");
+  if (variableId) return `Variable #${variableId}`;
+  if (attributeId) return `Attribute #${attributeId}`;
+  return pointKey || "聚合點位";
+};
+const formatExclusionUpdatedAt = (row) => {
+  const value = readField(row, "updatedAt", "UpdatedAt") || readField(row, "createdAt", "CreatedAt");
+  if (!value) return "";
+  return new Date(value).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+};
 const formatRuleCode = (value) => {
   const match = String(value || "").match(/^(?:Rule|Nelson)(\d+)/i);
   return match ? `Rule ${match[1]}` : String(value || "");
@@ -658,6 +682,7 @@ async function loadUploadBatchChart() {
       params: getChartQueryParams(ppcId.value)
     });
     chartResult.value = res.data;
+    await loadExcludedPoints(ppcId.value);
     loading.value = false;
     await nextTick();
     renderECharts();
@@ -689,6 +714,7 @@ async function loadInteractiveChart() {
       params: getChartQueryParams(activePpcId)
     });
     chartResult.value = res.data;
+    await loadExcludedPoints(activePpcId);
     loading.value = false;
     await nextTick();
     renderECharts();
@@ -701,6 +727,25 @@ async function loadInteractiveChart() {
     }
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadExcludedPoints(activePpcId = activePpcIdValue.value) {
+  if (!activePpcId) {
+    excludedPoints.value = [];
+    return;
+  }
+  excludedPointsLoading.value = true;
+  try {
+    const res = await api.get("/v1/spc/point-exclusions", {
+      params: { ppcId: Number(activePpcId) }
+    });
+    excludedPoints.value = res.data?.data || [];
+  } catch (e) {
+    error.value = "無法載入已排除點清單：" + getApiErrorMessage(e);
+    excludedPoints.value = [];
+  } finally {
+    excludedPointsLoading.value = false;
   }
 }
 
@@ -761,6 +806,8 @@ async function returnToSummary() {
   chartResult.value = null;
   selectedPoint.value = null;
   selectedPointIndex.value = -1;
+  excludedPoints.value = [];
+  showExcludedPointsPanel.value = false;
   selectedSummaryRow.value = null;
   ppcId.value = "";
   uploadBatchId.value = "";
@@ -825,6 +872,7 @@ async function setPointExclusion(state) {
   try {
     await api.put("/v1/spc/point-exclusions", payload);
     hidePointContextMenu();
+    await loadExcludedPoints(payload.partProcessCharacteristicId);
     await loadActiveChart();
   } catch (e) {
     alert("單點排除設定失敗：" + getApiErrorMessage(e));
@@ -859,6 +907,20 @@ async function restorePointExclusion() {
     await loadActiveChart();
   } catch (e) {
     alert("單點排除恢復失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointExclusionSaving.value = false;
+  }
+}
+
+async function restoreExcludedPoint(row) {
+  const exclusionId = row?.id ?? row?.Id;
+  if (!exclusionId) return;
+  pointExclusionSaving.value = true;
+  try {
+    await api.delete(`/v1/spc/point-exclusions/${exclusionId}`);
+    await loadActiveChart();
+  } catch (e) {
+    alert("恢復已排除點失敗：" + getApiErrorMessage(e));
   } finally {
     pointExclusionSaving.value = false;
   }
@@ -2063,6 +2125,59 @@ onBeforeUnmount(() => {
         >
           <Download class="w-4 h-4" /> {{ rawDataDownloading ? '下載中...' : '下載 raw data' }}
         </button>
+        <button
+          type="button"
+          data-testid="excluded-points-toggle"
+          @click="showExcludedPointsPanel = !showExcludedPointsPanel"
+          class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-xs shadow-sm transition-colors"
+        >
+          <List class="w-4 h-4" /> 已排除點 {{ activeExclusionCount }}
+        </button>
+      </div>
+
+      <div
+        v-if="showExcludedPointsPanel"
+        data-testid="excluded-points-panel"
+        class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+      >
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <h3 class="text-sm font-black text-slate-800 dark:text-white">已排除點</h3>
+          <button
+            type="button"
+            class="px-2 py-1 text-xs font-bold rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            :disabled="excludedPointsLoading"
+            @click="loadExcludedPoints()"
+          >
+            重新整理
+          </button>
+        </div>
+        <div v-if="excludedPointsLoading" class="text-xs text-slate-500">載入中...</div>
+        <div v-else-if="excludedPoints.length === 0" class="text-xs text-slate-500">目前沒有已排除點。</div>
+        <div v-else class="divide-y divide-slate-200 dark:divide-slate-800">
+          <div
+            v-for="row in excludedPoints"
+            :key="readField(row, 'id', 'Id')"
+            class="py-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+          >
+            <div class="min-w-0">
+              <p class="text-xs font-black text-slate-800 dark:text-slate-100">
+                {{ formatExclusionPointLabel(row) }}
+              </p>
+              <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                {{ formatExclusionState(row) }}
+                <span v-if="formatExclusionUpdatedAt(row)">・{{ formatExclusionUpdatedAt(row) }}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              class="self-start md:self-auto px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-black disabled:opacity-50"
+              :disabled="pointExclusionSaving"
+              @click="restoreExcludedPoint(row)"
+            >
+              恢復列入計算
+            </button>
+          </div>
+        </div>
       </div>
 
       <div

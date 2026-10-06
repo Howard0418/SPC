@@ -380,7 +380,7 @@
 
 #### SPC-POINT-FILTER-TASK-004：管制圖右鍵選單與已排除點恢復清單
 
-狀態：進行中；右鍵選單與 ExcludedVisible 樣式已完成，已排除點恢復清單待執行
+狀態：完成；SPC 測試站 frontend/backend 已發布
 
 預計修改：
 
@@ -408,7 +408,9 @@
 - 樣式：圖例補已排除點位，已排除點沿用灰色叉號樣式。
 - 驗證：前端 `npm run build -- --mode testhost` 通過；後端 `SpcPointExclusionCalculationTests` 2 passed；後端 build 0 warnings / 0 errors。
 - 發布：SPC 測試站 frontend/backend 已發布；備份 `frontend.backup-spc-point-context-menu-20261006`、`backend.backup-spc-point-context-menu-20261006`。Smoke：首頁 200，新 JS `index-93uPHtFu.js` 回 `application/javascript`，`/api/version` 200/test。正式站未發布。
-- 限制：已排除點恢復清單與真正隱藏點的清單恢復留待下一個小工作。
+- 追加修改：管制圖工具列新增「已排除點 N」清單，可恢復 `ExcludedVisible` / `ExcludedHidden` active 排除點。
+- 追加驗證：前端 `npm run build -- --mode testhost` 通過。
+- 追加發布：SPC 測試站 frontend 已發布；備份 `frontend.backup-spc-excluded-list-20261006`。Smoke：首頁 200，新 JS `index-Z4tE0lCl.js` 回 `application/javascript`。正式站未發布。
 
 #### SPC-POINT-FILTER-TASK-005：趨勢圖右鍵選單與已排除點恢復清單
 

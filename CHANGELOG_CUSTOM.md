@@ -28,6 +28,12 @@
 - 已發布 SPC 測試站 frontend/backend，備份 `frontend.backup-spc-point-context-menu-20261006`、`backend.backup-spc-point-context-menu-20261006`；Smoke：首頁 200，新 JS `index-93uPHtFu.js` 回 `application/javascript`，`/api/version` 200/test。正式站未發布。
 - 已排除點恢復清單與真正隱藏點的清單恢復留待後續小工作。
 
+## 2026-10-06（SPC-POINT-FILTER 管制圖已排除點清單）
+- 管制圖工具列新增「已排除點 N」清單，查圖成功後同步載入目前 PPC 的 active 排除點。
+- 清單可逐筆恢復 `ExcludedVisible` / `ExcludedHidden` 點，避免隱藏點找不到恢復入口。
+- 驗證：前端 `npm run build -- --mode testhost` 通過。
+- 已發布 SPC 測試站 frontend，備份 `frontend.backup-spc-excluded-list-20261006`；Smoke：首頁 200，新 JS `index-Z4tE0lCl.js` 回 `application/javascript`。正式站未發布。
+
 ## 2026-10-05（SPC 測試問題：總覽下拉與資料數口徑）
 - 依 `docs/SPC測試問題_20261005.xlsx` 修正兩項測試問題。
 - 製程總覽線別下拉排除無效 process 資料，避免混入「製程、檢驗項目、總數、日期、作業員、lot、樣本編號」等非線別項目。

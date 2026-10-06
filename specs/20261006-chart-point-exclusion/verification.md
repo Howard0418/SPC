@@ -126,3 +126,24 @@
 
 - 本階段先完成管制圖右鍵操作與 ExcludedVisible 樣式。
 - `ExcludedHidden` 已可寫入後端並不列入計算，但圖上隱藏點恢復清單留待 TASK-009 完成。
+
+## 2026-10-06 TASK-009 管制圖已排除點清單
+
+- 狀態：完成。
+- 修改：
+  - 管制圖工具列新增「已排除點 N」按鈕。
+  - 展開後可查看目前 PPC 的 active 排除點。
+  - 清單支援逐筆「恢復列入計算」，可恢復 `ExcludedHidden` 點。
+  - 查圖成功後同步載入排除清單；右鍵排除或恢復後重載圖表與清單。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過。
+- 測試站發布：已發布 `release/test/frontend`；備份 `release/test/frontend.backup-spc-excluded-list-20261006`。
+- Smoke：
+  - `http://172.16.110.27:8083/`：HTTP 200，`text/html`。
+  - `http://172.16.110.27:8083/assets/index-Z4tE0lCl.js`：HTTP 200，`application/javascript`。
+
+### 限制
+
+- 本階段只處理管制圖排除點清單；趨勢圖清單留待 TASK-011。
