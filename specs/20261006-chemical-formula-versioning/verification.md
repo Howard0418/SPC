@@ -111,3 +111,18 @@
 ### 驗證
 
 - `npm run build -- --mode testhost`：通過。
+
+## 2026-10-06 TASK-010 前端 build 與基本 UI 驗證
+
+- 狀態：完成。
+- 本階段未修改產品程式，只做前端建置與靜態 UI 檢查。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過，產出 `index-DiDDfgPE.js`、`index-CIBT_RHI.css`。
+- 靜態檢查確認 `PartProcessCharacteristicsView.vue` 仍包含：
+  - 「版本紀錄」入口。
+  - `GET /part-process-characteristics/{id}/chemical-analysis-formula-versions` 呼叫。
+  - 「回復此版」按鈕。
+  - `POST /part-process-characteristics/{id}/chemical-analysis-formula-versions/{versionId}/restore` 呼叫。
+- 本階段未發布測試站。
