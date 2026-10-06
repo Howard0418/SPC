@@ -30,3 +30,16 @@
 
 - `npm run build -- --mode testhost`：通過，產出 `index-CodgJfD4.js`、`index-CWZtvWtJ.css`。
 - 本階段未發布測試站；正式站未發布。
+
+## 2026-10-06 TASK-004 批次儲存確認與異動列送出
+
+- 狀態：完成。
+- 修改：藥液總覽頁新增「儲存變更」按鈕，按鈕顯示目前異動筆數，無異動時不可送出。
+- 修改：儲存前以確認視窗列出最多 8 筆即將儲存的線別/槽位/分析項目摘要。
+- 修改：儲存時只針對 dirty rows 逐筆呼叫既有 `PUT /part-process-characteristics/{id}`，payload 保留原主檔欄位，只替換 `chemicalAnalysisConfigJson`。
+- 範圍：未新增後端 API；詳細成功/失敗列結果顯示留待 TASK-005。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過，產出 `index-KMWpI8dd.js`、`index-pAvY4q_l.css`。
+- 本階段未發布測試站；正式站未發布。

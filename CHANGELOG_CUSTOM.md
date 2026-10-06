@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式總覽批次儲存確認）
+- 藥液總覽頁新增「儲存變更」按鈕，僅在有異動列時可送出，並顯示異動筆數。
+- 儲存前會顯示線別、槽位與分析項目的變更摘要；儲存時只逐筆送出 dirty rows，沿用既有 `PUT /part-process-characteristics/{id}` 與公式版本紀錄。
+- Payload 保留原主檔欄位，只替換 `chemicalAnalysisConfigJson`；本階段未新增後端 API，詳細成功/失敗列結果留待後續 TASK。
+- 驗證：前端 `npm run build -- --mode testhost` 通過，產出 `index-KMWpI8dd.js`、`index-pAvY4q_l.css`。本階段未發布測試站，正式站未發布。
+
 ## 2026-10-06（SPC 藥液公式總覽 draft 與異動標示）
 - 藥液總覽頁新增公式欄位草稿編輯，支援濃度公式、調整公式、調整量公式與小數位。
 - 已變更列會以底色與「已變更」標籤提示，並提供單列還原；本階段尚未送出批次儲存 API。
