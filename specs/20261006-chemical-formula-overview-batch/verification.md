@@ -86,3 +86,9 @@
 - Smoke：新版 CSS `/assets/index-B3nZcc2H.css` 回 200，`text/css`。
 - Smoke：`http://172.16.110.27:8081/api/version` 回 200，`environment=test`。
 - 備註：第一次 smoke 腳本使用 `$home` 變數時碰到 PowerShell `$HOME` 唯讀變數，修正測試腳本變數名後重跑通過；不是網站錯誤。
+
+## 2026-10-06 TASK-008 文件同步與收尾
+
+- 狀態：完成。
+- 同步：`CHANGELOG_CUSTOM.md`、`TODO.md`、`docs/requirements.md` 與本規格任務/驗證紀錄。
+- 結論：藥液公式總覽與批次儲存頁已完成測試站 frontend 發布；backend 未變更、未發布；正式站未發布。

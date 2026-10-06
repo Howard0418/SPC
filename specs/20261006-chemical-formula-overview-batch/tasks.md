@@ -15,4 +15,4 @@
 
 - [x] TASK-006：前端 build 與靜態檢查。
 - [x] TASK-007：發布 SPC 測試站 frontend 並 smoke test。
-- [ ] TASK-008：同步 `CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與驗證紀錄。
+- [x] TASK-008：同步 `CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與驗證紀錄。

@@ -1,5 +1,9 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式總覽文件收尾）
+- 藥液公式總覽與批次儲存頁文件收尾完成，`CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與規格驗證紀錄已同步。
+- 本串小工作測試站階段結案；SPC 測試站 frontend 已發布，backend 未變更、未發布，正式站未發布。
+
 ## 2026-10-06（SPC 藥液公式總覽測試站發布）
 - 藥液公式總覽批次編輯已發布 SPC 測試站 frontend；backend 未發布，正式站未發布。
 - 備份：`frontend.backup-chemical-formula-overview-batch-20261006-142452`。
