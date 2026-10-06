@@ -25,3 +25,30 @@
 - 文件內容檢查：完成。
 - 程式建置：不適用，本階段未修改程式。
 - 測試站發布：不適用，本階段未修改程式。
+
+## 2026-10-06 TASK-002 資料模型與 API
+
+- 狀態：完成。
+- 修改：
+  - 新增 `SpcPointExclusion` entity 與 `SpcPointExclusions` DbSet/EF mapping。
+  - 新增 EF migration `20261006003525_AddSpcPointExclusions`，建立 `SpcPointExclusions` 表、索引與外鍵。
+  - 新增 API：
+    - `GET /api/v1/spc/point-exclusions`
+    - `PUT /api/v1/spc/point-exclusions`
+    - `DELETE /api/v1/spc/point-exclusions/{id}`
+  - `PUT/DELETE` 限 `Admin,Editor`；未登入測試站呼叫回 401。
+
+### 驗證
+
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter SpcPointExclusionsControllerTests --no-restore -p:UseSharedCompilation=false`：4 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- `dotnet publish backend\MesSpc.Api\MesSpc.Api.csproj -c Release --no-restore -o release-staging\spc-point-exclusions-20261006\backend-publish -p:UseSharedCompilation=false`：成功。
+- 測試站發布：已發布 `release/test/backend`；備份 `release/test/backend.backup-spc-point-exclusions-20261006`。
+- Smoke：
+  - `http://172.16.110.27:8081/api/version`：HTTP 200，`environment=test`。
+  - 未登入 `PUT /api/v1/spc/point-exclusions`：HTTP 401。
+
+### 限制
+
+- 本階段只建立資料模型與 API，尚未接入管制圖/趨勢圖計算。
+- 右鍵選單、已排除點清單與隱藏點恢復 UI 尚未實作，留待後續 TASK。

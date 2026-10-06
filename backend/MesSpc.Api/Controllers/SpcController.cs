@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
+using MesSpc.Api.Services.Security;
+using Microsoft.AspNetCore.Authorization;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -126,6 +128,135 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         return Ok(new { batch.UploadBatchId, batch.IsExcluded });
     }
 
+    /// <summary>
+    /// 查詢目前條件下已設定的 SPC 單一圖點排除狀態。
+    /// </summary>
+    [HttpGet("point-exclusions")]
+    public async Task<IActionResult> GetPointExclusions(
+        [FromQuery] int ppcId,
+        [FromQuery] string? pointScope,
+        [FromQuery] long? variableMeasurementId,
+        [FromQuery] long? attributeMeasurementId,
+        [FromQuery] string? pointKey,
+        CancellationToken ct = default)
+    {
+        if (ppcId <= 0) return BadRequest(new { message = "ppcId 為必填。" });
+
+        var query = db.SpcPointExclusions
+            .AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == ppcId && x.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(pointScope))
+        {
+            query = query.Where(x => x.PointScope == NormalizePointScope(pointScope));
+        }
+
+        if (variableMeasurementId.HasValue)
+        {
+            query = query.Where(x => x.VariableMeasurementId == variableMeasurementId.Value);
+        }
+
+        if (attributeMeasurementId.HasValue)
+        {
+            query = query.Where(x => x.AttributeMeasurementId == attributeMeasurementId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(pointKey))
+        {
+            query = query.Where(x => x.PointKey == pointKey.Trim());
+        }
+
+        var rows = await query
+            .OrderByDescending(x => x.UpdatedAt ?? x.CreatedAt)
+            .Select(x => new
+            {
+                x.Id,
+                x.PartProcessCharacteristicId,
+                x.PointScope,
+                x.VariableMeasurementId,
+                x.AttributeMeasurementId,
+                x.MeasurementBatchId,
+                x.PointKey,
+                x.State,
+                x.Reason,
+                x.CreatedBy,
+                x.CreatedAt,
+                x.UpdatedBy,
+                x.UpdatedAt
+            })
+            .ToListAsync(ct);
+
+        return Ok(new { success = true, data = rows, message = "已取得點位排除清單。" });
+    }
+
+    /// <summary>
+    /// 設定單一 SPC 圖點為顯示但不列入計算，或隱藏且不列入計算。
+    /// </summary>
+    [HttpPut("point-exclusions")]
+    [Authorize(Roles = "Admin," + UserRoles.Editor)]
+    public async Task<IActionResult> UpsertPointExclusion([FromBody] UpsertSpcPointExclusionReq req, CancellationToken ct = default)
+    {
+        var validation = await ValidatePointExclusionRequestAsync(req, ct);
+        if (validation is not null) return validation;
+
+        var pointScope = NormalizePointScope(req.PointScope);
+        var state = NormalizeExclusionState(req.State);
+        var pointKey = string.IsNullOrWhiteSpace(req.PointKey) ? null : req.PointKey.Trim();
+        var entity = await FindActivePointExclusionAsync(
+            req.PartProcessCharacteristicId,
+            pointScope,
+            req.VariableMeasurementId,
+            req.AttributeMeasurementId,
+            pointKey,
+            ct);
+
+        if (entity is null)
+        {
+            entity = new SpcPointExclusion
+            {
+                PartProcessCharacteristicId = req.PartProcessCharacteristicId,
+                PointScope = pointScope,
+                VariableMeasurementId = req.VariableMeasurementId,
+                AttributeMeasurementId = req.AttributeMeasurementId,
+                MeasurementBatchId = req.MeasurementBatchId,
+                PointKey = pointKey,
+                IsActive = true
+            };
+            db.SpcPointExclusions.Add(entity);
+        }
+
+        entity.State = state;
+        entity.Reason = string.IsNullOrWhiteSpace(req.Reason) ? null : req.Reason.Trim();
+        entity.UpdatedBy = CurrentUserName();
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new
+        {
+            success = true,
+            data = ToPointExclusionDto(entity),
+            message = state == "ExcludedHidden" ? "點位已設定為隱藏且不列入計算。" : "點位已設定為顯示但不列入計算。"
+        });
+    }
+
+    /// <summary>
+    /// 恢復單一 SPC 圖點為正常顯示並列入計算。
+    /// </summary>
+    [HttpDelete("point-exclusions/{id:long}")]
+    [Authorize(Roles = "Admin," + UserRoles.Editor)]
+    public async Task<IActionResult> RestorePointExclusion(long id, CancellationToken ct = default)
+    {
+        var entity = await db.SpcPointExclusions.FirstOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
+        if (entity is null) return NotFound(new { success = false, data = (object?)null, message = "找不到有效的點位排除狀態。" });
+
+        entity.IsActive = false;
+        entity.UpdatedBy = CurrentUserName();
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new { success = true, data = ToPointExclusionDto(entity), message = "點位已恢復列入計算。" });
+    }
+
     [HttpPut("control-limits/{ppcId:int}")]
     public async Task<IActionResult> UpdateControlLimits(int ppcId, [FromBody] UpdateControlLimitsReq req, CancellationToken ct = default)
     {
@@ -243,6 +374,121 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         return parts.Count == 0 ? null : string.Join(" / ", parts);
     }
 
+    private async Task<IActionResult?> ValidatePointExclusionRequestAsync(UpsertSpcPointExclusionReq req, CancellationToken ct)
+    {
+        if (req.PartProcessCharacteristicId <= 0)
+            return BadRequest(new { success = false, data = (object?)null, message = "PartProcessCharacteristicId 為必填。" });
+
+        if (!IsValidExclusionState(req.State))
+            return BadRequest(new { success = false, data = (object?)null, message = "State 僅允許 ExcludedVisible 或 ExcludedHidden。" });
+
+        var pointScope = NormalizePointScope(req.PointScope);
+        if (!IsValidPointScope(pointScope))
+            return BadRequest(new { success = false, data = (object?)null, message = "PointScope 僅允許 VariableMeasurement、AttributeMeasurement 或 Subgroup。" });
+
+        if (!req.VariableMeasurementId.HasValue
+            && !req.AttributeMeasurementId.HasValue
+            && string.IsNullOrWhiteSpace(req.PointKey))
+        {
+            return BadRequest(new { success = false, data = (object?)null, message = "需提供 VariableMeasurementId、AttributeMeasurementId 或 PointKey 其中之一。" });
+        }
+
+        var ppcExists = await db.PartProcessCharacteristics.AsNoTracking()
+            .AnyAsync(x => x.Id == req.PartProcessCharacteristicId && x.IsEnabled, ct);
+        if (!ppcExists)
+            return NotFound(new { success = false, data = (object?)null, message = "找不到 SPC 管制項目。" });
+
+        if (req.VariableMeasurementId.HasValue)
+        {
+            var measurement = await db.VariableMeasurements.AsNoTracking()
+                .Where(x => x.Id == req.VariableMeasurementId.Value)
+                .Select(x => new { x.PartProcessCharacteristicId, x.UploadBatchId })
+                .FirstOrDefaultAsync(ct);
+            if (measurement is null || measurement.PartProcessCharacteristicId != req.PartProcessCharacteristicId)
+                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 VariableMeasurement。" });
+        }
+
+        if (req.AttributeMeasurementId.HasValue)
+        {
+            var measurement = await db.AttributeMeasurements.AsNoTracking()
+                .Where(x => x.Id == req.AttributeMeasurementId.Value)
+                .Select(x => new { x.PartProcessCharacteristicId, x.UploadBatchId })
+                .FirstOrDefaultAsync(ct);
+            if (measurement is null || measurement.PartProcessCharacteristicId != req.PartProcessCharacteristicId)
+                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 AttributeMeasurement。" });
+        }
+
+        return null;
+    }
+
+    private async Task<SpcPointExclusion?> FindActivePointExclusionAsync(
+        int partProcessCharacteristicId,
+        string pointScope,
+        long? variableMeasurementId,
+        long? attributeMeasurementId,
+        string? pointKey,
+        CancellationToken ct)
+    {
+        var query = db.SpcPointExclusions.Where(x =>
+            x.PartProcessCharacteristicId == partProcessCharacteristicId
+            && x.PointScope == pointScope
+            && x.IsActive);
+
+        if (variableMeasurementId.HasValue)
+            return await query.FirstOrDefaultAsync(x => x.VariableMeasurementId == variableMeasurementId.Value, ct);
+
+        if (attributeMeasurementId.HasValue)
+            return await query.FirstOrDefaultAsync(x => x.AttributeMeasurementId == attributeMeasurementId.Value, ct);
+
+        return await query.FirstOrDefaultAsync(x => x.PointKey == pointKey, ct);
+    }
+
+    private static bool IsValidPointScope(string pointScope) =>
+        pointScope is "VariableMeasurement" or "AttributeMeasurement" or "Subgroup";
+
+    private static string NormalizePointScope(string? pointScope)
+    {
+        if (string.IsNullOrWhiteSpace(pointScope)) return "VariableMeasurement";
+        if (string.Equals(pointScope, "variablemeasurement", StringComparison.OrdinalIgnoreCase)) return "VariableMeasurement";
+        if (string.Equals(pointScope, "attributemeasurement", StringComparison.OrdinalIgnoreCase)) return "AttributeMeasurement";
+        if (string.Equals(pointScope, "subgroup", StringComparison.OrdinalIgnoreCase)) return "Subgroup";
+        return string.Empty;
+    }
+
+    private static bool IsValidExclusionState(string? state) =>
+        NormalizeExclusionState(state) is "ExcludedVisible" or "ExcludedHidden";
+
+    private static string NormalizeExclusionState(string? state) =>
+        string.Equals(state, "ExcludedHidden", StringComparison.OrdinalIgnoreCase)
+            ? "ExcludedHidden"
+            : string.Equals(state, "ExcludedVisible", StringComparison.OrdinalIgnoreCase)
+                ? "ExcludedVisible"
+                : string.Empty;
+
+    private string CurrentUserName() =>
+        User.Identity?.Name
+        ?? User.FindFirst("name")?.Value
+        ?? User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
+        ?? "System";
+
+    private static object ToPointExclusionDto(SpcPointExclusion entity) => new
+    {
+        entity.Id,
+        entity.PartProcessCharacteristicId,
+        entity.PointScope,
+        entity.VariableMeasurementId,
+        entity.AttributeMeasurementId,
+        entity.MeasurementBatchId,
+        entity.PointKey,
+        entity.State,
+        entity.Reason,
+        entity.IsActive,
+        entity.CreatedBy,
+        entity.CreatedAt,
+        entity.UpdatedBy,
+        entity.UpdatedAt
+    };
+
     private static IEnumerable<object> ToEnumerable(object source) =>
         source is System.Collections.IEnumerable items
             ? items.Cast<object>()
@@ -324,6 +570,15 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
 
 public record TrialCalculateReq(int PartProcessCharacteristicId, DateTime? StartDate, DateTime? EndDate);
 public record UpdateControlLimitsReq(double? Ucl, double? Cl, double? Lcl);
+public record UpsertSpcPointExclusionReq(
+    int PartProcessCharacteristicId,
+    string PointScope,
+    long? VariableMeasurementId,
+    long? AttributeMeasurementId,
+    int? MeasurementBatchId,
+    string? PointKey,
+    string State,
+    string? Reason);
 public record SaveOcapReq(
     int PpcId,
     long? VariableMeasurementId,

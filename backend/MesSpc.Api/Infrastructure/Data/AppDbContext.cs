@@ -35,6 +35,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SpcRuleGroup> SpcRuleGroups => Set<SpcRuleGroup>();
     public DbSet<SpcRule> SpcRules => Set<SpcRule>();
     public DbSet<SpcCalculationResult> SpcCalculationResults => Set<SpcCalculationResult>();
+    public DbSet<SpcPointExclusion> SpcPointExclusions => Set<SpcPointExclusion>();
     public DbSet<ControlLimitSegment> ControlLimitSegments => Set<ControlLimitSegment>();
 
     // New Organizational DB Sets
@@ -177,6 +178,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .IsUnique();
         modelBuilder.Entity<SpcCalculationResult>().HasKey(x => x.Id);
         modelBuilder.Entity<SpcCalculationResult>().HasIndex(x => new { x.PartProcessCharacteristicId, x.CalculatedAt });
+        modelBuilder.Entity<SpcPointExclusion>().ToTable("SpcPointExclusions", table =>
+        {
+            table.HasComment("Single chart point exclusion states for SPC control/trend charts.");
+        });
+        modelBuilder.Entity<SpcPointExclusion>().HasKey(x => x.Id);
+        modelBuilder.Entity<SpcPointExclusion>().Property(x => x.PointScope).HasMaxLength(40).HasComment("VariableMeasurement, AttributeMeasurement, or Subgroup.");
+        modelBuilder.Entity<SpcPointExclusion>().Property(x => x.PointKey).HasMaxLength(200).HasComment("Stable key for aggregate chart points such as Xbar subgroups.");
+        modelBuilder.Entity<SpcPointExclusion>().Property(x => x.State).HasMaxLength(32).HasComment("ExcludedVisible or ExcludedHidden.");
+        modelBuilder.Entity<SpcPointExclusion>().Property(x => x.Reason).HasMaxLength(500).HasComment("Optional reason for excluding the chart point.");
+        modelBuilder.Entity<SpcPointExclusion>().Property(x => x.IsActive).HasDefaultValue(true).HasComment("Inactive rows are restored points kept for audit.");
+        modelBuilder.Entity<SpcPointExclusion>().HasIndex(x => new { x.PointScope, x.VariableMeasurementId, x.IsActive });
+        modelBuilder.Entity<SpcPointExclusion>().HasIndex(x => new { x.PointScope, x.AttributeMeasurementId, x.IsActive });
+        modelBuilder.Entity<SpcPointExclusion>().HasIndex(x => new { x.PartProcessCharacteristicId, x.PointKey, x.IsActive });
 
         // Organizational Data Indexes
         modelBuilder.Entity<Plant>().HasIndex(x => x.PlantCode).IsUnique();
@@ -349,6 +363,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne<ControlChartType>()
             .WithMany()
             .HasForeignKey(x => x.ChartTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SpcPointExclusion>()
+            .HasOne(x => x.PartProcessCharacteristic)
+            .WithMany()
+            .HasForeignKey(x => x.PartProcessCharacteristicId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SpcPointExclusion>()
+            .HasOne(x => x.VariableMeasurement)
+            .WithMany()
+            .HasForeignKey(x => x.VariableMeasurementId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SpcPointExclusion>()
+            .HasOne(x => x.AttributeMeasurement)
+            .WithMany()
+            .HasForeignKey(x => x.AttributeMeasurementId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SpcPointExclusion>()
+            .HasOne(x => x.MeasurementBatch)
+            .WithMany()
+            .HasForeignKey(x => x.MeasurementBatchId)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<LotSplitHistory>()
             .HasOne(x => x.TargetLot)

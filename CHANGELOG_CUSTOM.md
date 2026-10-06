@@ -6,6 +6,12 @@
 - 現況分析：目前只有 `UploadBatches.IsExcluded` 整批排除；管制圖明細已有剔除/恢復按鈕但作用在整批，不是單一點；趨勢圖可顯示 `isExcluded` 但沒有右鍵操作。
 - 文件：新增 `specs/20261006-chart-point-exclusion/`，並更新 `TODO.md` 與需求索引。本次未修改產品程式、未建置、未發布。
 
+## 2026-10-06（SPC-POINT-FILTER 單一點位排除 API）
+- 新增 `SpcPointExclusion` 資料模型與 `SpcPointExclusions` migration，保留原始量測資料不變，以獨立狀態記錄單一圖點排除/隱藏/恢復。
+- 新增 `GET/PUT/DELETE /api/v1/spc/point-exclusions`，支援查詢已排除點、設定 `ExcludedVisible` / `ExcludedHidden`、恢復列入計算；寫入與恢復限制 `Admin,Editor`。
+- 驗證：`SpcPointExclusionsControllerTests` 4 passed；後端 build 0 warnings / 0 errors。
+- 已發布 SPC 測試站 backend，備份 `backend.backup-spc-point-exclusions-20261006`；Smoke：`/api/version` 200/test，未登入寫入 API 401。正式站未發布。
+
 ## 2026-10-05（SPC 測試問題：總覽下拉與資料數口徑）
 - 依 `docs/SPC測試問題_20261005.xlsx` 修正兩項測試問題。
 - 製程總覽線別下拉排除無效 process 資料，避免混入「製程、檢驗項目、總數、日期、作業員、lot、樣本編號」等非線別項目。

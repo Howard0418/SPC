@@ -327,7 +327,7 @@
 
 #### SPC-POINT-FILTER-TASK-002：單一圖點排除資料模型與 API
 
-狀態：待執行
+狀態：完成；SPC 測試站 backend 已發布
 
 預計修改：
 
@@ -344,6 +344,13 @@
 確認結果：
 
 - 原始量測資料不變；排除狀態可查、可回復、可稽核。
+
+完成紀錄：
+
+- 修改：新增 `SpcPointExclusion` entity、`SpcPointExclusions` 資料表 migration、DbSet/EF mapping。
+- API：新增查詢、設定、恢復端點；`PUT/DELETE` 限 `Admin,Editor`，未登入回 401。
+- 驗證：`SpcPointExclusionsControllerTests` 4 passed；後端 build 0 warnings / 0 errors。
+- 發布：SPC 測試站 backend 已發布；備份 `backend.backup-spc-point-exclusions-20261006`。Smoke：`/api/version` 200/test，新寫入 API 未登入 401。正式站未發布。
 
 #### SPC-POINT-FILTER-TASK-003：後端計算套用單點排除
 
