@@ -15,6 +15,7 @@ const line = ref("");
 const tank = ref("");
 const status = ref("all");
 const formulaDrafts = ref({});
+const saveResults = ref({});
 
 const formulaKeys = [
   "concentrationFormula",
@@ -72,6 +73,7 @@ function rowOf(item) {
     adjustmentAmountFormula: normalizedDraft.adjustmentAmountFormula,
     decimalPlaces: normalizedDraft.decimalPlaces,
     dirty: hasDraftChange(item),
+    saveResult: saveResults.value[item.id] || null,
     issue: formulaMissing || limitsMissing
   };
 }
@@ -96,16 +98,26 @@ async function load(clearStatus = true) {
   try {
     const { data } = await api.get("/part-process-characteristics");
     items.value = Array.isArray(data) ? data : [];
+    const previousDrafts = formulaDrafts.value;
+    const previousResults = saveResults.value;
     formulaDrafts.value = Object.fromEntries(items.value
       .filter(x => String(x.controlScope || "").toUpperCase() === "CHEM")
-      .map(x => [x.id, draftOfConfig(configOf(x))]));
+      .map(x => {
+        const failed = previousResults[x.id]?.status === "failed";
+        return [x.id, failed && previousDrafts[x.id] ? previousDrafts[x.id] : draftOfConfig(configOf(x))];
+      }));
   }
   catch (e) { error.value = getApiErrorMessage(e); }
   finally { loading.value = false; }
 }
 function showLine(value) { line.value = value; tank.value = ""; }
 function edit(row) { router.push({ path: "/part-process-characteristics", query: { editId: row.id } }); }
-function resetRow(row) { formulaDrafts.value[row.id] = draftOfConfig(configOf(row.raw)); }
+function resetRow(row) {
+  formulaDrafts.value[row.id] = draftOfConfig(configOf(row.raw));
+  const next = { ...saveResults.value };
+  delete next[row.id];
+  saveResults.value = next;
+}
 function buildConfigJson(row) {
   return JSON.stringify({ ...configOf(row.raw), ...normalizeDraft(row.draft) });
 }
@@ -139,6 +151,7 @@ function buildSavePayload(row) {
 async function saveChanges() {
   const rows = dirtyRows.value;
   error.value = ""; message.value = "";
+  saveResults.value = {};
   if (!rows.length) {
     message.value = "目前沒有需要儲存的公式變更。";
     return;
@@ -148,17 +161,22 @@ async function saveChanges() {
   if (!window.confirm(`即將儲存 ${rows.length} 筆藥液公式變更：\n${preview}${more}\n\n是否繼續？`)) return;
 
   saving.value = true;
-  try {
-    for (const row of rows) {
+  const results = {};
+  for (const row of rows) {
+    try {
       await api.put(`/part-process-characteristics/${row.id}`, buildSavePayload(row));
+      results[row.id] = { status: "saved", message: "已儲存" };
+    } catch (e) {
+      results[row.id] = { status: "failed", message: getApiErrorMessage(e) };
     }
-    message.value = `已儲存 ${rows.length} 筆藥液公式變更。`;
-    await load(false);
-  } catch (e) {
-    error.value = getApiErrorMessage(e);
-  } finally {
-    saving.value = false;
   }
+  saveResults.value = results;
+  const successCount = Object.values(results).filter(x => x.status === "saved").length;
+  const failedCount = Object.values(results).filter(x => x.status === "failed").length;
+  message.value = `儲存完成：成功 ${successCount} 筆，失敗 ${failedCount} 筆。`;
+  if (failedCount > 0) error.value = "部分藥液公式儲存失敗，請查看表格中的錯誤訊息。";
+  await load(false);
+  saving.value = false;
 }
 function exportExcel() {
   const rows = filtered.value.map(x => ({ 線別: x.line, 槽體: x.tank, 槽體代碼: x.tankCode, 分析項目: x.chemical, 狀態: x.enabled ? "啟用" : "停用", 滴定值2: x.secondary || "無", 濃度公式: x.formula || "未設定", 調整公式: x.adjustmentFormula || "", 調整量公式: x.adjustmentAmountFormula || "", 小數位: x.decimalPlaces, 是否變更: x.dirty ? "已變更" : "未變更", 設定警示: x.formulaMissing ? "缺濃度公式" : x.limitsMissing ? "缺規格" : "完整" }));
@@ -178,7 +196,7 @@ onMounted(load);
     <div v-if="message" class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{{ message }}</div>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4"><button v-for="item in summaries" :key="item.line" @click="showLine(item.line)" class="rounded-2xl border bg-white p-4 text-left shadow-sm hover:border-emerald-400 dark:bg-slate-800 dark:border-slate-700"><div class="flex justify-between"><strong>{{ item.line }}</strong><span class="text-xs text-slate-500">{{ item.tanks }} 槽</span></div><div class="mt-3 text-3xl font-black text-emerald-600">{{ item.enabled }}<span class="ml-1 text-sm text-slate-500">啟用項目</span></div><div class="mt-2 text-xs text-slate-500">滴定值 2：{{ item.secondary }}　停用：{{ item.disabled }}　<span :class="item.issues ? 'text-amber-600 font-bold' : ''">警示：{{ item.issues }}</span></div></button></div>
     <div class="rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700"><div class="grid gap-3 md:grid-cols-4"><select v-model="line" @change="tank=''" class="field"><option value="">全部線別</option><option v-for="value in lines" :key="value">{{ value }}</option></select><select v-model="tank" class="field"><option value="">全部槽體</option><option v-for="value in tanks" :key="value">{{ value }}</option></select><select v-model="status" class="field"><option value="all">全部狀態</option><option value="enabled">僅啟用</option><option value="secondary">僅有滴定值 2</option><option value="issues">僅設定警示</option></select><div class="flex items-center text-sm text-slate-500"><Search class="mr-2 w-4 h-4" />顯示 {{ filtered.length }} 個項目</div></div></div>
-    <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700"><table class="min-w-[1180px] text-sm"><thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900"><tr><th>線別</th><th>槽體</th><th>分析項目</th><th>狀態</th><th>濃度公式</th><th>調整公式</th><th>調整量公式</th><th>小數位</th><th>設定狀態</th><th></th></tr></thead><tbody><tr v-for="item in filtered" :key="item.id" class="border-t dark:border-slate-700" :class="item.dirty ? 'bg-amber-50/70 dark:bg-amber-950/20' : ''"><td>{{ item.line }}</td><td><div>{{ item.tank }}</div><small class="text-slate-400">{{ item.tankCode }}</small></td><td class="font-bold"><div>{{ item.chemical }}</div><small v-if="item.secondary" class="text-slate-400">滴定值 2：{{ item.secondary }}</small></td><td><span :class="item.enabled ? 'badge-green' : 'badge-gray'">{{ item.enabled ? '啟用' : '停用' }}</span><span v-if="item.dirty" class="ml-2 badge-amber">已變更</span></td><td><textarea v-model="item.draft.concentrationFormula" rows="2" class="formula-field" placeholder="濃度公式"></textarea></td><td><textarea v-model="item.draft.adjustmentFormula" rows="2" class="formula-field" placeholder="調整公式"></textarea></td><td><textarea v-model="item.draft.adjustmentAmountFormula" rows="2" class="formula-field" placeholder="調整量公式"></textarea></td><td><input v-model.number="item.draft.decimalPlaces" type="number" min="0" max="8" class="field w-20" /></td><td><span :class="item.issue ? 'text-amber-600 font-bold' : 'text-emerald-600'">{{ item.formulaMissing ? '缺濃度公式' : item.limitsMissing ? '缺規格' : '完整' }}</span></td><td><div class="flex flex-col gap-2"><button @click="edit(item)" class="text-blue-600 hover:underline"><Settings2 class="inline w-4 h-4" /> 編輯</button><button v-if="item.dirty" @click="resetRow(item)" class="text-slate-500 hover:underline">還原</button></div></td></tr><tr v-if="!loading && !filtered.length"><td colspan="10" class="p-8 text-center text-slate-500">沒有符合條件的藥液分析項目。</td></tr></tbody></table></div>
+    <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700"><table class="min-w-[1260px] text-sm"><thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900"><tr><th>線別</th><th>槽體</th><th>分析項目</th><th>狀態</th><th>濃度公式</th><th>調整公式</th><th>調整量公式</th><th>小數位</th><th>設定狀態</th><th>儲存結果</th><th></th></tr></thead><tbody><tr v-for="item in filtered" :key="item.id" class="border-t dark:border-slate-700" :class="item.saveResult?.status === 'failed' ? 'bg-red-50/70 dark:bg-red-950/20' : item.dirty ? 'bg-amber-50/70 dark:bg-amber-950/20' : ''"><td>{{ item.line }}</td><td><div>{{ item.tank }}</div><small class="text-slate-400">{{ item.tankCode }}</small></td><td class="font-bold"><div>{{ item.chemical }}</div><small v-if="item.secondary" class="text-slate-400">滴定值 2：{{ item.secondary }}</small></td><td><span :class="item.enabled ? 'badge-green' : 'badge-gray'">{{ item.enabled ? '啟用' : '停用' }}</span><span v-if="item.dirty" class="ml-2 badge-amber">已變更</span></td><td><textarea v-model="item.draft.concentrationFormula" rows="2" class="formula-field" placeholder="濃度公式"></textarea></td><td><textarea v-model="item.draft.adjustmentFormula" rows="2" class="formula-field" placeholder="調整公式"></textarea></td><td><textarea v-model="item.draft.adjustmentAmountFormula" rows="2" class="formula-field" placeholder="調整量公式"></textarea></td><td><input v-model.number="item.draft.decimalPlaces" type="number" min="0" max="8" class="field w-20" /></td><td><span :class="item.issue ? 'text-amber-600 font-bold' : 'text-emerald-600'">{{ item.formulaMissing ? '缺濃度公式' : item.limitsMissing ? '缺規格' : '完整' }}</span></td><td class="max-w-56"><span v-if="item.saveResult?.status === 'saved'" class="badge-green">已儲存</span><span v-else-if="item.saveResult?.status === 'failed'" class="text-xs font-bold text-red-600">{{ item.saveResult.message }}</span><span v-else class="text-slate-400">—</span></td><td><div class="flex flex-col gap-2"><button @click="edit(item)" class="text-blue-600 hover:underline"><Settings2 class="inline w-4 h-4" /> 編輯</button><button v-if="item.dirty" @click="resetRow(item)" class="text-slate-500 hover:underline">還原</button></div></td></tr><tr v-if="!loading && !filtered.length"><td colspan="11" class="p-8 text-center text-slate-500">沒有符合條件的藥液分析項目。</td></tr></tbody></table></div>
   </section>
 </template>
 
