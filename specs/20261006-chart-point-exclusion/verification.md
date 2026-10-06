@@ -204,3 +204,28 @@
 ### 備註
 
 - 第一次 build 與 test 並行時遇到 `MesSpc.Api.dll` 檔案鎖定，單獨重跑 build 後通過；判定為並行程序鎖定，不是編譯錯誤。
+
+## 2026-10-06 TASK-013 前端 build / UI 測試
+
+- 狀態：完成；含已知既有 Playwright 測試落差。
+- 本階段未修改產品程式、未發布測試站。
+
+### 驗證
+
+- `npm run build:test`：通過，產出 `assets/index-DKfYYFj2.js` 與 `assets/index-CVlQs-Gh.css`。
+- 趨勢圖 UI 靜態檢查：
+  - `trend-excluded-points-toggle` 與 `trend-excluded-points-panel` 存在。
+  - `restoreExcludedPoint`、`ExcludedHidden` 隱藏判斷與 `point-exclusions` API 呼叫存在。
+- 管制圖 UI 靜態檢查：
+  - `excluded-points-toggle` 與 `excluded-points-panel` 存在。
+  - `restoreExcludedPoint` 與 `point-exclusions` API 呼叫存在。
+
+### 已知測試落差
+
+- `npx playwright test tests/spc-ui.spec.ts tests/spc-summary.spec.ts --project=chromium`：5 failed。
+- 失敗點為既有測試與目前 UI/mock 不一致：
+  - 版本文字 `Enterprise SPC Edition` 找不到。
+  - `ModuleGuide` 內容初始狀態為 hidden。
+  - 舊管制圖 mock 等不到 canvas。
+  - summary 測試等不到既有「重新計算」按鈕或 select。
+- 以上失敗未指向本次新增的已排除點清單 testid；本階段先記錄為既有 Playwright 測試需後續校正。

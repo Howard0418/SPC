@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC-POINT-FILTER 前端 build / UI 測試）
+- 前端 `npm run build:test` 通過，產出 `index-DKfYYFj2.js` 與 `index-CVlQs-Gh.css`。
+- 靜態檢查確認管制圖與趨勢圖皆有已排除點清單入口、恢復函式與 `point-exclusions` API 呼叫。
+- `spc-ui.spec.ts` / `spc-summary.spec.ts` Playwright 既有測試 5 failed，失敗點為版本文字、ModuleGuide 初始狀態、舊管制圖 mock 與總表按鈕/select 等既有測試落差；未指向本次新增的排除清單 testid。
+- 本階段未修改產品程式、未發布測試站。
+
 ## 2026-10-06（SPC-POINT-FILTER 後端回歸測試）
 - 驗證單點排除後端口徑、趨勢圖 normality 與 Xbar 代表案例；本階段未修改產品程式、未發布測試站。
 - `SpcPointExclusionCalculationTests`、`NormalityTest` 與 Xbar 代表案例共 8 passed。
