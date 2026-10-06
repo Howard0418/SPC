@@ -98,3 +98,31 @@
 ### 限制
 
 - 本階段只處理後端口徑，不改前端右鍵選單與 `ExcludedHidden` 圖上隱藏渲染。
+
+## 2026-10-06 TASK-008 管制圖右鍵單點排除
+
+- 狀態：完成。
+- 修改：
+  - 管制圖點位支援右鍵選單。
+  - 選單可設定「顯示但不列入計算」、「隱藏且不列入計算」、「恢復列入計算」。
+  - 點位排除改呼叫 `PUT/DELETE /api/v1/spc/point-exclusions`，不再以右鍵操作整批 UploadBatch。
+  - 圖例補上已排除點位樣式；已排除點沿用灰色叉號樣式。
+  - Attribute chart `chartData.points` 補帶 `attributeMeasurementId`，供右鍵選單定位單點。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過。
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter SpcPointExclusionCalculationTests --no-restore -p:UseSharedCompilation=false`：2 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- 測試站發布：已發布 `release/test/frontend`；備份 `release/test/frontend.backup-spc-point-context-menu-20261006`。
+- 測試站發布：已發布 `release/test/backend`；備份 `release/test/backend.backup-spc-point-context-menu-20261006`。
+- Smoke：
+  - `http://172.16.110.27:8083/`：HTTP 200，`text/html`。
+  - `http://172.16.110.27:8083/assets/index-93uPHtFu.js`：HTTP 200，`application/javascript`。
+  - `http://172.16.110.27:8081/api/version`：HTTP 200，`environment=test`。
+  - `release/test/backend/app_offline.htm`：不存在。
+
+### 限制
+
+- 本階段先完成管制圖右鍵操作與 ExcludedVisible 樣式。
+- `ExcludedHidden` 已可寫入後端並不列入計算，但圖上隱藏點恢復清單留待 TASK-009 完成。

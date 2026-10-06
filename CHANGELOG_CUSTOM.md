@@ -20,6 +20,14 @@
 - 已發布 SPC 測試站 backend，備份 `backend.backup-spc-point-exclusion-calc-20261006`、`backend.backup-spc-point-exclusion-trend-20261006`；Smoke：`/api/version` 200/test，`app_offline.htm` 已移除。正式站未發布。
 - 本階段尚未實作前端右鍵選單、隱藏點不渲染與已排除點清單。
 
+## 2026-10-06（SPC-POINT-FILTER 管制圖右鍵單點排除）
+- 管制圖點位新增右鍵選單，可設定「顯示但不列入計算」、「隱藏且不列入計算」與「恢復列入計算」，並呼叫單點 `point-exclusions` API。
+- Attribute chart `chartData.points` 補帶 `attributeMeasurementId`，讓右鍵選單可定位 Attribute 單點。
+- 圖例補上已排除點位，已排除點沿用灰色叉號樣式。
+- 驗證：前端 `npm run build -- --mode testhost` 通過；後端 `SpcPointExclusionCalculationTests` 2 passed；後端 build 0 warnings / 0 errors。
+- 已發布 SPC 測試站 frontend/backend，備份 `frontend.backup-spc-point-context-menu-20261006`、`backend.backup-spc-point-context-menu-20261006`；Smoke：首頁 200，新 JS `index-93uPHtFu.js` 回 `application/javascript`，`/api/version` 200/test。正式站未發布。
+- 已排除點恢復清單與真正隱藏點的清單恢復留待後續小工作。
+
 ## 2026-10-05（SPC 測試問題：總覽下拉與資料數口徑）
 - 依 `docs/SPC測試問題_20261005.xlsx` 修正兩項測試問題。
 - 製程總覽線別下拉排除無效 process 資料，避免混入「製程、檢驗項目、總數、日期、作業員、lot、樣本編號」等非線別項目。

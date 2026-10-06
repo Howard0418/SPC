@@ -137,6 +137,13 @@ const chartEl = ref(null);
 // Click Drill-down State
 const selectedPoint = ref(null);
 const selectedPointIndex = ref(-1);
+const pointContextMenu = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  point: null
+});
+const pointExclusionSaving = ref(false);
 const showSpecLimits = ref(false);
 const showControlLimits = ref(false);
 const showPointValues = ref(false);
@@ -325,6 +332,7 @@ const isEtchAverageChart = computed(() => {
   return ['ETCH_A_AVG', 'ETCH_B_AVG'].includes(code) || (name.includes('咬蝕量') && name.includes('平均')) || monitorCharacteristicLabel.value.includes('咬蝕量');
 });
 const displayedMeasurementCount = computed(() => isEtchAverageChart.value ? chartPoints.value.length : rawPointCount.value);
+const activePpcIdValue = computed(() => Number(ppcId.value || selectedSummaryRow.value?.ppcId || selectedMapping.value?.id || 0));
 
 const capabilityRows = computed(() => {
   const c = chartResult.value?.capability;
@@ -783,6 +791,79 @@ async function toggleExcludeBatch() {
   }
 }
 
+function getPointExclusionPayload(point, state) {
+  const ppc = activePpcIdValue.value;
+  if (!ppc || !point) return null;
+  const variableMeasurementId = point.variableMeasurementId ?? null;
+  const attributeMeasurementId = point.attributeMeasurementId ?? null;
+  if (!variableMeasurementId && !attributeMeasurementId) return null;
+  return {
+    partProcessCharacteristicId: ppc,
+    pointScope: attributeMeasurementId ? "AttributeMeasurement" : "VariableMeasurement",
+    variableMeasurementId,
+    attributeMeasurementId,
+    measurementBatchId: point.measurementBatchId ?? null,
+    pointKey: null,
+    state,
+    reason: "管制圖右鍵設定"
+  };
+}
+
+function hidePointContextMenu() {
+  pointContextMenu.value.visible = false;
+  pointContextMenu.value.point = null;
+}
+
+async function setPointExclusion(state) {
+  const payload = getPointExclusionPayload(pointContextMenu.value.point || selectedPoint.value, state);
+  if (!payload) {
+    alert("此點位缺少單點識別資料，暫時無法設定單點排除。");
+    hidePointContextMenu();
+    return;
+  }
+  pointExclusionSaving.value = true;
+  try {
+    await api.put("/v1/spc/point-exclusions", payload);
+    hidePointContextMenu();
+    await loadActiveChart();
+  } catch (e) {
+    alert("單點排除設定失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointExclusionSaving.value = false;
+  }
+}
+
+async function restorePointExclusion() {
+  const point = pointContextMenu.value.point || selectedPoint.value;
+  const payload = getPointExclusionPayload(point, "ExcludedVisible");
+  if (!payload) {
+    alert("此點位缺少單點識別資料，暫時無法恢復。");
+    hidePointContextMenu();
+    return;
+  }
+  pointExclusionSaving.value = true;
+  try {
+    const params = {
+      ppcId: payload.partProcessCharacteristicId,
+      pointScope: payload.pointScope
+    };
+    if (payload.variableMeasurementId) params.variableMeasurementId = payload.variableMeasurementId;
+    if (payload.attributeMeasurementId) params.attributeMeasurementId = payload.attributeMeasurementId;
+    const res = await api.get("/v1/spc/point-exclusions", { params });
+    const row = (res.data?.data || [])[0];
+    const exclusionId = row?.id ?? row?.Id;
+    if (exclusionId) {
+      await api.delete(`/v1/spc/point-exclusions/${exclusionId}`);
+    }
+    hidePointContextMenu();
+    await loadActiveChart();
+  } catch (e) {
+    alert("單點排除恢復失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointExclusionSaving.value = false;
+  }
+}
+
 async function updateControlLimitsFromChart() {
   if (!ppcId.value || !topControlStat.value) return;
   savingControlLimits.value = true;
@@ -839,6 +920,7 @@ function renderECharts() {
     chartInstance.dispose();
     chartInstance = null;
   }
+  hidePointContextMenu();
 
   chartInstance = echarts.init(chartEl.value);
 
@@ -1375,12 +1457,31 @@ function renderECharts() {
 
   // Attach Point Click listener for Drill-down cards
   chartInstance.on("click", (params) => {
+    hidePointContextMenu();
     if (params.componentType === "series") {
       const idx = params.dataIndex;
       selectedPointIndex.value = idx;
       selectedPoint.value = params.data?.meta || (params.seriesIndex < seriesTopList.length ? pointsTop[idx] : pointsBottom[idx]);
       prepareOcapForm(selectedPoint.value);
     }
+  });
+
+  chartInstance.on("contextmenu", (params) => {
+    params.event?.event?.preventDefault?.();
+    if (params.componentType !== "series") return;
+    const idx = params.dataIndex;
+    const point = params.data?.meta || (params.seriesIndex < seriesTopList.length ? pointsTop[idx] : pointsBottom[idx]);
+    if (!point) return;
+    selectedPointIndex.value = idx;
+    selectedPoint.value = point;
+    prepareOcapForm(point);
+    const nativeEvent = params.event?.event;
+    pointContextMenu.value = {
+      visible: true,
+      x: nativeEvent?.offsetX ?? params.event?.offsetX ?? 0,
+      y: nativeEvent?.offsetY ?? params.event?.offsetY ?? 0,
+      point
+    };
   });
 
   // Auto highlight point matching batchId / lotNo
@@ -1795,6 +1896,7 @@ function resetChartZoom() {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
+  hidePointContextMenu();
   chartInstance?.dispose();
   chartInstance = null;
   trendChartInstance?.dispose();
@@ -2088,6 +2190,7 @@ onBeforeUnmount(() => {
             </label>
             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span> 規格/管制界限失控點</span>
             <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> 正常管制點位</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-400 inline-block border border-slate-500"></span> 已排除點位</span>
           </div>
         </div>
 
@@ -2105,6 +2208,37 @@ onBeforeUnmount(() => {
             </button>
           </div>
           <div ref="chartEl" data-testid="primary-spc-chart" class="h-[620px] w-full min-h-[500px]"></div>
+          <div
+            v-if="pointContextMenu.visible"
+            class="absolute z-30 w-52 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden"
+            :style="{ left: `${pointContextMenu.x}px`, top: `${pointContextMenu.y}px` }"
+            @click.stop
+          >
+            <button
+              type="button"
+              class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+              :disabled="pointExclusionSaving"
+              @click="setPointExclusion('ExcludedVisible')"
+            >
+              顯示但不列入計算
+            </button>
+            <button
+              type="button"
+              class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+              :disabled="pointExclusionSaving"
+              @click="setPointExclusion('ExcludedHidden')"
+            >
+              隱藏且不列入計算
+            </button>
+            <button
+              type="button"
+              class="w-full px-3 py-2 text-left text-xs font-bold text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 disabled:opacity-50"
+              :disabled="pointExclusionSaving"
+              @click="restorePointExclusion"
+            >
+              恢復列入計算
+            </button>
+          </div>
         </div>
 
         <div id="violation-analysis" class="scroll-mt-4 mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">

@@ -82,7 +82,8 @@ public static class AttributeChartCalculator
                 { "outOfControl", outOfControl },
                 { "lotNo", d.LotNo },
                 { "operator", d.Operator },
-                { "isExcluded", d.IsExcluded }
+                { "isExcluded", d.IsExcluded },
+                { "attributeMeasurementId", d.AttributeMeasurementId }
             });
         }
 
@@ -175,7 +176,8 @@ public static class AttributeChartCalculator
                 { "violatedRules", p?.ViolatedRules ?? new List<string>() },
                 { "lotNo", d.LotNo },
                 { "operator", d.Operator },
-                { "isExcluded", d.IsExcluded }
+                { "isExcluded", d.IsExcluded },
+                { "attributeMeasurementId", d.AttributeMeasurementId }
             });
         }
 
@@ -244,7 +246,8 @@ public static class AttributeChartCalculator
                 { "violatedRules", p?.ViolatedRules ?? new List<string>() },
                 { "lotNo", d.LotNo },
                 { "operator", d.Operator },
-                { "isExcluded", d.IsExcluded }
+                { "isExcluded", d.IsExcluded },
+                { "attributeMeasurementId", d.AttributeMeasurementId }
             });
         }
 
@@ -314,7 +317,8 @@ public static class AttributeChartCalculator
                 { "outOfControl", outOfControl },
                 { "lotNo", d.LotNo },
                 { "operator", d.Operator },
-                { "isExcluded", d.IsExcluded }
+                { "isExcluded", d.IsExcluded },
+                { "attributeMeasurementId", d.AttributeMeasurementId }
             });
         }
 

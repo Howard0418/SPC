@@ -147,6 +147,7 @@ public class SpcPointExclusionCalculationTests
         var rawPoints = result!.RawDataPoints.Should().BeAssignableTo<List<AttributeDataPoint>>().Subject;
         rawPoints.Single(x => x.AttributeMeasurementId == 12).IsExcluded.Should().BeTrue();
         rawPoints.Single(x => x.AttributeMeasurementId == 11).IsExcluded.Should().BeFalse();
+        GetPoints(result.ChartData).Select(x => GetLong(x, "attributeMeasurementId")).Should().Contain(12);
     }
 
     private static VariableMeasurement NewMeasurement(long id, int ppcId, Guid batchId, double value, DateTime measuredAt) => new()
@@ -189,5 +190,7 @@ public class SpcPointExclusionCalculationTests
         item.GetType().GetProperty(propertyName)!.GetValue(item).Should().BeOfType<bool>().Subject;
 
     private static long? GetLong(object item, string propertyName) =>
-        item.GetType().GetProperty(propertyName)!.GetValue(item) as long?;
+        item is IReadOnlyDictionary<string, object?> dict
+            ? dict.TryGetValue(propertyName, out var value) ? value as long? : null
+            : item.GetType().GetProperty(propertyName)!.GetValue(item) as long?;
 }

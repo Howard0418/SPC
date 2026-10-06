@@ -380,7 +380,7 @@
 
 #### SPC-POINT-FILTER-TASK-004：管制圖右鍵選單與已排除點恢復清單
 
-狀態：待執行；相依 TASK-003
+狀態：進行中；右鍵選單與 ExcludedVisible 樣式已完成，已排除點恢復清單待執行
 
 預計修改：
 
@@ -400,6 +400,15 @@
 確認結果：
 
 - 使用者不會因隱藏點而找不到恢復入口。
+
+完成紀錄：
+
+- 修改：管制圖點位新增右鍵選單，可設定顯示排除、隱藏排除與恢復；呼叫 `point-exclusions` 單點 API。
+- 後端補充：Attribute chart `chartData.points` 補帶 `attributeMeasurementId`，讓右鍵選單可定位 Attribute 單點。
+- 樣式：圖例補已排除點位，已排除點沿用灰色叉號樣式。
+- 驗證：前端 `npm run build -- --mode testhost` 通過；後端 `SpcPointExclusionCalculationTests` 2 passed；後端 build 0 warnings / 0 errors。
+- 發布：SPC 測試站 frontend/backend 已發布；備份 `frontend.backup-spc-point-context-menu-20261006`、`backend.backup-spc-point-context-menu-20261006`。Smoke：首頁 200，新 JS `index-93uPHtFu.js` 回 `application/javascript`，`/api/version` 200/test。正式站未發布。
+- 限制：已排除點恢復清單與真正隱藏點的清單恢復留待下一個小工作。
 
 #### SPC-POINT-FILTER-TASK-005：趨勢圖右鍵選單與已排除點恢復清單
 
