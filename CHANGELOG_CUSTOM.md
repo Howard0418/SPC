@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式總覽完整預覽）
+- 目的：讓 `/chemical-analysis-overview` 三個公式欄位一眼看到完整內容，不需要 textarea 內捲動或展開。
+- 修改：濃度公式、調整公式、調整量公式預設改為完整換行預覽；按列右側「編輯」才切換為 textarea，既有 dirty 判斷、還原與批次儲存保留。
+- 驗證：前端 `npm run build -- --mode testhost` 通過，產出 `index-BS8crdCY.js`、`index-CC7a4yWE.css`。
+- 發布：已發布 SPC 測試站 frontend，備份 `frontend.backup-chemical-formula-full-preview-20261006`；Smoke：首頁 200/text-html，新版 JS 200/application-javascript，新版 CSS 200/text-css，後端 `/api/version` 200/test。backend 未變更，正式站未發布。
+
 ## 2026-10-06（SPC 藥液公式總覽可讀性改善）
 - 目的：改善 `/chemical-analysis-overview` 公式欄位過矮、長公式需在欄內捲動不易核對的問題。
 - 修改：濃度公式、調整公式、調整量公式 textarea 預設由 2 行改為 5 行；公式欄位改等寬字體、較高最小高度並保留垂直拉高。
