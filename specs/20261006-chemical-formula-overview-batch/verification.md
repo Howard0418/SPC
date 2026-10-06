@@ -18,3 +18,15 @@
 - 修改多筆公式後只送出異動列，且每筆各自新增版本紀錄。
 - 未修改時不送出。
 - 前端 build 與測試站 smoke。
+
+## 2026-10-06 TASK-003 前端 draft 與異動標示
+
+- 狀態：完成。
+- 修改：`ChemicalAnalysisOverviewView.vue` 新增每列公式 draft、dirty row 判斷、已變更標籤、列底色提示與單列還原。
+- 修改：總覽表格可直接編輯濃度公式、調整公式、調整量公式與小數位；本階段不送出儲存 API。
+- 修改：匯出 Excel 補上調整公式、調整量公式、小數位與是否變更欄位。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過，產出 `index-CodgJfD4.js`、`index-CWZtvWtJ.css`。
+- 本階段未發布測試站；正式站未發布。

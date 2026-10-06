@@ -12,16 +12,50 @@ const items = ref([]);
 const line = ref("");
 const tank = ref("");
 const status = ref("all");
+const formulaDrafts = ref({});
+
+const formulaKeys = [
+  "concentrationFormula",
+  "adjustmentFormula",
+  "adjustmentAmountFormula",
+  "decimalPlaces"
+];
 
 function configOf(item) {
   try { return JSON.parse(item.chemicalAnalysisConfigJson || "{}"); } catch { return {}; }
 }
+function draftOfConfig(config) {
+  return {
+    concentrationFormula: String(config.concentrationFormula || ""),
+    adjustmentFormula: String(config.adjustmentFormula || ""),
+    adjustmentAmountFormula: String(config.adjustmentAmountFormula || ""),
+    decimalPlaces: Number.isFinite(Number(config.decimalPlaces)) ? Number(config.decimalPlaces) : 2
+  };
+}
+function normalizeDraft(draft) {
+  return {
+    concentrationFormula: String(draft?.concentrationFormula || "").trim(),
+    adjustmentFormula: String(draft?.adjustmentFormula || "").trim(),
+    adjustmentAmountFormula: String(draft?.adjustmentAmountFormula || "").trim(),
+    decimalPlaces: Math.min(8, Math.max(0, Number.isFinite(Number(draft?.decimalPlaces)) ? Number(draft.decimalPlaces) : 2))
+  };
+}
+function hasDraftChange(item) {
+  const draft = formulaDrafts.value[item.id];
+  if (!draft) return false;
+  const original = draftOfConfig(configOf(item));
+  const current = normalizeDraft(draft);
+  return formulaKeys.some(key => String(original[key] ?? "") !== String(current[key] ?? ""));
+}
 function rowOf(item) {
   const config = configOf(item);
-  const formulaMissing = !config.enabled || !String(config.concentrationFormula || "").trim();
+  const draft = formulaDrafts.value[item.id] || draftOfConfig(config);
+  const normalizedDraft = normalizeDraft(draft);
+  const formulaMissing = !config.enabled || !normalizedDraft.concentrationFormula;
   const limitsMissing = item.lsl == null && item.usl == null && item.targetValue == null;
   return {
     id: item.id,
+    raw: item,
     line: item.machine?.machineCode || item.process?.processCode || "未設定",
     tank: item.tank?.tankName || item.tank?.tankCode || "未設定",
     tankCode: item.tank?.tankCode || "",
@@ -30,7 +64,12 @@ function rowOf(item) {
     secondary: String(config.secondaryInputLabel || "").trim(),
     formulaMissing,
     limitsMissing,
-    formula: String(config.concentrationFormula || ""),
+    draft,
+    formula: normalizedDraft.concentrationFormula,
+    adjustmentFormula: normalizedDraft.adjustmentFormula,
+    adjustmentAmountFormula: normalizedDraft.adjustmentAmountFormula,
+    decimalPlaces: normalizedDraft.decimalPlaces,
+    dirty: hasDraftChange(item),
     issue: formulaMissing || limitsMissing
   };
 }
@@ -50,14 +89,21 @@ const summaries = computed(() => lines.value.map(currentLine => {
 
 async function load() {
   loading.value = true; error.value = "";
-  try { const { data } = await api.get("/part-process-characteristics"); items.value = Array.isArray(data) ? data : []; }
+  try {
+    const { data } = await api.get("/part-process-characteristics");
+    items.value = Array.isArray(data) ? data : [];
+    formulaDrafts.value = Object.fromEntries(items.value
+      .filter(x => String(x.controlScope || "").toUpperCase() === "CHEM")
+      .map(x => [x.id, draftOfConfig(configOf(x))]));
+  }
   catch (e) { error.value = getApiErrorMessage(e); }
   finally { loading.value = false; }
 }
 function showLine(value) { line.value = value; tank.value = ""; }
 function edit(row) { router.push({ path: "/part-process-characteristics", query: { editId: row.id } }); }
+function resetRow(row) { formulaDrafts.value[row.id] = draftOfConfig(configOf(row.raw)); }
 function exportExcel() {
-  const rows = filtered.value.map(x => ({ 線別: x.line, 槽體: x.tank, 槽體代碼: x.tankCode, 分析項目: x.chemical, 狀態: x.enabled ? "啟用" : "停用", 滴定值2: x.secondary || "無", 濃度公式: x.formula || "未設定", 設定警示: x.formulaMissing ? "缺濃度公式" : x.limitsMissing ? "缺規格" : "完整" }));
+  const rows = filtered.value.map(x => ({ 線別: x.line, 槽體: x.tank, 槽體代碼: x.tankCode, 分析項目: x.chemical, 狀態: x.enabled ? "啟用" : "停用", 滴定值2: x.secondary || "無", 濃度公式: x.formula || "未設定", 調整公式: x.adjustmentFormula || "", 調整量公式: x.adjustmentAmountFormula || "", 小數位: x.decimalPlaces, 是否變更: x.dirty ? "已變更" : "未變更", 設定警示: x.formulaMissing ? "缺濃度公式" : x.limitsMissing ? "缺規格" : "完整" }));
   const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(rows), "藥液分析項目");
   XLSX.writeFile(book, `SPC_藥液分析項目總覽_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
@@ -73,10 +119,10 @@ onMounted(load);
     <div v-if="error" class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ error }}</div>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4"><button v-for="item in summaries" :key="item.line" @click="showLine(item.line)" class="rounded-2xl border bg-white p-4 text-left shadow-sm hover:border-emerald-400 dark:bg-slate-800 dark:border-slate-700"><div class="flex justify-between"><strong>{{ item.line }}</strong><span class="text-xs text-slate-500">{{ item.tanks }} 槽</span></div><div class="mt-3 text-3xl font-black text-emerald-600">{{ item.enabled }}<span class="ml-1 text-sm text-slate-500">啟用項目</span></div><div class="mt-2 text-xs text-slate-500">滴定值 2：{{ item.secondary }}　停用：{{ item.disabled }}　<span :class="item.issues ? 'text-amber-600 font-bold' : ''">警示：{{ item.issues }}</span></div></button></div>
     <div class="rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700"><div class="grid gap-3 md:grid-cols-4"><select v-model="line" @change="tank=''" class="field"><option value="">全部線別</option><option v-for="value in lines" :key="value">{{ value }}</option></select><select v-model="tank" class="field"><option value="">全部槽體</option><option v-for="value in tanks" :key="value">{{ value }}</option></select><select v-model="status" class="field"><option value="all">全部狀態</option><option value="enabled">僅啟用</option><option value="secondary">僅有滴定值 2</option><option value="issues">僅設定警示</option></select><div class="flex items-center text-sm text-slate-500"><Search class="mr-2 w-4 h-4" />顯示 {{ filtered.length }} 個項目</div></div></div>
-    <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700"><table class="min-w-full text-sm"><thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900"><tr><th>線別</th><th>槽體</th><th>分析項目</th><th>狀態</th><th>滴定值 2</th><th>設定狀態</th><th></th></tr></thead><tbody><tr v-for="item in filtered" :key="item.id" class="border-t dark:border-slate-700"><td>{{ item.line }}</td><td><div>{{ item.tank }}</div><small class="text-slate-400">{{ item.tankCode }}</small></td><td class="font-bold">{{ item.chemical }}</td><td><span :class="item.enabled ? 'badge-green' : 'badge-gray'">{{ item.enabled ? '啟用' : '停用' }}</span></td><td>{{ item.secondary || '—' }}</td><td><span :class="item.issue ? 'text-amber-600 font-bold' : 'text-emerald-600'">{{ item.formulaMissing ? '缺濃度公式' : item.limitsMissing ? '缺規格' : '完整' }}</span></td><td><button @click="edit(item)" class="text-blue-600 hover:underline"><Settings2 class="inline w-4 h-4" /> 編輯</button></td></tr><tr v-if="!loading && !filtered.length"><td colspan="7" class="p-8 text-center text-slate-500">沒有符合條件的藥液分析項目。</td></tr></tbody></table></div>
+    <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700"><table class="min-w-[1180px] text-sm"><thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900"><tr><th>線別</th><th>槽體</th><th>分析項目</th><th>狀態</th><th>濃度公式</th><th>調整公式</th><th>調整量公式</th><th>小數位</th><th>設定狀態</th><th></th></tr></thead><tbody><tr v-for="item in filtered" :key="item.id" class="border-t dark:border-slate-700" :class="item.dirty ? 'bg-amber-50/70 dark:bg-amber-950/20' : ''"><td>{{ item.line }}</td><td><div>{{ item.tank }}</div><small class="text-slate-400">{{ item.tankCode }}</small></td><td class="font-bold"><div>{{ item.chemical }}</div><small v-if="item.secondary" class="text-slate-400">滴定值 2：{{ item.secondary }}</small></td><td><span :class="item.enabled ? 'badge-green' : 'badge-gray'">{{ item.enabled ? '啟用' : '停用' }}</span><span v-if="item.dirty" class="ml-2 badge-amber">已變更</span></td><td><textarea v-model="item.draft.concentrationFormula" rows="2" class="formula-field" placeholder="濃度公式"></textarea></td><td><textarea v-model="item.draft.adjustmentFormula" rows="2" class="formula-field" placeholder="調整公式"></textarea></td><td><textarea v-model="item.draft.adjustmentAmountFormula" rows="2" class="formula-field" placeholder="調整量公式"></textarea></td><td><input v-model.number="item.draft.decimalPlaces" type="number" min="0" max="8" class="field w-20" /></td><td><span :class="item.issue ? 'text-amber-600 font-bold' : 'text-emerald-600'">{{ item.formulaMissing ? '缺濃度公式' : item.limitsMissing ? '缺規格' : '完整' }}</span></td><td><div class="flex flex-col gap-2"><button @click="edit(item)" class="text-blue-600 hover:underline"><Settings2 class="inline w-4 h-4" /> 編輯</button><button v-if="item.dirty" @click="resetRow(item)" class="text-slate-500 hover:underline">還原</button></div></td></tr><tr v-if="!loading && !filtered.length"><td colspan="10" class="p-8 text-center text-slate-500">沒有符合條件的藥液分析項目。</td></tr></tbody></table></div>
   </section>
 </template>
 
 <style scoped>
-th,td{padding:.8rem 1rem}.field{width:100%;border:1px solid #cbd5e1;border-radius:.65rem;padding:.55rem .7rem;background:transparent}.btn-primary,.btn-outline{display:inline-flex;align-items:center;gap:.4rem;border-radius:.7rem;padding:.55rem .8rem;font-size:.875rem;font-weight:700}.btn-primary{background:#059669;color:white}.btn-outline{border:1px solid #94a3b8}.badge-green,.badge-gray{border-radius:9999px;padding:.2rem .55rem;font-size:.75rem;font-weight:700}.badge-green{background:#d1fae5;color:#047857}.badge-gray{background:#e2e8f0;color:#475569}
+th,td{padding:.8rem 1rem;vertical-align:top}.field,.formula-field{width:100%;border:1px solid #cbd5e1;border-radius:.65rem;padding:.55rem .7rem;background:transparent}.formula-field{min-width:14rem;resize:vertical;line-height:1.35}.btn-primary,.btn-outline{display:inline-flex;align-items:center;gap:.4rem;border-radius:.7rem;padding:.55rem .8rem;font-size:.875rem;font-weight:700}.btn-primary{background:#059669;color:white}.btn-outline{border:1px solid #94a3b8}.badge-green,.badge-gray,.badge-amber{border-radius:9999px;padding:.2rem .55rem;font-size:.75rem;font-weight:700;white-space:nowrap}.badge-green{background:#d1fae5;color:#047857}.badge-gray{background:#e2e8f0;color:#475569}.badge-amber{background:#fef3c7;color:#b45309}
 </style>
