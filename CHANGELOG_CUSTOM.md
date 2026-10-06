@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式總覽可讀性改善）
+- 目的：改善 `/chemical-analysis-overview` 公式欄位過矮、長公式需在欄內捲動不易核對的問題。
+- 修改：濃度公式、調整公式、調整量公式 textarea 預設由 2 行改為 5 行；公式欄位改等寬字體、較高最小高度並保留垂直拉高。
+- 驗證：前端 `npm run build -- --mode testhost` 通過，產出 `index-tRINLkRd.js`、`index-BXboKn_D.css`。
+- 發布：已發布 SPC 測試站 frontend，備份 `frontend.backup-chemical-formula-readability-20261006`；Smoke：首頁 200/text-html，新版 JS 200/application-javascript，新版 CSS 200/text-css，後端 `/api/version` 200/test。backend 未變更，正式站未發布。
+
 ## 2026-10-06（SPC 藥液公式總覽文件收尾）
 - 藥液公式總覽與批次儲存頁文件收尾完成，`CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與規格驗證紀錄已同步。
 - 本串小工作測試站階段結案；SPC 測試站 frontend 已發布，backend 未變更、未發布，正式站未發布。
