@@ -16,6 +16,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ChemicalFTableVersion> ChemicalFTableVersions => Set<ChemicalFTableVersion>();
     public DbSet<ChemicalFTableCell> ChemicalFTableCells => Set<ChemicalFTableCell>();
     public DbSet<ChemicalFTableReference> ChemicalFTableReferences => Set<ChemicalFTableReference>();
+    public DbSet<ChemicalAnalysisFormulaVersion> ChemicalAnalysisFormulaVersions => Set<ChemicalAnalysisFormulaVersion>();
     public DbSet<AlertEvent> AlertEvents => Set<AlertEvent>();
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
     public DbSet<StationOperationSession> StationOperationSessions => Set<StationOperationSession>();
@@ -87,6 +88,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.NormalizedCellAddress).HasMaxLength(50);
         modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.SourceSheet).HasMaxLength(100);
         modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.ReferenceContext).HasMaxLength(200);
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>().ToTable("ChemicalAnalysisFormulaVersions", table =>
+        {
+            table.HasComment("Version history for chemical analysis formulas stored on PartProcessCharacteristics.");
+        });
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>().HasKey(x => x.Id);
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>().Property(x => x.ChangeType).HasMaxLength(32).HasComment("Create, Update, or Restore.");
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>().Property(x => x.ChangedBy).HasMaxLength(100);
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>().Property(x => x.Reason).HasMaxLength(500);
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>().HasIndex(x => new { x.PartProcessCharacteristicId, x.VersionNo }).IsUnique();
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>().HasIndex(x => new { x.PartProcessCharacteristicId, x.ChangedAt });
         modelBuilder.Entity<WorkOrder>().HasIndex(x => x.WorkOrderNo).IsUnique();
         modelBuilder.Entity<ProductStationItem>()
             .HasIndex(x => new { x.ProductId, x.StationId, x.InspectionItemId })
@@ -309,6 +320,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(x => x.PartProcessCharacteristicId)
             .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>()
+            .HasOne(x => x.PartProcessCharacteristic)
+            .WithMany()
+            .HasForeignKey(x => x.PartProcessCharacteristicId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ChemicalAnalysisFormulaVersion>()
+            .HasOne(x => x.RestoredFromVersion)
+            .WithMany()
+            .HasForeignKey(x => x.RestoredFromVersionId)
+            .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<UploadDetail>()
             .HasOne<UploadBatch>()
             .WithMany()

@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液分析公式版本資料模型）
+- 新增 `ChemicalAnalysisFormulaVersion` 後端 entity、`ChemicalAnalysisFormulaVersions` DbSet、EF mapping 與 migration，用於保存藥液分析公式版本、前一版內容、修改人、修改時間、原因與回復來源。
+- 新增模型 mapping 測試，確認資料表名稱、欄位長度與 `(PartProcessCharacteristicId, VersionNo)` 唯一索引。
+- 驗證：`ChemicalAnalysisFormulaVersionModelTests` 1 passed；後端 build 0 warnings / 0 errors。
+- 範圍：本階段只建立資料模型，不接 API、不改前端、不發布測試站。正式站未發布。
+
 ## 2026-10-06（SPC 藥液分析公式版本記錄規格）
 - 依使用者需求規劃藥液分析公式版本記錄與回復。
 - 現況：公式目前存在 `PartProcessCharacteristics.ChemicalAnalysisConfigJson`，由 `PartProcessCharacteristicsView.vue` 單筆編輯後透過 `PUT /part-process-characteristics/{id}` 覆蓋設定；目前無公式版本歷史或回復 API。

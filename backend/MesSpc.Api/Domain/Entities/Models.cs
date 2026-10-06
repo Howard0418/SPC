@@ -284,6 +284,24 @@ public class ChemicalFTableReference : BaseEntity<int>
     public virtual PartProcessCharacteristic? PartProcessCharacteristic { get; set; }
 }
 
+public class ChemicalAnalysisFormulaVersion : BaseEntity<long>
+{
+    public int PartProcessCharacteristicId { get; set; }
+    public int VersionNo { get; set; }
+    public string ConfigJson { get; set; } = string.Empty;
+    public string? PreviousConfigJson { get; set; }
+    public string ChangeType { get; set; } = "Update";
+    public long? RestoredFromVersionId { get; set; }
+    public string? Reason { get; set; }
+    public string? ChangedBy { get; set; }
+    public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey("PartProcessCharacteristicId")]
+    public virtual PartProcessCharacteristic? PartProcessCharacteristic { get; set; }
+    [ForeignKey("RestoredFromVersionId")]
+    public virtual ChemicalAnalysisFormulaVersion? RestoredFromVersion { get; set; }
+}
+
 public class AlertEvent : BaseEntity<int>
 {
     public DateTime OccurredAt { get; set; } = DateTime.UtcNow;

@@ -24,3 +24,16 @@
 - 權限測試。
 - 前端版本清單與回復操作。
 - 測試站實際修改一筆公式並回復。
+
+## 2026-10-06 TASK-003 後端資料模型與 Migration
+
+- 狀態：完成。
+- 修改：新增 `ChemicalAnalysisFormulaVersion` entity、`ChemicalAnalysisFormulaVersions` DbSet、EF mapping、唯一版本索引與 migration。
+- 範圍：只建立資料承載結構；尚未接 API、版本服務、前端或測試站發布。
+
+### 驗證
+
+- 先建測試：初次執行 `ChemicalAnalysisFormulaVersionModelTests` 因 model 尚未建立而編譯失敗，符合 red test 預期。
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter ChemicalAnalysisFormulaVersionModelTests --no-restore -p:UseSharedCompilation=false`：1 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- 備註：一次 build 與 test 並行時遇到 DLL 檔案鎖定，單獨重跑 build 後通過。
