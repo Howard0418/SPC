@@ -569,6 +569,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 contextMeasurement.SlotId,
                 ct);
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
+            var measurementIds = measurements.Select(x => x.Id).ToList();
+            var excludedMeasurementIds = await GetActiveAttributePointExclusionIdsAsync(partProcessCharacteristicId, measurementIds, ct);
 
             var points = measurements.Select(x => 
             {
@@ -589,7 +591,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     TankId = x.TankId,
                     SlotId = x.SlotId,
                     SideCode = x.SideCode.ToString(),
-                    IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId)
+                    IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId) || excludedMeasurementIds.Contains(x.Id),
+                    AttributeMeasurementId = x.Id
                 };
             }).ToList();
 
@@ -666,6 +669,24 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                      && x.VariableMeasurementId.HasValue
                      && ids.Contains(x.VariableMeasurementId.Value))
             .Select(x => x.VariableMeasurementId!.Value)
+            .ToHashSetAsync(ct);
+    }
+
+    private async Task<HashSet<long>> GetActiveAttributePointExclusionIdsAsync(
+        int partProcessCharacteristicId,
+        IEnumerable<long> attributeMeasurementIds,
+        CancellationToken ct)
+    {
+        var ids = attributeMeasurementIds.Distinct().ToList();
+        if (ids.Count == 0) return [];
+
+        return await db.SpcPointExclusions.AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId
+                     && x.IsActive
+                     && x.PointScope == "AttributeMeasurement"
+                     && x.AttributeMeasurementId.HasValue
+                     && ids.Contains(x.AttributeMeasurementId.Value))
+            .Select(x => x.AttributeMeasurementId!.Value)
             .ToHashSetAsync(ct);
     }
 

@@ -15,9 +15,10 @@
 ## 2026-10-06（SPC-POINT-FILTER 管制圖計算套用單點排除）
 - `SpcService.GetInteractiveChartAsync` 讀取 active `SpcPointExclusions`，變量型管制圖 raw point 與 Xbar 子組開始套用單點排除。
 - 保留既有 `UploadBatches.IsExcluded` 整批排除；單點排除只與整批排除 OR 合併，不會解除整批排除。
-- 驗證：`SpcPointExclusionCalculationTests` 1 passed；後端 build 0 warnings / 0 errors。
-- 已發布 SPC 測試站 backend，備份 `backend.backup-spc-point-exclusion-calc-20261006`；Smoke：`/api/version` 200/test，`app_offline.htm` 已移除。正式站未發布。
-- 本階段尚未實作趨勢圖/直方圖整合、前端右鍵選單、隱藏點不渲染與已排除點清單。
+- 趨勢圖/直方圖共用的 normality 資料口徑已確認使用未排除點；Attribute chart 補齊 `AttributeMeasurement` 單點排除與 `AttributeMeasurementId` 回傳。
+- 驗證：`SpcPointExclusionCalculationTests` 2 passed；後端 build 0 warnings / 0 errors。
+- 已發布 SPC 測試站 backend，備份 `backend.backup-spc-point-exclusion-calc-20261006`、`backend.backup-spc-point-exclusion-trend-20261006`；Smoke：`/api/version` 200/test，`app_offline.htm` 已移除。正式站未發布。
+- 本階段尚未實作前端右鍵選單、隱藏點不渲染與已排除點清單。
 
 ## 2026-10-05（SPC 測試問題：總覽下拉與資料數口徑）
 - 依 `docs/SPC測試問題_20261005.xlsx` 修正兩項測試問題。

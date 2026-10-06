@@ -369,13 +369,14 @@
 確認結果：
 
 - 管制圖後端計算開始讀取 `SpcPointExclusions` active 單點排除；整批排除仍優先保留。
-- 趨勢圖、直方圖、常態檢定與前端右鍵/隱藏顯示仍在後續 TASK。
+- 趨勢圖、直方圖與常態檢定共用後端 raw point 排除口徑已完成；前端右鍵/隱藏顯示仍在後續 TASK。
 
 完成紀錄：
 
 - 修改：`SpcService.GetInteractiveChartAsync` 將 `UploadBatches.IsExcluded` 與 active `SpcPointExclusions` 合併成點位 `IsExcluded`；Xbar 子組任一 raw measurement 被排除時，子組點也排除。
-- 驗證：`SpcPointExclusionCalculationTests` 1 passed；後端 build 0 warnings / 0 errors。
-- 發布：SPC 測試站 backend 已發布；備份 `backend.backup-spc-point-exclusion-calc-20261006`。Smoke：`/api/version` 200/test，`app_offline.htm` 已移除。正式站未發布。
+- 追加修改：常態檢定/直方圖資料口徑確認使用未排除點；Attribute chart 補齊 `AttributeMeasurement` 單點排除與 `AttributeMeasurementId` 回傳。
+- 驗證：`SpcPointExclusionCalculationTests` 2 passed；後端 build 0 warnings / 0 errors。
+- 發布：SPC 測試站 backend 已發布；備份 `backend.backup-spc-point-exclusion-calc-20261006`、`backend.backup-spc-point-exclusion-trend-20261006`。Smoke：`/api/version` 200/test，`app_offline.htm` 已移除。正式站未發布。
 
 #### SPC-POINT-FILTER-TASK-004：管制圖右鍵選單與已排除點恢復清單
 

@@ -76,3 +76,25 @@
 
 - 本階段只接管制圖後端變量資料與子組計算。
 - 趨勢圖、直方圖、常態檢定、前端右鍵選單、`ExcludedHidden` 圖上隱藏效果與已排除點清單仍留待後續 TASK。
+
+## 2026-10-06 TASK-007 趨勢圖/直方圖/常態檢定套用單點排除
+
+- 狀態：完成。
+- 修改：
+  - 趨勢圖/直方圖共用的 `PopulateNormalityAndCurve` 已由 TASK-006 回傳的 `IsExcluded` raw points 套用單點排除。
+  - 補齊 Attribute chart 的 `AttributeMeasurement` 單點排除讀取與 raw point 標記。
+  - `AttributeDataPoint` 補帶 `AttributeMeasurementId`，供後續前端右鍵與恢復清單定位點位。
+
+### 驗證
+
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter SpcPointExclusionCalculationTests --no-restore -p:UseSharedCompilation=false`：2 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- `dotnet publish backend\MesSpc.Api\MesSpc.Api.csproj -c Release --no-restore -o release-staging\spc-point-exclusion-trend-20261006\backend-publish -p:UseSharedCompilation=false`：成功。
+- 測試站發布：已發布 `release/test/backend`；備份 `release/test/backend.backup-spc-point-exclusion-trend-20261006`。
+- Smoke：
+  - `http://172.16.110.27:8081/api/version`：HTTP 200，`environment=test`。
+  - `release/test/backend/app_offline.htm`：不存在。
+
+### 限制
+
+- 本階段只處理後端口徑，不改前端右鍵選單與 `ExcludedHidden` 圖上隱藏渲染。

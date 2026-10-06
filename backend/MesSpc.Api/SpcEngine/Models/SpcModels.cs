@@ -89,4 +89,5 @@ public record AttributeDataPoint
     public int? SlotId { get; init; }
     public string? SideCode { get; init; }
     public bool IsExcluded { get; init; }
+    public long? AttributeMeasurementId { get; init; }
 }
