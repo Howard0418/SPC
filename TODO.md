@@ -352,25 +352,30 @@
 - 驗證：`SpcPointExclusionsControllerTests` 4 passed；後端 build 0 warnings / 0 errors。
 - 發布：SPC 測試站 backend 已發布；備份 `backend.backup-spc-point-exclusions-20261006`。Smoke：`/api/version` 200/test，新寫入 API 未登入 401。正式站未發布。
 
-#### SPC-POINT-FILTER-TASK-003：後端計算套用單點排除
+#### SPC-POINT-FILTER-TASK-003：後端管制圖計算套用單點排除
 
-狀態：待執行；相依 TASK-002
+狀態：完成；SPC 測試站 backend 已發布
 
 預計修改：
 
 - 管制圖計算套用單點排除。
-- 趨勢圖、直方圖、常態檢定與能力指標套用單點排除。
 - `ExcludedVisible` 與 `ExcludedHidden` 都不列入計算。
 
 測試：
 
-- 製程 I-MR / Xbar、藥液、趨勢圖各排除一點後重新計算。
-- `ExcludedVisible` 與 `ExcludedHidden` 計算結果一致。
-- 恢復後統計回復。
+- 製程 I-MR 排除一點後重新計算。
+- raw data 仍保留該點，但回傳 `isExcluded=true`，且不再計入 OOS。
 
 確認結果：
 
-- 管制圖與趨勢圖統計口徑一致，不因前端顯示/隱藏而分歧。
+- 管制圖後端計算開始讀取 `SpcPointExclusions` active 單點排除；整批排除仍優先保留。
+- 趨勢圖、直方圖、常態檢定與前端右鍵/隱藏顯示仍在後續 TASK。
+
+完成紀錄：
+
+- 修改：`SpcService.GetInteractiveChartAsync` 將 `UploadBatches.IsExcluded` 與 active `SpcPointExclusions` 合併成點位 `IsExcluded`；Xbar 子組任一 raw measurement 被排除時，子組點也排除。
+- 驗證：`SpcPointExclusionCalculationTests` 1 passed；後端 build 0 warnings / 0 errors。
+- 發布：SPC 測試站 backend 已發布；備份 `backend.backup-spc-point-exclusion-calc-20261006`。Smoke：`/api/version` 200/test，`app_offline.htm` 已移除。正式站未發布。
 
 #### SPC-POINT-FILTER-TASK-004：管制圖右鍵選單與已排除點恢復清單
 

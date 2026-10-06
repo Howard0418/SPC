@@ -52,3 +52,27 @@
 
 - 本階段只建立資料模型與 API，尚未接入管制圖/趨勢圖計算。
 - 右鍵選單、已排除點清單與隱藏點恢復 UI 尚未實作，留待後續 TASK。
+
+## 2026-10-06 TASK-006 管制圖計算套用單點排除
+
+- 狀態：完成。
+- 修改：
+  - `SpcService.GetInteractiveChartAsync` 讀取 active `SpcPointExclusions`。
+  - 變量型管制圖 raw point 若有 `VariableMeasurement` 單點排除，會標記 `IsExcluded = true`。
+  - Xbar-R / Xbar-S 子組若任一 raw measurement 被單點排除，該子組點會標記 `IsExcluded = true`。
+  - 保留既有 `UploadBatches.IsExcluded` 整批排除，單點排除只做 OR 合併，不覆蓋整批排除。
+
+### 驗證
+
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter SpcPointExclusionCalculationTests --no-restore -p:UseSharedCompilation=false`：1 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- `dotnet publish backend\MesSpc.Api\MesSpc.Api.csproj -c Release --no-restore -o release-staging\spc-point-exclusion-calc-20261006\backend-publish -p:UseSharedCompilation=false`：成功。
+- 測試站發布：已發布 `release/test/backend`；備份 `release/test/backend.backup-spc-point-exclusion-calc-20261006`。
+- Smoke：
+  - `http://172.16.110.27:8081/api/version`：HTTP 200，`environment=test`。
+  - `release/test/backend/app_offline.htm`：不存在。
+
+### 限制
+
+- 本階段只接管制圖後端變量資料與子組計算。
+- 趨勢圖、直方圖、常態檢定、前端右鍵選單、`ExcludedHidden` 圖上隱藏效果與已排除點清單仍留待後續 TASK。

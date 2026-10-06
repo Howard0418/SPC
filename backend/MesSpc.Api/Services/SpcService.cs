@@ -441,6 +441,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 ct);
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
             var measurementIds = measurements.Select(x => x.Id).ToList();
+            var excludedMeasurementIds = await GetActiveVariablePointExclusionIdsAsync(partProcessCharacteristicId, measurementIds, ct);
             var alerts = await db.AlertEvents.AsNoTracking()
                 .Where(a => a.VariableMeasurementId.HasValue && measurementIds.Contains(a.VariableMeasurementId.Value))
                 .ToListAsync(ct);
@@ -472,7 +473,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                     TankId = x.TankId,
                     SlotId = x.SlotId,
                     SideCode = x.SideCode.ToString(),
-                    IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId),
+                    IsExcluded = excludedUploadBatchIds.Contains(x.UploadBatchId) || excludedMeasurementIds.Contains(x.Id),
                     IsOutOfSpec = (activeUsl.HasValue && value > activeUsl.Value)
                         || (activeLsl.HasValue && value < activeLsl.Value),
                     IsOutOfControl = alert?.AlertType == AlertType.OutOfControl,
@@ -521,7 +522,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                         TankId = first.TankId,
                         SlotId = first.SlotId,
                         SideCode = first.SideCode.ToString(),
-                        IsExcluded = g.Any(m => excludedUploadBatchIds.Contains(m.UploadBatchId)),
+                        IsExcluded = g.Any(m => excludedUploadBatchIds.Contains(m.UploadBatchId) || excludedMeasurementIds.Contains(m.Id)),
                         VariableMeasurementId = first.Id,
                         AlertId = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.Id).FirstOrDefault(id => id.HasValue),
                         AlertStatus = g.Select(m => alertLookup.GetValueOrDefault(m.Id)?.Status).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)),
@@ -647,6 +648,24 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         return await db.UploadBatches.AsNoTracking()
             .Where(x => ids.Contains(x.UploadBatchId) && x.IsExcluded)
             .Select(x => x.UploadBatchId)
+            .ToHashSetAsync(ct);
+    }
+
+    private async Task<HashSet<long>> GetActiveVariablePointExclusionIdsAsync(
+        int partProcessCharacteristicId,
+        IEnumerable<long> variableMeasurementIds,
+        CancellationToken ct)
+    {
+        var ids = variableMeasurementIds.Distinct().ToList();
+        if (ids.Count == 0) return [];
+
+        return await db.SpcPointExclusions.AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId
+                     && x.IsActive
+                     && x.PointScope == "VariableMeasurement"
+                     && x.VariableMeasurementId.HasValue
+                     && ids.Contains(x.VariableMeasurementId.Value))
+            .Select(x => x.VariableMeasurementId!.Value)
             .ToHashSetAsync(ct);
     }
 
