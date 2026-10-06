@@ -246,7 +246,7 @@
 
 #### PORTAL-TASK-002：新增人事角色與公告管理角色隔離
 
-狀態：待規格
+狀態：完成；Portal 測試站已發布
 
 理由：公告管理屬權限隔離；需先做，避免不同角色互看/誤改公告。
 
@@ -270,6 +270,13 @@
 - 總務登入只看到總務公告。
 - admin 可看到全部公告。
 - 一般使用者仍只能看已發布公告，不能管理。
+
+完成紀錄：
+
+- 規格：`D:\PmrPortal\specs\20261006-announcement-role-isolation\spec.md`。
+- 修改：Portal 新增 `human_resources` 角色；公告新增 `manager_role` 欄位與 migration，既有公告預設 `general_affairs`；公告管理 API 清單、單筆、更新、刪除、附件新增/刪除皆依角色隔離，admin 不受隔離。
+- 驗證：Portal API/Web build 0 warnings / 0 errors；已補公告 Controller 測試，但既有 `PmrPortal.Api.Tests` 專案因多個舊測試簽章不符無法編譯，未宣稱測試通過。
+- 發布：Portal 測試站 API/Web 已發布；備份 `portal-api.backup-announcement-role-isolation-20261006-portal`、`portal-web.backup-announcement-role-isolation-20261006-portal`。Smoke：API `/health` 200/test，公告管理頁未登入 401。正式站未發布。
 
 #### PORTAL-TASK-003：公告發佈格式自動帶組織單位
 
