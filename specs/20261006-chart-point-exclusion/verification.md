@@ -229,3 +229,18 @@
   - 舊管制圖 mock 等不到 canvas。
   - summary 測試等不到既有「重新計算」按鈕或 select。
 - 以上失敗未指向本次新增的已排除點清單 testid；本階段先記錄為既有 Playwright 測試需後續校正。
+
+## 2026-10-06 TASK-014 測試站總 smoke test
+
+- 狀態：完成。
+- 本階段未修改產品程式；正式站未發布。
+- SPC 測試站目前已使用前序小工作發布的 frontend/backend。
+
+### 驗證
+
+- `http://172.16.110.27:8083/`：HTTP 200，`text/html`。
+- `http://172.16.110.27:8083/assets/index-DKfYYFj2.js`：HTTP 200，`application/javascript`。
+- `http://172.16.110.27:8081/api/version`：HTTP 200，`environment=test`。
+- `release/test/backend/app_offline.htm`：不存在。
+- `release/test/frontend/index.html`：存在。
+- `release/test/frontend/assets/index-DKfYYFj2.js`：存在。

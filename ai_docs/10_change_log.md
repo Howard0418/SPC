@@ -1,3 +1,6 @@
+## [2026-10-06] - SPC-POINT-FILTER-TASK-014 測試站總 smoke test
+- 目的：確認目前 SPC 測試站 frontend/backend 已可正常回應，且新版前端 JS MIME 正確；本階段只驗證不改程式、不發布正式站。
+
 ## [2026-10-06] - SPC-POINT-FILTER-TASK-013 前端 build / UI 測試
 - 目的：確認管制圖與趨勢圖點位排除/恢復前端仍可 build，並檢查新增清單入口與恢復呼叫存在；本階段只驗證不改程式。
 

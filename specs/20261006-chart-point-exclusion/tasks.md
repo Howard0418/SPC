@@ -24,5 +24,5 @@
 
 - [x] TASK-012：後端測試，涵蓋製程、藥液、Xbar 子組與趨勢圖 normality。
 - [x] TASK-013：前端 build / UI 測試。
-- [ ] TASK-014：發布 SPC 測試站並 smoke test。
+- [x] TASK-014：發布 SPC 測試站並 smoke test。
 - [ ] TASK-015：同步 CHANGELOG_CUSTOM.md 與 TODO 完成紀錄。

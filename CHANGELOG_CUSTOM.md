@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC-POINT-FILTER 測試站總 smoke test）
+- SPC 測試站 frontend/backend 總驗證完成；本階段未修改產品程式、正式站未發布。
+- 前端首頁 HTTP 200，`text/html`。
+- 新版 JS `index-DKfYYFj2.js` HTTP 200，`application/javascript`。
+- 後端 `/api/version` HTTP 200，`environment=test`。
+- `release/test/backend/app_offline.htm` 不存在。
+
 ## 2026-10-06（SPC-POINT-FILTER 前端 build / UI 測試）
 - 前端 `npm run build:test` 通過，產出 `index-DKfYYFj2.js` 與 `index-CVlQs-Gh.css`。
 - 靜態檢查確認管制圖與趨勢圖皆有已排除點清單入口、恢復函式與 `point-exclusions` API 呼叫。
