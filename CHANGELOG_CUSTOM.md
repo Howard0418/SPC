@@ -1,5 +1,13 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（SPC 正式機發布）
+- 目的：依使用者授權將目前 SPC production 交付包發布到正式機。
+- 發布：重建 `release/production/backend`、`release/production/frontend`，production manifest 顯示 `AppEnvironment=production`、Database `PMR_SPC_2026`、WebVersion `0.1.62`；正式前端資產為 `index-CTPUMGmw.js`、`index-B22nJqjf.css`。
+- 修正：發現正式 IIS `SpcApi`、`SpcWeb` 原指向 `D:\SPC\release\test\...`，導致 `172.16.110.27:8081/api/version` 回 `environment=test`；已建立 IIS 備份 `SPC-production-path-20261007-0756` 並改指 `D:\SPC\release\production\backend/frontend`。
+- 備份：`D:\SPC\publish\backend.backup-production-20261007-20261007-074921`、`D:\SPC\publish\frontend.backup-production-20261007-20261007-074921`。
+- 驗證：正式 API `http://172.16.110.27:8081/api/version` 回 200/production；正式 Web 首頁 200/text-html 並引用新版 JS；新版 JS 200/application-javascript；新版 CSS 200/text-css。
+- 範圍：未發布 Portal，未寫入 `D:\Sites\PmrPortal`，未手動修改正式資料。
+
 ## 2026-10-06（SPC 藥液公式總覽分頁）
 - 目的：公式完整預覽後列高增加，總覽頁一次顯示全部項目會過長；新增前端分頁降低單頁長度。
 - 修改：藥液公式總覽新增每頁 5/10/20 筆選擇、上一頁/下一頁與頁碼資訊；線別、槽體、狀態篩選及摘要卡切換會回到第 1 頁。匯出仍使用篩選後全部資料，批次儲存仍以全部 dirty rows 為準。

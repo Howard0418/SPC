@@ -1,3 +1,6 @@
+## [2026-10-07] - SPC 正式機發布
+- 目的：依使用者授權更新 SPC 正式機，重建 production 交付包、修正正式 IIS 路徑指向 production backend/frontend，並完成正式 API/Web smoke test。
+
 ## [2026-10-06] - SPC-TASK-002-TASK-005 藥液公式批次儲存結果列
 - 目的：批次儲存後顯示成功/失敗列結果；成功列重新載入資料，失敗列保留草稿與錯誤訊息供修正。
 
