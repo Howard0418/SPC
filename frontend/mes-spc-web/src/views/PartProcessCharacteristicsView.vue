@@ -23,7 +23,8 @@ import {
   Activity,
   Info,
   Cpu,
-  Code2
+  Code2,
+  History
 } from "lucide-vue-next";
 
 const rows = ref([]);
@@ -67,6 +68,10 @@ const originalDisplayMode = ref("CONTROL_CHART");
 const isHydratingForm = ref(false);
 const advancedMode = ref(localStorage.getItem("ppcAdvancedMode") === "true");
 const formMode = ref("quick"); // 'quick', 'advanced'
+const chemicalFormulaVersions = ref([]);
+const chemicalFormulaVersionsVisible = ref(false);
+const chemicalFormulaVersionsLoading = ref(false);
+const chemicalFormulaVersionsErr = ref("");
 
 const form = ref({
   controlScope: "PRODUCT",
@@ -137,6 +142,52 @@ function buildChemicalAnalysisConfigJson() {
   return "";
 }
 const formErr = ref("");
+
+function formatFormulaVersionDate(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function formulaVersionSummary(version) {
+  const raw = version?.configJson || "";
+  if (!raw) return "空白公式設定";
+  try {
+    const parsed = JSON.parse(raw);
+    const fields = [
+      parsed.enabled === false ? "停用" : "啟用",
+      parsed.version ? `版本 ${parsed.version}` : "",
+      parsed.concentrationFormula ? `濃度：${parsed.concentrationFormula}` : "",
+      parsed.adjustmentFormula ? `調整：${parsed.adjustmentFormula}` : "",
+      parsed.adjustmentAmountFormula ? `調整量：${parsed.adjustmentAmountFormula}` : ""
+    ].filter(Boolean);
+    return fields.join("｜") || raw;
+  } catch {
+    return raw;
+  }
+}
+
+async function loadChemicalFormulaVersions() {
+  if (!currentId.value || form.value.controlScope !== CONTROL_SCOPE.CHEM) return;
+  chemicalFormulaVersionsVisible.value = true;
+  chemicalFormulaVersionsLoading.value = true;
+  chemicalFormulaVersionsErr.value = "";
+  try {
+    const { data } = await api.get(`/part-process-characteristics/${currentId.value}/chemical-analysis-formula-versions`);
+    chemicalFormulaVersions.value = data?.data || [];
+  } catch (e) {
+    chemicalFormulaVersionsErr.value = getApiErrorMessage(e);
+  } finally {
+    chemicalFormulaVersionsLoading.value = false;
+  }
+}
 
 function finiteSpecNumber(value) {
   if (value === "" || value === null || value === undefined) return null;
@@ -707,6 +758,9 @@ async function openCreateModal() {
     isEnabled: true
   };
   formErr.value = "";
+  chemicalFormulaVersions.value = [];
+  chemicalFormulaVersionsVisible.value = false;
+  chemicalFormulaVersionsErr.value = "";
   showModal.value = true;
 }
 
@@ -716,6 +770,9 @@ async function openEditModal(item) {
   currentStep.value = 1;
   formMode.value = "quick";
   formErr.value = "";
+  chemicalFormulaVersions.value = [];
+  chemicalFormulaVersionsVisible.value = false;
+  chemicalFormulaVersionsErr.value = "";
 
   const scope = normalizeControlScope(item.controlScope || (item.partId ? CONTROL_SCOPE.PRODUCT : CONTROL_SCOPE.PROCESS));
   try {
@@ -2009,7 +2066,55 @@ onBeforeUnmount(() => {
                 <div v-if="form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 space-y-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/70">
                   <div class="flex items-center justify-between gap-3">
                     <div><h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">藥液分析公式</h4><p class="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">只套用目前線別、槽體與分析項目；可用 Primary、Secondary、LSL、USL、Target、Concentration。</p></div>
-                    <label class="flex items-center gap-2 text-xs font-bold"><input v-model="form.chemicalAnalysis.enabled" type="checkbox" class="w-4 h-4">啟用</label>
+                    <div class="flex items-center gap-2">
+                      <button
+                        v-if="modalMode === 'edit'"
+                        type="button"
+                        @click="loadChemicalFormulaVersions"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+                      >
+                        <History class="h-3.5 w-3.5" />
+                        版本紀錄
+                      </button>
+                      <label class="flex items-center gap-2 text-xs font-bold"><input v-model="form.chemicalAnalysis.enabled" type="checkbox" class="w-4 h-4">啟用</label>
+                    </div>
+                  </div>
+                  <div v-if="chemicalFormulaVersionsVisible" class="rounded-xl border border-emerald-200 bg-white/80 p-3 dark:border-emerald-900 dark:bg-slate-900/60">
+                    <div class="mb-2 flex items-center justify-between gap-3">
+                      <h5 class="text-xs font-black text-emerald-800 dark:text-emerald-200">公式版本紀錄</h5>
+                      <button
+                        type="button"
+                        @click="chemicalFormulaVersionsVisible = false"
+                        class="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      >
+                        收合
+                      </button>
+                    </div>
+                    <div v-if="chemicalFormulaVersionsLoading" class="py-3 text-xs font-semibold text-slate-500">載入版本紀錄中...</div>
+                    <div v-else-if="chemicalFormulaVersionsErr" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+                      {{ chemicalFormulaVersionsErr }}
+                    </div>
+                    <div v-else-if="chemicalFormulaVersions.length === 0" class="py-3 text-xs font-semibold text-slate-500">
+                      尚無公式版本紀錄；第一次修改並儲存後會自動建立。
+                    </div>
+                    <div v-else class="max-h-52 space-y-2 overflow-y-auto pr-1">
+                      <div
+                        v-for="version in chemicalFormulaVersions"
+                        :key="version.id"
+                        class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-950/50"
+                      >
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                          <span class="font-black text-slate-800 dark:text-slate-100">v{{ version.versionNo }}｜{{ version.changeType === 'Restore' ? '回復' : '修改' }}</span>
+                          <span class="font-semibold text-slate-400">{{ formatFormulaVersionDate(version.changedAt) }}</span>
+                        </div>
+                        <div class="mt-1 text-slate-500 dark:text-slate-400">
+                          {{ version.changedBy || 'System' }}<span v-if="version.reason">｜{{ version.reason }}</span>
+                        </div>
+                        <div class="mt-1 truncate font-mono text-[11px] text-emerald-700 dark:text-emerald-300" :title="formulaVersionSummary(version)">
+                          {{ formulaVersionSummary(version) }}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div v-if="form.chemicalAnalysis.enabled" class="space-y-3">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">

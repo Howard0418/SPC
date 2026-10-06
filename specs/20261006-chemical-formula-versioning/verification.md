@@ -90,3 +90,14 @@
 
 - `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter "ChemicalAnalysisFormulaVersion" --no-restore -p:UseSharedCompilation=false`：10 passed。
 - `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+
+## 2026-10-06 TASK-008 前端版本紀錄入口
+
+- 狀態：完成。
+- 修改：藥液管制項目編輯 modal 的「藥液分析公式」區塊新增「版本紀錄」按鈕，可載入並顯示目前項目的公式版本清單。
+- 範圍：只讀版本紀錄；尚未提供回復按鈕或回復確認，留待 TASK-009。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過。
+- 本階段未發布測試站。
