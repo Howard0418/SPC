@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液分析公式版本服務）
+- 新增 `ChemicalAnalysisFormulaVersionService`，集中處理藥液公式變更比對、版本建立與指定版本回復。
+- 公式內容未變更時不新增重複版本；非 CHEM 主檔會拒絕建立藥液公式版本。
+- 回復指定版本時會更新目前 `ChemicalAnalysisConfigJson`，並新增一筆 `Restore` 版本紀錄保留前後內容與來源版本。
+- 驗證：`ChemicalAnalysisFormulaVersionServiceTests` 4 passed；後端 build 0 warnings / 0 errors。
+- 範圍：本階段尚未接 API、未改前端、不發布測試站。正式站未發布。
+
 ## 2026-10-06（SPC 藥液分析公式版本資料模型）
 - 新增 `ChemicalAnalysisFormulaVersion` 後端 entity、`ChemicalAnalysisFormulaVersions` DbSet、EF mapping 與 migration，用於保存藥液分析公式版本、前一版內容、修改人、修改時間、原因與回復來源。
 - 新增模型 mapping 測試，確認資料表名稱、欄位長度與 `(PartProcessCharacteristicId, VersionNo)` 唯一索引。

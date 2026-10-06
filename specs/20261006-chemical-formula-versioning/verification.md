@@ -37,3 +37,16 @@
 - `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter ChemicalAnalysisFormulaVersionModelTests --no-restore -p:UseSharedCompilation=false`：1 passed。
 - `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
 - 備註：一次 build 與 test 並行時遇到 DLL 檔案鎖定，單獨重跑 build 後通過。
+
+## 2026-10-06 TASK-004 公式版本服務
+
+- 狀態：完成。
+- 修改：新增 `ChemicalAnalysisFormulaVersionService`，負責公式內容比對、建立下一版版本紀錄、拒絕非 CHEM 主檔，以及回復指定版本並新增 Restore 紀錄。
+- 範圍：本階段只建立可共用的後端服務；尚未接 `PUT /part-process-characteristics/{id}`、查詢/回復 API 或前端。
+
+### 驗證
+
+- 先建測試：初次執行 `ChemicalAnalysisFormulaVersionServiceTests` 因 service 尚未建立而編譯失敗，符合 red test 預期。
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter ChemicalAnalysisFormulaVersionServiceTests --no-restore -p:UseSharedCompilation=false`：4 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- 備註：一次 build 與 test 並行時遇到 DLL 檔案鎖定，單獨重跑 test 後通過。

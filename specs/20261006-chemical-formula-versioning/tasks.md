@@ -8,7 +8,7 @@
 ## 階段 2：後端版本基礎
 
 - [x] TASK-003：建立藥液公式版本 entity、DbSet、EF mapping 與 migration。
-- [ ] TASK-004：新增公式版本服務，負責變更比對、版本建立與回復。
+- [x] TASK-004：新增公式版本服務，負責變更比對、版本建立與回復。
 - [ ] TASK-005：整合 `PUT /part-process-characteristics/{id}`，公式變更時自動建立版本。
 - [ ] TASK-006：新增版本查詢與回復 API。
 - [ ] TASK-007：新增後端測試，涵蓋修改、無變更、非 CHEM、回復與權限。
