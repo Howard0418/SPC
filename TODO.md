@@ -449,9 +449,11 @@
 
 #### SPC-TASK-001：藥液分析公式版本記錄與回復
 
-狀態：待規格
+狀態：規格完成；待後端版本資料模型與 API 實作
 
 理由：公式會影響計算結果，需先建立版本、稽核與回復，才適合做大量編輯頁。
+
+規格：`specs/20261006-chemical-formula-versioning/spec.md`
 
 預計修改：
 
@@ -469,6 +471,13 @@
 確認結果：
 
 - 在測試站修改一筆藥液公式，可看到版本紀錄，並可回復前一版。
+
+完成紀錄：
+
+- 規格盤點：確認目前公式存在 `PartProcessCharacteristics.ChemicalAnalysisConfigJson`，前端單筆編輯透過 `PUT /part-process-characteristics/{id}` 覆蓋設定。
+- 規劃：第一階段新增獨立公式版本表與查詢/回復 API，不改公式語法、不做批次總覽頁、不改既有量測資料。
+- 文件：已建立 `specs/20261006-chemical-formula-versioning/` 的 spec、plan、tasks、verification。
+- 本階段未修改產品程式、未建置、未發布測試站。
 
 #### SPC-TASK-002：藥液公式總覽與批次儲存頁
 

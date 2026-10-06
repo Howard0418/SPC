@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液分析公式版本記錄規格）
+- 依使用者需求規劃藥液分析公式版本記錄與回復。
+- 現況：公式目前存在 `PartProcessCharacteristics.ChemicalAnalysisConfigJson`，由 `PartProcessCharacteristicsView.vue` 單筆編輯後透過 `PUT /part-process-characteristics/{id}` 覆蓋設定；目前無公式版本歷史或回復 API。
+- 規劃：新增獨立公式版本表、版本查詢 API、指定版本回復 API，並在單筆公式編輯流程中建立版本紀錄。
+- 文件：新增 `specs/20261006-chemical-formula-versioning/`。本階段未修改產品程式、未建置、未發布。
+
 ## 2026-10-06（SPC-POINT-FILTER 文件同步與收尾）
 - 已完成 SPC 管制圖/趨勢圖點位排除與隱藏恢復整串小工作文件同步。
 - 管制圖與趨勢圖右鍵單點排除、已排除點清單、隱藏點恢復、後端回歸、前端 build/靜態 UI 檢查與測試站 smoke test 均已記錄完成。
