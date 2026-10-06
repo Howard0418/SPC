@@ -491,7 +491,7 @@
 
 #### SPC-TASK-002：藥液公式總覽與批次儲存頁
 
-狀態：前端批次編輯與總驗證完成；待測試站發布
+狀態：SPC 測試站 frontend 已發布；待文件收尾
 
 理由：一次儲存多筆公式風險較高，須先有版本/回復保護。
 
@@ -522,6 +522,7 @@
 - TASK-004：新增「儲存變更」確認流程，只送出 dirty rows，逐筆呼叫既有單筆 PUT 並沿用公式版本紀錄；前端 testhost build 通過，未發布測試站。
 - TASK-005：新增儲存結果欄，成功列顯示已儲存，失敗列顯示錯誤並保留草稿；儲存後重新載入資料。前端 testhost build 通過，未發布測試站。
 - TASK-006：前端 testhost build 與靜態檢查通過，確認草稿、異動列、批次儲存、單筆 PUT 呼叫與儲存結果欄皆存在；未發布測試站。
+- TASK-007：SPC 測試站 frontend 已發布，備份 `frontend.backup-chemical-formula-overview-batch-20261006-142452`；首頁、JS/CSS MIME 與 `/api/version` smoke test 通過。backend 未發布，正式站未發布。
 
 ### 第五順位：單一 IIS Site（環境與發布）
 

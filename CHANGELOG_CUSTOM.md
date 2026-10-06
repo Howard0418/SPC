@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式總覽測試站發布）
+- 藥液公式總覽批次編輯已發布 SPC 測試站 frontend；backend 未發布，正式站未發布。
+- 備份：`frontend.backup-chemical-formula-overview-batch-20261006-142452`。
+- Smoke：首頁 200/text-html，新版 JS `index-7pDwhRVl.js` 200/application-javascript，新版 CSS `index-B3nZcc2H.css` 200/text-css，後端 `/api/version` 200/test。
+
 ## 2026-10-06（SPC 藥液公式總覽前端總驗證）
 - 藥液公式總覽批次編輯完成前端 build 與靜態檢查。
 - 確認總覽頁包含公式草稿、異動列判斷、批次儲存流程、既有單筆 PUT 呼叫，以及儲存結果欄。
