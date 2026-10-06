@@ -1,3 +1,6 @@
+## [2026-10-06] - SPC-POINT-FILTER-TASK-015 文件同步與收尾
+- 目的：同步 CHANGELOG_CUSTOM.md、TODO、需求索引與規格驗證紀錄，將 SPC 點位排除/隱藏恢復測試站階段收尾；本階段只改文件。
+
 ## [2026-10-06] - SPC-POINT-FILTER-TASK-014 測試站總 smoke test
 - 目的：確認目前 SPC 測試站 frontend/backend 已可正常回應，且新版前端 JS MIME 正確；本階段只驗證不改程式、不發布正式站。
 

@@ -1,6 +1,6 @@
 # SPC 現行需求索引
 
-- 進行中：[SPC 管制圖/趨勢圖點位排除與隱藏恢復](../specs/20261006-chart-point-exclusion/spec.md)；右鍵設定「顯示但不列入計算」與「隱藏且不列入計算」，隱藏點須由已排除點清單或 raw data/明細恢復。管制圖右鍵選單、管制圖已排除點恢復清單、趨勢圖右鍵選單與趨勢圖已排除點恢復清單已完成；後端回歸與前端 build/靜態 UI 檢查已通過，發布總驗證待執行。
+- 測試站已完成：[SPC 管制圖/趨勢圖點位排除與隱藏恢復](../specs/20261006-chart-point-exclusion/spec.md)；右鍵設定「顯示但不列入計算」與「隱藏且不列入計算」，隱藏點可由已排除點清單恢復。管制圖右鍵選單、管制圖已排除點恢復清單、趨勢圖右鍵選單與趨勢圖已排除點恢復清單已完成；後端回歸、前端 build/靜態 UI 檢查與 SPC 測試站 smoke test 已通過。正式站未發布。
 - 小型修正（測試 API 已發布）：[PPC 重複鍵儲存防護](../specs/20260929-ppc-duplicate-key-guard/spec.md)；SPC 管制項目新增/編輯若同鍵其他列已存在，後端先回 409 可讀訊息，不再外洩 SQL 唯一索引錯誤。
 - 測試與正式 SPC 前端已發布：[藥液 GENERAL 視同早班](../specs/20260922-chemical-general-as-open/verification.md)；班別 GENERAL／空白當早班，圖上不丟歷史點；開／收線仍只限 N1／N2。資料未改；正式 Portal 未發布。
 - 正式已轉換：[N1／N2 舊 CLOSE 轉收線](../specs/20260922-chemical-close-stage-apply/verification.md)；`PMR_SPC_2026` 198 筆 CLOSE＋GENERAL → OPEN＋CLOSE，剩餘 0。9 月前僅開收線、9 月後才分早中班；`OPEN`＋`GENERAL` 開線列與 MIDDLE 未改。[盤點](../specs/20260922-chemical-close-stage-inventory/verification.md)

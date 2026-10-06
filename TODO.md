@@ -443,6 +443,7 @@
 - 後端回歸：`SpcPointExclusionCalculationTests`、`NormalityTest` 與 Xbar 代表案例共 8 passed；後端 build 0 warnings / 0 errors。本階段未修改產品程式、未發布測試站。
 - 前端驗證：`npm run build:test` 通過；靜態檢查確認管制圖/趨勢圖已排除點清單入口、恢復函式與 `point-exclusions` API 呼叫存在。既有 Playwright `spc-ui` / `spc-summary` 5 failed，失敗點為舊測試與目前 UI/mock 落差，未指向本次新增 testid。
 - 測試站 smoke：前端首頁 200/text-html，新 JS `index-DKfYYFj2.js` 200/application-javascript，後端 `/api/version` 200/test，backend `app_offline.htm` 不存在。正式站未發布。
+- 文件收尾：`CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與 `specs/20261006-chart-point-exclusion/` 已同步完成；本串小工作測試站階段結案，正式站仍須另行授權。
 
 ### 第四順位：SPC 藥液公式版本與核對效率（資料正確性）
 

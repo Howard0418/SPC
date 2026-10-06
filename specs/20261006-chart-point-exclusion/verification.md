@@ -244,3 +244,25 @@
 - `release/test/backend/app_offline.htm`：不存在。
 - `release/test/frontend/index.html`：存在。
 - `release/test/frontend/assets/index-DKfYYFj2.js`：存在。
+
+## 2026-10-06 TASK-015 文件同步與收尾
+
+- 狀態：完成。
+- 本階段未修改產品程式、未重新發布測試站。
+- 已同步：
+  - `CHANGELOG_CUSTOM.md`
+  - `TODO.md`
+  - `docs/requirements.md`
+  - `specs/20261006-chart-point-exclusion/tasks.md`
+  - `specs/20261006-chart-point-exclusion/verification.md`
+
+### 最終狀態
+
+- 管制圖右鍵單點排除：完成。
+- 管制圖已排除點清單與隱藏點恢復：完成。
+- 趨勢圖右鍵單點排除：完成。
+- 趨勢圖已排除點清單與隱藏點恢復：完成。
+- 後端回歸測試：完成。
+- 前端 build / UI 檢查：完成；既有 Playwright 測試落差已記錄。
+- SPC 測試站 smoke test：完成。
+- 正式站：未發布。
