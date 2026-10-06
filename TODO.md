@@ -449,7 +449,7 @@
 
 #### SPC-TASK-001：藥液分析公式版本記錄與回復
 
-狀態：後端資料模型、migration、版本服務與既有 PUT 整合完成；待查詢/回復 API 實作
+狀態：後端資料模型、migration、版本服務、既有 PUT 整合與查詢/回復 API 完成；待前端版本入口
 
 理由：公式會影響計算結果，需先建立版本、稽核與回復，才適合做大量編輯頁。
 
@@ -480,7 +480,8 @@
 - TASK-003：新增 `ChemicalAnalysisFormulaVersion`、`ChemicalAnalysisFormulaVersions` DbSet、EF mapping 與 migration；模型測試 1 passed，後端 build 0 warnings / 0 errors。
 - TASK-004：新增 `ChemicalAnalysisFormulaVersionService`，可建立版本、略過未變更內容、拒絕非 CHEM 主檔並回復指定版本；服務測試 4 passed，後端 build 0 warnings / 0 errors。
 - TASK-005：既有 `PUT /part-process-characteristics/{id}` 已整合版本服務；CHEM 公式變更時自動新增版本，未變更不新增；相關測試共 5 passed，後端 build 0 warnings / 0 errors。
-- 本階段尚未接 API/前端，未發布測試站。
+- TASK-006：新增藥液公式版本查詢與指定版本回復 API；Controller/Service 測試共 7 passed，後端 build 0 warnings / 0 errors。
+- 本階段尚未接前端，未發布測試站。
 
 #### SPC-TASK-002：藥液公式總覽與批次儲存頁
 

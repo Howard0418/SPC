@@ -63,3 +63,19 @@
 - `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter "Update_Should_Record_ChemicalFormulaVersion_When_ChemicalConfigChanges|ChemicalAnalysisFormulaVersionServiceTests" --no-restore -p:UseSharedCompilation=false`：5 passed。
 - `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
 - 備註：曾嘗試併跑舊測試 `Update_Should_Save_Unit_And_ItemSpecificRules`，該測試卡在既有 `UpdateRules` 已固定 WE 規則的舊期待，非本次版本紀錄變更；本階段未修改該舊測試。
+
+## 2026-10-06 TASK-006 版本查詢與回復 API
+
+- 狀態：完成。
+- 修改：新增 `ChemicalAnalysisFormulaVersionsController`。
+- API：
+  - `GET /api/v1/part-process-characteristics/{id}/chemical-analysis-formula-versions`
+  - `POST /api/v1/part-process-characteristics/{id}/chemical-analysis-formula-versions/{versionId}/restore`
+- 範圍：查詢版本清單、回復指定版本；回復限制 `Admin,Editor`。本階段不改前端、不發布測試站。
+
+### 驗證
+
+- 先建測試：初次執行 `ChemicalAnalysisFormulaVersionsControllerTests` 因 controller 尚未建立而編譯失敗，符合 red test 預期。
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter "ChemicalAnalysisFormulaVersionsControllerTests|ChemicalAnalysisFormulaVersionServiceTests" --no-restore -p:UseSharedCompilation=false`：7 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- 備註：一次 build 與 test 並行時遇到 DLL 檔案鎖定，單獨重跑後通過。

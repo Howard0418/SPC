@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式版本查詢與回復 API）
+- 新增藥液公式版本 API，可查詢指定管制項目的公式版本清單，並回復指定版本。
+- 回復 API 沿用 `ChemicalAnalysisFormulaVersionService.RestoreAsync`，會更新目前 `ChemicalAnalysisConfigJson` 並新增一筆 `Restore` 紀錄。
+- 回復端點限制 `Admin,Editor`；非 CHEM 管制項目回 400，找不到資料回 404。
+- 驗證：Controller/Service 測試共 7 passed；後端 build 0 warnings / 0 errors。
+- 範圍：本階段不改前端、不發布測試站。正式站未發布。
+
 ## 2026-10-06（SPC 藥液公式修改自動建立版本）
 - 既有 `PUT /part-process-characteristics/{id}` 已整合公式版本服務；藥液 `ChemicalAnalysisConfigJson` 變更後會自動新增版本紀錄。
 - 公式內容未變更時不新增重複版本；非藥液主檔未變更公式時不受影響。
