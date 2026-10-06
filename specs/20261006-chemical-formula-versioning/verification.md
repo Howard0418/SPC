@@ -79,3 +79,14 @@
 - `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter "ChemicalAnalysisFormulaVersionsControllerTests|ChemicalAnalysisFormulaVersionServiceTests" --no-restore -p:UseSharedCompilation=false`：7 passed。
 - `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
 - 備註：一次 build 與 test 並行時遇到 DLL 檔案鎖定，單獨重跑後通過。
+
+## 2026-10-06 TASK-007 後端測試補齊
+
+- 狀態：完成。
+- 修改：補齊藥液公式版本相關測試，涵蓋資料模型、服務、既有 PUT 整合、無變更不新增、非 CHEM、回復 API 與回復端點授權角色。
+- 範圍：只補測試與文件，不改產品功能行為。
+
+### 驗證
+
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter "ChemicalAnalysisFormulaVersion" --no-restore -p:UseSharedCompilation=false`：10 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。

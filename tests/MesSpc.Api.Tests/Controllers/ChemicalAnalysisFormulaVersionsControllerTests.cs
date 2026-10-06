@@ -5,6 +5,7 @@ using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -60,6 +61,32 @@ public class ChemicalAnalysisFormulaVersionsControllerTests
         var controller = CreateController(db);
 
         var result = await controller.GetVersions(mapping.Id, CancellationToken.None);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public void RestoreVersion_ShouldRequireAdminOrEditorRole()
+    {
+        var method = typeof(ChemicalAnalysisFormulaVersionsController).GetMethod(nameof(ChemicalAnalysisFormulaVersionsController.RestoreVersion));
+
+        var authorize = method!.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: false)
+            .Cast<AuthorizeAttribute>()
+            .Single();
+        authorize.Roles.Should().Be("Admin,Editor");
+    }
+
+    [Fact]
+    public async Task RestoreVersion_WhenMappingIsNotChemical_ReturnsBadRequest()
+    {
+        await using var db = CreateDb();
+        var mapping = await SeedMappingAsync(db, "PROCESS", """{"formula":"current"}""");
+        var version = Version(mapping.Id, 1, """{"formula":"old"}""");
+        db.ChemicalAnalysisFormulaVersions.Add(version);
+        await db.SaveChangesAsync();
+        var controller = CreateController(db);
+
+        var result = await controller.RestoreVersion(mapping.Id, version.Id, new RestoreChemicalAnalysisFormulaVersionRequest(null), CancellationToken.None);
 
         result.Should().BeOfType<BadRequestObjectResult>();
     }
