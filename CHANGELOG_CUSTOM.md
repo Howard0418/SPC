@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC-POINT-FILTER 趨勢圖右鍵單點排除）
+- 趨勢圖點位新增右鍵選單，可設定「顯示但不列入計算」、「隱藏且不列入計算」與「恢復列入計算」，並呼叫單點 `point-exclusions` API。
+- 趨勢圖圖例補上已排除點位，已排除點沿用灰色叉號樣式。
+- 驗證：前端 `npm run build -- --mode testhost` 通過。
+- 已發布 SPC 測試站 frontend，備份 `frontend.backup-trend-point-context-menu-20261006`；Smoke：首頁 200，新 JS `index-KEeRhtLO.js` 回 `application/javascript`。正式站未發布。
+- 趨勢圖已排除點清單與隱藏點恢復入口留待後續小工作。
+
 ## 2026-10-06（SPC-POINT-FILTER 點位排除/隱藏規劃）
 - 依使用者需求規劃管制圖與趨勢圖量測點右鍵選單，支援「顯示但不列入計算」與「隱藏且不列入計算」。
 - 已確認隱藏點需提供恢復入口：圖表工具列「已排除點 N」清單與 raw data/明細清單皆可恢復，避免隱藏後找不到。

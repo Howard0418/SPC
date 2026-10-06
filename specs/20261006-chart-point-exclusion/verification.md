@@ -147,3 +147,25 @@
 ### 限制
 
 - 本階段只處理管制圖排除點清單；趨勢圖清單留待 TASK-011。
+
+## 2026-10-06 TASK-010 趨勢圖右鍵單點排除
+
+- 狀態：完成。
+- 修改：
+  - 趨勢圖點位支援右鍵選單。
+  - 選單可設定「顯示但不列入計算」、「隱藏且不列入計算」、「恢復列入計算」。
+  - 趨勢圖點位排除改呼叫 `PUT/DELETE /api/v1/spc/point-exclusions`。
+  - 趨勢圖圖例補上已排除點位樣式；已排除點沿用灰色叉號樣式。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過。
+- 測試站發布：已發布 `release/test/frontend`；備份 `release/test/frontend.backup-trend-point-context-menu-20261006`。
+- Smoke：
+  - `http://172.16.110.27:8083/`：HTTP 200，`text/html`。
+  - `http://172.16.110.27:8083/assets/index-KEeRhtLO.js`：HTTP 200，`application/javascript`。
+
+### 限制
+
+- 本階段先完成趨勢圖右鍵操作與 ExcludedVisible 樣式。
+- 趨勢圖已排除點清單與 `ExcludedHidden` 隱藏點恢復入口留待 TASK-011。

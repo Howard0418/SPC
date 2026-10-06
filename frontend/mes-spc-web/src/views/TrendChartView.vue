@@ -51,6 +51,13 @@ const histogramChartEl = ref(null);
 let trendChartInstance = null;
 let histogramChartInstance = null;
 const selectedPointIndex = ref(-1);
+const pointContextMenu = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  point: null
+});
+const pointExclusionSaving = ref(false);
 
 const tableSummaryData = ref(null);
 const cachedSummaryData = ref(null);
@@ -130,6 +137,7 @@ const selectedMapping = computed(() => {
     m.characteristicId === Number(selectedCharacteristicId.value)
   ) || null;
 });
+const activePpcIdValue = computed(() => Number(selectedPpcId.value || selectedMapping.value?.id || selectedSummaryRow.value?.partProcessCharacteristicId || 0));
 
 function uniqueNonEmptyParts(parts) {
   return [...new Set(parts
@@ -183,6 +191,7 @@ async function drawSingleChart(row) {
 function returnToSummary() {
   chartResult.value = null;
   selectedPointIndex.value = -1;
+  hidePointContextMenu();
   selectedSummaryRow.value = null;
   tableSummaryData.value = cachedSummaryData.value || [];
   if (trendChartInstance) {
@@ -200,6 +209,7 @@ watch(selectedDimension, (newDim) => {
   chartResult.value = null;
   tableSummaryData.value = null;
   selectedSummaryRow.value = null;
+  hidePointContextMenu();
 });
 
 watch(selectedPartId, () => {
@@ -304,6 +314,7 @@ async function loadChart() {
 
   tableSummaryData.value = null;
   selectedPointIndex.value = -1;
+  hidePointContextMenu();
 
   const mapping = selectedMapping.value;
   if (!mapping) return;
@@ -360,6 +371,78 @@ function selectTrendPoint(index) {
   trendChartInstance?.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: index });
 }
 
+function getPointExclusionPayload(point, state) {
+  const ppc = activePpcIdValue.value;
+  if (!ppc || !point) return null;
+  const variableMeasurementId = point.variableMeasurementId ?? null;
+  const attributeMeasurementId = point.attributeMeasurementId ?? null;
+  if (!variableMeasurementId && !attributeMeasurementId) return null;
+  return {
+    partProcessCharacteristicId: ppc,
+    pointScope: attributeMeasurementId ? "AttributeMeasurement" : "VariableMeasurement",
+    variableMeasurementId,
+    attributeMeasurementId,
+    measurementBatchId: point.measurementBatchId ?? null,
+    pointKey: null,
+    state,
+    reason: "趨勢圖右鍵設定"
+  };
+}
+
+function hidePointContextMenu() {
+  pointContextMenu.value.visible = false;
+  pointContextMenu.value.point = null;
+}
+
+async function setPointExclusion(state) {
+  const payload = getPointExclusionPayload(pointContextMenu.value.point, state);
+  if (!payload) {
+    alert("此點位缺少單點識別資料，暫時無法設定單點排除。");
+    hidePointContextMenu();
+    return;
+  }
+  pointExclusionSaving.value = true;
+  try {
+    await api.put("/v1/spc/point-exclusions", payload);
+    hidePointContextMenu();
+    await loadChart();
+  } catch (e) {
+    alert("單點排除設定失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointExclusionSaving.value = false;
+  }
+}
+
+async function restorePointExclusion() {
+  const payload = getPointExclusionPayload(pointContextMenu.value.point, "ExcludedVisible");
+  if (!payload) {
+    alert("此點位缺少單點識別資料，暫時無法恢復。");
+    hidePointContextMenu();
+    return;
+  }
+  pointExclusionSaving.value = true;
+  try {
+    const params = {
+      ppcId: payload.partProcessCharacteristicId,
+      pointScope: payload.pointScope
+    };
+    if (payload.variableMeasurementId) params.variableMeasurementId = payload.variableMeasurementId;
+    if (payload.attributeMeasurementId) params.attributeMeasurementId = payload.attributeMeasurementId;
+    const res = await api.get("/v1/spc/point-exclusions", { params });
+    const row = (res.data?.data || [])[0];
+    const exclusionId = row?.id ?? row?.Id;
+    if (exclusionId) {
+      await api.delete(`/v1/spc/point-exclusions/${exclusionId}`);
+    }
+    hidePointContextMenu();
+    await loadChart();
+  } catch (e) {
+    alert("單點排除恢復失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointExclusionSaving.value = false;
+  }
+}
+
 function formatPointTime(value) {
   if (!value) return "未提供";
   const date = new Date(value);
@@ -408,6 +491,7 @@ function renderTrendChart() {
     trendChartInstance.dispose();
     trendChartInstance = null;
   }
+  hidePointContextMenu();
 
   trendChartInstance = echarts.init(trendChartEl.value);
 
@@ -589,9 +673,25 @@ function renderTrendChart() {
   });
 
   trendChartInstance.on("click", params => {
+    hidePointContextMenu();
     if (params.componentType === "series" && params.seriesType === "line" && Number.isInteger(params.dataIndex)) {
       selectTrendPoint(params.dataIndex);
     }
+  });
+
+  trendChartInstance.on("contextmenu", params => {
+    params.event?.event?.preventDefault?.();
+    if (params.componentType !== "series" || params.seriesType !== "line" || !Number.isInteger(params.dataIndex)) return;
+    const point = rawPoints[params.dataIndex];
+    if (!point) return;
+    selectedPointIndex.value = params.dataIndex;
+    const nativeEvent = params.event?.event;
+    pointContextMenu.value = {
+      visible: true,
+      x: nativeEvent?.offsetX ?? params.event?.offsetX ?? 0,
+      y: nativeEvent?.offsetY ?? params.event?.offsetY ?? 0,
+      point
+    };
   });
 
   renderHistogramChart();
@@ -795,6 +895,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
+  hidePointContextMenu();
   trendChartInstance?.dispose();
   trendChartInstance = null;
   histogramChartInstance?.dispose();
@@ -1046,6 +1147,7 @@ const trendStats = computed(() => {
 
             <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>OOS 超規點</span>
             <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block"></span>正常量測點</span>
+            <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block border border-slate-500"></span>已排除點</span>
           </div>
         </div>
 
@@ -1073,7 +1175,40 @@ const trendStats = computed(() => {
           </div>
         </div>
 
-        <div ref="trendChartEl" class="h-[480px] w-full min-h-[320px]"></div>
+        <div class="relative">
+          <div ref="trendChartEl" class="h-[480px] w-full min-h-[320px]"></div>
+          <div
+            v-if="pointContextMenu.visible"
+            class="absolute z-30 w-52 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden"
+            :style="{ left: `${pointContextMenu.x}px`, top: `${pointContextMenu.y}px` }"
+            @click.stop
+          >
+            <button
+              type="button"
+              class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+              :disabled="pointExclusionSaving"
+              @click="setPointExclusion('ExcludedVisible')"
+            >
+              顯示但不列入計算
+            </button>
+            <button
+              type="button"
+              class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+              :disabled="pointExclusionSaving"
+              @click="setPointExclusion('ExcludedHidden')"
+            >
+              隱藏且不列入計算
+            </button>
+            <button
+              type="button"
+              class="w-full px-3 py-2 text-left text-xs font-bold text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 disabled:opacity-50"
+              :disabled="pointExclusionSaving"
+              @click="restorePointExclusion"
+            >
+              恢復列入計算
+            </button>
+          </div>
+        </div>
 
         <!-- Distribution Histogram -->
         <div class="pt-5 border-t border-slate-200 dark:border-slate-800 space-y-4">

@@ -17,7 +17,7 @@
 
 - [x] TASK-008：管制圖點位右鍵選單與 ExcludedVisible 樣式。
 - [x] TASK-009：管制圖「已排除點」清單與隱藏點恢復。
-- [ ] TASK-010：趨勢圖點位右鍵選單與 ExcludedVisible 樣式。
+- [x] TASK-010：趨勢圖點位右鍵選單與 ExcludedVisible 樣式。
 - [ ] TASK-011：趨勢圖「已排除點」清單與隱藏點恢復。
 
 ## 階段 4：驗證與發布
