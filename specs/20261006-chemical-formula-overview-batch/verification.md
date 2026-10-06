@@ -56,3 +56,19 @@
 
 - `npm run build -- --mode testhost`：通過，產出 `index-7pDwhRVl.js`、`index-B3nZcc2H.css`。
 - 本階段未發布測試站；正式站未發布。
+
+## 2026-10-06 TASK-006 前端 build 與靜態檢查
+
+- 狀態：完成。
+- 本階段未修改產品程式，只做前端總驗證與靜態檢查。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過，產出 `index-7pDwhRVl.js`、`index-B3nZcc2H.css`。
+- 靜態檢查確認 `ChemicalAnalysisOverviewView.vue` 包含：
+  - `formulaDrafts` 草稿資料。
+  - `dirtyRows` 異動列判斷。
+  - `saveChanges` 批次儲存流程。
+  - `PUT /part-process-characteristics/${row.id}` 呼叫。
+  - `saveResults` 與「儲存結果」欄。
+- 本階段未發布測試站；正式站未發布。
