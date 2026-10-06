@@ -4,6 +4,7 @@
 - 測試站已完成：[藥液公式總覽與批次儲存頁](../specs/20261006-chemical-formula-overview-batch/spec.md)；既有藥液總覽頁已完成公式 draft 編輯、異動標示、批次儲存確認與成功/失敗結果欄；第一版沿用既有單筆 PUT 與公式版本紀錄，不新增後端批次 API。SPC 測試站 frontend 已發布；backend 未變更、未發布；正式站未發布。
 - 測試站已完成：[藥液公式總覽可讀性改善](../specs/20261006-chemical-formula-overview-readability/spec.md)；公式欄位預設 5 行、等寬字體、較高最小高度並保留可手動拉高，不改 API、儲存或計算。SPC 測試站 frontend 已發布；backend 未變更、正式站未發布。
 - 測試站已完成：[藥液公式總覽完整預覽](../specs/20261006-chemical-formula-overview-full-preview/spec.md)；公式欄位預設完整換行顯示，按「編輯」才切換為 textarea，保留既有批次儲存，不改 API、儲存或計算。SPC 測試站 frontend 已發布；backend 未變更、正式站未發布。
+- 測試站已完成：[藥液公式總覽分頁](../specs/20261006-chemical-formula-overview-pagination/spec.md)；總覽表格每頁 5/10/20 筆，篩選回第 1 頁，批次儲存仍涵蓋全部 dirty rows，不改 API、儲存或計算。SPC 測試站 frontend 已發布；backend 未變更、正式站未發布。
 - 測試站已完成：[SPC 管制圖/趨勢圖點位排除與隱藏恢復](../specs/20261006-chart-point-exclusion/spec.md)；右鍵設定「顯示但不列入計算」與「隱藏且不列入計算」，隱藏點可由已排除點清單恢復。管制圖右鍵選單、管制圖已排除點恢復清單、趨勢圖右鍵選單與趨勢圖已排除點恢復清單已完成；後端回歸、前端 build/靜態 UI 檢查與 SPC 測試站 smoke test 已通過。正式站未發布。
 - 小型修正（測試 API 已發布）：[PPC 重複鍵儲存防護](../specs/20260929-ppc-duplicate-key-guard/spec.md)；SPC 管制項目新增/編輯若同鍵其他列已存在，後端先回 409 可讀訊息，不再外洩 SQL 唯一索引錯誤。
 - 測試與正式 SPC 前端已發布：[藥液 GENERAL 視同早班](../specs/20260922-chemical-general-as-open/verification.md)；班別 GENERAL／空白當早班，圖上不丟歷史點；開／收線仍只限 N1／N2。資料未改；正式 Portal 未發布。

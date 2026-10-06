@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式總覽分頁）
+- 目的：公式完整預覽後列高增加，總覽頁一次顯示全部項目會過長；新增前端分頁降低單頁長度。
+- 修改：藥液公式總覽新增每頁 5/10/20 筆選擇、上一頁/下一頁與頁碼資訊；線別、槽體、狀態篩選及摘要卡切換會回到第 1 頁。匯出仍使用篩選後全部資料，批次儲存仍以全部 dirty rows 為準。
+- 驗證：前端 `npm run build -- --mode testhost` 通過，產出 `index-BYjQytI2.js`、`index-B22nJqjf.css`。
+- 發布：已發布 SPC 測試站 frontend，備份 `frontend.backup-chemical-formula-pagination-20261006`；Smoke：首頁 200/text-html，新版 JS 200/application-javascript，新版 CSS 200/text-css，後端 `/api/version` 200/test。backend 未變更，正式站未發布。
+
 ## 2026-10-06（SPC 藥液公式總覽完整預覽）
 - 目的：讓 `/chemical-analysis-overview` 三個公式欄位一眼看到完整內容，不需要 textarea 內捲動或展開。
 - 修改：濃度公式、調整公式、調整量公式預設改為完整換行預覽；按列右側「編輯」才切換為 textarea，既有 dirty 判斷、還原與批次儲存保留。
