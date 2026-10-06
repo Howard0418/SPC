@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC-POINT-FILTER 後端回歸測試）
+- 驗證單點排除後端口徑、趨勢圖 normality 與 Xbar 代表案例；本階段未修改產品程式、未發布測試站。
+- `SpcPointExclusionCalculationTests`、`NormalityTest` 與 Xbar 代表案例共 8 passed。
+- 後端 build 0 warnings / 0 errors。
+- 備註：第一次 build 與 test 並行時遇到 DLL 檔案鎖定，單獨重跑 build 後通過。
+
 ## 2026-10-06（SPC-POINT-FILTER 趨勢圖已排除點清單）
 - 趨勢圖頁新增「已排除點 N」清單，可查看目前 PPC 的 active 排除點。
 - 清單可逐筆恢復 `ExcludedVisible` / `ExcludedHidden` 點；`ExcludedHidden` 點會從趨勢線上隱藏，但仍可由清單恢復。

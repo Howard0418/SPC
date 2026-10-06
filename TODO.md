@@ -440,6 +440,7 @@
 - 追加修改：趨勢圖工具列新增「已排除點 N」清單，可恢復 `ExcludedVisible` / `ExcludedHidden` active 排除點；`ExcludedHidden` 點會從趨勢線上隱藏。
 - 追加驗證：前端 `npm run build -- --mode testhost` 通過。
 - 追加發布：SPC 測試站 frontend 已發布；備份 `frontend.backup-trend-excluded-list-20261006`。Smoke：首頁 200，新 JS `index-DKfYYFj2.js` 回 `application/javascript`。正式站未發布。
+- 後端回歸：`SpcPointExclusionCalculationTests`、`NormalityTest` 與 Xbar 代表案例共 8 passed；後端 build 0 warnings / 0 errors。本階段未修改產品程式、未發布測試站。
 
 ### 第四順位：SPC 藥液公式版本與核對效率（資料正確性）
 

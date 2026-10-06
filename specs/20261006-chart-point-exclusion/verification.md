@@ -190,3 +190,17 @@
 ### 限制
 
 - 本階段只處理趨勢圖前端清單與恢復；未改後端 API、資料表或統計公式。
+
+## 2026-10-06 TASK-012 後端回歸測試
+
+- 狀態：完成。
+- 本階段未修改產品程式、未發布測試站。
+
+### 驗證
+
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter "SpcPointExclusionCalculationTests|NormalityTest|XbarR_GoldenValues_ShouldUseN3Constants|XbarR_ShouldKeepChemicalShiftMetadataOnChartPoints" --no-restore -p:UseSharedCompilation=false`：8 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+
+### 備註
+
+- 第一次 build 與 test 並行時遇到 `MesSpc.Api.dll` 檔案鎖定，單獨重跑 build 後通過；判定為並行程序鎖定，不是編譯錯誤。
