@@ -15,12 +15,12 @@ public sealed class ChemicalAnalysisFormulaVersionService(AppDbContext db)
         string? reason,
         CancellationToken ct)
     {
-        var mapping = await GetChemicalMappingAsync(partProcessCharacteristicId, ct);
         if (ConfigEquals(previousConfigJson, newConfigJson))
         {
             return new ChemicalAnalysisFormulaVersionChangeResult(false, null);
         }
 
+        var mapping = await GetChemicalMappingAsync(partProcessCharacteristicId, ct);
         var version = await CreateVersionAsync(
             mapping.Id,
             NormalizeConfig(newConfigJson),

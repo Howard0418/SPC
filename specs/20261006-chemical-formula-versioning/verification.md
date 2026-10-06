@@ -50,3 +50,16 @@
 - `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter ChemicalAnalysisFormulaVersionServiceTests --no-restore -p:UseSharedCompilation=false`：4 passed。
 - `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
 - 備註：一次 build 與 test 並行時遇到 DLL 檔案鎖定，單獨重跑 test 後通過。
+
+## 2026-10-06 TASK-005 整合既有 PPC 更新流程
+
+- 狀態：完成。
+- 修改：`PUT /part-process-characteristics/{id}` 在保存主檔後，呼叫 `ChemicalAnalysisFormulaVersionService.RecordChangeAsync`；CHEM 公式內容有變更時新增版本紀錄，未變更時不新增。
+- 範圍：不新增 API、不改前端；仍沿用既有主檔儲存流程與 display mode 驗證。
+
+### 驗證
+
+- 先建測試：初次執行 `Update_Should_Record_ChemicalFormulaVersion_When_ChemicalConfigChanges` 因 controller 尚未注入版本服務而編譯失敗，符合 red test 預期。
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter "Update_Should_Record_ChemicalFormulaVersion_When_ChemicalConfigChanges|ChemicalAnalysisFormulaVersionServiceTests" --no-restore -p:UseSharedCompilation=false`：5 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- 備註：曾嘗試併跑舊測試 `Update_Should_Save_Unit_And_ItemSpecificRules`，該測試卡在既有 `UpdateRules` 已固定 WE 規則的舊期待，非本次版本紀錄變更；本階段未修改該舊測試。

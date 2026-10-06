@@ -131,6 +131,81 @@ public class PartProcessCharacteristicMaintenanceTests
     }
 
     [Fact]
+    public async Task Update_Should_Record_ChemicalFormulaVersion_When_ChemicalConfigChanges()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        await using var db = new AppDbContext(options);
+        var process = new Process { ProcessCode = "CHEM-P", ProcessName = "藥液製程", ControlScope = "CHEM" };
+        var characteristic = new QualityCharacteristic
+        {
+            CharacteristicCode = "CHEM-C",
+            CharacteristicName = "濃度",
+            ControlScope = "CHEM"
+        };
+        var chartGroup = new ControlChartGroup
+        {
+            GroupCode = "CHEM",
+            GroupName = "藥液管制",
+            GroupType = "CONTROL_CHART",
+            BusinessScopeCode = "CHEM"
+        };
+        db.AddRange(process, characteristic, chartGroup);
+        await db.SaveChangesAsync();
+
+        var chartType = new ControlChartType
+        {
+            ChartGroupId = chartGroup.Id,
+            ChartTypeCode = "I_MR",
+            ChartTypeName = "I-MR",
+            DataCategory = "Variable",
+            RequiredSampleSize = 1
+        };
+        db.ControlChartTypes.Add(chartType);
+        await db.SaveChangesAsync();
+
+        var item = new PartProcessCharacteristic
+        {
+            ControlScope = "CHEM",
+            ProcessId = process.Id,
+            CharacteristicId = characteristic.Id,
+            Unit = "g/L",
+            SampleSize = 1,
+            ChartTypeId = chartType.Id,
+            DisplayMode = "CONTROL_CHART",
+            ChemicalAnalysisConfigJson = """{"formula":"old"}""",
+            IsEnabled = true
+        };
+        db.PartProcessCharacteristics.Add(item);
+        await db.SaveChangesAsync();
+
+        var controller = new PartProcessCharacteristicsController(db, new ChemicalAnalysisFormulaVersionService(db));
+        var result = await controller.Update(item.Id, new PartProcessCharacteristic
+        {
+            ControlScope = item.ControlScope,
+            ProcessId = item.ProcessId,
+            CharacteristicId = item.CharacteristicId,
+            Unit = item.Unit,
+            SampleSize = item.SampleSize,
+            ChartTypeId = item.ChartTypeId,
+            DisplayMode = item.DisplayMode,
+            ChemicalAnalysisConfigJson = """{"formula":"new"}""",
+            IsRequired = item.IsRequired,
+            IsEnabled = true
+        });
+
+        result.Should().BeOfType<OkObjectResult>();
+        var version = await db.ChemicalAnalysisFormulaVersions.SingleAsync();
+        version.PartProcessCharacteristicId.Should().Be(item.Id);
+        version.VersionNo.Should().Be(1);
+        version.PreviousConfigJson.Should().Be("""{"formula":"old"}""");
+        version.ConfigJson.Should().Be("""{"formula":"new"}""");
+        version.ChangeType.Should().Be("Update");
+    }
+
+    [Fact]
     public async Task Calculation_Should_Prefer_ItemRuleGroup_Over_ChartTypeRuleGroup()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()

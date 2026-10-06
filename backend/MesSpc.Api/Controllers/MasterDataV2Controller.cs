@@ -1,6 +1,7 @@
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain;
 using MesSpc.Api.Infrastructure.Data;
+using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -427,7 +428,9 @@ public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
 [ApiController]
 [Route("api/part-process-characteristics")]
 [Route("api/v1/part-process-characteristics")]
-public class PartProcessCharacteristicsController(AppDbContext db) : ControllerBase
+public class PartProcessCharacteristicsController(
+    AppDbContext db,
+    ChemicalAnalysisFormulaVersionService? chemicalFormulaVersions = null) : ControllerBase
 {
     private const string ItemRuleGroupCodePrefix = "PPC_RULES_";
     private const string ChartTypeRuleGroupCodePrefix = "CT_RULES_";
@@ -525,6 +528,7 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
     {
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
         var previousDisplayMode = x.DisplayMode;
+        var previousChemicalAnalysisConfigJson = x.ChemicalAnalysisConfigJson;
         var validation = await ValidateScopeAsync(req);
         if (validation is not null) return BadRequest(new { message = validation });
         var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
@@ -540,7 +544,8 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
         x.SampleSize = req.SampleSize; x.DisplayMode = req.DisplayMode; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = req.FormulaConfigJson; x.ChemicalAnalysisConfigJson = req.ChemicalAnalysisConfigJson; x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
         x.RuleGroupId = null;
 
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        var useTransaction = !string.Equals(db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
+        await using var transaction = useTransaction ? await db.Database.BeginTransactionAsync() : null;
         if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase))
         {
             var staleResults = await db.SpcCalculationResults
@@ -549,7 +554,18 @@ public class PartProcessCharacteristicsController(AppDbContext db) : ControllerB
             db.SpcCalculationResults.RemoveRange(staleResults);
         }
         await db.SaveChangesAsync();
-        await transaction.CommitAsync();
+        var formulaVersionService = chemicalFormulaVersions ?? new ChemicalAnalysisFormulaVersionService(db);
+        await formulaVersionService.RecordChangeAsync(
+            x.Id,
+            previousChemicalAnalysisConfigJson,
+            x.ChemicalAnalysisConfigJson,
+            User?.Identity?.Name,
+            "PartProcessCharacteristic update",
+            HttpContext?.RequestAborted ?? CancellationToken.None);
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync();
+        }
         return Ok(x);
     }
 
