@@ -169,3 +169,24 @@
 
 - 本階段先完成趨勢圖右鍵操作與 ExcludedVisible 樣式。
 - 趨勢圖已排除點清單與 `ExcludedHidden` 隱藏點恢復入口留待 TASK-011。
+
+## 2026-10-06 TASK-011 趨勢圖已排除點清單
+
+- 狀態：完成。
+- 修改：
+  - 趨勢圖工具列新增「已排除點 N」按鈕。
+  - 展開後可查看目前 PPC 的 active 排除點。
+  - 清單支援逐筆「恢復列入計算」，可恢復 `ExcludedHidden` 點。
+  - `ExcludedHidden` 點會從趨勢線上隱藏，但仍保留於清單供恢復。
+
+### 驗證
+
+- `npm run build -- --mode testhost`：通過。
+- 測試站發布：已發布 `release/test/frontend`；備份 `release/test/frontend.backup-trend-excluded-list-20261006`。
+- Smoke：
+  - `http://172.16.110.27:8083/`：HTTP 200，`text/html`。
+  - `http://172.16.110.27:8083/assets/index-DKfYYFj2.js`：HTTP 200，`application/javascript`。
+
+### 限制
+
+- 本階段只處理趨勢圖前端清單與恢復；未改後端 API、資料表或統計公式。

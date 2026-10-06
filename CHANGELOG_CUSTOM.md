@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC-POINT-FILTER 趨勢圖已排除點清單）
+- 趨勢圖頁新增「已排除點 N」清單，可查看目前 PPC 的 active 排除點。
+- 清單可逐筆恢復 `ExcludedVisible` / `ExcludedHidden` 點；`ExcludedHidden` 點會從趨勢線上隱藏，但仍可由清單恢復。
+- 本次沿用既有 `point-exclusions` API，不改資料庫與後端契約。
+- 驗證：前端 `npm run build -- --mode testhost` 通過。
+- 已發布 SPC 測試站 frontend，備份 `frontend.backup-trend-excluded-list-20261006`；Smoke：首頁 200，新 JS `index-DKfYYFj2.js` 回 `application/javascript`。正式站未發布。
+
 ## 2026-10-06（SPC-POINT-FILTER 趨勢圖右鍵單點排除）
 - 趨勢圖點位新增右鍵選單，可設定「顯示但不列入計算」、「隱藏且不列入計算」與「恢復列入計算」，並呼叫單點 `point-exclusions` API。
 - 趨勢圖圖例補上已排除點位，已排除點沿用灰色叉號樣式。
