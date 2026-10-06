@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-06（SPC 藥液公式總覽批次儲存規格）
+- 規劃藥液公式總覽與批次儲存頁，目標是在既有藥液總覽頁直接核對與編輯所有 CHEM 線別、槽位、分析項目的公式。
+- 最小方案：第一版不新增後端批次 API，由前端只針對異動列逐筆呼叫既有 `PUT /part-process-characteristics/{id}`，沿用已完成的公式版本紀錄與回復能力。
+- 文件：新增 `specs/20261006-chemical-formula-overview-batch/`。本階段未修改產品程式、未建置、未發布。
+
 ## 2026-10-06（SPC 藥液公式版本測試站發布）
 - 藥液公式版本紀錄與回復已發布 SPC 測試站 backend/frontend；正式站未發布。
 - 備份：`backend.backup-chemical-formula-versioning-20261006-130824`、`frontend.backup-chemical-formula-versioning-20261006-130824`。
