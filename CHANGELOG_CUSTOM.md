@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（Portal 生日通知調整與團保取消規劃）
+- 目的：依使用者新指示，團保專區拿掉；生日資料維護不再獨立成區，改在權限管理維護出生年月日；生日祝詞與祝賀圖片上傳改放人事專區。
+- 修改：新增 `specs/20261007-portal-birthday-replan/`，並在 `TODO.md` 加入三個 Portal 生日調整小工作；團保專區標示取消。
+- 驗證：本次僅規劃與工作池更新，未修改 Portal 程式、資料庫、IIS，未讀取或異動 `D:\PmrPortal\GroupInsurance`。
+- 發布：不適用；未發布測試站或正式站。
+
 ## 2026-10-07（IIS-TASK-006 測試單一 IIS Site 部分完成）
 - 調整：新增獨立 IIS 測試單站 `SpcSingleTest`，`http://172.16.110.27:8084/` 指向 `D:\SPC\release\test\backend`，由後端供應 sibling `frontend`；未改既有 `SpcApi:8081`、`SpcWeb:8083`。
 - 驗證：`/api/version` 200/test，首頁與 `/spc`、`/calibration-instruments`、`/particle-monitoring` 皆 200，新 JS 200；前端資產已無舊 API base 與 `/api/api`。

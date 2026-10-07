@@ -1,3 +1,8 @@
+## [2026-10-07] - Portal 生日通知調整與團保取消規劃
+- 目的：依使用者新需求，取消團保專區後續小工作，將生日資料維護改至權限管理出生年月日欄位，並規劃人事專區生日祝詞與祝賀圖片設定頁。
+- 範圍：新增 `specs/20261007-portal-birthday-replan/`，更新 `TODO.md`、`docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不修改 Portal 程式、資料庫、IIS 或團保資料夾。
+- 驗證：工作池新增三個 Portal 生日調整小工作，團保專區標示取消且不列入未完成開發。
+
 ## [2026-10-07] - IIS-TASK-006 測試單一 IIS Site 部分完成
 - 目的：在不影響既有 `SpcApi:8081`、`SpcWeb:8083` 的前提下，建立 SPC 單一 IIS 測試站並驗證 Vue 與 `/api` 同站服務。
 - 範圍：新增 IIS Site/AppPool `SpcSingleTest`，binding `http/172.16.110.27:8084:`，PhysicalPath `D:\SPC\release\test\backend`；將 `release/test/frontend` 更新為 production build 使用相對 `/api`。

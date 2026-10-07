@@ -26,7 +26,31 @@
 - T-007：執行登入、Portal SSO、JWT、SQL、401、403、Vue refresh、mixed content smoke。
 - T-008：同步需求索引、變更紀錄與驗證證據。
 
-### 第二順位：全專案 AI + BDD 導入（流程治理）
+### 第二順位：Portal 生日通知調整（個資與人事權限）
+
+#### PORTAL-BIRTHDAY-REPLAN-TASK-001：權限管理加入出生年月日欄位
+
+狀態：待規格；主規格 `specs/20261007-portal-birthday-replan/spec.md`
+
+範圍：取消獨立生日資料維護專區；在人員/權限管理編輯表單加入出生年月日欄位，限制人事或授權管理角色維護，並保護個資可見性與稽核。
+
+#### PORTAL-BIRTHDAY-REPLAN-TASK-002：人事專區生日通知設定頁
+
+狀態：待 PORTAL-BIRTHDAY-REPLAN-TASK-001
+
+範圍：在人事專區新增生日通知設定頁，可修改生日祝詞、上傳/替換生日祝賀圖片、預覽通知效果；需限制圖片格式、大小與儲存路徑。
+
+#### PORTAL-BIRTHDAY-REPLAN-TASK-003：登入生日通知套用新版設定
+
+狀態：待 PORTAL-BIRTHDAY-REPLAN-TASK-002
+
+範圍：使用權限管理中的出生年月日判斷生日，登入時顯示人事設定的祝詞與圖片；驗證一般使用者只看到自己的生日通知。
+
+#### PORTAL-GROUP-INSURANCE-CANCELLED：團保專區取消
+
+狀態：取消；除非使用者重新提出，不再排入未完成小工作，不讀取或使用 `D:\PmrPortal\GroupInsurance`。
+
+### 第三順位：全專案 AI + BDD 導入（流程治理）
 
 #### AI-BDD-ALL-TASK-001：全專案導入盤點與共用範本
 
@@ -46,7 +70,7 @@
 
 範圍：Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 依專案大小採輕量導入。
 
-### 第三順位：KM 教育訓練系統（新功能）
+### 第四順位：KM 教育訓練系統（新功能）
 
 #### KM-TRAINING-TASK-001：教育訓練系統需求規格與資料來源盤點
 
@@ -78,7 +102,7 @@
 
 範圍：完成率、逾期清單、課程歷程、部門統計與 Excel 匯出。
 
-### 第四順位：正式機程式碼更新工具（正式發布/IIS 高風險）
+### 第五順位：正式機程式碼更新工具（正式發布/IIS 高風險）
 
 #### RELEASE-TOOL-TASK-001：正式機更新工具規格與環境盤點
 
