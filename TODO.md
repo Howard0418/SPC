@@ -28,15 +28,9 @@
 
 ### 第二順位：SPC 管制界線重算與 F 表版本（資料正確性）
 
-#### SPC-CL-RECALC-TASK-001：標準差方法切換後重算管制界線
-
-狀態：待規格；主規格 `specs/20261007-spc-ftable-control-limit-replan/spec.md`
-
-範圍：修正切換「樣本標準差」與「系統標準公式」後 UCL/CL/LCL 未跟著重算的問題；先釐清手動固定界線、分段管制線與統計試算來源，再以測試保護重算結果。
-
 #### SPC-FTABLE-VERSION-TASK-001：F 表版本記錄與回復
 
-狀態：待 SPC-CL-RECALC-TASK-001
+狀態：待規格；主規格 `specs/20261007-spc-ftable-control-limit-replan/spec.md`
 
 範圍：讓 F 表套用新版或修改儲存格時建立可查詢、可追溯、可回復的版本記錄；回復時需保留回復來源與影響範圍。
 

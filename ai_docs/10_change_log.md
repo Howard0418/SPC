@@ -1,3 +1,8 @@
+## [2026-10-07] - SPC-CL-RECALC-TASK-001 標準差方法切換清除舊管制線
+- 目的：修正 Xbar 計算方法在「樣本標準差」與「系統標準公式」切換後，舊固定 UCL/CL/LCL 繼續覆蓋新統計界線的問題。
+- 範圍：後端 `PartProcessCharacteristicsController.Update` 與主檔維護測試；不修改 DB schema、不重算既有正式資料。
+- 驗證：新增單測通過、後端 build 通過；已發布 SPC 測試站 backend，`8084/api/version` 回 200/test，未登入寫入 API 回 401。
+
 ## [2026-10-07] - SPC F 表版本記錄與管制界線重算規劃
 - 目的：依使用者需求，將 F 表版本記錄/回復與標準差方法切換後管制界線重算問題加入小工作池。
 - 範圍：新增 `specs/20261007-spc-ftable-control-limit-replan/`，更新 `TODO.md`、`docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不修改 SPC 程式、資料庫或 IIS。

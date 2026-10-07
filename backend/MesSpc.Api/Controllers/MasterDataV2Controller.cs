@@ -528,6 +528,7 @@ public class PartProcessCharacteristicsController(
     {
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
         var previousDisplayMode = x.DisplayMode;
+        var previousFormulaConfigJson = x.FormulaConfigJson;
         var previousChemicalAnalysisConfigJson = x.ChemicalAnalysisConfigJson;
         var validation = await ValidateScopeAsync(req);
         if (validation is not null) return BadRequest(new { message = validation });
@@ -536,6 +537,13 @@ public class PartProcessCharacteristicsController(
         req.Unit = CleanUnit(req.Unit);
         req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
         req.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson);
+        var xbarCalculationMethodChanged = HasXbarCalculationMethodChanged(previousFormulaConfigJson, req.FormulaConfigJson);
+        if (xbarCalculationMethodChanged)
+        {
+            req.UCL = null;
+            req.CL = null;
+            req.LCL = null;
+        }
         if (await HasDuplicateBusinessKeyAsync(req, id))
             return Conflict(new { message = BuildDuplicateBusinessKeyMessage() });
         x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = req.PartId; x.ProcessId = req.ProcessId; x.MachineId = req.MachineId; x.TankId = req.TankId; x.SlotId = req.SlotId; x.CharacteristicId = req.CharacteristicId; x.SequenceNo = req.SequenceNo;
@@ -546,7 +554,7 @@ public class PartProcessCharacteristicsController(
 
         var useTransaction = !string.Equals(db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
         await using var transaction = useTransaction ? await db.Database.BeginTransactionAsync() : null;
-        if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase) || xbarCalculationMethodChanged)
         {
             var staleResults = await db.SpcCalculationResults
                 .Where(result => result.PartProcessCharacteristicId == id)
@@ -731,6 +739,31 @@ public class PartProcessCharacteristicsController(
         if (string.IsNullOrWhiteSpace(formulaConfigJson)) return null;
         using var document = System.Text.Json.JsonDocument.Parse(formulaConfigJson);
         return document.RootElement.GetRawText();
+    }
+
+    private static bool HasXbarCalculationMethodChanged(string? previousFormulaConfigJson, string? nextFormulaConfigJson) =>
+        !string.Equals(
+            GetXbarCalculationMethod(previousFormulaConfigJson),
+            GetXbarCalculationMethod(nextFormulaConfigJson),
+            StringComparison.OrdinalIgnoreCase);
+
+    private static string GetXbarCalculationMethod(string? formulaConfigJson)
+    {
+        if (string.IsNullOrWhiteSpace(formulaConfigJson)) return "SYSTEM_STANDARD";
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(formulaConfigJson);
+            if (document.RootElement.TryGetProperty("XbarCalculationMethod", out var methodProperty))
+            {
+                var method = methodProperty.GetString();
+                if (!string.IsNullOrWhiteSpace(method)) return method.Trim().ToUpperInvariant();
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return "SYSTEM_STANDARD";
+        }
+        return "SYSTEM_STANDARD";
     }
 
     private static string NormalizeScope(string? scope)

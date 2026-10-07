@@ -131,6 +131,85 @@ public class PartProcessCharacteristicMaintenanceTests
     }
 
     [Fact]
+    public async Task Update_Should_Clear_FixedControlLimits_When_XbarCalculationMethodChanges()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        await using var db = new AppDbContext(options);
+        var process = new Process { ProcessCode = "P1", ProcessName = "製程一", ControlScope = "PROCESS" };
+        var characteristic = new QualityCharacteristic
+        {
+            CharacteristicCode = "C1",
+            CharacteristicName = "厚度",
+            ControlScope = "PROCESS"
+        };
+        var chartGroup = new ControlChartGroup
+        {
+            GroupCode = "PROCESS",
+            GroupName = "製程管制",
+            GroupType = "CONTROL_CHART",
+            BusinessScopeCode = "PROCESS"
+        };
+        db.AddRange(process, characteristic, chartGroup);
+        await db.SaveChangesAsync();
+
+        var chartType = new ControlChartType
+        {
+            ChartGroupId = chartGroup.Id,
+            ChartTypeCode = "XBAR_R",
+            ChartTypeName = "平均數-全距圖",
+            DataCategory = "Variable",
+            RequiredSampleSize = 5
+        };
+        db.ControlChartTypes.Add(chartType);
+        await db.SaveChangesAsync();
+
+        var item = new PartProcessCharacteristic
+        {
+            ControlScope = "PROCESS",
+            ProcessId = process.Id,
+            CharacteristicId = characteristic.Id,
+            Unit = "μm",
+            UCL = 12.5,
+            CL = 10.0,
+            LCL = 7.5,
+            SampleSize = 5,
+            ChartTypeId = chartType.Id,
+            DisplayMode = "CONTROL_CHART",
+            FormulaConfigJson = """{"XbarCalculationMethod":"SIGMA_METHOD","Multiplier":3}""",
+            IsEnabled = true
+        };
+        db.PartProcessCharacteristics.Add(item);
+        await db.SaveChangesAsync();
+
+        var result = await new PartProcessCharacteristicsController(db).Update(item.Id, new PartProcessCharacteristic
+        {
+            ControlScope = item.ControlScope,
+            ProcessId = item.ProcessId,
+            CharacteristicId = item.CharacteristicId,
+            Unit = item.Unit,
+            UCL = item.UCL,
+            CL = item.CL,
+            LCL = item.LCL,
+            SampleSize = item.SampleSize,
+            ChartTypeId = item.ChartTypeId,
+            DisplayMode = item.DisplayMode,
+            FormulaConfigJson = null,
+            IsRequired = item.IsRequired,
+            IsEnabled = true
+        });
+
+        result.Should().BeOfType<OkObjectResult>();
+        var saved = await db.PartProcessCharacteristics.SingleAsync(x => x.Id == item.Id);
+        saved.FormulaConfigJson.Should().BeNull();
+        saved.UCL.Should().BeNull();
+        saved.CL.Should().BeNull();
+        saved.LCL.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Update_Should_Record_ChemicalFormulaVersion_When_ChemicalConfigChanges()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()

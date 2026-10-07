@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（SPC 標準差方法切換後管制線重算修正）
+- 修正：管制項目保存時若 `FormulaConfigJson.XbarCalculationMethod` 改變，後端會清空舊固定 `UCL/CL/LCL`，並移除舊 SPC 計算結果，避免舊界線覆蓋新統計方法。
+- 驗證：新增 `Update_Should_Clear_FixedControlLimits_When_XbarCalculationMethodChanges` 通過；後端 build 0 warnings / 0 errors。整個 `PartProcessCharacteristicMaintenanceTests` 類別仍有 3 個既有測試斷言落差，非本次新增測試。
+- 發布：已發布 SPC 測試站 backend，備份 `backend.backup-cl-recalc-20261007-161715`；`http://172.16.110.27:8084/api/version` 200/test，未登入寫入 API 401。正式站未發布。
+- 待辦：F 表版本記錄與回復尚未執行。
+
 ## 2026-10-07（SPC F 表版本記錄與管制界線重算規劃）
 - 目的：依使用者需求，F 表需加入版本記錄；切換樣本標準差與系統標準公式時，管制界線必須重新計算，不能維持不變。
 - 修改：新增 `specs/20261007-spc-ftable-control-limit-replan/`，並在 `TODO.md` 加入 `SPC-CL-RECALC-TASK-001`、`SPC-FTABLE-VERSION-TASK-001`。
