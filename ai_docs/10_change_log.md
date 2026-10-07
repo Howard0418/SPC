@@ -1,3 +1,9 @@
+## [2026-10-07] - IIS-TASK-006 測試單一 IIS Site 部分完成
+- 目的：在不影響既有 `SpcApi:8081`、`SpcWeb:8083` 的前提下，建立 SPC 單一 IIS 測試站並驗證 Vue 與 `/api` 同站服務。
+- 範圍：新增 IIS Site/AppPool `SpcSingleTest`，binding `http/172.16.110.27:8084:`，PhysicalPath `D:\SPC\release\test\backend`；將 `release/test/frontend` 更新為 production build 使用相對 `/api`。
+- 驗證：`http://172.16.110.27:8084/api/version` 200/test，首頁 200，`/spc`、`/calibration-instruments`、`/particle-monitoring` 200，新 JS 200；前端資產無舊 API base 與 `/api/api`。
+- 限制：尚未有 HTTPS binding/cert，AC-007 mixed content 未能驗證；T-006 不標示 DONE。
+
 ## [2026-10-07] - IIS-TASK-005 單一 IIS 打包驗證
 - 目的：確認前端 production build、後端 Release publish 與 sibling frontend static file fallback 可組成單一 IIS Site 發布包；不切換實際 IIS、不修改業務功能。
 - 範圍：更新 `specs/20261005-single-iis-site/` 驗證紀錄與任務狀態；staging package 位於 `release-staging/single-iis-t005/`，不納入提交。

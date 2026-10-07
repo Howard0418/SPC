@@ -18,14 +18,11 @@
 
 #### IIS-TASK-003～IIS-TASK-008：沿用 `specs/20261005-single-iis-site/tasks.md`
 
-狀態：已完成 TASK-001/TASK-002；TASK-003 起待執行
+狀態：已完成 TASK-001～TASK-005；TASK-006 已建立 HTTP 測試單站，待 HTTPS binding/cert 才能完成 AC-007
 
 待執行：
 
-- T-003：將前端 API base 預設調整為相對 `/api`。
-- T-004：修正手動組 API URL 的匯出路徑，避免 `/api/api`。
-- T-005：建置並檢查前端資產、後端 publish 與 static file fallback。
-- T-006：規劃並執行測試站單一 IIS Site 設定；不發布正式站。
+- T-006：補齊測試站 HTTPS binding/cert 與 mixed content 驗證；不發布正式站。
 - T-007：執行登入、Portal SSO、JWT、SQL、401、403、Vue refresh、mixed content smoke。
 - T-008：同步需求索引、變更紀錄與驗證證據。
 

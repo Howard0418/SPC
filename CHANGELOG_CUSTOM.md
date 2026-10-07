@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（IIS-TASK-006 測試單一 IIS Site 部分完成）
+- 調整：新增獨立 IIS 測試單站 `SpcSingleTest`，`http://172.16.110.27:8084/` 指向 `D:\SPC\release\test\backend`，由後端供應 sibling `frontend`；未改既有 `SpcApi:8081`、`SpcWeb:8083`。
+- 驗證：`/api/version` 200/test，首頁與 `/spc`、`/calibration-instruments`、`/particle-monitoring` 皆 200，新 JS 200；前端資產已無舊 API base 與 `/api/api`。
+- 發布：僅測試站新增 HTTP 單站；正式站未發布。HTTPS binding/cert 尚未提供，AC-007 mixed content 未驗證，因此 T-006 暫不標示 DONE。
+
 ## 2026-10-07（IIS-TASK-005 單一 IIS 打包驗證）
 - 調整：完成單一 IIS 發布包 staging 驗證，前端 production build 複製到後端 publish sibling `frontend`，確認 backend static file fallback 可供應 Vue。
 - 驗證：`dotnet build --no-restore`、`npm run build`、`dotnet publish -c Release --no-restore` 通過；本機 staging `/api/version`、`/`、`/spc`、`/calibration-instruments`、`/particle-monitoring`、新版 JS 資產均 200。
