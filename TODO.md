@@ -28,11 +28,17 @@
 
 ### 第二順位：SPC 線別分析項目總覽公式版本記錄（資料正確性）
 
-#### SPC-CHEM-OVERVIEW-VERSION-TASK-001：總覽頁公式修改共用藥液公式版本記錄
+#### SPC-CHEM-OVERVIEW-VERSION-TASK-001：總覽頁公式修改共用藥液公式版本記錄與參照文件備註
 
 狀態：待執行；主規格 `specs/20261007-chemical-overview-formula-versioning/spec.md`
 
-範圍：線別分析項目總覽若修改藥液分析公式，必須與 SPC 管制項目設定頁共用同一個 `ChemicalAnalysisFormulaVersion` 版本記錄與回復功能；不得新增第二套版本邏輯。
+範圍：線別分析項目總覽若修改藥液分析公式，必須與 SPC 管制項目設定頁共用同一個 `ChemicalAnalysisFormulaVersion` 版本記錄與回復功能，並在每筆版本記錄保存參照文件/修改依據備註；不得新增第二套版本邏輯。
+
+#### SPC-CHART-POINT-REMARK-TASK-001：SPC 管制圖量測點備註
+
+狀態：待執行；主規格 `specs/20261007-spc-chart-point-remarks/spec.md`
+
+範圍：SPC 管制圖每個可定位量測點右鍵可新增/編輯備註；備註需可重新查詢顯示，不影響管制界線、OOC/OOS、Cpk 或既有點位排除/隱藏狀態。
 
 ### 第三順位：Portal 生日通知調整（個資與人事權限）
 

@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（SPC 公式版本參照文件與管制圖點位備註規劃）
+- 目的：依使用者需求，線別分析項目總覽修改公式時，每筆版本記錄需保存參照文件/修改依據；SPC 管制圖每個量測點可由右鍵新增備註。
+- 修改：補強 `specs/20261007-chemical-overview-formula-versioning/`，新增 `specs/20261007-spc-chart-point-remarks/`，並在 `TODO.md` 加入 `SPC-CHART-POINT-REMARK-TASK-001`。
+- 排序：公式版本參照文件屬資料正確性與可追溯性，優先；管制圖點位備註排在其後、Portal 生日調整之前。
+- 驗證：本次僅規劃與工作池更新，未修改 SPC 程式、資料庫或 IIS。
+- 發布：不適用；未發布測試站或正式站。
+
 ## 2026-10-07（SPC 線別分析項目總覽公式版本記錄規劃）
 - 目的：依使用者需求，線別分析項目總覽的公式修改必須與 SPC 管制項目設定頁的藥液分析公式共用同一套版本記錄與回復功能。
 - 修改：新增 `specs/20261007-chemical-overview-formula-versioning/`，並在 `TODO.md` 加入 `SPC-CHEM-OVERVIEW-VERSION-TASK-001`。
