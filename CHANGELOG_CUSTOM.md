@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（TODO 只顯示未完成小工作）
+- 目的：讓工作池只顯示未完成、待規格、待執行或待確認的小工作。
+- 修改：整理 `TODO.md`，移除已全數完成的小工作，新增 `specs/20261007-todo-open-items-only/` 規格/驗證。
+- 驗證：確認待處理小工作仍保留；完成紀錄改查 `CHANGELOG_CUSTOM.md` 與對應 specs。
+- 發布：不適用；未修改程式、未發布。
+
 ## 2026-10-07（正式機更新工具、全專案 AI+BDD 與 KM 教育訓練系統規劃）
 - 目的：將正式機程式碼更新工具、全專案 AI+BDD 導入、KM 教育訓練系統加入小工作池。
 - 修改：新增 `specs/20261007-release-ai-bdd-km-training-plan/` 規格/驗證，並在 `TODO.md` 加入 AI-BDD-ALL、KM-TRAINING、RELEASE-TOOL 小工作。

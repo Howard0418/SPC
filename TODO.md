@@ -1,671 +1,81 @@
-# SPC 架構改善 TODO
+# SPC 全系統未完成小工作池
 
-建立日期：2026-10-02
-狀態：架構稽核完成，等待使用者逐項確認
+狀態：僅顯示未完成、待規格、待執行、待確認小工作。已完成小工作不再保留於本檔，完成紀錄請查 `CHANGELOG_CUSTOM.md` 與對應 `specs/`。
 
 ## 執行規則
 
 - 每次只執行一個 TASK。
 - 開始前先確認該 TASK 的範圍與驗收條件。
-- 新發想先進「工作池」並標註系統、風險、相依與驗收；未排入工作池前不插隊實作。
-- 排序優先順序：阻擋正式/測試使用的錯誤 > 安全與權限隔離 > 資料正確性與可回復 > 使用者高頻操作 > 文件/文案 > 架構整理。
+- 依優先順序執行；阻擋正式/測試使用的錯誤 > 安全與權限隔離 > 資料正確性與可回復 > 使用者高頻操作 > 文件/文案 > 架構整理。
 - 同時碰登入/權限、發布/IIS、資料庫 migration、公式計算或公告權限的小工作不可併行；先做範圍小且可獨立驗證者。
-- 修改核心邏輯前先補測試，修改後執行對應測試。
-- 完成後更新本檔、相關 specs、`CHANGELOG_CUSTOM.md` 及必要變更紀錄。
 - 測試通過後只發布 SPC 測試站；正式站需另行授權。
+- 未完成小工作須有對應 Spec/BDD；完成後同步需求索引與變更紀錄，並自本檔移除。
 - 未經確認不提前執行下一個 TASK。
 
-## 目前小工作排序（2026-10-06）
+## 目前小工作排序（2026-10-07）
 
-### 第一順位：SPC 修正-1002 Excel 統計正確性與圖表需求
-
-來源：`D:\SPC\docs\SPC 修正-1002.xlsx`；規格：`specs/20261005-spc-1002-workbook-plan/spec.md`。
-
-原則：先處理統計正確性與可驗證資料，再處理呈現增強；疑似已完成項目先驗證，不重複改動。
-
-#### SPC-TEST-20261005-TASK-001：製程總覽下拉與資料數口徑修正
-
-狀態：完成；SPC 測試站 backend/frontend 已發布
-
-來源：`D:\SPC\docs\SPC測試問題_20261005.xlsx`
-
-問題：
-
-- 製程的管制項目總覽「線別」下拉混入非線別項目，如製程、檢驗項目、總數、日期、作業員、lot、樣本編號。
-- 總表「匯入資料數」與管制圖明細「管制點數」口徑不同，Xbar 類項目顯示 raw sample 數，與畫面管制點數不一致。
-
-修改：
-
-- 前端線別下拉只納入有 `processId`、`process` 與製程名稱/代碼的有效線別。
-- 後端總表 `TotalCount` 僅在製程 `PROC` 改採 chart data 的管制點數；藥液 `CHEM` 維持 raw data 筆數，不影響藥液功能與計算。
-
-驗證：
-
-- 後端 build 0 warnings / 0 errors。
-- 前端 `npm run build -- --mode testhost` 通過。
-- SPC 測試站 backend/frontend 已發布；備份 `backend.backup-test-issues-20261005-144947`、`frontend.backup-test-issues-20261005-144947`。
-- 2026-10-05 補充：依使用者提醒，`TotalCount` 口徑修正已收斂為只套用製程 `PROC`；藥液 `CHEM` 維持原 raw data 筆數。測試站 backend 已重新發布，備份 `backend.backup-proc-total-count-20261005-150540`。
-- 2026-10-05 再修正：製程標準代碼為 `PROCESS`，已改用標準化 control scope 判斷，避免製程總覽仍回退 raw data 筆數；藥液 `CHEM` 維持不變。後端 build 通過並已發布測試站 backend，備份 `backend.backup-process-total-count-scope-170030`。
-- 2026-10-05 OOS 再確認：製程總覽 `OosCount/OocCount` 同樣需用製圖管制點口徑；已調整為製程 `PROCESS` 使用 `chartData.points` 旗標計算，藥液 `CHEM` 維持 raw data 口徑。後端 build 通過並已發布測試站 backend，備份 `backend.backup-process-oos-scope-193639`。
-- Smoke：`/api/version` 回 `environment=test`；前端首頁 HTTP 200；新 JS `index-Hc-aHFuY.js` 回 `application/javascript`，CSS 回 `text/css`。
-
-#### SPC-1002-TASK-001：常態分布檢定 P-value 修正
-
-狀態：完成；SPC 測試站 backend 已發布
-
-理由：Excel 指出 raw data 實際 P-value `<0.05`，系統顯示 `0.0986`，屬核心統計正確性。
-
-預計修改：
-
-- 後端常態性檢定演算法、資料取樣或 P-value 回傳。
-- 必要時調整前端直方圖檢定顯示文字；不先擴張到其他圖表功能。
-
-測試：
-
-- 以可重現 raw data 建立後端單元測試。
-- 驗證 `<0.05` 案例、目前 `0.0986` 回歸案例、零變異/小樣本邊界。
-
-確認結果：
-
-- 測試站同一組資料 P-value 與 raw data 驗算一致。
-
-完成紀錄：
-
-- 修改：後端常態性檢定由一般 Jarque-Bera 改為 adjusted Jarque-Bera，修正小樣本 P-value 偏高。
-- 測試：`NormalityTest` 4 passed；後端 build 0 warnings / 0 errors。
-- 發布：SPC 測試站 backend 已發布，備份 `backend.backup-normality-20261005-123245`；正式站未發布。
-- 限制：Excel 未附原始 raw data，因此以可重現的小樣本差異案例驗證；使用者仍可後續用真實 raw data 再對帳。
-
-#### SPC-1002-TASK-002：管制圖預設界線關閉現況驗證
-
-狀態：完成；現況驗證通過
-
-理由：`CHANGELOG_CUSTOM.md` 已有 2026-09-25「管制界限預設關閉」，先驗證避免重複改動。
-
-預計修改：
-
-- 原則上不改程式；若測試站仍預設勾選，再另開小型修正。
-
-測試：
-
-- 製程/藥液管制圖初始載入、重新整理、切換圖表後，規格界限與管制界限皆預設未勾選。
-
-確認結果：
-
-- 使用者進入管制圖時界線預設關閉，手動勾選仍可顯示。
-
-完成紀錄：
-
-- 驗證：`frontend/mes-spc-web/src/views/SpcChartView.vue` 中 `showSpecLimits` 與 `showControlLimits` 初始值皆為 `false`，且畫面 checkbox 綁定同兩個狀態。
-- 說明：`TrendChartView.vue` 的規格線初始值目前為 `true`，但 Excel 此項為「管制圖」；趨勢圖分布/直方圖需求已另列 `SPC-1002-TASK-006`，本項不混入。
-- 本次未修改產品程式、未建置、未發布。
-
-#### SPC-1002-TASK-003：Ca 呈現移除絕對值現況驗證/補修
-
-狀態：完成；現況驗證通過
-
-理由：`ai_docs/10_change_log.md` 已有 2026-09-29「CA 顯示保留正負號」目的，需確認目前程式/測試站是否完成。
-
-預計修改：
-
-- 若尚未完成，只調整 Ca 顯示/格式化或計算輸出；Cpk/Ppk 不跟著改。
-
-測試：
-
-- 平均值低於/高於 target 各一筆，Ca 顯示負值/正值。
-- Cpk/Ppk 回歸不受影響。
-
-確認結果：
-
-- Ca 不再被絕對值化，正負號符合 mean 相對 target 的方向。
-
-完成紀錄：
-
-- 現況：後端 `ProcessCapabilityCalculator` 已用 `(mean - target) / halfWidth` 計算 Ca，未再取絕對值。
-- 現況：前端 `SpcChartView.vue` 的能力指標列直接顯示 `chartResult.capability.ca`，`formatNumber` 只做小數格式化，會保留負號。
-- 測試：`dotnet test tests/MesSpc.Api.Tests/MesSpc.Api.Tests.csproj --filter Capability_Ca_ShouldKeepSignAndLeaveCpkPpkUnchanged --no-restore -p:UseSharedCompilation=false` 通過，1 passed。
-- 發布：本項未修改功能程式，故不重新發布；沿用目前 SPC 測試站。
-
-#### SPC-1002-TASK-004：班別管制圖合併呈現需求釐清與最小調整
-
-狀態：完成；SPC 測試站 backend/frontend 已發布
-
-理由：會碰時間序列、班別與開收線既有規則，需在統計核心修正後處理。
-
-預計修改：
-
-- 管制圖班別序列呈現、Tooltip、圖例或查詢組合邏輯。
-- 不改歷史量測資料、不改班別/開收線資料結構。
-
-測試：
-
-- N1/N2 開收線、早/中班、非 N1/N2 線別各一組。
-- 驗證同圖查看不同班別時，點位順序、MR 與異常規則不錯位。
-
-確認結果：
-
-- 使用者可在同一張管制圖查看班別資料，標籤與統計結果正確。
-
-完成紀錄：
-
-- 修改：Xbar-R/Xbar-S 子組點位補帶 `portalDailyDate`、`samplingPhase`、`samplingStage`，讓同一張管制圖合併顯示不同班別時，座標標籤、Tooltip 與點位詳細卡可顯示班別/取樣階段。
-- 範圍：未修改資料庫、未改歷史量測資料、未改 `ChemicalStageChart` 排序、未改 MR/Xbar/Cpk/Ppk 統計公式。
-- 測試：`XbarR_ShouldKeepChemicalShiftMetadataOnChartPoints` 與 `Capability_Ca_ShouldKeepSignAndLeaveCpkPpkUnchanged` 通過，2 passed。
-- 建置：後端 build 0 warnings / 0 errors；前端 `npm run build -- --mode testhost` 通過。
-- 發布：SPC 測試站 backend/frontend 已發布；備份 `backend.backup-shift-chart-20261005-130812`、`frontend.backup-shift-chart-20261005-130812`。正式站未發布。
-- Smoke：`/api/version` 回 `environment=test`；前端首頁與 `index-x4DbX-TX.js` 資產 HTTP 200。
-
-#### SPC-1002-TASK-005：raw data 下載（製程/藥液）
-
-狀態：完成；SPC 測試站 backend/frontend 已發布
-
-理由：可支援使用者自行驗算常態檢定與後續問題追溯，但屬新增功能。
-
-預計修改：
-
-- 新增或擴充 raw data 匯出 API。
-- 管制圖/趨勢圖加入下載入口。
-- 權限不得大於既有查詢頁面。
-
-測試：
-
-- 製程與藥液各下載一組，核對日期、線別、槽位、分析項目、班別/階段、原始值。
-- 未登入 401、無權限 403。
-
-確認結果：
-
-- 使用者可下載目前查詢條件的 raw data 並用 Excel 驗算。
-
-完成紀錄：
-
-- 修改：新增 `GET /api/v1/spc/chart/raw-data` CSV 下載端點，沿用管制圖 `ppcId`、`uploadBatchId`、`batchNo`、`partId`、`startDate`、`endDate` 查詢條件與 93 天限制。
-- 修改：管制圖頁新增「下載 raw data」按鈕；下載內容包含製程/檢驗項目、量測時間、日報日期、班別、取樣階段、原始值、批號、線別/槽位 ID、板面與 OOS/OOC 等欄位。
-- 範圍：不改資料庫、不改量測資料、不放大查詢權限；未登入端點回 401。
-- 驗證：後端 build 0 warnings / 0 errors；前端 `npm run build -- --mode testhost` 通過。
-- 發布：SPC 測試站 backend/frontend 已發布；備份 `backend.backup-raw-data-download-20261005-135341`、`frontend.backup-raw-data-download-20261005-135341`。正式站未發布。
-- Smoke：`/api/version` 回 `environment=test`；前端首頁與 `index-BEkeUYvV.js` 資產 HTTP 200；未登入 raw data 端點回 401。
-- 待使用者登入確認：使用有資料的製程/藥液管制圖下載 CSV，核對內容是否符合現場欄位期待。
-
-#### SPC-1002-TASK-006：趨勢圖增加直方圖等分布功能
-
-狀態：完成；SPC 測試站 frontend 已發布
-
-理由：屬呈現增強，需等常態檢定與 raw data 對帳可信後再做。
-
-預計修改：
-
-- 趨勢圖新增直方圖/常態分布相關區塊。
-- 不畫管制界線、不套用規則管理、不顯示 OOC 規則判定。
-
-測試：
-
-- 趨勢圖仍維持 `TREND_CHART` 行為，不混入 `CONTROL_CHART` 規則。
-- 直方圖、常態曲線、P-value 與 raw data 下載結果一致。
-
-確認結果：
-
-- 趨勢圖可看分布與常態檢定，但不出現管制線與規則管理。
-
-完成紀錄：
-
-- 規格：`specs/20261005-trend-histogram/spec.md`。
-- 修改：趨勢圖頁新增 raw data 分布直方圖、常態分布曲線、P-value、偏態、峰度與常態判定；直方圖只標示 LSL/USL/Target/Mean，不顯示 UCL/LCL/CL，不套用 OOC 規則管理。
-- 驗證：前端 `npm run build -- --mode testhost` 通過。
-- 發布：SPC 測試站 frontend 已發布，備份 `frontend.backup-trend-histogram-203651`；首頁 HTTP 200，新版 JS `index-DVVeXuQK.js` 回 `application/javascript`。
-- 待使用者登入確認：開啟有資料的趨勢圖項目，確認直方圖、常態曲線與 P-value 顯示。
-
-### 第二順位：Portal 公告權限與公告格式（安全與高頻操作）
-
-#### PORTAL-TASK-001：福利專區文案「輔助辦法」改「補助辦法」
-
-狀態：完成；Portal 測試站已發布
-
-理由：低風險文案變更，可快速完成並避免後續混淆。
-
-預計修改：
-
-- Portal Web 福利專區卡片、標題、相關提示文字。
-- 若後端回傳顯示名稱或檔案說明含「輔助辦法」，同步改為「補助辦法」。
-
-測試：
-
-- Portal Web build。
-- 開福利專區確認卡片與頁面顯示「補助辦法」。
-- 確認 PDF 開啟/下載行為不變。
-
-確認結果：
-
-- 使用者登入 Portal，進福利專區，只看到「補助辦法」，不再看到「輔助辦法」。
-
-完成紀錄：
-
-- 規格：`D:\PmrPortal\specs\20261005-welfare-subsidy-wording\spec.md`。
-- 修改：Portal Web 福利專區頁面文字、上傳成功訊息；Portal API welfare-assistance 回應訊息。
-- 驗證：Portal API/Web build 通過；測試站 API `/health` 200，福利頁未登入 401。
-- 發布：Portal 測試站 API/Web 已發布，備份 `welfare-subsidy-wording-20261005-095524`；正式站未發布。
-
-#### PORTAL-TASK-002：新增人事角色與公告管理角色隔離
-
-狀態：完成；Portal 測試站已發布
-
-理由：公告管理屬權限隔離；需先做，避免不同角色互看/誤改公告。
-
-預計修改：
-
-- 新增人事角色（建議 role code：`human_resources`，顯示「人事」）。
-- 公告管理入口允許 `admin`、`general_affairs`、`human_resources` 及未來授權公告角色。
-- 公告資料需能辨識管理角色/擁有角色；非 admin 只能看、改、刪自己角色管理的公告。
-- `admin` 可看全部公告管理。
-- API 查詢、新增、修改、刪除、附件上傳/刪除都必須套同一隔離規則。
-
-測試：
-
-- 後端公告 controller 權限測試：admin 全看；總務只看總務公告；人事只看人事公告；一般使用者不可進管理。
-- Portal Web build。
-- 測試站用不同角色登入確認清單與操作邊界。
-
-確認結果：
-
-- 人事登入公告管理只看到人事公告。
-- 總務登入只看到總務公告。
-- admin 可看到全部公告。
-- 一般使用者仍只能看已發布公告，不能管理。
-
-完成紀錄：
-
-- 規格：`D:\PmrPortal\specs\20261006-announcement-role-isolation\spec.md`。
-- 修改：Portal 新增 `human_resources` 角色；公告新增 `manager_role` 欄位與 migration，既有公告預設 `general_affairs`；公告管理 API 清單、單筆、更新、刪除、附件新增/刪除皆依角色隔離，admin 不受隔離。
-- 驗證：Portal API/Web build 0 warnings / 0 errors；已補公告 Controller 測試，但既有 `PmrPortal.Api.Tests` 專案因多個舊測試簽章不符無法編譯，未宣稱測試通過。
-- 發布：Portal 測試站 API/Web 已發布；備份 `portal-api.backup-announcement-role-isolation-20261006-portal`、`portal-web.backup-announcement-role-isolation-20261006-portal`。Smoke：API `/health` 200/test，公告管理頁未登入 401。正式站未發布。
+### 第一順位：Portal 公告權限、生日通知與團保專區（安全與高頻操作）
 
 #### PORTAL-TASK-003：公告發佈格式自動帶組織單位
 
 狀態：待規格；相依 PORTAL-TASK-002
 
-理由：牽涉 AD/Portal 使用者資料與公告內容規則，需在公告角色隔離後做。
-
-預計修改：
-
-- 發公告時依登入者 AD/Portal 使用者資料帶入組織單位，例如「資訊課」。
-- 新公告主旨格式：`【組織單位名稱】公告主旨`。
-- 公告內容維持使用者輸入，不自動覆蓋既有公告內容。
-- 若 AD 無組織單位，回退 Portal 使用者部門；仍無資料時要求使用者確認或顯示「未設定單位」。
-
-測試：
-
-- 後端/前端測試不同帳號部門來源。
-- 新增公告後清單與前台顯示標題含 `【資訊課】` 類格式。
-- 編輯既有公告不得重複套兩次前綴。
-
-確認結果：
-
-- 使用 ihao_ting 或測試帳號發公告時，主旨自動帶入正確組織單位。
+初步範圍：公告主旨依登入者 AD/Portal 組織單位自動帶入 `【組織單位名稱】`，編輯既有公告不得重複套用。
 
 #### PORTAL-TASK-004：生日資料管理與登入生日快樂通知
 
 狀態：待規格；相依人事角色與權限基礎
 
-理由：生日屬個資且登入即顯示，需先定義人事可管理範圍、一般使用者可見內容、通知頻率與文案，再實作。
+初步範圍：人事維護生日資料與生日快樂說明詞；使用者生日當天登入 Portal 顯示通知；一般使用者不可查詢他人生日清單。
 
-初步發想：
-
-- 人事在權限管理或人員管理中維護每位使用者生日，建議只存月/日；若需年份另行確認是否顯示年齡。
-- 使用者登入 Portal 當天若符合生日條件，顯示生日快樂通知彈窗。
-- 生日快樂說明詞可由人事維護預設文案，例如「生日快樂！祝您今天順心愉快，感謝您一直以來的努力與付出。」
-- 通知建議每日只顯示一次，可提供「今天不再提醒」；同日重新登入不重複打擾。
-- 一般使用者不可查詢他人生日清單；人事與 admin 可管理。
-
-初步 BDD：
-
-- Given 人事已設定使用者生日為今日
-- When 該使用者登入 Portal
-- Then 系統顯示生日快樂通知與說明詞
-
-驗收方向：
-
-- 人事可新增/修改/清除生日。
-- 一般使用者不能進入生日管理。
-- 今日生日登入顯示通知；非生日不顯示。
-- 同一天重複登入不重複彈出，除非規則另行確認。
-
-風險/待確認：
-
-- 是否只存月日或包含年份。
-- 文案是否全域一份、依部門或依人員客製。
-- 生日遇假日是否提前/延後提醒。
+待確認：是否只存月日或包含年份；文案是否全域一份；生日遇假日是否提前/延後提醒。
 
 #### PORTAL-TASK-005：團保專區瀏覽與人事管理
 
 狀態：待規格；相依人事角色與檔案存取規則
 
-理由：團保資料所有人可看但人事可管理，且來源路徑為 `D:\PmrPortal\GroupInsurance`，需先確認檔案格式、上傳/同步方式與下載權限。
+初步範圍：新增團保專區，所有登入使用者可瀏覽/下載，人事與 admin 可管理；資料來源初步為 `D:\PmrPortal\GroupInsurance`，不得直接暴露實體路徑。
 
-初步發想：
+待確認：資料夾由 Portal 寫入或只讀；允許檔案類型/大小；是否需要下載紀錄或閱讀確認。
 
-- Portal 新增「團保專區」，所有登入使用者可瀏覽已發布團保資料。
-- 人事與 admin 可上傳、更新、下架或排序團保文件。
-- 後端讀取/管理 `D:\PmrPortal\GroupInsurance`；避免直接暴露實體路徑給前端。
-- 文件建議保留標題、說明、版本日期、檔案大小、更新人與更新時間。
-- 可先做檔案清單與下載，後續再加分類、搜尋、閱讀確認或版本歷程。
-
-初步 BDD：
-
-- Given 團保專區已有已發布文件
-- When 一般使用者登入 Portal 並進入團保專區
-- Then 系統顯示可下載的團保資料，但不顯示管理操作
-
-驗收方向：
-
-- 一般登入者可瀏覽/下載團保資料。
-- 人事可新增、更新、下架團保資料。
-- 未登入者不可下載。
-- 不回傳伺服器實體路徑。
-
-風險/待確認：
-
-- `D:\PmrPortal\GroupInsurance` 是否由 Portal 寫入，或只讀取既有檔案。
-- 允許的檔案類型與大小限制。
-- 是否需要下載紀錄或閱讀確認。
-
-### 第三順位：SPC 圖表點位排除/隱藏與恢復（資料正確性與可回復）
-
-規格：`specs/20261006-chart-point-exclusion/spec.md`。
-
-#### SPC-POINT-FILTER-TASK-001：現況分析與規格
-
-狀態：完成；僅文件規劃，未修改程式
-
-理由：此需求會影響管制圖、趨勢圖、直方圖、常態檢定、能力指標與 OOS/OOC 統計，需先確認既有排除機制與點位識別，避免只做前端隱藏造成統計錯誤。
-
-發現：
-
-- 現有 `UploadBatches.IsExcluded` 與 `POST /api/v1/spc/exclude-batch/{uploadBatchId}` 是整批排除，不是單一點位。
-- 現有計算模型已有 `isExcluded`，I-MR、Xbar-R、Xbar-S、Attribute chart 與 normality 會排除 `isExcluded`。
-- 管制圖已有點位明細「剔除此數據/恢復此數據」，但目前切換的是整批 batch。
-- 趨勢圖會顯示已排除狀態，但沒有右鍵選單或恢復操作。
-- 目前沒有「隱藏且不列入計算」狀態，也沒有「已排除點」清單供隱藏點恢復。
-
-確認結果：
-
-- 隱藏點必須從「已排除點」清單或 raw data/明細清單恢復，不能只靠圖上右鍵，因為圖上已看不到該點。
-- 第一版建議新增單一圖點排除狀態：`Normal`、`ExcludedVisible`、`ExcludedHidden`。
-- 既有整批排除先保留；若整批與單點同時存在，整批排除優先，避免單點恢復誤解除整批排除。
-
-#### SPC-POINT-FILTER-TASK-002：單一圖點排除資料模型與 API
-
-狀態：完成；SPC 測試站 backend 已發布
-
-預計修改：
-
-- 新增單一圖點排除資料表，記錄點位來源、狀態、修改人、修改時間、備註與 active 狀態。
-- 新增 API：查詢已排除點、設定 `ExcludedVisible` / `ExcludedHidden`、恢復 `Normal`。
-- 權限限制為 SPC 可編輯/管理角色；一般查詢者不可變更排除狀態。
-
-測試：
-
-- 單一 VariableMeasurement 可排除/隱藏/恢復。
-- Xbar 子組點可排除/隱藏/恢復。
-- 未授權變更回 401/403。
-
-確認結果：
-
-- 原始量測資料不變；排除狀態可查、可回復、可稽核。
-
-完成紀錄：
-
-- 修改：新增 `SpcPointExclusion` entity、`SpcPointExclusions` 資料表 migration、DbSet/EF mapping。
-- API：新增查詢、設定、恢復端點；`PUT/DELETE` 限 `Admin,Editor`，未登入回 401。
-- 驗證：`SpcPointExclusionsControllerTests` 4 passed；後端 build 0 warnings / 0 errors。
-- 發布：SPC 測試站 backend 已發布；備份 `backend.backup-spc-point-exclusions-20261006`。Smoke：`/api/version` 200/test，新寫入 API 未登入 401。正式站未發布。
-
-#### SPC-POINT-FILTER-TASK-003：後端管制圖計算套用單點排除
-
-狀態：完成；SPC 測試站 backend 已發布
-
-預計修改：
-
-- 管制圖計算套用單點排除。
-- `ExcludedVisible` 與 `ExcludedHidden` 都不列入計算。
-
-測試：
-
-- 製程 I-MR 排除一點後重新計算。
-- raw data 仍保留該點，但回傳 `isExcluded=true`，且不再計入 OOS。
-
-確認結果：
-
-- 管制圖後端計算開始讀取 `SpcPointExclusions` active 單點排除；整批排除仍優先保留。
-- 趨勢圖、直方圖與常態檢定共用後端 raw point 排除口徑已完成；前端右鍵/隱藏顯示仍在後續 TASK。
-
-完成紀錄：
-
-- 修改：`SpcService.GetInteractiveChartAsync` 將 `UploadBatches.IsExcluded` 與 active `SpcPointExclusions` 合併成點位 `IsExcluded`；Xbar 子組任一 raw measurement 被排除時，子組點也排除。
-- 追加修改：常態檢定/直方圖資料口徑確認使用未排除點；Attribute chart 補齊 `AttributeMeasurement` 單點排除與 `AttributeMeasurementId` 回傳。
-- 驗證：`SpcPointExclusionCalculationTests` 2 passed；後端 build 0 warnings / 0 errors。
-- 發布：SPC 測試站 backend 已發布；備份 `backend.backup-spc-point-exclusion-calc-20261006`、`backend.backup-spc-point-exclusion-trend-20261006`。Smoke：`/api/version` 200/test，`app_offline.htm` 已移除。正式站未發布。
-
-#### SPC-POINT-FILTER-TASK-004：管制圖右鍵選單與已排除點恢復清單
-
-狀態：完成；SPC 測試站 frontend/backend 已發布
-
-預計修改：
-
-- 管制圖點位右鍵選單：
-  - 顯示但不列入計算
-  - 隱藏且不列入計算
-  - 恢復列入計算
-- 工具列新增「已排除點 N」清單。
-- `ExcludedVisible` 以灰色/特殊符號顯示；`ExcludedHidden` 不顯示於圖上。
-
-測試：
-
-- 右鍵排除後圖表重算。
-- 隱藏點從圖上消失。
-- 從「已排除點」清單恢復後重新顯示並列入計算。
-
-確認結果：
-
-- 使用者不會因隱藏點而找不到恢復入口。
-
-完成紀錄：
-
-- 修改：管制圖點位新增右鍵選單，可設定顯示排除、隱藏排除與恢復；呼叫 `point-exclusions` 單點 API。
-- 後端補充：Attribute chart `chartData.points` 補帶 `attributeMeasurementId`，讓右鍵選單可定位 Attribute 單點。
-- 樣式：圖例補已排除點位，已排除點沿用灰色叉號樣式。
-- 驗證：前端 `npm run build -- --mode testhost` 通過；後端 `SpcPointExclusionCalculationTests` 2 passed；後端 build 0 warnings / 0 errors。
-- 發布：SPC 測試站 frontend/backend 已發布；備份 `frontend.backup-spc-point-context-menu-20261006`、`backend.backup-spc-point-context-menu-20261006`。Smoke：首頁 200，新 JS `index-93uPHtFu.js` 回 `application/javascript`，`/api/version` 200/test。正式站未發布。
-- 追加修改：管制圖工具列新增「已排除點 N」清單，可恢復 `ExcludedVisible` / `ExcludedHidden` active 排除點。
-- 追加驗證：前端 `npm run build -- --mode testhost` 通過。
-- 追加發布：SPC 測試站 frontend 已發布；備份 `frontend.backup-spc-excluded-list-20261006`。Smoke：首頁 200，新 JS `index-Z4tE0lCl.js` 回 `application/javascript`。正式站未發布。
-
-#### SPC-POINT-FILTER-TASK-005：趨勢圖右鍵選單與已排除點恢復清單
-
-狀態：完成；SPC 測試站 frontend 已發布
-
-預計修改：
-
-- 趨勢圖點位右鍵選單同管制圖。（已完成）
-- 趨勢圖工具列新增「已排除點 N」清單。（已完成）
-- 直方圖、P-value、平均等統計隨排除狀態重算。
-
-測試：
-
-- 趨勢圖排除/隱藏/恢復點後，折線、直方圖、normality 結果一致。
-
-確認結果：
-
-- 趨勢圖與管制圖操作規則一致。
-- 目前已可從趨勢圖點位右鍵設定顯示排除、隱藏排除與恢復；若點位已隱藏，可從「已排除點 N」清單找回。
-
-完成紀錄：
-
-- 修改：趨勢圖點位新增右鍵選單，可設定顯示排除、隱藏排除與恢復；呼叫 `point-exclusions` 單點 API。
-- 樣式：趨勢圖圖例補已排除點位，已排除點沿用灰色叉號樣式。
-- 驗證：前端 `npm run build -- --mode testhost` 通過。
-- 發布：SPC 測試站 frontend 已發布；備份 `frontend.backup-trend-point-context-menu-20261006`。Smoke：首頁 200，新 JS `index-KEeRhtLO.js` 回 `application/javascript`。正式站未發布。
-- 追加修改：趨勢圖工具列新增「已排除點 N」清單，可恢復 `ExcludedVisible` / `ExcludedHidden` active 排除點；`ExcludedHidden` 點會從趨勢線上隱藏。
-- 追加驗證：前端 `npm run build -- --mode testhost` 通過。
-- 追加發布：SPC 測試站 frontend 已發布；備份 `frontend.backup-trend-excluded-list-20261006`。Smoke：首頁 200，新 JS `index-DKfYYFj2.js` 回 `application/javascript`。正式站未發布。
-- 後端回歸：`SpcPointExclusionCalculationTests`、`NormalityTest` 與 Xbar 代表案例共 8 passed；後端 build 0 warnings / 0 errors。本階段未修改產品程式、未發布測試站。
-- 前端驗證：`npm run build:test` 通過；靜態檢查確認管制圖/趨勢圖已排除點清單入口、恢復函式與 `point-exclusions` API 呼叫存在。既有 Playwright `spc-ui` / `spc-summary` 5 failed，失敗點為舊測試與目前 UI/mock 落差，未指向本次新增 testid。
-- 測試站 smoke：前端首頁 200/text-html，新 JS `index-DKfYYFj2.js` 200/application-javascript，後端 `/api/version` 200/test，backend `app_offline.htm` 不存在。正式站未發布。
-- 文件收尾：`CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與 `specs/20261006-chart-point-exclusion/` 已同步完成；本串小工作測試站階段結案，正式站仍須另行授權。
-
-### 第四順位：SPC 藥液公式版本與核對效率（資料正確性）
-
-#### SPC-TASK-001：藥液分析公式版本記錄與回復
-
-狀態：完成；SPC 測試站 backend/frontend 已發布
-
-理由：公式會影響計算結果，需先建立版本、稽核與回復，才適合做大量編輯頁。
-
-規格：`specs/20261006-chemical-formula-versioning/spec.md`
-
-預計修改：
-
-- 釐清既有 `ChemicalAnalysisConfigJson`、F 表版本與公式來源。
-- 新增或利用既有歷史表保存公式版本、啟用日期、修改人、修改原因與前後差異。
-- 提供回復上一版或指定版本能力。
-- 保留既有計算結果可追溯，不覆蓋歷史紀錄。
-
-測試：
-
-- 後端公式版本新增/修改/回復測試。
-- 確認修改公式後新查詢使用新版，回復後使用舊版。
-- 權限測試：只有授權角色可改公式。
-
-確認結果：
-
-- 在測試站修改一筆藥液公式，可看到版本紀錄，並可回復前一版。
-
-完成紀錄：
-
-- 規格盤點：確認目前公式存在 `PartProcessCharacteristics.ChemicalAnalysisConfigJson`，前端單筆編輯透過 `PUT /part-process-characteristics/{id}` 覆蓋設定。
-- 規劃：第一階段新增獨立公式版本表與查詢/回復 API，不改公式語法、不做批次總覽頁、不改既有量測資料。
-- 文件：已建立 `specs/20261006-chemical-formula-versioning/` 的 spec、plan、tasks、verification。
-- TASK-003：新增 `ChemicalAnalysisFormulaVersion`、`ChemicalAnalysisFormulaVersions` DbSet、EF mapping 與 migration；模型測試 1 passed，後端 build 0 warnings / 0 errors。
-- TASK-004：新增 `ChemicalAnalysisFormulaVersionService`，可建立版本、略過未變更內容、拒絕非 CHEM 主檔並回復指定版本；服務測試 4 passed，後端 build 0 warnings / 0 errors。
-- TASK-005：既有 `PUT /part-process-characteristics/{id}` 已整合版本服務；CHEM 公式變更時自動新增版本，未變更不新增；相關測試共 5 passed，後端 build 0 warnings / 0 errors。
-- TASK-006：新增藥液公式版本查詢與指定版本回復 API；Controller/Service 測試共 7 passed，後端 build 0 warnings / 0 errors。
-- TASK-007：補齊後端測試，涵蓋資料模型、修改、無變更、非 CHEM、回復與授權角色；化學公式版本相關測試 10 passed，後端 build 0 warnings / 0 errors。
-- TASK-008：藥液公式編輯區新增只讀「版本紀錄」入口；前端 testhost build 通過。
-- TASK-009：版本紀錄清單新增「回復此版」操作與確認提示；前端 testhost build 通過。
-- TASK-010：前端 testhost build 通過，靜態檢查確認版本紀錄入口、查詢 API、回復按鈕與回復 API 呼叫存在。
-- TASK-011/TASK-012：SPC 測試站 backend/frontend 已發布，文件已同步；備份 `backend.backup-chemical-formula-versioning-20261006-130824`、`frontend.backup-chemical-formula-versioning-20261006-130824`。
-- Smoke：`/api/version` 200/test；前端首頁 200/text-html；新版 JS `index-DiDDfgPE.js` 200/application-javascript；版本查詢/回復端點未登入 401。
-- 發布修正：初次手動複製前端 assets 位置錯誤導致 JS MIME 回 HTML，已補正 `dist/assets/*` 至測試站 `assets` 目錄並重測通過。
-
-#### SPC-TASK-002：藥液公式總覽與批次儲存頁
-
-狀態：完成；SPC 測試站 frontend 已發布
-
-理由：一次儲存多筆公式風險較高，須先有版本/回復保護。
-
-規格：`specs/20261006-chemical-formula-overview-batch/spec.md`
-
-預計修改：
-
-- 擴充既有藥液總覽頁，顯示所有線別、槽位、分析項目的藥液分析公式。
-- 支援篩選、搜尋、差異標示、批次編輯與一次儲存。
-- 儲存前顯示變更摘要；儲存時逐筆建立版本紀錄。
-- 不影響現有單筆管制項目編輯入口。
-- 第一版優先由前端逐筆呼叫既有 `PUT /part-process-characteristics/{id}`，沿用已完成的公式版本紀錄服務；暫不新增後端批次 API。
-
-測試：
-
-- 前端 build 與靜態檢查。
-- 修改 1 筆與多筆公式後確認只送出異動列。
-- 一次儲存多筆後，每筆皆有版本紀錄，可逐筆回復。
-
-確認結果：
-
-- 使用者可在一頁核對所有公式，修改多筆後一次儲存；錯誤時可回復。
-
-完成紀錄：
-
-- TASK-001/TASK-002：已完成現況盤點、規格、技術計畫、任務與驗證紀錄；本階段未修改產品程式、未建置、未發布。
-- TASK-003：藥液總覽頁已可直接編輯濃度公式、調整公式、調整量公式與小數位 draft；已變更列會顯示底色與「已變更」標籤，並可單列還原。本階段未送出批次儲存 API，前端 testhost build 通過，未發布測試站。
-- TASK-004：新增「儲存變更」確認流程，只送出 dirty rows，逐筆呼叫既有單筆 PUT 並沿用公式版本紀錄；前端 testhost build 通過，未發布測試站。
-- TASK-005：新增儲存結果欄，成功列顯示已儲存，失敗列顯示錯誤並保留草稿；儲存後重新載入資料。前端 testhost build 通過，未發布測試站。
-- TASK-006：前端 testhost build 與靜態檢查通過，確認草稿、異動列、批次儲存、單筆 PUT 呼叫與儲存結果欄皆存在；未發布測試站。
-- TASK-007：SPC 測試站 frontend 已發布，備份 `frontend.backup-chemical-formula-overview-batch-20261006-142452`；首頁、JS/CSS MIME 與 `/api/version` smoke test 通過。backend 未發布，正式站未發布。
-- TASK-008：`CHANGELOG_CUSTOM.md`、`TODO.md`、需求索引與規格驗證紀錄已同步；本串小工作測試站階段結案，正式站仍須另行授權。
-
-### 第五順位：SPC 咬蝕 X- 不列入 SPC（資料正確性）
+### 第二順位：SPC 咬蝕 X- 不列入 SPC（資料正確性）
 
 #### SPC-ETCH-X-TASK-001：咬蝕 X- / 不生產資料匯入排除規格
 
 狀態：待規格
 
-理由：咬蝕量可能有檢測值，但因不生產或 X- 標記不得列入 SPC；這會影響資料匯入、預覽、確認、統計與圖表口徑，需先明確定義排除契約。
+初步範圍：釐清 `X-`、不生產、停線、免檢等來源欄位與判定值；保留匯入資料與批次追溯，但不列入 SPC 管制圖、CL/UCL/LCL、OOC/OOS 與總覽統計。
 
-初步範圍：
-
-- 釐清來源欄位與判定值：例如 `X-`、不生產、停線、免檢或其他文字。
-- 保留匯入資料與批次追溯，但標記為不列入 SPC。
-- 排除資料不得進入 SPC 管制圖點位、CL/UCL/LCL 計算、OOC/OOS 統計與總覽資料數口徑。
-- 匯入預覽需顯示「不列入 SPC」原因與筆數。
-- 不直接刪除原始資料。
-
-初步 BDD：
-
-- Given 咬蝕量匯入資料中有一筆標記為 X-
-- When 使用者確認匯入
-- Then 系統保留該筆匯入紀錄，但不把該筆列入 SPC 計算、圖表與異常判定
-
-驗收方向：
-
-- Happy Path：正常咬蝕量照常進入 SPC，X- 保留但排除。
-- Boundary Case：同一批同時有正常值與 X-，統計只含正常值。
-- Invalid Input：未知排除字串不可自行猜測，需在預覽提示待確認。
-- Regression Risk：既有 9 月咬蝕匯入與管制圖不得被破壞。
-
-風險/待確認：
-
-- X- 來源是否只在 Excel 檢測值欄，或也可能在備註/狀態欄。
-- 排除資料是否需在 Portal 查詢顯示。
-- 歷史已匯入資料是否需要補標，或只適用新匯入。
+待確認：X- 是否只在檢測值欄；排除資料是否在 Portal 查詢顯示；歷史資料是否補標。
 
 #### SPC-ETCH-X-TASK-002：咬蝕 X- 排除實作與測試
 
 狀態：待 SPC-ETCH-X-TASK-001 規格確認
 
-理由：需待排除契約確認後，再調整匯入、暫存、確認與 SPC 查詢/計算，避免誤排除正常資料。
+初步範圍：依規格調整匯入預覽、確認流程、SPC 查詢/計算排除口徑，並建立測試與必要端到端驗證。
 
-初步範圍：
-
-- 依規格新增或沿用排除狀態欄位。
-- 調整咬蝕匯入預覽與確認流程。
-- 調整 SPC 查詢/計算排除口徑。
-- 建立後端測試與必要端到端驗證。
-
-### 第六順位：單一 IIS Site（環境與發布）
+### 第三順位：單一 IIS Site（環境與發布）
 
 #### IIS-TASK-003～IIS-TASK-008：沿用 `specs/20261005-single-iis-site/tasks.md`
 
 狀態：已完成 TASK-001/TASK-002；TASK-003 起待執行
 
-理由：會碰發布/IIS/HTTPS，與 Portal/SPC 新功能開發不併行。公告與公式規格定案後，再安排測試站切換。
+待執行：
 
-### 第七順位：全專案 AI + BDD 導入（流程治理）
+- T-003：將前端 API base 預設調整為相對 `/api`。
+- T-004：修正手動組 API URL 的匯出路徑，避免 `/api/api`。
+- T-005：建置並檢查前端資產、後端 publish 與 static file fallback。
+- T-006：規劃並執行測試站單一 IIS Site 設定；不發布正式站。
+- T-007：執行登入、Portal SSO、JWT、SQL、401、403、Vue refresh、mixed content smoke。
+- T-008：同步需求索引、變更紀錄與驗證證據。
+
+### 第四順位：全專案 AI + BDD 導入（流程治理）
 
 #### AI-BDD-ALL-TASK-001：全專案導入盤點與共用範本
 
 狀態：待規格
 
-理由：屬文件/流程治理，風險低但影響多專案；先盤點每個專案入口、需求索引、features 目錄與本地規則，再分批導入。
-
-初步範圍：
-
-- 盤點 SPC、PmrPortal、TransFiles、KM、Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 的 AI+BDD 狀態。
-- 建立共用 AI+BDD 段落、BDD 範本與 STOP RULE。
-- 不修改業務程式。
-
-初步 BDD：
-
-- Given 某專案已接入 SDD
-- When 開始新的開發 Task
-- Then 該專案入口文件要求先建立 Spec 並定義 BDD 驗收條件
+初步範圍：盤點 SPC、PmrPortal、TransFiles、KM、Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 的 AI+BDD 狀態，建立共用段落、BDD 範本與 STOP RULE。
 
 #### AI-BDD-ALL-TASK-002：第一批高頻專案導入
 
@@ -679,25 +89,13 @@
 
 範圍：Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 依專案大小採輕量導入。
 
-### 第八順位：KM 教育訓練系統（新功能）
+### 第五順位：KM 教育訓練系統（新功能）
 
 #### KM-TRAINING-TASK-001：教育訓練系統需求規格與資料來源盤點
 
 狀態：待規格
 
-理由：新功能涉及人員、權限、教材附件、完成紀錄與報表，需先定義 KM 邊界與角色，不直接開發。
-
-初步範圍：
-
-- 定義角色：一般使用者、講師/課程管理者、人事/admin。
-- 定義課程、教材、梯次、指派、報名、簽到、測驗、完成紀錄與報表。
-- 盤點是否沿用 Portal/SPC 人員或另建 KM 人員主檔。
-
-初步 BDD：
-
-- Given 人事已建立一門必修課並指派給使用者
-- When 使用者登入 KM 教育訓練系統
-- Then 系統顯示該使用者待完成課程與期限
+初步範圍：定義一般使用者、講師/課程管理者、人事/admin；定義課程、教材、梯次、指派、報名、簽到、測驗、完成紀錄與報表；盤點人員資料來源。
 
 #### KM-TRAINING-TASK-002：課程與教材管理
 
@@ -723,26 +121,13 @@
 
 範圍：完成率、逾期清單、課程歷程、部門統計與 Excel 匯出。
 
-### 第九順位：正式機程式碼更新工具（正式發布/IIS 高風險）
+### 第六順位：正式機程式碼更新工具（正式發布/IIS 高風險）
 
 #### RELEASE-TOOL-TASK-001：正式機更新工具規格與環境盤點
 
 狀態：待規格；正式站操作需另行授權
 
-理由：正式機在另一台主機，更新工具需備份、更新 IIS 網站資料夾、保留環境設定、驗證與回復；屬高風險發布/IIS 工作，不與其他正式/IIS 工作併行。
-
-初步範圍：
-
-- 盤點正式機連線方式、IIS site/app pool、實體路徑、備份路徑、服務帳號與權限。
-- 定義 release manifest、hash、版本、目標環境、來源包與 smoke test URL。
-- 明確禁止誤寫 `D:\Sites\PmrPortal`，除非該專案另行授權。
-- 本階段只規格，不連線正式機。
-
-初步 BDD：
-
-- Given 正式機目前有既有 IIS 網站資料夾
-- When 更新工具執行正式部署前檢查
-- Then 工具必須先建立可驗證備份並確認目標路徑與 manifest 相符
+初步範圍：盤點正式機連線方式、IIS site/app pool、實體路徑、備份路徑、服務帳號與權限；定義 release manifest、hash、版本、目標環境、來源包與 smoke test URL；本階段只規格，不連線正式機。
 
 #### RELEASE-TOOL-TASK-002：備份與回復流程原型
 
@@ -768,139 +153,48 @@
 
 範圍：整理操作手冊、參數範本、前置檢查、回復步驟、證據格式與核准清單。
 
-### 暫停併行：架構改善 TODO
+## 暫停併行：架構改善 TODO
 
 `TASK-002`～`TASK-010` 架構改善暫不插隊；若與本批 Portal/SPC 工作碰到相同區域，先以本批業務需求的小範圍修改優先。
 
-## TASK-001：設定與密鑰安全
+### TASK-001：設定與密鑰安全
 
 狀態：已完成，待使用者確認
 
-範圍：
+待確認：是否排入後續實際密鑰輪替與部署環境注入檢查。
 
-- 清查 `appsettings.example.json`、測試／正式設定與 Git 歷史中的 JWT、SMTP、資料庫連線資訊。
-- 輪替已暴露或疑似暴露的密鑰。
-- 改用環境變數、受控秘密儲存或部署注入，不在版本庫保存可用密鑰。
-- SMTP 設定 API 不回傳密碼，設定更新採安全且可回復方式。
-
-已完成：SMTP GET 不回傳密碼；留白更新保留既有密碼；範例設定改為環境注入 placeholder；新增 2 個回歸測試。
-
-驗證：後端 2 tests passed；前端 production build passed；範例 JSON 解析成功。
-
-待運維：尚未自動輪替現有測試站／正式站實際密鑰，需另依發布環境注入並驗證。
-
-## TASK-002：MES Sync 資料可靠性
+### TASK-002：MES Sync 資料可靠性
 
 狀態：待確認
 
-範圍：
-
-- 移除尚未實作卻將訊息標記為 `Processed` 的流程。
-- 定義未知 MessageType、解析失敗、重試、死信與冪等鍵行為。
-- 補上資料寫入交易與背景服務測試。
-
-驗收：未支援或失敗訊息不會被誤標成功；可重試且不重複寫入；服務重啟後狀態一致。
-
-## TASK-003：診斷端點與錯誤資訊隔離
+### TASK-003：診斷端點與錯誤資訊隔離
 
 狀態：待確認
 
-範圍：
-
-- 移除或限制 `SettingsController` 的任意檔案 `inspect-excel` 讀取能力。
-- 確認 OpenAPI、Scalar、健康檢查及診斷端點的匿名／登入／Editor 邊界。
-- production 錯誤回應不暴露 SQL、檔案路徑或 inner exception；詳細資訊只寫安全日誌。
-
-驗收：Viewer 無法讀取任意伺服器檔案；未授權端點符合明確清單；錯誤回應不含內部細節。
-
-## TASK-004：後端授權模型收斂
+### TASK-004：後端授權模型收斂
 
 狀態：待確認
 
-範圍：
-
-- 將前端 permission 與後端 authorization policy 對齊。
-- 逐一檢查主檔、匯入、設定、通知、校正、Migration 等 controller。
-- 不再只依 HTTP method 判斷 Viewer 是否可執行業務操作。
-
-驗收：Viewer、Editor、指定 permission 的 API 行為與 UI 一致；直接呼叫 API 也無法繞過權限。
-
-## TASK-005：資料庫 migration 與啟動流程
+### TASK-005：資料庫 migration 與啟動流程
 
 狀態：待確認
 
-範圍：
-
-- 將 `Program.cs` 內手寫 schema 修補與資料初始化分離。
-- 收斂為可追蹤 EF migration／受控 deployment job。
-- 啟動時不吞掉 migration 或 schema 失敗；建立回復與維護模式策略。
-
-驗收：全新資料庫、既有測試資料庫可重現升級；失敗會阻止錯誤版本啟動；migration history 與 schema 一致。
-
-## TASK-006：發布流程與環境隔離
+### TASK-006：發布流程與環境隔離
 
 狀態：待確認
 
-範圍：
-
-- 將 test／production build 與 publish 指令分離。
-- 正式發布必須明確指定環境、目標、版本與核准，不因測試發布連帶處理正式目錄。
-- 發布前備份、health check、版本核對、回復及 app_offline 流程標準化。
-
-驗收：測試發布不會寫入正式輸出；錯誤發布可回復；release manifest 可對應 commit、API、Web 與資料庫。
-
-## TASK-007：SMTP、檔案與背景排程可靠性
+### TASK-007：SMTP、檔案與背景排程可靠性
 
 狀態：待確認
 
-範圍：
-
-- SMTP 密碼遮罩／安全保存與原子設定更新。
-- 報表排程加入分散式鎖、outbox 或等價防重送機制。
-- 檔案附件、Email、Chat 發送失敗可追蹤、重試且不重複副作用。
-
-驗收：多 instance 不重複寄送；設定更新中斷不破壞原設定；通知狀態可追蹤與重試。
-
-## TASK-008：稽核與操作者追溯
+### TASK-008：稽核與操作者追溯
 
 狀態：待確認
 
-範圍：
-
-- `CreatedBy`／`UpdatedBy` 不再固定為 `System`。
-- 統一從已驗證 claims 取得操作者，補足背景工作、Portal SSO、工具匯入的 actor 規則。
-- 重要主檔、設定、匯入、刪除與通知操作保留可查稽核資料。
-
-驗收：UI、API、背景工作及匯入流程的操作者可正確追溯；未驗證 actor 不可冒用。
-
-## TASK-009：測試與可重建基線
+### TASK-009：測試與可重建基線
 
 狀態：待確認
 
-範圍：
-
-- 整理多組 .NET 測試專案、E2E、前端測試與缺少 fixture 的歷史測試。
-- 建立單一可重現的 build／test 入口與測試分類。
-- 盤點未追蹤 migration、功能檔案、發布產物及工作樹差異，建立可重建 Git 基線。
-
-驗收：乾淨工作樹可重建 API、Web、測試與測試站包；測試報告能區分通過、失敗、跳過與環境限制。
-
-## TASK-010：大型模組拆分與架構治理
+### TASK-010：大型模組拆分與架構治理
 
 狀態：待確認
-
-範圍：
-
-- 在安全、資料可靠性與發布基線穩定後，拆分 `UploadService`、`SpcService`、大型 controller 與大型 Vue view。
-- 建立 application service、domain calculation、持久化、API DTO 與前端 feature boundary。
-- 保持 API 契約、資料庫相容性與既有業務行為。
-
-驗收：模組依責任可獨立測試；核心服務大小與依賴降低；完整回歸及效能基準通過。
-
-## 本輪紀錄
-
-- 已完成：閱讀根目錄、backend、frontend、tests、scripts、需求索引與專案設定。
-- 已完成：建立 TASK-001～TASK-010 清單。
-- 本輪未修改程式、資料庫或發布內容。
-- 本輪測試：不適用；僅新增規劃文件，未執行程式修改。
-- 下一步：等待使用者確認後，僅執行 TASK-001。
