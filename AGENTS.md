@@ -10,6 +10,14 @@
 - SPC 提供主檔、儲存、運算與圖表；Portal 負責入口與量測輸入；TransFiles 為獨立轉檔工具。
 - 回覆繁體中文，簡述結果、驗證及發布狀態。
 
+## SDD + BDD + AI Coding 開發模式
+- SPC 採 SDD + BDD + AI Coding：Requirement → Spec → BDD → Implementation → Test → Verify → 文件同步。
+- 每個開發 Task 必須有對應 `specs/` 規格；重要功能需在規格或 `features/` 以 Given / When / Then 定義驗收行為。
+- BDD 驗收至少描述可觀察的使用者行為、資料結果或系統回應；涉及計算、匯入、權限、資料寫入、圖表或發布流程時，需能對應自動化測試或人工驗證紀錄。
+- AI Coding 只處理目前 Task 必要檔案與驗證，不自動開始下一個 Task，不順手重構未授權範圍。
+- 每個 Task 測試規劃至少評估 Happy Path、Boundary Case、Invalid Input、Regression Risk；適合自動化測試者須建立或更新自動化測試。
+- 只有 Spec 完成、BDD 驗收通過、必要 build/test 通過、無明顯 regression、文件與發布狀態已同步，才可標示 DONE；文件型 Task 可將 build/發布標示不適用並說明原因。
+
 ## 一句話需求的預設執行方式
 - 使用者提出開發或修正需求時，即使只有一句話，也自動套用本檔 SDD 流程；不必要求重貼範本。一般問答不因此修改程式。
 - 依需求與既有上下文推導最小修改範圍、可觀察的驗收條件，寫入 specs/；只有阻擋性歧義或業務衝突才詢問，不擴張至未授權系統或行為。當次明確指示優先。

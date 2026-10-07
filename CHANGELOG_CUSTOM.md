@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（SPC AI + BDD 開發模式導入）
+- 目的：在既有 SDD 流程上補齊 SPC 主專案 BDD 驗收與 AI Coding 協作規則。
+- 修改：更新 `AGENTS.md`，新增 `features/` BDD 入口與 `specs/20261007-spc-ai-bdd-development/` 規格/驗證。
+- 驗證：確認本次僅文件與目錄變更；未修改 API、資料庫、UI 或既有業務功能。
+- 發布：不適用；未發布測試站或正式站。
+
 ## 2026-10-07（KM TASK-000 SDD + BDD 開發框架初始化）
 - 目的：將 KM 專案導入 SDD + BDD + AI Coding 工作模式。
 - 修改：新增 `KM/AGENTS.md`、`KM/specs/README.md`、`KM/specs/tasks/TASK-000-sdd-bdd-initialization.md`、`KM/features/`、`KM/docs/progress.md`、`KM/docs/architecture.md` 與 `KM/tests/`。

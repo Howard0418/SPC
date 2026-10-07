@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- SPC 開發流程已擴充：[SPC AI + BDD 開發模式導入](../specs/20261007-spc-ai-bdd-development/spec.md)；後續 SPC 開發採 SDD + BDD + AI Coding，重要功能需以 Given / When / Then 定義驗收行為，AI Coding 只處理目前 Task 必要範圍。本次只建立文件與 `features/` 入口，未修改業務功能，未發布。
 - KM 開發流程已初始化：[KM TASK-000 SDD + BDD 開發框架初始化](../KM/specs/tasks/TASK-000-sdd-bdd-initialization.md)；KM 後續工作採一次一個 Task、Spec 先行、BDD 驗收、測試驗證與 `KM/docs/progress.md` 追蹤。本次只建立文件與目錄骨架，未修改業務功能，未發布。
 - 正式站已發布：[SPC 正式機發布](../specs/20261007-spc-production-publish/spec.md)；2026-10-07 已重建 production backend/frontend 交付包並更新正式 IIS `SpcApi`、`SpcWeb` 指向 `D:\SPC\release\production\...`。正式 API `/api/version` 回 `environment=production`，正式 Web 首頁與新版 JS/CSS MIME smoke test 通過；未發布 Portal，未寫入 `D:\Sites\PmrPortal`，未手動修改正式資料。
 - 測試站已完成：[藥液分析公式版本記錄與回復](../specs/20261006-chemical-formula-versioning/spec.md)；藥液公式目前存在 `ChemicalAnalysisConfigJson` 並由單筆主檔編輯覆蓋，已完成規格、後端版本資料模型、migration、版本服務、既有 PUT 整合、查詢/回復 API、後端測試、前端版本紀錄入口、回復操作、前端 build/UI 靜態檢查與 SPC 測試站 smoke test。正式站未發布。
