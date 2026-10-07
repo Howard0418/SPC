@@ -34,8 +34,9 @@ const alertsMap = ref({});
 const exportMonth = ref(new Date().toISOString().slice(0, 7));
 
 function exportCpkMaster() {
-  const baseUrl = api.defaults?.baseURL || "http://localhost:5243";
-  const url = `${baseUrl}/api/v1/reports/cpk-summary?month=${exportMonth.value}`;
+  const baseUrl = (api.defaults?.baseURL || "/api").replace(/\/+$/, "");
+  const month = encodeURIComponent(exportMonth.value);
+  const url = `${baseUrl}/v1/reports/cpk-summary?month=${month}`;
   window.open(url, "_blank");
 }
 

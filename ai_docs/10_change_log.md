@@ -1,3 +1,7 @@
+## [2026-10-07] - IIS-TASK-004 修正手動匯出 URL
+- 目的：修正 CPK 匯出 URL 手動組字串時重複加 `/api` 的風險，支援 T-003 的相對 API base。
+- 範圍：僅調整 `SpcQueryView.vue` 匯出 URL 組法；不調整 IIS、後端 route 或其他 API 呼叫。
+
 ## [2026-10-07] - IIS-TASK-003 前端 API base 改為相對路徑
 - 目的：支援 SPC 單一 IIS Site 部署，讓前端預設呼叫同 origin `/api`，移除 production fallback 的固定 IP/port。
 - 範圍：僅調整 `frontend/mes-spc-web/src/api/client.js` 與 `.env.example` 的 API base 預設；不處理 T-004 手動組 URL、不修改 IIS 設定與後端 route。現行測試站仍為 Web/API 分離，testhost 發布暫保留既有 API base，待 T-006 單一 IIS Site 設定後再切換。

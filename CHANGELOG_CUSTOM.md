@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（IIS-TASK-004 手動匯出 URL 修正）
+- 調整：SPC 查詢頁 CPK 匯出 URL 改以 API root 加 `/v1/reports/cpk-summary`，避免 baseURL 為 `/api` 時組成 `/api/api/v1/...`。
+- 驗證：`npm run build`、`npm run build:test` 通過；測試站 frontend 已發布 testhost build，首頁與新版 JS 200。
+- 發布：已發布 SPC 測試站 frontend；正式站未發布。測試站仍暫保留 Web/API 分離設定。
+
 ## 2026-10-07（IIS-TASK-003 前端 API base 相對路徑）
 - 調整：SPC 前端 API client 預設 base 改為 `/api`，`.env.example` 與 production env 同步改為 `/api`，避免 production build fallback 到固定 API IP/port。
 - 驗證：production `npm run build` 通過；production build 後資產檢查不含 `172.16.119.140:8081/api`、`172.16.110.27:8082/api`；testhost `npm run build:test` 通過。
