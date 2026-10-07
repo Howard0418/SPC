@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（PORTAL-TASK-005 工作池狀態同步）
+- 目的：同步 Portal 團保專區瀏覽與人事管理完成狀態，更新 SPC 未完成工作池。
+- 修改：從 `TODO.md` 移除 `PORTAL-TASK-005`，新增 `specs/20261007-portal-group-insurance-task-sync/` 規格/驗證。
+- 驗證：確認 PmrPortal 已建立 `specs/20261007-group-insurance/verification.md`，且測試站發布與 smoke 已記錄；本次 SPC 未修改程式。
+- 發布：SPC 不適用。
+
 ## 2026-10-07（PORTAL-TASK-004 工作池狀態同步）
 - 目的：同步 Portal 生日資料管理與登入生日通知完成狀態，更新 SPC 未完成工作池。
 - 修改：從 `TODO.md` 移除 `PORTAL-TASK-004`，新增 `specs/20261007-portal-birthday-task-sync/` 規格/驗證。
