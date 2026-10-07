@@ -1,3 +1,8 @@
+## [2026-10-07] - SPC-FTABLE-VERSION-TASK-001 F 表版本記錄與回復
+- 目的：讓 F 表套用新版或回復舊版時保留可查詢、可追溯、可回復的版本歷程。
+- 範圍：新增 F 表歷程 entity/migration、service 記錄與回復流程、API、F 表維護頁版本清單與回復操作、service 測試；不修改藥液公式版本與其他 SPC 計算邏輯。
+- 驗證：`ChemicalFTableServiceTests` 3/3 通過，後端 build 與前端 production build 通過；已發布 SPC 測試站 backend/frontend，未登入 F 表版本 API 回 401。
+
 ## [2026-10-07] - SPC-CL-RECALC-TASK-001 標準差方法切換清除舊管制線
 - 目的：修正 Xbar 計算方法在「樣本標準差」與「系統標準公式」切換後，舊固定 UCL/CL/LCL 繼續覆蓋新統計界線的問題。
 - 範圍：後端 `PartProcessCharacteristicsController.Update` 與主檔維護測試；不修改 DB schema、不重算既有正式資料。

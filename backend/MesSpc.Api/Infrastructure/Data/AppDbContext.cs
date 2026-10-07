@@ -16,6 +16,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ChemicalFTableVersion> ChemicalFTableVersions => Set<ChemicalFTableVersion>();
     public DbSet<ChemicalFTableCell> ChemicalFTableCells => Set<ChemicalFTableCell>();
     public DbSet<ChemicalFTableReference> ChemicalFTableReferences => Set<ChemicalFTableReference>();
+    public DbSet<ChemicalFTableVersionHistory> ChemicalFTableVersionHistories => Set<ChemicalFTableVersionHistory>();
     public DbSet<ChemicalAnalysisFormulaVersion> ChemicalAnalysisFormulaVersions => Set<ChemicalAnalysisFormulaVersion>();
     public DbSet<AlertEvent> AlertEvents => Set<AlertEvent>();
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
@@ -88,6 +89,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.NormalizedCellAddress).HasMaxLength(50);
         modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.SourceSheet).HasMaxLength(100);
         modelBuilder.Entity<ChemicalFTableReference>().Property(x => x.ReferenceContext).HasMaxLength(200);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>().HasIndex(x => x.VersionNo).IsUnique();
+        modelBuilder.Entity<ChemicalFTableVersionHistory>().HasIndex(x => x.ChangedAt);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>().Property(x => x.VersionCode).HasMaxLength(50);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>().Property(x => x.DisplayName).HasMaxLength(100);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>().Property(x => x.PreviousVersionCode).HasMaxLength(50);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>().Property(x => x.ChangeType).HasMaxLength(32);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>().Property(x => x.Reason).HasMaxLength(500);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>().Property(x => x.ChangedBy).HasMaxLength(100);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>()
+            .HasOne(x => x.FTableVersion)
+            .WithMany()
+            .HasForeignKey(x => x.FTableVersionId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ChemicalFTableVersionHistory>()
+            .HasOne(x => x.RestoredFromHistory)
+            .WithMany()
+            .HasForeignKey(x => x.RestoredFromHistoryId)
+            .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<ChemicalAnalysisFormulaVersion>().ToTable("ChemicalAnalysisFormulaVersions", table =>
         {
             table.HasComment("Version history for chemical analysis formulas stored on PartProcessCharacteristics.");

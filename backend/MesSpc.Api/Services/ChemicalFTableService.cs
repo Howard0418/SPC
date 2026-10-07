@@ -31,7 +31,16 @@ public class ChemicalFTableService(AppDbContext db)
         return await SyncCellsAsync(DefaultSeedCells, apply, versionCode, displayName, "SPC_DEFAULT_F_TABLE", ct);
     }
 
-    public async Task<ChemicalFTableSyncResult> SyncCellsAsync(IReadOnlyList<ChemicalFTableSeedCell> seedCells, bool apply, string? versionCode, string? displayName, string sourceName, CancellationToken ct)
+    public async Task<ChemicalFTableSyncResult> SyncCellsAsync(
+        IReadOnlyList<ChemicalFTableSeedCell> seedCells,
+        bool apply,
+        string? versionCode,
+        string? displayName,
+        string sourceName,
+        CancellationToken ct,
+        string? changedBy = null,
+        string? reason = null,
+        long? restoredFromHistoryId = null)
     {
         var normalizedVersionCode = string.IsNullOrWhiteSpace(versionCode)
             ? $"F-{DateTime.Today:yyyyMMdd}"
@@ -40,7 +49,7 @@ public class ChemicalFTableService(AppDbContext db)
         var activeVersion = await GetActiveVersionAsync(ct);
         var existingVersion = await db.ChemicalFTableVersions
             .FirstOrDefaultAsync(x => x.VersionCode == normalizedVersionCode, ct);
-        var existingCells = activeVersion is null
+        var activeCells = activeVersion is null
             ? new Dictionary<string, ChemicalFTableCell>(StringComparer.OrdinalIgnoreCase)
             : await db.ChemicalFTableCells
                 .Where(x => x.VersionId == activeVersion.Id)
@@ -49,7 +58,7 @@ public class ChemicalFTableService(AppDbContext db)
         var cells = seedCells.Select(seed =>
         {
             var normalized = NormalizeCellAddress(seed.CellAddress);
-            existingCells.TryGetValue(normalized, out var current);
+            activeCells.TryGetValue(normalized, out var current);
             return new ChemicalFTableCellPreview(
                 normalized,
                 seed.StandardSolution,
@@ -62,6 +71,19 @@ public class ChemicalFTableService(AppDbContext db)
         {
             return new ChemicalFTableSyncResult(false, normalizedVersionCode, activeVersion?.VersionCode, cells);
         }
+
+        var hasCellChanges = cells.Any(x => x.Action != "Unchanged");
+        var activeVersionChanged = !string.Equals(activeVersion?.VersionCode, normalizedVersionCode, StringComparison.OrdinalIgnoreCase);
+        var shouldRecordHistory = hasCellChanges || activeVersionChanged || restoredFromHistoryId.HasValue;
+        var previousVersionCode = activeVersion?.VersionCode;
+        var previousCells = activeCells.Values
+            .Select(x => new ChemicalFTableHistoryCell(x.NormalizedCellAddress, x.StandardSolution, x.NumericValue))
+            .OrderBy(x => x.CellAddress, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var nextCells = seedCells
+            .Select(x => new ChemicalFTableHistoryCell(NormalizeCellAddress(x.CellAddress), x.StandardSolution, x.NumericValue))
+            .OrderBy(x => x.CellAddress, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var version = existingVersion ?? new ChemicalFTableVersion
@@ -113,9 +135,100 @@ public class ChemicalFTableService(AppDbContext db)
         }
 
         await RebuildReferencesAsync(version.Id, ct);
+        if (shouldRecordHistory)
+        {
+            var versionNo = (await db.ChemicalFTableVersionHistories
+                .Select(x => (int?)x.VersionNo)
+                .MaxAsync(ct) ?? 0) + 1;
+            db.ChemicalFTableVersionHistories.Add(new ChemicalFTableVersionHistory
+            {
+                VersionNo = versionNo,
+                FTableVersionId = version.Id,
+                VersionCode = version.VersionCode,
+                DisplayName = version.DisplayName,
+                PreviousVersionCode = previousVersionCode,
+                CellsJson = JsonSerializer.Serialize(nextCells),
+                PreviousCellsJson = previousCells.Count == 0 ? null : JsonSerializer.Serialize(previousCells),
+                ChangeType = restoredFromHistoryId.HasValue ? "Restore" : existingVersion is null ? "Create" : "Update",
+                RestoredFromHistoryId = restoredFromHistoryId,
+                Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim(),
+                ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? "system" : changedBy.Trim(),
+                ChangedAt = DateTime.UtcNow
+            });
+        }
+
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-        return new ChemicalFTableSyncResult(true, normalizedVersionCode, version.VersionCode, cells);
+        return new ChemicalFTableSyncResult(true, normalizedVersionCode, previousVersionCode, cells);
+    }
+
+    public async Task<List<ChemicalFTableVersionHistorySummary>> GetVersionHistoryAsync(int take, CancellationToken ct)
+    {
+        var limit = Math.Clamp(take, 1, 100);
+        return await db.ChemicalFTableVersionHistories
+            .AsNoTracking()
+            .OrderByDescending(x => x.VersionNo)
+            .Take(limit)
+            .Select(x => new ChemicalFTableVersionHistorySummary(
+                x.Id,
+                x.VersionNo,
+                x.VersionCode,
+                x.DisplayName,
+                x.PreviousVersionCode,
+                x.ChangeType,
+                x.ChangedAt,
+                x.ChangedBy,
+                x.Reason,
+                x.RestoredFromHistoryId))
+            .ToListAsync(ct);
+    }
+
+    public async Task<ChemicalFTableVersionHistoryDetail?> GetVersionHistoryDetailAsync(long id, CancellationToken ct)
+    {
+        var history = await db.ChemicalFTableVersionHistories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (history is null) return null;
+
+        return new ChemicalFTableVersionHistoryDetail(
+            history.Id,
+            history.VersionNo,
+            history.VersionCode,
+            history.DisplayName,
+            history.PreviousVersionCode,
+            history.ChangeType,
+            history.ChangedAt,
+            history.ChangedBy,
+            history.Reason,
+            history.RestoredFromHistoryId,
+            DeserializeHistoryCells(history.CellsJson),
+            string.IsNullOrWhiteSpace(history.PreviousCellsJson) ? [] : DeserializeHistoryCells(history.PreviousCellsJson));
+    }
+
+    public async Task<ChemicalFTableSyncResult> RestoreVersionHistoryAsync(long id, string? changedBy, string? reason, CancellationToken ct)
+    {
+        var history = await GetVersionHistoryDetailAsync(id, ct);
+        if (history is null)
+        {
+            throw new ArgumentException("找不到指定的 F 表版本記錄。");
+        }
+
+        var seedCells = history.Cells
+            .Select(x => new ChemicalFTableSeedCell(x.CellAddress, x.StandardSolution ?? "", x.NumericValue ?? 0m))
+            .ToList();
+        if (seedCells.Count == 0)
+        {
+            throw new ArgumentException("指定的 F 表版本記錄沒有可回復的儲存格。");
+        }
+
+        return await SyncCellsAsync(
+            seedCells,
+            true,
+            history.VersionCode,
+            history.DisplayName,
+            "SPC_F_TABLE_RESTORE",
+            ct,
+            changedBy,
+            string.IsNullOrWhiteSpace(reason) ? $"Restore from F table history #{history.VersionNo}" : reason,
+            id);
     }
 
     public async Task<List<ChemicalFTableImpactItem>> GetImpactAsync(string cellAddress, CancellationToken ct)
@@ -309,6 +422,19 @@ public class ChemicalFTableService(AppDbContext db)
         }
     }
 
+    private static List<ChemicalFTableHistoryCell> DeserializeHistoryCells(string? cellsJson)
+    {
+        if (string.IsNullOrWhiteSpace(cellsJson)) return [];
+        try
+        {
+            return JsonSerializer.Deserialize<List<ChemicalFTableHistoryCell>>(cellsJson) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
     private static void VisitJson(JsonElement element, string path, List<ChemicalFormulaReference> result)
     {
         switch (element.ValueKind)
@@ -342,6 +468,9 @@ public record ChemicalFTableCellPreview(string CellAddress, string StandardSolut
 public record ChemicalFTableSyncResult(bool Applied, string VersionCode, string? PreviousActiveVersionCode, List<ChemicalFTableCellPreview> Cells);
 public record ChemicalFTableCellDto(string CellAddress, string? StandardSolution, decimal? NumericValue, string? TextValue);
 public record ChemicalFTableVersionDetail(int Id, string VersionCode, string DisplayName, DateTime EffectiveAt, List<ChemicalFTableCellDto> Cells);
+public record ChemicalFTableHistoryCell(string CellAddress, string? StandardSolution, decimal? NumericValue);
+public record ChemicalFTableVersionHistorySummary(long Id, int VersionNo, string VersionCode, string DisplayName, string? PreviousVersionCode, string ChangeType, DateTime ChangedAt, string? ChangedBy, string? Reason, long? RestoredFromHistoryId);
+public record ChemicalFTableVersionHistoryDetail(long Id, int VersionNo, string VersionCode, string DisplayName, string? PreviousVersionCode, string ChangeType, DateTime ChangedAt, string? ChangedBy, string? Reason, long? RestoredFromHistoryId, List<ChemicalFTableHistoryCell> Cells, List<ChemicalFTableHistoryCell> PreviousCells);
 public record ChemicalFormulaEvaluationResult(string VersionCode, string SourceExpression, string EvaluatedExpression, decimal Value, List<string> CellReferences);
 public record ChemicalFormulaReference(string CellAddress, string Formula, string Context);
 public record ChemicalFTableImpactItem(int PartProcessCharacteristicId, string ProcessCode, string ProcessName, string MachineCode, string MachineName, string TankCode, string TankName, string CharacteristicCode, string CharacteristicName, string? SourceFormula, string? ReferenceContext);

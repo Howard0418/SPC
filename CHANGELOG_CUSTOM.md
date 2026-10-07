@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（SPC F 表版本記錄與回復）
+- 新增：F 表套用新版或回復舊版時建立版本歷程，保存啟用版本、前後儲存格 snapshot、操作類型、原因、修改人與回復來源。
+- 調整：F 表維護頁新增版本記錄清單與回復操作；新增版本查詢、版本明細與回復 API。
+- 驗證：`ChemicalFTableServiceTests` 3/3 通過；後端 build 0 warnings / 0 errors；前端 production build 通過，僅保留既有 chunk size warning。
+- 發布：已發布 SPC 測試站 backend/frontend，備份 `backend.backup-ftable-history-20261007-163420`；`/api/version` 與首頁 200，F 表版本 API 未登入 401。正式站未發布。
+
 ## 2026-10-07（SPC 標準差方法切換後管制線重算修正）
 - 修正：管制項目保存時若 `FormulaConfigJson.XbarCalculationMethod` 改變，後端會清空舊固定 `UCL/CL/LCL`，並移除舊 SPC 計算結果，避免舊界線覆蓋新統計方法。
 - 驗證：新增 `Update_Should_Clear_FixedControlLimits_When_XbarCalculationMethodChanges` 通過；後端 build 0 warnings / 0 errors。整個 `PartProcessCharacteristicMaintenanceTests` 類別仍有 3 個既有測試斷言落差，非本次新增測試。

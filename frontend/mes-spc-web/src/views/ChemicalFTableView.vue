@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
-import { RefreshCw, Save, Search, TestTube2 } from "lucide-vue-next";
+import { History, RefreshCw, RotateCcw, Save, Search, TestTube2 } from "lucide-vue-next";
 
 const defaultCells = [
   { cellAddress: "F!B3", standardSolution: "1N NaOH", numericValue: 1.02 },
@@ -26,6 +26,9 @@ const impactLoading = ref(false);
 const formula = ref("Primary * F!B3");
 const primaryValue = ref(10);
 const formulaResult = ref(null);
+const historyRows = ref([]);
+const historyLoading = ref(false);
+const restoringHistoryId = ref(null);
 
 const hasActive = computed(() => !!active.value?.versionCode);
 
@@ -69,6 +72,38 @@ async function save() {
   return apply(true);
 }
 
+async function loadHistory() {
+  historyLoading.value = true;
+  try {
+    const { data } = await api.get("/v1/chemical-f-table/versions", { params: { take: 20 } });
+    historyRows.value = Array.isArray(data) ? data : [];
+  } catch (err) {
+    error.value = getApiErrorMessage(err);
+  } finally {
+    historyLoading.value = false;
+  }
+}
+
+async function restoreHistory(row) {
+  if (!window.confirm(`回復到 ${row.versionCode}？目前啟用 F 表會被此版本取代。`)) return;
+  restoringHistoryId.value = row.id;
+  error.value = "";
+  message.value = "";
+  try {
+    await api.post(`/v1/chemical-f-table/versions/${row.id}/restore`, {
+      reason: `由畫面回復版本 ${row.versionNo}`
+    });
+    message.value = `已回復到 ${row.versionCode}，並建立回復紀錄。`;
+    await load();
+    await loadHistory();
+    await loadImpact();
+  } catch (err) {
+    error.value = getApiErrorMessage(err);
+  } finally {
+    restoringHistoryId.value = null;
+  }
+}
+
 async function apply(applyChanges) {
   saving.value = true;
   error.value = "";
@@ -88,7 +123,10 @@ async function apply(applyChanges) {
     message.value = applyChanges
       ? `已套用 ${data.versionCode}，並重建公式引用索引。`
       : `Dry-run 完成：${data.cells?.filter(x => x.action !== "Unchanged").length || 0} 格將異動。`;
-    if (applyChanges) await load();
+    if (applyChanges) {
+      await load();
+      await loadHistory();
+    }
   } catch (err) {
     error.value = getApiErrorMessage(err);
   } finally {
@@ -125,6 +163,7 @@ async function evaluateFormula() {
 
 onMounted(async () => {
   await load();
+  await loadHistory();
   await loadImpact();
 });
 </script>
@@ -202,6 +241,35 @@ onMounted(async () => {
             <div>結果：<span class="font-mono font-bold">{{ formulaResult.value }}</span></div>
             <div>版本：<span class="font-mono">{{ formulaResult.versionCode }}</span></div>
           </div>
+        </div>
+
+        <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+          <div class="mb-3 flex items-center gap-2">
+            <History class="w-4 h-4 text-slate-500" />
+            <h2 class="mr-auto text-sm font-black text-slate-800 dark:text-white">版本記錄</h2>
+            <button @click="loadHistory" :disabled="historyLoading" class="rounded border px-2 py-1 text-xs font-bold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">更新</button>
+          </div>
+          <div v-if="historyRows.length" class="space-y-2">
+            <div v-for="row in historyRows" :key="row.id" class="rounded border p-2 text-xs dark:border-slate-800">
+              <div class="flex items-start gap-2">
+                <div class="mr-auto">
+                  <div class="font-mono font-bold">{{ row.versionCode }}</div>
+                  <div class="text-slate-500">{{ row.displayName }}</div>
+                  <div class="text-slate-400">#{{ row.versionNo }} {{ row.changeType }} · {{ new Date(row.changedAt).toLocaleString() }}</div>
+                </div>
+                <button
+                  @click="restoreHistory(row)"
+                  :disabled="restoringHistoryId === row.id"
+                  class="inline-flex items-center gap-1 rounded bg-amber-600 px-2 py-1 font-bold text-white hover:bg-amber-500"
+                  title="回復此版本"
+                >
+                  <RotateCcw class="w-3 h-3" /> 回復
+                </button>
+              </div>
+              <div v-if="row.reason" class="mt-1 text-slate-500">{{ row.reason }}</div>
+            </div>
+          </div>
+          <div v-else class="text-sm text-slate-500">尚無版本記錄</div>
         </div>
       </aside>
     </section>

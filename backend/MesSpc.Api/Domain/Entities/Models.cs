@@ -284,6 +284,28 @@ public class ChemicalFTableReference : BaseEntity<int>
     public virtual PartProcessCharacteristic? PartProcessCharacteristic { get; set; }
 }
 
+public class ChemicalFTableVersionHistory : BaseEntity<long>
+{
+    public int VersionNo { get; set; }
+    public int? FTableVersionId { get; set; }
+    public string VersionCode { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? PreviousVersionCode { get; set; }
+    public string CellsJson { get; set; } = "[]";
+    public string? PreviousCellsJson { get; set; }
+    public string ChangeType { get; set; } = "Apply";
+    public long? RestoredFromHistoryId { get; set; }
+    public string? Reason { get; set; }
+    public string? ChangedBy { get; set; }
+    public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey("FTableVersionId")]
+    public virtual ChemicalFTableVersion? FTableVersion { get; set; }
+
+    [ForeignKey("RestoredFromHistoryId")]
+    public virtual ChemicalFTableVersionHistory? RestoredFromHistory { get; set; }
+}
+
 public class ChemicalAnalysisFormulaVersion : BaseEntity<long>
 {
     public int PartProcessCharacteristicId { get; set; }

@@ -26,15 +26,7 @@
 - T-007：執行登入、Portal SSO、JWT、SQL、401、403、Vue refresh、mixed content smoke。
 - T-008：同步需求索引、變更紀錄與驗證證據。
 
-### 第二順位：SPC 管制界線重算與 F 表版本（資料正確性）
-
-#### SPC-FTABLE-VERSION-TASK-001：F 表版本記錄與回復
-
-狀態：待規格；主規格 `specs/20261007-spc-ftable-control-limit-replan/spec.md`
-
-範圍：讓 F 表套用新版或修改儲存格時建立可查詢、可追溯、可回復的版本記錄；回復時需保留回復來源與影響範圍。
-
-### 第三順位：Portal 生日通知調整（個資與人事權限）
+### 第二順位：Portal 生日通知調整（個資與人事權限）
 
 #### PORTAL-BIRTHDAY-REPLAN-TASK-001：權限管理加入出生年月日欄位
 
@@ -58,7 +50,7 @@
 
 狀態：取消；除非使用者重新提出，不再排入未完成小工作，不讀取或使用 `D:\PmrPortal\GroupInsurance`。
 
-### 第四順位：全專案 AI + BDD 導入（流程治理）
+### 第三順位：全專案 AI + BDD 導入（流程治理）
 
 #### AI-BDD-ALL-TASK-001：全專案導入盤點與共用範本
 
@@ -78,7 +70,7 @@
 
 範圍：Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 依專案大小採輕量導入。
 
-### 第五順位：KM 教育訓練系統（新功能）
+### 第四順位：KM 教育訓練系統（新功能）
 
 #### KM-TRAINING-TASK-001：教育訓練系統需求規格與資料來源盤點
 
@@ -110,7 +102,7 @@
 
 範圍：完成率、逾期清單、課程歷程、部門統計與 Excel 匯出。
 
-### 第六順位：正式機程式碼更新工具（正式發布/IIS 高風險）
+### 第五順位：正式機程式碼更新工具（正式發布/IIS 高風險）
 
 #### RELEASE-TOOL-TASK-001：正式機更新工具規格與環境盤點
 

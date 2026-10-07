@@ -682,7 +682,15 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
             var cells = req.Cells
                 .Select(x => new ChemicalFTableSeedCell(x.CellAddress, x.StandardSolution ?? "", x.NumericValue))
                 .ToList();
-            var result = await fTableService.SyncCellsAsync(cells, req.Apply, req.VersionCode, req.DisplayName, "SPC_F_TABLE_MAINTENANCE", ct);
+            var result = await fTableService.SyncCellsAsync(
+                cells,
+                req.Apply,
+                req.VersionCode,
+                req.DisplayName,
+                "SPC_F_TABLE_MAINTENANCE",
+                ct,
+                User?.Identity?.Name,
+                req.Reason);
             return Ok(result);
         }
         catch (ArgumentException ex)
@@ -736,9 +744,38 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
         return Ok(new { references = refs });
     }
 
-    public record ChemicalFTableSyncRequest(bool Apply, string? VersionCode, string? DisplayName);
-    public record ChemicalFTableApplyRequest(bool Apply, string? VersionCode, string? DisplayName, List<ChemicalFTableApplyCell> Cells);
+    [HttpGet("versions")]
+    public async Task<IActionResult> Versions([FromQuery] int take, CancellationToken ct)
+    {
+        var result = await fTableService.GetVersionHistoryAsync(take <= 0 ? 50 : take, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("versions/{id:long}")]
+    public async Task<IActionResult> VersionDetail(long id, CancellationToken ct)
+    {
+        var result = await fTableService.GetVersionHistoryDetailAsync(id, ct);
+        return result is null ? NotFound(new { message = "找不到指定的 F 表版本記錄。" }) : Ok(result);
+    }
+
+    [HttpPost("versions/{id:long}/restore")]
+    public async Task<IActionResult> RestoreVersion(long id, [FromBody] ChemicalFTableRestoreRequest req, CancellationToken ct)
+    {
+        try
+        {
+            var result = await fTableService.RestoreVersionHistoryAsync(id, User?.Identity?.Name, req.Reason, ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    public record ChemicalFTableSyncRequest(bool Apply, string? VersionCode, string? DisplayName, string? Reason = null);
+    public record ChemicalFTableApplyRequest(bool Apply, string? VersionCode, string? DisplayName, List<ChemicalFTableApplyCell> Cells, string? Reason = null);
     public record ChemicalFTableApplyCell(string CellAddress, string? StandardSolution, decimal NumericValue);
     public record ChemicalFTableEvaluateRequest(string Expression, Dictionary<string, decimal>? Variables);
     public record ChemicalFTableReferenceRequest(string? Expression);
+    public record ChemicalFTableRestoreRequest(string? Reason);
 }
