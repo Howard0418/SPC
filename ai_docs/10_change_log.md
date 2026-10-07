@@ -1,3 +1,7 @@
+## [2026-10-07] - IIS-TASK-003 前端 API base 改為相對路徑
+- 目的：支援 SPC 單一 IIS Site 部署，讓前端預設呼叫同 origin `/api`，移除 production fallback 的固定 IP/port。
+- 範圍：僅調整 `frontend/mes-spc-web/src/api/client.js` 與 `.env.example` 的 API base 預設；不處理 T-004 手動組 URL、不修改 IIS 設定與後端 route。現行測試站仍為 Web/API 分離，testhost 發布暫保留既有 API base，待 T-006 單一 IIS Site 設定後再切換。
+
 ## [2026-10-07] - PORTAL-TASK-003 工作池狀態同步
 - 目的：使用者確認準備執行公告主旨自動帶組織單位時，核對發現 PmrPortal 已有完成規格與測試站 API 發布紀錄；同步移除 SPC `TODO.md` 未完成項目。本階段只整理文件。
 

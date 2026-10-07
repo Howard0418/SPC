@@ -1,8 +1,7 @@
 import axios from "axios";
 import { clearAuthSession } from "../utils/auth";
 
-const baseURL = import.meta.env.VITE_API_BASE
-  || (import.meta.env.DEV ? "/api" : "http://172.16.110.27:8082/api");
+const baseURL = import.meta.env.VITE_API_BASE || "/api";
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 let apiEnvironment = "unknown";
 

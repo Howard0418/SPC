@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（IIS-TASK-003 前端 API base 相對路徑）
+- 調整：SPC 前端 API client 預設 base 改為 `/api`，`.env.example` 與 production env 同步改為 `/api`，避免 production build fallback 到固定 API IP/port。
+- 驗證：production `npm run build` 通過；production build 後資產檢查不含 `172.16.119.140:8081/api`、`172.16.110.27:8082/api`；testhost `npm run build:test` 通過。
+- 發布：測試站仍為 Web `8083`、API `8081` 分離，`8083/api/version` 尚未路由至 API；為避免現行測試站失效，已發布 testhost build 並暫保留 `172.16.110.27:8081/api`。Smoke：首頁 200、新 JS 200、`8081/api/version` 200 但回 `environment=production`（既有環境風險）。正式站未發布。T-004 手動組 URL、T-006 單一 IIS 設定尚未執行。
+
 ## 2026-10-07（SPC 咬蝕 X- 任務暫緩）
 - 目的：依使用者指示，`SPC-ETCH-X-TASK-001/002` 因需求尚未想完整先跳過。
 - 修改：更新 `TODO.md` 排序，將咬蝕 X- 任務移至暫緩區，下一個可執行順位改為單一 IIS Site；新增 `specs/20261007-skip-etch-x-task/` 規格/驗證。
