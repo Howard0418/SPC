@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- 工作池狀態同步：[PORTAL-TASK-003 公告主旨自動帶組織單位](../specs/20261007-portal-task003-sync/spec.md)；核對 PmrPortal 已有完成規格與測試站 API 發布紀錄後，已自 `TODO.md` 未完成工作池移除。本次只整理文件，未修改功能，未發布。
 - 工作池結案確認：[確認設定與密鑰安全小工作結案](../specs/20261007-confirm-secret-security-task/spec.md)；依使用者確認，`TASK-001：設定與密鑰安全` 已自 `TODO.md` 未完成工作池移除。本次只整理文件，未修改設定、密鑰或程式，未發布。
 - 工作池顯示規則已調整：[TODO 只顯示未完成小工作](../specs/20261007-todo-open-items-only/spec.md)；`TODO.md` 後續只列未完成、待執行或待確認項目，已完成小工作改由 `CHANGELOG_CUSTOM.md` 與 specs 追溯。本次只整理文件，未修改功能，未發布。
 - 小工作池已新增：[正式機更新工具、全專案 AI+BDD 與 KM 教育訓練系統規劃](../specs/20261007-release-ai-bdd-km-training-plan/spec.md)；正式機更新工具需先備份、更新 IIS 網站資料夾、smoke test 與 rollback 演練，正式操作仍需另行授權；全專案 AI+BDD 分批導入；KM 教育訓練系統先規劃課程、教材、指派、簽到、測驗、完成紀錄與報表。本次只排程與設計，未實作，未發布。

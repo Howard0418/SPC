@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（PORTAL-TASK-003 工作池狀態同步）
+- 目的：核對 PmrPortal 已完成公告主旨自動帶組織單位功能後，更新 SPC 未完成工作池。
+- 修改：從 `TODO.md` 移除 `PORTAL-TASK-003`，新增 `specs/20261007-portal-task003-sync/` 規格/驗證。
+- 驗證：確認 PmrPortal 已有 `specs/20261006-announcement-title-organization-prefix/spec.md` 完成紀錄；本次未修改程式。
+- 發布：不適用。
+
 ## 2026-10-07（確認設定與密鑰安全小工作結案）
 - 目的：依使用者確認，將 `TASK-001：設定與密鑰安全` 自未完成工作池移除。
 - 修改：更新 `TODO.md`，新增 `specs/20261007-confirm-secret-security-task/` 規格/驗證。
