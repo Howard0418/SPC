@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（SPC 咬蝕 X- 任務暫緩）
+- 目的：依使用者指示，`SPC-ETCH-X-TASK-001/002` 因需求尚未想完整先跳過。
+- 修改：更新 `TODO.md` 排序，將咬蝕 X- 任務移至暫緩區，下一個可執行順位改為單一 IIS Site；新增 `specs/20261007-skip-etch-x-task/` 規格/驗證。
+- 驗證：確認 `TODO.md` 已標示暫緩原因；本次未修改程式。
+- 發布：不適用。
+
 ## 2026-10-07（PORTAL-TASK-005 工作池狀態同步）
 - 目的：同步 Portal 團保專區瀏覽與人事管理完成狀態，更新 SPC 未完成工作池。
 - 修改：從 `TODO.md` 移除 `PORTAL-TASK-005`，新增 `specs/20261007-portal-group-insurance-task-sync/` 規格/驗證。
