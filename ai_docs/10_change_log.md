@@ -1,3 +1,6 @@
+## [2026-10-07] - KM TASK-000 SDD + BDD 開發框架初始化
+- 目的：依使用者要求將 KM 專案導入 SDD + BDD + AI Coding 工作模式，建立本地入口、規格、BDD、架構、進度與測試目錄；本階段只做文件框架，不修改業務功能。
+
 ## [2026-10-07] - SPC 正式機發布
 - 目的：依使用者授權更新 SPC 正式機，重建 production 交付包、修正正式 IIS 路徑指向 production backend/frontend，並完成正式 API/Web smoke test。
 

@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（KM TASK-000 SDD + BDD 開發框架初始化）
+- 目的：將 KM 專案導入 SDD + BDD + AI Coding 工作模式。
+- 修改：新增 `KM/AGENTS.md`、`KM/specs/README.md`、`KM/specs/tasks/TASK-000-sdd-bdd-initialization.md`、`KM/features/`、`KM/docs/progress.md`、`KM/docs/architecture.md` 與 `KM/tests/`。
+- 驗證：確認本次僅新增文件與目錄骨架；未修改 API、資料庫、UI 或既有業務功能。
+- 發布：不適用；未發布測試站或正式站。
+
 ## 2026-10-07（SPC 正式機發布）
 - 目的：依使用者授權將目前 SPC production 交付包發布到正式機。
 - 發布：重建 `release/production/backend`、`release/production/frontend`，production manifest 顯示 `AppEnvironment=production`、Database `PMR_SPC_2026`、WebVersion `0.1.62`；正式前端資產為 `index-CTPUMGmw.js`、`index-B22nJqjf.css`。
