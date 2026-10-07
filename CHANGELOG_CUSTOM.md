@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（Portal 生日/團保與 SPC 咬蝕 X- 小工作規劃）
+- 目的：依使用者新需求加入小工作池，暫不實作。
+- 修改：新增 `specs/20261007-new-work-items/` 規格/驗證，並在 `TODO.md` 加入 Portal 生日通知、Portal 團保專區、SPC 咬蝕 X- 不列入 SPC 小工作。
+- 驗證：確認本次僅文件與工作池更新；未修改 Portal/SPC API、資料庫、UI 或既有業務功能。
+- 發布：不適用；未發布測試站或正式站。
+
 ## 2026-10-07（SPC AI + BDD 開發模式導入）
 - 目的：在既有 SDD 流程上補齊 SPC 主專案 BDD 驗收與 AI Coding 協作規則。
 - 修改：更新 `AGENTS.md`，新增 `features/` BDD 入口與 `specs/20261007-spc-ai-bdd-development/` 規格/驗證。

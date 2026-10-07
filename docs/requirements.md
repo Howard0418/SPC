@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- 小工作池已新增：[Portal 生日/團保與 SPC 咬蝕 X- 小工作規劃](../specs/20261007-new-work-items/spec.md)；Portal 待規格包含生日資料管理與登入生日快樂通知、團保專區瀏覽與人事管理，SPC 待規格包含咬蝕 X- / 不生產資料保留匯入但不列入 SPC 統計與圖表。本次只排程與發想，未修改功能，未發布。
 - SPC 開發流程已擴充：[SPC AI + BDD 開發模式導入](../specs/20261007-spc-ai-bdd-development/spec.md)；後續 SPC 開發採 SDD + BDD + AI Coding，重要功能需以 Given / When / Then 定義驗收行為，AI Coding 只處理目前 Task 必要範圍。本次只建立文件與 `features/` 入口，未修改業務功能，未發布。
 - KM 開發流程已初始化：[KM TASK-000 SDD + BDD 開發框架初始化](../KM/specs/tasks/TASK-000-sdd-bdd-initialization.md)；KM 後續工作採一次一個 Task、Spec 先行、BDD 驗收、測試驗證與 `KM/docs/progress.md` 追蹤。本次只建立文件與目錄骨架，未修改業務功能，未發布。
 - 正式站已發布：[SPC 正式機發布](../specs/20261007-spc-production-publish/spec.md)；2026-10-07 已重建 production backend/frontend 交付包並更新正式 IIS `SpcApi`、`SpcWeb` 指向 `D:\SPC\release\production\...`。正式 API `/api/version` 回 `environment=production`，正式 Web 首頁與新版 JS/CSS MIME smoke test 通過；未發布 Portal，未寫入 `D:\Sites\PmrPortal`，未手動修改正式資料。
