@@ -1,3 +1,8 @@
+## [2026-10-07] - SPC F 表版本記錄與管制界線重算規劃
+- 目的：依使用者需求，將 F 表版本記錄/回復與標準差方法切換後管制界線重算問題加入小工作池。
+- 範圍：新增 `specs/20261007-spc-ftable-control-limit-replan/`，更新 `TODO.md`、`docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不修改 SPC 程式、資料庫或 IIS。
+- 排序：先處理 `SPC-CL-RECALC-TASK-001`，再處理 `SPC-FTABLE-VERSION-TASK-001`。
+
 ## [2026-10-07] - Portal 生日通知調整與團保取消規劃
 - 目的：依使用者新需求，取消團保專區後續小工作，將生日資料維護改至權限管理出生年月日欄位，並規劃人事專區生日祝詞與祝賀圖片設定頁。
 - 範圍：新增 `specs/20261007-portal-birthday-replan/`，更新 `TODO.md`、`docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不修改 Portal 程式、資料庫、IIS 或團保資料夾。

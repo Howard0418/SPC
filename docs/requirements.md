@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- SPC F 表版本記錄與管制界線重算規劃：[SPC-FTABLE-CL-REPLAN-20261007](../specs/20261007-spc-ftable-control-limit-replan/spec.md)；依使用者新需求，新增標準差方法切換後必須重算管制界線的小工作，並新增 F 表版本記錄/回復小工作。因管制界線影響資料判定，排序高於 F 表版本功能。本次僅規劃，未修改程式、資料庫或 IIS。
 - Portal 生日通知調整與團保取消規劃：[PORTAL-BIRTHDAY-REPLAN-20261007](../specs/20261007-portal-birthday-replan/spec.md)；依使用者新指示，團保專區取消，生日資料維護不再獨立成區，改於權限管理維護出生年月日，並新增人事專區生日祝詞與祝賀圖片設定。規劃已加入 `TODO.md`，本次未修改 Portal 程式、資料庫或 IIS。
 - 工作池狀態同步：[PORTAL-TASK-003 公告主旨自動帶組織單位](../specs/20261007-portal-task003-sync/spec.md)；核對 PmrPortal 已有完成規格與測試站 API 發布紀錄後，已自 `TODO.md` 未完成工作池移除。本次只整理文件，未修改功能，未發布。
 - 工作池結案確認：[確認設定與密鑰安全小工作結案](../specs/20261007-confirm-secret-security-task/spec.md)；依使用者確認，`TASK-001：設定與密鑰安全` 已自 `TODO.md` 未完成工作池移除。本次只整理文件，未修改設定、密鑰或程式，未發布。
