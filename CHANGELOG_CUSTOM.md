@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（正式機更新工具、全專案 AI+BDD 與 KM 教育訓練系統規劃）
+- 目的：將正式機程式碼更新工具、全專案 AI+BDD 導入、KM 教育訓練系統加入小工作池。
+- 修改：新增 `specs/20261007-release-ai-bdd-km-training-plan/` 規格/驗證，並在 `TODO.md` 加入 AI-BDD-ALL、KM-TRAINING、RELEASE-TOOL 小工作。
+- 驗證：確認本次僅文件與工作池更新；未連線正式機、未更新 IIS、未修改業務程式。
+- 發布：不適用；未發布測試站或正式站。
+
 ## 2026-10-07（Portal 生日/團保與 SPC 咬蝕 X- 小工作規劃）
 - 目的：依使用者新需求加入小工作池，暫不實作。
 - 修改：新增 `specs/20261007-new-work-items/` 規格/驗證，並在 `TODO.md` 加入 Portal 生日通知、Portal 團保專區、SPC 咬蝕 X- 不列入 SPC 小工作。

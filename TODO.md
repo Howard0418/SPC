@@ -647,6 +647,127 @@
 
 理由：會碰發布/IIS/HTTPS，與 Portal/SPC 新功能開發不併行。公告與公式規格定案後，再安排測試站切換。
 
+### 第七順位：全專案 AI + BDD 導入（流程治理）
+
+#### AI-BDD-ALL-TASK-001：全專案導入盤點與共用範本
+
+狀態：待規格
+
+理由：屬文件/流程治理，風險低但影響多專案；先盤點每個專案入口、需求索引、features 目錄與本地規則，再分批導入。
+
+初步範圍：
+
+- 盤點 SPC、PmrPortal、TransFiles、KM、Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 的 AI+BDD 狀態。
+- 建立共用 AI+BDD 段落、BDD 範本與 STOP RULE。
+- 不修改業務程式。
+
+初步 BDD：
+
+- Given 某專案已接入 SDD
+- When 開始新的開發 Task
+- Then 該專案入口文件要求先建立 Spec 並定義 BDD 驗收條件
+
+#### AI-BDD-ALL-TASK-002：第一批高頻專案導入
+
+狀態：待 AI-BDD-ALL-TASK-001
+
+範圍：PmrPortal、TransFiles、KM 與 SPC 對齊 AI+BDD 入口、features 目錄與導入紀錄；不補造歷史規格。
+
+#### AI-BDD-ALL-TASK-003：第二批支援/工具專案導入
+
+狀態：待 AI-BDD-ALL-TASK-002
+
+範圍：Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 依專案大小採輕量導入。
+
+### 第八順位：KM 教育訓練系統（新功能）
+
+#### KM-TRAINING-TASK-001：教育訓練系統需求規格與資料來源盤點
+
+狀態：待規格
+
+理由：新功能涉及人員、權限、教材附件、完成紀錄與報表，需先定義 KM 邊界與角色，不直接開發。
+
+初步範圍：
+
+- 定義角色：一般使用者、講師/課程管理者、人事/admin。
+- 定義課程、教材、梯次、指派、報名、簽到、測驗、完成紀錄與報表。
+- 盤點是否沿用 Portal/SPC 人員或另建 KM 人員主檔。
+
+初步 BDD：
+
+- Given 人事已建立一門必修課並指派給使用者
+- When 使用者登入 KM 教育訓練系統
+- Then 系統顯示該使用者待完成課程與期限
+
+#### KM-TRAINING-TASK-002：課程與教材管理
+
+狀態：待 KM-TRAINING-TASK-001
+
+範圍：課程主檔、分類、講師、時數、教材附件、啟用/停用與版本紀錄。
+
+#### KM-TRAINING-TASK-003：訓練指派、報名與簽到
+
+狀態：待 KM-TRAINING-TASK-002
+
+範圍：依人員/部門/職務指派，梯次報名，名額限制，簽到與補課紀錄。
+
+#### KM-TRAINING-TASK-004：測驗、完成認定與個人進度
+
+狀態：待 KM-TRAINING-TASK-003
+
+範圍：題庫、測驗、及格分數、完成證明、個人待辦與完成歷程。
+
+#### KM-TRAINING-TASK-005：管理報表與匯出
+
+狀態：待 KM-TRAINING-TASK-004
+
+範圍：完成率、逾期清單、課程歷程、部門統計與 Excel 匯出。
+
+### 第九順位：正式機程式碼更新工具（正式發布/IIS 高風險）
+
+#### RELEASE-TOOL-TASK-001：正式機更新工具規格與環境盤點
+
+狀態：待規格；正式站操作需另行授權
+
+理由：正式機在另一台主機，更新工具需備份、更新 IIS 網站資料夾、保留環境設定、驗證與回復；屬高風險發布/IIS 工作，不與其他正式/IIS 工作併行。
+
+初步範圍：
+
+- 盤點正式機連線方式、IIS site/app pool、實體路徑、備份路徑、服務帳號與權限。
+- 定義 release manifest、hash、版本、目標環境、來源包與 smoke test URL。
+- 明確禁止誤寫 `D:\Sites\PmrPortal`，除非該專案另行授權。
+- 本階段只規格，不連線正式機。
+
+初步 BDD：
+
+- Given 正式機目前有既有 IIS 網站資料夾
+- When 更新工具執行正式部署前檢查
+- Then 工具必須先建立可驗證備份並確認目標路徑與 manifest 相符
+
+#### RELEASE-TOOL-TASK-002：備份與回復流程原型
+
+狀態：待 RELEASE-TOOL-TASK-001
+
+範圍：建立可在非正式目標演練的 PowerShell/CLI，支援備份網站資料夾、匯出 IIS 設定、hash 紀錄與回復。
+
+#### RELEASE-TOOL-TASK-003：更新 IIS 網站資料夾流程
+
+狀態：待 RELEASE-TOOL-TASK-002
+
+範圍：app_offline/app pool 停啟、複製交付包、保留環境設定、移除暫停檔、smoke test。
+
+#### RELEASE-TOOL-TASK-004：測試站/沙盒演練與 rollback 驗證
+
+狀態：待 RELEASE-TOOL-TASK-003
+
+範圍：使用非正式目標完整演練更新與回復，保留證據；不得操作正式機。
+
+#### RELEASE-TOOL-TASK-005：正式機使用手冊與授權檢核
+
+狀態：待 RELEASE-TOOL-TASK-004；正式執行需使用者另行授權
+
+範圍：整理操作手冊、參數範本、前置檢查、回復步驟、證據格式與核准清單。
+
 ### 暫停併行：架構改善 TODO
 
 `TASK-002`～`TASK-010` 架構改善暫不插隊；若與本批 Portal/SPC 工作碰到相同區域，先以本批業務需求的小範圍修改優先。
