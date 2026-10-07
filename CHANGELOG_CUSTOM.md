@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-07（IIS-TASK-005 單一 IIS 打包驗證）
+- 調整：完成單一 IIS 發布包 staging 驗證，前端 production build 複製到後端 publish sibling `frontend`，確認 backend static file fallback 可供應 Vue。
+- 驗證：`dotnet build --no-restore`、`npm run build`、`dotnet publish -c Release --no-restore` 通過；本機 staging `/api/version`、`/`、`/spc`、`/calibration-instruments`、`/particle-monitoring`、新版 JS 資產均 200。
+- 發布：未切換實際測試站 IIS；正式站未發布。T-006/T-007 繼續處理 IIS 設定與登入/JWT smoke。
+
 ## 2026-10-07（IIS-TASK-004 手動匯出 URL 修正）
 - 調整：SPC 查詢頁 CPK 匯出 URL 改以 API root 加 `/v1/reports/cpk-summary`，避免 baseURL 為 `/api` 時組成 `/api/api/v1/...`。
 - 驗證：`npm run build`、`npm run build:test` 通過；測試站 frontend 已發布 testhost build，首頁與新版 JS 200。

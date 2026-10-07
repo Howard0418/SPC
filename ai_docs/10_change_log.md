@@ -1,3 +1,9 @@
+## [2026-10-07] - IIS-TASK-005 單一 IIS 打包驗證
+- 目的：確認前端 production build、後端 Release publish 與 sibling frontend static file fallback 可組成單一 IIS Site 發布包；不切換實際 IIS、不修改業務功能。
+- 範圍：更新 `specs/20261005-single-iis-site/` 驗證紀錄與任務狀態；staging package 位於 `release-staging/single-iis-t005/`，不納入提交。
+- 驗證：`dotnet build --no-restore`、`npm run build`、`dotnet publish -c Release --no-restore` 通過；本機 staging `/api/version`、`/`、`/spc`、`/calibration-instruments`、`/particle-monitoring`、新版 JS 資產均 200。
+- 限制：實際測試站 IIS 單站設定、登入/JWT/401/403/mixed content smoke 留待 T-006/T-007。
+
 ## [2026-10-07] - IIS-TASK-004 修正手動匯出 URL
 - 目的：修正 CPK 匯出 URL 手動組字串時重複加 `/api` 的風險，支援 T-003 的相對 API base。
 - 範圍：僅調整 `SpcQueryView.vue` 匯出 URL 組法；不調整 IIS、後端 route 或其他 API 呼叫。
