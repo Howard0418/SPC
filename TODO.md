@@ -44,7 +44,7 @@
 
 #### PORTAL-BIRTHDAY-REPLAN-TASK-001：權限管理加入出生年月日欄位
 
-狀態：待規格；主規格 `specs/20261007-portal-birthday-replan/spec.md`
+狀態：已實作並發布 Portal 測試站；Portal 規格 `D:\PmrPortal\specs\20261009-birthday-permissions-replan\spec.md`，主規格 `specs/20261007-portal-birthday-replan/spec.md`
 
 範圍：取消獨立生日資料維護專區；在人員/權限管理編輯表單加入出生年月日欄位，限制人事或授權管理角色維護，並保護個資可見性與稽核。
 

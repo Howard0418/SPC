@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-09（Portal 權限管理生日欄位完成）
+- 目的：執行 `PORTAL-BIRTHDAY-REPLAN-TASK-001`，在 Portal 權限管理補回出生年月日欄位，沿用既有 `users.birth_date`。
+- 修改：Portal 規格與實作位於 `D:\PmrPortal\specs\20261009-birthday-permissions-replan\`；權限管理 API/Web/Excel 匯入匯出已支援生日欄位。未刪除既有人事生日頁或 API。
+- 驗證：Portal `AdminUsersControllerTests|AuthControllerTests` 11 passed；Portal API/Web build 0 warnings / 0 errors。
+- 發布：已發布 Portal 測試站 API/Web；Smoke：API health 200、權限管理頁未登入 401。正式站未發布。
+
 ## 2026-10-09（SPC 管制圖量測點備註實作）
 - 目的：讓 SPC 管制圖與趨勢圖的可定位量測點可由右鍵新增、編輯與清空備註，並保持備註與 SPC 計算/排除狀態分離。
 - 修改：新增 `SpcPointRemark`、`SpcPointRemarks` EF mapping/migration 與 `GET/PUT/DELETE /api/v1/spc/point-remarks`；前端管制圖與趨勢圖右鍵選單加入點位備註，tooltip 與點位明細可顯示備註。清空備註採 `IsActive=false` 軟停用，不實體刪除資料列。

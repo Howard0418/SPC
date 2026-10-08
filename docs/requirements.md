@@ -3,7 +3,7 @@
 - SPC 線別分析項目總覽公式版本記錄補強：[SPC-CHEM-OVERVIEW-FORMULA-VERSION-20261007](../specs/20261007-chemical-overview-formula-versioning/spec.md)；線別分析項目總覽修改藥液分析公式時，必須與 SPC 管制項目設定頁共用同一個 `ChemicalAnalysisFormulaVersion` 版本記錄與回復功能，並保存每筆版本參照的文件/修改依據備註。規劃已加入 `TODO.md`，本次未修改程式、資料庫或 IIS。
 - SPC 管制圖量測點備註：[SPC-CHART-POINT-REMARKS-20261007](../specs/20261007-spc-chart-point-remarks/spec.md)；SPC 管制圖與趨勢圖每個可定位量測點可由右鍵新增/編輯/清空備註，備註以獨立 `SpcPointRemarks` 軟停用資料表保存並可重新查詢顯示，不影響管制界線、OOC/OOS、Cpk 或既有點位排除/隱藏狀態。已發布 SPC 測試站，正式站未發布。
 - SPC F 表版本記錄與管制界線重算：[SPC-FTABLE-CL-REPLAN-20261007](../specs/20261007-spc-ftable-control-limit-replan/spec.md)；標準差方法切換後重算管制界線已完成後端防護。F 表版本記錄/回復已新增歷程資料表、查詢/回復 API 與維護頁版本記錄。
-- Portal 生日通知調整與團保取消規劃：[PORTAL-BIRTHDAY-REPLAN-20261007](../specs/20261007-portal-birthday-replan/spec.md)；依使用者新指示，團保專區取消，生日資料維護不再獨立成區，改於權限管理維護出生年月日，並新增人事專區生日祝詞與祝賀圖片設定。規劃已加入 `TODO.md`，本次未修改 Portal 程式、資料庫或 IIS。
+- Portal 生日通知調整與團保取消規劃：[PORTAL-BIRTHDAY-REPLAN-20261007](../specs/20261007-portal-birthday-replan/spec.md)；依使用者新指示，團保專區取消，生日資料維護不再獨立成區。`PORTAL-BIRTHDAY-REPLAN-TASK-001` 已於 Portal 權限管理補回出生年月日欄位並發布測試站；後續仍待新增人事專區生日祝詞與祝賀圖片設定。
 - 工作池狀態同步：[PORTAL-TASK-003 公告主旨自動帶組織單位](../specs/20261007-portal-task003-sync/spec.md)；核對 PmrPortal 已有完成規格與測試站 API 發布紀錄後，已自 `TODO.md` 未完成工作池移除。本次只整理文件，未修改功能，未發布。
 - 工作池結案確認：[確認設定與密鑰安全小工作結案](../specs/20261007-confirm-secret-security-task/spec.md)；依使用者確認，`TASK-001：設定與密鑰安全` 已自 `TODO.md` 未完成工作池移除。本次只整理文件，未修改設定、密鑰或程式，未發布。
 - 工作池顯示規則已調整：[TODO 只顯示未完成小工作](../specs/20261007-todo-open-items-only/spec.md)；`TODO.md` 後續只列未完成、待執行或待確認項目，已完成小工作改由 `CHANGELOG_CUSTOM.md` 與 specs 追溯。本次只整理文件，未修改功能，未發布。
