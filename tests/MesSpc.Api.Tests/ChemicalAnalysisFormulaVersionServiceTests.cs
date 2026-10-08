@@ -15,7 +15,7 @@ public class ChemicalAnalysisFormulaVersionServiceTests
         var mapping = await AddMappingAsync(db, "CHEM", """{"formula":"old"}""");
         var service = new ChemicalAnalysisFormulaVersionService(db);
 
-        var result = await service.RecordChangeAsync(mapping.Id, mapping.ChemicalAnalysisConfigJson, """{"formula":"new"}""", "ihao_ting", "調整公式", CancellationToken.None);
+        var result = await service.RecordChangeAsync(mapping.Id, mapping.ChemicalAnalysisConfigJson, """{"formula":"new"}""", "測試人員", "參照 WI-CA-001 調整公式", CancellationToken.None);
 
         result.Created.Should().BeTrue();
         result.Version.Should().NotBeNull();
@@ -23,7 +23,8 @@ public class ChemicalAnalysisFormulaVersionServiceTests
         result.Version.ConfigJson.Should().Be("""{"formula":"new"}""");
         result.Version.PreviousConfigJson.Should().Be("""{"formula":"old"}""");
         result.Version.ChangeType.Should().Be("Update");
-        result.Version.ChangedBy.Should().Be("ihao_ting");
+        result.Version.ChangedBy.Should().Be("測試人員");
+        result.Version.Reason.Should().Be("參照 WI-CA-001 調整公式");
     }
 
     [Fact]
@@ -33,7 +34,7 @@ public class ChemicalAnalysisFormulaVersionServiceTests
         var mapping = await AddMappingAsync(db, "CHEM", """{"formula":"same"}""");
         var service = new ChemicalAnalysisFormulaVersionService(db);
 
-        var result = await service.RecordChangeAsync(mapping.Id, mapping.ChemicalAnalysisConfigJson, "  {\"formula\":\"same\"}  ", "ihao_ting", null, CancellationToken.None);
+        var result = await service.RecordChangeAsync(mapping.Id, mapping.ChemicalAnalysisConfigJson, "  {\"formula\":\"same\"}  ", "測試人員", null, CancellationToken.None);
 
         result.Created.Should().BeFalse();
         (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(0);
@@ -46,7 +47,7 @@ public class ChemicalAnalysisFormulaVersionServiceTests
         var mapping = await AddMappingAsync(db, "PROCESS", """{"formula":"old"}""");
         var service = new ChemicalAnalysisFormulaVersionService(db);
 
-        Func<Task> act = () => service.RecordChangeAsync(mapping.Id, mapping.ChemicalAnalysisConfigJson, """{"formula":"new"}""", "ihao_ting", null, CancellationToken.None);
+        Func<Task> act = () => service.RecordChangeAsync(mapping.Id, mapping.ChemicalAnalysisConfigJson, """{"formula":"new"}""", "測試人員", null, CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*only supports CHEM*");
@@ -70,7 +71,7 @@ public class ChemicalAnalysisFormulaVersionServiceTests
         await db.SaveChangesAsync();
         var service = new ChemicalAnalysisFormulaVersionService(db);
 
-        var result = await service.RestoreAsync(mapping.Id, oldVersion.Id, "ihao_ting", "回復舊版", CancellationToken.None);
+        var result = await service.RestoreAsync(mapping.Id, oldVersion.Id, "測試人員", "回復舊版", CancellationToken.None);
 
         result.Restored.Should().BeTrue();
         (await db.PartProcessCharacteristics.SingleAsync(x => x.Id == mapping.Id))

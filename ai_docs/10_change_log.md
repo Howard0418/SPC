@@ -1,3 +1,8 @@
+## [2026-10-09] - SPC-CHEM-OVERVIEW-VERSION-TASK-001 總覽頁公式版本參照文件部分實作
+- 目的：讓線別分析項目總覽修改藥液公式時，將參照文件/修改依據寫入既有 `ChemicalAnalysisFormulaVersions.Reason`，不建立第二套版本邏輯。
+- 範圍：`ChemicalAnalysisOverviewView.vue`、`PartProcessCharacteristic` 請求欄位、PPC 更新流程與公式版本測試；不新增資料表、不改公式 JSON 格式、不修改 F 表版本。
+- 驗證：靜態檢查確認 `chemicalAnalysisFormulaVersionReason` 由前端送出並由後端傳給版本服務；測試資料使用測試名字。後端針對性測試 11 passed；後端 build 0 warnings / 0 errors；前端 `npm run build` 通過，僅保留既有 chunk size warning。已發布 SPC 測試站 backend/frontend 檔案；HTTP smoke 因 `8084`、既有 `8081/8083` 皆連線被拒未通過，判定為測試 IIS/網路層阻擋。
+
 ## [2026-10-07] - SPC-FTABLE-VERSION-TASK-001 F 表版本記錄與回復
 - 目的：讓 F 表套用新版或回復舊版時保留可查詢、可追溯、可回復的版本歷程。
 - 範圍：新增 F 表歷程 entity/migration、service 記錄與回復流程、API、F 表維護頁版本清單與回復操作、service 測試；不修改藥液公式版本與其他 SPC 計算邏輯。
@@ -23,6 +28,8 @@
 - 範圍：新增 IIS Site/AppPool `SpcSingleTest`，binding `http/172.16.110.27:8084:`，PhysicalPath `D:\SPC\release\test\backend`；將 `release/test/frontend` 更新為 production build 使用相對 `/api`。
 - 驗證：`http://172.16.110.27:8084/api/version` 200/test，首頁 200，`/spc`、`/calibration-instruments`、`/particle-monitoring` 200，新 JS 200；前端資產無舊 API base 與 `/api/api`。
 - 限制：尚未有 HTTPS binding/cert，AC-007 mixed content 未能驗證；T-006 不標示 DONE。
+- 2026-10-09 補充：使用者確認先將 HTTPS binding/cert 視為外部環境阻擋；不操作正式站、不建立未授權憑證，後續先推進可在現有 HTTP 單站或既有測試環境完成的 smoke。
+- 2026-10-09 T-007 部分驗證：測試站前端 assets 離線檢查無固定 SPC API IP、localhost 或 `/api/api`；本輪未使用真人帳密或真實姓名。HTTP 實站請求因本機 helper 建立程序失敗未重跑，HTTPS mixed content 隨 T-006 阻擋。
 
 ## [2026-10-07] - IIS-TASK-005 單一 IIS 打包驗證
 - 目的：確認前端 production build、後端 Release publish 與 sibling frontend static file fallback 可組成單一 IIS Site 發布包；不切換實際 IIS、不修改業務功能。

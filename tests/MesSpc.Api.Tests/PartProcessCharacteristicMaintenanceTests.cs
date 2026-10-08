@@ -271,6 +271,7 @@ public class PartProcessCharacteristicMaintenanceTests
             ChartTypeId = item.ChartTypeId,
             DisplayMode = item.DisplayMode,
             ChemicalAnalysisConfigJson = """{"formula":"new"}""",
+            ChemicalAnalysisFormulaVersionReason = "參照 WI-CA-001",
             IsRequired = item.IsRequired,
             IsEnabled = true
         });
@@ -279,6 +280,7 @@ public class PartProcessCharacteristicMaintenanceTests
         var version = await db.ChemicalAnalysisFormulaVersions.SingleAsync();
         version.PartProcessCharacteristicId.Should().Be(item.Id);
         version.VersionNo.Should().Be(1);
+        version.Reason.Should().Be("參照 WI-CA-001");
         version.PreviousConfigJson.Should().Be("""{"formula":"old"}""");
         version.ConfigJson.Should().Be("""{"formula":"new"}""");
         version.ChangeType.Should().Be("Update");

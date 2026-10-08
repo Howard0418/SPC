@@ -7,6 +7,12 @@
 - 驗證：本次僅規劃與工作池更新，未修改 SPC 程式、資料庫或 IIS。
 - 發布：不適用；未發布測試站或正式站。
 
+## 2026-10-09（SPC 線別分析項目總覽公式版本參照文件部分實作）
+- 目的：讓線別分析項目總覽修改藥液公式時，將參照文件/修改依據寫入既有 `ChemicalAnalysisFormulaVersions.Reason`，不建立第二套版本邏輯。
+- 修改：總覽頁新增版本參照文件/修改依據欄位，批次儲存 payload 帶 `chemicalAnalysisFormulaVersionReason`；後端 PPC 更新模型以 `[NotMapped]` 接收此欄位並傳給既有公式版本服務；測試改用測試名字並新增 Reason 斷言。
+- 驗證：後端針對性測試 11 passed；後端 build 0 warnings / 0 errors；前端 `npm run build` 通過，產出 `index-BSgajB2z.js`、`index-CRaqMmV-.css`，僅保留既有 chunk size warning。
+- 發布：已發布 SPC 測試站 backend/frontend 檔案，備份 `backend.backup-chemical-overview-version-reason-20261009-002558`、`frontend.backup-chemical-overview-version-reason-20261009-002558`；testhost 前端產出 `index-kMhx5TtG.js`、`index-CRaqMmV-.css`。HTTP smoke 因 `8084`、既有 `8081/8083` 皆連線被拒未通過，判定為測試 IIS/網路層阻擋。正式站未發布。
+
 ## 2026-10-07（SPC 線別分析項目總覽公式版本記錄規劃）
 - 目的：依使用者需求，線別分析項目總覽的公式修改必須與 SPC 管制項目設定頁的藥液分析公式共用同一套版本記錄與回復功能。
 - 修改：新增 `specs/20261007-chemical-overview-formula-versioning/`，並在 `TODO.md` 加入 `SPC-CHEM-OVERVIEW-VERSION-TASK-001`。
@@ -43,6 +49,8 @@
 - 調整：新增獨立 IIS 測試單站 `SpcSingleTest`，`http://172.16.110.27:8084/` 指向 `D:\SPC\release\test\backend`，由後端供應 sibling `frontend`；未改既有 `SpcApi:8081`、`SpcWeb:8083`。
 - 驗證：`/api/version` 200/test，首頁與 `/spc`、`/calibration-instruments`、`/particle-monitoring` 皆 200，新 JS 200；前端資產已無舊 API base 與 `/api/api`。
 - 發布：僅測試站新增 HTTP 單站；正式站未發布。HTTPS binding/cert 尚未提供，AC-007 mixed content 未驗證，因此 T-006 暫不標示 DONE。
+- 2026-10-09 補充：使用者確認先將 HTTPS binding/cert 視為外部環境阻擋；不操作正式站、不建立未授權憑證，後續先推進可在現有 HTTP 單站或既有測試環境完成的 smoke。
+- 2026-10-09 T-007 部分驗證：測試站前端 assets 離線檢查無固定 SPC API IP、localhost 或 `/api/api`；本輪未使用真人帳密或真實姓名。HTTP 實站請求因本機 helper 建立程序失敗未重跑，HTTPS mixed content 隨 T-006 阻擋。
 
 ## 2026-10-07（IIS-TASK-005 單一 IIS 打包驗證）
 - 調整：完成單一 IIS 發布包 staging 驗證，前端 production build 複製到後端 publish sibling `frontend`，確認 backend static file fallback 可供應 Vue。

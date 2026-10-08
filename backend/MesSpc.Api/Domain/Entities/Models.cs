@@ -437,6 +437,8 @@ public class PartProcessCharacteristic : BaseEntity<int>
     public int? ChartTypeId { get; set; }
     public string? FormulaConfigJson { get; set; }
     public string? ChemicalAnalysisConfigJson { get; set; }
+    [NotMapped]
+    public string? ChemicalAnalysisFormulaVersionReason { get; set; }
     public int? RuleGroupId { get; set; }
     public bool IsRequired { get; set; } = true;
     public bool IsEnabled { get; set; } = true;

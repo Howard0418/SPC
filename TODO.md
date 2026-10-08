@@ -18,19 +18,19 @@
 
 #### IIS-TASK-003～IIS-TASK-008：沿用 `specs/20261005-single-iis-site/tasks.md`
 
-狀態：已完成 TASK-001～TASK-005；TASK-006 已建立 HTTP 測試單站，待 HTTPS binding/cert 才能完成 AC-007
+狀態：已完成 TASK-001～TASK-005；TASK-006 已建立 HTTP 測試單站；HTTPS binding/cert 為外部環境阻擋，待提供後才能完成 AC-007，不標示 DONE
 
 待執行：
 
-- T-006：補齊測試站 HTTPS binding/cert 與 mixed content 驗證；不發布正式站。
-- T-007：執行登入、Portal SSO、JWT、SQL、401、403、Vue refresh、mixed content smoke。
+- T-006：待測試站 HTTPS binding/cert 可用後補驗 mixed content；不發布正式站。
+- T-007：已完成可離線資產 smoke；待可用 HTTP 請求/瀏覽器環境與測試帳號後，補登入、Portal SSO、JWT、SQL、401、403、Vue refresh smoke；HTTPS mixed content 隨 T-006 阻擋。
 - T-008：同步需求索引、變更紀錄與驗證證據。
 
 ### 第二順位：SPC 線別分析項目總覽公式版本記錄（資料正確性）
 
 #### SPC-CHEM-OVERVIEW-VERSION-TASK-001：總覽頁公式修改共用藥液公式版本記錄與參照文件備註
 
-狀態：待執行；主規格 `specs/20261007-chemical-overview-formula-versioning/spec.md`
+狀態：已實作並發布 SPC 測試站檔案；HTTP smoke 因測試 IIS/網路連線被拒待補；主規格 `specs/20261007-chemical-overview-formula-versioning/spec.md`
 
 範圍：線別分析項目總覽若修改藥液分析公式，必須與 SPC 管制項目設定頁共用同一個 `ChemicalAnalysisFormulaVersion` 版本記錄與回復功能，並在每筆版本記錄保存參照文件/修改依據備註；不得新增第二套版本邏輯。
 

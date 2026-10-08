@@ -568,7 +568,7 @@ public class PartProcessCharacteristicsController(
             previousChemicalAnalysisConfigJson,
             x.ChemicalAnalysisConfigJson,
             User?.Identity?.Name,
-            "PartProcessCharacteristic update",
+            req.ChemicalAnalysisFormulaVersionReason,
             HttpContext?.RequestAborted ?? CancellationToken.None);
         if (transaction is not null)
         {
