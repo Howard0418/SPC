@@ -35,7 +35,8 @@ import {
   Clock,
   Loader2,
   ZoomIn,
-  RotateCcw
+  RotateCcw,
+  StickyNote
 } from "lucide-vue-next";
 import SpcSummaryTable from "../components/SpcSummaryTable.vue";
 
@@ -146,6 +147,14 @@ const pointContextMenu = ref({
 const pointExclusionSaving = ref(false);
 const excludedPoints = ref([]);
 const excludedPointsLoading = ref(false);
+const pointRemarks = ref([]);
+const pointRemarkSaving = ref(false);
+const pointRemarkModal = ref({
+  visible: false,
+  text: "",
+  point: null,
+  existing: null
+});
 const showExcludedPointsPanel = ref(false);
 const showSpecLimits = ref(false);
 const showControlLimits = ref(false);
@@ -376,6 +385,35 @@ const formatExclusionUpdatedAt = (row) => {
   if (!value) return "";
   return new Date(value).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 };
+const getPointIdentityKey = (point) => {
+  if (!point) return "";
+  if (point.variableMeasurementId) return `v:${point.variableMeasurementId}`;
+  if (point.attributeMeasurementId) return `a:${point.attributeMeasurementId}`;
+  if (point.pointKey) return `k:${point.pointKey}`;
+  return "";
+};
+const getRemarkIdentityKey = (row) => {
+  const variableId = readField(row, "variableMeasurementId", "VariableMeasurementId");
+  const attributeId = readField(row, "attributeMeasurementId", "AttributeMeasurementId");
+  const pointKey = readField(row, "pointKey", "PointKey");
+  if (variableId) return `v:${variableId}`;
+  if (attributeId) return `a:${attributeId}`;
+  if (pointKey) return `k:${pointKey}`;
+  return "";
+};
+const findPointRemark = (point) => {
+  const key = getPointIdentityKey(point);
+  if (!key) return null;
+  return pointRemarks.value.find(row => getRemarkIdentityKey(row) === key) || null;
+};
+function applyPointRemarksToChart() {
+  const points = chartResult.value?.rawDataPoints || [];
+  points.forEach(point => {
+    const row = findPointRemark(point);
+    point.pointRemarkId = row ? readField(row, "id", "Id") : null;
+    point.pointRemark = row ? readField(row, "remark", "Remark") : "";
+  });
+}
 const formatRuleCode = (value) => {
   const match = String(value || "").match(/^(?:Rule|Nelson)(\d+)/i);
   return match ? `Rule ${match[1]}` : String(value || "");
@@ -683,6 +721,7 @@ async function loadUploadBatchChart() {
     });
     chartResult.value = res.data;
     await loadExcludedPoints(ppcId.value);
+    await loadPointRemarks(ppcId.value);
     loading.value = false;
     await nextTick();
     renderECharts();
@@ -715,6 +754,7 @@ async function loadInteractiveChart() {
     });
     chartResult.value = res.data;
     await loadExcludedPoints(activePpcId);
+    await loadPointRemarks(activePpcId);
     loading.value = false;
     await nextTick();
     renderECharts();
@@ -746,6 +786,23 @@ async function loadExcludedPoints(activePpcId = activePpcIdValue.value) {
     excludedPoints.value = [];
   } finally {
     excludedPointsLoading.value = false;
+  }
+}
+
+async function loadPointRemarks(activePpcId = activePpcIdValue.value) {
+  if (!activePpcId) {
+    pointRemarks.value = [];
+    return;
+  }
+  try {
+    const res = await api.get("/v1/spc/point-remarks", {
+      params: { ppcId: Number(activePpcId) }
+    });
+    pointRemarks.value = res.data?.data || [];
+    applyPointRemarksToChart();
+  } catch (e) {
+    error.value = "無法載入點位備註：" + getApiErrorMessage(e);
+    pointRemarks.value = [];
   }
 }
 
@@ -807,6 +864,7 @@ async function returnToSummary() {
   selectedPoint.value = null;
   selectedPointIndex.value = -1;
   excludedPoints.value = [];
+  pointRemarks.value = [];
   showExcludedPointsPanel.value = false;
   selectedSummaryRow.value = null;
   ppcId.value = "";
@@ -856,9 +914,86 @@ function getPointExclusionPayload(point, state) {
   };
 }
 
+function getPointRemarkPayload(point, remark) {
+  const ppc = activePpcIdValue.value;
+  if (!ppc || !point) return null;
+  const variableMeasurementId = point.variableMeasurementId ?? null;
+  const attributeMeasurementId = point.attributeMeasurementId ?? null;
+  if (!variableMeasurementId && !attributeMeasurementId) return null;
+  return {
+    partProcessCharacteristicId: ppc,
+    pointScope: attributeMeasurementId ? "AttributeMeasurement" : "VariableMeasurement",
+    variableMeasurementId,
+    attributeMeasurementId,
+    measurementBatchId: point.measurementBatchId ?? null,
+    pointKey: null,
+    remark
+  };
+}
+
 function hidePointContextMenu() {
   pointContextMenu.value.visible = false;
   pointContextMenu.value.point = null;
+}
+
+function openPointRemarkModal() {
+  const point = pointContextMenu.value.point || selectedPoint.value;
+  const payload = getPointRemarkPayload(point, "");
+  if (!payload) {
+    alert("此點位缺少單點識別資料，暫時無法設定備註。");
+    hidePointContextMenu();
+    return;
+  }
+  const existing = findPointRemark(point);
+  pointRemarkModal.value = {
+    visible: true,
+    text: existing ? readField(existing, "remark", "Remark") || "" : "",
+    point,
+    existing
+  };
+  hidePointContextMenu();
+}
+
+function closePointRemarkModal() {
+  pointRemarkModal.value = { visible: false, text: "", point: null, existing: null };
+}
+
+async function savePointRemark() {
+  const payload = getPointRemarkPayload(pointRemarkModal.value.point, pointRemarkModal.value.text);
+  if (!payload) return;
+  pointRemarkSaving.value = true;
+  try {
+    await api.put("/v1/spc/point-remarks", payload);
+    await loadPointRemarks(payload.partProcessCharacteristicId);
+    await loadActiveChart();
+    closePointRemarkModal();
+  } catch (e) {
+    alert("點位備註儲存失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointRemarkSaving.value = false;
+  }
+}
+
+async function clearPointRemark() {
+  const row = pointRemarkModal.value.existing || findPointRemark(pointRemarkModal.value.point);
+  const remarkId = row ? readField(row, "id", "Id") : null;
+  const payload = getPointRemarkPayload(pointRemarkModal.value.point, "");
+  if (!payload) return;
+  pointRemarkSaving.value = true;
+  try {
+    if (remarkId) {
+      await api.delete(`/v1/spc/point-remarks/${remarkId}`);
+    } else {
+      await api.put("/v1/spc/point-remarks", payload);
+    }
+    await loadPointRemarks(payload.partProcessCharacteristicId);
+    await loadActiveChart();
+    closePointRemarkModal();
+  } catch (e) {
+    alert("點位備註清空失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointRemarkSaving.value = false;
+  }
 }
 
 async function setPointExclusion(state) {
@@ -1433,6 +1568,7 @@ function renderECharts() {
           if (meta.sideCode && meta.sideCode !== "0") res += `<div>板面: <span class="text-blue-300 font-bold">${meta.sideCode === "1" ? "S1 (Top)" : "S2 (Bottom)"}</span></div>`;
           if (meta.lineId) res += `<div>產線: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>槽體: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
+          if (meta.pointRemark) res += `<div>備註: <span class="text-amber-200">${meta.pointRemark}</span></div>`;
           if (meta.slotId) res += `<div>槽位: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
           const phase = normalizeChemicalShift(meta.samplingPhase);
           const phaseColors = { OPEN: "text-blue-300", MIDDLE: "text-emerald-300", CLOSE: "text-orange-300" };
@@ -1683,6 +1819,7 @@ function renderTrendChart() {
           if (meta.lotNo) res += `<div>批號: <span class="text-slate-200">${meta.lotNo}</span></div>`;
           if (meta.serialNo) res += `<div>序號: <span class="text-slate-200">${meta.serialNo}</span></div>`;
           if (meta.operator) res += `<div>人員: <span class="text-slate-200">${meta.operator}</span></div>`;
+          if (meta.pointRemark) res += `<div>備註: <span class="text-amber-200">${meta.pointRemark}</span></div>`;
           if (meta.lineId) res += `<div>產線: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>槽體: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
           if (meta.slotId) res += `<div>槽位: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
@@ -2332,6 +2469,14 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+              :disabled="pointRemarkSaving"
+              @click="openPointRemarkModal"
+            >
+              新增/編輯備註
+            </button>
+            <button
+              type="button"
+              class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               :disabled="pointExclusionSaving"
               @click="setPointExclusion('ExcludedVisible')"
             >
@@ -2353,6 +2498,51 @@ onBeforeUnmount(() => {
             >
               恢復列入計算
             </button>
+          </div>
+        </div>
+
+        <div
+          v-if="pointRemarkModal.visible"
+          class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4"
+          @click.self="closePointRemarkModal"
+        >
+          <div class="w-full max-w-md rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-4">
+            <h3 class="text-sm font-black text-slate-900 dark:text-white mb-3">點位備註</h3>
+            <textarea
+              v-model="pointRemarkModal.text"
+              maxlength="500"
+              rows="5"
+              class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="輸入此量測點的備註"
+            ></textarea>
+            <div class="mt-2 flex items-center justify-between gap-3">
+              <span class="text-xs text-slate-500">{{ pointRemarkModal.text.length }}/500</span>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                  :disabled="pointRemarkSaving"
+                  @click="clearPointRemark"
+                >
+                  清空
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  @click="closePointRemarkModal"
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="pointRemarkSaving"
+                  @click="savePointRemark"
+                >
+                  儲存
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2514,6 +2704,13 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div v-if="selectedPoint.pointRemark" class="md:col-span-4 flex items-start gap-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-3">
+              <StickyNote class="w-4 h-4 text-amber-500 mt-1" />
+              <div>
+                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase mb-1">點位備註</p>
+                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{{ selectedPoint.pointRemark }}</p>
+              </div>
+            </div>
             <div class="flex items-start gap-2.5">
               <Hash class="w-4 h-4 text-slate-400 mt-1" />
               <div>

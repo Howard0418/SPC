@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-09（SPC 管制圖量測點備註實作）
+- 目的：讓 SPC 管制圖與趨勢圖的可定位量測點可由右鍵新增、編輯與清空備註，並保持備註與 SPC 計算/排除狀態分離。
+- 修改：新增 `SpcPointRemark`、`SpcPointRemarks` EF mapping/migration 與 `GET/PUT/DELETE /api/v1/spc/point-remarks`；前端管制圖與趨勢圖右鍵選單加入點位備註，tooltip 與點位明細可顯示備註。清空備註採 `IsActive=false` 軟停用，不實體刪除資料列。
+- 驗證：`SpcPointRemarksControllerTests|SpcPointExclusionsControllerTests` 8 passed；後端 build 0 warnings / 0 errors；前端 `npm run build` 通過，僅既有 chunk size warning。
+- 發布：已發布 SPC 測試站 backend/frontend 檔案，備份 `backend.backup-spc-point-remarks-20261009-023652`、`frontend.backup-spc-point-remarks-20261009-023652`；HTTP smoke：`8084/api/version` 200/test、首頁 200、新前端 JS 200、未登入 `point-remarks` 401。正式站未發布。
+
 ## 2026-10-07（SPC 公式版本參照文件與管制圖點位備註規劃）
 - 目的：依使用者需求，線別分析項目總覽修改公式時，每筆版本記錄需保存參照文件/修改依據；SPC 管制圖每個量測點可由右鍵新增備註。
 - 修改：補強 `specs/20261007-chemical-overview-formula-versioning/`，新增 `specs/20261007-spc-chart-point-remarks/`，並在 `TODO.md` 加入 `SPC-CHART-POINT-REMARK-TASK-001`。

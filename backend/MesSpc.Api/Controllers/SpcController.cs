@@ -190,6 +190,58 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     }
 
     /// <summary>
+    /// 查詢目前條件下已設定的 SPC 單一圖點備註。
+    /// </summary>
+    [HttpGet("point-remarks")]
+    public async Task<IActionResult> GetPointRemarks(
+        [FromQuery] int ppcId,
+        [FromQuery] string? pointScope,
+        [FromQuery] long? variableMeasurementId,
+        [FromQuery] long? attributeMeasurementId,
+        [FromQuery] string? pointKey,
+        CancellationToken ct = default)
+    {
+        if (ppcId <= 0) return BadRequest(new { message = "ppcId 為必填。" });
+
+        var query = db.SpcPointRemarks
+            .AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == ppcId && x.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(pointScope))
+            query = query.Where(x => x.PointScope == NormalizePointScope(pointScope));
+
+        if (variableMeasurementId.HasValue)
+            query = query.Where(x => x.VariableMeasurementId == variableMeasurementId.Value);
+
+        if (attributeMeasurementId.HasValue)
+            query = query.Where(x => x.AttributeMeasurementId == attributeMeasurementId.Value);
+
+        if (!string.IsNullOrWhiteSpace(pointKey))
+            query = query.Where(x => x.PointKey == pointKey.Trim());
+
+        var rows = await query
+            .OrderByDescending(x => x.UpdatedAt ?? x.CreatedAt)
+            .Select(x => new
+            {
+                x.Id,
+                x.PartProcessCharacteristicId,
+                x.PointScope,
+                x.VariableMeasurementId,
+                x.AttributeMeasurementId,
+                x.MeasurementBatchId,
+                x.PointKey,
+                x.Remark,
+                x.CreatedBy,
+                x.CreatedAt,
+                x.UpdatedBy,
+                x.UpdatedAt
+            })
+            .ToListAsync(ct);
+
+        return Ok(new { success = true, data = rows, message = "已取得點位備註清單。" });
+    }
+
+    /// <summary>
     /// 設定單一 SPC 圖點為顯示但不列入計算，或隱藏且不列入計算。
     /// </summary>
     [HttpPut("point-exclusions")]
@@ -240,6 +292,63 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     }
 
     /// <summary>
+    /// 新增、編輯或清空單一 SPC 圖點備註；備註不影響計算與點位排除狀態。
+    /// </summary>
+    [HttpPut("point-remarks")]
+    [Authorize(Roles = "Admin," + UserRoles.Editor)]
+    public async Task<IActionResult> UpsertPointRemark([FromBody] UpsertSpcPointRemarkReq req, CancellationToken ct = default)
+    {
+        var validation = await ValidatePointRemarkRequestAsync(req, ct);
+        if (validation is not null) return validation;
+
+        var pointScope = NormalizePointScope(req.PointScope);
+        var pointKey = string.IsNullOrWhiteSpace(req.PointKey) ? null : req.PointKey.Trim();
+        var entity = await FindActivePointRemarkAsync(
+            req.PartProcessCharacteristicId,
+            pointScope,
+            req.VariableMeasurementId,
+            req.AttributeMeasurementId,
+            pointKey,
+            ct);
+
+        var remark = string.IsNullOrWhiteSpace(req.Remark) ? null : req.Remark.Trim();
+        if (remark is null)
+        {
+            if (entity is not null)
+            {
+                entity.IsActive = false;
+                entity.UpdatedBy = CurrentUserName();
+                entity.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(ct);
+            }
+
+            return Ok(new { success = true, data = entity is null ? null : ToPointRemarkDto(entity), message = "點位備註已清空。" });
+        }
+
+        if (entity is null)
+        {
+            entity = new SpcPointRemark
+            {
+                PartProcessCharacteristicId = req.PartProcessCharacteristicId,
+                PointScope = pointScope,
+                VariableMeasurementId = req.VariableMeasurementId,
+                AttributeMeasurementId = req.AttributeMeasurementId,
+                MeasurementBatchId = req.MeasurementBatchId,
+                PointKey = pointKey,
+                IsActive = true
+            };
+            db.SpcPointRemarks.Add(entity);
+        }
+
+        entity.Remark = remark;
+        entity.UpdatedBy = CurrentUserName();
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new { success = true, data = ToPointRemarkDto(entity), message = "點位備註已儲存。" });
+    }
+
+    /// <summary>
     /// 恢復單一 SPC 圖點為正常顯示並列入計算。
     /// </summary>
     [HttpDelete("point-exclusions/{id:long}")]
@@ -255,6 +364,24 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         await db.SaveChangesAsync(ct);
 
         return Ok(new { success = true, data = ToPointExclusionDto(entity), message = "點位已恢復列入計算。" });
+    }
+
+    /// <summary>
+    /// 清空單一 SPC 圖點備註。
+    /// </summary>
+    [HttpDelete("point-remarks/{id:long}")]
+    [Authorize(Roles = "Admin," + UserRoles.Editor)]
+    public async Task<IActionResult> DeletePointRemark(long id, CancellationToken ct = default)
+    {
+        var entity = await db.SpcPointRemarks.FirstOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
+        if (entity is null) return NotFound(new { success = false, data = (object?)null, message = "找不到有效的點位備註。" });
+
+        entity.IsActive = false;
+        entity.UpdatedBy = CurrentUserName();
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new { success = true, data = ToPointRemarkDto(entity), message = "點位備註已清空。" });
     }
 
     [HttpPut("control-limits/{ppcId:int}")]
@@ -421,6 +548,70 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         return null;
     }
 
+    private async Task<IActionResult?> ValidatePointRemarkRequestAsync(UpsertSpcPointRemarkReq req, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(req.Remark) && req.Remark.Trim().Length > 500)
+            return BadRequest(new { success = false, data = (object?)null, message = "Remark 不可超過 500 字。" });
+
+        return await ValidatePointReferenceAsync(
+            req.PartProcessCharacteristicId,
+            req.PointScope,
+            req.VariableMeasurementId,
+            req.AttributeMeasurementId,
+            req.PointKey,
+            ct);
+    }
+
+    private async Task<IActionResult?> ValidatePointReferenceAsync(
+        int partProcessCharacteristicId,
+        string? pointScopeValue,
+        long? variableMeasurementId,
+        long? attributeMeasurementId,
+        string? pointKey,
+        CancellationToken ct)
+    {
+        if (partProcessCharacteristicId <= 0)
+            return BadRequest(new { success = false, data = (object?)null, message = "PartProcessCharacteristicId 為必填。" });
+
+        var pointScope = NormalizePointScope(pointScopeValue);
+        if (!IsValidPointScope(pointScope))
+            return BadRequest(new { success = false, data = (object?)null, message = "PointScope 僅允許 VariableMeasurement、AttributeMeasurement 或 Subgroup。" });
+
+        if (!variableMeasurementId.HasValue
+            && !attributeMeasurementId.HasValue
+            && string.IsNullOrWhiteSpace(pointKey))
+        {
+            return BadRequest(new { success = false, data = (object?)null, message = "需提供 VariableMeasurementId、AttributeMeasurementId 或 PointKey 其中之一。" });
+        }
+
+        var ppcExists = await db.PartProcessCharacteristics.AsNoTracking()
+            .AnyAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
+        if (!ppcExists)
+            return NotFound(new { success = false, data = (object?)null, message = "找不到 SPC 管制項目。" });
+
+        if (variableMeasurementId.HasValue)
+        {
+            var measurement = await db.VariableMeasurements.AsNoTracking()
+                .Where(x => x.Id == variableMeasurementId.Value)
+                .Select(x => new { x.PartProcessCharacteristicId, x.UploadBatchId })
+                .FirstOrDefaultAsync(ct);
+            if (measurement is null || measurement.PartProcessCharacteristicId != partProcessCharacteristicId)
+                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 VariableMeasurement。" });
+        }
+
+        if (attributeMeasurementId.HasValue)
+        {
+            var measurement = await db.AttributeMeasurements.AsNoTracking()
+                .Where(x => x.Id == attributeMeasurementId.Value)
+                .Select(x => new { x.PartProcessCharacteristicId, x.UploadBatchId })
+                .FirstOrDefaultAsync(ct);
+            if (measurement is null || measurement.PartProcessCharacteristicId != partProcessCharacteristicId)
+                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 AttributeMeasurement。" });
+        }
+
+        return null;
+    }
+
     private async Task<SpcPointExclusion?> FindActivePointExclusionAsync(
         int partProcessCharacteristicId,
         string pointScope,
@@ -430,6 +621,28 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         CancellationToken ct)
     {
         var query = db.SpcPointExclusions.Where(x =>
+            x.PartProcessCharacteristicId == partProcessCharacteristicId
+            && x.PointScope == pointScope
+            && x.IsActive);
+
+        if (variableMeasurementId.HasValue)
+            return await query.FirstOrDefaultAsync(x => x.VariableMeasurementId == variableMeasurementId.Value, ct);
+
+        if (attributeMeasurementId.HasValue)
+            return await query.FirstOrDefaultAsync(x => x.AttributeMeasurementId == attributeMeasurementId.Value, ct);
+
+        return await query.FirstOrDefaultAsync(x => x.PointKey == pointKey, ct);
+    }
+
+    private async Task<SpcPointRemark?> FindActivePointRemarkAsync(
+        int partProcessCharacteristicId,
+        string pointScope,
+        long? variableMeasurementId,
+        long? attributeMeasurementId,
+        string? pointKey,
+        CancellationToken ct)
+    {
+        var query = db.SpcPointRemarks.Where(x =>
             x.PartProcessCharacteristicId == partProcessCharacteristicId
             && x.PointScope == pointScope
             && x.IsActive);
@@ -482,6 +695,23 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         entity.PointKey,
         entity.State,
         entity.Reason,
+        entity.IsActive,
+        entity.CreatedBy,
+        entity.CreatedAt,
+        entity.UpdatedBy,
+        entity.UpdatedAt
+    };
+
+    private static object ToPointRemarkDto(SpcPointRemark entity) => new
+    {
+        entity.Id,
+        entity.PartProcessCharacteristicId,
+        entity.PointScope,
+        entity.VariableMeasurementId,
+        entity.AttributeMeasurementId,
+        entity.MeasurementBatchId,
+        entity.PointKey,
+        entity.Remark,
         entity.IsActive,
         entity.CreatedBy,
         entity.CreatedAt,
@@ -579,6 +809,14 @@ public record UpsertSpcPointExclusionReq(
     string? PointKey,
     string State,
     string? Reason);
+public record UpsertSpcPointRemarkReq(
+    int PartProcessCharacteristicId,
+    string PointScope,
+    long? VariableMeasurementId,
+    long? AttributeMeasurementId,
+    int? MeasurementBatchId,
+    string? PointKey,
+    string? Remark);
 public record SaveOcapReq(
     int PpcId,
     long? VariableMeasurementId,

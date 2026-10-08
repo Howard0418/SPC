@@ -36,7 +36,7 @@
 
 #### SPC-CHART-POINT-REMARK-TASK-001：SPC 管制圖量測點備註
 
-狀態：待執行；主規格 `specs/20261007-spc-chart-point-remarks/spec.md`
+狀態：已實作並發布 SPC 測試站；HTTP smoke 通過；主規格 `specs/20261007-spc-chart-point-remarks/spec.md`
 
 範圍：SPC 管制圖每個可定位量測點右鍵可新增/編輯備註；備註需可重新查詢顯示，不影響管制界線、OOC/OOS、Cpk 或既有點位排除/隱藏狀態。
 

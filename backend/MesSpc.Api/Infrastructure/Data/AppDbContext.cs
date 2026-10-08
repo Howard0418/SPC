@@ -38,6 +38,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SpcRule> SpcRules => Set<SpcRule>();
     public DbSet<SpcCalculationResult> SpcCalculationResults => Set<SpcCalculationResult>();
     public DbSet<SpcPointExclusion> SpcPointExclusions => Set<SpcPointExclusion>();
+    public DbSet<SpcPointRemark> SpcPointRemarks => Set<SpcPointRemark>();
     public DbSet<ControlLimitSegment> ControlLimitSegments => Set<ControlLimitSegment>();
 
     // New Organizational DB Sets
@@ -221,6 +222,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<SpcPointExclusion>().HasIndex(x => new { x.PointScope, x.VariableMeasurementId, x.IsActive });
         modelBuilder.Entity<SpcPointExclusion>().HasIndex(x => new { x.PointScope, x.AttributeMeasurementId, x.IsActive });
         modelBuilder.Entity<SpcPointExclusion>().HasIndex(x => new { x.PartProcessCharacteristicId, x.PointKey, x.IsActive });
+        modelBuilder.Entity<SpcPointRemark>().ToTable("SpcPointRemarks", table =>
+        {
+            table.HasComment("Single chart point remarks for SPC control/trend charts.");
+        });
+        modelBuilder.Entity<SpcPointRemark>().HasKey(x => x.Id);
+        modelBuilder.Entity<SpcPointRemark>().Property(x => x.PointScope).HasMaxLength(40).HasComment("VariableMeasurement, AttributeMeasurement, or Subgroup.");
+        modelBuilder.Entity<SpcPointRemark>().Property(x => x.PointKey).HasMaxLength(200).HasComment("Stable key for aggregate chart points such as Xbar subgroups.");
+        modelBuilder.Entity<SpcPointRemark>().Property(x => x.Remark).HasMaxLength(500).HasComment("User remark for the chart point.");
+        modelBuilder.Entity<SpcPointRemark>().Property(x => x.IsActive).HasDefaultValue(true).HasComment("Inactive rows are cleared point remarks kept for audit.");
+        modelBuilder.Entity<SpcPointRemark>().HasIndex(x => new { x.PointScope, x.VariableMeasurementId, x.IsActive });
+        modelBuilder.Entity<SpcPointRemark>().HasIndex(x => new { x.PointScope, x.AttributeMeasurementId, x.IsActive });
+        modelBuilder.Entity<SpcPointRemark>().HasIndex(x => new { x.PartProcessCharacteristicId, x.PointKey, x.IsActive });
 
         // Organizational Data Indexes
         modelBuilder.Entity<Plant>().HasIndex(x => x.PlantCode).IsUnique();
@@ -420,6 +433,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(x => x.AttributeMeasurementId)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<SpcPointExclusion>()
+            .HasOne(x => x.MeasurementBatch)
+            .WithMany()
+            .HasForeignKey(x => x.MeasurementBatchId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SpcPointRemark>()
+            .HasOne(x => x.PartProcessCharacteristic)
+            .WithMany()
+            .HasForeignKey(x => x.PartProcessCharacteristicId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SpcPointRemark>()
+            .HasOne(x => x.VariableMeasurement)
+            .WithMany()
+            .HasForeignKey(x => x.VariableMeasurementId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SpcPointRemark>()
+            .HasOne(x => x.AttributeMeasurement)
+            .WithMany()
+            .HasForeignKey(x => x.AttributeMeasurementId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SpcPointRemark>()
             .HasOne(x => x.MeasurementBatch)
             .WithMany()
             .HasForeignKey(x => x.MeasurementBatchId)

@@ -11,7 +11,8 @@ import {
   ShieldAlert,
   Info,
   Sliders,
-  List
+  List,
+  StickyNote
 } from "lucide-vue-next";
 import SpcSummaryTable from "../components/SpcSummaryTable.vue";
 
@@ -61,6 +62,14 @@ const pointContextMenu = ref({
 const pointExclusionSaving = ref(false);
 const excludedPoints = ref([]);
 const excludedPointsLoading = ref(false);
+const pointRemarks = ref([]);
+const pointRemarkSaving = ref(false);
+const pointRemarkModal = ref({
+  visible: false,
+  text: "",
+  point: null,
+  existing: null
+});
 const showExcludedPointsPanel = ref(false);
 
 const tableSummaryData = ref(null);
@@ -355,6 +364,7 @@ async function loadChart() {
     });
     chartResult.value = res.data;
     await loadExcludedPoints(mapping.id);
+    await loadPointRemarks(mapping.id);
     loading.value = false;
     await nextTick();
     renderTrendChart();
@@ -405,6 +415,23 @@ function getPointExclusionPayload(point, state) {
   };
 }
 
+function getPointRemarkPayload(point, remark) {
+  const ppc = activePpcIdValue.value;
+  if (!ppc || !point) return null;
+  const variableMeasurementId = point.variableMeasurementId ?? null;
+  const attributeMeasurementId = point.attributeMeasurementId ?? null;
+  if (!variableMeasurementId && !attributeMeasurementId) return null;
+  return {
+    partProcessCharacteristicId: ppc,
+    pointScope: attributeMeasurementId ? "AttributeMeasurement" : "VariableMeasurement",
+    variableMeasurementId,
+    attributeMeasurementId,
+    measurementBatchId: point.measurementBatchId ?? null,
+    pointKey: null,
+    remark
+  };
+}
+
 function hidePointContextMenu() {
   pointContextMenu.value.visible = false;
   pointContextMenu.value.point = null;
@@ -433,6 +460,35 @@ const formatExclusionUpdatedAt = (row) => {
   if (!value) return "";
   return new Date(value).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 };
+const getPointIdentityKey = (point) => {
+  if (!point) return "";
+  if (point.variableMeasurementId) return `v:${point.variableMeasurementId}`;
+  if (point.attributeMeasurementId) return `a:${point.attributeMeasurementId}`;
+  if (point.pointKey) return `k:${point.pointKey}`;
+  return "";
+};
+const getRemarkIdentityKey = (row) => {
+  const variableId = readField(row, "variableMeasurementId", "VariableMeasurementId");
+  const attributeId = readField(row, "attributeMeasurementId", "AttributeMeasurementId");
+  const pointKey = readField(row, "pointKey", "PointKey");
+  if (variableId) return `v:${variableId}`;
+  if (attributeId) return `a:${attributeId}`;
+  if (pointKey) return `k:${pointKey}`;
+  return "";
+};
+const findPointRemark = (point) => {
+  const key = getPointIdentityKey(point);
+  if (!key) return null;
+  return pointRemarks.value.find(row => getRemarkIdentityKey(row) === key) || null;
+};
+function applyPointRemarksToChart() {
+  const points = chartResult.value?.rawDataPoints || [];
+  points.forEach(point => {
+    const row = findPointRemark(point);
+    point.pointRemarkId = row ? readField(row, "id", "Id") : null;
+    point.pointRemark = row ? readField(row, "remark", "Remark") : "";
+  });
+}
 
 function getHiddenExclusionKeySet() {
   return new Set(excludedPoints.value
@@ -470,6 +526,83 @@ async function loadExcludedPoints(activePpcId = activePpcIdValue.value) {
     excludedPoints.value = [];
   } finally {
     excludedPointsLoading.value = false;
+  }
+}
+
+async function loadPointRemarks(activePpcId = activePpcIdValue.value) {
+  if (!activePpcId) {
+    pointRemarks.value = [];
+    return;
+  }
+  try {
+    const res = await api.get("/v1/spc/point-remarks", {
+      params: { ppcId: Number(activePpcId) }
+    });
+    pointRemarks.value = res.data?.data || [];
+    applyPointRemarksToChart();
+  } catch (e) {
+    error.value = "無法載入點位備註：" + getApiErrorMessage(e);
+    pointRemarks.value = [];
+  }
+}
+
+function openPointRemarkModal() {
+  const point = pointContextMenu.value.point;
+  const payload = getPointRemarkPayload(point, "");
+  if (!payload) {
+    alert("此點位缺少單點識別資料，暫時無法設定備註。");
+    hidePointContextMenu();
+    return;
+  }
+  const existing = findPointRemark(point);
+  pointRemarkModal.value = {
+    visible: true,
+    text: existing ? readField(existing, "remark", "Remark") || "" : "",
+    point,
+    existing
+  };
+  hidePointContextMenu();
+}
+
+function closePointRemarkModal() {
+  pointRemarkModal.value = { visible: false, text: "", point: null, existing: null };
+}
+
+async function savePointRemark() {
+  const payload = getPointRemarkPayload(pointRemarkModal.value.point, pointRemarkModal.value.text);
+  if (!payload) return;
+  pointRemarkSaving.value = true;
+  try {
+    await api.put("/v1/spc/point-remarks", payload);
+    await loadPointRemarks(payload.partProcessCharacteristicId);
+    await loadChart();
+    closePointRemarkModal();
+  } catch (e) {
+    alert("點位備註儲存失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointRemarkSaving.value = false;
+  }
+}
+
+async function clearPointRemark() {
+  const row = pointRemarkModal.value.existing || findPointRemark(pointRemarkModal.value.point);
+  const remarkId = row ? readField(row, "id", "Id") : null;
+  const payload = getPointRemarkPayload(pointRemarkModal.value.point, "");
+  if (!payload) return;
+  pointRemarkSaving.value = true;
+  try {
+    if (remarkId) {
+      await api.delete(`/v1/spc/point-remarks/${remarkId}`);
+    } else {
+      await api.put("/v1/spc/point-remarks", payload);
+    }
+    await loadPointRemarks(payload.partProcessCharacteristicId);
+    await loadChart();
+    closePointRemarkModal();
+  } catch (e) {
+    alert("點位備註清空失敗：" + getApiErrorMessage(e));
+  } finally {
+    pointRemarkSaving.value = false;
   }
 }
 
@@ -708,6 +841,7 @@ function renderTrendChart() {
           if (meta.lotNo) res += `<div>批號: <span style="color:#e2e8f0">${meta.lotNo}</span></div>`;
           if (meta.serialNo) res += `<div>序號: <span style="color:#e2e8f0">${meta.serialNo}</span></div>`;
           if (meta.operator) res += `<div>人員: <span style="color:#e2e8f0">${meta.operator}</span></div>`;
+          if (meta.pointRemark) res += `<div>備註: <span style="color:#fde68a">${meta.pointRemark}</span></div>`;
           res += `</div>`;
         }
         params.forEach(p => {
@@ -1338,6 +1472,14 @@ const trendStats = computed(() => {
             <button
               type="button"
               class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+              :disabled="pointRemarkSaving"
+              @click="openPointRemarkModal"
+            >
+              新增/編輯備註
+            </button>
+            <button
+              type="button"
+              class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               :disabled="pointExclusionSaving"
               @click="setPointExclusion('ExcludedVisible')"
             >
@@ -1359,6 +1501,51 @@ const trendStats = computed(() => {
             >
               恢復列入計算
             </button>
+          </div>
+        </div>
+
+        <div
+          v-if="pointRemarkModal.visible"
+          class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4"
+          @click.self="closePointRemarkModal"
+        >
+          <div class="w-full max-w-md rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-4">
+            <h3 class="text-sm font-black text-slate-900 dark:text-white mb-3">點位備註</h3>
+            <textarea
+              v-model="pointRemarkModal.text"
+              maxlength="500"
+              rows="5"
+              class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="輸入此量測點的備註"
+            ></textarea>
+            <div class="mt-2 flex items-center justify-between gap-3">
+              <span class="text-xs text-slate-500">{{ pointRemarkModal.text.length }}/500</span>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                  :disabled="pointRemarkSaving"
+                  @click="clearPointRemark"
+                >
+                  清空
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  @click="closePointRemarkModal"
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-50"
+                  :disabled="pointRemarkSaving"
+                  @click="savePointRemark"
+                >
+                  儲存
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1463,6 +1650,13 @@ const trendStats = computed(() => {
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div v-if="selectedPointDetails.point.pointRemark" class="md:col-span-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900/50 flex items-start gap-2.5">
+              <StickyNote class="w-4 h-4 text-amber-500 mt-1" />
+              <div>
+                <p class="font-black text-amber-700 dark:text-amber-300 mb-1">點位備註</p>
+                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{{ selectedPointDetails.point.pointRemark }}</p>
+              </div>
+            </div>
             <div class="rounded-xl bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800">
               <p class="font-black text-slate-700 dark:text-slate-200 mb-2">資料來源</p>
               <div class="grid grid-cols-2 gap-x-4 gap-y-2">

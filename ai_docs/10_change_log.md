@@ -1,3 +1,8 @@
+## [2026-10-09] - SPC-CHART-POINT-REMARK-TASK-001 管制圖量測點備註
+- 目的：讓 SPC 管制圖與趨勢圖的可定位量測點可新增、編輯與清空備註，且備註不影響 SPC 計算、OOC/OOS/Cpk 或既有點位排除狀態。
+- 範圍：新增 `SpcPointRemark`、`SpcPointRemarks` EF mapping/migration、`point-remarks` API、管制圖/趨勢圖右鍵備註 UI 與 controller 測試；清空備註採軟停用，不實體刪除資料列。
+- 驗證：測試資料使用測試名字與測試備註；`SpcPointRemarksControllerTests|SpcPointExclusionsControllerTests` 8 passed；後端 build 0 warnings / 0 errors；前端 `npm run build` 通過，僅保留既有 chunk size warning。已發布 SPC 測試站 backend/frontend 檔案；HTTP smoke：`8084/api/version` 200/test、首頁 200、新前端 JS 200、未登入 `point-remarks` 401。
+
 ## [2026-10-09] - SPC-CHEM-OVERVIEW-VERSION-TASK-001 總覽頁公式版本參照文件部分實作
 - 目的：讓線別分析項目總覽修改藥液公式時，將參照文件/修改依據寫入既有 `ChemicalAnalysisFormulaVersions.Reason`，不建立第二套版本邏輯。
 - 範圍：`ChemicalAnalysisOverviewView.vue`、`PartProcessCharacteristic` 請求欄位、PPC 更新流程與公式版本測試；不新增資料表、不改公式 JSON 格式、不修改 F 表版本。

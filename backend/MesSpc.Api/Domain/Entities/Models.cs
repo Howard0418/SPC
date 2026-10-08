@@ -698,6 +698,27 @@ public class SpcPointExclusion : BaseEntity<long>
     public virtual MeasurementBatch? MeasurementBatch { get; set; }
 }
 
+public class SpcPointRemark : BaseEntity<long>
+{
+    public int PartProcessCharacteristicId { get; set; }
+    public string PointScope { get; set; } = "VariableMeasurement";
+    public long? VariableMeasurementId { get; set; }
+    public long? AttributeMeasurementId { get; set; }
+    public int? MeasurementBatchId { get; set; }
+    public string? PointKey { get; set; }
+    public string Remark { get; set; } = "";
+    public bool IsActive { get; set; } = true;
+
+    [ForeignKey("PartProcessCharacteristicId")]
+    public virtual PartProcessCharacteristic? PartProcessCharacteristic { get; set; }
+    [ForeignKey("VariableMeasurementId")]
+    public virtual VariableMeasurement? VariableMeasurement { get; set; }
+    [ForeignKey("AttributeMeasurementId")]
+    public virtual AttributeMeasurement? AttributeMeasurement { get; set; }
+    [ForeignKey("MeasurementBatchId")]
+    public virtual MeasurementBatch? MeasurementBatch { get; set; }
+}
+
 // --- Traceability ---
 
 public class LotMaster : BaseEntity<long>
