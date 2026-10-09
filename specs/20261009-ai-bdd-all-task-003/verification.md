@@ -24,7 +24,7 @@
 - PMR_ERP撈取工單：目前不是 Git repository，已更新工作區檔案，無法提交。
 - DS2000：目前不是 Git repository，已更新工作區檔案，無法提交。
 - Voice：目前不是 Git repository，已更新工作區檔案，無法提交。
-- python-pypxlib：本地提交 `c741080 2026-10-09 完成 AI-BDD-ALL-TASK-003 python-pypxlib 導入`；推送外部 GitHub remote 被安全審核擋下，待使用者明確授權。
+- python-pypxlib：本地提交 `c741080 2026-10-09 完成 AI-BDD-ALL-TASK-003 python-pypxlib 導入`；使用者確認後已推送 `origin/main`。
 
 ## 發布
 - 不適用；本次未修改應用程式，未建置、未打包、未發布測試站或正式站。
