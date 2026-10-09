@@ -80,7 +80,7 @@
 
 #### AI-BDD-ALL-TASK-003：第二批支援/工具專案導入
 
-狀態：待 AI-BDD-ALL-TASK-002
+狀態：已完成文件型導入；主規格 `specs/20261009-ai-bdd-all-task-003/spec.md`
 
 範圍：Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 依專案大小採輕量導入。
 
