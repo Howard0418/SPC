@@ -50,7 +50,7 @@
 
 #### PORTAL-BIRTHDAY-REPLAN-TASK-002：人事專區生日通知設定頁
 
-狀態：待 PORTAL-BIRTHDAY-REPLAN-TASK-001
+狀態：已實作並發布 Portal 測試站；Portal 規格 `D:\PmrPortal\specs\20261009-birthday-notification-settings\spec.md`
 
 範圍：在人事專區新增生日通知設定頁，可修改生日祝詞、上傳/替換生日祝賀圖片、預覽通知效果；需限制圖片格式、大小與儲存路徑。
 
