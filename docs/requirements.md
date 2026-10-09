@@ -129,3 +129,9 @@
 - 對應 SPC 同步規格：`specs/20261009-km-training-task005-sync/spec.md`
 - 對應 KM 規格：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\specs\tasks\TASK-016-training-report-export.md`
 - 結論：`KM-TRAINING-TASK-005` 已完成完成率、逾期清單、課程歷程、部門統計與 Excel 匯出規格；本次不涉及程式、資料庫、正式資料或發布。
+
+## 2026-10-09 正式機更新工具規格
+
+- 對應規格：`specs/20261009-release-tool-task001/spec.md`
+- 對應驗證：`specs/20261009-release-tool-task001/verification.md`
+- 結論：`RELEASE-TOOL-TASK-001` 已完成正式機更新工具的環境盤點欄位、release manifest、hash、版本、目標環境、來源包與 smoke test URL 規格；本次僅文件變更，未連線正式機、未讀取機敏設定、未刪除資料、未發布。
