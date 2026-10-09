@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-09（AI+BDD 第一批高頻專案導入）
+- 目的：執行 `AI-BDD-ALL-TASK-002`，讓 PmrPortal、TransFiles、KM 與 SPC 對齊 AI+BDD 入口、features 目錄與導入紀錄。
+- 修改：新增 `specs/20261009-ai-bdd-all-task-002/`；同步 SPC 工作池與需求索引。PmrPortal、TransFiles、KM 已分別補 AGENTS/需求索引/變更紀錄/規格或任務規格與 `features/.gitkeep`。
+- 驗證：文件內容與連結檢查完成；未讀取機敏設定、未修改業務功能、未刪除資料。TransFiles 目前不是 Git repository，已更新檔案但無法在該目錄提交。
+- 發布：文件型小工作，建置、打包與發布不適用；正式站未發布。
+
 ## 2026-10-09（全專案 AI+BDD 導入盤點與共用範本）
 - 目的：執行 `AI-BDD-ALL-TASK-001`，盤點十專案 AI+BDD 導入狀態，建立共用段落、BDD 範本與 STOP RULE。
 - 修改：新增 `specs/20261009-ai-bdd-all-task-001/`、`docs/ai-bdd-guide.md`、`docs/templates/sdd/bdd-feature.md`，並同步 `TODO.md` 與需求索引。

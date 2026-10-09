@@ -74,7 +74,7 @@
 
 #### AI-BDD-ALL-TASK-002：第一批高頻專案導入
 
-狀態：待 AI-BDD-ALL-TASK-001
+狀態：已完成文件型導入；主規格 `specs/20261009-ai-bdd-all-task-002/spec.md`
 
 範圍：PmrPortal、TransFiles、KM 與 SPC 對齊 AI+BDD 入口、features 目錄與導入紀錄；不補造歷史規格。
 

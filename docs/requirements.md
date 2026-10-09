@@ -9,6 +9,7 @@
 - 工作池顯示規則已調整：[TODO 只顯示未完成小工作](../specs/20261007-todo-open-items-only/spec.md)；`TODO.md` 後續只列未完成、待執行或待確認項目，已完成小工作改由 `CHANGELOG_CUSTOM.md` 與 specs 追溯。本次只整理文件，未修改功能，未發布。
 - 小工作池已新增：[正式機更新工具、全專案 AI+BDD 與 KM 教育訓練系統規劃](../specs/20261007-release-ai-bdd-km-training-plan/spec.md)；正式機更新工具需先備份、更新 IIS 網站資料夾、smoke test 與 rollback 演練，正式操作仍需另行授權；全專案 AI+BDD 分批導入；KM 教育訓練系統先規劃課程、教材、指派、簽到、測驗、完成紀錄與報表。本次只排程與設計，未實作，未發布。
 - 全專案 AI+BDD 盤點與共用範本：[AI-BDD-ALL-TASK-001](../specs/20261009-ai-bdd-all-task-001/spec.md)；已建立十專案導入盤點、共用段落、STOP RULE 與 BDD feature 範本。本次為文件型小工作，未修改應用程式、未建置、未發布。
+- AI+BDD 第一批高頻專案導入：[AI-BDD-ALL-TASK-002](../specs/20261009-ai-bdd-all-task-002/spec.md)；PmrPortal、TransFiles、KM 與 SPC 已對齊 AI+BDD 入口、features 目錄與導入紀錄。本次為文件型小工作，未修改應用程式、未發布。
 - 小工作池已新增：[Portal 生日/團保與 SPC 咬蝕 X- 小工作規劃](../specs/20261007-new-work-items/spec.md)；Portal 待規格包含生日資料管理與登入生日快樂通知、團保專區瀏覽與人事管理，SPC 待規格包含咬蝕 X- / 不生產資料保留匯入但不列入 SPC 統計與圖表。本次只排程與發想，未修改功能，未發布。
 - SPC 開發流程已擴充：[SPC AI + BDD 開發模式導入](../specs/20261007-spc-ai-bdd-development/spec.md)；後續 SPC 開發採 SDD + BDD + AI Coding，重要功能需以 Given / When / Then 定義驗收行為，AI Coding 只處理目前 Task 必要範圍。本次只建立文件與 `features/` 入口，未修改業務功能，未發布。
 - KM 開發流程已初始化：[KM TASK-000 SDD + BDD 開發框架初始化](../KM/specs/tasks/TASK-000-sdd-bdd-initialization.md)；KM 後續工作採一次一個 Task、Spec 先行、BDD 驗收、測試驗證與 `KM/docs/progress.md` 追蹤。本次只建立文件與目錄骨架，未修改業務功能，未發布。
