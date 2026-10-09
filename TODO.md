@@ -88,7 +88,7 @@
 
 #### KM-TRAINING-TASK-001：教育訓練系統需求規格與資料來源盤點
 
-狀態：待規格
+狀態：已完成（2026-10-09，KM 規格 `specs/tasks/TASK-012-training-requirements-inventory.md`；SPC 同步 `specs/20261009-km-training-task001-sync/`）
 
 初步範圍：定義一般使用者、講師/課程管理者、人事/admin；定義課程、教材、梯次、指派、報名、簽到、測驗、完成紀錄與報表；盤點人員資料來源。
 
@@ -203,3 +203,7 @@
 ### TASK-010：大型模組拆分與架構治理
 
 狀態：待確認
+
+## 2026-10-09 執行紀錄
+
+- `KM-TRAINING-TASK-001`：已完成教育訓練系統需求規格與資料來源盤點。KM 產出 `specs/tasks/TASK-012-training-requirements-inventory.md`、`features/training-system.feature`、`docs/training-system-requirements.md`；SPC 產出 `specs/20261009-km-training-task001-sync/`。本次僅文件與規格變更，未刪除資料、未讀取正式人員名單、未發布。

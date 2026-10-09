@@ -1283,3 +1283,7 @@
 - 新增 Particle 專用 C-chart 與 SPC API：20 點門檻、同時間重測保留、bigint 精度保護、固定採樣基準警示，規格線與管制線分離。Particle 相關測試 9 passed，T-012 backend 已發布測試站，正式站未發布。
 - Particle SPC 擴充 C/U 可選：U-chart 使用 decimal SamplingVolume、動態界線與明確單位；缺分母或混用單位回 422。相關測試 12 passed，單欄 migration 已套測試庫，T-012A backend 已發布測試站，正式站未發布。
 
+
+## 2026-10-09
+
+- 同步 `KM-TRAINING-TASK-001`：KM 已完成教育訓練系統需求規格、BDD 驗收與資料來源盤點；SPC 工作池新增同步規格與驗證紀錄。本次僅文件變更，未讀取正式人員名單、未刪除資料、未發布。

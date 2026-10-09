@@ -99,3 +99,9 @@
 # Particle Monitoring
 - [落塵／Particle 粒子監控 Long Format](../specs/20260930-particle-monitoring/spec.md)：R1-R9、0.5/1/5/10 µm Long Format，支援 preview/confirm、查詢、位置比較及 C/U-chart；測試站已發布，正式站未發布。
 
+
+## 2026-10-09 KM 教育訓練需求盤點同步
+
+- 對應 SPC 同步規格：`specs/20261009-km-training-task001-sync/spec.md`
+- 對應 KM 規格：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\specs\tasks\TASK-012-training-requirements-inventory.md`
+- 結論：`KM-TRAINING-TASK-001` 已完成角色、資料物件、人員資料來源原則與 BDD 驗收盤點；本次不涉及程式、資料庫、正式資料或發布。
