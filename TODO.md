@@ -56,7 +56,7 @@
 
 #### PORTAL-BIRTHDAY-REPLAN-TASK-003：登入生日通知套用新版設定
 
-狀態：待 PORTAL-BIRTHDAY-REPLAN-TASK-002
+狀態：已實作並發布 Portal 測試站；Portal 規格 `D:\PmrPortal\specs\20261009-birthday-login-settings\spec.md`
 
 範圍：使用權限管理中的出生年月日判斷生日，登入時顯示人事設定的祝詞與圖片；驗證一般使用者只看到自己的生日通知。
 

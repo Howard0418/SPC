@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-09（Portal 登入生日通知套用新版設定）
+- 目的：執行 `PORTAL-BIRTHDAY-REPLAN-TASK-003`，登入生日通知使用權限管理生日欄位判斷，並套用人事設定祝詞與圖片。
+- 修改：Portal 規格與實作位於 `D:\PmrPortal\specs\20261009-birthday-login-settings\`；`/api/auth/me` 生日通知回傳設定祝詞與圖片 URL，首頁彈窗顯示圖片。未新增 migration，未刪除資料。
+- 驗證：Portal `AuthControllerTests|HumanResourcesBirthdayNotificationSettingsControllerTests|AdminUsersControllerTests` 16 passed；Portal API/Web build 0 warnings / 0 errors。
+- 發布：已發布 Portal 測試站 API/Web；發布時短暫停止並重啟測試站 App Pool 以釋放 DLL 鎖，未刪除檔案或資料。Smoke：API `/health` 200/test、首頁未登入 401、`/api/auth/me` 未登入 401。正式站未發布。
+
 ## 2026-10-09（Portal 人事專區生日通知設定頁）
 - 目的：執行 `PORTAL-BIRTHDAY-REPLAN-TASK-002`，在人事專區新增生日通知祝詞與祝賀圖片設定。
 - 修改：Portal 規格與實作位於 `D:\PmrPortal\specs\20261009-birthday-notification-settings\`；新增人事角色限定 API 與 Razor 設定頁，沿用 `feature_settings` 儲存設定，圖片存入 `/uploads/birthday-notifications/yyyyMM/`。替換圖片不刪除舊檔，只更新設定指向。

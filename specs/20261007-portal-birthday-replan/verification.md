@@ -2,7 +2,7 @@
 
 功能 ID：PORTAL-BIRTHDAY-REPLAN-20261007  
 日期：2026-10-07  
-狀態：TASK-002 已實作並完成本機驗證
+狀態：TASK-003 已實作並完成本機驗證
 
 ## 驗證
 - Happy Path：已將新 Portal 生日調整拆成可逐一執行的小工作。
@@ -22,4 +22,7 @@
 - 2026-10-09 TASK-002：Portal 人事專區已新增生日通知設定頁；規格與驗證紀錄位於 `D:\PmrPortal\specs\20261009-birthday-notification-settings\`。
 - 2026-10-09 TASK-002 驗證：Portal `HumanResourcesBirthdayNotificationSettingsControllerTests|HumanResourcesUsersControllerTests|AdminUsersControllerTests` 7 passed；Portal API/Web build 0 warnings / 0 errors。
 - 2026-10-09 TASK-002 發布：已發布 Portal 測試站 API/Web；Smoke：API `/health` 200/test、新設定頁未登入 401、設定 API 未登入 401；正式站未發布。
+- 2026-10-09 TASK-003：Portal 登入生日通知已套用人事設定祝詞與圖片；規格與驗證紀錄位於 `D:\PmrPortal\specs\20261009-birthday-login-settings\`。
+- 2026-10-09 TASK-003 驗證：Portal `AuthControllerTests|HumanResourcesBirthdayNotificationSettingsControllerTests|AdminUsersControllerTests` 16 passed；Portal API/Web build 0 warnings / 0 errors。
+- 2026-10-09 TASK-003 發布：已發布 Portal 測試站 API/Web；Smoke：API `/health` 200/test、首頁未登入 401、`/api/auth/me` 未登入 401；正式站未發布。
 
