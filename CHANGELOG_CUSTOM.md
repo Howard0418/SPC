@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-09（全專案 AI+BDD 導入盤點與共用範本）
+- 目的：執行 `AI-BDD-ALL-TASK-001`，盤點十專案 AI+BDD 導入狀態，建立共用段落、BDD 範本與 STOP RULE。
+- 修改：新增 `specs/20261009-ai-bdd-all-task-001/`、`docs/ai-bdd-guide.md`、`docs/templates/sdd/bdd-feature.md`，並同步 `TODO.md` 與需求索引。
+- 驗證：文件內容與連結檢查完成；本次未讀取機敏設定、未修改業務功能、未刪除資料。
+- 發布：文件型小工作，建置與發布不適用；正式站未發布。
+
 ## 2026-10-09（Portal 登入生日通知套用新版設定）
 - 目的：執行 `PORTAL-BIRTHDAY-REPLAN-TASK-003`，登入生日通知使用權限管理生日欄位判斷，並套用人事設定祝詞與圖片。
 - 修改：Portal 規格與實作位於 `D:\PmrPortal\specs\20261009-birthday-login-settings\`；`/api/auth/me` 生日通知回傳設定祝詞與圖片 URL，首頁彈窗顯示圖片。未新增 migration，未刪除資料。

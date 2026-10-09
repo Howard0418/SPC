@@ -68,7 +68,7 @@
 
 #### AI-BDD-ALL-TASK-001：全專案導入盤點與共用範本
 
-狀態：待規格
+狀態：已完成文件型小工作；主規格 `specs/20261009-ai-bdd-all-task-001/spec.md`
 
 初步範圍：盤點 SPC、PmrPortal、TransFiles、KM、Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 的 AI+BDD 狀態，建立共用段落、BDD 範本與 STOP RULE。
 
