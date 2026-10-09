@@ -117,3 +117,9 @@
 - 對應 SPC 同步規格：`specs/20261009-km-training-task003-sync/spec.md`
 - 對應 KM 規格：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\specs\tasks\TASK-014-training-assignment-registration-attendance.md`
 - 結論：`KM-TRAINING-TASK-003` 已完成訓練指派、梯次報名、名額限制、簽到、補簽與補課規格；本次不涉及程式、資料庫、正式資料或發布。
+
+## 2026-10-09 KM 測驗、完成認定與個人進度同步
+
+- 對應 SPC 同步規格：`specs/20261009-km-training-task004-sync/spec.md`
+- 對應 KM 規格：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\specs\tasks\TASK-015-training-exam-completion-progress.md`
+- 結論：`KM-TRAINING-TASK-004` 已完成題庫、測驗、及格分數、完成證明、個人待辦與完成歷程規格；本次不涉及程式、資料庫、正式資料或發布。
