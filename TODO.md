@@ -94,7 +94,7 @@
 
 #### KM-TRAINING-TASK-002：課程與教材管理
 
-狀態：待 KM-TRAINING-TASK-001
+狀態：已完成（2026-10-09，KM 規格 `specs/tasks/TASK-013-training-course-material-management.md`；SPC 同步 `specs/20261009-km-training-task002-sync/`）
 
 範圍：課程主檔、分類、講師、時數、教材附件、啟用/停用與版本紀錄。
 
@@ -207,3 +207,4 @@
 ## 2026-10-09 執行紀錄
 
 - `KM-TRAINING-TASK-001`：已完成教育訓練系統需求規格與資料來源盤點。KM 產出 `specs/tasks/TASK-012-training-requirements-inventory.md`、`features/training-system.feature`、`docs/training-system-requirements.md`；SPC 產出 `specs/20261009-km-training-task001-sync/`。本次僅文件與規格變更，未刪除資料、未讀取正式人員名單、未發布。
+- `KM-TRAINING-TASK-002`：已完成課程與教材管理規格。KM 產出 `specs/tasks/TASK-013-training-course-material-management.md`、`features/training-course-material.feature`、`docs/training-course-material-management.md`；SPC 產出 `specs/20261009-km-training-task002-sync/`。本次僅文件與規格變更，未刪除資料、未讀取正式人員或講師名單、未發布。

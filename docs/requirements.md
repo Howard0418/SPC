@@ -105,3 +105,9 @@
 - 對應 SPC 同步規格：`specs/20261009-km-training-task001-sync/spec.md`
 - 對應 KM 規格：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\specs\tasks\TASK-012-training-requirements-inventory.md`
 - 結論：`KM-TRAINING-TASK-001` 已完成角色、資料物件、人員資料來源原則與 BDD 驗收盤點；本次不涉及程式、資料庫、正式資料或發布。
+
+## 2026-10-09 KM 課程與教材管理同步
+
+- 對應 SPC 同步規格：`specs/20261009-km-training-task002-sync/spec.md`
+- 對應 KM 規格：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\specs\tasks\TASK-013-training-course-material-management.md`
+- 結論：`KM-TRAINING-TASK-002` 已完成課程主檔、分類、講師、時數、教材附件、啟停用與版本紀錄規格；本次不涉及程式、資料庫、正式資料或發布。
