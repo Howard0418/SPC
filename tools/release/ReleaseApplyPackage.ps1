@@ -117,7 +117,7 @@ $events = @()
 
 if ($PSCmdlet.ShouldProcess($stagePath, 'Stage package and preserved files')) {
     New-Item -ItemType Directory -Path $stagePath -Force | Out-Null
-    Copy-Item -LiteralPath (Join-Path $resolvedPackagePath '*') -Destination $stagePath -Recurse -Force
+    Copy-Item -Path (Join-Path $resolvedPackagePath '*') -Destination $stagePath -Recurse -Force
     $preserved = Copy-PreservedFiles -SiteRoot $resolvedSitePath -StageRoot $stagePath -RelativePaths $PreserveRelativePath
     $events += "Staged package and preserved files: $($preserved -join ', ')"
 
@@ -141,7 +141,7 @@ if ($PSCmdlet.ShouldProcess($stagePath, 'Stage package and preserved files')) {
         }
     }
 
-    Copy-Item -LiteralPath (Join-Path $stagePath '*') -Destination $resolvedSitePath -Recurse -Force
+    Copy-Item -Path (Join-Path $stagePath '*') -Destination $resolvedSitePath -Recurse -Force
     $events += 'Copied staged package into site path without deleting extra target files.'
 
     if ($ControlAppPool -and (Get-Module -ListAvailable -Name WebAdministration)) {

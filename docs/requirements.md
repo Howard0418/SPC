@@ -149,3 +149,9 @@
 - 對應工具：`tools/release/ReleaseApplyPackage.ps1`
 - 對應驗證：`specs/20261009-release-tool-task003/verification.md`
 - 結論：`RELEASE-TOOL-TASK-003` 已建立只允許非正式目標演練的網站資料夾更新 PowerShell 原型，支援 app_offline 建立、app pool 停啟、複製交付包、保留環境設定與 smoke test evidence；`app_offline.htm` 移除列入待刪除清單，不自動刪除。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
+
+## 2026-10-09 正式機更新工具沙盒演練
+
+- 對應規格：`specs/20261009-release-tool-task004/spec.md`
+- 對應驗證：`specs/20261009-release-tool-task004/verification.md`
+- 結論：`RELEASE-TOOL-TASK-004` 已使用非正式 sandbox 完成備份、套用與 rollback 驗證；首次演練抓到 wildcard copy 問題並修正兩支工具，重跑後備份、套用、回復均通過。Sandbox 證據輸出未提交，`app_offline.htm` 與 sandbox 目錄未刪除並列入待刪除清單。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。

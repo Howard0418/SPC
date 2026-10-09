@@ -89,7 +89,7 @@ if ($Mode -eq 'Backup') {
     if ($PSCmdlet.ShouldProcess($backupPath, 'Create backup directory and copy site files')) {
         New-Item -ItemType Directory -Path $siteBackupPath -Force | Out-Null
         New-Item -ItemType Directory -Path $evidencePath -Force | Out-Null
-        Copy-Item -LiteralPath (Join-Path $resolvedSitePath '*') -Destination $siteBackupPath -Recurse -Force
+        Copy-Item -Path (Join-Path $resolvedSitePath '*') -Destination $siteBackupPath -Recurse -Force
 
         $hashes = Get-DirectoryHashes -Root $siteBackupPath
         Save-Json -Value $hashes -Path (Join-Path $evidencePath 'site-hashes.json')
@@ -141,7 +141,7 @@ else {
     }
 
     if ($PSCmdlet.ShouldProcess($resolvedSitePath, "Restore files from $siteBackupPath without deleting extra target files")) {
-        Copy-Item -LiteralPath (Join-Path $siteBackupPath '*') -Destination $resolvedSitePath -Recurse -Force
+        Copy-Item -Path (Join-Path $siteBackupPath '*') -Destination $resolvedSitePath -Recurse -Force
         $hashes = Get-DirectoryHashes -Root $resolvedSitePath
         $restoreEvidence = [pscustomobject]@{
             tool = 'ReleaseBackupRestore'

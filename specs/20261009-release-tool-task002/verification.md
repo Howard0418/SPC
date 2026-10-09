@@ -18,4 +18,5 @@
 - Production 阻擋：通過，`-EnvironmentName Production` 會停止並回報需要正式授權。
 - Portal 路徑阻擋：通過，`-SitePath D:\Sites\PmrPortal` 會停止並回報不可作為 SPC release tool 目標。
 - 非正式資料夾實際備份/回復：未執行；未建立或刪除任何 sandbox 檔案。
+- 2026-10-09 RELEASE-TOOL-TASK-004 演練補充：首次 sandbox 備份發現 `Copy-Item -LiteralPath ... *` 不展開 wildcard，已改用 `-Path`，並以 `sandbox-rollback-002` 完成備份與回復驗證。
 - 發布：不適用；未發布測試站或正式站。
