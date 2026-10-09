@@ -135,3 +135,10 @@
 - 對應規格：`specs/20261009-release-tool-task001/spec.md`
 - 對應驗證：`specs/20261009-release-tool-task001/verification.md`
 - 結論：`RELEASE-TOOL-TASK-001` 已完成正式機更新工具的環境盤點欄位、release manifest、hash、版本、目標環境、來源包與 smoke test URL 規格；本次僅文件變更，未連線正式機、未讀取機敏設定、未刪除資料、未發布。
+
+## 2026-10-09 正式機更新工具備份/回復原型
+
+- 對應規格：`specs/20261009-release-tool-task002/spec.md`
+- 對應工具：`tools/release/ReleaseBackupRestore.ps1`
+- 對應驗證：`specs/20261009-release-tool-task002/verification.md`
+- 結論：`RELEASE-TOOL-TASK-002` 已建立只允許非正式目標演練的備份/回復 PowerShell 原型，支援網站資料夾備份、IIS 設定匯出、hash 紀錄與回復；已驗證語法、Production 阻擋與 `D:\Sites\PmrPortal` 阻擋。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
