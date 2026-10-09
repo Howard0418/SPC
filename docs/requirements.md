@@ -123,3 +123,9 @@
 - 對應 SPC 同步規格：`specs/20261009-km-training-task004-sync/spec.md`
 - 對應 KM 規格：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\specs\tasks\TASK-015-training-exam-completion-progress.md`
 - 結論：`KM-TRAINING-TASK-004` 已完成題庫、測驗、及格分數、完成證明、個人待辦與完成歷程規格；本次不涉及程式、資料庫、正式資料或發布。
+
+## 2026-10-09 KM 管理報表與匯出同步
+
+- 對應 SPC 同步規格：`specs/20261009-km-training-task005-sync/spec.md`
+- 對應 KM 規格：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\KM\specs\tasks\TASK-016-training-report-export.md`
+- 結論：`KM-TRAINING-TASK-005` 已完成完成率、逾期清單、課程歷程、部門統計與 Excel 匯出規格；本次不涉及程式、資料庫、正式資料或發布。
