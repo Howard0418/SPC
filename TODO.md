@@ -100,7 +100,7 @@
 
 #### KM-TRAINING-TASK-003：訓練指派、報名與簽到
 
-狀態：待 KM-TRAINING-TASK-002
+狀態：已完成（2026-10-09，KM 規格 `specs/tasks/TASK-014-training-assignment-registration-attendance.md`；SPC 同步 `specs/20261009-km-training-task003-sync/`）
 
 範圍：依人員/部門/職務指派，梯次報名，名額限制，簽到與補課紀錄。
 
@@ -208,3 +208,4 @@
 
 - `KM-TRAINING-TASK-001`：已完成教育訓練系統需求規格與資料來源盤點。KM 產出 `specs/tasks/TASK-012-training-requirements-inventory.md`、`features/training-system.feature`、`docs/training-system-requirements.md`；SPC 產出 `specs/20261009-km-training-task001-sync/`。本次僅文件與規格變更，未刪除資料、未讀取正式人員名單、未發布。
 - `KM-TRAINING-TASK-002`：已完成課程與教材管理規格。KM 產出 `specs/tasks/TASK-013-training-course-material-management.md`、`features/training-course-material.feature`、`docs/training-course-material-management.md`；SPC 產出 `specs/20261009-km-training-task002-sync/`。本次僅文件與規格變更，未刪除資料、未讀取正式人員或講師名單、未發布。
+- `KM-TRAINING-TASK-003`：已完成訓練指派、報名與簽到規格。KM 產出 `specs/tasks/TASK-014-training-assignment-registration-attendance.md`、`features/training-assignment-registration-attendance.feature`、`docs/training-assignment-registration-attendance.md`；SPC 產出 `specs/20261009-km-training-task003-sync/`。本次僅文件與規格變更，未刪除資料、未讀取正式人員、部門或職務名單、未發布。
