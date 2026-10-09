@@ -132,7 +132,7 @@
 
 #### RELEASE-TOOL-TASK-003：更新 IIS 網站資料夾流程
 
-狀態：待 RELEASE-TOOL-TASK-002
+狀態：已完成原型（2026-10-09，`tools/release/ReleaseApplyPackage.ps1`、`specs/20261009-release-tool-task003/`）；僅限非正式目標演練
 
 範圍：app_offline/app pool 停啟、複製交付包、保留環境設定、移除暫停檔、smoke test。
 
@@ -213,3 +213,4 @@
 - `KM-TRAINING-TASK-005`：已完成管理報表與匯出規格。KM 產出 `specs/tasks/TASK-016-training-report-export.md`、`features/training-report-export.feature`、`docs/training-report-export.md`；SPC 產出 `specs/20261009-km-training-task005-sync/`。本次僅文件與規格變更，未刪除資料、未讀取正式人員、部門、課程或完訓資料、未發布。
 - `RELEASE-TOOL-TASK-001`：已完成正式機更新工具規格與環境盤點欄位。SPC 產出 `specs/20261009-release-tool-task001/`，定義正式機連線方式、IIS site/app pool、實體路徑、備份路徑、服務帳號權限、release manifest、hash、版本、目標環境、來源包與 smoke test URL。本次僅文件與規格變更，未連線正式機、未讀取機敏設定、未刪除資料、未發布。
 - `RELEASE-TOOL-TASK-002`：已完成備份與回復流程原型。新增 `tools/release/ReleaseBackupRestore.ps1` 與 `specs/20261009-release-tool-task002/`，支援非正式目標備份網站資料夾、IIS 設定匯出、hash 紀錄與回復；已驗證語法、Production 阻擋與 `D:\Sites\PmrPortal` 阻擋。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
+- `RELEASE-TOOL-TASK-003`：已完成更新 IIS 網站資料夾流程原型。新增 `tools/release/ReleaseApplyPackage.ps1` 與 `specs/20261009-release-tool-task003/`，支援非正式目標 app_offline 建立、app pool 停啟、複製交付包、保留環境設定與 smoke test evidence；`app_offline.htm` 移除列入待刪除清單，未自動刪除。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。

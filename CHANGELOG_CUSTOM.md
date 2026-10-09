@@ -1293,3 +1293,4 @@
 - 同步 `KM-TRAINING-TASK-005`：KM 已完成管理報表與匯出規格及 BDD；SPC 工作池新增同步規格與驗證紀錄。本次僅文件變更，未讀取正式人員、部門、課程或完訓資料、未刪除資料、未發布。
 - 完成 `RELEASE-TOOL-TASK-001`：新增正式機更新工具規格與環境盤點欄位，定義 release manifest、hash、版本、目標環境、來源包與 smoke test URL；本次僅文件變更，未連線正式機、未讀取機敏設定、未刪除資料、未發布。
 - 完成 `RELEASE-TOOL-TASK-002`：新增非正式目標備份/回復 PowerShell 原型 `tools/release/ReleaseBackupRestore.ps1`，支援網站資料夾備份、IIS 設定匯出、hash 紀錄與回復；已驗證語法、Production 阻擋與 `D:\Sites\PmrPortal` 阻擋。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
+- 完成 `RELEASE-TOOL-TASK-003`：新增非正式目標網站資料夾更新 PowerShell 原型 `tools/release/ReleaseApplyPackage.ps1`，支援 app_offline 建立、app pool 停啟、複製交付包、保留環境設定與 smoke test evidence；`app_offline.htm` 移除已列入待刪除清單，未自動刪除。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。

@@ -142,3 +142,10 @@
 - 對應工具：`tools/release/ReleaseBackupRestore.ps1`
 - 對應驗證：`specs/20261009-release-tool-task002/verification.md`
 - 結論：`RELEASE-TOOL-TASK-002` 已建立只允許非正式目標演練的備份/回復 PowerShell 原型，支援網站資料夾備份、IIS 設定匯出、hash 紀錄與回復；已驗證語法、Production 阻擋與 `D:\Sites\PmrPortal` 阻擋。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
+
+## 2026-10-09 正式機更新工具網站資料夾更新原型
+
+- 對應規格：`specs/20261009-release-tool-task003/spec.md`
+- 對應工具：`tools/release/ReleaseApplyPackage.ps1`
+- 對應驗證：`specs/20261009-release-tool-task003/verification.md`
+- 結論：`RELEASE-TOOL-TASK-003` 已建立只允許非正式目標演練的網站資料夾更新 PowerShell 原型，支援 app_offline 建立、app pool 停啟、複製交付包、保留環境設定與 smoke test evidence；`app_offline.htm` 移除列入待刪除清單，不自動刪除。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
