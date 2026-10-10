@@ -30,35 +30,11 @@
 
 `SPC-CHEM-OVERVIEW-VERSION-TASK-001` 已完成並補驗 HTTP smoke；完成紀錄請查 `CHANGELOG_CUSTOM.md` 與 `specs/20261007-chemical-overview-formula-versioning/verification.md`。
 
-#### SPC-CHART-POINT-REMARK-TASK-001：SPC 管制圖量測點備註
-
-狀態：已實作並發布 SPC 測試站；HTTP smoke 通過；主規格 `specs/20261007-spc-chart-point-remarks/spec.md`
-
-範圍：SPC 管制圖每個可定位量測點右鍵可新增/編輯備註；備註需可重新查詢顯示，不影響管制界線、OOC/OOS、Cpk 或既有點位排除/隱藏狀態。
+`SPC-CHART-POINT-REMARK-TASK-001` 已完成並發布 SPC 測試站；完成紀錄請查 `CHANGELOG_CUSTOM.md`、`docs/requirements.md` 與 `specs/20261007-spc-chart-point-remarks/verification.md`。
 
 ### 第三順位：Portal 生日通知調整（個資與人事權限）
 
-#### PORTAL-BIRTHDAY-REPLAN-TASK-001：權限管理加入出生年月日欄位
-
-狀態：已實作並發布 Portal 測試站；Portal 規格 `D:\PmrPortal\specs\20261009-birthday-permissions-replan\spec.md`，主規格 `specs/20261007-portal-birthday-replan/spec.md`
-
-範圍：取消獨立生日資料維護專區；在人員/權限管理編輯表單加入出生年月日欄位，限制人事或授權管理角色維護，並保護個資可見性與稽核。
-
-#### PORTAL-BIRTHDAY-REPLAN-TASK-002：人事專區生日通知設定頁
-
-狀態：已實作並發布 Portal 測試站；Portal 規格 `D:\PmrPortal\specs\20261009-birthday-notification-settings\spec.md`
-
-範圍：在人事專區新增生日通知設定頁，可修改生日祝詞、上傳/替換生日祝賀圖片、預覽通知效果；需限制圖片格式、大小與儲存路徑。
-
-#### PORTAL-BIRTHDAY-REPLAN-TASK-003：登入生日通知套用新版設定
-
-狀態：已實作並發布 Portal 測試站；Portal 規格 `D:\PmrPortal\specs\20261009-birthday-login-settings\spec.md`
-
-範圍：使用權限管理中的出生年月日判斷生日，登入時顯示人事設定的祝詞與圖片；驗證一般使用者只看到自己的生日通知。
-
-#### PORTAL-GROUP-INSURANCE-CANCELLED：團保專區取消
-
-狀態：取消；除非使用者重新提出，不再排入未完成小工作，不讀取或使用 `D:\PmrPortal\GroupInsurance`。
+`PORTAL-BIRTHDAY-REPLAN-TASK-001`～`TASK-003` 已完成並發布 Portal 測試站；團保專區已取消。完成紀錄請查 `docs/requirements.md`、`CHANGELOG_CUSTOM.md`、`specs/20261007-portal-birthday-replan/` 與 Portal 對應 specs。
 
 ### 第四順位：全專案 AI + BDD 導入（流程治理）
 
@@ -198,6 +174,7 @@
 
 ## 2026-10-10 執行紀錄
 
+- `TODO-COMPLETED-ITEMS-CLEANUP-20261010`：已整理 `TODO.md` 未完成排序區，移除已完成或取消的 SPC 管制圖點位備註、Portal 生日通知三個 Task 與團保取消項目；追溯改查需求索引、CHANGELOG 與對應 specs。本次僅文件變更，未修改功能、未發布。
 - `SPC-CHEM-OVERVIEW-VERSION-TASK-001`：已補驗 SPC 測試站 HTTP smoke。`8084/api/version` 200/test、`8084/` 200、既有 `8081/api/version` 200、`8083/` 200；單站前端 JS 包含 `chemicalAnalysisFormulaVersionReason` 且不含 `/api/api`。本次僅驗證與文件同步，未修改程式、未發布正式站。
 - `IIS-TASK-008`：已同步單一 IIS Site 的需求索引、變更紀錄與驗證證據。HTTP 測試單站 `SpcSingleTest` 已建立且 Vue/API 基本 smoke 有紀錄；HTTPS binding/cert、mixed content、真人登入、Portal SSO、JWT 與 Viewer 403 仍待外部條件，不標示 T-006/T-007 完成。本次僅文件變更，未操作 IIS、未發布。
 - `RELEASE-TOOL-TASK-005`：已完成正式機更新工具使用手冊與授權檢核。SPC 產出 `specs/20261010-release-tool-task005/spec.md` 與 `docs/release-tools/production-release-runbook.md`，整理操作手冊、參數範本、前置檢查、回復步驟、證據格式與核准清單。本次僅文件變更，未連線正式機、未操作 IIS、未讀取機敏設定、未刪除資料、未發布。

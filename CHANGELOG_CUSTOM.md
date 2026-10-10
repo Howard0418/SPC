@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-10（TODO 已完成項目整理）
+- 目的：讓 `TODO.md` 未完成排序區維持只列未完成、待執行、待確認或外部阻擋項目。
+- 修改：新增 `specs/20261010-todo-completed-items-cleanup/spec.md`；自 `TODO.md` 未完成排序區移除已完成的 SPC 管制圖點位備註、Portal 生日通知三個 Task 與團保取消項目，完成狀態改由需求索引、CHANGELOG 與對應 specs 追溯。
+- 驗證：文件內容與關鍵字檢查完成；本次未修改 SPC/Portal 程式、資料庫或 IIS。
+- 發布：文件型小工作，建置、打包與發布不適用；正式站未發布。
+
 ## 2026-10-10（SPC 線別分析項目總覽公式版本 HTTP smoke 補驗）
 - 目的：補驗 `SPC-CHEM-OVERVIEW-VERSION-TASK-001` 測試站 HTTP smoke，確認先前測試 IIS/網路連線拒絕已恢復。
 - 驗證：`8084/api/version` 200/test、`8084/` 200、既有 `8081/api/version` 200、`8083/` 200；單站前端 JS `/assets/index-96H3lPaN.js` 包含 `chemicalAnalysisFormulaVersionReason` 且不含 `/api/api`。

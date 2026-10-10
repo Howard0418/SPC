@@ -1,3 +1,8 @@
+## [2026-10-10] - TODO-COMPLETED-ITEMS-CLEANUP-20261010 已完成項目整理
+- 目的：讓 `TODO.md` 未完成排序區只保留未完成、待執行、待確認或外部阻擋項目。
+- 範圍：新增 `specs/20261010-todo-completed-items-cleanup/spec.md`，整理 `TODO.md`，同步 `docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不修改程式、不發布。
+- 驗證：文件內容與關鍵字檢查完成；未修改程式、未發布。
+
 ## [2026-10-10] - SPC-CHEM-OVERVIEW-VERSION-TASK-001 HTTP smoke 補驗
 - 目的：補驗線別分析項目總覽公式版本參照文件功能的 SPC 測試站 HTTP smoke，確認先前連線拒絕已恢復。
 - 範圍：只更新 `specs/20261007-chemical-overview-formula-versioning/`、`TODO.md`、`docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不修改程式、不發布。
