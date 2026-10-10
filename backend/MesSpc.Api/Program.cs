@@ -139,23 +139,13 @@ app.UseExceptionHandler(errApp =>
         ctx.Response.ContentType = "application/json";
         ctx.Response.StatusCode = 500;
 
-        // 外鍵違規 / 資料庫限制
-        if (ex is Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+        if (ex is Microsoft.EntityFrameworkCore.DbUpdateException)
         {
             ctx.Response.StatusCode = 409;
-            var inner = dbEx.InnerException?.Message ?? dbEx.Message;
-            var msg = inner.Contains("FOREIGN KEY") || inner.Contains("REFERENCE")
-                ? "此資料已被其他記錄關聯（外鍵約束），請先刪除或解除相關聯的資料後再操作。"
-                : "資料庫更新失敗：" + inner;
-            await ctx.Response.WriteAsJsonAsync(new { message = msg, detail = inner });
-            return;
         }
 
-        await ctx.Response.WriteAsJsonAsync(new
-        {
-            message = ex?.Message ?? "伺服器發生未預期的錯誤",
-            detail  = ex?.InnerException?.Message
-        });
+        var includeDetails = app.Environment.IsDevelopment();
+        await ctx.Response.WriteAsJsonAsync(ApiErrorResponseFactory.FromException(ex, includeDetails));
     });
 });
 
@@ -173,6 +163,13 @@ if (authEnabled)
 
 app.MapGet("/api/version", (IConfiguration configuration) => Results.Ok(new
 {
+    version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "unknown",
+    environment = configuration["AppEnvironment"] ?? "unknown"
+})).AllowAnonymous();
+
+app.MapGet("/api/health", (IConfiguration configuration) => Results.Ok(new
+{
+    status = "ok",
     version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "unknown",
     environment = configuration["AppEnvironment"] ?? "unknown"
 })).AllowAnonymous();

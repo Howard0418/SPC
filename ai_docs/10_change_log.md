@@ -1,3 +1,8 @@
+## [2026-10-10] - ARCH-TASK-003 診斷端點與錯誤資訊隔離
+- 目的：收斂 SPC API 未處理例外與診斷端點，避免 Production/Test 對外回傳 exception message、inner exception 或 SQL 細節，同時提供最小 `/api/health`。
+- 範圍：新增錯誤回應工廠與測試、調整 `Program.cs` 全域 exception handler、加入匿名 health endpoint；不改資料庫 schema、不做正式站發布。
+- 驗證：`ApiErrorResponseFactoryTests` 3 passed；後端 build 0 warnings / 0 errors；已發布 SPC 測試站 backend，`/api/health`、`/api/version` 與首頁 smoke 通過。
+
 ## [2026-10-10] - TODO-COMPLETED-ITEMS-CLEANUP-20261010 已完成項目整理
 - 目的：讓 `TODO.md` 未完成排序區只保留未完成、待執行、待確認或外部阻擋項目。
 - 範圍：新增 `specs/20261010-todo-completed-items-cleanup/spec.md`，整理 `TODO.md`，同步 `docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不修改程式、不發布。

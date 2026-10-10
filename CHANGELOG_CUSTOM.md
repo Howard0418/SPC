@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-10（診斷端點與錯誤資訊隔離）
+- 目的：執行 `ARCH-TASK-003-DIAGNOSTICS-ERROR-ISOLATION-20261010`，收斂 SPC API 未處理例外與健康檢查，避免非 Development 對外回傳 exception detail。
+- 修改：新增 `ApiErrorResponseFactory` 與 `ApiErrorResponseFactoryTests`；調整 `Program.cs` 全域 exception handler，非 Development 一般例外只回通用訊息，DB 更新例外保留分類但隱藏 inner detail；新增匿名 `/api/health`。
+- 驗證：`ApiErrorResponseFactoryTests` 3 passed；後端 build 0 warnings / 0 errors；測試站 smoke：`8084/api/health` 200 且只回 `status/version/environment`、`8084/api/version` 200/test、首頁 200。
+- 發布：已發布 SPC 測試站 backend，備份 `release/test/backend.backup-architecture-task003-20261010-211209`；正式站未發布。App Pool 停啟指令於本 PowerShell 環境不可用，但 robocopy 部署與 smoke 通過。
+
 ## 2026-10-10（TODO 已完成項目整理）
 - 目的：讓 `TODO.md` 未完成排序區維持只列未完成、待執行、待確認或外部阻擋項目。
 - 修改：新增 `specs/20261010-todo-completed-items-cleanup/spec.md`；自 `TODO.md` 未完成排序區移除已完成的 SPC 管制圖點位備註、Portal 生日通知三個 Task 與團保取消項目，完成狀態改由需求索引、CHANGELOG 與對應 specs 追溯。
