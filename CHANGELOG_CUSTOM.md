@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-10（SPC 線別分析項目總覽公式版本 HTTP smoke 補驗）
+- 目的：補驗 `SPC-CHEM-OVERVIEW-VERSION-TASK-001` 測試站 HTTP smoke，確認先前測試 IIS/網路連線拒絕已恢復。
+- 驗證：`8084/api/version` 200/test、`8084/` 200、既有 `8081/api/version` 200、`8083/` 200；單站前端 JS `/assets/index-96H3lPaN.js` 包含 `chemicalAnalysisFormulaVersionReason` 且不含 `/api/api`。
+- 修改：同步 `specs/20261007-chemical-overview-formula-versioning/`、`TODO.md`、`docs/requirements.md`、`ai_docs/10_change_log.md`。
+- 發布：本次僅補驗與文件同步，未修改程式、未重新發布；正式站未發布。
+
 ## 2026-10-10（單一 IIS Site 文件同步）
 - 目的：執行 `IIS-TASK-008`，同步單一 IIS Site 需求索引、變更紀錄與驗證證據，避免 HTTP 已完成項目與 HTTPS/登入待補項混淆。
 - 修改：更新 `specs/20261005-single-iis-site/`、`TODO.md`、`docs/requirements.md`、`ai_docs/10_change_log.md`。

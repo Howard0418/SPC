@@ -28,11 +28,7 @@
 
 ### 第二順位：SPC 線別分析項目總覽公式版本記錄（資料正確性）
 
-#### SPC-CHEM-OVERVIEW-VERSION-TASK-001：總覽頁公式修改共用藥液公式版本記錄與參照文件備註
-
-狀態：已實作並發布 SPC 測試站檔案；HTTP smoke 因測試 IIS/網路連線被拒待補；主規格 `specs/20261007-chemical-overview-formula-versioning/spec.md`
-
-範圍：線別分析項目總覽若修改藥液分析公式，必須與 SPC 管制項目設定頁共用同一個 `ChemicalAnalysisFormulaVersion` 版本記錄與回復功能，並在每筆版本記錄保存參照文件/修改依據備註；不得新增第二套版本邏輯。
+`SPC-CHEM-OVERVIEW-VERSION-TASK-001` 已完成並補驗 HTTP smoke；完成紀錄請查 `CHANGELOG_CUSTOM.md` 與 `specs/20261007-chemical-overview-formula-versioning/verification.md`。
 
 #### SPC-CHART-POINT-REMARK-TASK-001：SPC 管制圖量測點備註
 
@@ -202,6 +198,7 @@
 
 ## 2026-10-10 執行紀錄
 
+- `SPC-CHEM-OVERVIEW-VERSION-TASK-001`：已補驗 SPC 測試站 HTTP smoke。`8084/api/version` 200/test、`8084/` 200、既有 `8081/api/version` 200、`8083/` 200；單站前端 JS 包含 `chemicalAnalysisFormulaVersionReason` 且不含 `/api/api`。本次僅驗證與文件同步，未修改程式、未發布正式站。
 - `IIS-TASK-008`：已同步單一 IIS Site 的需求索引、變更紀錄與驗證證據。HTTP 測試單站 `SpcSingleTest` 已建立且 Vue/API 基本 smoke 有紀錄；HTTPS binding/cert、mixed content、真人登入、Portal SSO、JWT 與 Viewer 403 仍待外部條件，不標示 T-006/T-007 完成。本次僅文件變更，未操作 IIS、未發布。
 - `RELEASE-TOOL-TASK-005`：已完成正式機更新工具使用手冊與授權檢核。SPC 產出 `specs/20261010-release-tool-task005/spec.md` 與 `docs/release-tools/production-release-runbook.md`，整理操作手冊、參數範本、前置檢查、回復步驟、證據格式與核准清單。本次僅文件變更，未連線正式機、未操作 IIS、未讀取機敏設定、未刪除資料、未發布。
 

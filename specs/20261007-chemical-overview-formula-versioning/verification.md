@@ -1,8 +1,8 @@
 # 線別分析項目總覽公式版本記錄補強驗證
 
 功能 ID：SPC-CHEM-OVERVIEW-FORMULA-VERSION-20261007  
-日期：2026-10-07；更新：2026-10-09  
-狀態：已實作並發布測試站檔案；HTTP smoke 待測試 IIS/網路恢復
+日期：2026-10-07；更新：2026-10-10  
+狀態：DONE；已實作並發布測試站檔案，HTTP smoke 補驗通過
 
 ## 驗證
 
@@ -21,4 +21,5 @@
 - AC-004：2026-10-09 靜態檢查通過：確認 `chemicalAnalysisFormulaVersionReason` 由前端 payload 送出、後端傳給版本服務，測試中使用 `測試人員` 而非真實姓名。
 - AC-005：通過。`dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter "ChemicalAnalysisFormulaVersion|Update_Should_Record_ChemicalFormulaVersion" --no-restore -p:UseSharedCompilation=false`：11 passed；`dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors；前端 `npm run build` 通過，產出 `index-BSgajB2z.js`、`index-CRaqMmV-.css`，僅保留既有 chunk size warning。
 - AC-006：測試站檔案已發布至 `release/test/backend` 與 `release/test/frontend`；備份 `release/test/backend.backup-chemical-overview-version-reason-20261009-002558`、`release/test/frontend.backup-chemical-overview-version-reason-20261009-002558`；testhost 前端產出 `index-kMhx5TtG.js`、`index-CRaqMmV-.css`，且發布後資產包含 `chemicalAnalysisFormulaVersionReason`。
-- AC-007：HTTP smoke 未通過。`http://172.16.110.27:8084/api/version`、既有 `8081/api/version` 與 `8083/` 皆回連線被拒；`SpcSingleTest` app pool 可回收，但 site state 顯示 Unknown，IIS/WebAdministration 模組不可用。判定為測試 IIS/網路層阻擋；正式站未發布。
+- AC-007：2026-10-09 HTTP smoke 未通過，`8084/api/version`、既有 `8081/api/version` 與 `8083/` 皆回連線被拒，判定為測試 IIS/網路層阻擋。
+- AC-007 補驗：2026-10-10 HTTP smoke 通過。`http://172.16.110.27:8084/api/version` 200 且 `environment=test`、`version=0.1.59`；`http://172.16.110.27:8084/` 200；既有 `http://172.16.110.27:8081/api/version` 200、`http://172.16.110.27:8083/` 200。單站首頁引用 `/assets/index-96H3lPaN.js`，該 JS 包含 `chemicalAnalysisFormulaVersionReason` 且不含 `/api/api`。正式站未發布。

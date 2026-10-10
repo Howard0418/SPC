@@ -1,3 +1,8 @@
+## [2026-10-10] - SPC-CHEM-OVERVIEW-VERSION-TASK-001 HTTP smoke 補驗
+- 目的：補驗線別分析項目總覽公式版本參照文件功能的 SPC 測試站 HTTP smoke，確認先前連線拒絕已恢復。
+- 範圍：只更新 `specs/20261007-chemical-overview-formula-versioning/`、`TODO.md`、`docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不修改程式、不發布。
+- 驗證：`8084/api/version`、`8084/`、既有 `8081/api/version`、`8083/` 均 200；單站前端 JS 包含 `chemicalAnalysisFormulaVersionReason` 且不含 `/api/api`。
+
 ## [2026-10-10] - IIS-TASK-008 單一 IIS Site 文件同步
 - 目的：同步單一 IIS Site 目前驗證狀態，明確區分 HTTP 測試單站已完成項目、HTTPS binding/cert 外部阻擋項目與登入/SSO/JWT smoke 待測條件。
 - 範圍：更新 `specs/20261005-single-iis-site/`、`TODO.md`、`docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不操作 IIS、不發布、不修改程式。
