@@ -24,7 +24,7 @@
 
 - T-006：待測試站 HTTPS binding/cert 可用後補驗 mixed content；不發布正式站。
 - T-007：已完成可離線資產 smoke；待可用 HTTP 請求/瀏覽器環境與測試帳號後，補登入、Portal SSO、JWT、SQL、401、403、Vue refresh smoke；HTTPS mixed content 隨 T-006 阻擋。
-- T-008：同步需求索引、變更紀錄與驗證證據。
+- T-008：已完成需求索引、變更紀錄與驗證證據同步；T-006/T-007 外部阻擋與待測項保留。
 
 ### 第二順位：SPC 線別分析項目總覽公式版本記錄（資料正確性）
 
@@ -202,6 +202,7 @@
 
 ## 2026-10-10 執行紀錄
 
+- `IIS-TASK-008`：已同步單一 IIS Site 的需求索引、變更紀錄與驗證證據。HTTP 測試單站 `SpcSingleTest` 已建立且 Vue/API 基本 smoke 有紀錄；HTTPS binding/cert、mixed content、真人登入、Portal SSO、JWT 與 Viewer 403 仍待外部條件，不標示 T-006/T-007 完成。本次僅文件變更，未操作 IIS、未發布。
 - `RELEASE-TOOL-TASK-005`：已完成正式機更新工具使用手冊與授權檢核。SPC 產出 `specs/20261010-release-tool-task005/spec.md` 與 `docs/release-tools/production-release-runbook.md`，整理操作手冊、參數範本、前置檢查、回復步驟、證據格式與核准清單。本次僅文件變更，未連線正式機、未操作 IIS、未讀取機敏設定、未刪除資料、未發布。
 
 ## 2026-10-09 執行紀錄

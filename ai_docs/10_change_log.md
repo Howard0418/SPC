@@ -1,3 +1,8 @@
+## [2026-10-10] - IIS-TASK-008 單一 IIS Site 文件同步
+- 目的：同步單一 IIS Site 目前驗證狀態，明確區分 HTTP 測試單站已完成項目、HTTPS binding/cert 外部阻擋項目與登入/SSO/JWT smoke 待測條件。
+- 範圍：更新 `specs/20261005-single-iis-site/`、`TODO.md`、`docs/requirements.md` 與 `CHANGELOG_CUSTOM.md`；不操作 IIS、不發布、不修改程式。
+- 驗證：文件內容、連結與阻擋狀態檢查完成；T-006/T-007 外部阻擋與待測項仍明確保留，未操作 IIS、未發布。
+
 ## [2026-10-10] - RELEASE-TOOL-TASK-005 正式機使用手冊與授權檢核
 - 目的：完成正式機更新工具的操作手冊、參數範本、前置檢查、回復步驟、證據格式與核准清單，作為未來正式站授權執行前的文件基準。
 - 範圍：新增 RELEASE-TOOL-TASK-005 規格與正式機更新手冊，並同步 TODO、需求索引與客製變更紀錄；本階段不操作正式機、不連線正式 IIS、不發布測試站或正式站。

@@ -2,9 +2,9 @@
 - 功能 ID：20261005-single-iis-site
 - 規格版本：1
 - 日期／環境：2026-10-05／D:\SPC 工作區
-- 實作狀態：尚未修改產品程式；已完成 TASK-001/TASK-002 文件
-- 驗證狀態：待執行
-- 發布狀態：未發布
+- 實作狀態：T-001～T-005 已完成；T-006 已建立 HTTP 測試單站；T-007 部分離線驗證完成；T-008 文件同步完成
+- 驗證狀態：部分通過；HTTPS mixed content、真人登入/Portal SSO/JWT/Viewer 403 仍待外部條件
+- 發布狀態：已發布 SPC 測試站 frontend/backend 檔案並建立 HTTP 測試單站；正式站未發布
 
 | 驗收 ID | 命令或操作 | 預期結果 | 實際結果及證據 | 狀態 |
 |---|---|---|---|---|
@@ -26,7 +26,9 @@
 - 2026-10-09：使用者確認 `T-006` 的 HTTPS binding/cert 視為外部環境阻擋；目前不操作正式站、不建立未授權憑證、不將 `T-006` 標示 DONE，後續先推進可在現有 HTTP 單站或既有測試環境完成的 smoke 項目。
 - 2026-10-07：測試站 smoke 首頁 200、新 JS 200、`8081/api/version` 200；但 `8081/api/version` 回 `environment=production`，列為 IIS/API 環境設定剩餘風險，非本次 T-003 修改範圍。
 - 2026-10-09：T-007 可離線驗證項目已執行：`rg -n "172\.16\.|localhost:|/api/api" release\test\frontend\assets frontend\mes-spc-web\dist\assets` 無結果，確認測試站前端資產沒有固定 SPC API IP、localhost 或 `/api/api`。HTTP 實站 smoke 因本機 helper 建立程序失敗未重跑；HTTPS mixed content 隨 T-006 外部環境阻擋。
+- 2026-10-10：T-008 已同步需求索引、變更紀錄與本驗證紀錄。T-006/T-007 不標示完成；待 HTTPS binding/cert、可用 HTTP/瀏覽器請求環境與測試帳號後補驗。
 
 ## 基準與變更紀錄更新位置
 - 本規格：`specs/20261005-single-iis-site/`
 - 變更目的已記錄於 `ai_docs/10_change_log.md`。
+- 2026-10-10 文件同步：`docs/requirements.md`、`CHANGELOG_CUSTOM.md`、`TODO.md`。

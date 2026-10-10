@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-10（單一 IIS Site 文件同步）
+- 目的：執行 `IIS-TASK-008`，同步單一 IIS Site 需求索引、變更紀錄與驗證證據，避免 HTTP 已完成項目與 HTTPS/登入待補項混淆。
+- 修改：更新 `specs/20261005-single-iis-site/`、`TODO.md`、`docs/requirements.md`、`ai_docs/10_change_log.md`。
+- 驗證：文件內容與連結檢查完成；T-006/T-007 外部阻擋與待測項仍明確保留。
+- 發布：文件型小工作，建置、打包與發布不適用；未操作 IIS，正式站未發布。
+
 ## 2026-10-10（正式機更新工具使用手冊與授權檢核）
 - 目的：執行 `RELEASE-TOOL-TASK-005`，完成正式機更新工具的操作手冊、參數範本、前置檢查、回復步驟、證據格式與核准清單。
 - 修改：新增 `specs/20261010-release-tool-task005/spec.md` 與 `docs/release-tools/production-release-runbook.md`，並同步 `TODO.md`、`docs/requirements.md`、`ai_docs/10_change_log.md`。

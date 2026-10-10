@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- SPC 單一 IIS Site 文件同步：[20261005-single-iis-site](../specs/20261005-single-iis-site/spec.md)；T-001～T-005 已完成，T-006 已建立 HTTP 測試單站 `SpcSingleTest`，T-008 已同步需求索引、變更紀錄與驗證證據。HTTPS binding/cert、mixed content、真人登入、Portal SSO、JWT 與 Viewer 403 仍待外部條件，不標示完成；正式站未發布。
 - 正式機更新工具使用手冊與授權檢核：[RELEASE-TOOL-TASK-005](../specs/20261010-release-tool-task005/spec.md)；已建立正式機更新手冊 `docs/release-tools/production-release-runbook.md`，涵蓋授權清單、參數範本、前置檢查、操作順序、rollback、evidence 格式與停止條件。本次僅文件變更，正式站操作仍需另行授權，未連線正式機、未發布。
 - SPC 線別分析項目總覽公式版本記錄補強：[SPC-CHEM-OVERVIEW-FORMULA-VERSION-20261007](../specs/20261007-chemical-overview-formula-versioning/spec.md)；線別分析項目總覽修改藥液分析公式時，必須與 SPC 管制項目設定頁共用同一個 `ChemicalAnalysisFormulaVersion` 版本記錄與回復功能，並保存每筆版本參照的文件/修改依據備註。規劃已加入 `TODO.md`，本次未修改程式、資料庫或 IIS。
 - SPC 管制圖量測點備註：[SPC-CHART-POINT-REMARKS-20261007](../specs/20261007-spc-chart-point-remarks/spec.md)；SPC 管制圖與趨勢圖每個可定位量測點可由右鍵新增/編輯/清空備註，備註以獨立 `SpcPointRemarks` 軟停用資料表保存並可重新查詢顯示，不影響管制界線、OOC/OOS、Cpk 或既有點位排除/隱藏狀態。已發布 SPC 測試站，正式站未發布。
