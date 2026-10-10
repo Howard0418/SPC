@@ -138,7 +138,7 @@
 
 ### TASK-002：MES Sync 資料可靠性
 
-狀態：待確認
+狀態：已完成（2026-10-10，`specs/20261010-architecture-task002-mes-sync-reliability/`）；SPC 測試站 backend 已發布，正式站未發布
 
 ### TASK-003：診斷端點與錯誤資訊隔離
 
@@ -174,6 +174,7 @@
 
 ## 2026-10-10 執行紀錄
 
+- `ARCH-TASK-002-DIAGNOSTICS-MES-SYNC-RELIABILITY-20261010`：已完成 MES Sync 資料可靠性改善。新增可單測的 `MesSyncMessageBatchProcessor` 與 `IMesSyncMessageHandler`，背景服務改呼叫批次處理器；無效 JSON 與未支援 MessageType 會標示 `Failed` 並留下錯誤，不再假標 `Processed`。針對性測試 3 passed，後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
 - `ARCH-TASK-003-DIAGNOSTICS-ERROR-ISOLATION-20261010`：已完成診斷端點與錯誤資訊隔離。新增安全錯誤回應工廠、調整全域 exception handler 非 Development 不回傳 exception detail，新增匿名 `/api/health`。針對性測試 3 passed，後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
 - `TODO-COMPLETED-ITEMS-CLEANUP-20261010`：已整理 `TODO.md` 未完成排序區，移除已完成或取消的 SPC 管制圖點位備註、Portal 生日通知三個 Task 與團保取消項目；追溯改查需求索引、CHANGELOG 與對應 specs。本次僅文件變更，未修改功能、未發布。
 - `SPC-CHEM-OVERVIEW-VERSION-TASK-001`：已補驗 SPC 測試站 HTTP smoke。`8084/api/version` 200/test、`8084/` 200、既有 `8081/api/version` 200、`8083/` 200；單站前端 JS 包含 `chemicalAnalysisFormulaVersionReason` 且不含 `/api/api`。本次僅驗證與文件同步，未修改程式、未發布正式站。

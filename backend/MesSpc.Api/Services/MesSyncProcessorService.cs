@@ -1,7 +1,3 @@
-using MesSpc.Api.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-
 namespace MesSpc.Api.Services;
 
 public class MesSyncProcessorService(IServiceProvider serviceProvider, ILogger<MesSyncProcessorService> logger) : BackgroundService
@@ -13,39 +9,11 @@ public class MesSyncProcessorService(IServiceProvider serviceProvider, ILogger<M
             try
             {
                 using var scope = serviceProvider.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                
-                var pendingMessages = await dbContext.MesSyncMessages
-                    .Where(m => m.SyncStatus == "Pending")
-                    .OrderBy(m => m.CreatedAt)
-                    .Take(100)
-                    .ToListAsync(stoppingToken);
+                var processor = scope.ServiceProvider.GetRequiredService<MesSyncMessageBatchProcessor>();
+                var result = await processor.ProcessPendingAsync(stoppingToken);
 
-                foreach (var message in pendingMessages)
-                {
-                    logger.LogInformation("Processing MES Sync Message: {MessageId} of type {MessageType}", message.MessageId, message.MessageType);
-                    
-                    try 
-                    {
-                        // TODO: Phase 2/3 - Implement parsing logic based on MessageType
-                        // Example: 
-                        // if (message.MessageType == "WorkOrder") { var wo = JsonSerializer.Deserialize<WorkOrderDto>(message.PayloadJson); ... }
-
-                        message.SyncStatus = "Processed";
-                        message.ProcessedAt = DateTime.UtcNow;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "Failed to process message {MessageId}", message.MessageId);
-                        message.SyncStatus = "Failed";
-                        message.ErrorMessage = ex.Message;
-                    }
-                }
-                
-                if (pendingMessages.Any())
-                {
-                    await dbContext.SaveChangesAsync(stoppingToken);
-                }
+                if (result.Total > 0)
+                    logger.LogInformation("MES Sync batch completed. Total: {Total}, Processed: {Processed}, Failed: {Failed}", result.Total, result.Processed, result.Failed);
             }
             catch (Exception ex)
             {

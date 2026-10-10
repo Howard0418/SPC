@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-10（MES Sync 資料可靠性）
+- 目的：執行 `ARCH-TASK-002-DIAGNOSTICS-MES-SYNC-RELIABILITY-20261010`，避免 MES Sync 尚未支援的訊息或無效 Payload 被假標為 `Processed`。
+- 修改：新增 `MesSyncMessageBatchProcessor`、`IMesSyncMessageHandler` 與 `MesSyncMessageBatchProcessorTests`；`MesSyncProcessorService` 改為只負責排程並呼叫批次處理器；無效 JSON 與未支援 `MessageType` 會標示 `Failed` 並留下錯誤。
+- 驗證：`MesSyncMessageBatchProcessorTests` 3 passed；後端 build 0 warnings / 0 errors。
+- 發布：已發布 SPC 測試站 backend，備份 `release/test/backend.backup-architecture-task002-20261010-211822`；smoke：`8084/api/health` 200、`8084/api/version` 200/test、首頁 200。正式站未發布。首次複製遇 DLL 鎖，已用 `app_offline.htm` 釋放後重跑成功並移除暫停檔。
+
 ## 2026-10-10（診斷端點與錯誤資訊隔離）
 - 目的：執行 `ARCH-TASK-003-DIAGNOSTICS-ERROR-ISOLATION-20261010`，收斂 SPC API 未處理例外與健康檢查，避免非 Development 對外回傳 exception detail。
 - 修改：新增 `ApiErrorResponseFactory` 與 `ApiErrorResponseFactoryTests`；調整 `Program.cs` 全域 exception handler，非 Development 一般例外只回通用訊息，DB 更新例外保留分類但隱藏 inner detail；新增匿名 `/api/health`。

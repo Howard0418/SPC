@@ -1,3 +1,8 @@
+## [2026-10-10] - ARCH-TASK-002 MES Sync 資料可靠性
+- 目的：避免 `MesSyncProcessorService` 在尚未實作 MessageType 處理或 Payload 無效時仍將 MES 訊息標示為 `Processed`，造成資料漏同步卻難以追查。
+- 範圍：新增可單測的 MES Sync 批次處理器與 handler 介面，背景服務改呼叫批次處理器；不新增 migration、不改 MES/Portal/TransFiles。
+- 驗證：`MesSyncMessageBatchProcessorTests` 3 passed；後端 build 0 warnings / 0 errors；已發布 SPC 測試站 backend，`/api/health`、`/api/version` 與首頁 smoke 通過。
+
 ## [2026-10-10] - ARCH-TASK-003 診斷端點與錯誤資訊隔離
 - 目的：收斂 SPC API 未處理例外與診斷端點，避免 Production/Test 對外回傳 exception message、inner exception 或 SQL 細節，同時提供最小 `/api/health`。
 - 範圍：新增錯誤回應工廠與測試、調整 `Program.cs` 全域 exception handler、加入匿名 health endpoint；不改資料庫 schema、不做正式站發布。
