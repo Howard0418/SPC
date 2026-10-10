@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-10（正式機更新工具使用手冊與授權檢核）
+- 目的：執行 `RELEASE-TOOL-TASK-005`，完成正式機更新工具的操作手冊、參數範本、前置檢查、回復步驟、證據格式與核准清單。
+- 修改：新增 `specs/20261010-release-tool-task005/spec.md` 與 `docs/release-tools/production-release-runbook.md`，並同步 `TODO.md`、`docs/requirements.md`、`ai_docs/10_change_log.md`。
+- 驗證：文件內容與連結檢查完成；未連線正式機、未操作 IIS、未讀取機敏設定、未刪除資料。
+- 發布：文件型小工作，建置、打包與發布不適用；正式站未發布。
+
 ## 2026-10-09（AI+BDD 第二批支援/工具專案導入）
 - 目的：執行 `AI-BDD-ALL-TASK-003`，讓 Chameleon、DH_Temperature、PMR_ERP撈取工單、DS2000、Voice、python-pypxlib 採輕量 AI+BDD 入口。
 - 修改：新增 `specs/20261009-ai-bdd-all-task-003/`；六個工具專案各自補 AGENTS/需求索引/變更紀錄/規格與 `features/.gitkeep`。
