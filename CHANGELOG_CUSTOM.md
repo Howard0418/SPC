@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-11（完成後剩餘小工作提醒規則）
+- 目的：依使用者要求，將「每執行完一個小工作後提醒還有多少小工作未完成」寫入 SPC 開發規則。
+- 修改：新增 `specs/20261011-completion-remaining-work-reminder/spec.md`；更新 `AGENTS.md` 小工作完成規則，並同步 `docs/requirements.md`、`TODO.md`、`ai_docs/10_change_log.md`。
+- 驗證：文件內容檢查完成；本次未修改程式、資料庫或 IIS。
+- 發布：文件型小工作，建置與發布不適用；正式站未發布。
+
 ## 2026-10-10（MES Sync 資料可靠性）
 - 目的：執行 `ARCH-TASK-002-DIAGNOSTICS-MES-SYNC-RELIABILITY-20261010`，避免 MES Sync 尚未支援的訊息或無效 Payload 被假標為 `Processed`。
 - 修改：新增 `MesSyncMessageBatchProcessor`、`IMesSyncMessageHandler` 與 `MesSyncMessageBatchProcessorTests`；`MesSyncProcessorService` 改為只負責排程並呼叫批次處理器；無效 JSON 與未支援 `MessageType` 會標示 `Failed` 並留下錯誤。

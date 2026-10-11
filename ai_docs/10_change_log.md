@@ -1,3 +1,8 @@
+## [2026-10-11] - COMPLETION-REMAINING-WORK-REMINDER 完成後剩餘小工作提醒規則
+- 目的：依使用者要求，讓每個小工作完成後的最終回覆固定提醒 `TODO.md` 尚有多少未完成小工作。
+- 範圍：更新 `AGENTS.md` 小工作完成規則，新增本次文件型規格並同步需求索引、TODO 與 CHANGELOG；不修改程式、不發布。
+- 驗證：文件內容檢查完成。
+
 ## [2026-10-10] - ARCH-TASK-002 MES Sync 資料可靠性
 - 目的：避免 `MesSyncProcessorService` 在尚未實作 MessageType 處理或 Payload 無效時仍將 MES 訊息標示為 `Processed`，造成資料漏同步卻難以追查。
 - 範圍：新增可單測的 MES Sync 批次處理器與 handler 介面，背景服務改呼叫批次處理器；不新增 migration、不改 MES/Portal/TransFiles。

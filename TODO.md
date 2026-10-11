@@ -172,6 +172,10 @@
 
 狀態：待確認
 
+## 2026-10-11 執行紀錄
+
+- `COMPLETION-REMAINING-WORK-REMINDER-20261011`：已將「每執行完一個小工作後，最終回覆提醒目前剩餘未完成小工作數」寫入 `AGENTS.md` 小工作完成規則；同步需求索引、CHANGELOG 與變更目的。本次僅文件變更，未修改程式、未發布。
+
 ## 2026-10-10 執行紀錄
 
 - `ARCH-TASK-002-DIAGNOSTICS-MES-SYNC-RELIABILITY-20261010`：已完成 MES Sync 資料可靠性改善。新增可單測的 `MesSyncMessageBatchProcessor` 與 `IMesSyncMessageHandler`，背景服務改呼叫批次處理器；無效 JSON 與未支援 MessageType 會標示 `Failed` 並留下錯誤，不再假標 `Processed`。針對性測試 3 passed，後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
