@@ -3,6 +3,7 @@ using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
 using MesSpc.Api.Services.Calibration;
+using MesSpc.Api.Services.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,27 +19,13 @@ public class InstrumentCalibrationsController(
     CalibrationCertificates certificates,
     TimeProvider clock,
     IEmailNotificationService emailService,
-    IConfiguration config) : ControllerBase
+    IConfiguration config,
+    AuthorizationAccess authorizationAccess) : ControllerBase
 {
     private string GetActor() => User.Identity?.Name ?? "system";
 
-    private bool CheckManagePermission()
-    {
-        // 取得目前呼叫者的角色與頁面權限 JSON
-        var role = User.FindFirst("role")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Editor";
-        var perms = User.FindFirst("permissions")?.Value;
-        // 若在開發階段或無宣告 Claim，嘗試自資料庫讀取
-        if (string.IsNullOrWhiteSpace(perms) && User.Identity?.Name != null)
-        {
-            var op = db.Operators.AsNoTracking().FirstOrDefault(x => x.Username == User.Identity.Name || x.OperatorCode == User.Identity.Name);
-            if (op != null)
-            {
-                role = op.Role;
-                perms = op.PagePermissionsJson;
-            }
-        }
-        return CalibrationRules.CanManage(role, perms);
-    }
+    private Task<bool> CheckManagePermissionAsync(CancellationToken ct = default)
+        => authorizationAccess.CanManageCalibrationAsync(User, ct);
 
     [HttpGet]
     public async Task<IActionResult> GetInstruments(
@@ -154,7 +141,7 @@ public class InstrumentCalibrationsController(
     [HttpPost]
     public async Task<IActionResult> CreateInstrument([FromBody] InstrumentInput req, CancellationToken ct = default)
     {
-        if (!CheckManagePermission())
+        if (!await CheckManagePermissionAsync(ct))
             return StatusCode(403, new { success = false, message = "無維護儀器權限，需具備校正管理權限。" });
 
         try
@@ -171,7 +158,7 @@ public class InstrumentCalibrationsController(
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateInstrument(int id, [FromBody] InstrumentInput req, CancellationToken ct = default)
     {
-        if (!CheckManagePermission())
+        if (!await CheckManagePermissionAsync(ct))
             return StatusCode(403, new { success = false, message = "無維護儀器權限，需具備校正管理權限。" });
 
         try
@@ -232,7 +219,7 @@ public class InstrumentCalibrationsController(
     [HttpPost("{id:int}/calibrations")]
     public async Task<IActionResult> RecordCalibration(int id, [FromBody] CalibrationInput req, CancellationToken ct = default)
     {
-        if (!CheckManagePermission())
+        if (!await CheckManagePermissionAsync(ct))
             return StatusCode(403, new { success = false, message = "無登錄校正權限，需具備校正管理權限。" });
 
         try
@@ -249,7 +236,7 @@ public class InstrumentCalibrationsController(
     [HttpPost("/api/v1/calibrations/{recordId:int}/certificates")]
     public async Task<IActionResult> UploadCertificate(int recordId, IFormFile file, CancellationToken ct = default)
     {
-        if (!CheckManagePermission())
+        if (!await CheckManagePermissionAsync(ct))
             return StatusCode(403, new { success = false, message = "無上傳證書權限，需具備校正管理權限。" });
 
         try
@@ -341,7 +328,7 @@ public class InstrumentCalibrationsController(
     [HttpPut("/api/v1/instrument-calibrations/settings")]
     public async Task<IActionResult> UpdateSettings([FromBody] CalibrationSettingInput req, [FromServices] CalibrationChatSecrets chatSecrets, CancellationToken ct = default)
     {
-        if (!CheckManagePermission())
+        if (!await CheckManagePermissionAsync(ct))
             return StatusCode(403, new { success = false, message = "無修改提醒設定權限。" });
 
         int[] validatedDays;
@@ -389,7 +376,7 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> SendTestChat([FromBody] CalibrationTestChatInput req,
         [FromServices] CalibrationChatSecrets chatSecrets, [FromServices] ICalibrationChatSender chat, CancellationToken ct = default)
     {
-        if (!CheckManagePermission())
+        if (!await CheckManagePermissionAsync(ct))
             return StatusCode(403, new { success = false, message = "無發送測試通知權限。" });
         var url = req.ChatWebhookUrl;
         if (string.IsNullOrWhiteSpace(url))
@@ -423,7 +410,7 @@ public class InstrumentCalibrationsController(
     [HttpPost("/api/v1/instrument-calibrations/test-email")]
     public async Task<IActionResult> SendTestEmail([FromBody] CalibrationTestEmailInput? req, CancellationToken ct = default)
     {
-        if (!CheckManagePermission())
+        if (!await CheckManagePermissionAsync(ct))
             return StatusCode(403, new { success = false, message = "無發送測試通知權限。" });
 
         var email = string.IsNullOrWhiteSpace(req?.Email) ? config["SmtpSettings:DefaultRecipientEmail"] : req!.Email.Trim();

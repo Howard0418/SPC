@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using System.Text.Json;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services.Calibration;
+using MesSpc.Api.Services.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +12,7 @@ namespace MesSpc.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/v1/instruments/import")]
-public sealed class InstrumentImportController(AppDbContext db, CalibrationImportService import) : ControllerBase
+public sealed class InstrumentImportController(CalibrationImportService import, AuthorizationAccess authorizationAccess) : ControllerBase
 {
     /// <summary>取得目前使用者是否能匯入儀器，供畫面顯示入口。</summary>
     [HttpGet("access")]
@@ -70,12 +70,7 @@ public sealed class InstrumentImportController(AppDbContext db, CalibrationImpor
 
     private async Task<bool> CanManageAsync(CancellationToken ct)
     {
-        if (User.Identity?.IsAuthenticated!=true || string.IsNullOrWhiteSpace(User.Identity.Name)) return false;
-        var role=User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-        if (!string.Equals(role,"Editor",StringComparison.OrdinalIgnoreCase)) return false;
-        var name=User.Identity.Name;
-        var op=await db.Operators.AsNoTracking().SingleOrDefaultAsync(x=>x.Username==name,ct);
-        return op is { IsActive:true } && CalibrationRules.CanManage(op.Role,op.PagePermissionsJson);
+        return await authorizationAccess.CanManageCalibrationAsync(User, ct);
     }
     private async Task<IActionResult?> DeniedAsync(CancellationToken ct)
     {

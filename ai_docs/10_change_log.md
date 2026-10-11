@@ -1,3 +1,8 @@
+## [2026-10-11] - ARCH-TASK-004 後端授權模型收斂
+- 目的：收斂校正管理相關後端授權判斷，避免 controller 各自解析角色、permissions 與 Operators 回查，降低權限判斷不一致風險。
+- 範圍：新增共用授權存取服務與測試，調整校正儀器與匯入 controller 呼叫共用服務；不修改登入流程、JWT 格式或資料庫 schema。
+- 驗證：授權相關測試 11 passed；後端 build 0 warnings / 0 errors；已發布 SPC 測試站 backend，`/api/health`、`/api/version` 與首頁 smoke 通過。
+
 ## [2026-10-11] - COMPLETION-REMAINING-WORK-REMINDER 完成後剩餘小工作提醒規則
 - 目的：依使用者要求，讓每個小工作完成後的最終回覆固定提醒 `TODO.md` 尚有多少未完成小工作。
 - 範圍：更新 `AGENTS.md` 小工作完成規則，新增本次文件型規格並同步需求索引、TODO 與 CHANGELOG；不修改程式、不發布。

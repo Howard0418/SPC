@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- 後端授權模型收斂：[ARCH-TASK-004-BACKEND-AUTHORIZATION-CONSOLIDATION-20261011](../specs/20261011-architecture-task004-backend-authorization-consolidation/spec.md)；SPC backend 已新增共用授權存取服務，校正管理與儀器匯入改由同一服務解析登入者角色、頁面權限與操作者狀態，降低 Viewer/Editor 與 `calibration.manage` 判斷不一致風險。不改登入流程、JWT 格式或資料庫 schema。已發布 SPC 測試站 backend，正式站未發布。
 - 小工作完成後剩餘工作提醒：[COMPLETION-REMAINING-WORK-REMINDER-20261011](../specs/20261011-completion-remaining-work-reminder/spec.md)；每執行完一個小工作後，最終回覆須依 `TODO.md` 提醒目前仍有多少未完成小工作；暫緩或外部阻擋項目可分開簡述。本次僅文件規則變更，未修改程式、未發布。
 - MES Sync 資料可靠性：[ARCH-TASK-002-DIAGNOSTICS-MES-SYNC-RELIABILITY-20261010](../specs/20261010-architecture-task002-mes-sync-reliability/spec.md)；SPC API 背景服務不再將無效 JSON 或未支援 MessageType 的 MES Sync 訊息假標 `Processed`，改標 `Failed` 並留下錯誤，批次處理邏輯已抽出可單元測試。已發布 SPC 測試站 backend，正式站未發布。
 - 診斷端點與錯誤資訊隔離：[ARCH-TASK-003-DIAGNOSTICS-ERROR-ISOLATION-20261010](../specs/20261010-architecture-task003-diagnostics-error-isolation/spec.md)；SPC API 非 Development 未處理例外不再回傳 exception message/detail，Development 保留診斷資訊，新增匿名 `/api/health` 最小健康檢查。已發布 SPC 測試站 backend，正式站未發布。

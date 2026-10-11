@@ -80,6 +80,7 @@ builder.Services.AddScoped<TestDataSeeder>();
 builder.Services.AddScoped<GenealogyService>();
 builder.Services.AddScoped<SpcOverviewReportService>();
 builder.Services.AddScoped<MesSyncMessageBatchProcessor>();
+builder.Services.AddScoped<AuthorizationAccess>();
 builder.Services.AddSingleton<UserPasswordHasher>();
 builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddHostedService<SpcReportSchedulerService>();

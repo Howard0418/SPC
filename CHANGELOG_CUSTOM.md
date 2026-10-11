@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-11（後端授權模型收斂）
+- 目的：執行 `ARCH-TASK-004-BACKEND-AUTHORIZATION-CONSOLIDATION-20261011`，收斂校正管理相關後端授權判斷，避免 controller 各自解析角色、permissions 與 Operators 回查。
+- 修改：新增 `AuthorizationAccess` 共用服務與 `AuthorizationAccessTests`；校正儀器管理與儀器匯入 controller 改呼叫共用服務判斷 `calibration.manage`；不修改登入流程、JWT claims 格式或資料庫 schema。
+- 驗證：授權相關測試 11 passed；後端 build 0 warnings / 0 errors。
+- 發布：已發布 SPC 測試站 backend，備份 `release/test/backend.backup-architecture-task004-20261011-103654`；smoke：`8084/api/health` 200、`8084/api/version` 200/test、首頁 200。正式站未發布。
+
 ## 2026-10-11（完成後剩餘小工作提醒規則）
 - 目的：依使用者要求，將「每執行完一個小工作後提醒還有多少小工作未完成」寫入 SPC 開發規則。
 - 修改：新增 `specs/20261011-completion-remaining-work-reminder/spec.md`；更新 `AGENTS.md` 小工作完成規則，並同步 `docs/requirements.md`、`TODO.md`、`ai_docs/10_change_log.md`。
