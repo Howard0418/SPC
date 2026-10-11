@@ -1,3 +1,8 @@
+## [2026-10-11] - ARCH-TASK-005 資料庫 migration 與啟動流程
+- 目的：先將資料庫啟動流程的 provider 正規化與 EnsureCreated/Migrate 決策抽離成可測試規則，降低日後整理 migration 與相容性 SQL 時的誤判風險。
+- 範圍：新增 `DatabaseStartupPlanner` 與測試，`Program.cs` 改用啟動計畫；不新增 migration、不改相容性 SQL、不操作正式資料庫。
+- 驗證：`DatabaseStartupPlannerTests` 8 passed；後端 build 0 warnings / 0 errors；已發布 SPC 測試站 backend，`/api/health`、`/api/version` 與首頁 smoke 通過。
+
 ## [2026-10-11] - ARCH-TASK-004 後端授權模型收斂
 - 目的：收斂校正管理相關後端授權判斷，避免 controller 各自解析角色、permissions 與 Operators 回查，降低權限判斷不一致風險。
 - 範圍：新增共用授權存取服務與測試，調整校正儀器與匯入 controller 呼叫共用服務；不修改登入流程、JWT 格式或資料庫 schema。

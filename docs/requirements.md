@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- 資料庫 migration 與啟動流程：[ARCH-TASK-005-DATABASE-STARTUP-FLOW-20261011](../specs/20261011-architecture-task005-database-startup-flow/spec.md)；SPC API 已將資料庫 provider 正規化與啟動動作決策抽出為 `DatabaseStartupPlanner`，明確區分 SQLite `EnsureCreated` 與 SQL Server baseline + EF migration，降低日後整理相容性 SQL 與發布時誤判 provider 的風險。本次不新增 migration、不改相容性 SQL、不操作正式資料庫。已發布 SPC 測試站 backend，正式站未發布。
 - 後端授權模型收斂：[ARCH-TASK-004-BACKEND-AUTHORIZATION-CONSOLIDATION-20261011](../specs/20261011-architecture-task004-backend-authorization-consolidation/spec.md)；SPC backend 已新增共用授權存取服務，校正管理與儀器匯入改由同一服務解析登入者角色、頁面權限與操作者狀態，降低 Viewer/Editor 與 `calibration.manage` 判斷不一致風險。不改登入流程、JWT 格式或資料庫 schema。已發布 SPC 測試站 backend，正式站未發布。
 - 小工作完成後剩餘工作提醒：[COMPLETION-REMAINING-WORK-REMINDER-20261011](../specs/20261011-completion-remaining-work-reminder/spec.md)；每執行完一個小工作後，最終回覆須依 `TODO.md` 提醒目前仍有多少未完成小工作；暫緩或外部阻擋項目可分開簡述。本次僅文件規則變更，未修改程式、未發布。
 - MES Sync 資料可靠性：[ARCH-TASK-002-DIAGNOSTICS-MES-SYNC-RELIABILITY-20261010](../specs/20261010-architecture-task002-mes-sync-reliability/spec.md)；SPC API 背景服務不再將無效 JSON 或未支援 MessageType 的 MES Sync 訊息假標 `Processed`，改標 `Failed` 並留下錯誤，批次處理邏輯已抽出可單元測試。已發布 SPC 測試站 backend，正式站未發布。

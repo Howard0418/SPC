@@ -46,7 +46,7 @@ builder.Services.AddHttpClient<ChameleonStatusService>(client =>
 builder.Services.AddHttpClient();
 builder.Services.AddDbContext<AppDbContext>(opt =>
 {
-    var provider = builder.Configuration["DatabaseProvider"]?.Trim().ToLowerInvariant() ?? "sqlserver";
+    var provider = DatabaseStartupPlanner.NormalizeProvider(builder.Configuration["DatabaseProvider"]);
     if (provider == "sqlite")
     {
         var sqliteConn = builder.Configuration.GetConnectionString("Sqlite")
@@ -192,9 +192,10 @@ if (Directory.Exists(frontendRoot) && File.Exists(Path.Combine(frontendRoot, "in
 
 using (var scope = app.Services.CreateScope())
 {
-    var provider = builder.Configuration["DatabaseProvider"]?.Trim().ToLowerInvariant() ?? "sqlserver";
+    var startupPlan = DatabaseStartupPlanner.CreatePlan(builder.Configuration["DatabaseProvider"]);
+    var provider = startupPlan.Provider;
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    if (provider == "sqlite")
+    if (startupPlan.Action == DatabaseStartupAction.EnsureCreated)
     {
         // SQLite is used for local rehearsal/test databases. This project does
         // not carry provider-specific SQLite migrations, so build a fresh
@@ -203,7 +204,8 @@ using (var scope = app.Services.CreateScope())
     }
     else
     {
-        try { EnsureSqlServerMigrationBaseline(db); } catch { }
+        if (startupPlan.RequiresSqlServerBaseline)
+            try { EnsureSqlServerMigrationBaseline(db); } catch { }
         db.Database.Migrate();
     }
 

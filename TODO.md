@@ -150,7 +150,7 @@
 
 ### TASK-005：資料庫 migration 與啟動流程
 
-狀態：待確認
+狀態：已完成（2026-10-11，`specs/20261011-architecture-task005-database-startup-flow/`）；SPC 測試站 backend 已發布，正式站未發布
 
 ### TASK-006：發布流程與環境隔離
 
@@ -174,6 +174,7 @@
 
 ## 2026-10-11 執行紀錄
 
+- `ARCH-TASK-005-DATABASE-STARTUP-FLOW-20261011`：已完成資料庫 migration 與啟動流程第一步收斂。新增 `DatabaseStartupPlanner`，將 provider 正規化與 SQLite `EnsureCreated` / SQL Server baseline + EF migration 決策抽成可測試規則；不新增 migration、不改相容性 SQL、不操作正式資料庫。Planner 測試 8 passed，後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
 - `ARCH-TASK-004-BACKEND-AUTHORIZATION-CONSOLIDATION-20261011`：已完成後端授權模型收斂。新增共用 `AuthorizationAccess` 服務，校正儀器管理與儀器匯入 controller 改由同一服務判斷登入者角色、頁面權限與操作者啟用狀態；不改登入流程、JWT claims 或 DB schema。授權相關測試 11 passed，後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
 - `COMPLETION-REMAINING-WORK-REMINDER-20261011`：已將「每執行完一個小工作後，最終回覆提醒目前剩餘未完成小工作數」寫入 `AGENTS.md` 小工作完成規則；同步需求索引、CHANGELOG 與變更目的。本次僅文件變更，未修改程式、未發布。
 

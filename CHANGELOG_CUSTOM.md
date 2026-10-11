@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-11（資料庫 migration 與啟動流程）
+- 目的：執行 `ARCH-TASK-005-DATABASE-STARTUP-FLOW-20261011`，先將資料庫啟動 provider 正規化與 EnsureCreated/Migrate 決策抽離成可測試規則。
+- 修改：新增 `DatabaseStartupPlanner` 與 `DatabaseStartupPlannerTests`；`Program.cs` 改用啟動計畫判斷 SQLite `EnsureCreated` 與 SQL Server baseline + EF migration。不新增 migration、不改相容性 SQL、不操作正式資料庫。
+- 驗證：`DatabaseStartupPlannerTests` 8 passed；後端 build 0 warnings / 0 errors。
+- 發布：已發布 SPC 測試站 backend，備份 `release/test/backend.backup-architecture-task005-20261011-203422`；smoke：`8084/api/health` 200、`8084/api/version` 200/test、首頁 200。正式站未發布。
+
 ## 2026-10-11（後端授權模型收斂）
 - 目的：執行 `ARCH-TASK-004-BACKEND-AUTHORIZATION-CONSOLIDATION-20261011`，收斂校正管理相關後端授權判斷，避免 controller 各自解析角色、permissions 與 Operators 回查。
 - 修改：新增 `AuthorizationAccess` 共用服務與 `AuthorizationAccessTests`；校正儀器管理與儀器匯入 controller 改呼叫共用服務判斷 `calibration.manage`；不修改登入流程、JWT claims 格式或資料庫 schema。
