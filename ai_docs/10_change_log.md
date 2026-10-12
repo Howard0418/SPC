@@ -5,6 +5,7 @@
 - 補修：圖片上傳與預覽顯示已於 PmrPortal 修正；支援常見 Content-Type 變體，並將 `/uploads/...` 轉為 Portal API 完整圖片網址。API 測試 7 passed，Portal 測試站 API/Web 已發布。
 - 版型：生日賀卡已依參考圖改為購物網站廣告式置中彈窗；Portal Web build 通過，測試站 Web 已發布。
 - 微調：生日賀卡背景透明、右上角浮動關閉按鍵、圖片置中放大；Portal Web build 通過，測試站 Web 已發布。
+- 回饋修正：已移除生日賀卡透明外框與圖片陰影；Portal Web build 通過，測試站 Web 已發布。
 
 ## [2026-10-12] - Portal 測試生日祝賀按鍵規劃
 - 目的：依使用者要求先規劃 Portal 生日通知設定頁的測試生日祝賀按鍵，方便人事不需指定時間即可確認生日祝賀版面與顯示效果。
