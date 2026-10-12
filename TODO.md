@@ -14,25 +14,15 @@
 
 ## 目前小工作排序（2026-10-07）
 
-### 第一順位：SPC Raw Data 下載異常（測試使用阻擋／資料正確性）
-
-規格：`specs/20261012-spc-rawdata-normality-issues-plan/spec.md`
-
 ### 第一順位：SPC 咬蝕 X- 線別不匯入 SPC（資料正確性）
 
 規格：`specs/20261012-etch-x-line-prefix-requirement/spec.md`
 
-#### SPC-ETCH-X-TASK-001：咬蝕 X- 線別排除規格與測試案例
-
-狀態：待執行；需求已補齊
-
-初步範圍：依 `docs/SPC文件/PD-3-581-06B-咬蝕量_2026.xlsx` 確認咬蝕量 Excel 線別若以 `X-` 開頭，例如 `X-PT-01`、`X-QE-02`、`X-PT-01-2`，該線別區塊不用匯入 SPC；未帶 `X-` 的 `PT-01`、`PT-02`、`QE-01`、`QE-02` 等線別仍需匯入。需細化 TransFiles/Portal/SPC 預覽與確認匯入契約、測試案例及回復方式。
-
 #### SPC-ETCH-X-TASK-002：咬蝕 X- 線別排除實作與測試
 
-狀態：待 `SPC-ETCH-X-TASK-001` 完成後執行
+狀態：待執行；`SPC-ETCH-X-TASK-001` 已完成
 
-初步範圍：依規格調整咬蝕量匯入預覽、確認流程與 SPC 寫入邏輯；`X-` 線別不建立 SPC 量測資料，未帶 `X-` 線別維持既有匯入。需建立自動化測試與必要端到端驗證，測試通過後發布 SPC 測試站。
+初步範圍：依規格調整咬蝕量匯入預覽、確認流程與 SPC 寫入邏輯；`X-` 線別不建立 SPC 量測資料，未帶 `X-` 線別維持既有匯入。需建立自動化測試覆蓋線別判定、預覽排除摘要、確認匯入不送 SPC、未帶 `X-` 線別回歸；測試通過後發布 SPC 測試站。
 
 ### 第二順位：SPC 常態檢定與直方圖（統計正確性／圖表可讀性）
 
@@ -191,6 +181,7 @@
 - `SPC-RAWDATA-1012-TASK-001`：已完成 All 總表後 raw data 下載上下文修正。新增前端 raw data active PPC 解析工具，下載時依序使用 `ppcId`、總表列 `partProcessCharacteristicId`、舊欄位 `ppcId` 與 selected mapping，避免 All 總表 drilldown 後仍提示需先查詢管制圖。驗證通過：raw data 下載解析測試 5 passed、前端 build 通過；已發布 SPC 測試站 frontend，備份 `release/test/frontend.backup-rawdata-context-20261012-172446`，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 8 件（Raw Data 2 件、咬蝕 X- 2 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 - `SPC-RAWDATA-1012-TASK-002`：已完成 Raw data `Value` 日期誤判與項目資料正確性修正。後端 CSV 組裝抽出 `RawDataCsvExporter`，日期欄位才格式化，`Value` 欄保留原始 invariant 字串，並過濾其他 `PartProcessCharacteristicId` 的列。驗證通過：RawDataCsvExporter 測試 2 passed、後端 build 通過；已發布 SPC 測試站 backend，備份 `release/test/backend.backup-rawdata-value-20261013-074103`，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 7 件（Raw Data 1 件、咬蝕 X- 2 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 - `SPC-RAWDATA-1012-TASK-003`：已完成 Raw data 規格資訊補欄。CSV 新增 `SpecLSL`、`SpecTarget`、`SpecUSL`、`Unit` 欄位，來源為下載目標 `PartProcessCharacteristic` 的規格欄位，與圖表 limits 口徑一致。驗證通過：RawDataCsvExporter 測試 3 passed、後端 build 通過；已發布 SPC 測試站 backend，備份 `release/test/backend.backup-rawdata-spec-20261013-074946`，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 6 件（咬蝕 X- 2 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
+- `SPC-ETCH-X-TASK-001`：已完成咬蝕 X- 線別排除規格與測試案例。補齊 TransFiles/Portal/SPC 契約、預覽排除狀態、確認匯入不得送 SPC、測試案例矩陣與回復方式；本次未修改程式、未匯入資料、未發布。目前剩餘未完成小工作 5 件（咬蝕 X- 1 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 
 ## 2026-10-11 執行紀錄
 

@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（SPC 咬蝕 X- 線別規格與測試案例）
+- 目的：執行 `SPC-ETCH-X-TASK-001`，將 `X-` 線別不匯入 SPC 規則細化為可實作契約，避免後續把 `X-PT-01` 去掉前綴後誤匯入。
+- 修改：更新 `specs/20261012-etch-x-line-prefix-requirement/spec.md`，補齊 TransFiles/Portal/SPC 系統責任、預覽與確認匯入契約、測試案例矩陣、Direct SPC API 期望與 rollback/補救方式；新增驗證紀錄。
+- 驗證：文件內容檢查完成；本次未修改程式，建置、自動化測試與發布不適用。
+- 發布：未發布 SPC 測試站或正式站；`SPC-ETCH-X-TASK-002` 待依本規格實作。
+
 ## 2026-10-13（SPC Raw Data 規格資訊補欄）
 - 目的：執行 `SPC-RAWDATA-1012-TASK-003`，讓 raw data CSV 下載內容可直接辨識對應規格資訊，避免使用者下載後無法判讀量測值與 LSL/Target/USL/Unit 的關係。
 - 修改：`RawDataCsvExporter` 於 `Value` 欄後新增 `SpecLSL`、`SpecTarget`、`SpecUSL`、`Unit` 欄位，數值使用 invariant 格式，單位沿用管制項目設定；不調整 raw data 查詢條件、不修改前端、不處理常態檢定或直方圖。
