@@ -1,3 +1,8 @@
+## [2026-10-12] - SPC-RAWDATA-1012-TASK-001 All 總表後 Raw Data 下載上下文修正
+- 目的：修正 SPC 使用者先查詢 All 總表後，選定單一管制項目再下載 raw data 時，前端未穩定解析 active ppcId 而提示需先查詢管制圖的問題。
+- 範圍：前端 `SpcChartView` raw data 下載上下文解析與對應單元測試；不調整 CSV 欄位內容、不修正 Value 日期誤判、不補規格資訊，後兩者留待後續 Task。
+- 驗證：預計新增 node 單元測試保護 `ppcId`、總表列 `partProcessCharacteristicId`、舊欄位 `ppcId` 與 mapping fallback。
+
 ## [2026-10-12] - IIS-TASK-007 Portal SSO 完成
 - 目的：完成單一 IIS Site T-007 真人登入、Portal SSO、JWT 與 HTTPS 單站回跳驗證。
 - 範圍：Portal API 測試站 `SpcSso:WebBaseUrl` 改為 `https://172.16.110.27:8901` 並重啟 AppPool；SPC 測試前端以 `VITE_APP_ENV=test` 重建刷新。不操作正式站。

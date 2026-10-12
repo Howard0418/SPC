@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（SPC Raw Data All 總表後下載上下文修正）
+- 目的：執行 `SPC-RAWDATA-1012-TASK-001`，修正使用者先查詢 All 總表後，選定單一管制項目再下載 raw data 時，前端未穩定解析 active ppcId 而提示需先查詢管制圖的問題。
+- 修改：新增 `frontend/mes-spc-web/src/utils/spcRawDataDownload.js` 與測試；`SpcChartView` raw data 下載改用共用解析邏輯，依序使用 `ppcId`、總表列 `partProcessCharacteristicId`、舊欄位 `ppcId`、selected mapping id。本次不處理 `Value` 日期誤判與規格資訊補欄。
+- 驗證：`node --test frontend/mes-spc-web/tests/spc-raw-data-download.test.mjs` 5 passed；`npm run build` 通過，僅既有 Vite chunk size warning。
+- 發布：已發布 SPC 測試站 frontend，備份 `release/test/frontend.backup-rawdata-context-20261012-172446`；Playwright/Chromium HTTPS smoke：`/api/version` 200、首頁 200、新 JS `/assets/index-VGtDwk3O.js` 200 `text/javascript`，active JS 不含舊 `8081/api`、`localhost:` 或 `/api/api`。正式站未發布。
+
 ## 2026-10-12（SPC 咬蝕 X- 線別需求補齊）
 - 目的：依使用者補充，調整原暫緩的 `SPC-ETCH-X-TASK-001/002` 需求；咬蝕量 Excel 線別若帶 `X-` 前綴，表示該線別資料不用匯入 SPC，未帶 `X-` 的線別仍需匯入。
 - 分析：已檢查 `docs/SPC文件/PD-3-581-06B-咬蝕量_2026.xlsx`，活頁簿共有 196 張日期工作表；實際出現 `X-PT-01`、`X-PT-01-2`、`X-PT-01-3`、`X-PT-01-4`、`X-PT-02`、`X-QE-01`、`X-QE-02` 等 `X-` 線別，也有未帶 `X-` 的 `PT-01`、`PT-02`、`QE-01`、`QE-02`。

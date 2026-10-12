@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
 import { normalizeControlScope } from "../utils/controlScope";
+import { resolveActiveRawDataPpcId } from "../utils/spcRawDataDownload";
 import {
   useSingleChemicalLine,
   stageLabel,
@@ -344,7 +345,11 @@ const isEtchAverageChart = computed(() => {
   return ['ETCH_A_AVG', 'ETCH_B_AVG'].includes(code) || (name.includes('咬蝕量') && name.includes('平均')) || monitorCharacteristicLabel.value.includes('咬蝕量');
 });
 const displayedMeasurementCount = computed(() => isEtchAverageChart.value ? chartPoints.value.length : rawPointCount.value);
-const activePpcIdValue = computed(() => Number(ppcId.value || selectedSummaryRow.value?.ppcId || selectedMapping.value?.id || 0));
+const activePpcIdValue = computed(() => resolveActiveRawDataPpcId({
+  ppcId: ppcId.value,
+  selectedSummaryRow: selectedSummaryRow.value,
+  selectedMapping: selectedMapping.value
+}));
 const activeExclusionCount = computed(() => excludedPoints.value.length);
 
 const capabilityRows = computed(() => {
@@ -829,7 +834,7 @@ async function drawSingleChart(row) {
 }
 
 async function downloadRawData() {
-  const activePpcId = ppcId.value || selectedMapping.value?.id;
+  const activePpcId = activePpcIdValue.value;
   if (!activePpcId) {
     error.value = "請先查詢一張管制圖後再下載 raw data。";
     return;
