@@ -1,3 +1,8 @@
+## [2026-10-12] - ARCH-TASK-009 測試與可重建基線
+- 目的：新增可重跑的 SPC 基線驗證入口，將後端測試、後端 build、前端 build 與可選 smoke 依固定順序執行，降低平行執行造成 DLL 鎖或驗證口徑不一致的風險。
+- 範圍：新增 `tools/testing/Invoke-SpcBaseline.ps1` 與規格/驗證文件；不修改應用程式、不發布、不清資料。
+- 驗證：基線腳本後端測試/build 模式通過；build+smoke 模式通過。工具與文件型小工作，發布不適用。
+
 ## [2026-10-12] - ARCH-TASK-008 稽核與操作者追溯
 - 目的：先建立共用操作者解析規則，降低各 controller 對 `Identity.Name`、username claims 與 fallback 解析不一致造成的稽核追溯風險。
 - 範圍：新增 `AuditActorResolver`，調整 SPC 點位備註/排除 `UpdatedBy` 使用共用解析；不新增 schema、不修改登入/JWT 發行、不改校正 audit log。

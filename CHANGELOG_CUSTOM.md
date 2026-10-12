@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（測試與可重建基線）
+- 目的：執行 `ARCH-TASK-009-REPRODUCIBLE-TEST-BASELINE-20261012`，新增固定順序的基線驗證入口，降低平行測試/build 搶 DLL 鎖與驗證口徑不一致風險。
+- 修改：新增 `tools/testing/Invoke-SpcBaseline.ps1`，支援 `-TestFilter`、`-SkipTests`、`-SkipFrontend` 與 `-SmokeUrl`；不修改應用程式、不清資料。
+- 驗證：`Invoke-SpcBaseline.ps1 -TestFilter UserAccessTests -SkipFrontend` 通過；`Invoke-SpcBaseline.ps1 -SkipTests -SkipFrontend -SmokeUrl http://172.16.110.27:8084/api/health` 通過。兩次 build 均 0 errors，僅有 NuGet 弱點資料來源連線警告。
+- 發布：工具與文件型小工作，發布不適用；正式站未發布。
+
 ## 2026-10-12（稽核與操作者追溯）
 - 目的：執行 `ARCH-TASK-008-AUDIT-OPERATOR-TRACEABILITY-20261012`，先統一後端寫入稽核欄位時的操作者 claim 解析規則。
 - 修改：新增 `AuditActorResolver`，依序解析 `Identity.Name`、標準/自訂 name、username、NameIdentifier 與 `sub`；SPC 點位備註/排除 `UpdatedBy` 改用共用解析。不新增 schema、不修改登入或 JWT 發行。
