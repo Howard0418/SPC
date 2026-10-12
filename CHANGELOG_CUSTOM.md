@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（大型模組拆分與架構治理）
+- 目的：執行 `ARCH-TASK-010-LARGE-MODULE-GOVERNANCE-20261012`，建立大型模組盤點與拆分治理基線，避免後續直接拆分核心模組時缺少固定門檻、順序與驗證要求。
+- 修改：新增 `tools/architecture/Get-LargeModules.ps1` 與 `docs/architecture-governance.md`，記錄大型模組候選、責任邊界、拆分順序與最低驗證；同步規格、需求索引、TODO 與變更目的。不修改應用程式、不拆核心類別。
+- 驗證：`Get-LargeModules.ps1 -Threshold 700 -Top 8` 符合預期回傳非 0 並列出 11 個超標模組；`-Threshold 10000 -Top 8` 通過並回傳 0；治理文件關鍵字檢查通過。
+- 發布：工具與文件型小工作，發布不適用；正式站未發布。
+
 ## 2026-10-12（測試與可重建基線）
 - 目的：執行 `ARCH-TASK-009-REPRODUCIBLE-TEST-BASELINE-20261012`，新增固定順序的基線驗證入口，降低平行測試/build 搶 DLL 鎖與驗證口徑不一致風險。
 - 修改：新增 `tools/testing/Invoke-SpcBaseline.ps1`，支援 `-TestFilter`、`-SkipTests`、`-SkipFrontend` 與 `-SmokeUrl`；不修改應用程式、不清資料。

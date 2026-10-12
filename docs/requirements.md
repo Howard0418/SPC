@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- 大型模組拆分與架構治理：[ARCH-TASK-010-LARGE-MODULE-GOVERNANCE-20261012](../specs/20261012-architecture-task010-large-module-governance/spec.md)；SPC 新增 `tools/architecture/Get-LargeModules.ps1` 與 `docs/architecture-governance.md`，固定大型模組盤點門檻、拆分候選、責任邊界、拆分順序與最低驗證要求。門檻 700 可抓出既有超標模組並回傳非 0；門檻 10000 回傳 0。本次只建立治理基線，不修改應用程式、不發布。
 - 測試與可重建基線：[ARCH-TASK-009-REPRODUCIBLE-TEST-BASELINE-20261012](../specs/20261012-architecture-task009-reproducible-test-baseline/spec.md)；SPC 新增 `tools/testing/Invoke-SpcBaseline.ps1`，依序執行後端測試、後端 build、前端 build 與可選 smoke URL，支援 `-TestFilter`、`-SkipTests`、`-SkipFrontend` 與 `-SmokeUrl`，避免小工作驗證時平行 build/test 搶 DLL 鎖並統一驗證入口。本次不修改應用程式、不發布、不清資料。
 - 稽核與操作者追溯：[ARCH-TASK-008-AUDIT-OPERATOR-TRACEABILITY-20261012](../specs/20261012-architecture-task008-audit-operator-traceability/spec.md)；SPC 後端新增共用 `AuditActorResolver`，統一依 `Identity.Name`、`ClaimTypes.Name`、`name`、`preferred_username`、`username`、`NameIdentifier`、`sub` 解析操作者。SPC 點位備註/排除寫入 `UpdatedBy` 時改用共用解析規則；本次不新增資料表、不修改 JWT 發行或登入流程。
 - SMTP、檔案與背景排程可靠性：[ARCH-TASK-007-SMTP-FILE-SCHEDULER-RELIABILITY-20261012](../specs/20261012-architecture-task007-smtp-file-scheduler-reliability/spec.md)；SPC 項目管制總覽週報/月報背景排程已抽出 `SpcReportScheduleProcessor`，寄送報表時需至少一位收件者成功才更新 LastSent；若全部 SMTP 寄送失敗，LastSent 保持不變以便後續排程重試。不新增資料表、不變更 SMTP 設定 UI。

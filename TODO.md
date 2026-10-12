@@ -170,10 +170,11 @@
 
 ### TASK-010：大型模組拆分與架構治理
 
-狀態：待確認
+狀態：已完成（2026-10-12，`specs/20261012-architecture-task010-large-module-governance/`）；工具與文件型小工作，未發布測試站或正式站
 
 ## 2026-10-12 執行紀錄
 
+- `ARCH-TASK-010-LARGE-MODULE-GOVERNANCE-20261012`：已完成大型模組拆分與架構治理基線。新增 `tools/architecture/Get-LargeModules.ps1` 與 `docs/architecture-governance.md`，固定大型模組盤點門檻、候選模組、責任邊界、拆分順序與最低驗證要求；不修改應用程式、不拆核心類別。驗證通過：門檻 700 可抓出 11 個超標模組並回傳非 0，門檻 10000 回傳 0，治理文件關鍵字檢查通過。本次未發布測試站或正式站。架構改善 `TASK-002`～`TASK-010` 已全部完成；目前剩餘未完成小工作 4 件（IIS 外部條件阻擋 2 件、咬蝕 X- 暫停 2 件）。
 - `ARCH-TASK-009-REPRODUCIBLE-TEST-BASELINE-20261012`：已完成測試與可重建基線第一步改善。新增 `tools/testing/Invoke-SpcBaseline.ps1`，固定順序執行後端測試、後端 build、前端 build 與可選 smoke，支援 `-TestFilter`、`-SkipTests`、`-SkipFrontend`、`-SmokeUrl`。驗證通過：後端測試/build 模式與 build+smoke 模式皆通過；本次未修改應用程式、未發布、未清資料。
 - `ARCH-TASK-008-AUDIT-OPERATOR-TRACEABILITY-20261012`：已完成稽核與操作者追溯第一步改善。新增共用 `AuditActorResolver`，SPC 點位備註/排除 `UpdatedBy` 改用同一套 claim 解析規則；不新增 schema、不改登入或 JWT 發行。驗證通過：操作者解析與點位備註測試 15 passed，後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
 - `ARCH-TASK-007-SMTP-FILE-SCHEDULER-RELIABILITY-20261012`：已完成 SMTP、檔案與背景排程可靠性第一步改善。新增 `SpcReportScheduleProcessor`，報表週報/月報至少一位收件者寄送成功才更新 LastSent；全部 SMTP 寄送失敗會保留 LastSent 以便下次排程重試。不新增 schema、不改 SMTP 設定 UI。驗證通過：processor 測試 3 passed、後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
