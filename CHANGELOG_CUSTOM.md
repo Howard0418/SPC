@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（單一 IIS Site T-007 HTTP smoke 補驗）
+- 目的：補驗 `IIS-TASK-007` 可在現有 HTTP 測試單站完成的項目，確認單一 IIS Site 測試站不再載入舊分站台 API base。
+- 修改：重跑 SPC Web production build，備份 `release/test/frontend.backup-single-iis-t007-http-smoke-20261012-130624`，清除並刷新 `release/test/frontend`，同步單一 IIS Site 規格、驗證紀錄、需求索引與工作池。
+- 驗證：`npm run build` 通過，僅既有 chunk size warning；active JS `/assets/index-DghC2Ifj.js` 回 200 `text/javascript`；資產檢查無 `172.16.110.27:8081/api`、`localhost:` 或 `/api/api`；`8084/api/version` 回 200/test，首頁與三個 Vue 子路由回 200，未登入受保護 API 回 401。
+- 發布：已刷新 SPC 測試單站 frontend；正式站未發布。HTTPS mixed content、真人登入、Portal SSO、JWT 與 Viewer 403 仍待外部條件。
+
 ## 2026-10-12（Portal 測試生日祝賀按鍵完成）
 - 目的：執行 `PORTAL-BIRTHDAY-REPLAN-TASK-004`，讓人事可在生日通知設定頁直接預覽生日祝賀彈窗，不需等待生日日期。
 - 修改：PmrPortal 已新增測試生日祝賀按鍵與廣告式彈窗；SPC 同步工作池、需求索引與完成紀錄。預覽不新增 API、schema 或資料寫入。

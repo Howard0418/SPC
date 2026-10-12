@@ -1,7 +1,7 @@
 # 功能規格：SPC 單一 IIS Site 部署
 - 功能 ID：20261005-single-iis-site
 - 版本：1
-- 狀態：部分完成；T-001～T-005 完成，T-006 已建立 HTTP 測試單站，T-008 文件同步完成；HTTPS binding/cert 與登入 smoke 條件仍待補
+- 狀態：部分完成；T-001～T-005 完成，T-006 已建立 HTTP 測試單站，T-007 已補驗 HTTP 單站 smoke 與 401，T-008 文件同步完成；HTTPS binding/cert 與登入/SSO/JWT/Viewer 403 smoke 條件仍待補
 - 涉及專案：SPC Web、SPC API、IIS
 - 授權依據：2026-10-05 使用者要求將目前專案調整成單一 IIS Site；目前僅核准 TASK-001 分析與 TASK-002 規格/rollback 計畫。
 - 現行需求基準：[docs/requirements.md](../../docs/requirements.md)
@@ -15,7 +15,7 @@
 - ASP.NET Core Web API 位於 `backend/MesSpc.Api`。
 - API controller route 已包含 `/api` 前綴，例如 `/api/version`、`/api/v1/auth/portal-sso`、`/api/v1/spc`。
 - 現行測試站採前後端分開：前端常見 `http://172.16.110.27:8083`，API 常見 `http://172.16.110.27:8081`。
-- 前端 `.env.testhost`、`.env.production` 及 `src/api/client.js` 仍含 IP/port API base。
+- 前端 production build 使用相對 `/api`；`.env.testhost` 仍保留分站台測試 API base，避免影響本機/舊測試模式。
 - `Program.cs` 目前已有服務 sibling `frontend` 靜態檔與 `MapFallbackToFile("index.html")` 的能力。
 
 ## 範圍與非範圍
@@ -62,3 +62,4 @@
 |---|---|---|
 | 1 | 2026-10-05 | 初版；TASK-001 分析後建立單站部署邊界與驗收 |
 | 1.1 | 2026-10-10 | 同步 T-008 文件收尾；保留 T-006/T-007 外部阻擋與待測項 |
+| 1.2 | 2026-10-12 | 補驗 T-007 HTTP 單站 smoke，刷新測試站 production 前端資產以移除舊 testhost API base |

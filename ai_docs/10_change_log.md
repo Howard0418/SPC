@@ -1,3 +1,9 @@
+## [2026-10-12] - IIS-TASK-007 HTTP smoke 補驗
+- 目的：補驗單一 IIS Site 在現有 HTTP 測試單站可完成的 smoke，並移除測試站 active bundle 殘留的舊 `8081` API base 風險。
+- 範圍：重建 SPC Web production 前端並刷新 `release/test/frontend`；同步單一 IIS Site 規格、驗證紀錄、需求索引、TODO 與變更紀錄。不修改後端程式、不操作正式站。
+- 驗證：`npm run build` 通過；資產檢查無 `172.16.110.27:8081/api`、`localhost:` 或 `/api/api`；`8084/api/version` 200/test，首頁與三個 Vue 子路由 200，active JS 200 `text/javascript`，未登入受保護 API 401。
+- 限制：HTTPS mixed content、真人登入、Portal SSO、JWT 與 Viewer 403 仍待外部條件。
+
 ## [2026-10-12] - Portal 測試生日祝賀按鍵完成
 - 目的：同步 `PORTAL-BIRTHDAY-REPLAN-TASK-004` 完成狀態，讓 SPC 工作池反映 Portal 已新增人事生日祝賀即時預覽。
 - 範圍：更新 SPC 工作池、需求索引與客製變更紀錄；Portal 實作位於 `D:\PmrPortal\specs\20261012-birthday-preview-button\`。
