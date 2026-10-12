@@ -6,6 +6,7 @@
 - 驗證：Portal Web build 通過 0 warnings / 0 errors；測試站 smoke：設定頁未登入 401、API `/health` 200/test、發布目錄含新 CSS。
 - 發布：已發布 Portal 測試站 Web，正式站未發布。
 - 2026-10-12 補修：使用者回報圖片上傳與預覽問題；PmrPortal 已放寬圖片 Content-Type 變體、改善錯誤訊息，並將 `/uploads/...` 顯示路徑轉為 Portal API 完整圖片網址。API 測試 7 passed，API/Web build 通過；已發布 Portal 測試站 API/Web，正式站未發布。
+- 2026-10-12 版型調整：依使用者參考圖，PmrPortal 生日設定頁測試預覽與首頁生日通知改為購物網站廣告式賀卡彈窗，包含遮罩、紅橘色圓角卡片、浮動關閉按鍵、圖片置中與「收到祝福」CTA。Portal Web build 通過並已發布測試站 Web，正式站未發布。
 
 ## 2026-10-12（Portal 測試生日祝賀按鍵規劃）
 - 目的：依使用者要求，規劃 Portal 生日通知設定頁的測試生日祝賀按鍵，方便不指定時間也能確認版面與顯示效果。
