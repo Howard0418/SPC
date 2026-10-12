@@ -1,3 +1,8 @@
+## [2026-10-13] - SPC-RAWDATA-1012-TASK-003 Raw Data 規格資訊補欄
+- 目的：讓 raw data CSV 下載內容可直接辨識對應規格資訊，補上 LSL/Target/USL/Unit，避免使用者下載後無法判讀量測值與規格關係。
+- 範圍：後端 `RawDataCsvExporter` 欄位與測試；不調整 raw data 查詢條件、不修改前端、不處理常態檢定或直方圖。
+- 驗證：RawDataCsvExporter 測試 3 passed；後端 build 通過；已發布 SPC 測試站 backend 並完成 HTTPS smoke。
+
 ## [2026-10-13] - SPC-RAWDATA-1012-TASK-002 Raw Data Value 日期誤判與項目資料修正
 - 目的：修正 raw data CSV `Value` 欄與日期欄共用格式化造成數值被誤判為日期的問題，並避免非目標 PPC 資料混入下載結果。
 - 範圍：後端 CSV 組裝抽出 `RawDataCsvExporter`；日期欄位才格式化，`Value` 保留原始 invariant 字串；補 RawDataCsvExporter 單元測試。不補規格資訊欄位。

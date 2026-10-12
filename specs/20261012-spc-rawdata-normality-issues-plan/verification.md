@@ -62,4 +62,34 @@
 
 ### 未執行／後續
 
-- `SPC-RAWDATA-1012-TASK-003`：Raw data 補上規格資訊尚未執行。
+- `SPC-RAWDATA-1012-TASK-003`：此 Task 執行時尚未處理；已於下節補驗完成。
+
+## SPC-RAWDATA-1012-TASK-003：Raw data 補上規格資訊
+
+日期：2026-10-13
+
+### 驗收結果
+
+| 驗收 ID | 結果 | 驗證方式 |
+|---|---|---|
+| AC-003 | 通過 | Raw data CSV 已新增 `SpecLSL`、`SpecTarget`、`SpecUSL`、`Unit` 欄位，值來自下載目標 `PartProcessCharacteristic` 的 `LSL`、`TargetValue`、`USL`、`Unit`，與圖表 limits 使用同一 mapping 來源。 |
+
+### 自動化驗證
+
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter RawDataCsvExporterTests --no-restore -p:UseSharedCompilation=false`：3 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+
+### 測試站發布與 smoke
+
+- Publish：`dotnet publish backend\MesSpc.Api\MesSpc.Api.csproj -c Release --no-restore -p:UseSharedCompilation=false -o release-staging\rawdata-spec-task003\backend` 通過。
+- 發布範圍：SPC 測試站 backend。
+- 備份：`release/test/backend.backup-rawdata-spec-20261013-074946`。
+- 發布目標：`release/test/backend`。
+- Playwright/Chromium HTTPS smoke：
+  - `https://172.16.110.27:8901/api/health`：200，`{"status":"ok","version":"0.1.59","environment":"test"}`
+  - `https://172.16.110.27:8901/api/version`：200，`{"version":"0.1.59","environment":"test"}`
+  - `https://172.16.110.27:8901/`：200，`text/html`
+
+### 未執行／後續
+
+- Raw Data 三個小工作已完成；常態檢定、直方圖與咬蝕 X- 仍依 `TODO.md` 後續排序執行。

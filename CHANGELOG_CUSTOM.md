@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（SPC Raw Data 規格資訊補欄）
+- 目的：執行 `SPC-RAWDATA-1012-TASK-003`，讓 raw data CSV 下載內容可直接辨識對應規格資訊，避免使用者下載後無法判讀量測值與 LSL/Target/USL/Unit 的關係。
+- 修改：`RawDataCsvExporter` 於 `Value` 欄後新增 `SpecLSL`、`SpecTarget`、`SpecUSL`、`Unit` 欄位，數值使用 invariant 格式，單位沿用管制項目設定；不調整 raw data 查詢條件、不修改前端、不處理常態檢定或直方圖。
+- 驗證：`dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter RawDataCsvExporterTests --no-restore -p:UseSharedCompilation=false` 3 passed；`dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 0 warnings / 0 errors。
+- 發布：已發布 SPC 測試站 backend，備份 `release/test/backend.backup-rawdata-spec-20261013-074946`；Playwright/Chromium HTTPS smoke：`/api/health` 200、`/api/version` 200、首頁 200。正式站未發布。
+
 ## 2026-10-13（SPC Raw Data Value 日期誤判與項目資料修正）
 - 目的：執行 `SPC-RAWDATA-1012-TASK-002`，修正 raw data CSV `Value` 欄被日期格式化邏輯誤判，以及避免非目標管制項目資料混入下載結果。
 - 修改：新增 `RawDataCsvExporter`，將 CSV 組裝自 `SpcController` 抽出；`MeasuredAt`、`PortalDailyDate` 才套用日期格式化，`Value` 欄保留原始 invariant 字串；若 raw data row 帶有 `PartProcessCharacteristicId`，只輸出與下載目標 mapping 相同的列。本次不補規格資訊欄位，留待 `SPC-RAWDATA-1012-TASK-003`。

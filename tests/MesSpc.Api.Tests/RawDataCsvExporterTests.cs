@@ -51,6 +51,25 @@ public class RawDataCsvExporterTests
         csv.Should().NotContain("\"99.99\"");
     }
 
+    [Fact]
+    public void Build_ShouldIncludeSpecificationColumns()
+    {
+        var mapping = CreateMapping(2606);
+        mapping.LSL = 7.5;
+        mapping.TargetValue = 8.0;
+        mapping.USL = 8.5;
+        mapping.Unit = "%";
+        var rows = new object[]
+        {
+            new { PartProcessCharacteristicId = 2606, MeasuredAt = new DateTime(2026, 8, 14, 9, 10, 0), Value = 7.92 }
+        };
+
+        var csv = RawDataCsvExporter.Build(rows, mapping);
+
+        csv.Should().Contain("\"Value\",\"SpecLSL\",\"SpecTarget\",\"SpecUSL\",\"Unit\",\"LotNo\"");
+        csv.Should().Contain("\"7.92\",\"7.5\",\"8\",\"8.5\",\"%\"");
+    }
+
     private static PartProcessCharacteristic CreateMapping(int id) => new()
     {
         Id = id,

@@ -20,6 +20,10 @@ internal static class RawDataCsvExporter
             "SamplingPhase",
             "SamplingStage",
             "Value",
+            "SpecLSL",
+            "SpecTarget",
+            "SpecUSL",
+            "Unit",
             "LotNo",
             "SerialNo",
             "Operator",
@@ -44,6 +48,10 @@ internal static class RawDataCsvExporter
                 ReadProperty(row, "SamplingPhase") ?? "",
                 ReadProperty(row, "SamplingStage") ?? "",
                 ReadProperty(row, "Value") ?? "",
+                FormatNumber(mapping.LSL),
+                FormatNumber(mapping.TargetValue),
+                FormatNumber(mapping.USL),
+                mapping.Unit ?? "",
                 ReadProperty(row, "LotNo") ?? "",
                 ReadProperty(row, "SerialNo") ?? "",
                 ReadProperty(row, "Operator") ?? "",
@@ -77,6 +85,9 @@ internal static class RawDataCsvExporter
         DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt)
             ? dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
             : value ?? "";
+
+    private static string FormatNumber(double? value) =>
+        value.HasValue ? value.Value.ToString("G17", CultureInfo.InvariantCulture) : "";
 
     private static void AppendCsvRow(StringBuilder sb, params object?[] values)
     {
