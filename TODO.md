@@ -18,15 +18,9 @@
 
 規格：`specs/20261012-spc-rawdata-normality-issues-plan/spec.md`
 
-#### SPC-RAWDATA-1012-TASK-002：Raw data Value 日期誤判與項目資料正確性
-
-狀態：待執行；`SPC-RAWDATA-1012-TASK-001` 已完成
-
-初步範圍：修正 raw data CSV `Value` 欄被日期格式化邏輯誤判的問題，並確認下載資料只包含目標 `PartProcessCharacteristicId` 的量測資料。需建立後端單元測試或整合測試，覆蓋小數值、日期欄位與 Value 欄分流。
-
 #### SPC-RAWDATA-1012-TASK-003：Raw data 補上規格資訊
 
-狀態：待執行；相依 `SPC-RAWDATA-1012-TASK-002`
+狀態：待執行；`SPC-RAWDATA-1012-TASK-001/002` 已完成
 
 初步範圍：在 raw data 下載內容補上可辨識的規格資訊，初步包含 LSL、Target、USL 或既有規格字串；實作前需確認欄位來源與既有圖表/API 規格口徑一致。
 
@@ -201,6 +195,7 @@
 - `ARCH-TASK-007-SMTP-FILE-SCHEDULER-RELIABILITY-20261012`：已完成 SMTP、檔案與背景排程可靠性第一步改善。新增 `SpcReportScheduleProcessor`，報表週報/月報至少一位收件者寄送成功才更新 LastSent；全部 SMTP 寄送失敗會保留 LastSent 以便下次排程重試。不新增 schema、不改 SMTP 設定 UI。驗證通過：processor 測試 3 passed、後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
 - `ARCH-TASK-006-RELEASE-ENVIRONMENT-ISOLATION-20261012`：已完成發布流程與環境隔離改善。新增共用 `ReleaseTargetGuard.psm1`，兩支 release 工具改用同一份正式環境與 `D:\Sites\PmrPortal` 路徑阻擋規則；新增 PowerShell 測試。驗證通過：guard 測試、Production/Portal 拒絕、Sandbox `-WhatIf` 載入。本次未操作正式站、未發布、未刪除資料。
 - `SPC-RAWDATA-1012-TASK-001`：已完成 All 總表後 raw data 下載上下文修正。新增前端 raw data active PPC 解析工具，下載時依序使用 `ppcId`、總表列 `partProcessCharacteristicId`、舊欄位 `ppcId` 與 selected mapping，避免 All 總表 drilldown 後仍提示需先查詢管制圖。驗證通過：raw data 下載解析測試 5 passed、前端 build 通過；已發布 SPC 測試站 frontend，備份 `release/test/frontend.backup-rawdata-context-20261012-172446`，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 8 件（Raw Data 2 件、咬蝕 X- 2 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
+- `SPC-RAWDATA-1012-TASK-002`：已完成 Raw data `Value` 日期誤判與項目資料正確性修正。後端 CSV 組裝抽出 `RawDataCsvExporter`，日期欄位才格式化，`Value` 欄保留原始 invariant 字串，並過濾其他 `PartProcessCharacteristicId` 的列。驗證通過：RawDataCsvExporter 測試 2 passed、後端 build 通過；已發布 SPC 測試站 backend，備份 `release/test/backend.backup-rawdata-value-20261013-074103`，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 7 件（Raw Data 1 件、咬蝕 X- 2 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 
 ## 2026-10-11 執行紀錄
 

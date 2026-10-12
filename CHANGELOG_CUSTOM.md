@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（SPC Raw Data Value 日期誤判與項目資料修正）
+- 目的：執行 `SPC-RAWDATA-1012-TASK-002`，修正 raw data CSV `Value` 欄被日期格式化邏輯誤判，以及避免非目標管制項目資料混入下載結果。
+- 修改：新增 `RawDataCsvExporter`，將 CSV 組裝自 `SpcController` 抽出；`MeasuredAt`、`PortalDailyDate` 才套用日期格式化，`Value` 欄保留原始 invariant 字串；若 raw data row 帶有 `PartProcessCharacteristicId`，只輸出與下載目標 mapping 相同的列。本次不補規格資訊欄位，留待 `SPC-RAWDATA-1012-TASK-003`。
+- 驗證：`dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter RawDataCsvExporterTests --no-restore -p:UseSharedCompilation=false` 2 passed；`dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false` 0 warnings / 0 errors。首次測試與 build 平行執行遇 `obj` 檔案鎖，改為單獨重跑後通過。
+- 發布：已發布 SPC 測試站 backend，備份 `release/test/backend.backup-rawdata-value-20261013-074103`；Playwright/Chromium HTTPS smoke：`/api/health` 200、`/api/version` 200、首頁 200。正式站未發布。
+
 ## 2026-10-12（SPC Raw Data All 總表後下載上下文修正）
 - 目的：執行 `SPC-RAWDATA-1012-TASK-001`，修正使用者先查詢 All 總表後，選定單一管制項目再下載 raw data 時，前端未穩定解析 active ppcId 而提示需先查詢管制圖的問題。
 - 修改：新增 `frontend/mes-spc-web/src/utils/spcRawDataDownload.js` 與測試；`SpcChartView` raw data 下載改用共用解析邏輯，依序使用 `ppcId`、總表列 `partProcessCharacteristicId`、舊欄位 `ppcId`、selected mapping id。本次不處理 `Value` 日期誤判與規格資訊補欄。

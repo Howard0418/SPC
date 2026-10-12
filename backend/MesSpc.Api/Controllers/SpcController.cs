@@ -6,8 +6,6 @@ using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
 using MesSpc.Api.Services.Security;
 using Microsoft.AspNetCore.Authorization;
-using System.Globalization;
-using System.Reflection;
 using System.Text;
 
 namespace MesSpc.Api.Controllers;
@@ -81,7 +79,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         var rows = ToEnumerable(chart.RawDataPoints).ToList();
         if (rows.Count == 0) return NotFound("Raw data not found.");
 
-        var csv = BuildRawDataCsv(rows, mapping);
+        var csv = RawDataCsvExporter.Build(rows, mapping);
         var fileName = $"SPC_RawData_{ppcId}_{DateTime.Now:yyyyMMddHHmmss}.csv";
         return File(Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray(), "text/csv; charset=utf-8", fileName);
     }
@@ -720,78 +718,6 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             ? items.Cast<object>()
             : [];
 
-    private static string BuildRawDataCsv(IEnumerable<object> rows, PartProcessCharacteristic mapping)
-    {
-        var sb = new StringBuilder();
-        AppendCsvRow(sb,
-            "PartProcessCharacteristicId",
-            "Process",
-            "Characteristic",
-            "Machine",
-            "MeasuredAt",
-            "PortalDailyDate",
-            "SamplingPhase",
-            "SamplingStage",
-            "Value",
-            "LotNo",
-            "SerialNo",
-            "Operator",
-            "LineId",
-            "TankId",
-            "SlotId",
-            "SideCode",
-            "IsExcluded",
-            "IsOutOfSpec",
-            "IsOutOfControl",
-            "VariableMeasurementId");
-
-        foreach (var row in rows)
-        {
-            AppendCsvRow(sb,
-                mapping.Id,
-                mapping.Process?.ProcessName ?? mapping.Process?.ProcessCode ?? "",
-                mapping.Characteristic?.CharacteristicName ?? mapping.Characteristic?.CharacteristicCode ?? "",
-                mapping.Machine?.MachineName ?? mapping.Machine?.MachineCode ?? "",
-                FormatValue(ReadProperty(row, "MeasuredAt")),
-                FormatValue(ReadProperty(row, "PortalDailyDate")),
-                ReadProperty(row, "SamplingPhase") ?? "",
-                ReadProperty(row, "SamplingStage") ?? "",
-                FormatValue(ReadProperty(row, "Value")),
-                ReadProperty(row, "LotNo") ?? "",
-                ReadProperty(row, "SerialNo") ?? "",
-                ReadProperty(row, "Operator") ?? "",
-                ReadProperty(row, "LineId") ?? "",
-                ReadProperty(row, "TankId") ?? "",
-                ReadProperty(row, "SlotId") ?? "",
-                ReadProperty(row, "SideCode") ?? "",
-                ReadProperty(row, "IsExcluded") ?? "",
-                ReadProperty(row, "IsOutOfSpec") ?? "",
-                ReadProperty(row, "IsOutOfControl") ?? "",
-                ReadProperty(row, "VariableMeasurementId") ?? "");
-        }
-
-        return sb.ToString();
-    }
-
-    private static string? ReadProperty(object source, string name)
-    {
-        var prop = source.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-        return prop?.GetValue(source) is { } value ? Convert.ToString(value, CultureInfo.InvariantCulture) : null;
-    }
-
-    private static string FormatValue(string? value) =>
-        DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt)
-            ? dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
-            : value ?? "";
-
-    private static void AppendCsvRow(StringBuilder sb, params object?[] values)
-    {
-        sb.AppendLine(string.Join(",", values.Select(value =>
-        {
-            var text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? "";
-            return "\"" + text.Replace("\"", "\"\"") + "\"";
-        })));
-    }
 }
 
 public record TrialCalculateReq(int PartProcessCharacteristicId, DateTime? StartDate, DateTime? EndDate);

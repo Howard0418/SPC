@@ -1,3 +1,8 @@
+## [2026-10-13] - SPC-RAWDATA-1012-TASK-002 Raw Data Value 日期誤判與項目資料修正
+- 目的：修正 raw data CSV `Value` 欄與日期欄共用格式化造成數值被誤判為日期的問題，並避免非目標 PPC 資料混入下載結果。
+- 範圍：後端 CSV 組裝抽出 `RawDataCsvExporter`；日期欄位才格式化，`Value` 保留原始 invariant 字串；補 RawDataCsvExporter 單元測試。不補規格資訊欄位。
+- 驗證：RawDataCsvExporter 測試 2 passed；後端 build 通過；已發布 SPC 測試站 backend 並完成 HTTPS smoke。
+
 ## [2026-10-12] - SPC-RAWDATA-1012-TASK-001 All 總表後 Raw Data 下載上下文修正
 - 目的：修正 SPC 使用者先查詢 All 總表後，選定單一管制項目再下載 raw data 時，前端未穩定解析 active ppcId 而提示需先查詢管制圖的問題。
 - 範圍：前端 `SpcChartView` raw data 下載上下文解析與對應單元測試；不調整 CSV 欄位內容、不修正 Value 日期誤判、不補規格資訊，後兩者留待後續 Task。
