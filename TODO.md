@@ -154,7 +154,7 @@
 
 ### TASK-006：發布流程與環境隔離
 
-狀態：待確認
+狀態：已完成（2026-10-12，`specs/20261012-architecture-task006-release-environment-isolation/`）；工具與文件型小工作，未發布測試站或正式站
 
 ### TASK-007：SMTP、檔案與背景排程可靠性
 
@@ -171,6 +171,10 @@
 ### TASK-010：大型模組拆分與架構治理
 
 狀態：待確認
+
+## 2026-10-12 執行紀錄
+
+- `ARCH-TASK-006-RELEASE-ENVIRONMENT-ISOLATION-20261012`：已完成發布流程與環境隔離改善。新增共用 `ReleaseTargetGuard.psm1`，兩支 release 工具改用同一份正式環境與 `D:\Sites\PmrPortal` 路徑阻擋規則；新增 PowerShell 測試。驗證通過：guard 測試、Production/Portal 拒絕、Sandbox `-WhatIf` 載入。本次未操作正式站、未發布、未刪除資料。
 
 ## 2026-10-11 執行紀錄
 

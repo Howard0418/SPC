@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（發布流程與環境隔離）
+- 目的：執行 `ARCH-TASK-006-RELEASE-ENVIRONMENT-ISOLATION-20261012`，將 release 工具正式環境與 Portal 路徑阻擋規則抽成共用 guard。
+- 修改：新增 `tools/release/ReleaseTargetGuard.psm1` 與 `tests/release/ReleaseTargetGuard.Tests.ps1`；`ReleaseApplyPackage.ps1`、`ReleaseBackupRestore.ps1` 改用共用 `Assert-SpcReleaseTarget`。
+- 驗證：`ReleaseTargetGuard.Tests.ps1` 通過；兩支工具 Production/Portal 拒絕案例如預期失敗，Sandbox `-WhatIf` 載入驗證通過。
+- 發布：工具與文件型小工作，未發布 SPC 測試站或正式站；未操作正式 IIS、未刪除資料。
+
 ## 2026-10-11（資料庫 migration 與啟動流程）
 - 目的：執行 `ARCH-TASK-005-DATABASE-STARTUP-FLOW-20261011`，先將資料庫啟動 provider 正規化與 EnsureCreated/Migrate 決策抽離成可測試規則。
 - 修改：新增 `DatabaseStartupPlanner` 與 `DatabaseStartupPlannerTests`；`Program.cs` 改用啟動計畫判斷 SQLite `EnsureCreated` 與 SQL Server baseline + EF migration。不新增 migration、不改相容性 SQL、不操作正式資料庫。

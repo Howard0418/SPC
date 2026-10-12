@@ -23,22 +23,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Assert-NonProductionTarget {
-    param(
-        [string]$Name,
-        [string]$Path
-    )
-
-    if ($Name -match '^(prod|production|formal|正式)$') {
-        throw 'This prototype refuses Production targets. Formal release requires a separate explicit authorization.'
-    }
-
-    $fullPath = [System.IO.Path]::GetFullPath($Path)
-    $blocked = [System.IO.Path]::GetFullPath('D:\Sites\PmrPortal')
-    if ($fullPath.StartsWith($blocked, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw 'Blocked target path: D:\Sites\PmrPortal must not be used by this SPC release tool.'
-    }
-}
+Import-Module (Join-Path $PSScriptRoot 'ReleaseTargetGuard.psm1') -Force
 
 function Save-Json {
     param(
@@ -98,7 +83,7 @@ function Invoke-SmokeTests {
     return $results
 }
 
-Assert-NonProductionTarget -Name $EnvironmentName -Path $SitePath
+Assert-SpcReleaseTarget -EnvironmentName $EnvironmentName -SitePath $SitePath
 
 $resolvedSitePath = [System.IO.Path]::GetFullPath($SitePath)
 $resolvedPackagePath = [System.IO.Path]::GetFullPath($PackagePath)

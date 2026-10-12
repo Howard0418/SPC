@@ -1,3 +1,8 @@
+## [2026-10-12] - ARCH-TASK-006 發布流程與環境隔離
+- 目的：將 release 工具中正式環境與 Portal 路徑阻擋規則抽為共用 guard，避免 apply 與 backup/restore 工具安全邊界不一致。
+- 範圍：新增 `ReleaseTargetGuard.psm1` 與自動化測試，兩支 release 工具改用共用 guard；不操作正式站、不發布、不刪除資料。
+- 驗證：`ReleaseTargetGuard.Tests.ps1` 通過；兩支 release 工具的 Production/Portal 拒絕與 Sandbox WhatIf 載入驗證通過。
+
 ## [2026-10-11] - ARCH-TASK-005 資料庫 migration 與啟動流程
 - 目的：先將資料庫啟動流程的 provider 正規化與 EnsureCreated/Migrate 決策抽離成可測試規則，降低日後整理 migration 與相容性 SQL 時的誤判風險。
 - 範圍：新增 `DatabaseStartupPlanner` 與測試，`Program.cs` 改用啟動計畫；不新增 migration、不改相容性 SQL、不操作正式資料庫。
