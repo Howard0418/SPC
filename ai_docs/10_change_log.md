@@ -1,3 +1,9 @@
+## [2026-10-12] - IIS-TASK-006 HTTPS binding 補驗
+- 目的：補上 SPC 單一測試站 HTTPS binding/cert 與 mixed content 驗證，使用者提供 Portal HTTPS 入口 `https://172.16.110.27:8900/Login`。
+- 範圍：新增 `SpcSingleTest` 的 `https/172.16.110.27:8901:` binding，沿用既有測試憑證；production `VITE_PORTAL_URL` 改為 HTTPS Portal URL，同步 `.env.example`，重建並刷新 `release/test/frontend`。不操作正式站。
+- 驗證：IIS 與 frontend 皆已備份；Playwright/Chromium HTTPS 首頁/子路由/API version smoke 通過，Network 無 `http://` mixed content；`npm run build` 通過。
+- 限制：真人登入、Portal SSO、JWT 與 Viewer 403 仍待測試帳號。
+
 ## [2026-10-12] - IIS-TASK-007 HTTP smoke 補驗
 - 目的：補驗單一 IIS Site 在現有 HTTP 測試單站可完成的 smoke，並移除測試站 active bundle 殘留的舊 `8081` API base 風險。
 - 範圍：重建 SPC Web production 前端並刷新 `release/test/frontend`；同步單一 IIS Site 規格、驗證紀錄、需求索引、TODO 與變更紀錄。不修改後端程式、不操作正式站。

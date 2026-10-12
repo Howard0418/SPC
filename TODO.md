@@ -18,13 +18,12 @@
 
 #### IIS-TASK-003～IIS-TASK-008：沿用 `specs/20261005-single-iis-site/tasks.md`
 
-狀態：已完成 TASK-001～TASK-005；TASK-006 已建立 HTTP 測試單站；T-007 已補驗 HTTP 單站 smoke 與未登入 401；HTTPS binding/cert 為外部環境阻擋，待提供後才能完成 AC-007，不標示 DONE
+狀態：已完成 TASK-001～TASK-006；T-007 已補驗 HTTP/HTTPS 單站 smoke、mixed content 與未登入 401；登入/SSO/JWT/Viewer 403 待測試帳號，不標示 DONE
 
 待執行：
 
-- T-006：待測試站 HTTPS binding/cert 可用後補驗 mixed content；不發布正式站。
-- T-007：已完成 production 前端刷新、資產 API base 檢查、HTTP 首頁/子路由/API version/未登入 401 smoke；待可用測試帳號或瀏覽器條件後，補登入、Portal SSO、JWT 與 Viewer 403。HTTPS mixed content 隨 T-006 阻擋。
-- T-008：已完成需求索引、變更紀錄與驗證證據同步；T-006/T-007 外部阻擋與待測項保留。
+- T-007：已完成 production 前端刷新、資產 API base 檢查、HTTP/HTTPS 首頁/子路由/API version/mixed content/未登入 401 smoke；待可用測試帳號後，補真人登入、Portal SSO、JWT 與 Viewer 403。
+- T-008：已完成需求索引、變更紀錄與驗證證據同步；T-007 待測項保留。
 
 ### 第二順位：SPC 線別分析項目總覽公式版本記錄（資料正確性）
 

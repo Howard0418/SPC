@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（單一 IIS Site T-006 HTTPS binding 補驗）
+- 目的：執行 `IIS-TASK-006`，依使用者提供的 Portal HTTPS 入口補上 SPC 單一測試站 HTTPS binding/cert 與 mixed content 驗證。
+- 修改：確認 `https://172.16.110.27:8900/Login` 屬 `PmrPortalWeb`；替 `SpcSingleTest` 新增 `https/172.16.110.27:8901:` binding，沿用憑證 hash `6a24ea17c559069d29139c38c79fe246bdfdc6a2`；production `VITE_PORTAL_URL` 改為 `https://172.16.110.27:8900/Login`，同步 `.env.example` 並重建刷新 SPC 測試單站 frontend。
+- 驗證：IIS 備份 `SPC-single-iis-t006-https-20261012-132421`，frontend 備份 `release/test/frontend.backup-single-iis-t006-https-20261012-132549`；`npm run build` 通過；Playwright/Chromium 開啟 `https://172.16.110.27:8901/`、`/spc`、`/calibration-instruments`、`/particle-monitoring` 皆回 200 並導向 HTTPS Portal，Network 無 `http://` 請求；`/api/version` 回 200/test。PowerShell/curl 受 Windows Schannel `SEC_E_NO_CREDENTIALS` 限制，不作為此憑證驗證工具。
+- 發布：已更新 SPC 測試單站 IIS binding 與 frontend；正式站未發布。T-007 真人登入、Portal SSO、JWT 與 Viewer 403 仍待測試帳號。
+
 ## 2026-10-12（單一 IIS Site T-007 HTTP smoke 補驗）
 - 目的：補驗 `IIS-TASK-007` 可在現有 HTTP 測試單站完成的項目，確認單一 IIS Site 測試站不再載入舊分站台 API base。
 - 修改：重跑 SPC Web production build，備份 `release/test/frontend.backup-single-iis-t007-http-smoke-20261012-130624`，清除並刷新 `release/test/frontend`，同步單一 IIS Site 規格、驗證紀錄、需求索引與工作池。
