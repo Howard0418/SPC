@@ -18,11 +18,11 @@
 
 #### IIS-TASK-003～IIS-TASK-008：沿用 `specs/20261005-single-iis-site/tasks.md`
 
-狀態：已完成 TASK-001～TASK-006；T-007 已補驗 HTTP/HTTPS 單站 smoke、mixed content 與未登入 401；登入/SSO/JWT/Viewer 403 待測試帳號，不標示 DONE
+狀態：已完成 TASK-001～TASK-006；T-007 已補驗 HTTP/HTTPS 單站 smoke、mixed content、未登入 401、短效測試 JWT 與 Viewer 403；真人登入/Portal SSO 待測試帳號，不標示 DONE
 
 待執行：
 
-- T-007：已完成 production 前端刷新、資產 API base 檢查、HTTP/HTTPS 首頁/子路由/API version/mixed content/未登入 401 smoke；待可用測試帳號後，補真人登入、Portal SSO、JWT 與 Viewer 403。
+- T-007：已完成 production 前端刷新、資產 API base 檢查、HTTP/HTTPS 首頁/子路由/API version/mixed content/未登入 401/JWT/Viewer 403 smoke；待可用測試帳號後，補真人登入與 Portal SSO。
 - T-008：已完成需求索引、變更紀錄與驗證證據同步；T-007 待測項保留。
 
 ### 第二順位：SPC 線別分析項目總覽公式版本記錄（資料正確性）

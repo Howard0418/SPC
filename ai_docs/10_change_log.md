@@ -1,3 +1,9 @@
+## [2026-10-12] - IIS-TASK-007 JWT/403 補驗
+- 目的：續補單一 IIS Site T-007 中可自動驗證的 JWT、401 與 Viewer 403，縮小剩餘外部阻擋範圍。
+- 範圍：使用測試站設定產生短效測試 JWT 進行 HTTPS API smoke；僅更新文件，不修改程式、不操作 IIS、不發布正式站。
+- 驗證：Portal 測試登入頁可載入但 `demo/demo123` 不可用；未登入寫入 API 401，Viewer JWT 寫入 API 403，Editor JWT 進入 controller validation 回 400；Portal directory 比對服務另回 502/Portal 401。
+- 限制：真人登入與 Portal SSO 仍需可用測試帳號。
+
 ## [2026-10-12] - IIS-TASK-006 HTTPS binding 補驗
 - 目的：補上 SPC 單一測試站 HTTPS binding/cert 與 mixed content 驗證，使用者提供 Portal HTTPS 入口 `https://172.16.110.27:8900/Login`。
 - 範圍：新增 `SpcSingleTest` 的 `https/172.16.110.27:8901:` binding，沿用既有測試憑證；production `VITE_PORTAL_URL` 改為 HTTPS Portal URL，同步 `.env.example`，重建並刷新 `release/test/frontend`。不操作正式站。

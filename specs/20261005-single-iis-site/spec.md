@@ -1,7 +1,7 @@
 # 功能規格：SPC 單一 IIS Site 部署
 - 功能 ID：20261005-single-iis-site
 - 版本：1
-- 狀態：部分完成；T-001～T-006 完成，T-007 已補驗 HTTP 單站 smoke 與 401，T-008 文件同步完成；登入/SSO/JWT/Viewer 403 smoke 條件仍待補
+- 狀態：部分完成；T-001～T-006 完成，T-007 已補驗 HTTP/HTTPS 單站 smoke、JWT、401 與 Viewer 403，T-008 文件同步完成；真人登入與 Portal SSO 仍待測試帳號
 - 涉及專案：SPC Web、SPC API、IIS
 - 授權依據：2026-10-05 使用者要求將目前專案調整成單一 IIS Site；目前僅核准 TASK-001 分析與 TASK-002 規格/rollback 計畫。
 - 現行需求基準：[docs/requirements.md](../../docs/requirements.md)

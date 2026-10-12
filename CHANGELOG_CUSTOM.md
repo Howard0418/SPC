@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（單一 IIS Site T-007 JWT/403 補驗）
+- 目的：續補 `IIS-TASK-007` 可不依賴真人帳密的 JWT、401 與 Viewer 403 驗證。
+- 修改：僅更新單一 IIS Site 規格、驗證紀錄、需求索引、TODO 與變更目的；不修改程式、不操作 IIS、不刷新發布檔。
+- 驗證：Portal 測試登入頁可載入，但舊 E2E `demo/demo123` 回「帳號或密碼錯誤」且不再猜測帳密。使用測試站設定產生短效測試 JWT 並只回報狀態碼：未登入 `PUT /api/v1/spc/point-remarks` 回 401，Viewer JWT 回 403，Editor JWT 回 400 validation error（授權通過但 invalid body，未寫入資料）；Editor JWT 呼叫 Portal 人員比對 API 回 502，訊息為 Portal directory 外部服務 401。
+- 發布：文件與驗證補記，測試站已沿用既有單站；正式站未發布。真人登入與 Portal SSO 待可用測試帳號。
+
 ## 2026-10-12（單一 IIS Site T-006 HTTPS binding 補驗）
 - 目的：執行 `IIS-TASK-006`，依使用者提供的 Portal HTTPS 入口補上 SPC 單一測試站 HTTPS binding/cert 與 mixed content 驗證。
 - 修改：確認 `https://172.16.110.27:8900/Login` 屬 `PmrPortalWeb`；替 `SpcSingleTest` 新增 `https/172.16.110.27:8901:` binding，沿用憑證 hash `6a24ea17c559069d29139c38c79fe246bdfdc6a2`；production `VITE_PORTAL_URL` 改為 `https://172.16.110.27:8900/Login`，同步 `.env.example` 並重建刷新 SPC 測試單站 frontend。
