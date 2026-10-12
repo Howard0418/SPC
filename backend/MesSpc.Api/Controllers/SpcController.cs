@@ -678,11 +678,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
                 ? "ExcludedVisible"
                 : string.Empty;
 
-    private string CurrentUserName() =>
-        User.Identity?.Name
-        ?? User.FindFirst("name")?.Value
-        ?? User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
-        ?? "System";
+    private string CurrentUserName() => AuditActorResolver.Resolve(User);
 
     private static object ToPointExclusionDto(SpcPointExclusion entity) => new
     {

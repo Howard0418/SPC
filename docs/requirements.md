@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- 稽核與操作者追溯：[ARCH-TASK-008-AUDIT-OPERATOR-TRACEABILITY-20261012](../specs/20261012-architecture-task008-audit-operator-traceability/spec.md)；SPC 後端新增共用 `AuditActorResolver`，統一依 `Identity.Name`、`ClaimTypes.Name`、`name`、`preferred_username`、`username`、`NameIdentifier`、`sub` 解析操作者。SPC 點位備註/排除寫入 `UpdatedBy` 時改用共用解析規則；本次不新增資料表、不修改 JWT 發行或登入流程。
 - SMTP、檔案與背景排程可靠性：[ARCH-TASK-007-SMTP-FILE-SCHEDULER-RELIABILITY-20261012](../specs/20261012-architecture-task007-smtp-file-scheduler-reliability/spec.md)；SPC 項目管制總覽週報/月報背景排程已抽出 `SpcReportScheduleProcessor`，寄送報表時需至少一位收件者成功才更新 LastSent；若全部 SMTP 寄送失敗，LastSent 保持不變以便後續排程重試。不新增資料表、不變更 SMTP 設定 UI。
 - 發布流程與環境隔離：[ARCH-TASK-006-RELEASE-ENVIRONMENT-ISOLATION-20261012](../specs/20261012-architecture-task006-release-environment-isolation/spec.md)；SPC release 工具已將正式環境名稱與 `D:\Sites\PmrPortal` 路徑阻擋抽成共用 `ReleaseTargetGuard.psm1`，`ReleaseApplyPackage.ps1` 與 `ReleaseBackupRestore.ps1` 共用同一份安全邊界，並新增 PowerShell 自動化測試。本次未操作正式站、未發布、未刪除資料。
 - 資料庫 migration 與啟動流程：[ARCH-TASK-005-DATABASE-STARTUP-FLOW-20261011](../specs/20261011-architecture-task005-database-startup-flow/spec.md)；SPC API 已將資料庫 provider 正規化與啟動動作決策抽出為 `DatabaseStartupPlanner`，明確區分 SQLite `EnsureCreated` 與 SQL Server baseline + EF migration，降低日後整理相容性 SQL 與發布時誤判 provider 的風險。本次不新增 migration、不改相容性 SQL、不操作正式資料庫。已發布 SPC 測試站 backend，正式站未發布。

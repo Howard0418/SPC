@@ -1,3 +1,8 @@
+## [2026-10-12] - ARCH-TASK-008 稽核與操作者追溯
+- 目的：先建立共用操作者解析規則，降低各 controller 對 `Identity.Name`、username claims 與 fallback 解析不一致造成的稽核追溯風險。
+- 範圍：新增 `AuditActorResolver`，調整 SPC 點位備註/排除 `UpdatedBy` 使用共用解析；不新增 schema、不修改登入/JWT 發行、不改校正 audit log。
+- 驗證：`UserAccessTests|SpcPointRemarksControllerTests` 15 passed；後端 build 0 errors；已發布 SPC 測試站 backend，`/api/health`、`/api/version`、首頁 smoke 皆 200。
+
 ## [2026-10-12] - ARCH-TASK-007 SMTP、檔案與背景排程可靠性
 - 目的：修正 SPC 報表背景排程未檢查 SMTP 寄送結果即更新 LastSent 的可靠性風險，避免全部寄送失敗後同週/月不再重試。
 - 範圍：先以測試保護週報/月報排程處理，再抽出可測 processor；不新增 schema、不修改 SMTP 設定 UI、不操作正式站。

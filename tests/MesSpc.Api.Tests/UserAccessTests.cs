@@ -43,6 +43,43 @@ public class UserAccessTests
     }
 
     [Fact]
+    public void AuditActorResolver_ShouldPreferIdentityName()
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.Name, "identity-user"),
+                new Claim("preferred_username", "preferred-user")
+            ],
+            "test"));
+
+        AuditActorResolver.Resolve(principal).Should().Be("identity-user");
+    }
+
+    [Fact]
+    public void AuditActorResolver_ShouldUsePreferredUsername_WhenIdentityNameMissing()
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("preferred_username", " preferred-user ")],
+            "test",
+            nameType: "missing-name-type",
+            roleType: ClaimTypes.Role));
+
+        AuditActorResolver.Resolve(principal).Should().Be("preferred-user");
+    }
+
+    [Fact]
+    public void AuditActorResolver_ShouldReturnSystem_WhenNoUsableClaim()
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("preferred_username", " ")],
+            "test",
+            nameType: "missing-name-type",
+            roleType: ClaimTypes.Role));
+
+        AuditActorResolver.Resolve(principal).Should().Be("System");
+    }
+
+    [Fact]
     public async Task ViewerWriteGuard_Should_Block_Post_And_Allow_Get()
     {
         var nextCalled = false;

@@ -162,7 +162,7 @@
 
 ### TASK-008：稽核與操作者追溯
 
-狀態：待確認
+狀態：已完成（2026-10-12，`specs/20261012-architecture-task008-audit-operator-traceability/`）；SPC 測試站 backend 已發布，正式站未發布
 
 ### TASK-009：測試與可重建基線
 
@@ -174,6 +174,7 @@
 
 ## 2026-10-12 執行紀錄
 
+- `ARCH-TASK-008-AUDIT-OPERATOR-TRACEABILITY-20261012`：已完成稽核與操作者追溯第一步改善。新增共用 `AuditActorResolver`，SPC 點位備註/排除 `UpdatedBy` 改用同一套 claim 解析規則；不新增 schema、不改登入或 JWT 發行。驗證通過：操作者解析與點位備註測試 15 passed，後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
 - `ARCH-TASK-007-SMTP-FILE-SCHEDULER-RELIABILITY-20261012`：已完成 SMTP、檔案與背景排程可靠性第一步改善。新增 `SpcReportScheduleProcessor`，報表週報/月報至少一位收件者寄送成功才更新 LastSent；全部 SMTP 寄送失敗會保留 LastSent 以便下次排程重試。不新增 schema、不改 SMTP 設定 UI。驗證通過：processor 測試 3 passed、後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
 - `ARCH-TASK-006-RELEASE-ENVIRONMENT-ISOLATION-20261012`：已完成發布流程與環境隔離改善。新增共用 `ReleaseTargetGuard.psm1`，兩支 release 工具改用同一份正式環境與 `D:\Sites\PmrPortal` 路徑阻擋規則；新增 PowerShell 測試。驗證通過：guard 測試、Production/Portal 拒絕、Sandbox `-WhatIf` 載入。本次未操作正式站、未發布、未刪除資料。
 

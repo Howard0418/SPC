@@ -42,6 +42,31 @@ public class SpcPointRemarksControllerTests
     }
 
     [Fact]
+    public async Task UpsertPointRemark_ShouldWriteUpdatedByFromPreferredUsername_WhenIdentityNameMissing()
+    {
+        await using var db = CreateDb();
+        var measurement = await SeedVariableMeasurementAsync(db, ppcId: 101);
+        var controller = CreateController(db, new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("preferred_username", "trace-user")],
+            "TestAuth",
+            nameType: "missing-name-type",
+            roleType: ClaimTypes.Role)));
+        var request = new UpsertSpcPointRemarkReq(
+            measurement.PartProcessCharacteristicId,
+            "VariableMeasurement",
+            measurement.Id,
+            null,
+            null,
+            null,
+            "測試備註：操作者追溯");
+
+        var result = await controller.UpsertPointRemark(request, CancellationToken.None);
+
+        result.Should().BeOfType<OkObjectResult>();
+        (await db.SpcPointRemarks.SingleAsync()).UpdatedBy.Should().Be("trace-user");
+    }
+
+    [Fact]
     public async Task UpsertPointRemark_WhenSamePointExists_UpdatesExistingRow()
     {
         await using var db = CreateDb();
@@ -163,7 +188,7 @@ public class SpcPointRemarksControllerTests
         return measurement;
     }
 
-    private static SpcController CreateController(AppDbContext db)
+    private static SpcController CreateController(AppDbContext db, ClaimsPrincipal? user = null)
     {
         var emailService = new Mock<IEmailNotificationService>();
         var config = new ConfigurationBuilder().Build();
@@ -172,7 +197,7 @@ public class SpcPointRemarksControllerTests
         {
             HttpContext = new DefaultHttpContext
             {
-                User = new ClaimsPrincipal(new ClaimsIdentity(
+                User = user ?? new ClaimsPrincipal(new ClaimsIdentity(
                     [new Claim(ClaimTypes.Name, "測試人員"), new Claim(ClaimTypes.Role, "Editor")],
                     "TestAuth"))
             }

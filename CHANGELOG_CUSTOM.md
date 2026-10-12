@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（稽核與操作者追溯）
+- 目的：執行 `ARCH-TASK-008-AUDIT-OPERATOR-TRACEABILITY-20261012`，先統一後端寫入稽核欄位時的操作者 claim 解析規則。
+- 修改：新增 `AuditActorResolver`，依序解析 `Identity.Name`、標準/自訂 name、username、NameIdentifier 與 `sub`；SPC 點位備註/排除 `UpdatedBy` 改用共用解析。不新增 schema、不修改登入或 JWT 發行。
+- 驗證：`UserAccessTests|SpcPointRemarksControllerTests` 15 passed；後端 build 0 errors，僅有 NuGet 弱點資料來源連線警告。
+- 發布：已發布 SPC 測試站 backend，備份 `release/test/backend.backup-architecture-task008-20261012-0828`；首次套用遇 DLL 鎖，已用 `app_offline.htm` 釋放後重跑成功並移除暫停檔。smoke：`8084/api/health` 200、`8084/api/version` 200/test、首頁 200。正式站未發布。
+
 ## 2026-10-12（SMTP、檔案與背景排程可靠性）
 - 目的：執行 `ARCH-TASK-007-SMTP-FILE-SCHEDULER-RELIABILITY-20261012`，修正 SPC 報表背景排程未檢查 SMTP 寄送結果即更新 LastSent 的可靠性風險。
 - 修改：新增 `SpcReportScheduleProcessor` 與 `ISpcOverviewReportBuilder`，`SpcReportSchedulerService` 改為只負責定時觸發；週報/月報至少一位收件者寄送成功才更新 LastSent，全部失敗則保留重試機會。
