@@ -54,3 +54,4 @@ Then 系統只顯示預覽，不寫入通知已讀或生日資料異動
 - 發布狀態：規劃型小工作，建置與發布不適用；Portal 測試站與正式站皆未發布。
 - 限制或未決問題：實作時需先讀取 PmrPortal 既有生日設定頁與登入生日通知元件，確認彈窗樣式、圖片尺寸限制、權限與既有已讀狀態是否可完全避開。
 - 2026-10-12 實作後補修：使用者回報祝詞縮短至 240 字內仍儲存 500；原因為祝詞 JSON 內容可能超過 `feature_settings.message` 舊 500 字限制。PmrPortal 已補 migration 放寬欄位、補齊 EF migration metadata、測試 9 passed、API build 通過並發布 Portal 測試站 API。測試 DB 已確認欄位為 `nvarchar(max)` 且 migration history 已有 `20261012031000_ExpandFeatureSettingsMessage`。正式站未發布。
+- 2026-10-12 顯示模式調整：PmrPortal 生日通知設定新增顯示方式，可選「只顯示圖片」或「顯示賀詞 + 圖片」；設定頁測試預覽與首頁生日通知共用 `DisplayMode`。生日設定 API 測試 10 passed、API/Web build 通過並發布 Portal 測試站 API/Web。正式站未發布。

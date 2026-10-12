@@ -10,6 +10,7 @@
 - 2026-10-12 卡片微調：PmrPortal 生日賀卡背景改透明、浮動關閉按鍵移至右上角、圖片置中放大。Portal Web build 通過並已發布測試站 Web，正式站未發布。
 - 2026-10-12 陰影移除：依使用者回饋移除生日賀卡透明外框與圖片陰影，只保留透明背景、右上關閉按鍵與放大圖片。Portal Web build 通過並已發布測試站 Web，正式站未發布。
 - 2026-10-12 儲存 500 補修：使用者回報祝詞縮短至 240 字內仍儲存失敗；原因為 PmrPortal 將祝詞以 JSON 儲存在 `feature_settings.message`，可能超過舊 500 字欄位限制。已於 PmrPortal 將欄位放寬為 `nvarchar(max)` 並補齊 EF migration metadata；生日設定 API 測試 9 passed、API build 通過，並發布 Portal 測試站 API。測試 DB 已確認欄位為 `nvarchar(max)` 且 migration history 已有 `20261012031000_ExpandFeatureSettingsMessage`。正式站未發布。
+- 2026-10-12 顯示模式調整：PmrPortal 生日通知設定新增顯示方式，可選「只顯示圖片」或「顯示賀詞 + 圖片」；設定頁測試預覽與首頁生日通知共用 `DisplayMode`。生日設定 API 測試 10 passed、API/Web build 通過，並發布 Portal 測試站 API/Web。正式站未發布。
 
 ## 2026-10-12（Portal 測試生日祝賀按鍵規劃）
 - 目的：依使用者要求，規劃 Portal 生日通知設定頁的測試生日祝賀按鍵，方便不指定時間也能確認版面與顯示效果。
