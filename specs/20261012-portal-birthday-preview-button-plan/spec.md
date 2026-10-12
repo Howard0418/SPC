@@ -40,9 +40,9 @@ Then 系統只顯示預覽，不寫入通知已讀或生日資料異動
 - 建議小工作代號：`PORTAL-BIRTHDAY-REPLAN-TASK-004`
 - 主系統：PmrPortal
 - 相依系統：無；SPC 只維護跨系統工作池與需求索引。
-- 資料庫影響：預期無 schema migration；若實作時發現既有生日通知已讀紀錄會被共用，需改為純前端預覽或新增不寫入模式。
+- 資料庫影響：預覽本身不新增資料寫入；2026-10-12 補修因生日設定共用 `feature_settings.message` 儲存祝詞與圖片 URL JSON，PmrPortal 已將該欄位由 500 字放寬為 `nvarchar(max)`，避免 240 字祝詞搭配圖片 URL 儲存失敗。
 - 發布影響：實作完成後發布 Portal 測試站；正式站需另行授權。
-- Rollback：回復 Portal 生日通知設定頁前端/後端變更，移除測試按鍵與預覽觸發入口；不需資料回復。
+- Rollback：回復 Portal 生日通知設定頁前端/後端變更，移除測試按鍵與預覽觸發入口；若需回復 `feature_settings.message` 欄位長度，須先確認既有設定內容皆不超過 500 字，再套用對應 rollback。
 - 排序建議：IIS `T-006/T-007` 外部條件解除時優先；若仍受阻，下一個可執行小工作可做 `PORTAL-BIRTHDAY-REPLAN-TASK-004`，優先於暫緩的咬蝕 X-。
 - [x] T-001：定義測試生日祝賀按鍵需求與 BDD 驗收。
 - [x] T-002：加入 `TODO.md` 小工作池與排序說明。
@@ -53,3 +53,4 @@ Then 系統只顯示預覽，不寫入通知已讀或生日資料異動
 - 實際結果及證據：已完成文件規劃；未修改 Portal 程式。
 - 發布狀態：規劃型小工作，建置與發布不適用；Portal 測試站與正式站皆未發布。
 - 限制或未決問題：實作時需先讀取 PmrPortal 既有生日設定頁與登入生日通知元件，確認彈窗樣式、圖片尺寸限制、權限與既有已讀狀態是否可完全避開。
+- 2026-10-12 實作後補修：使用者回報祝詞縮短至 240 字內仍儲存 500；原因為祝詞與圖片 URL JSON 超過 `feature_settings.message` 舊 500 字限制。PmrPortal 已補 migration 放寬欄位、測試 9 passed、API build 通過並發布 Portal 測試站 API。正式站未發布。

@@ -6,6 +6,7 @@
 - 版型：生日賀卡已依參考圖改為購物網站廣告式置中彈窗；Portal Web build 通過，測試站 Web 已發布。
 - 微調：生日賀卡背景透明、右上角浮動關閉按鍵、圖片置中放大；Portal Web build 通過，測試站 Web 已發布。
 - 回饋修正：已移除生日賀卡透明外框與圖片陰影；Portal Web build 通過，測試站 Web 已發布。
+- 儲存修正：PmrPortal 已將 `feature_settings.message` 放寬為 `nvarchar(max)`，避免 240 字祝詞搭配圖片 URL JSON 超過舊 500 字限制造成儲存 500；生日設定 API 測試 9 passed，Portal API build 通過，測試站 API 已發布。
 
 ## [2026-10-12] - Portal 測試生日祝賀按鍵規劃
 - 目的：依使用者要求先規劃 Portal 生日通知設定頁的測試生日祝賀按鍵，方便人事不需指定時間即可確認生日祝賀版面與顯示效果。
