@@ -36,6 +36,16 @@
 
 `PORTAL-BIRTHDAY-REPLAN-TASK-001`～`TASK-003` 已完成並發布 Portal 測試站；團保專區已取消。完成紀錄請查 `docs/requirements.md`、`CHANGELOG_CUSTOM.md`、`specs/20261007-portal-birthday-replan/` 與 Portal 對應 specs。
 
+#### PORTAL-BIRTHDAY-REPLAN-TASK-004：測試生日祝賀按鍵與廣告式彈窗預覽
+
+狀態：待執行；規劃已完成（2026-10-12，`specs/20261012-portal-birthday-preview-button-plan/`）；依使用者指示先加入小工作，不立即實作
+
+主系統：PmrPortal；相依系統：無；資料庫影響：預期無 schema migration；發布影響：完成後發布 Portal 測試站，正式站需另行授權；Rollback：回復生日通知設定頁測試按鍵/預覽變更，不需資料回復。
+
+範圍：在人事生日通知設定頁新增「測試生日祝賀」按鍵，點擊後不需符合生日日期或指定時間，直接顯示購物網站廣告式生日祝賀彈窗；彈窗需有關閉按鍵，關閉後可繼續操作；預覽不得寫入生日通知已讀狀態、不得修改生日資料或正式觸發規則。
+
+排序：IIS `T-006/T-007` 外部條件解除時仍優先；若 IIS 仍受阻，這是下一個可執行小工作，優先於暫緩的咬蝕 X-。
+
 ### 第四順位：全專案 AI + BDD 導入（流程治理）
 
 #### AI-BDD-ALL-TASK-001：全專案導入盤點與共用範本
