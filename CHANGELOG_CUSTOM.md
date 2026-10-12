@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（Portal 測試生日祝賀按鍵完成）
+- 目的：執行 `PORTAL-BIRTHDAY-REPLAN-TASK-004`，讓人事可在生日通知設定頁直接預覽生日祝賀彈窗，不需等待生日日期。
+- 修改：PmrPortal 已新增測試生日祝賀按鍵與廣告式彈窗；SPC 同步工作池、需求索引與完成紀錄。預覽不新增 API、schema 或資料寫入。
+- 驗證：Portal Web build 通過 0 warnings / 0 errors；測試站 smoke：設定頁未登入 401、API `/health` 200/test、發布目錄含新 CSS。
+- 發布：已發布 Portal 測試站 Web，正式站未發布。
+
 ## 2026-10-12（Portal 測試生日祝賀按鍵規劃）
 - 目的：依使用者要求，規劃 Portal 生日通知設定頁的測試生日祝賀按鍵，方便不指定時間也能確認版面與顯示效果。
 - 修改：新增 `specs/20261012-portal-birthday-preview-button-plan/`，並在 `TODO.md` 加入 `PORTAL-BIRTHDAY-REPLAN-TASK-004`；需求索引同步記錄後續需顯示廣告式生日祝賀彈窗、提供關閉按鍵且不寫入正式通知狀態。本次只規劃，不立即實作。

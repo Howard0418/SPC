@@ -36,16 +36,6 @@
 
 `PORTAL-BIRTHDAY-REPLAN-TASK-001`～`TASK-003` 已完成並發布 Portal 測試站；團保專區已取消。完成紀錄請查 `docs/requirements.md`、`CHANGELOG_CUSTOM.md`、`specs/20261007-portal-birthday-replan/` 與 Portal 對應 specs。
 
-#### PORTAL-BIRTHDAY-REPLAN-TASK-004：測試生日祝賀按鍵與廣告式彈窗預覽
-
-狀態：待執行；規劃已完成（2026-10-12，`specs/20261012-portal-birthday-preview-button-plan/`）；依使用者指示先加入小工作，不立即實作
-
-主系統：PmrPortal；相依系統：無；資料庫影響：預期無 schema migration；發布影響：完成後發布 Portal 測試站，正式站需另行授權；Rollback：回復生日通知設定頁測試按鍵/預覽變更，不需資料回復。
-
-範圍：在人事生日通知設定頁新增「測試生日祝賀」按鍵，點擊後不需符合生日日期或指定時間，直接顯示購物網站廣告式生日祝賀彈窗；彈窗需有關閉按鍵，關閉後可繼續操作；預覽不得寫入生日通知已讀狀態、不得修改生日資料或正式觸發規則。
-
-排序：IIS `T-006/T-007` 外部條件解除時仍優先；若 IIS 仍受阻，這是下一個可執行小工作，優先於暫緩的咬蝕 X-。
-
 ### 第四順位：全專案 AI + BDD 導入（流程治理）
 
 #### AI-BDD-ALL-TASK-001：全專案導入盤點與共用範本
@@ -184,6 +174,7 @@
 
 ## 2026-10-12 執行紀錄
 
+- `PORTAL-BIRTHDAY-REPLAN-TASK-004`：已完成 Portal 測試生日祝賀按鍵。PmrPortal 人事生日通知設定頁新增「測試生日祝賀」按鍵與廣告式 Bootstrap 彈窗，套用目前祝詞與祝賀圖片並提供關閉；不新增 API、schema 或資料寫入。驗證通過：Portal Web build 0 warnings / 0 errors，測試站設定頁未登入 401、API health 200/test、發布目錄含新 CSS；已發布 Portal 測試站 Web，正式站未發布。目前剩餘未完成小工作 4 件（IIS 外部條件阻擋 2 件、咬蝕 X- 暫緩 2 件）。
 - `ARCH-TASK-010-LARGE-MODULE-GOVERNANCE-20261012`：已完成大型模組拆分與架構治理基線。新增 `tools/architecture/Get-LargeModules.ps1` 與 `docs/architecture-governance.md`，固定大型模組盤點門檻、候選模組、責任邊界、拆分順序與最低驗證要求；不修改應用程式、不拆核心類別。驗證通過：門檻 700 可抓出 11 個超標模組並回傳非 0，門檻 10000 回傳 0，治理文件關鍵字檢查通過。本次未發布測試站或正式站。架構改善 `TASK-002`～`TASK-010` 已全部完成；目前剩餘未完成小工作 4 件（IIS 外部條件阻擋 2 件、咬蝕 X- 暫停 2 件）。
 - `ARCH-TASK-009-REPRODUCIBLE-TEST-BASELINE-20261012`：已完成測試與可重建基線第一步改善。新增 `tools/testing/Invoke-SpcBaseline.ps1`，固定順序執行後端測試、後端 build、前端 build 與可選 smoke，支援 `-TestFilter`、`-SkipTests`、`-SkipFrontend`、`-SmokeUrl`。驗證通過：後端測試/build 模式與 build+smoke 模式皆通過；本次未修改應用程式、未發布、未清資料。
 - `ARCH-TASK-008-AUDIT-OPERATOR-TRACEABILITY-20261012`：已完成稽核與操作者追溯第一步改善。新增共用 `AuditActorResolver`，SPC 點位備註/排除 `UpdatedBy` 改用同一套 claim 解析規則；不新增 schema、不改登入或 JWT 發行。驗證通過：操作者解析與點位備註測試 15 passed，後端 build 通過；已發布 SPC 測試站 backend，`/api/health` 200、`/api/version` 200/test、首頁 200。正式站未發布。
