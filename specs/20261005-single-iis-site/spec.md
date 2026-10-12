@@ -1,7 +1,7 @@
 # 功能規格：SPC 單一 IIS Site 部署
 - 功能 ID：20261005-single-iis-site
 - 版本：1
-- 狀態：部分完成；T-001～T-006 完成，T-007 已補驗 HTTP/HTTPS 單站 smoke、JWT、401 與 Viewer 403，T-008 文件同步完成；真人登入與 Portal SSO 仍待測試帳號
+- 狀態：完成；T-001～T-008 已完成，HTTP/HTTPS 單站、Portal SSO、JWT、401、Viewer 403、Vue refresh 與 mixed content smoke 已補驗；正式站未發布
 - 涉及專案：SPC Web、SPC API、IIS
 - 授權依據：2026-10-05 使用者要求將目前專案調整成單一 IIS Site；目前僅核准 TASK-001 分析與 TASK-002 規格/rollback 計畫。
 - 現行需求基準：[docs/requirements.md](../../docs/requirements.md)
@@ -65,3 +65,4 @@
 | 1.1 | 2026-10-10 | 同步 T-008 文件收尾；保留 T-006/T-007 外部阻擋與待測項 |
 | 1.2 | 2026-10-12 | 補驗 T-007 HTTP 單站 smoke，刷新測試站 production 前端資產以移除舊 testhost API base |
 | 1.3 | 2026-10-12 | 補上 SpcSingleTest HTTPS binding 與 HTTPS Portal URL，完成 T-006 mixed content 驗證 |
+| 1.4 | 2026-10-12 | Portal 測試站 SSO 回跳改至 SPC HTTPS 單站，完成 T-007 登入/JWT smoke |

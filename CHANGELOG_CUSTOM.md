@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（單一 IIS Site T-007 Portal SSO 完成）
+- 目的：完成 `IIS-TASK-007` 真人登入、Portal SSO、JWT 與 HTTPS 單站回跳驗證。
+- 修改：Portal API 測試站 `SpcSso:WebBaseUrl` 由舊 `http://172.16.110.27:8083` 改為 `https://172.16.110.27:8901`，並重啟 `PmrPortal` AppPool；SPC 測試前端以 `VITE_APP_ENV=test` 重建刷新，備份 `release/test/frontend.backup-single-iis-t007-sso-20261012-152549`。
+- 驗證：由 `https://172.16.110.27:8901/spc` 進入，Portal `https://172.16.110.27:8900/Spc/Launch` 登入後回跳 `https://172.16.110.27:8901/portal-sso`，SPC 取得 JWT 並顯示使用者 `ihao_ting` / `丁義豪` / `Editor`；API version、control chart groups/types、PPC 請求皆 200；Network 無 `http://` 請求，WEB/API 環境不一致警示消失。
+- 發布：已更新 Portal API 測試站設定與 SPC 測試站 frontend；正式站未發布。`IIS-TASK-007` 完成。
+
 ## 2026-10-12（單一 IIS Site T-007 JWT/403 補驗）
 - 目的：續補 `IIS-TASK-007` 可不依賴真人帳密的 JWT、401 與 Viewer 403 驗證。
 - 修改：僅更新單一 IIS Site 規格、驗證紀錄、需求索引、TODO 與變更目的；不修改程式、不操作 IIS、不刷新發布檔。

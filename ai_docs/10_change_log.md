@@ -1,3 +1,8 @@
+## [2026-10-12] - IIS-TASK-007 Portal SSO 完成
+- 目的：完成單一 IIS Site T-007 真人登入、Portal SSO、JWT 與 HTTPS 單站回跳驗證。
+- 範圍：Portal API 測試站 `SpcSso:WebBaseUrl` 改為 `https://172.16.110.27:8901` 並重啟 AppPool；SPC 測試前端以 `VITE_APP_ENV=test` 重建刷新。不操作正式站。
+- 驗證：Portal 登入後回跳 `https://172.16.110.27:8901/portal-sso`，SPC 取得 JWT，使用者為 Editor；API smoke 皆 200，Network 無 `http://`，環境不一致警示消失。
+
 ## [2026-10-12] - IIS-TASK-007 JWT/403 補驗
 - 目的：續補單一 IIS Site T-007 中可自動驗證的 JWT、401 與 Viewer 403，縮小剩餘外部阻擋範圍。
 - 範圍：使用測試站設定產生短效測試 JWT 進行 HTTPS API smoke；僅更新文件，不修改程式、不操作 IIS、不發布正式站。
