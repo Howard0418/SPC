@@ -2,6 +2,7 @@
 - 目的：同步 `PORTAL-BIRTHDAY-REPLAN-TASK-004` 完成狀態，讓 SPC 工作池反映 Portal 已新增人事生日祝賀即時預覽。
 - 範圍：更新 SPC 工作池、需求索引與客製變更紀錄；Portal 實作位於 `D:\PmrPortal\specs\20261012-birthday-preview-button\`。
 - 驗證：Portal Web build 通過；Portal 測試站 Web 已發布，正式站未發布。
+- 補修：圖片上傳與預覽顯示已於 PmrPortal 修正；支援常見 Content-Type 變體，並將 `/uploads/...` 轉為 Portal API 完整圖片網址。API 測試 7 passed，Portal 測試站 API/Web 已發布。
 
 ## [2026-10-12] - Portal 測試生日祝賀按鍵規劃
 - 目的：依使用者要求先規劃 Portal 生日通知設定頁的測試生日祝賀按鍵，方便人事不需指定時間即可確認生日祝賀版面與顯示效果。
