@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MesSpc.Api.Services;
 
-public class SpcOverviewReportService(AppDbContext db, SpcService spcService)
+public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : ISpcOverviewReportBuilder
 {
     public async Task<byte[]> BuildExcelAsync(DateTime startUtc, DateTime endUtc, CancellationToken ct = default)
     {

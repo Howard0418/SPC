@@ -79,6 +79,8 @@ builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddScoped<TestDataSeeder>();
 builder.Services.AddScoped<GenealogyService>();
 builder.Services.AddScoped<SpcOverviewReportService>();
+builder.Services.AddScoped<ISpcOverviewReportBuilder>(sp => sp.GetRequiredService<SpcOverviewReportService>());
+builder.Services.AddScoped<SpcReportScheduleProcessor>();
 builder.Services.AddScoped<MesSyncMessageBatchProcessor>();
 builder.Services.AddScoped<AuthorizationAccess>();
 builder.Services.AddSingleton<UserPasswordHasher>();

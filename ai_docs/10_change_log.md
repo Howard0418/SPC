@@ -1,3 +1,8 @@
+## [2026-10-12] - ARCH-TASK-007 SMTP、檔案與背景排程可靠性
+- 目的：修正 SPC 報表背景排程未檢查 SMTP 寄送結果即更新 LastSent 的可靠性風險，避免全部寄送失敗後同週/月不再重試。
+- 範圍：先以測試保護週報/月報排程處理，再抽出可測 processor；不新增 schema、不修改 SMTP 設定 UI、不操作正式站。
+- 驗證：`SpcReportScheduleProcessorTests` 3 passed；後端 build 0 warnings / 0 errors；已發布 SPC 測試站 backend，`/api/health`、`/api/version`、首頁 smoke 皆 200。
+
 ## [2026-10-12] - ARCH-TASK-006 發布流程與環境隔離
 - 目的：將 release 工具中正式環境與 Portal 路徑阻擋規則抽為共用 guard，避免 apply 與 backup/restore 工具安全邊界不一致。
 - 範圍：新增 `ReleaseTargetGuard.psm1` 與自動化測試，兩支 release 工具改用共用 guard；不操作正式站、不發布、不刪除資料。

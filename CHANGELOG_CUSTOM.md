@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（SMTP、檔案與背景排程可靠性）
+- 目的：執行 `ARCH-TASK-007-SMTP-FILE-SCHEDULER-RELIABILITY-20261012`，修正 SPC 報表背景排程未檢查 SMTP 寄送結果即更新 LastSent 的可靠性風險。
+- 修改：新增 `SpcReportScheduleProcessor` 與 `ISpcOverviewReportBuilder`，`SpcReportSchedulerService` 改為只負責定時觸發；週報/月報至少一位收件者寄送成功才更新 LastSent，全部失敗則保留重試機會。
+- 驗證：`SpcReportScheduleProcessorTests` 3 passed；後端 build 0 warnings / 0 errors。
+- 發布：已發布 SPC 測試站 backend，備份 `release/test/backend.backup-architecture-task007-20261012-0800`；smoke：`8084/api/health` 200、`8084/api/version` 200/test、首頁 200。正式站未發布。
+
 ## 2026-10-12（發布流程與環境隔離）
 - 目的：執行 `ARCH-TASK-006-RELEASE-ENVIRONMENT-ISOLATION-20261012`，將 release 工具正式環境與 Portal 路徑阻擋規則抽成共用 guard。
 - 修改：新增 `tools/release/ReleaseTargetGuard.psm1` 與 `tests/release/ReleaseTargetGuard.Tests.ps1`；`ReleaseApplyPackage.ps1`、`ReleaseBackupRestore.ps1` 改用共用 `Assert-SpcReleaseTarget`。
