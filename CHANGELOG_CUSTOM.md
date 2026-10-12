@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-12（SPC Raw Data 與常態檢定異常規劃）
+- 目的：依使用者提供 `docs/SPC_RawData 異常說明-1012.xlsx` 分析測試 SPC 後的文件問題，規劃小工作並加入工作池，不立即實作。
+- 分析：Excel 指出 Raw Data 下載有三類問題：All 總表後改選單一線別仍提示需先查詢管制圖、下載資料非預期項目或 `Value` 欄出現日期、下載內容缺規格訊息；另指出常態檢定與 Minitab 分析有差異，以及小變異資料的直方圖 scale/bin 幾乎只剩單柱。
+- 修改：新增 `specs/20261012-spc-rawdata-normality-issues-plan/spec.md`，並在 `TODO.md` 加入 5 個待執行小工作：`SPC-RAWDATA-1012-TASK-001`～`TASK-003`、`SPC-NORMALITY-1012-TASK-001`、`SPC-HISTOGRAM-1012-TASK-001`；同步需求索引。本次不修改程式。
+- 驗證：已用試算表解析確認活頁簿含 `raw data 確認`、`常態檢定確認` 兩張工作表；`raw data 確認` 的 26 筆樣本中 `Value` 欄有 13 筆為日期型、12 筆為數值、1 筆為文字日期樣式。文件內容檢查完成。
+- 發布：規劃型文件變更，建置與發布不適用；SPC 測試站與正式站皆未發布。
+
 ## 2026-10-12（單一 IIS Site T-007 Portal SSO 完成）
 - 目的：完成 `IIS-TASK-007` 真人登入、Portal SSO、JWT 與 HTTPS 單站回跳驗證。
 - 修改：Portal API 測試站 `SpcSso:WebBaseUrl` 由舊 `http://172.16.110.27:8083` 改為 `https://172.16.110.27:8901`，並重啟 `PmrPortal` AppPool；SPC 測試前端以 `VITE_APP_ENV=test` 重建刷新，備份 `release/test/frontend.backup-single-iis-t007-sso-20261012-152549`。

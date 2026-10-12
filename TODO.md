@@ -14,7 +14,45 @@
 
 ## 目前小工作排序（2026-10-07）
 
-### 第一順位：SPC 線別分析項目總覽公式版本記錄（資料正確性）
+### 第一順位：SPC Raw Data 下載異常（測試使用阻擋／資料正確性）
+
+規格：`specs/20261012-spc-rawdata-normality-issues-plan/spec.md`
+
+#### SPC-RAWDATA-1012-TASK-001：All 總表後 raw data 下載上下文修正
+
+狀態：待執行
+
+初步範圍：修正使用者一開始線別選 All 查詢總表後，改選或點選單一線別／單一管制項目仍無法下載 raw data 的狀態同步問題。驗收需覆蓋 All 總表後下載與一開始即選單一線別下載。
+
+#### SPC-RAWDATA-1012-TASK-002：Raw data Value 日期誤判與項目資料正確性
+
+狀態：待執行；相依 `SPC-RAWDATA-1012-TASK-001`
+
+初步範圍：修正 raw data CSV `Value` 欄被日期格式化邏輯誤判的問題，並確認下載資料只包含目標 `PartProcessCharacteristicId` 的量測資料。需建立後端單元測試或整合測試，覆蓋小數值、日期欄位與 Value 欄分流。
+
+#### SPC-RAWDATA-1012-TASK-003：Raw data 補上規格資訊
+
+狀態：待執行；相依 `SPC-RAWDATA-1012-TASK-002`
+
+初步範圍：在 raw data 下載內容補上可辨識的規格資訊，初步包含 LSL、Target、USL 或既有規格字串；實作前需確認欄位來源與既有圖表/API 規格口徑一致。
+
+### 第二順位：SPC 常態檢定與直方圖（統計正確性／圖表可讀性）
+
+規格：`specs/20261012-spc-rawdata-normality-issues-plan/spec.md`
+
+#### SPC-NORMALITY-1012-TASK-001：常態檢定與 Minitab 差異確認
+
+狀態：待執行；相依 Raw Data 正確性修正完成
+
+初步範圍：確認 SPC 常態檢定方法、樣本數限制、p-value 近似與 Minitab 差異來源；以固定樣本建立可重跑驗收，必要時修正演算法或在畫面清楚揭露方法差異。
+
+#### SPC-HISTOGRAM-1012-TASK-001：直方圖 scale/bin 改善
+
+狀態：待執行；相依 `SPC-NORMALITY-1012-TASK-001`
+
+初步範圍：改善小變異資料下的直方圖 X 軸範圍與 bins 策略，避免主要資料集中成單一柱；規格線與管制線需保留輔助辨識但不得壓縮主要資料分布。
+
+### 已完成追溯：SPC 線別分析項目總覽公式版本記錄（資料正確性）
 
 `SPC-CHEM-OVERVIEW-VERSION-TASK-001` 已完成並補驗 HTTP smoke；完成紀錄請查 `CHANGELOG_CUSTOM.md` 與 `specs/20261007-chemical-overview-formula-versioning/verification.md`。
 

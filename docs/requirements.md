@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- 小工作池已新增：[SPC Raw Data 與常態檢定異常規劃](../specs/20261012-spc-rawdata-normality-issues-plan/spec.md)；依 `docs/SPC_RawData 異常說明-1012.xlsx` 分析，待處理問題包含 All 總表後 raw data 無法下載、RawData `Value` 日期誤判、下載內容缺規格資訊、常態檢定與 Minitab 差異，以及小變異資料直方圖 scale/bin 不易判讀。本次只規劃並加入小工作，未修改程式、未建置、未發布。
 - 大型模組拆分與架構治理：[ARCH-TASK-010-LARGE-MODULE-GOVERNANCE-20261012](../specs/20261012-architecture-task010-large-module-governance/spec.md)；SPC 新增 `tools/architecture/Get-LargeModules.ps1` 與 `docs/architecture-governance.md`，固定大型模組盤點門檻、拆分候選、責任邊界、拆分順序與最低驗證要求。門檻 700 可抓出既有超標模組並回傳非 0；門檻 10000 回傳 0。本次只建立治理基線，不修改應用程式、不發布。
 - 測試與可重建基線：[ARCH-TASK-009-REPRODUCIBLE-TEST-BASELINE-20261012](../specs/20261012-architecture-task009-reproducible-test-baseline/spec.md)；SPC 新增 `tools/testing/Invoke-SpcBaseline.ps1`，依序執行後端測試、後端 build、前端 build 與可選 smoke URL，支援 `-TestFilter`、`-SkipTests`、`-SkipFrontend` 與 `-SmokeUrl`，避免小工作驗證時平行 build/test 搶 DLL 鎖並統一驗證入口。本次不修改應用程式、不發布、不清資料。
 - 稽核與操作者追溯：[ARCH-TASK-008-AUDIT-OPERATOR-TRACEABILITY-20261012](../specs/20261012-architecture-task008-audit-operator-traceability/spec.md)；SPC 後端新增共用 `AuditActorResolver`，統一依 `Identity.Name`、`ClaimTypes.Name`、`name`、`preferred_username`、`username`、`NameIdentifier`、`sub` 解析操作者。SPC 點位備註/排除寫入 `UpdatedBy` 時改用共用解析規則；本次不新增資料表、不修改 JWT 發行或登入流程。
