@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（SPC/Portal 測試站 DNS 連線修復）
+- 目的：修正 `SPCTEST.pmr.com.tw` 與 `portaltest.pmr.com.tw` 無法連線或導向舊 IP 的問題。
+- 修改：補齊 IIS hostname bindings：`SpcSingleTest` 支援 `SPCTEST.pmr.com.tw:443/8901`，`PmrPortalWeb` 支援 `portaltest.pmr.com.tw:443/8900`；恢復缺失的 `PmrPortalApi` 測試站 `http://172.16.110.27:8091/`；Portal Web upstream `PortalApi:BaseUrl` 修回內部 API；SPC 測試前端 Portal 登入入口改為 `https://portaltest.pmr.com.tw/Login` 並刷新測試站 frontend。
+- 驗證：`https://portaltest.pmr.com.tw/` 200 並導向 Login、`https://portaltest.pmr.com.tw/api/auth/me` 401；`https://SPCTEST.pmr.com.tw/api/health` 200/test；`https://SPCTEST.pmr.com.tw/` 200 並導向 `https://portaltest.pmr.com.tw/Login?ReturnUrl=%2FSpc%2FLaunch`。正式站未發布。
+- 發布：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-dns-portal-url-20261013-102539`；Portal 僅調整測試 IIS 與測試站發布設定，正式站未發布。
+
 ## 2026-10-13（Portal 測試站 DNS Hostname Binding）
 - 目的：依使用者 DNS 設定，讓 `portaltest.pmr.com.tw` 可連到 Portal 測試 Web 站 `PmrPortalWeb`。
 - 修改：IIS `PmrPortalWeb` 新增 `https/172.16.110.27:8900:portaltest.pmr.com.tw` binding；HTTP.SYS 新增 `hostnameport=portaltest.pmr.com.tw:8900` SSL 憑證繫結，沿用既有測試站憑證 hash `6a24ea17c559069d29139c38c79fe246bdfdc6a2`。
