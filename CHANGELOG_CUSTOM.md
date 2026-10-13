@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（Portal/SPC SSO Token Secret 對齊）
+- 目的：修正 Portal 與 SPC 測試站 SSO token secret 不一致，造成 Portal 取得 SPC 登入權杖失敗。
+- 修改：SPC 測試站 `Auth:PortalSsoKey` 已改為與 Portal 測試 API `SpcSso:SharedKey` 相同；已回收 `SpcSingleTest` AppPool。
+- 驗證：兩邊 secret 已一致；用 Portal 相同 HMAC 簽章方式 POST `https://SPCTEST.pmr.com.tw/api/v1/auth/portal-sso` 回 200 並取得 JWT。驗證建立的臨時測試操作者已刪除。正式站未發布。
+
 ## 2026-10-13（SPC/Portal 測試站 DNS 連線修復）
 - 目的：修正 `SPCTEST.pmr.com.tw` 與 `portaltest.pmr.com.tw` 無法連線或導向舊 IP 的問題。
 - 修改：補齊 IIS hostname bindings：`SpcSingleTest` 支援 `SPCTEST.pmr.com.tw:443/8901`，`PmrPortalWeb` 支援 `portaltest.pmr.com.tw:443/8900`；恢復缺失的 `PmrPortalApi` 測試站 `http://172.16.110.27:8091/`；Portal Web upstream `PortalApi:BaseUrl` 修回內部 API；SPC 測試前端 Portal 登入入口改為 `https://portaltest.pmr.com.tw/Login` 並刷新測試站 frontend。
