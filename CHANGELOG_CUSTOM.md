@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（Portal 測試站 DNS Hostname Binding）
+- 目的：依使用者 DNS 設定，讓 `portaltest.pmr.com.tw` 可連到 Portal 測試 Web 站 `PmrPortalWeb`。
+- 修改：IIS `PmrPortalWeb` 新增 `https/172.16.110.27:8900:portaltest.pmr.com.tw` binding；HTTP.SYS 新增 `hostnameport=portaltest.pmr.com.tw:8900` SSL 憑證繫結，沿用既有測試站憑證 hash `6a24ea17c559069d29139c38c79fe246bdfdc6a2`。
+- 驗證：本機 DNS 尚未解析 `portaltest.pmr.com.tw`，以 Chromium host-resolver 暫指 `172.16.110.27` 驗證：`https://portaltest.pmr.com.tw:8900/` 200、`/Login` 200、`/Spc/Launch` 200 並導向登入。`/api/health`、`/api/version` 於 `PmrPortalWeb:8900` 回 404，Portal API 仍需依 `PmrPortalApi` 站台另行規劃。
+- 備註：DNS 只能指到 IP，瀏覽器仍需使用 port `8900`；若要省略 port，需另行規劃 443 binding 與憑證。
+
 ## 2026-10-13（SPC 測試站 DNS Hostname Binding）
 - 目的：依使用者 DNS 設定，讓 `SPCTEST.pmr.com.tw` 可連到 SPC 測試單站 `SpcSingleTest`。
 - 修改：IIS `SpcSingleTest` 新增 `https/172.16.110.27:8901:SPCTEST.pmr.com.tw` binding；HTTP.SYS 新增 `hostnameport=SPCTEST.pmr.com.tw:8901` SSL 憑證繫結，沿用既有測試站憑證 hash `6a24ea17c559069d29139c38c79fe246bdfdc6a2`。
