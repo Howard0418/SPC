@@ -27,6 +27,7 @@
 - 2026-10-09：T-007 可離線驗證項目已執行；HTTP 實站 smoke 因本機 helper 建立程序失敗未重跑；HTTPS mixed content 隨 T-006 外部環境阻擋。
 - 2026-10-12：補驗發現 `release/test/frontend` active JS 為舊 testhost bundle，仍含 `172.16.110.27:8081/api`；已用 production build 刷新測試單站前端並清除舊 bundle。HTTP 實站 smoke 通過：首頁、`/spc`、`/calibration-instruments`、`/particle-monitoring` 皆 200，新 JS `text/javascript`，`/api/version` 200/test，未登入受保護 API 401。
 - 2026-10-12：T-007 已補驗短效測試 JWT、401 與 Viewer 403；使用者提供測試帳號後，Portal SSO 已完成端到端驗證。補修 Portal API 測試站 `SpcSso:WebBaseUrl` 從舊 `http://172.16.110.27:8083` 改為 `https://172.16.110.27:8901` 並重啟 `PmrPortal` AppPool；SPC 測試前端重新以 `VITE_APP_ENV=test` build 並刷新，備份 `release/test/frontend.backup-single-iis-t007-sso-20261012-152549`，WEB/API 環境不一致警示消失。
+- 2026-10-13：使用者已設定 DNS `SPCTEST.pmr.com.tw` 指向 `172.16.110.27`，本次替 `SpcSingleTest` 新增 `https/172.16.110.27:8901:SPCTEST.pmr.com.tw` binding，並新增 HTTP.SYS `hostnameport=SPCTEST.pmr.com.tw:8901` SSL 憑證繫結，沿用既有測試站憑證 hash `6a24ea17c559069d29139c38c79fe246bdfdc6a2`。Playwright/Chromium smoke：`https://SPCTEST.pmr.com.tw:8901/api/health` 200/test、`/api/version` 200/test、首頁 200。Portal 與正式站未修改。Rollback：移除該 IIS binding，並執行 `netsh http delete sslcert hostnameport=SPCTEST.pmr.com.tw:8901`。
 
 ## 基準與變更紀錄更新位置
 - 本規格：`specs/20261005-single-iis-site/`

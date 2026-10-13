@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（SPC 測試站 DNS Hostname Binding）
+- 目的：依使用者 DNS 設定，讓 `SPCTEST.pmr.com.tw` 可連到 SPC 測試單站 `SpcSingleTest`。
+- 修改：IIS `SpcSingleTest` 新增 `https/172.16.110.27:8901:SPCTEST.pmr.com.tw` binding；HTTP.SYS 新增 `hostnameport=SPCTEST.pmr.com.tw:8901` SSL 憑證繫結，沿用既有測試站憑證 hash `6a24ea17c559069d29139c38c79fe246bdfdc6a2`。
+- 驗證：`https://SPCTEST.pmr.com.tw:8901/api/health` 200/test、`/api/version` 200/test、首頁 200。正式站未發布，Portal 未修改。
+- 備註：DNS 只能指到 IP，瀏覽器仍需使用 port `8901`；若要省略 port，需另行規劃 443 binding 與憑證。
+
 ## 2026-10-13（SPC 直方圖 scale/bin 改善）
 - 目的：執行 `SPC-HISTOGRAM-1012-TASK-001`，改善小變異資料的直方圖可讀性，避免遠端規格線/管制線把主要量測分布壓縮成單一柱。
 - 修改：新增前端共用 `histogram` 工具；管制圖與趨勢圖直方圖 bins 改以未排除量測值範圍加 padding 建立，規格/管制線只在可見 bins 內標示；後端常態曲線 `ScaledPdf` 改用相同量測值 bin width。
