@@ -14,17 +14,7 @@
 
 ## 目前小工作排序（2026-10-07）
 
-### 第一順位：SPC 咬蝕 X- 線別不匯入 SPC（資料正確性）
-
-規格：`specs/20261012-etch-x-line-prefix-requirement/spec.md`
-
-#### SPC-ETCH-X-TASK-002：咬蝕 X- 線別排除實作與測試
-
-狀態：待執行；`SPC-ETCH-X-TASK-001` 已完成
-
-初步範圍：依規格調整咬蝕量匯入預覽、確認流程與 SPC 寫入邏輯；`X-` 線別不建立 SPC 量測資料，未帶 `X-` 線別維持既有匯入。需建立自動化測試覆蓋線別判定、預覽排除摘要、確認匯入不送 SPC、未帶 `X-` 線別回歸；測試通過後發布 SPC 測試站。
-
-### 第二順位：SPC 常態檢定與直方圖（統計正確性／圖表可讀性）
+### 第一順位：SPC 常態檢定與直方圖（統計正確性／圖表可讀性）
 
 規格：`specs/20261012-spc-rawdata-normality-issues-plan/spec.md`
 
@@ -182,6 +172,7 @@
 - `SPC-RAWDATA-1012-TASK-002`：已完成 Raw data `Value` 日期誤判與項目資料正確性修正。後端 CSV 組裝抽出 `RawDataCsvExporter`，日期欄位才格式化，`Value` 欄保留原始 invariant 字串，並過濾其他 `PartProcessCharacteristicId` 的列。驗證通過：RawDataCsvExporter 測試 2 passed、後端 build 通過；已發布 SPC 測試站 backend，備份 `release/test/backend.backup-rawdata-value-20261013-074103`，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 7 件（Raw Data 1 件、咬蝕 X- 2 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 - `SPC-RAWDATA-1012-TASK-003`：已完成 Raw data 規格資訊補欄。CSV 新增 `SpecLSL`、`SpecTarget`、`SpecUSL`、`Unit` 欄位，來源為下載目標 `PartProcessCharacteristic` 的規格欄位，與圖表 limits 口徑一致。驗證通過：RawDataCsvExporter 測試 3 passed、後端 build 通過；已發布 SPC 測試站 backend，備份 `release/test/backend.backup-rawdata-spec-20261013-074946`，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 6 件（咬蝕 X- 2 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 - `SPC-ETCH-X-TASK-001`：已完成咬蝕 X- 線別排除規格與測試案例。補齊 TransFiles/Portal/SPC 契約、預覽排除狀態、確認匯入不得送 SPC、測試案例矩陣與回復方式；本次未修改程式、未匯入資料、未發布。目前剩餘未完成小工作 5 件（咬蝕 X- 1 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
+- `SPC-ETCH-X-TASK-002`：已完成咬蝕 X- 線別排除實作與測試。TransFiles 解析咬蝕日報時讀取各區塊第 2 列線別標題，`X-` 前綴線別加入 `excluded` 與 Excel「排除清單」，不產生 SPC `reports`；未帶 `X-` 線別維持既有流程。驗證通過：TransFiles 咬蝕相關測試 11 passed、py_compile 通過；真實來源唯讀抽取 reports 114、excluded 8。未打包 EXE、未連線 Portal/SPC、未寫入資料，SPC 測試站發布不適用。正式站未發布。目前剩餘未完成小工作 4 件（常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 
 ## 2026-10-11 執行紀錄
 

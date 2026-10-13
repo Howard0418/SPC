@@ -1,3 +1,8 @@
+## [2026-10-13] - SPC-ETCH-X-TASK-002 咬蝕 X- 線別排除實作
+- 目的：避免 TransFiles 固定區塊解析時將 `X-PT-01`、`X-QE-02` 等不匯入 SPC 的線別誤產生為 SPC reports。
+- 範圍：TransFiles `etch_reports.py` 讀取第 2 列原始線別標題，`X-` 前綴線別加入 `excluded` 並不產生 `reports`；JSON/Excel 輸出保留排除摘要。不修改 Portal/SPC API、不打包 EXE。
+- 驗證：TransFiles 咬蝕相關 unittest 11 passed；py_compile 通過；真實來源唯讀抽取 reports 114、excluded 8。
+
 ## [2026-10-13] - SPC-ETCH-X-TASK-001 咬蝕 X- 線別規格與測試案例
 - 目的：將使用者補齊的 `X-` 線別不匯入 SPC 規則落成可實作契約，避免後續把 `X-PT-01` 去掉前綴後誤匯入。
 - 範圍：更新咬蝕 X- 規格、跨 TransFiles/Portal/SPC 契約、測試案例矩陣與回復方式；不修改程式、不匯入資料、不發布。

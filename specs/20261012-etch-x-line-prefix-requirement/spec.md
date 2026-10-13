@@ -1,7 +1,7 @@
 # 功能規格：咬蝕量 X- 線別不匯入 SPC 規則補齊
 - 功能 ID：SPC-ETCH-X-LINE-PREFIX-20261012
 - 版本：2
-- 狀態：TASK-001 完成，TASK-002 可實作
+- 狀態：完成
 - 涉及專案：SPC、TransFiles、Portal
 - 授權依據：使用者於 2026-10-12 指定 `docs/SPC文件/PD-3-581-06B-咬蝕量_2026.xlsx` 中線別若帶 `X-` 前綴，例如 `X-PT-01`，表示該線別資料不用匯入 SPC；沒有 `X-` 的資料都需匯入，其他線別以此類推。
 - 現行需求基準：`docs/requirements.md`、`CHANGELOG_CUSTOM.md`
@@ -135,7 +135,7 @@ Feature: 咬蝕量 X- 線別不匯入 SPC
 | Task ID | 新狀態 | 調整 |
 |---|---|---|
 | SPC-ETCH-X-TASK-001 | 已完成 | 已建立/更新詳細規格與測試案例，確認 TransFiles/Portal/SPC 契約與回復方式。 |
-| SPC-ETCH-X-TASK-002 | 可執行 | 依 TASK-001 實作預覽、確認匯入與 SPC 資料排除，並發布 SPC 測試站。 |
+| SPC-ETCH-X-TASK-002 | 已完成 | TransFiles 解析咬蝕日報時讀取第 2 列原始線別標題；`X-` 線別加入 `excluded` 並不產生 SPC `reports`。本次未修改 Portal/SPC API，未打包 EXE。 |
 
 排序建議：此需求屬資料正確性與匯入可回復風險，應排在 Raw Data 下載資料正確性修正後，常態檢定與直方圖改善前。
 
@@ -147,7 +147,7 @@ Feature: 咬蝕量 X- 線別不匯入 SPC
 ## 發布規劃
 
 - 本次規劃：建置不適用，發布不適用。
-- 後續程式 Task：測試通過後依規則發布 SPC 測試站；正式站需另行授權。
+- TASK-002：修改 TransFiles 轉檔工具原始碼，未修改 SPC 後端/前端或 Portal API，SPC 測試站發布不適用；正式站未發布。
 
 ## 規格版本紀錄
 
@@ -155,3 +155,4 @@ Feature: 咬蝕量 X- 線別不匯入 SPC
 |---|---|---|
 | 1 | 2026-10-12 | 使用者補齊咬蝕量 `X-` 線別不匯入 SPC 規則 |
 | 2 | 2026-10-13 | 完成 `SPC-ETCH-X-TASK-001`，補齊跨系統契約、測試案例與回復方式 |
+| 3 | 2026-10-13 | 完成 `SPC-ETCH-X-TASK-002`，TransFiles 實作 `X-` 線別排除與輸出摘要 |
