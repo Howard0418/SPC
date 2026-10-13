@@ -125,4 +125,35 @@
 ### 未執行／後續
 
 - 本 Task 不把 SPC p-value 調整為 Minitab Anderson-Darling；差異以方法揭露處理。若未來要求完全對齊 Minitab，需另開統計方法替換或新增檢定 Task。
-- `SPC-HISTOGRAM-1012-TASK-001` 仍待執行。
+- `SPC-HISTOGRAM-1012-TASK-001` 已於下節完成。
+
+## SPC-HISTOGRAM-1012-TASK-001：直方圖 scale/bin 改善
+
+日期：2026-10-13
+
+### 驗收結果
+
+| 驗收 ID | 結果 | 驗證方式 |
+|---|---|---|
+| AC-005 | 通過 | 前端新增共用 `histogram` 工具，管制圖與趨勢圖直方圖 bins 改以未排除量測值範圍建立，規格線/管制線只在落入顯示範圍時標示，不再把遠端界線納入 X 軸 domain 壓縮主要分布。 |
+| AC-005 補充 | 通過 | 後端常態分布曲線 `ScaledPdf` 的 bin width 改與前端相同，以量測值範圍加 padding 估算，避免遠端規格線造成曲線高度失真。 |
+
+### 自動化驗證
+
+- `node --test frontend/mes-spc-web/tests/histogram.test.mjs`：2 passed。
+- `dotnet test tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj --filter NormalityTest --no-restore -p:UseSharedCompilation=false`：6 passed。
+- `dotnet build backend\MesSpc.Api\MesSpc.Api.csproj --no-restore -p:UseSharedCompilation=false`：0 warnings / 0 errors。
+- `npm run build`：通過，僅既有 Vite chunk size warning。
+
+### 測試站發布與 smoke
+
+- 發布範圍：SPC 測試站 backend/frontend。
+- 備份：
+  - `release/test/backend.backup-histogram-task001-20261013-081457`
+  - `release/test/frontend.backup-histogram-task001-20261013-081457`
+  - `release/test/frontend.backup-histogram-task001-final-20261013-081629`（最終前端 build 後刷新前備份）
+- Playwright/Chromium HTTPS smoke：
+  - `https://172.16.110.27:8901/api/health`：200，`{"status":"ok","version":"0.1.59","environment":"test"}`
+  - `https://172.16.110.27:8901/api/version`：200，`{"version":"0.1.59","environment":"test"}`
+  - `https://172.16.110.27:8901/`：200，`text/html`
+- 正式站未發布。

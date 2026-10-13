@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- SPC 直方圖 scale/bin 改善：[SPC-RAWDATA-NORMALITY-ISSUES-20261012](../specs/20261012-spc-rawdata-normality-issues-plan/spec.md)；`SPC-HISTOGRAM-1012-TASK-001` 已完成，管制圖與趨勢圖直方圖 bins 改以未排除量測值範圍建立，遠端規格/管制線不再壓縮主要分布；常態分布曲線縮放同步改用相同 bin width。已發布 SPC 測試站 backend/frontend，正式站未發布。
 - SPC Raw Data 規格資訊補欄：[SPC-RAWDATA-NORMALITY-ISSUES-20261012](../specs/20261012-spc-rawdata-normality-issues-plan/spec.md)；`SPC-RAWDATA-1012-TASK-003` 已完成，raw data CSV 於 `Value` 後補上 `SpecLSL`、`SpecTarget`、`SpecUSL`、`Unit`，讓下載內容可直接對照量測值與規格資訊。已發布 SPC 測試站 backend，正式站未發布。
 - SPC Raw Data `Value` 日期誤判與項目資料正確性修正：[SPC-RAWDATA-NORMALITY-ISSUES-20261012](../specs/20261012-spc-rawdata-normality-issues-plan/spec.md)；`SPC-RAWDATA-1012-TASK-002` 已完成，後端 raw data CSV 組裝抽出 `RawDataCsvExporter`，日期欄位才套用日期格式化，`Value` 欄保留原始 invariant 字串，並過濾其他 `PartProcessCharacteristicId` 的列。已發布 SPC 測試站 backend，正式站未發布。
 - SPC Raw Data 下載上下文修正：[SPC-RAWDATA-NORMALITY-ISSUES-20261012](../specs/20261012-spc-rawdata-normality-issues-plan/spec.md)；`SPC-RAWDATA-1012-TASK-001` 已完成，前端下載 raw data 時會依序解析 `ppcId`、總表列 `partProcessCharacteristicId`、舊欄位 `ppcId` 與 selected mapping，修正 All 總表 drilldown 後無法取得單一管制項目 ID 的問題。已發布 SPC 測試站 frontend，正式站未發布。

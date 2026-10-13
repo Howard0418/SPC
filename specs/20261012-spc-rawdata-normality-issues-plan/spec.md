@@ -1,7 +1,7 @@
 # 功能規格：SPC Raw Data 與常態檢定異常規劃
 - 功能 ID：SPC-RAWDATA-NORMALITY-ISSUES-20261012
-- 版本：2
-- 狀態：可實作
+- 版本：3
+- 狀態：完成
 - 涉及專案：SPC
 - 授權依據：使用者於 2026-10-12 提供 `docs/SPC_RawData 異常說明-1012.xlsx`，要求分析文件問題、規劃後加入小工作，不立即執行，並依輕重緩急執行小工作。
 - 現行需求基準：`docs/requirements.md`、`CHANGELOG_CUSTOM.md`
@@ -129,3 +129,4 @@ Feature: SPC 常態檢定與直方圖
 |---|---|---|
 | 1 | 2026-10-12 | 依使用者提供 Excel 完成問題分析、驗收草案與小工作排序 |
 | 2 | 2026-10-13 | 完成 `SPC-NORMALITY-1012-TASK-001`，揭露 SPC 與 Minitab 常態檢定方法差異 |
+| 3 | 2026-10-13 | 完成 `SPC-HISTOGRAM-1012-TASK-001`，直方圖 bins 改以量測值範圍為主，避免遠端規格/管制線壓縮主要分布 |

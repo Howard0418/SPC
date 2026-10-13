@@ -910,51 +910,16 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var curvePoints = new List<NormalCurvePoint>();
         if (stdDev > 1e-15)
         {
-            // Replicate frontend binWidth logic to get exact scale
-            var numericDomainValues = new List<double>(nonExcludedValues);
-            if (limits.LSL.HasValue) numericDomainValues.Add(limits.LSL.Value);
-            if (limits.USL.HasValue) numericDomainValues.Add(limits.USL.Value);
-            if (limits.Target.HasValue) numericDomainValues.Add(limits.Target.Value);
-            if (limits.LCL.HasValue) numericDomainValues.Add(limits.LCL.Value);
-            if (limits.CL.HasValue) numericDomainValues.Add(limits.CL.Value);
-            if (limits.UCL.HasValue) numericDomainValues.Add(limits.UCL.Value);
-
-            // Also check for dynamically calculated control limits in result.StatControlLimits
-            if (result.StatControlLimits != null)
-            {
-                var type = result.StatControlLimits.GetType();
-                var props = type.GetProperties();
-                var limitGroupProp = props.FirstOrDefault(p =>
-                    p.Name == "iControlLimitsStat" ||
-                    p.Name == "xbarControl" ||
-                    p.Name == "pControlLimitsStat" ||
-                    p.Name == "npControlLimitsStat");
-
-                if (limitGroupProp != null)
-                {
-                    var limitGroup = limitGroupProp.GetValue(result.StatControlLimits);
-                    if (limitGroup != null)
-                    {
-                        var groupType = limitGroup.GetType();
-                        var uclVal = groupType.GetProperty("ucl")?.GetValue(limitGroup) as double?
-                                     ?? groupType.GetProperty("Ucl")?.GetValue(limitGroup) as double?;
-                        var lclVal = groupType.GetProperty("lcl")?.GetValue(limitGroup) as double?
-                                     ?? groupType.GetProperty("Lcl")?.GetValue(limitGroup) as double?;
-                        var clVal = groupType.GetProperty("cl")?.GetValue(limitGroup) as double?
-                                    ?? groupType.GetProperty("Cl")?.GetValue(limitGroup) as double?;
-
-                        if (uclVal.HasValue) numericDomainValues.Add(uclVal.Value);
-                        if (lclVal.HasValue) numericDomainValues.Add(lclVal.Value);
-                        if (clVal.HasValue) numericDomainValues.Add(clVal.Value);
-                    }
-                }
-            }
-
-            double domainMin = numericDomainValues.Min();
-            double domainMax = numericDomainValues.Max();
+            // Keep normal curve scaling aligned with the frontend histogram bins:
+            // bins use measured values only so distant spec/control lines do not flatten the distribution.
+            double domainMin = nonExcludedValues.Min();
+            double domainMax = nonExcludedValues.Max();
             double binWidth = 0;
             if (domainMax > domainMin)
             {
+                var valueRange = domainMax - domainMin;
+                domainMin -= valueRange * 0.08;
+                domainMax += valueRange * 0.08;
                 int preferredBins = 12;
                 int binCount = Math.Max(5, Math.Min(preferredBins, (int)Math.Ceiling(Math.Sqrt(n)) + 3));
                 binWidth = (domainMax - domainMin) / binCount;

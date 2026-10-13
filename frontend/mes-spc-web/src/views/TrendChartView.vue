@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue"
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
+import { buildHistogramBins, findHistogramBinIndex } from "../utils/histogram";
 import {
   TrendingUp,
   RefreshCw,
@@ -928,37 +929,6 @@ function renderTrendChart() {
   renderHistogramChart();
 }
 
-function buildHistogramBins(values, preferredBins = 12, domainValues = values) {
-  if (!values.length) return [];
-  const numericDomainValues = domainValues
-    .filter(value => value !== null && value !== undefined && !Number.isNaN(Number(value)))
-    .map(value => Number(value));
-  const min = Math.min(...numericDomainValues);
-  const max = Math.max(...numericDomainValues);
-  if (min === max) {
-    const pad = Math.abs(min) > 0 ? Math.abs(min) * 0.05 : 0.5;
-    return [{ min: min - pad, max: max + pad, count: values.length, values }];
-  }
-
-  const binCount = Math.max(5, Math.min(preferredBins, Math.ceil(Math.sqrt(values.length)) + 3));
-  const width = (max - min) / binCount;
-  const bins = Array.from({ length: binCount }, (_, idx) => ({
-    min: min + idx * width,
-    max: idx === binCount - 1 ? max : min + (idx + 1) * width,
-    count: 0,
-    values: []
-  }));
-
-  values.forEach(value => {
-    const rawIndex = Math.floor((value - min) / width);
-    const index = Math.max(0, Math.min(binCount - 1, rawIndex));
-    bins[index].count += 1;
-    bins[index].values.push(value);
-  });
-
-  return bins;
-}
-
 function renderHistogramChart() {
   if (!histogramChartEl.value || !chartResult.value) return;
 
@@ -987,8 +957,7 @@ function renderHistogramChart() {
     return;
   }
 
-  const histogramBoundaries = [limits.lsl, limits.usl, limits.target];
-  const bins = buildHistogramBins(values, 12, [...values, ...histogramBoundaries]);
+  const bins = buildHistogramBins(values, 12);
   const min = bins[0]?.min ?? 0;
   const max = bins[bins.length - 1]?.max ?? 0;
   const labels = bins.map(bin => `${formatNumber(bin.min, 3)} - ${formatNumber(bin.max, 3)}`);
@@ -999,14 +968,8 @@ function renderHistogramChart() {
   const std = Math.sqrt(variance);
 
   const markLines = [];
-  const findBinIndexForValue = value => {
-    if (value == null || Number.isNaN(Number(value))) return null;
-    const numericValue = Number(value);
-    const index = bins.findIndex(bin => numericValue >= bin.min && numericValue <= bin.max);
-    return index >= 0 ? index : null;
-  };
   const addXAxisLine = (value, name, color, style = "dashed") => {
-    const index = findBinIndexForValue(value);
+    const index = findHistogramBinIndex(bins, value);
     if (index === null) return;
     markLines.push({
       name,

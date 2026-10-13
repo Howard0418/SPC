@@ -5,6 +5,7 @@ import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
 import { normalizeControlScope } from "../utils/controlScope";
 import { resolveActiveRawDataPpcId } from "../utils/spcRawDataDownload";
+import { buildHistogramBins, findHistogramBinIndex } from "../utils/histogram";
 import {
   useSingleChemicalLine,
   stageLabel,
@@ -1709,43 +1710,6 @@ function renderECharts() {
   renderHistogramChart();
 }
 
-function buildHistogramBins(values, preferredBins = 12, domainValues = values) {
-  if (!values.length) return [];
-
-  const numericDomainValues = domainValues
-    .filter(value => value !== null && value !== undefined && !Number.isNaN(Number(value)))
-    .map(value => Number(value));
-  const min = Math.min(...numericDomainValues);
-  const max = Math.max(...numericDomainValues);
-  if (min === max) {
-    const pad = Math.abs(min) > 0 ? Math.abs(min) * 0.05 : 0.5;
-    return [{
-      min: min - pad,
-      max: max + pad,
-      count: values.length,
-      values
-    }];
-  }
-
-  const binCount = Math.max(5, Math.min(preferredBins, Math.ceil(Math.sqrt(values.length)) + 3));
-  const width = (max - min) / binCount;
-  const bins = Array.from({ length: binCount }, (_, idx) => ({
-    min: min + idx * width,
-    max: idx === binCount - 1 ? max : min + (idx + 1) * width,
-    count: 0,
-    values: []
-  }));
-
-  values.forEach(value => {
-    const rawIndex = Math.floor((value - min) / width);
-    const index = Math.max(0, Math.min(binCount - 1, rawIndex));
-    bins[index].count += 1;
-    bins[index].values.push(value);
-  });
-
-  return bins;
-}
-
 function renderTrendChart() {
   if (!trendChartEl.value || !chartResult.value) return;
 
@@ -1898,18 +1862,7 @@ function renderHistogramChart() {
     return;
   }
 
-  const histogramBoundaries = [
-    limits.lsl,
-    limits.usl,
-    limits.target,
-    limits.lcl,
-    limits.cl,
-    limits.ucl,
-    controlLimits.lcl,
-    controlLimits.cl,
-    controlLimits.ucl
-  ];
-  const bins = buildHistogramBins(values, 12, [...values, ...histogramBoundaries]);
+  const bins = buildHistogramBins(values, 12);
   const min = bins.length > 0 ? bins[0].min : 0;
   const max = bins.length > 0 ? bins[bins.length - 1].max : 100;
   const labels = bins.map(bin => `${formatNumber(bin.min, 3)} - ${formatNumber(bin.max, 3)}`);
@@ -1921,15 +1874,9 @@ function renderHistogramChart() {
   const std = Math.sqrt(variance);
 
   const markLines = [];
-  const findBinIndexForValue = (value) => {
-    if (value == null || Number.isNaN(Number(value))) return null;
-    const numericValue = Number(value);
-    const idx = bins.findIndex(bin => numericValue >= bin.min && numericValue <= bin.max);
-    return idx >= 0 ? idx : null;
-  };
   const labelSlotsByBin = new Map();
   const addXAxisLine = (value, name, color, style = "dashed") => {
-    const idx = findBinIndexForValue(value);
+    const idx = findHistogramBinIndex(bins, value);
     if (idx === null) return;
     const slot = labelSlotsByBin.get(idx) || 0;
     labelSlotsByBin.set(idx, slot + 1);

@@ -1,3 +1,8 @@
+## [2026-10-13] - SPC-HISTOGRAM-1012-TASK-001 直方圖 scale/bin 改善
+- 目的：改善小變異資料的直方圖 X 軸與 bins，避免遠端規格/管制界線壓縮主要量測分布。
+- 範圍：前端管制圖與趨勢圖直方圖共用 bins 工具；後端 normal curve 縮放改用量測值範圍估算 bin width。不改 SPC 檢定方法、不改 raw data 匯出欄位。
+- 驗證：前端 histogram 測試 2 passed；NormalityTest 6 passed；後端 build 通過；前端 build 通過。
+
 ## [2026-10-13] - SPC-NORMALITY-1012-TASK-001 常態檢定方法差異揭露
 - 目的：確認 SPC 與 Minitab 常態檢定差異來源，避免不同檢定方法的 p-value 被直接比較。
 - 範圍：後端 `NormalityTestResult` 增加方法說明，管制圖與趨勢圖顯示 SPC 採 Adjusted Jarque-Bera、Minitab 常用 Anderson-Darling 的差異；不替換統計方法。

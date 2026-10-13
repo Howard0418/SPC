@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（SPC 直方圖 scale/bin 改善）
+- 目的：執行 `SPC-HISTOGRAM-1012-TASK-001`，改善小變異資料的直方圖可讀性，避免遠端規格線/管制線把主要量測分布壓縮成單一柱。
+- 修改：新增前端共用 `histogram` 工具；管制圖與趨勢圖直方圖 bins 改以未排除量測值範圍加 padding 建立，規格/管制線只在可見 bins 內標示；後端常態曲線 `ScaledPdf` 改用相同量測值 bin width。
+- 驗證：前端 histogram 測試 2 passed；NormalityTest 6 passed；後端 build 0 warnings / 0 errors；前端 build 通過，僅既有 Vite chunk size warning。
+- 發布：已發布 SPC 測試站 backend/frontend，備份 `release/test/backend.backup-histogram-task001-20261013-081457`、`release/test/frontend.backup-histogram-task001-final-20261013-081629`；HTTPS smoke `/api/health`、`/api/version`、首頁皆 200。正式站未發布。
+
 ## 2026-10-13（SPC 常態檢定與 Minitab 差異揭露）
 - 目的：執行 `SPC-NORMALITY-1012-TASK-001`，確認 SPC 常態檢定與 Minitab 差異來源，避免使用者將不同檢定方法的 p-value 直接比較。
 - 修改：`NormalityTestResult` 新增 `MethodNote`；後端回傳 SPC 採 Adjusted Jarque-Bera 偏態/峰態檢定、Minitab 常用 Anderson-Darling 的說明；管制圖與趨勢圖直方圖 tooltip/卡片顯示方法說明。

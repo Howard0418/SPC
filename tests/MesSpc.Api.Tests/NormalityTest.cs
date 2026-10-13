@@ -106,6 +106,23 @@ public class NormalityTest
     }
 
     [Fact]
+    public void NormalCurveScale_UsesMeasurementRangeWhenSpecLimitsAreDistant()
+    {
+        var values = new List<double> { 7.91, 7.92, 7.925, 7.93, 7.935, 7.94, 7.945, 7.95 };
+        var rawPoints = values.Select(v => new SpcDataPoint { Value = v }).ToList();
+        var nearLimits = new ControlLimits { USL = 8, LSL = 7.8, Target = 7.93 };
+        var distantLimits = new ControlLimits { USL = 100, LSL = -100, Target = 0 };
+
+        var nearResult = SpcService.PopulateNormalityAndCurve(new ControlChartResult(), rawPoints, nearLimits);
+        var distantResult = SpcService.PopulateNormalityAndCurve(new ControlChartResult(), rawPoints, distantLimits);
+
+        nearResult.NormalCurve.Should().NotBeNull();
+        distantResult.NormalCurve.Should().NotBeNull();
+        distantResult.NormalCurve!.Max(x => x.ScaledPdf)
+            .Should().BeApproximately(nearResult.NormalCurve!.Max(x => x.ScaledPdf), 0.000001);
+    }
+
+    [Fact]
     public void TestDegenerateDataset_ReturnsNullPValueWithNote()
     {
         // GIVEN: A dataset with zero variance (all values are identical)
