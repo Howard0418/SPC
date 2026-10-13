@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（SPC/Portal/KM Web API 單一網址設定）
+- 目的：依使用者要求，統一 SPC、入口網站與 KM 的 Web/API 對外網址；對外只宣告站台根網址，API 一律掛同站 `/api/...`。
+- 修改：新增跨系統規格 `specs/20261013-unified-web-api-endpoints/spec.md`；同步需求索引；記錄 Portal Web 的 `PortalApi:BaseUrl` 僅為內部 upstream，不作為對外 API 網址。Portal/KM 原始與測試設定由各專案提交。
+- 驗證：Portal API/Web 與 KM build 皆 0 warnings / 0 errors；Portal API 內部 health 200/test；KM 測試登入頁 200。PowerShell 對外 HTTPS hostname 因 Windows TLS/憑證交握限制未完成 smoke，需以瀏覽器或受信任憑證環境再驗證。正式站未發布。
+
 ## 2026-10-13（Portal/SPC SSO Token Secret 對齊）
 - 目的：修正 Portal 與 SPC 測試站 SSO token secret 不一致，造成 Portal 取得 SPC 登入權杖失敗。
 - 修改：SPC 測試站 `Auth:PortalSsoKey` 已改為與 Portal 測試 API `SpcSso:SharedKey` 相同；已回收 `SpcSingleTest` AppPool。

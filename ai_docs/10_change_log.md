@@ -689,3 +689,8 @@
 - 範圍：`SettingsController`、SMTP 設定頁、範例設定檔與相關測試。
 - 限制：不自動輪替現有測試站或正式環境密鑰，改由部署環境注入並另行執行輪替。
 
+# 2026-10-13 SPC/Portal/KM Web API 單一網址設定
+
+- 目的：依使用者要求，將 SPC、入口網站與 KM 的 Web/API 對外網址統一為站台根網址加 `/api`，避免 Web/API 分成不同外部 URL 或設定誤填 `/api` 造成 `/api/api`。
+- 範圍：跨系統設定基準、Portal/KM 相關設定與 BaseUrl 防呆；不操作正式站、不修改資料庫。
+
