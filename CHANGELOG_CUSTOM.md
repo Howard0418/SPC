@@ -2,7 +2,8 @@
 
 ## 2026-10-13（SPC/Portal/KM Web API 單一網址設定）
 - 目的：依使用者要求，統一 SPC、入口網站與 KM 的 Web/API 對外網址；對外只宣告站台根網址，API 一律掛同站 `/api/...`。
-- 修改：新增跨系統規格 `specs/20261013-unified-web-api-endpoints/spec.md`；同步需求索引；記錄 Portal Web 的 `PortalApi:BaseUrl` 僅為內部 upstream，不作為對外 API 網址。Portal/KM 原始與測試設定由各專案提交。
+- 修改：新增跨系統規格 `specs/20261013-unified-web-api-endpoints/spec.md`；同步需求索引；記錄 Portal Web 的 `PortalApi:BaseUrl` 僅為內部 upstream，不作為對外 API 網址。KM 測試站 DNS 入口為 `https://kmtest.pmr.com.tw:8086/`。Portal/KM 原始與測試設定由各專案提交。
+- 追加：IIS `KM-Test` 新增 `https/172.16.110.27:8086:kmtest.pmr.com.tw`，移除同 port 舊 HTTP binding，HTTP.SYS 已新增 `kmtest.pmr.com.tw:8086` SSL 憑證繫結；Portal 測試 API `KmSso:WebBaseUrl` 改為 `https://kmtest.pmr.com.tw:8086`。
 - 驗證：Portal API/Web 與 KM build 皆 0 warnings / 0 errors；Portal API 內部 health 200/test；KM 測試登入頁 200。PowerShell 對外 HTTPS hostname 因 Windows TLS/憑證交握限制未完成 smoke，需以瀏覽器或受信任憑證環境再驗證。正式站未發布。
 
 ## 2026-10-13（Portal/SPC SSO Token Secret 對齊）

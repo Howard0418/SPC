@@ -29,7 +29,7 @@
 - 不操作正式站。
 - 不修改資料庫 schema。
 - 不把 Portal API DLL 混入 Portal Web 實體目錄；Portal Web 仍以 proxy 轉送 `/api`。
-- 不新增 KM DNS 名稱；若需 `kmtest.pmr.com.tw`，需先完成 DNS 指向後再加 IIS hostname binding。
+- KM DNS 名稱已由使用者指定為 `kmtest.pmr.com.tw`，測試站網址為 `https://kmtest.pmr.com.tw:8086/`。
 
 ## 統一網址基準
 
@@ -37,7 +37,7 @@
 | --- | --- | --- | --- |
 | SPC 測試站 | `https://SPCTEST.pmr.com.tw/` | `https://SPCTEST.pmr.com.tw/api/...` | 同站 |
 | Portal 測試站 | `https://portaltest.pmr.com.tw/` | `https://portaltest.pmr.com.tw/api/...` | `http://172.16.110.27:8091/`，僅供 Portal Web proxy |
-| KM 測試站 | `http://172.16.110.27:8086/` | `http://172.16.110.27:8086/api/...`（若未來新增 API） | 同站 |
+| KM 測試站 | `https://kmtest.pmr.com.tw:8086/` | `https://kmtest.pmr.com.tw:8086/api/...`（若未來新增 API） | 同站 |
 
 ## 需求
 
@@ -58,6 +58,11 @@ Then 目標 endpoint 必須是 `https://SPCTEST.pmr.com.tw/api/v1/auth/portal-ss
 Given KM 設定 `PortalApi:BaseUrl=https://portaltest.pmr.com.tw/`  
 When KM 呼叫 `api/auth/me` 或 `api/auth/login`  
 Then 請求必須送往 `https://portaltest.pmr.com.tw/api/...`，不得使用 `http://172.16.110.27:8091/` 作為對外設定
+
+### Scenario: Portal 產生 KM SSO 入口
+Given Portal 設定 `KmSso:WebBaseUrl=https://kmtest.pmr.com.tw:8086`  
+When 使用者從 Portal 啟動 KM  
+Then Portal 回傳的 KM SSO launch URL 必須使用 `https://kmtest.pmr.com.tw:8086/Account/PortalSso`
 
 ### Scenario: Portal Web 同站 API
 Given 使用者開啟 `https://portaltest.pmr.com.tw/`  
