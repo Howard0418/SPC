@@ -897,6 +897,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var normality = new NormalityTestResult
         {
             TestName = "Adjusted Jarque-Bera",
+            MethodNote = "本系統採 Adjusted Jarque-Bera 偏態/峰態檢定；Minitab 常用 Anderson-Darling 常態檢定，兩者 p-value 與判定不可直接等同。",
             Statistic = jbStatistic,
             PValue = m2 < 1e-15 || stdDev < 1e-15 ? null : pValue,
             Skewness = skewness,

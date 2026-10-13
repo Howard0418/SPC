@@ -27,6 +27,7 @@ public record CapabilityResult
 public record NormalityTestResult
 {
     public string TestName { get; init; } = "Jarque-Bera";
+    public string? MethodNote { get; init; }
     public double Statistic { get; init; }
     public double? PValue { get; init; }
     public double Skewness { get; init; }

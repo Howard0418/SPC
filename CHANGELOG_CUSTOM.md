@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-13（SPC 常態檢定與 Minitab 差異揭露）
+- 目的：執行 `SPC-NORMALITY-1012-TASK-001`，確認 SPC 常態檢定與 Minitab 差異來源，避免使用者將不同檢定方法的 p-value 直接比較。
+- 修改：`NormalityTestResult` 新增 `MethodNote`；後端回傳 SPC 採 Adjusted Jarque-Bera 偏態/峰態檢定、Minitab 常用 Anderson-Darling 的說明；管制圖與趨勢圖直方圖 tooltip/卡片顯示方法說明。
+- 驗證：NormalityTest 5 passed；後端 build 0 warnings / 0 errors；前端 build 通過，僅既有 Vite chunk size warning。
+- 發布：已發布 SPC 測試站 backend/frontend，備份 `release/test/backend.backup-normality-task001-20261013-080810`、`release/test/frontend.backup-normality-task001-20261013-080810`；HTTPS smoke `/api/health`、`/api/version`、首頁皆 200。正式站未發布。
+
 ## 2026-10-13（SPC 咬蝕 X- 線別排除實作）
 - 目的：執行 `SPC-ETCH-X-TASK-002`，避免 TransFiles 固定區塊解析時將 `X-PT-01`、`X-QE-02` 等不匯入 SPC 的線別誤產生為 SPC reports。
 - 修改：TransFiles `etch_reports.py` 讀取各咬蝕區塊第 2 列原始線別標題；trim 後以 `X-` 開頭時加入 `excluded` 清單並跳過 report 產生。JSON 輸出保留 `excluded`，Excel 增加「排除清單」工作表；未修改 Portal/SPC API。

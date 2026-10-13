@@ -18,15 +18,9 @@
 
 規格：`specs/20261012-spc-rawdata-normality-issues-plan/spec.md`
 
-#### SPC-NORMALITY-1012-TASK-001：常態檢定與 Minitab 差異確認
-
-狀態：待執行；相依 Raw Data 正確性修正完成
-
-初步範圍：確認 SPC 常態檢定方法、樣本數限制、p-value 近似與 Minitab 差異來源；以固定樣本建立可重跑驗收，必要時修正演算法或在畫面清楚揭露方法差異。
-
 #### SPC-HISTOGRAM-1012-TASK-001：直方圖 scale/bin 改善
 
-狀態：待執行；相依 `SPC-NORMALITY-1012-TASK-001`
+狀態：待執行；相依 `SPC-NORMALITY-1012-TASK-001` 已完成
 
 初步範圍：改善小變異資料下的直方圖 X 軸範圍與 bins 策略，避免主要資料集中成單一柱；規格線與管制線需保留輔助辨識但不得壓縮主要資料分布。
 
@@ -173,6 +167,7 @@
 - `SPC-RAWDATA-1012-TASK-003`：已完成 Raw data 規格資訊補欄。CSV 新增 `SpecLSL`、`SpecTarget`、`SpecUSL`、`Unit` 欄位，來源為下載目標 `PartProcessCharacteristic` 的規格欄位，與圖表 limits 口徑一致。驗證通過：RawDataCsvExporter 測試 3 passed、後端 build 通過；已發布 SPC 測試站 backend，備份 `release/test/backend.backup-rawdata-spec-20261013-074946`，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 6 件（咬蝕 X- 2 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 - `SPC-ETCH-X-TASK-001`：已完成咬蝕 X- 線別排除規格與測試案例。補齊 TransFiles/Portal/SPC 契約、預覽排除狀態、確認匯入不得送 SPC、測試案例矩陣與回復方式；本次未修改程式、未匯入資料、未發布。目前剩餘未完成小工作 5 件（咬蝕 X- 1 件、常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
 - `SPC-ETCH-X-TASK-002`：已完成咬蝕 X- 線別排除實作與測試。TransFiles 解析咬蝕日報時讀取各區塊第 2 列線別標題，`X-` 前綴線別加入 `excluded` 與 Excel「排除清單」，不產生 SPC `reports`；未帶 `X-` 線別維持既有流程。驗證通過：TransFiles 咬蝕相關測試 11 passed、py_compile 通過；真實來源唯讀抽取 reports 114、excluded 8。未打包 EXE、未連線 Portal/SPC、未寫入資料，SPC 測試站發布不適用。正式站未發布。目前剩餘未完成小工作 4 件（常態/直方圖 2 件、IIS 外部條件阻擋 2 件）。
+- `SPC-NORMALITY-1012-TASK-001`：已完成常態檢定與 Minitab 差異確認。SPC 後端回傳 `MethodNote`，前端管制圖/趨勢圖揭露 SPC 採 Adjusted Jarque-Bera，Minitab 常用 Anderson-Darling，p-value 與判定不可直接等同；固定樣本測試保護方法揭露與 p-value 範圍。驗證通過：NormalityTest 5 passed、後端 build 通過、前端 build 通過；已發布 SPC 測試站 backend/frontend，HTTPS smoke 通過。正式站未發布。目前剩餘未完成小工作 3 件（直方圖 1 件、IIS 外部條件阻擋 2 件）。
 
 ## 2026-10-11 執行紀錄
 

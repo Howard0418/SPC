@@ -1089,7 +1089,7 @@ function renderHistogramChart() {
           `<div>${formatNumber(bin.min, 4)} &lt;= X ${point.dataIndex === bins.length - 1 ? "&lt;=" : "&lt;"} ${formatNumber(bin.max, 4)}</div>`,
           `<div style="margin-top:4px">區間筆數: <strong style="color:#a5b4fc">${bin.count}</strong></div>`,
           `<div style="margin-top:4px;color:#94a3b8;font-size:11px">總樣本數 N=${values.length}, 平均值=${formatNumber(mean, 4)}, 標準差=${formatNumber(std, 4)}</div>`,
-          data.normality ? `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">常態性檢定 P-value: <strong style="color:#fbbf24">${pValue}</strong></div>` : ""
+          data.normality ? `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">常態性檢定 ${data.normality.testName || ""} P-value: <strong style="color:#fbbf24">${pValue}</strong>${data.normality.methodNote ? `<div style="margin-top:4px;color:#cbd5e1">${data.normality.methodNote}</div>` : ""}</div>` : ""
         ].join("");
       }
     },
@@ -1588,6 +1588,10 @@ const trendStats = computed(() => {
               </p>
             </div>
           </div>
+
+          <p v-if="chartResult.normality?.methodNote" class="text-xs text-slate-500 dark:text-slate-400">
+            {{ chartResult.normality.methodNote }}
+          </p>
 
           <div ref="histogramChartEl" class="h-[300px] w-full min-h-[240px]"></div>
         </div>

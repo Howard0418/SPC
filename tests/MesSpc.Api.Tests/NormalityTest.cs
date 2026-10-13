@@ -26,6 +26,7 @@ public class NormalityTest
         result.Should().NotBeNull();
         result.Normality.Should().NotBeNull();
         result.Normality!.TestName.Should().Be("Adjusted Jarque-Bera");
+        result.Normality.MethodNote.Should().Contain("Minitab");
         result.Normality.PValue.Should().NotBeNull();
         
         // P-value should be high (>= 0.05) because the dataset is symmetric
@@ -84,6 +85,24 @@ public class NormalityTest
         result.Normality!.PValue.Should().NotBeNull();
         result.Normality.PValue.Value.Should().BeLessThan(0.05);
         result.Normality.IsNormal.Should().BeFalse();
+        result.Normality.MethodNote.Should().Contain("Adjusted Jarque-Bera");
+    }
+
+    [Fact]
+    public void FixedMinitabComparisonSample_DisclosesDifferentMethodAndStableResult()
+    {
+        var values = new List<double> { 7.92, 7.75, 7.87, 7.81, 7.95, 7.77, 7.83, 7.86, 7.9, 7.79, 7.84, 7.88 };
+        var rawPoints = values.Select(v => new SpcDataPoint { Value = v }).ToList();
+        var limits = new ControlLimits { USL = 8.5, LSL = 7.5, Target = 8.0 };
+
+        var result = SpcService.PopulateNormalityAndCurve(new ControlChartResult(), rawPoints, limits);
+
+        result.Normality.Should().NotBeNull();
+        result.Normality!.TestName.Should().Be("Adjusted Jarque-Bera");
+        result.Normality.MethodNote.Should().Contain("Anderson-Darling");
+        result.Normality.PValue.Should().NotBeNull();
+        result.Normality.PValue!.Value.Should().BeInRange(0, 1);
+        result.NormalCurve.Should().NotBeNull();
     }
 
     [Fact]

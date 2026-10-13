@@ -2032,7 +2032,10 @@ function renderHistogramChart() {
           const normalStatus = data.normality.isNormal
             ? "<span style='color:#34d399;font-weight:bold'>符合常態</span>"
             : "<span style='color:#f87171;font-weight:bold'>偏離常態</span>";
-          normalityInfo = `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">常態性檢定 (P-val): <strong style="color:#fbbf24">${pValStr}</strong> (${normalStatus})</div>`;
+          const methodNote = data.normality.methodNote
+            ? `<div style="margin-top:4px;color:#cbd5e1">${data.normality.methodNote}</div>`
+            : "";
+          normalityInfo = `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">常態性檢定 ${data.normality.testName || ""} (P-val): <strong style="color:#fbbf24">${pValStr}</strong> (${normalStatus})${methodNote}</div>`;
         }
 
         return [
@@ -2677,6 +2680,9 @@ onBeforeUnmount(() => {
               </div>
             </div>
           </div>
+          <p v-if="chartResult.normality?.methodNote" class="text-xs text-slate-500 dark:text-slate-400">
+            {{ chartResult.normality.methodNote }}
+          </p>
           <div ref="histogramChartEl" class="h-[300px] w-full min-h-[240px]"></div>
         </div>
 
