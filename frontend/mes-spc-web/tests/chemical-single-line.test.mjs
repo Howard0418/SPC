@@ -41,7 +41,7 @@ test('GENERAL and blank shifts count as morning',()=>{
 });
 test('N1/N2 chart labels show open and close as morning stages without changing legacy shift labels',()=>{
   assert.equal(shiftLabel('CLOSE'),'晚班');
-  assert.equal(chartShiftLabel('OPEN',true),'早班(開)');
+  assert.equal(chartShiftLabel('OPEN',true),'早(開)');
   assert.equal(chartShiftLabel('CLOSE',true),'早(收)');
   assert.equal(chartStageShiftLabel('MIDDLE','OPEN',true),'中(開)');
   assert.equal(chartStageShiftLabel('MIDDLE','CLOSE',true),'中(收)');

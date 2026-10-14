@@ -39,7 +39,7 @@ export function shiftLabel(phase) {
 
 export function chartShiftLabel(phase, isN1N2 = false) {
   if (!isN1N2) return shiftLabel(phase);
-  return ({ OPEN: '早班(開)', MIDDLE: '中(開)', CLOSE: '早(收)' })[normalizeChemicalShift(phase)];
+  return ({ OPEN: '早(開)', MIDDLE: '中(開)', CLOSE: '早(收)' })[normalizeChemicalShift(phase)];
 }
 
 export function chartStageShiftLabel(phase, stage, isN1N2 = false) {

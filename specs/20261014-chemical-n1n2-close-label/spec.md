@@ -43,7 +43,12 @@ N1/N2 藥液資料中的 `OPEN` / `CLOSE` 在開收線情境代表早班開線 /
 - 驗證：`node --test frontend/mes-spc-web/tests/chemical-single-line.test.mjs` 7 passed；`npm run build` 通過，僅既有 Vite chunk size warning。
 
 ## v3 顯示文案調整：開收線短標籤
-- 需求：N1/N2 藥液管制圖標籤改為短格式：早班開線顯示「早班(開)」、早班收線顯示「早(收)」、中班開線顯示「中(開)」、中班收線顯示「中(收)」。
+- 需求：N1/N2 藥液管制圖標籤改為短格式：早班開線顯示「早(開)」、早班收線顯示「早(收)」、中班開線顯示「中(開)」、中班收線顯示「中(收)」。
 - 修改：新增 `chartStageShiftLabel` 統一 X 軸、tooltip 與點位明細文案；N1/N2 點位明細不再額外附加重複的取樣階段。
 - 驗收：N1/N2 單線圖的 X 軸、tooltip 與點位明細均不得再顯示「早班開線」或「早班收線」。
 - 驗證：`node --test frontend/mes-spc-web/tests/chemical-single-line.test.mjs` 7 passed；`npm run build` 通過，僅既有 Vite chunk size warning；已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-20261014-chemical-shift-short-label`。
+
+## v4 顯示文案微調：早班開線再短化
+- 需求：早班開線由「早班(開)」改為「早(開)」。
+- 驗收：N1/N2 藥液管制圖 X 軸、tooltip 與點位明細的 OPEN 顯示為「早(開)」。
+- 驗證：`node --test frontend/mes-spc-web/tests/chemical-single-line.test.mjs` 7 passed；`npm run build` 通過，僅既有 Vite chunk size warning；已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-20261014-chemical-open-short-label`。

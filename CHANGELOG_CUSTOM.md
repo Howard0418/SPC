@@ -14,7 +14,7 @@
 - 驗證：`node --test frontend/mes-spc-web/tests/chemical-single-line.test.mjs` 通過，7 passed；`npm run build` 通過，僅既有 Vite chunk size warning。
 - 發布：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-20261014-chemical-n1n2-close-label`；PowerShell 對 `https://SPCTEST.pmr.com.tw/` 發生 SSL 連線失敗，需以瀏覽器或受信任憑證環境補做外部 smoke。正式站未發布。
 - 追加修正：部分管制圖 mapping 直接提供 `machineCode` / `machineName`，或以 `CHEMICAL` / `藥液` 表示範圍，導致 N2 藥液圖仍未套用單線開收線標籤；`useSingleChemicalLine` 已補支援直接欄位與藥液範圍名稱。`chemical-single-line.test.mjs` 7 passed，frontend build 通過；已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-20261014-chemical-n1n2-close-label-v3`。正式站未發布。
-- 文案調整：N1/N2 藥液開收線顯示改為短標籤，早班開線=`早班(開)`、早班收線=`早(收)`、中班開線=`中(開)`、中班收線=`中(收)`；X 軸、tooltip 與點位明細同步套用。`chemical-single-line.test.mjs` 7 passed，frontend build 通過；已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-20261014-chemical-shift-short-label`。正式站未發布。
+- 文案調整：N1/N2 藥液開收線顯示改為短標籤，早班開線=`早(開)`、早班收線=`早(收)`、中班開線=`中(開)`、中班收線=`中(收)`；X 軸、tooltip 與點位明細同步套用。`chemical-single-line.test.mjs` 7 passed，frontend build 通過；已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-20261014-chemical-open-short-label`。正式站未發布。
 
 ## 2026-10-14（SPC 資料匯入頁完全改為 TransFiles 追蹤）
 - 目的：依使用者補充，既然不走網頁資料匯入，SPC 網站的資料匯入功能也要收斂為批次查詢、錯誤追蹤與製圖確認，不再保留網頁確認匯入動作。
