@@ -13,6 +13,7 @@ import {
   isRecordedChemicalShift,
   shiftLabel,
   chartShiftLabel,
+  chartStageShiftLabel,
   chemicalDateKey,
   buildPairedShiftLookup
 } from "../utils/chemicalChart";
@@ -1343,9 +1344,9 @@ function renderECharts() {
       const date = chemicalDateKey(p).slice(5).replace("-", "/");
       const phase = normalizeChemicalShift(p.samplingPhase);
       const chartPhaseLabel = singleChemicalLine
-        ? ({ OPEN: '早班開線', MIDDLE: '中班', CLOSE: '早班收線' })[phase]
+        ? chartStageShiftLabel(phase, p.samplingStage, true)
         : shiftLabel(phase);
-      return `${date} ${chartPhaseLabel}${singleChemicalLine && p.samplingStage ? `（${stageLabel(p.samplingStage)}）` : ''}`;
+      return `${date} ${chartPhaseLabel}`;
     }
     if (singleChemicalLine) return `${chemicalDateKey(p).slice(5).replace("-", "/")} ${stageLabel(p.samplingStage)}`;
     if (p.measuredAt) {
@@ -1579,7 +1580,7 @@ function renderECharts() {
           if (meta.slotId) res += `<div>槽位: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
           const phase = normalizeChemicalShift(meta.samplingPhase);
           const phaseColors = { OPEN: "text-blue-300", MIDDLE: "text-emerald-300", CLOSE: "text-orange-300" };
-          res += `<div>班別: <span class="font-bold ${phaseColors[phase]}">${chartShiftLabel(meta.samplingPhase, singleChemicalLine)}</span></div>`;
+          res += `<div>班別: <span class="font-bold ${phaseColors[phase]}">${chartStageShiftLabel(meta.samplingPhase, meta.samplingStage, singleChemicalLine)}</span></div>`;
           if (singleChemicalLine) res += `<div>取樣階段: ${stageLabel(meta.samplingStage)}</div>`;
           if (meta.measuredAt) res += `<div>實際量測: <span class="text-slate-200">${new Date(meta.measuredAt).toLocaleString("zh-TW", { hour12: false })}</span></div>`;
           res += `</div>`;
@@ -2717,8 +2718,8 @@ onBeforeUnmount(() => {
               <div>
                 <p class="text-[10px] font-bold text-slate-400 uppercase">班別 / 取樣階段</p>
                 <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
-                  {{ chartShiftLabel(selectedPoint.samplingPhase, useSingleChemicalLine(selectedMapping)) }}
-                  <span v-if="selectedPoint.samplingStage && selectedPoint.samplingStage !== 'GENERAL'" class="text-xs text-slate-400">
+                  {{ chartStageShiftLabel(selectedPoint.samplingPhase, selectedPoint.samplingStage, useSingleChemicalLine(selectedMapping)) }}
+                  <span v-if="selectedPoint.samplingStage && selectedPoint.samplingStage !== 'GENERAL' && !useSingleChemicalLine(selectedMapping)" class="text-xs text-slate-400">
                     / {{ stageLabel(selectedPoint.samplingStage) }}
                   </span>
                 </p>

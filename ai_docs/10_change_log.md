@@ -2,6 +2,7 @@
 - 目的：修正 SPC 管制圖中 N1/N2 藥液 `CLOSE` 被舊班別顯示邏輯標成「晚班」的問題，讓開收線情境顯示為「早班收線」。
 - 範圍：前端 `chemicalChart` 標籤工具、`SpcChartView` tooltip 與點位明細、對應前端測試；不修改後端資料、資料庫、TransFiles 輸出或正式資料。
 - 驗證：先補前端回歸測試，再執行相關 node test 與 frontend build；通過後刷新 SPC 測試站 frontend。
+- 追加：依使用者要求將 N1/N2 藥液開收線標籤縮短為 `早班(開)`、`早(收)`、`中(開)`、`中(收)`，同步 X 軸、tooltip 與點位明細。
 
 ## [2026-10-14] - SPC-IMPORT-VIA-TRANSFILES-ONLY 全部小工作
 - 目的：完成 SPC 改由 TransFiles 直接匯入的支援工作，SPC 網站不再引導 Excel 上傳，改為批次查詢、錯誤追蹤、新資料提示與製圖確認。
