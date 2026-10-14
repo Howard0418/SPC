@@ -1,5 +1,6 @@
 # SPC 現行需求索引
 
+- SPC 管制項目編輯畫面直覺化：[SPC-PPC-EDIT-UI-SIMPLIFICATION-20261014](../specs/20261014-ppc-edit-ui-simplification/spec.md)；新增／編輯抽屜改為固定分頁，基本資料、規格與抽樣、圖表設定、藥液公式、進階設定分區操作；顯示方式與管制圖類型各只保留一處，畫面文字統一使用「槽位」。已發布 SPC 測試站 frontend，正式站未發布。
 - SPC 常態檢定方法切換：[SPC-NORMALITY-METHOD-SWITCH-20261014](../specs/20261014-normality-method-switch/spec.md)；SPC 管制圖與量測趨勢圖可選 Adjusted Jarque-Bera 或 Anderson-Darling 常態檢定，後端 `/api/v1/spc/chart` 以 `normalityMethod` 參數切換，未指定時維持 Adjusted Jarque-Bera。正式站未發布。
 - SPC 槽位顯示一致：[SPC-TANK-SLOT-DISPLAY-20261014](../specs/20261014-spc-tank-slot-display/spec.md)；SPC 管制項目總覽與管制圖監控明細都顯示「槽位」，且需保留完整槽位名稱，例如 `蝕刻(鎳)`，不得切成 `蝕刻`。正式站未發布。
 - SPC/Portal/KM Web API 單一網址設定：[UNIFIED-WEB-API-ENDPOINTS-20261013](../specs/20261013-unified-web-api-endpoints/spec.md)；對使用者、瀏覽器與跨系統 SSO 設定一律使用站台根網址，API 掛同站 `/api/...`。SPC 測試站為 `https://SPCTEST.pmr.com.tw/` 與 `/api/...`；Portal 測試站為 `https://portaltest.pmr.com.tw/` 與 `/api/...`，內部 `PmrPortalApi` 僅作 Web proxy upstream；KM 測試站為 `https://kmtest.pmr.com.tw:8086/`，若未來新增 API 亦掛同站 `/api/...`。正式站未發布。

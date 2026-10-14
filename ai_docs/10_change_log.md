@@ -1,3 +1,8 @@
+## [2026-10-14] - SPC-PPC-EDIT-UI-SIMPLIFICATION 管制項目編輯畫面直覺化
+- 目的：整理 SPC 管制項目新增／編輯抽屜，移除快速／進階模式造成的重複欄位，讓基本資料、規格、圖表、藥液公式與進階 JSON 分區操作。
+- 範圍：前端 `PartProcessCharacteristicsView.vue` 版面與文案；統一「槽位」顯示。不修改 API、資料庫、計算、權限或儲存 payload。
+- 驗證：前端 build；通過後刷新 SPC 測試站 frontend。
+
 ## [2026-10-14] - SPC-NORMALITY-METHOD-SWITCH 常態檢定方法切換
 - 目的：讓使用者可在 SPC 管制圖與量測趨勢圖切換 Adjusted Jarque-Bera 與 Anderson-Darling 常態檢定，比對 p-value 與判定。
 - 範圍：後端 `/api/v1/spc/chart` 新增 `normalityMethod` 參數與 Anderson-Darling 計算；前端新增常態檢定方法選項。不修改資料庫、不改 raw data、管制界線或能力指標。

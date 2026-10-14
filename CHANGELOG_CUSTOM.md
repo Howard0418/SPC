@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC 管制項目編輯畫面直覺化）
+- 目的：整理 SPC 管制項目新增／編輯抽屜，讓使用者依基本資料、規格與抽樣、圖表設定、藥液公式與進階設定分區確認，不再被快速／進階模式與重複欄位干擾。
+- 規格：新增 `specs/20261014-ppc-edit-ui-simplification/spec.md`。
+- 修改：前端 `PartProcessCharacteristicsView` 移除快速／進階模式切換入口，改為固定分頁；基本資料不再顯示圖表設定，`顯示方式` 與 `管制圖類型` 收斂到圖表設定分頁；藥液公式與公式 JSON 分別放在藥液公式與進階設定分頁；畫面文字統一使用「槽位」。
+- 驗證：`npm run build` 通過；既有 Vite chunk size warning 可接受。
+- 發布：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-ppc-edit-ui-20261014-105341`；PowerShell 對 `https://SPCTEST.pmr.com.tw/` 仍發生 SSL 連線失敗，需以瀏覽器或受信任憑證環境再做外部 smoke。正式站未發布。
+
 ## 2026-10-14（SPC 常態檢定方法切換）
 - 目的：讓 SPC 管制圖與量測趨勢圖可切換 Adjusted Jarque-Bera 與 Anderson-Darling 常態檢定，方便比對 p-value 與 Minitab 方法差異。
 - 規格：新增 `specs/20261014-normality-method-switch/spec.md`。

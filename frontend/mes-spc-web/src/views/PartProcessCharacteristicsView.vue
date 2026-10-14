@@ -68,6 +68,13 @@ const originalDisplayMode = ref("CONTROL_CHART");
 const isHydratingForm = ref(false);
 const advancedMode = ref(localStorage.getItem("ppcAdvancedMode") === "true");
 const formMode = ref("quick"); // 'quick', 'advanced'
+const formTabs = computed(() => [
+  { id: 1, label: "基本資料" },
+  { id: 2, label: "規格與抽樣" },
+  { id: 3, label: "圖表設定" },
+  ...(form.value.controlScope === CONTROL_SCOPE.CHEM ? [{ id: 4, label: "藥液公式" }] : []),
+  { id: 5, label: "進階設定" }
+]);
 const chemicalFormulaVersions = ref([]);
 const chemicalFormulaVersionsVisible = ref(false);
 const chemicalFormulaVersionsLoading = ref(false);
@@ -694,7 +701,7 @@ function validateStep(step) {
         return false;
       }
       if (!form.value.tankId) {
-        formErr.value = "請選擇生產槽體";
+        formErr.value = "請選擇生產槽位";
         return false;
       }
     }
@@ -753,7 +760,7 @@ async function openCreateModal() {
   modalMode.value = "create";
   currentId.value = null;
   currentStep.value = 1;
-  formMode.value = "quick";
+  formMode.value = "tabs";
   availableTanks.value = [];
   const characteristic = characteristics.value[0] || null;
   const displayMode = getControlScopeGroupType("PRODUCT");
@@ -798,7 +805,7 @@ async function openEditModal(item) {
   modalMode.value = "edit";
   currentId.value = item.id;
   currentStep.value = 1;
-  formMode.value = "quick";
+  formMode.value = "tabs";
   formErr.value = "";
   chemicalFormulaVersions.value = [];
   chemicalFormulaVersionsVisible.value = false;
@@ -875,7 +882,7 @@ async function save() {
     formErr.value = `目前「${scopeLabel(form.value.controlScope)}」尚未啟用${selectedDisplayModeLabel.value}大類別。`;
     return;
   }
-  if (formMode.value === "quick") {
+  if (formMode.value !== "advanced") {
     form.value.displayMode = form.value.displayMode || "CONTROL_CHART";
     if (form.value.displayMode === "CONTROL_CHART") {
       form.value.chartTypeId = form.value.chartTypeId || findDefaultChartTypeId(form.value.displayMode, selectedCharacteristic.value?.dataCategory);
@@ -900,7 +907,7 @@ async function save() {
     return;
   }
   if (form.value.controlScope === CONTROL_SCOPE.CHEM && (!form.value.machineId || !form.value.tankId)) {
-    formErr.value = "藥水管制項目必須選擇線別/機台與槽體。";
+    formErr.value = "藥水管制項目必須選擇線別/機台與槽位。";
     return;
   }
   if (form.value.displayMode === "CONTROL_CHART" && !form.value.chartTypeId) {
@@ -1626,18 +1633,8 @@ onBeforeUnmount(() => {
               {{ modalMode === 'create' ? '新增 SPC 管制項目' : '編輯 SPC 管制項目' }}
             </h3>
           </div>
-          <div class="flex items-center gap-2 ml-auto mr-4">
-            <button
-              @click="formMode = formMode === 'quick' ? 'advanced' : 'quick'"
-              type="button"
-              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all hover:opacity-90"
-              :class="formMode === 'quick'
-                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/60'
-                : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900/60'"
-            >
-              <span v-if="formMode === 'quick'">⚡ 快速建檔模式</span>
-              <span v-else>⚙️ 進階精靈模式</span>
-            </button>
+          <div class="ml-auto mr-4 hidden text-xs font-bold text-slate-500 dark:text-slate-400 sm:block">
+            {{ modalMode === 'edit' ? `#${currentId}` : 'New' }}
           </div>
           <button
             @click="showModal = false"
@@ -1654,56 +1651,25 @@ onBeforeUnmount(() => {
               <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
             </div>
 
-            <!-- Step Indicator (進度指示器) -->
-            <div v-show="formMode === 'advanced'" class="px-2 py-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 mb-2">
-              <div class="flex items-center justify-between max-w-lg mx-auto relative">
-                <!-- Background Connecting Line -->
-                <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-slate-200 dark:bg-slate-700 z-0"></div>
-                <!-- Active Progress Line -->
-                <div 
-                  class="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-amber-500 transition-all duration-300 z-0"
-                  :style="{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }"
-                ></div>
-
-                <!-- Step 1 -->
-                <div class="flex flex-col items-center relative z-10">
-                  <div 
-                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all border-2"
-                    :class="currentStep >= 1 ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-slate-100 border-slate-300 text-slate-400 dark:bg-slate-800 dark:border-slate-700'"
-                  >
-                    <span v-if="currentStep > 1">✓</span>
-                    <span v-else>1</span>
-                  </div>
-                  <span class="text-[11px] font-black mt-1.5" :class="currentStep >= 1 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">基礎對照</span>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="flex flex-col items-center relative z-10">
-                  <div 
-                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all border-2"
-                    :class="currentStep >= 2 ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-white border-slate-200 text-slate-400 dark:bg-slate-900 dark:border-slate-800'"
-                  >
-                    <span v-if="currentStep > 2">✓</span>
-                    <span v-else>2</span>
-                  </div>
-                  <span class="text-[11px] font-black mt-1.5" :class="currentStep >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">規格設定</span>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="flex flex-col items-center relative z-10">
-                  <div 
-                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all border-2"
-                    :class="currentStep >= 3 ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-white border-slate-200 text-slate-400 dark:bg-slate-900 dark:border-slate-800'"
-                  >
-                    3
-                  </div>
-                  <span class="text-[11px] font-black mt-1.5" :class="currentStep >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">圖表規則</span>
-                </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/60">
+              <div class="flex min-w-max gap-1">
+                <button
+                  v-for="tab in formTabs"
+                  :key="tab.id"
+                  type="button"
+                  @click="currentStep = tab.id"
+                  class="px-4 py-2 rounded-lg text-xs font-black transition-all"
+                  :class="currentStep === tab.id
+                    ? 'bg-white text-amber-700 shadow-sm dark:bg-slate-900 dark:text-amber-300'
+                    : 'text-slate-500 hover:bg-white/70 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-900/60 dark:hover:text-slate-100'"
+                >
+                  {{ tab.label }}
+                </button>
               </div>
             </div>
 
             <!-- STEP 1 CONTAINER -->
-            <div v-show="formMode === 'quick' || currentStep === 1" class="space-y-5 animate-fade-in">
+            <div v-show="currentStep === 1" class="space-y-5 animate-fade-in">
               <!-- Control Scope Selector -->
               <div class="space-y-2">
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制類型 <span class="text-red-500">*</span></label>
@@ -1739,7 +1705,7 @@ onBeforeUnmount(() => {
               </div>
 
               <!-- Machines associated with the selected Process -->
-              <div v-if="form.processId" class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <div v-if="form.processId && form.controlScope !== CONTROL_SCOPE.CHEM" class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-2">
                   <Cpu class="w-4 h-4 text-purple-500" />
                   <span>此工站配置生產設備機台：</span>
@@ -1777,20 +1743,20 @@ onBeforeUnmount(() => {
                   </div>
 
                   <div class="space-y-1.5">
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">槽體 <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">槽位 <span class="text-red-500">*</span></label>
                     <select
                       v-model="form.tankId"
                       :required="form.controlScope === CONTROL_SCOPE.CHEM && currentStep === 1"
                       :disabled="!form.machineId"
                       class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
                     >
-                      <option :value="null">-- 選擇槽體 --</option>
+                      <option :value="null">-- 選擇槽位 --</option>
                       <option v-for="tank in availableTanks" :key="tank.id" :value="tank.id">{{ tank.tankName }}</option>
                     </select>
                   </div>
                 </div>
                 <p v-if="form.machineId && availableTanks.length === 0" class="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-                  此線別尚未建立槽體，請先到「線別槽體設定」新增槽體。
+                  此線別尚未建立槽位，請先到「線別槽位設定」新增槽位。
                 </p>
               </div>
 
@@ -1834,48 +1800,10 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <!-- ⚡ 快速建檔模式：新增預設管制圖與顯示類型設定 -->
-              <div class="space-y-1.5 pt-2">
-                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
-                <select
-                  v-model="form.displayMode"
-                  class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-                >
-                  <option value="CONTROL_CHART">SPC 管制圖</option>
-                  <option value="TREND_CHART" :disabled="!hasDisplayModeGroup('TREND_CHART')">量測值趨勢圖</option>
-                </select>
-                <p class="text-[11px] text-slate-400">
-                  切換為趨勢圖會保留量測資料、規格界限與目標值，並移除不適用的管制圖類型、管制線、公式與規則設定。
-                </p>
-                <p v-if="!hasDisplayModeGroup('TREND_CHART')" class="text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                  此業務範圍尚未啟用趨勢圖大類別，因此暫不可選擇。
-                </p>
-              </div>
-
-              <div v-if="formMode === 'quick'" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ selectedDisplayModeLabel }}類型</label>
-                  <select
-                    v-model="form.chartTypeId"
-                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-                  >
-                    <option :value="null">-- 請選擇{{ selectedDisplayModeLabel }}類型 --</option>
-                    <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">
-                      {{ ct.chartTypeCode }} - {{ ct.chartTypeName }}
-                    </option>
-                  </select>
-                </div>
-                <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">可用圖表</label>
-                  <div class="px-3 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-sm font-bold text-emerald-700 dark:text-emerald-300">
-                    {{ selectedDisplayModeLabel }}
-                  </div>
-                </div>
-              </div>
             </div>
 
             <!-- STEP 2 CONTAINER -->
-            <div v-show="formMode === 'quick' || currentStep === 2" class="space-y-5 animate-fade-in">
+            <div v-show="currentStep === 2" class="space-y-5 animate-fade-in">
               <!-- Specs: USL, Target, LSL, Sample Size -->
               <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
@@ -1969,70 +1897,45 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- STEP 3 CONTAINER -->
-            <div v-show="formMode === 'quick' || currentStep === 3" class="space-y-5 animate-fade-in">
-              <!-- Mode Switcher -->
-              <div v-if="formMode === 'advanced'" class="p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-1">
-                <button
-                  type="button"
-                  @click="advancedMode = false"
-                  :class="[
-                    'px-4 py-2.5 rounded-xl text-sm font-black transition-all',
-                    !advancedMode ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                  ]"
-                >
-                  簡易模式
-                </button>
-                <button
-                  type="button"
-                  @click="advancedMode = true"
-                  :class="[
-                    'px-4 py-2.5 rounded-xl text-sm font-black transition-all',
-                    advancedMode ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                  ]"
-                >
-                  進階模式
-                </button>
-              </div>
-
-              <!-- currently applied info card (!advancedMode) -->
-              <div v-if="formMode === 'advanced' && !advancedMode" class="p-4 bg-blue-50/60 dark:bg-blue-950/15 rounded-2xl border border-blue-200 dark:border-blue-900/70 space-y-3">
+            <div v-show="currentStep === 3 || currentStep === 4 || currentStep === 5" class="space-y-5 animate-fade-in">
+              <div v-if="currentStep === 3" class="p-4 bg-blue-50/60 dark:bg-blue-950/15 rounded-2xl border border-blue-200 dark:border-blue-900/70 space-y-4">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                  <Info class="w-4 h-4" /> 目前套用資訊
+                  <Info class="w-4 h-4" /> 圖表顯示方式
                 </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
-                    <div class="text-slate-400 font-bold">量測單位</div>
-                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ effectiveUnit }}</div>
-                    <div class="mt-1 text-[11px] text-slate-400">由此管制項目設定</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">顯示方式</label>
+                    <select
+                      v-model="form.displayMode"
+                      class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    >
+                      <option value="CONTROL_CHART">SPC 管制圖</option>
+                      <option value="TREND_CHART" :disabled="!hasDisplayModeGroup('TREND_CHART')">量測值趨勢圖</option>
+                    </select>
+                    <p v-if="!hasDisplayModeGroup('TREND_CHART')" class="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                      此業務範圍尚未啟用趨勢圖大類別，因此暫不可選擇。
+                    </p>
                   </div>
-                  <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
-                    <div class="text-slate-400 font-bold">管制圖類型</div>
-                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ selectedChartType ? `${selectedChartType.chartTypeCode} (${selectedChartType.chartTypeName})` : '繼承特性設定' }}</div>
-                    <div class="mt-1 text-[11px] text-slate-400">{{ selectedChartType ? '此管制項目指定' : '未指定項目專屬管制圖' }}</div>
-                  </div>
-                  <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
-                    <div class="text-slate-400 font-bold">公式來源</div>
-                    <div class="mt-1 font-black text-slate-800 dark:text-white">{{ formulaLabel(form.formulaConfigJson) }}</div>
-                    <div class="mt-1 text-[11px] text-amber-600 dark:text-amber-400 font-bold">
-                      此管制項目專屬設定
-                    </div>
-                  </div>
-                  <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900/70">
-                    <div class="text-slate-400 font-bold">管制規則</div>
-                    <div class="mt-1 font-black text-slate-800 dark:text-white">WE 八大規則</div>
-                    <div class="mt-1 text-[11px]" :class="hasItemRules ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                      全部管制項目統一套用，不支援項目專屬設定
-                    </div>
+
+                  <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制圖類型</label>
+                    <select
+                      v-model="form.chartTypeId"
+                      class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
+                    >
+                      <option :value="null" disabled>-- 請選擇{{ selectedDisplayModeLabel }}類型 --</option>
+                      <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
+                    </select>
                   </div>
                 </div>
                 <p class="text-[11px] text-blue-700/70 dark:text-blue-300/70 font-semibold">
-                  {{ form.displayMode === 'TREND_CHART' ? '趨勢圖僅使用量測單位、目標值與規格界限。' : '若要調整單位、公式、管制規則或固定 UCL/CL/LCL，請切換到進階模式。' }}
+                  切換為趨勢圖會保留量測資料、規格界限與目標值，並移除不適用的管制圖類型、管制線、公式與規則設定。
                 </p>
               </div>
 
               <!-- Advanced Override items -->
-              <div v-if="formMode === 'quick' || advancedMode" class="space-y-5">
-                <div class="space-y-1.5">
+              <div class="space-y-5">
+                <div v-if="currentStep === 3" class="space-y-1.5">
                   <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">量測單位</label>
                   <input
                     v-model.trim="form.unit"
@@ -2041,11 +1944,11 @@ onBeforeUnmount(() => {
                     placeholder="例如：mm、μm、%、mg/L"
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   />
-                  <p class="text-[11px] text-slate-400">單位只屬於此製程／槽體管制項目，可依實際量測方式設定。</p>
+                  <p class="text-[11px] text-slate-400">單位只屬於此製程／槽位管制項目，可依實際量測方式設定。</p>
                 </div>
 
                 <!-- Custom Control Limits -->
-                <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                <div v-if="currentStep === 3 && form.displayMode === 'CONTROL_CHART'" class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                   <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mb-2 block">固定統計管制線 (可留空由系統自動算圖)</span>
                   <div class="grid grid-cols-3 gap-3">
                     <div>
@@ -2066,37 +1969,10 @@ onBeforeUnmount(() => {
                   </p>
                 </div>
 
-                <!-- Chart Type -->
-                <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">圖表顯示方式</label>
-                  <div class="px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-sm font-bold text-blue-700 dark:text-blue-300">
-                    此項目由所屬大類別決定顯示為{{ selectedDisplayModeLabel }}。
-                  </div>
-                  <p class="text-[11px] text-slate-400">
-                    如需變更顯示方式，請調整管制圖大類別的群組類型。
-                  </p>
-                </div>
-
-                <!-- Bind Chart Type -->
-                <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">綁定 {{ selectedDisplayModeLabel }} 類型</label>
-                  <select
-                    v-model="form.chartTypeId"
-                    :required="advancedMode && currentStep === 3"
-                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
-                  >
-                    <option :value="null" disabled>-- 請選擇{{ selectedDisplayModeLabel }}類型 --</option>
-                    <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
-                  </select>
-                  <p class="text-[11px] text-slate-400 mt-1">
-                    圖表類型只套用於目前管制項目；修改此處不會影響其他資料。
-                  </p>
-                </div>
-
                 <!-- Formula Config -->
-                <div v-if="form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 space-y-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/70">
+                <div v-if="currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 space-y-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/70">
                   <div class="flex items-center justify-between gap-3">
-                    <div><h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">藥液分析公式</h4><p class="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">只套用目前線別、槽體與分析項目；可用 Primary、Secondary、LSL、USL、Target、Concentration。</p></div>
+                    <div><h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">藥液分析公式</h4><p class="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">只套用目前線別、槽位與分析項目；可用 Primary、Secondary、LSL、USL、Target、Concentration。</p></div>
                     <div class="flex items-center gap-2">
                       <button
                         v-if="modalMode === 'edit'"
@@ -2171,7 +2047,7 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
 
-                <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-4 space-y-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/15 border border-indigo-200 dark:border-indigo-900/70">
+                <div v-if="currentStep === 5 && form.displayMode === 'CONTROL_CHART'" class="p-4 space-y-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/15 border border-indigo-200 dark:border-indigo-900/70">
                   <div>
                     <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
                       <Code2 class="w-4 h-4" /> 公式配置
@@ -2215,7 +2091,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Control Rules -->
-                <div v-if="form.displayMode === 'CONTROL_CHART'" class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
+                <div v-if="currentStep === 3 && form.displayMode === 'CONTROL_CHART'" class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
                   <div>
                     <h4 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-2">
                       <AlertTriangle class="w-4 h-4" /> 管制規則
@@ -2254,15 +2130,6 @@ onBeforeUnmount(() => {
           <div class="shrink-0 p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
               <button
-                v-if="formMode === 'advanced' && currentStep > 1"
-                @click="prevStep"
-                type="button"
-                class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all"
-              >
-                上一步
-              </button>
-              <button
-                v-else
                 @click="showModal = false"
                 type="button"
                 class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all"
@@ -2272,15 +2139,6 @@ onBeforeUnmount(() => {
             </div>
             <div>
               <button
-                v-if="formMode === 'advanced' && currentStep < 3"
-                @click="nextStep"
-                type="button"
-                class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold shadow-lg shadow-amber-500/25 transition-all"
-              >
-                下一步
-              </button>
-              <button
-                v-else
                 type="submit"
                 :disabled="loading"
                 class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-bold shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all transform hover:-translate-y-0.5"
