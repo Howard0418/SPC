@@ -482,7 +482,7 @@ function formatPercentage(val) {
 }
 function formatSlotName(val) {
   if (!val) return "N/A";
-  return String(val).split(/[（(]/, 1)[0].trim() || "N/A";
+  return String(val).trim() || "N/A";
 }
 function formatLineName(val) {
   if (!val) return "N/A";
