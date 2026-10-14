@@ -1,3 +1,8 @@
+## [2026-10-14] - SPC-ETCH-PREVIEW-500-DIAGNOSTICS 咬蝕量預覽 500 診斷修正
+- 目的：TransFiles 咬蝕量預覽遇 SPC 拒絕時須顯示可修正原因，避免只看到 HTTP 500。
+- 範圍：SPC `EtchReportSyncService` 主檔與既有批次缺漏錯誤處理、咬蝕測試；不修改計算公式、不匯入正式資料、不改 TransFiles 解析。
+- 驗證：EtchTests、backend build；通過後刷新 SPC 測試站 backend。
+
 ## [2026-10-14] - SPC-CHEM-N1N2-CLOSE-LABEL N1/N2 CLOSE 顯示修正
 - 目的：修正 SPC 管制圖中 N1/N2 藥液 `CLOSE` 被舊班別顯示邏輯標成「晚班」的問題，讓開收線情境顯示為「早班收線」。
 - 範圍：前端 `chemicalChart` 標籤工具、`SpcChartView` tooltip 與點位明細、對應前端測試；不修改後端資料、資料庫、TransFiles 輸出或正式資料。

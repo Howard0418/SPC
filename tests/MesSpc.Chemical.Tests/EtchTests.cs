@@ -54,7 +54,7 @@ public class EtchTests
         Assert.Equal(50,result.SubgroupSize);Assert.NotNull(result.SubgroupSizeNote);
         Assert.Equal(JsonValueKind.Null,JsonSerializer.SerializeToElement(result.StatControlLimits).GetProperty("xbarControl").ValueKind);
     }
-    [Theory] [InlineData("PT1",5)] [InlineData("PT2",10)]
+    [Theory] [InlineData("PT1",5)] [InlineData("PT2",10)] [InlineData("QE1",5)] [InlineData("QE2",10)]
     public async Task Sync_IsAtomicIdempotent_PreservesAllPointsAndUpdatesIds(string line,int ops)
     {
         await using var c=new SqliteConnection("Data Source=:memory:;Foreign Keys=False");await c.OpenAsync();
@@ -85,5 +85,19 @@ public class EtchTests
         points[0]=points[0] with {AfterValue=3m};
         await Assert.ThrowsAsync<ArgumentException>(()=>svc.SyncAsync(request,"tester",true));
         Assert.Equal(2,await db.UploadBatches.CountAsync());
+    }
+
+    [Fact]
+    public async Task Preview_UnknownEnabledLine_ReturnsReadableBusinessError()
+    {
+        await using var c=new SqliteConnection("Data Source=:memory:;Foreign Keys=False");await c.OpenAsync();
+        await using var db=new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlite(c).Options);await db.Database.EnsureCreatedAsync();
+        var points=(from side in new[]{"A","B"} from r in Enumerable.Range(1,5) from op in Enumerable.Range(1,5) select new EtchPoint(side,r,op,2m,1.5m)).ToList();
+        var request=new EtchReportRequest(new(2026,10,14),"QE1",1.5m,"test",points);
+        var svc=new EtchReportSyncService(db);
+        var ex=await Assert.ThrowsAsync<InvalidOperationException>(()=>svc.PreviewAsync(request));
+        Assert.Contains("找不到已啟用的咬蝕線別主檔：QE1",ex.Message);
+        Assert.Equal(0,await db.VariableMeasurements.CountAsync());
+        Assert.Equal(0,await db.UploadBatches.CountAsync());
     }
 }

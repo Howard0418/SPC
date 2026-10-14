@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC 咬蝕量預覽 500 診斷修正）
+- 目的：修正 TransFiles 咬蝕量匯入預覽只顯示 `HTTP 500: SPC預覽拒絕，未匯入`，讓 SPC 對可預期主檔/既有資料狀態回傳可讀錯誤。
+- 規格：新增 `specs/20261014-etch-preview-500-diagnostics/spec.md`。
+- 修改：`EtchReportSyncService` 遇到未知或停用線別時改回「找不到已啟用的咬蝕線別主檔：線別」；既有資料缺少原 UploadBatch 時改回「同日同線既有資料缺少匯入批次」，避免 `SingleAsync` 例外變成 HTTP 500。
+- 驗證：`EtchTests` 10 passed；backend build 0 warnings / 0 errors；publish 成功。第一次測試與 build 併行遇 SourceLink obj 檔案鎖，改為單獨重跑測試後通過。
+- 發布：已刷新 SPC 測試站 backend，備份 `release/test/backend.backup-20261014-etch-preview-500-diagnostics`；已回收 `SpcSingleTest` AppPool，`app_offline.htm` 與暫存 publish 目錄已移除。PowerShell/curl 對 HTTPS 仍受 Windows Schannel `SEC_E_NO_CREDENTIALS` 限制，需以瀏覽器或受信任憑證環境補做外部 smoke。正式站未發布。
+
 ## 2026-10-14（SPC N1/N2 CLOSE 顯示為早班收線）
 - 目的：修正 N1/N2 藥液管制圖中 `SamplingPhase=CLOSE` 被舊班別函式顯示為「晚班」的問題，符合 OPEN=早班開線、CLOSE=早班收線規則。
 - 規格：新增 `specs/20261014-chemical-n1n2-close-label/spec.md`。

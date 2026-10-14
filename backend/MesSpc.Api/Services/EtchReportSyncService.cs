@@ -59,7 +59,8 @@ public sealed class EtchReportSyncService(AppDbContext db)
             // Transaction-owned lock also serializes first insertion, when no measurement rows exist yet.
             await db.Database.ExecuteSqlInterpolatedAsync($"DECLARE @r int; EXEC @r=sys.sp_getapplock @Resource={key}, @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=15000; IF @r<0 THROW 51000, 'Etch report lock unavailable', 1;", ct);
         }
-        var machine = await db.Machines.SingleAsync(x => x.MachineCode == request.LineCode && x.IsEnabled, ct);
+        var machine = await db.Machines.SingleOrDefaultAsync(x => x.MachineCode == request.LineCode && x.IsEnabled, ct)
+            ?? throw new InvalidOperationException($"找不到已啟用的咬蝕線別主檔：{request.LineCode}。");
         var mappings = await db.PartProcessCharacteristics.Include(x => x.Characteristic)
             .Where(x => x.MachineId == machine.Id && x.ControlScope == "PROCESS" && x.IsEnabled && Codes.Contains(x.Characteristic!.CharacteristicCode)).ToListAsync(ct);
         if (mappings.Count != 3 || mappings.Select(x => x.Characteristic!.CharacteristicCode).Distinct().Count() != 3)
@@ -84,7 +85,8 @@ public sealed class EtchReportSyncService(AppDbContext db)
         if (existing.Count == desired.Count && existing.All(x => Math.Abs(x.MeasuredValue - expected[(x.PartProcessCharacteristicId, x.SampleNo)]) < 1e-10 && x.Operator == request.OperatorName))
         {
             var batchId = existing[0].UploadBatchId;
-            var oldHash = await db.UploadBatches.Where(b => b.UploadBatchId == batchId).Select(b => b.FileHash).SingleAsync(ct);
+            var oldHash = await db.UploadBatches.Where(b => b.UploadBatchId == batchId).Select(b => b.FileHash).SingleOrDefaultAsync(ct)
+                ?? throw new InvalidOperationException($"同日同線既有資料缺少匯入批次：{key}，請先核對既有資料來源。");
             if (oldHash == hash) { await tx.CommitAsync(ct); return new(batchId, true, desired.Count); }
         }
         if (existing.Count > 0 && !allowUpdate) throw new InvalidOperationException("同日同線內容不同，嚴格匯入拒絕覆寫。");
