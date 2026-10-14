@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC N1/N2 CLOSE 顯示為早班收線）
+- 目的：修正 N1/N2 藥液管制圖中 `SamplingPhase=CLOSE` 被舊班別函式顯示為「晚班」的問題，符合 OPEN=早班開線、CLOSE=早班收線規則。
+- 規格：新增 `specs/20261014-chemical-n1n2-close-label/spec.md`。
+- 修改：`SpcChartView` 的 tooltip 與點位明細在 N1/N2 藥液單線圖情境改用 `chartShiftLabel`；一般班別 `shiftLabel` 維持 `OPEN=早班`、`MIDDLE=中班`、`CLOSE=晚班`，避免影響其他線別舊資料。
+- 驗證：`node --test frontend/mes-spc-web/tests/chemical-single-line.test.mjs` 通過，7 passed；`npm run build` 通過，僅既有 Vite chunk size warning。
+- 發布：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-20261014-chemical-n1n2-close-label`；PowerShell 對 `https://SPCTEST.pmr.com.tw/` 發生 SSL 連線失敗，需以瀏覽器或受信任憑證環境補做外部 smoke。正式站未發布。
+
 ## 2026-10-14（SPC 資料匯入頁完全改為 TransFiles 追蹤）
 - 目的：依使用者補充，既然不走網頁資料匯入，SPC 網站的資料匯入功能也要收斂為批次查詢、錯誤追蹤與製圖確認，不再保留網頁確認匯入動作。
 - 規格：更新 `specs/20261014-spc-import-via-transfiles-only-plan/spec.md`，新增 `SPC-TRANSFILES-IMPORT-TASK-006`。

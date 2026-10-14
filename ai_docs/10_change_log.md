@@ -1,3 +1,8 @@
+## [2026-10-14] - SPC-CHEM-N1N2-CLOSE-LABEL N1/N2 CLOSE 顯示修正
+- 目的：修正 SPC 管制圖中 N1/N2 藥液 `CLOSE` 被舊班別顯示邏輯標成「晚班」的問題，讓開收線情境顯示為「早班收線」。
+- 範圍：前端 `chemicalChart` 標籤工具、`SpcChartView` tooltip 與點位明細、對應前端測試；不修改後端資料、資料庫、TransFiles 輸出或正式資料。
+- 驗證：先補前端回歸測試，再執行相關 node test 與 frontend build；通過後刷新 SPC 測試站 frontend。
+
 ## [2026-10-14] - SPC-IMPORT-VIA-TRANSFILES-ONLY 全部小工作
 - 目的：完成 SPC 改由 TransFiles 直接匯入的支援工作，SPC 網站不再引導 Excel 上傳，改為批次查詢、錯誤追蹤、新資料提示與製圖確認。
 - 範圍：直接匯入契約文件、Uploads 查詢 API、匯入批次查詢頁、首頁新資料提示、驗證與操作說明。不新增資料表、不匯入資料、不操作正式環境。
