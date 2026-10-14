@@ -21,7 +21,8 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         [FromQuery] string? batchNo,
         [FromQuery] int? partId,
         [FromQuery] DateTime? startDate,
-        [FromQuery] DateTime? endDate)
+        [FromQuery] DateTime? endDate,
+        [FromQuery] string? normalityMethod)
     {
         var useAlternateFilter = !string.IsNullOrWhiteSpace(batchNo) || partId.HasValue;
         var start = useAlternateFilter ? startDate : startDate ?? DateTime.Today.AddMonths(-3);
@@ -37,7 +38,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             return BadRequest("查詢時間範圍最多不可超過 3 個月。");
         }
 
-        var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId, start, end, batchNo, partId);
+        var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId, start, end, batchNo, partId, normalityMethod);
         if (chart is null) return NotFound("Chart data not found or invalid part process characteristic.");
         return Ok(chart);
     }

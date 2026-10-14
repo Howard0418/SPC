@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC 常態檢定方法切換）
+- 目的：讓 SPC 管制圖與量測趨勢圖可切換 Adjusted Jarque-Bera 與 Anderson-Darling 常態檢定，方便比對 p-value 與 Minitab 方法差異。
+- 規格：新增 `specs/20261014-normality-method-switch/spec.md`。
+- 修改：後端 `/api/v1/spc/chart` 新增 `normalityMethod` 參數，預設維持 Adjusted Jarque-Bera，指定 `AD` / `Anderson-Darling` 時改用 Anderson-Darling；前端 SPC 管制圖與量測趨勢圖新增「常態檢定方法」選項。
+- 驗證：NormalityTest 8 passed；後端 build 0 warnings / 0 errors；前端 build 通過，既有 chunk size warning 可接受。
+- 發布：已刷新 SPC 測試站 backend/frontend，備份 `release/test/backend.backup-normality-method-switch-20261014-100437`、`release/test/frontend.backup-normality-method-switch-20261014-100437`；PowerShell 對 `https://SPCTEST.pmr.com.tw/api/version` 仍發生 TLS 交握失敗，需以瀏覽器或受信任憑證環境再做外部 smoke。正式站未發布。
+
 ## 2026-10-14（SPC 槽位顯示一致）
 - 目的：修正 SPC 管制項目總覽「槽位」欄將 `蝕刻(鎳)` 顯示成 `蝕刻`，並將管制圖監控明細欄位名稱由「槽體」統一為「槽位」。
 - 規格：新增 `specs/20261014-spc-tank-slot-display/spec.md`。

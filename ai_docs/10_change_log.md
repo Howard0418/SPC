@@ -1,3 +1,8 @@
+## [2026-10-14] - SPC-NORMALITY-METHOD-SWITCH 常態檢定方法切換
+- 目的：讓使用者可在 SPC 管制圖與量測趨勢圖切換 Adjusted Jarque-Bera 與 Anderson-Darling 常態檢定，比對 p-value 與判定。
+- 範圍：後端 `/api/v1/spc/chart` 新增 `normalityMethod` 參數與 Anderson-Darling 計算；前端新增常態檢定方法選項。不修改資料庫、不改 raw data、管制界線或能力指標。
+- 驗證：先補 NormalityTest，再實作並執行後端測試/build 與前端 build。
+
 ## [2026-10-13] - SPC-HISTOGRAM-1012-TASK-001 直方圖 scale/bin 改善
 - 目的：改善小變異資料的直方圖 X 軸與 bins，避免遠端規格/管制界線壓縮主要量測分布。
 - 範圍：前端管制圖與趨勢圖直方圖共用 bins 工具；後端 normal curve 縮放改用量測值範圍估算 bin width。不改 SPC 檢定方法、不改 raw data 匯出欄位。

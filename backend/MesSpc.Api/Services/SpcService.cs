@@ -362,6 +362,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         DateTime? endDate = null,
         string? batchNo = null,
         int? partId = null,
+        string? normalityMethod = null,
         CancellationToken ct = default)
     {
         var mapping = await db.PartProcessCharacteristics
@@ -546,7 +547,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 }
             }
 
-            return PopulateNormalityAndCurve(chartResultVal, rawPoints, limits) with { MonitorContext = monitorContext, SpecLimitSegments = specLimitSegments };
+            return PopulateNormalityAndCurve(chartResultVal, rawPoints, limits, normalityMethod) with { MonitorContext = monitorContext, SpecLimitSegments = specLimitSegments };
         }
         else // Attribute
         {
@@ -838,7 +839,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
     internal static ControlChartResult PopulateNormalityAndCurve(
         ControlChartResult result,
         List<SpcDataPoint> rawPoints,
-        ControlLimits limits)
+        ControlLimits limits,
+        string? normalityMethod = null)
     {
         var nonExcludedValues = rawPoints
             .Where(x => !x.IsExcluded)
@@ -850,7 +852,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             return result;
         }
 
-        // 1. Calculate Jarque-Bera Normality Test
+        // 1. Calculate selected normality test
         double mean = nonExcludedValues.Average();
         double sumSqDiff = nonExcludedValues.Sum(x => Math.Pow(x - mean, 2));
         double variance = sumSqDiff / (nonExcludedValues.Count - 1);
@@ -876,10 +878,15 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
         double skewness = 0;
         double kurtosis = 0;
-        double jbStatistic = 0;
+        double statistic = 0;
         double pValue = 1.0;
         bool isNormal = true;
         string? note = null;
+        var method = NormalizeNormalityMethod(normalityMethod);
+        var testName = method == NormalityMethod.AndersonDarling ? "Anderson-Darling" : "Adjusted Jarque-Bera";
+        var methodNote = method == NormalityMethod.AndersonDarling
+            ? "本系統採 Anderson-Darling 常態檢定；可用於與 Minitab 常態檢定進行方法層級比對。"
+            : "本系統採 Adjusted Jarque-Bera 偏態/峰態檢定；Minitab 常用 Anderson-Darling 常態檢定，兩者 p-value 與判定不可直接等同。";
 
         if (m2 < 1e-15 || stdDev < 1e-15)
         {
@@ -889,16 +896,25 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         {
             skewness = m3 / Math.Pow(m2, 1.5);
             kurtosis = m4 / (m2 * m2);
-            jbStatistic = CalculateAdjustedJarqueBeraStatistic(n, skewness, kurtosis);
-            pValue = Math.Exp(-jbStatistic / 2.0);
+            if (method == NormalityMethod.AndersonDarling)
+            {
+                var adResult = CalculateAndersonDarling(nonExcludedValues, mean, stdDev);
+                statistic = adResult.Statistic;
+                pValue = adResult.PValue;
+            }
+            else
+            {
+                statistic = CalculateAdjustedJarqueBeraStatistic(n, skewness, kurtosis);
+                pValue = Math.Exp(-statistic / 2.0);
+            }
             isNormal = pValue >= 0.05;
         }
 
         var normality = new NormalityTestResult
         {
-            TestName = "Adjusted Jarque-Bera",
-            MethodNote = "本系統採 Adjusted Jarque-Bera 偏態/峰態檢定；Minitab 常用 Anderson-Darling 常態檢定，兩者 p-value 與判定不可直接等同。",
-            Statistic = jbStatistic,
+            TestName = testName,
+            MethodNote = methodNote,
+            Statistic = statistic,
             PValue = m2 < 1e-15 || stdDev < 1e-15 ? null : pValue,
             Skewness = skewness,
             Kurtosis = kurtosis,
@@ -976,6 +992,96 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
              (Math.Pow(kurtosis - expectedKurtosis, 2) / kurtosisVariance));
     }
 
+    private enum NormalityMethod
+    {
+        AdjustedJarqueBera,
+        AndersonDarling
+    }
+
+    private static NormalityMethod NormalizeNormalityMethod(string? method)
+    {
+        var value = (method ?? "")
+            .Trim()
+            .Replace("-", "", StringComparison.Ordinal)
+            .Replace("_", "", StringComparison.Ordinal)
+            .Replace(" ", "", StringComparison.Ordinal);
+
+        return value.Equals("AD", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("AndersonDarling", StringComparison.OrdinalIgnoreCase)
+            ? NormalityMethod.AndersonDarling
+            : NormalityMethod.AdjustedJarqueBera;
+    }
+
+    private static (double Statistic, double PValue) CalculateAndersonDarling(List<double> values, double mean, double stdDev)
+    {
+        var sorted = values.OrderBy(x => x).ToList();
+        var n = sorted.Count;
+        var sum = 0.0;
+        const double epsilon = 1e-12;
+
+        for (var i = 0; i < n; i++)
+        {
+            var lower = ClampProbability(StandardNormalCdf((sorted[i] - mean) / stdDev), epsilon);
+            var upper = ClampProbability(StandardNormalCdf((sorted[n - 1 - i] - mean) / stdDev), epsilon);
+            sum += (2 * (i + 1) - 1) * (Math.Log(lower) + Math.Log(1.0 - upper));
+        }
+
+        var a2 = -n - (sum / n);
+        var adjusted = a2 * (1.0 + 0.75 / n + 2.25 / (n * n));
+        return (adjusted, AndersonDarlingPValue(adjusted));
+    }
+
+    private static double AndersonDarlingPValue(double adjustedStatistic)
+    {
+        var a = Math.Max(0.0, adjustedStatistic);
+        double pValue;
+        if (a < 0.2)
+        {
+            pValue = 1.0 - Math.Exp(-13.436 + 101.14 * a - 223.73 * a * a);
+        }
+        else if (a < 0.34)
+        {
+            pValue = 1.0 - Math.Exp(-8.318 + 42.796 * a - 59.938 * a * a);
+        }
+        else if (a < 0.6)
+        {
+            pValue = Math.Exp(0.9177 - 4.279 * a - 1.38 * a * a);
+        }
+        else
+        {
+            pValue = Math.Exp(1.2937 - 5.709 * a + 0.0186 * a * a);
+        }
+
+        return Math.Clamp(pValue, 0.0, 1.0);
+    }
+
+    private static double StandardNormalCdf(double z)
+    {
+        return 0.5 * (1.0 + Erf(z / Math.Sqrt(2.0)));
+    }
+
+    private static double Erf(double x)
+    {
+        var sign = x < 0 ? -1.0 : 1.0;
+        x = Math.Abs(x);
+
+        const double a1 = 0.254829592;
+        const double a2 = -0.284496736;
+        const double a3 = 1.421413741;
+        const double a4 = -1.453152027;
+        const double a5 = 1.061405429;
+        const double p = 0.3275911;
+
+        var t = 1.0 / (1.0 + p * x);
+        var y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.Exp(-x * x);
+        return sign * y;
+    }
+
+    private static double ClampProbability(double probability, double epsilon)
+    {
+        return Math.Min(1.0 - epsilon, Math.Max(epsilon, probability));
+    }
+
     public async Task<List<MesSpc.Api.Controllers.ChartSummaryDto>> GetChartSummaryListAsync(
         string dimension,
         Guid? uploadBatchId,
@@ -1044,7 +1150,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var summaries = new List<MesSpc.Api.Controllers.ChartSummaryDto>();
         foreach (var mapping in mappings)
         {
-            var result = await GetInteractiveChartAsync(mapping.Id, uploadBatchId, startDate, endDate, batchNo, partId, ct);
+            var result = await GetInteractiveChartAsync(mapping.Id, uploadBatchId, startDate, endDate, batchNo, partId, ct: ct);
             if (result == null || result.RawDataPoints == null) continue;
 
             var rawPoints = ToSpcDataPoints(result.RawDataPoints);
@@ -1146,7 +1252,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         string controlScope,
         CancellationToken ct)
     {
-        var result = await GetInteractiveChartAsync(partProcessCharacteristicId, uploadBatchId, startDate, endDate, batchNo, partId, ct);
+        var result = await GetInteractiveChartAsync(partProcessCharacteristicId, uploadBatchId, startDate, endDate, batchNo, partId, ct: ct);
         if (result?.RawDataPoints == null) return (0, 0, null);
 
         var rawPoints = ToSpcDataPoints(result.RawDataPoints);

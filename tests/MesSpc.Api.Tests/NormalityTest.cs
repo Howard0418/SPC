@@ -106,6 +106,40 @@ public class NormalityTest
     }
 
     [Fact]
+    public void AndersonDarlingMethod_ReturnsAdTestNameAndPValue()
+    {
+        var values = new List<double> { 7.92, 7.75, 7.87, 7.81, 7.95, 7.77, 7.83, 7.86, 7.9, 7.79, 7.84, 7.88 };
+        var rawPoints = values.Select(v => new SpcDataPoint { Value = v }).ToList();
+        var limits = new ControlLimits { USL = 8.5, LSL = 7.5, Target = 8.0 };
+
+        var result = SpcService.PopulateNormalityAndCurve(new ControlChartResult(), rawPoints, limits, "AD");
+
+        result.Normality.Should().NotBeNull();
+        result.Normality!.TestName.Should().Be("Anderson-Darling");
+        result.Normality.MethodNote.Should().Contain("Anderson-Darling");
+        result.Normality.PValue.Should().NotBeNull();
+        result.Normality.PValue!.Value.Should().BeInRange(0, 1);
+        result.Normality.Statistic.Should().BeGreaterThan(0);
+        result.NormalCurve.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void AndersonDarlingMethod_DegenerateDataset_ReturnsNullPValueWithNote()
+    {
+        var values = new List<double> { 10.0, 10.0, 10.0, 10.0, 10.0 };
+        var rawPoints = values.Select(v => new SpcDataPoint { Value = v }).ToList();
+        var limits = new ControlLimits { USL = 12, LSL = 8, Target = 10 };
+
+        var result = SpcService.PopulateNormalityAndCurve(new ControlChartResult(), rawPoints, limits, "Anderson-Darling");
+
+        result.Normality.Should().NotBeNull();
+        result.Normality!.TestName.Should().Be("Anderson-Darling");
+        result.Normality.PValue.Should().BeNull();
+        result.Normality.Note.Should().Contain("數據無變異");
+        result.NormalCurve.Should().BeNullOrEmpty();
+    }
+
+    [Fact]
     public void NormalCurveScale_UsesMeasurementRangeWhenSpecLimitsAreDistant()
     {
         var values = new List<double> { 7.91, 7.92, 7.925, 7.93, 7.935, 7.94, 7.945, 7.95 };

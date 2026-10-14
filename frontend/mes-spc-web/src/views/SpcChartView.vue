@@ -105,6 +105,7 @@ const getDefaultEndDateStr = () => isMonthlyChartPage.value ? getMonthEndStr() :
 
 const startDate = ref(getDefaultStartDateStr());
 const endDate = ref(getDefaultEndDateStr());
+const normalityMethod = ref("AJB");
 const reportPeriodType = ref("MONTH");
 const reportMonth = ref(getCurrentMonthStr());
 const reportWeek = ref(getCurrentIsoWeekStr());
@@ -620,7 +621,7 @@ watch([showSpecLimits, showControlLimits, showPointValues], () => {
 });
 
 const getChartQueryParams = (activePpcId) => {
-  const params = { ppcId: activePpcId };
+  const params = { ppcId: activePpcId, normalityMethod: normalityMethod.value };
   if (uploadBatchId.value) params.uploadBatchId = uploadBatchId.value;
   if (batchId.value) params.batchNo = batchId.value;
   if (selectedDimension.value === "PRODUCT" && productQueryMode.value === "PART") {
@@ -2166,6 +2167,14 @@ onBeforeUnmount(() => {
               <option value="">選擇線別...</option>
               <option value="ALL">全部 (All)</option>
               <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.processName || pr.processCode }}</option>
+            </select>
+          </div>
+
+          <div v-if="!isMonthlyChartPage" class="w-full">
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">常態檢定方法</label>
+            <select v-model="normalityMethod" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+              <option value="AJB">Adjusted Jarque-Bera</option>
+              <option value="AD">Anderson-Darling</option>
             </select>
           </div>
 

@@ -44,6 +44,7 @@ const threeMonthsAgo = new Date(today);
 threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 const startDate = ref(toDateInputValue(threeMonthsAgo));
 const endDate = ref(toDateInputValue(today));
+const normalityMethod = ref("AJB");
 
 // Chart state
 const loading = ref(false);
@@ -361,7 +362,12 @@ async function loadChart() {
 
   try {
     const res = await api.get("/v1/spc/chart", {
-      params: { ppcId: mapping.id, startDate: startDate.value || undefined, endDate: endDate.value || undefined }
+      params: {
+        ppcId: mapping.id,
+        startDate: startDate.value || undefined,
+        endDate: endDate.value || undefined,
+        normalityMethod: normalityMethod.value
+      }
     });
     chartResult.value = res.data;
     await loadExcludedPoints(mapping.id);
@@ -1212,6 +1218,15 @@ const trendStats = computed(() => {
           <option value="">選擇線別...</option>
           <option value="ALL">全部 (All)</option>
           <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.processName || pr.processCode }}</option>
+        </select>
+      </div>
+
+      <div class="w-48">
+        <label class="block text-[11px] font-bold text-slate-400 mb-1">常態檢定方法</label>
+        <select v-model="normalityMethod"
+          class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500">
+          <option value="AJB">Adjusted Jarque-Bera</option>
+          <option value="AD">Anderson-Darling</option>
         </select>
       </div>
 
