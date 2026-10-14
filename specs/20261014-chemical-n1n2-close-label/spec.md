@@ -36,3 +36,8 @@ N1/N2 藥液資料中的 `OPEN` / `CLOSE` 在開收線情境代表早班開線 /
   - frontend build：通過；保留既有 Vite chunk size warning。
 - 發布狀態：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-20261014-chemical-n1n2-close-label`；PowerShell 對 `https://SPCTEST.pmr.com.tw/` 發生 SSL 連線失敗，需以瀏覽器或受信任憑證環境補做外部 smoke。正式站未發布。
 - 限制或未決問題：本次不改 TransFiles 輸出欄位；若要從資料契約根治，後續可另開小工作將班別 `SamplingPhase` 與開收線 `SamplingStage` 完全分欄。
+
+## v2 補修：N1/N2 mapping 結構判斷
+- 問題：部分管制圖 mapping 直接提供 `machineCode` / `machineName`，不是巢狀 `machine.machineCode`，導致 N2 藥液圖仍走一般班別標籤並顯示「晚班」。
+- 修改：`useSingleChemicalLine` 支援 `machine.machineCode`、`machine.machineName`、`machineCode`、`machineName`，並可辨識 `CHEMICAL` / `藥液` 範圍名稱。
+- 驗證：`node --test frontend/mes-spc-web/tests/chemical-single-line.test.mjs` 7 passed；`npm run build` 通過，僅既有 Vite chunk size warning。

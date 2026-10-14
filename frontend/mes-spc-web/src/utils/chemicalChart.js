@@ -1,5 +1,21 @@
 export function useSingleChemicalLine(mapping) {
-  return mapping?.controlScope === 'CHEM' && ['N1', 'N2'].includes(mapping?.machine?.machineCode);
+  const scope = String(
+    mapping?.controlScope
+    ?? mapping?.scope
+    ?? mapping?.controlScopeName
+    ?? mapping?.scopeName
+    ?? mapping?.category
+    ?? ''
+  ).trim().toUpperCase();
+  const machineCode = String(
+    mapping?.machine?.machineCode
+    ?? mapping?.machine?.machineName
+    ?? mapping?.machineCode
+    ?? mapping?.machineName
+    ?? ''
+  ).trim().toUpperCase();
+  const isChemical = scope === 'CHEM' || scope === 'CHEMICAL' || scope.includes('藥液');
+  return isChemical && ['N1', 'N2'].includes(machineCode);
 }
 
 export function stageLabel(stage) {

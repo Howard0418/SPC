@@ -20,6 +20,10 @@ function renderEChartsCode() {
 
 test('Only N1/N2 CHEM use one sequence',()=>{
   for(const machineCode of ['N1','N2'])assert.equal(useSingleChemicalLine({controlScope:'CHEM',machine:{machineCode}}),true);
+  assert.equal(useSingleChemicalLine({controlScope:'CHEM',machineCode:'N2'}),true);
+  assert.equal(useSingleChemicalLine({controlScope:'CHEM',machineName:'N2'}),true);
+  assert.equal(useSingleChemicalLine({controlScopeName:'藥液',machineCode:'N2'}),true);
+  assert.equal(useSingleChemicalLine({scope:'CHEMICAL',machineName:'N1'}),true);
   assert.equal(useSingleChemicalLine({controlScope:'CHEM',machine:{machineCode:'N10'}}),false);
   assert.equal(useSingleChemicalLine({controlScope:'PROCESS',machine:{machineCode:'N2'}}),false);
 });
