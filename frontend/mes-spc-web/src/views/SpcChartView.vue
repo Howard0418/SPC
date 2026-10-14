@@ -2313,7 +2313,7 @@ onBeforeUnmount(() => {
               <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorMachineLabel }}</p>
             </div>
             <div>
-              <p class="text-slate-400 font-bold">槽體</p>
+              <p class="text-slate-400 font-bold">槽位</p>
               <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorSlotLabel }}</p>
             </div>
             <div>

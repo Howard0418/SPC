@@ -1,11 +1,11 @@
 # 客製需求與回歸檢查
 
-## 2026-10-14（SPC 槽體／槽位顯示一致）
-- 目的：修正 SPC 管制項目總覽「槽位」欄將 `蝕刻(鎳)` 顯示成 `蝕刻`，與管制圖監控明細「槽體」顯示不一致的問題。
+## 2026-10-14（SPC 槽位顯示一致）
+- 目的：修正 SPC 管制項目總覽「槽位」欄將 `蝕刻(鎳)` 顯示成 `蝕刻`，並將管制圖監控明細欄位名稱由「槽體」統一為「槽位」。
 - 規格：新增 `specs/20261014-spc-tank-slot-display/spec.md`。
-- 修改：前端 `SpcSummaryTable` 的槽位顯示不再切除括號後文字，保留 API 回傳完整名稱；新增 Playwright 回歸案例。
-- 驗證：`npm run build` 通過；`npm run test:e2e -- tests/spc-summary.spec.ts --reporter=list --timeout=10000` 已印出 2 個 Playwright 案例 `ok`，包含 `蝕刻(鎳)` 槽位完整顯示回歸；runner webServer 收尾未自動結束，已手動中止。既有 Vite 警告：`EquipmentPointsView.vue` 的 `<tr>` 直接置於 `<table>`。
-- 發布：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-tank-slot-display-20261014-091516`；PowerShell 對 `https://SPCTEST.pmr.com.tw/` 與 `https://172.16.110.27:8901/` 仍發生 TLS 交握失敗，HTTP `172.16.110.27:8084` 拒絕連線，需以瀏覽器或受信任憑證環境再做外部 smoke。正式站未發布。
+- 修改：前端 `SpcSummaryTable` 的槽位顯示不再切除括號後文字，保留 API 回傳完整名稱；`SpcChartView` 監控明細標籤改為「槽位」；新增 Playwright 回歸案例。
+- 驗證：`npm run build` 通過；`npm run test:e2e -- tests/spc-summary.spec.ts --reporter=list --timeout=10000` 已印出 2 個 Playwright 案例 `ok`，包含 `蝕刻(鎳)` 槽位完整顯示回歸；runner webServer 收尾未自動結束，已手動中止。補充修正「槽體」標籤為「槽位」後，前端 build 再次通過。既有 Vite 警告：`EquipmentPointsView.vue` 的 `<tr>` 直接置於 `<table>`。
+- 發布：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-tank-slot-display-20261014-091516`、`release/test/frontend.backup-slot-label-20261014-092045`；PowerShell 對 `https://SPCTEST.pmr.com.tw/` 與 `https://172.16.110.27:8901/` 仍發生 TLS 交握失敗，HTTP `172.16.110.27:8084` 拒絕連線，需以瀏覽器或受信任憑證環境再做外部 smoke。正式站未發布。
 
 ## 2026-10-13（SPC/Portal/KM Web API 單一網址設定）
 - 目的：依使用者要求，統一 SPC、入口網站與 KM 的 Web/API 對外網址；對外只宣告站台根網址，API 一律掛同站 `/api/...`。
