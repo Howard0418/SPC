@@ -126,9 +126,96 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 batch.OriginalFileName,
                 GetMetadata(payload, "__SourceSheet"),
                 TryInt(GetMetadata(payload, "__SourceRow"), error.RowNo ?? 0),
+                ReadRawValue(payload, error.FieldName),
                 BuildFixSuggestion(error.ErrorCode, error.FieldName, error.ErrorMessage));
         }).ToList();
         return new { batch, details, errors = reportErrors };
+    }
+
+    public async Task<object> GetBatchListAsync(int take = 50, string? status = null, CancellationToken ct = default)
+    {
+        take = Math.Clamp(take, 1, 200);
+        var query = db.UploadBatches.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(status))
+            query = query.Where(x => x.ImportStatus == status);
+
+        var batches = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(take)
+            .Select(x => new
+            {
+                x.UploadBatchId,
+                x.UploadType,
+                x.SourceType,
+                x.ImportStatus,
+                x.OriginalFileName,
+                x.TotalRows,
+                x.ValidRows,
+                x.ErrorRows,
+                x.CreatedAt,
+                x.ConfirmedAt,
+                x.CreatedBy
+            })
+            .ToListAsync(ct);
+
+        var ids = batches.Select(x => x.UploadBatchId).ToList();
+        var errorSamples = await db.UploadErrors.AsNoTracking()
+            .Where(x => ids.Contains(x.UploadBatchId))
+            .GroupBy(x => x.UploadBatchId)
+            .Select(g => new
+            {
+                UploadBatchId = g.Key,
+                ErrorCount = g.Count(),
+                FirstErrorCode = g.OrderBy(x => x.RowNo).Select(x => x.ErrorCode).FirstOrDefault(),
+                FirstErrorMessage = g.OrderBy(x => x.RowNo).Select(x => x.ErrorMessage).FirstOrDefault()
+            })
+            .ToDictionaryAsync(x => x.UploadBatchId, ct);
+
+        return new
+        {
+            batches = batches.Select(x => new
+            {
+                x.UploadBatchId,
+                x.UploadType,
+                x.SourceType,
+                x.ImportStatus,
+                x.OriginalFileName,
+                x.TotalRows,
+                x.ValidRows,
+                x.ErrorRows,
+                x.CreatedAt,
+                x.ConfirmedAt,
+                x.CreatedBy,
+                ErrorCount = errorSamples.TryGetValue(x.UploadBatchId, out var sample) ? sample.ErrorCount : 0,
+                FirstErrorCode = errorSamples.TryGetValue(x.UploadBatchId, out sample) ? sample.FirstErrorCode : null,
+                FirstErrorMessage = errorSamples.TryGetValue(x.UploadBatchId, out sample) ? sample.FirstErrorMessage : null
+            })
+        };
+    }
+
+    public async Task<object> GetRecentImportsAsync(int take = 5, CancellationToken ct = default)
+    {
+        take = Math.Clamp(take, 1, 20);
+        var since = DateTime.UtcNow.AddDays(-7);
+        var batches = await db.UploadBatches.AsNoTracking()
+            .Where(x => x.ImportStatus == "Imported" && (x.ConfirmedAt ?? x.CreatedAt) >= since)
+            .OrderByDescending(x => x.ConfirmedAt ?? x.CreatedAt)
+            .Take(take)
+            .Select(x => new
+            {
+                x.UploadBatchId,
+                x.UploadType,
+                x.SourceType,
+                x.OriginalFileName,
+                x.TotalRows,
+                x.ValidRows,
+                x.ErrorRows,
+                x.CreatedAt,
+                x.ConfirmedAt
+            })
+            .ToListAsync(ct);
+
+        return new { batches };
     }
 
     public async Task<object?> GetProgressAsync(Guid uploadBatchId, CancellationToken ct = default)
@@ -1299,6 +1386,25 @@ public class UploadService(AppDbContext db, SpcService spcService)
     private static string? GetMetadata(Dictionary<string, string?> row, string key)
         => row.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
 
+    private static string? ReadRawValue(Dictionary<string, string?> row, string? fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName)) return null;
+        if (row.TryGetValue(fieldName, out var value)) return value;
+        return fieldName.ToLowerInvariant() switch
+        {
+            "processcode" => Get(row, "ProcessCode"),
+            "machinecode" => Get(row, "MachineCode"),
+            "tankcode" => Get(row, "TankCode"),
+            "characteristiccode" => Get(row, "CharacteristicCode"),
+            "unit" => Get(row, "Unit"),
+            "measuredvalue" => Get(row, "MeasuredValue"),
+            "measuredat" => Get(row, "MeasuredAt"),
+            "samplingstage" => Get(row, "SamplingStage"),
+            "partprocesscharacteristic" => string.Join(" / ", new[] { Get(row, "MachineCode"), Get(row, "TankCode"), Get(row, "CharacteristicCode"), Get(row, "Unit") }.Where(x => !string.IsNullOrWhiteSpace(x))),
+            _ => null
+        };
+    }
+
     private static string BuildFixSuggestion(string errorCode, string? fieldName, string errorMessage) => errorCode switch
     {
         "SCOPE_NOT_CONFIGURED" => "請先確認此類別已建立並啟用管制圖群組設定。",
@@ -1333,6 +1439,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         string? SourceFile,
         string? SourceSheet,
         int SourceRow,
+        string? RawValue,
         string Suggestion);
 
     private static bool NearlyEqual(double? actual, double? expected)

@@ -82,6 +82,16 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
     [HttpPost("attribute/csv")]
     public async Task<IActionResult> UploadAttributeCsv(IFormFile file) => await UploadCsvLike(file, false);
 
+    /// <summary>查詢 TransFiles 或既有匯入流程建立的 SPC 匯入批次清單。</summary>
+    [HttpGet]
+    public async Task<IActionResult> List([FromQuery] int take = 50, [FromQuery] string? status = null, CancellationToken ct = default)
+        => Ok(await uploadService.GetBatchListAsync(take, status, ct));
+
+    /// <summary>查詢近期已匯入批次，用於 SPC 網站新資料提示。</summary>
+    [HttpGet("recent-imports")]
+    public async Task<IActionResult> RecentImports([FromQuery] int take = 5, CancellationToken ct = default)
+        => Ok(await uploadService.GetRecentImportsAsync(take, ct));
+
     [HttpGet("{uploadBatchId:guid}/preview")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Preview(Guid uploadBatchId)

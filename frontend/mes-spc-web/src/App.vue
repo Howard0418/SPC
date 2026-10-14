@@ -121,7 +121,7 @@ const editorMenuCategories = [
   {
     title: "自動化匯入與採樣",
     items: [
-      { to: "/uploads", text: "SPC 資料匯入", icon: UploadCloud }
+      { to: "/uploads", text: "匯入批次查詢", icon: UploadCloud }
     ]
   },
   {

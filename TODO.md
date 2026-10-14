@@ -14,41 +14,11 @@
 
 ## 目前小工作排序（2026-10-14）
 
-### 第一順位：SPC 改由 TransFiles 直接匯入（阻擋測試匯入／資料正確性）
+### 已完成追溯：SPC 改由 TransFiles 直接匯入（阻擋測試匯入／資料正確性）
 
 規格：`specs/20261014-spc-import-via-transfiles-only-plan/spec.md`
 
-說明：原 `SPC-CHEM-OCT-IMPORT-TASK-002`～`TASK-005` 不照原樣執行，改由下列新小工作承接；SPC 網站不再作為 Excel 人工匯入入口，資料改由 TransFiles 直接匯入資料庫。
-
-#### SPC-TRANSFILES-IMPORT-TASK-001：定義 TransFiles 直接匯入資料契約與錯誤報告
-
-狀態：待執行
-
-範圍：定義 TransFiles 寫入 SPC 的欄位、批次狀態、錯誤報告、日期時間、主檔對應、重複資料與 rollback 規則；先盤點既有資料表是否足夠，不先改 schema。
-
-#### SPC-TRANSFILES-IMPORT-TASK-002：SPC API 提供批次/錯誤查詢與主檔驗證支援
-
-狀態：待執行
-
-範圍：提供 TransFiles 直接匯入後可查詢的批次/錯誤 API，錯誤需包含檔案、工作表、列號、欄位、原始值、錯誤代碼與修正建議；必要主檔驗證 API 一併整理。
-
-#### SPC-TRANSFILES-IMPORT-TASK-003：SPC Web 隱藏網頁上傳入口，改為批次查詢/錯誤追蹤
-
-狀態：待執行
-
-範圍：SPC 網站不再引導使用者上傳 Excel 匯入，改顯示 TransFiles 匯入狀態、錯誤報告與修正建議；保留查詢與製圖。
-
-#### SPC-TRANSFILES-IMPORT-TASK-004：新資料匯入提示與製圖確認入口
-
-狀態：待執行
-
-範圍：TransFiles 成功匯入後，SPC 首頁/管制圖入口顯示新資料匯入摘要，並可依批次或管制項目進入圖表確認。
-
-#### SPC-TRANSFILES-IMPORT-TASK-005：端到端測試與操作說明
-
-狀態：待執行
-
-範圍：完成藥液、咬蝕量、落塵至少各一個 Happy Path 與 Invalid Input 測試；文件說明如何確認資料已匯入與製圖是否正確。
+`SPC-TRANSFILES-IMPORT-TASK-001`～`TASK-005` 已完成；完成紀錄請查 `CHANGELOG_CUSTOM.md` 與 `specs/20261014-spc-import-via-transfiles-only-plan/verification.md`。
 
 ### 已完成追溯：SPC 常態檢定與直方圖（統計正確性／圖表可讀性）
 

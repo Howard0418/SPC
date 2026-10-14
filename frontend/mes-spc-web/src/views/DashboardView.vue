@@ -45,6 +45,7 @@ let pollTimer = null;
 const trendData = ref({ hours: ["08:00", "10:00", "12:00", "14:00", "16:00"], counts: [0, 0, 0, 0, 0], alerts: [0, 0, 0, 0, 0] });
 const cpkData = ref({ names: ["尚無資料"], values: [0] });
 const paretoData = ref({ names: ["尚無資料"], counts: [0], pcts: [0] });
+const recentImports = ref([]);
 
 async function loadData() {
   loading.value = true;
@@ -68,6 +69,13 @@ async function loadData() {
       stats.value.activeCharacteristics = ppcRes.data?.length || 12;
     } catch {
       stats.value.activeCharacteristics = 12;
+    }
+
+    try {
+      const importRes = await api.get("/uploads/recent-imports", { params: { take: 3 } });
+      recentImports.value = importRes.data?.batches || [];
+    } catch {
+      recentImports.value = [];
     }
 
     // Load Dashboard Stats
@@ -299,8 +307,8 @@ onBeforeUnmount(() => {
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-          <button @click="router.push('/uploads/variable')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-blue-600 font-bold hover:bg-blue-50 transition-all shadow-lg text-sm">
-            <Zap class="w-4 h-4 text-blue-600" /> 快速匯入計量數據
+          <button @click="router.push('/uploads')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-blue-600 font-bold hover:bg-blue-50 transition-all shadow-lg text-sm">
+            <Zap class="w-4 h-4 text-blue-600" /> 查看匯入批次
           </button>
           <button @click="router.push('/spc')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500/40 text-white font-bold hover:bg-indigo-500/60 border border-white/20 transition-all text-sm backdrop-blur-md">
             <Activity class="w-4 h-4" /> 開啟 SPC 管制圖
@@ -313,6 +321,19 @@ onBeforeUnmount(() => {
     <div v-if="error" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
       <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ error }}
     </div>
+
+    <section v-if="recentImports.length > 0" class="rounded-3xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <p class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300">新資料匯入</p>
+        <h2 class="mt-1 text-lg font-black text-slate-900 dark:text-white">近期有 {{ recentImports.length }} 個批次已匯入，可進行製圖確認</h2>
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          最新批次：{{ recentImports[0].originalFileName || 'TransFiles 直接匯入' }}，{{ recentImports[0].validRows || 0 }} 筆。
+        </p>
+      </div>
+      <button @click="router.push('/uploads')" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm">
+        查看批次與錯誤 <ArrowUpRight class="w-4 h-4" />
+      </button>
+    </section>
 
     <!-- First-time Setup Guide -->
     <section class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl overflow-hidden">
@@ -372,7 +393,7 @@ onBeforeUnmount(() => {
 
         <button
           type="button"
-          @click="router.push('/uploads/variable')"
+          @click="router.push('/uploads')"
           class="group text-left p-6 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
         >
           <div class="flex items-start gap-4">
@@ -385,7 +406,7 @@ onBeforeUnmount(() => {
                 建立製程、機台與必要料號後，到「SPC 管制項目設定」綁定管制類型、特性與 USL/LSL，再錄入或匯入量測資料查看 SPC 圖。
               </p>
               <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 mt-4 group-hover:gap-2 transition-all">
-                前往資料匯入 <ArrowUpRight class="w-3.5 h-3.5" />
+                查看匯入批次 <ArrowUpRight class="w-3.5 h-3.5" />
               </span>
             </div>
           </div>

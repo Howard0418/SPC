@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC 改由 TransFiles 直接匯入完成）
+- 目的：完成 `SPC-TRANSFILES-IMPORT-TASK-001`～`TASK-005`，讓 SPC 網站不再引導 Excel 上傳匯入，改由 TransFiles 直接匯入後回 SPC 查批次、錯誤與製圖結果。
+- 規格：更新 `specs/20261014-spc-import-via-transfiles-only-plan/spec.md`，新增 `verification.md`；新增契約文件 `docs/imports/transfiles-direct-import-contract.md`。
+- 修改：後端新增 `GET /api/uploads` 批次清單與 `GET /api/uploads/recent-imports` 近期已匯入批次；預覽錯誤報告補 `rawValue`。前端 `/uploads` 改為匯入批次與錯誤追蹤頁，不再載入 Excel 上傳元件；首頁新增近期匯入提示並將快速入口改為查看匯入批次。
+- 驗證：`dotnet test tests\MesSpc.Chemical.Tests\MesSpc.Chemical.Tests.csproj --filter ChemicalStageTests --no-restore -p:UseSharedCompilation=false` 通過，22 passed；後端 build 0 warnings / 0 errors；前端 `npm run build` 通過，既有 Vite chunk size warning 可接受。
+- 發布：已刷新 SPC 測試站 backend/frontend，備份 `release/test/backend.backup-transfiles-direct-import-20261014-163000`、`release/test/frontend.backup-transfiles-direct-import-20261014-163000`；PowerShell 對 `https://SPCTEST.pmr.com.tw:8901/api/version`、`/api/uploads/recent-imports`、首頁仍發生 SSL 連線失敗，需以瀏覽器或受信任憑證環境補做外部 smoke。正式站未發布。
+
 ## 2026-10-14（SPC 改由 TransFiles 直接匯入規劃）
 - 目的：依使用者最新指示，SPC 網站後續不從網頁進行資料匯入，改由 TransFiles 轉檔工具直接匯入資料庫；SPC 網站改為查看匯入批次、錯誤追蹤、新資料提示與製圖確認。
 - 規格：新增 `specs/20261014-spc-import-via-transfiles-only-plan/spec.md`。

@@ -181,7 +181,28 @@ public class ChemicalStageTests
         Assert.Equal("oct.xlsx",error.GetProperty("SourceFile").GetString());
         Assert.Equal("工作表1",error.GetProperty("SourceSheet").GetString());
         Assert.Equal(27,error.GetProperty("SourceRow").GetInt32());
+        Assert.Equal("MissingTank",error.GetProperty("RawValue").GetString());
         Assert.Contains("請確認槽位屬於該線別",error.GetProperty("Suggestion").GetString());
+    }
+
+    [Fact]
+    public async Task BatchListAndRecentImports_ShouldSupportTransFilesStatusViews()
+    {
+        await using var f=await Fixture.Create("N2");
+        var invalidPayload=f.Payload("OPEN","GENERAL",25);
+        invalidPayload["TankCode"]="MissingTank";
+        var invalid=await f.Upload.CreateVariableBatchAsync([invalidPayload],"TransFiles","tool","bad.xlsx");
+
+        await f.Save("OPEN","GENERAL",30);
+
+        var listJson=JsonSerializer.Serialize(await f.Upload.GetBatchListAsync());
+        using var listDoc=JsonDocument.Parse(listJson);
+        var batches=listDoc.RootElement.GetProperty("batches").EnumerateArray().ToList();
+        Assert.Contains(batches,x=>x.GetProperty("UploadBatchId").GetGuid()==invalid.UploadBatchId && x.GetProperty("FirstErrorCode").GetString()=="TANK_NOT_FOUND");
+
+        var recentJson=JsonSerializer.Serialize(await f.Upload.GetRecentImportsAsync());
+        using var recentDoc=JsonDocument.Parse(recentJson);
+        Assert.NotEmpty(recentDoc.RootElement.GetProperty("batches").EnumerateArray());
     }
 
     [Fact]
