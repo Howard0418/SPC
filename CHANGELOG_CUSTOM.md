@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC 管制線計算公式文案釐清）
+- 目的：將 SPC 管制項目編輯頁進階設定的公式區說清楚，避免使用者誤以為是常態檢定方法。
+- 規格：新增 `specs/20261014-control-line-formula-label/spec.md`。
+- 修改：前端 `PartProcessCharacteristicsView` 將「公式配置」改為「管制線計算公式」，將「公式設定 JSON」改為「管制線計算公式 JSON」，說明此設定用於 UCL／CL／LCL，常態檢定方法需在圖表查詢畫面切換。
+- 驗證：`npm run build` 通過；既有 Vite chunk size warning 可接受。
+- 發布：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-control-line-formula-label-20261014-105857`；PowerShell 對 `https://SPCTEST.pmr.com.tw/` 仍發生 SSL 連線失敗，需以瀏覽器或受信任憑證環境再做外部 smoke。正式站未發布。
+
 ## 2026-10-14（SPC 管制項目編輯畫面直覺化）
 - 目的：整理 SPC 管制項目新增／編輯抽屜，讓使用者依基本資料、規格與抽樣、圖表設定、藥液公式與進階設定分區確認，不再被快速／進階模式與重複欄位干擾。
 - 規格：新增 `specs/20261014-ppc-edit-ui-simplification/spec.md`。

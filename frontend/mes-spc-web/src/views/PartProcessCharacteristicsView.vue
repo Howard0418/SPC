@@ -2050,10 +2050,10 @@ onBeforeUnmount(() => {
                 <div v-if="currentStep === 5 && form.displayMode === 'CONTROL_CHART'" class="p-4 space-y-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/15 border border-indigo-200 dark:border-indigo-900/70">
                   <div>
                     <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
-                      <Code2 class="w-4 h-4" /> 公式配置
+                      <Code2 class="w-4 h-4" /> 管制線計算公式
                     </h4>
                     <p class="mt-1 text-[11px] text-indigo-700/70 dark:text-indigo-300/70">
-                      可套用預設公式後再編輯 JSON；設定只影響目前這一個管制項目。
+                      用於計算 SPC 管制線 UCL／CL／LCL，不是常態檢定方法；設定只影響目前這一個管制項目。
                     </p>
                   </div>
 
@@ -2076,16 +2076,16 @@ onBeforeUnmount(() => {
                   </div>
 
                   <div class="space-y-1.5">
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">公式設定 JSON</label>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">管制線計算公式 JSON</label>
                     <textarea
                       v-model="form.formulaConfigJson"
                       rows="7"
                       spellcheck="false"
-                      placeholder="留空代表使用系統標準公式；也可貼入自訂公式 JSON"
+                      placeholder="留空代表使用系統標準管制線公式；也可貼入自訂管制線公式 JSON"
                       class="w-full px-4 py-3 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl font-mono text-xs leading-5 text-green-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
                     ></textarea>
                     <p class="text-[11px] text-slate-400">
-                      留空使用系統標準公式；既有自訂公式會完整帶入此欄位，可直接修改。
+                      留空使用系統標準管制線公式；既有自訂管制線公式會完整帶入此欄位，可直接修改。常態檢定方法請在圖表查詢畫面切換。
                     </p>
                   </div>
                 </div>

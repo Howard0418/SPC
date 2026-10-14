@@ -1,3 +1,8 @@
+## [2026-10-14] - SPC-CONTROL-LINE-FORMULA-LABEL 管制線計算公式文案釐清
+- 目的：將 SPC 管制項目進階設定中的「公式配置」改為「管制線計算公式」，避免與常態檢定方法混淆。
+- 範圍：前端 `PartProcessCharacteristicsView.vue` 文案與說明；不修改 API、資料庫、JSON 契約、常態檢定或管制線計算邏輯。
+- 驗證：前端 build；通過後刷新 SPC 測試站 frontend。
+
 ## [2026-10-14] - SPC-PPC-EDIT-UI-SIMPLIFICATION 管制項目編輯畫面直覺化
 - 目的：整理 SPC 管制項目新增／編輯抽屜，移除快速／進階模式造成的重複欄位，讓基本資料、規格、圖表、藥液公式與進階 JSON 分區操作。
 - 範圍：前端 `PartProcessCharacteristicsView.vue` 版面與文案；統一「槽位」顯示。不修改 API、資料庫、計算、權限或儲存 payload。
