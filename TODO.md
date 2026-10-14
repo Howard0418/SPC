@@ -18,12 +18,6 @@
 
 規格：`specs/20261014-chemical-october-import-failure-plan/spec.md`
 
-#### SPC-CHEM-OCT-IMPORT-TASK-001：建立 10 月藥液匯入預檢報告
-
-狀態：待執行
-
-範圍：上傳 `批次轉換結果_藥液匯入檔_2026-10.xlsx` 時，匯入預覽需列出總筆數、可匯入筆數、錯誤筆數，並逐筆顯示檔案、工作表、Excel 列號、欄位、錯誤代碼與修正建議。
-
 #### SPC-CHEM-OCT-IMPORT-TASK-002：修正藥液 Excel 日期時間解析
 
 狀態：待執行

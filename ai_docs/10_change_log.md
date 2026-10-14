@@ -1,3 +1,8 @@
+## [2026-10-14] - SPC-CHEM-OCT-IMPORT-TASK-001 10 月藥液匯入預檢報告
+- 目的：讓藥液 Excel 匯入預覽可清楚顯示檔案、工作表、Excel 列號、錯誤欄位、錯誤代碼與修正建議，協助定位 10 月資料無法匯入原因。
+- 範圍：後端上傳預覽 metadata 與錯誤 DTO、前端匯入預覽表格；不新增資料表、不確認匯入、不修改正式資料。
+- 驗證：先補 UploadService 預覽錯誤報告測試，再執行相關測試、後端 build 與前端 build；通過後發布 SPC 測試站。
+
 ## [2026-10-14] - SPC-CONTROL-LINE-FORMULA-LABEL 管制線計算公式文案釐清
 - 目的：將 SPC 管制項目進階設定中的「公式配置」改為「管制線計算公式」，避免與常態檢定方法混淆。
 - 範圍：前端 `PartProcessCharacteristicsView.vue` 文案與說明；不修改 API、資料庫、JSON 契約、常態檢定或管制線計算邏輯。

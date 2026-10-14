@@ -93,6 +93,9 @@ async function load() {
         resolvedUnit: p.ResolvedUnit || "",
         resolvedMappingId: p.ResolvedMappingId || "",
         duplicateStatus: p.DuplicateStatus || "",
+        sourceFile: rowErrors[0]?.sourceFile || batch.value?.originalFileName || "",
+        sourceSheet: rowErrors[0]?.sourceSheet || p.__SourceSheet || "",
+        sourceRow: rowErrors[0]?.sourceRow || p.__SourceRow || d.rowNo,
         measuredValue: p.MeasuredValue !== undefined ? p.MeasuredValue : (p["測量值"] !== undefined ? p["測量值"] : (p["量測值"] !== undefined ? p["量測值"] : null)),
         recheckValue: p.RecheckValue !== undefined ? p.RecheckValue : (p["複驗"] !== undefined ? p["複驗"] : (p["複驗值"] !== undefined ? p["複驗值"] : "")),
         adjustAction: p.AdjustAction || p["調整"] || p["調整方式"] || "",
@@ -449,6 +452,7 @@ onMounted(load);
           <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-400 uppercase text-[11px] font-bold tracking-wider border-b border-slate-250 dark:border-slate-800">
             <tr>
               <th class="p-3 w-16">列號</th>
+              <th class="p-3">來源</th>
               <th class="p-3">產品料號 (PartNo)</th>
               <th class="p-3">製程對應</th>
               <th class="p-3">線別對應</th>
@@ -470,6 +474,13 @@ onMounted(load);
               <!-- Row No -->
               <td class="p-3 font-mono font-bold" :class="!d.isValid ? 'text-red-650 dark:text-red-400' : 'text-slate-450'">
                 #{{ d.rowNo }}
+              </td>
+
+              <td class="p-3 align-top">
+                <div class="font-bold text-slate-700 dark:text-slate-200">{{ d.sourceFile || batch?.originalFileName || '-' }}</div>
+                <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  {{ d.sourceSheet || '工作表' }} · Excel 第 {{ d.sourceRow || d.rowNo }} 列
+                </div>
               </td>
 
               <!-- PartNo -->
@@ -577,8 +588,15 @@ onMounted(load);
                   {{ `重複：${d.duplicateStatus}` }}
                 </div>
                 <div v-else class="text-red-500 space-y-1">
-                  <div v-for="errItem in d.errorsList" :key="errItem.id" class="flex items-center gap-1 text-[11px]">
-                    <AlertTriangle class="w-3 h-3 flex-shrink-0" /> {{ errItem.errorMessage }}
+                  <div v-for="errItem in d.errorsList" :key="errItem.id" class="space-y-0.5 text-[11px]">
+                    <div class="flex items-center gap-1">
+                      <AlertTriangle class="w-3 h-3 flex-shrink-0" />
+                      <span class="font-black">{{ errItem.errorCode }}</span>
+                      <span>{{ errItem.errorMessage }}</span>
+                    </div>
+                    <div v-if="errItem.suggestion" class="ml-4 text-amber-700 dark:text-amber-300">
+                      建議：{{ errItem.suggestion }}
+                    </div>
                   </div>
                 </div>
               </td>
@@ -586,7 +604,7 @@ onMounted(load);
 
             <!-- Empty Rows fallback -->
             <tr v-if="errorDetails.length === 0">
-              <td colspan="15" class="p-8 text-center text-slate-400 text-sm">
+              <td colspan="16" class="p-8 text-center text-slate-400 text-sm">
                 {{ Number(batch?.errorRows || 0) === 0 ? '無未通過資料，系統將直接匯入。' : '仍有未通過資料，請重新整理後查看。' }}
               </td>
             </tr>

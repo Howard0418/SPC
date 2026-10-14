@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC 10 月藥液匯入預檢報告）
+- 目的：執行 `SPC-CHEM-OCT-IMPORT-TASK-001`，讓 10 月藥液匯入失敗時可直接看到來源檔、工作表、Excel 列號、錯誤欄位、錯誤代碼與修正建議。
+- 規格：更新 `specs/20261014-chemical-october-import-failure-plan/spec.md`，新增 `verification.md`。
+- 修改：後端 Excel 上傳解析每列加入 `__SourceSheet`、`__SourceRow`；`UploadService.GetPreviewAsync` 回傳錯誤報告 DTO，補 `sourceFile`、`sourceSheet`、`sourceRow`、`suggestion`；前端 `UploadPreviewView` 未通過資料表新增來源欄，錯誤原因顯示錯誤代碼與建議。
+- 驗證：`dotnet test tests\MesSpc.Chemical.Tests\MesSpc.Chemical.Tests.csproj --filter ChemicalStageTests --no-restore -p:UseSharedCompilation=false` 通過，21 passed；後端 build 0 warnings / 0 errors；前端 `npm run build` 通過，既有 Vite chunk size warning 可接受。
+- 發布：已刷新 SPC 測試站 backend/frontend，備份 `release/test/backend.backup-chem-oct-import-preview-20261014-151500`、`release/test/frontend.backup-chem-oct-import-preview-20261014-151500`；PowerShell 對 `https://SPCTEST.pmr.com.tw:8901/` 仍發生 SSL 連線失敗，HTTP `172.16.110.27:8084` 拒絕連線，需以瀏覽器或受信任憑證環境補做外部 smoke。正式站未發布。
+
 ## 2026-10-14（SPC 10 月藥液匯入失敗分析規劃）
 - 目的：分析 `docs/SPC文件/批次轉換結果_藥液匯入檔_2026-10.xlsx` 為何 10 月資料無法匯入，並依輕重緩急加入小工作池。
 - 規格：新增 `specs/20261014-chemical-october-import-failure-plan/spec.md`。

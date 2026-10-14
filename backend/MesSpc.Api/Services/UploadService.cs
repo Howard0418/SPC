@@ -99,7 +99,36 @@ public class UploadService(AppDbContext db, SpcService spcService)
             ? invalidDetails
             : invalidDetails.Append(firstValidDetail).ToList();
         var errors = await db.UploadErrors.Where(x => x.UploadBatchId == uploadBatchId).OrderBy(x => x.RowNo).ToListAsync(ct);
-        return new { batch, details, errors };
+        var detailsById = details.ToDictionary(x => x.Id);
+        var reportErrors = errors.Select(error =>
+        {
+            Dictionary<string, string?> payload = [];
+            if (error.UploadDetailId.HasValue && detailsById.TryGetValue(error.UploadDetailId.Value, out var detail))
+            {
+                try
+                {
+                    payload = JsonSerializer.Deserialize<Dictionary<string, string?>>(detail.PayloadJson) ?? [];
+                }
+                catch (JsonException)
+                {
+                    payload = [];
+                }
+            }
+
+            return new UploadPreviewErrorReport(
+                error.Id,
+                error.UploadBatchId,
+                error.UploadDetailId,
+                error.RowNo,
+                error.FieldName,
+                error.ErrorCode,
+                error.ErrorMessage,
+                batch.OriginalFileName,
+                GetMetadata(payload, "__SourceSheet"),
+                TryInt(GetMetadata(payload, "__SourceRow"), error.RowNo ?? 0),
+                BuildFixSuggestion(error.ErrorCode, error.FieldName, error.ErrorMessage));
+        }).ToList();
+        return new { batch, details, errors = reportErrors };
     }
 
     public async Task<object?> GetProgressAsync(Guid uploadBatchId, CancellationToken ct = default)
@@ -1266,6 +1295,45 @@ public class UploadService(AppDbContext db, SpcService spcService)
         if (matchedKey != null && row.TryGetValue(matchedKey, out val) && !string.IsNullOrWhiteSpace(val)) return val;
         return null;
     }
+
+    private static string? GetMetadata(Dictionary<string, string?> row, string key)
+        => row.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
+
+    private static string BuildFixSuggestion(string errorCode, string? fieldName, string errorMessage) => errorCode switch
+    {
+        "SCOPE_NOT_CONFIGURED" => "請先確認此類別已建立並啟用管制圖群組設定。",
+        "MEASURED_VALUE_REQUIRED" => "請補上量測值；若該項目當日未量測，請不要產生此列匯入資料。",
+        "INVALID_MEASURED_VALUE" => "請將量測值改為純數字，移除文字、單位或特殊符號。",
+        "INVALID_MEASURED_AT" => "請使用 yyyy-MM-dd HH:mm:ss 或 yyyyMMdd HH:mm:ss；若 Excel 分成日期與時間兩欄，需確認匯入程式有合併。",
+        "PART_NOT_FOUND" => "請先建立料號主檔，或確認此列是否不應使用產品管制類別。",
+        "PROCESS_NOT_FOUND" => "請確認製程欄位或線別所屬製程已存在且啟用。",
+        "MACHINE_NOT_FOUND" => "請確認 Excel 線別與 SPC 主檔線別代碼/名稱一致。",
+        "MACHINE_PROCESS_MISMATCH" => "請確認線別隸屬的製程與 Excel 製程一致。",
+        "INVALID_SAMPLING_STAGE" => ChemicalSamplingStage.Error,
+        "TANK_REQUIRED" => "藥液資料必須有槽位，請補上槽位名稱或代碼。",
+        "TANK_NOT_FOUND" => "請確認槽位屬於該線別；括號、全半形與舊名稱需與 SPC 主檔一致。",
+        "CHAR_NOT_FOUND" => "請先建立品質特性，或確認管制項目名稱/代碼與 SPC 主檔一致。",
+        "INVALID_DATA_CATEGORY" => "請確認此品質特性是計量型或計數型，並使用正確匯入入口。",
+        "UNIT_MISMATCH" => "請將 Excel 單位調整為主檔單位，或在 SPC 管制項目建立此單位的設定。",
+        "MAPPING_NOT_FOUND" => "請先建立此線別、槽位、管制項目與單位的 SPC 管制項目。",
+        "MAPPING_AMBIGUOUS" => "請整理重複的 SPC 管制項目，保留唯一啟用設定後再匯入。",
+        _ => string.IsNullOrWhiteSpace(fieldName)
+            ? errorMessage
+            : $"請檢查 {fieldName} 欄位內容是否符合 SPC 主檔與匯入格式。"
+    };
+
+    public sealed record UploadPreviewErrorReport(
+        long Id,
+        Guid UploadBatchId,
+        long? UploadDetailId,
+        int? RowNo,
+        string? FieldName,
+        string ErrorCode,
+        string ErrorMessage,
+        string? SourceFile,
+        string? SourceSheet,
+        int SourceRow,
+        string Suggestion);
 
     private static bool NearlyEqual(double? actual, double? expected)
         => actual.HasValue && expected.HasValue && Math.Abs(actual.Value - expected.Value) < 0.000001;

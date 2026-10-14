@@ -216,6 +216,8 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
 
                     var dict = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
                     {
+                        ["__SourceSheet"] = ws.Name,
+                        ["__SourceRow"] = r.ToString(CultureInfo.InvariantCulture),
                         ["PartNo"] = meta.PartNo,
                         ["ProcessCode"] = meta.ProcessCode,
                         ["MachineCode"] = $"{meta.ProcessCode}-M01",
@@ -257,7 +259,12 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
                         dict[headers[c - 1]] = val;
                     }
                 }
-                if (hasData) rows.Add(dict);
+                if (hasData)
+                {
+                    dict["__SourceSheet"] = ws.Name;
+                    dict["__SourceRow"] = r.ToString(CultureInfo.InvariantCulture);
+                    rows.Add(dict);
+                }
             }
         }
 

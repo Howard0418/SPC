@@ -162,6 +162,29 @@ public class ChemicalStageTests
     }
 
     [Fact]
+    public async Task Preview_ShouldIncludeSourceAndFixSuggestionForInvalidRows()
+    {
+        await using var f=await Fixture.Create("N2");
+        var payload=f.Payload("OPEN","GENERAL",25);
+        payload["TankCode"]="MissingTank";
+        payload["__SourceSheet"]="工作表1";
+        payload["__SourceRow"]="27";
+
+        var batch=await f.Upload.CreateVariableBatchAsync([payload],"PortalDaily","test","oct.xlsx");
+
+        Assert.Equal(1,batch.ErrorRows);
+        var preview=await f.Upload.GetPreviewAsync(batch.UploadBatchId);
+        var json=JsonSerializer.Serialize(preview);
+        using var doc=JsonDocument.Parse(json);
+        var error=doc.RootElement.GetProperty("errors")[0];
+        Assert.Equal("TANK_NOT_FOUND",error.GetProperty("ErrorCode").GetString());
+        Assert.Equal("oct.xlsx",error.GetProperty("SourceFile").GetString());
+        Assert.Equal("工作表1",error.GetProperty("SourceSheet").GetString());
+        Assert.Equal(27,error.GetProperty("SourceRow").GetInt32());
+        Assert.Contains("請確認槽位屬於該線別",error.GetProperty("Suggestion").GetString());
+    }
+
+    [Fact]
     public void Migration_OnlyAddsStageAndReplacesDailyUniqueIndex()
     {
         var migration=new MesSpc.Api.Migrations.AddChemicalSamplingStage();

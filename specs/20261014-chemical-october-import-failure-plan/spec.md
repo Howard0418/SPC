@@ -2,7 +2,7 @@
 
 ## 狀態
 
-規劃完成，待逐項執行。本次僅分析來源檔與既有匯入規則，不修改程式、不匯入資料、不發布測試站。
+逐項執行中。`SPC-CHEM-OCT-IMPORT-TASK-001` 已完成並發布 SPC 測試站；其餘小工作待執行。
 
 ## 來源
 
@@ -81,12 +81,14 @@ Then 系統應可將兩欄合併為完整 `MeasuredAt`，並保留 PortalDaily �
 ### SPC-CHEM-OCT-IMPORT-TASK-001：建立 10 月藥液匯入預檢報告
 
 - 優先：第一順位，阻擋測試匯入與資料正確性。
+- 狀態：完成。
 - 主系統：SPC。
 - 相依系統：TransFiles 產出的 Excel 格式。
 - 資料庫影響：讀取 UploadBatches/UploadDetails/UploadErrors 與主檔；不新增 schema。
 - 發布影響：後端 API 與前端匯入頁；測試通過後發布 SPC 測試站。
 - Rollback：還原匯入預檢 API/UI 變更，不影響既有資料。
 - 驗收：上傳本檔後，畫面可看到每筆失敗的檔名、工作表、列號、欄位、錯誤代碼與建議。
+- 完成紀錄：後端預覽 API 會回傳 `sourceFile`、`sourceSheet`、`sourceRow` 與 `suggestion`；Excel 上傳解析會將工作表與原始 Excel 列號寫入暫存 payload；前端匯入預覽表格新增來源欄與錯誤代碼/建議。
 
 ### SPC-CHEM-OCT-IMPORT-TASK-002：修正藥液 Excel 日期時間解析
 
