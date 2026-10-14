@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC 改由 TransFiles 直接匯入規劃）
+- 目的：依使用者最新指示，SPC 網站後續不從網頁進行資料匯入，改由 TransFiles 轉檔工具直接匯入資料庫；SPC 網站改為查看匯入批次、錯誤追蹤、新資料提示與製圖確認。
+- 規格：新增 `specs/20261014-spc-import-via-transfiles-only-plan/spec.md`。
+- 調整：原 `SPC-CHEM-OCT-IMPORT-TASK-002`～`TASK-005` 不照原樣執行，改由 `SPC-TRANSFILES-IMPORT-TASK-001`～`TASK-005` 承接，依序處理資料契約/錯誤報告、SPC API 查詢支援、SPC Web 隱藏網頁匯入入口、新資料提示與端到端測試說明。
+- 格式建議：TransFiles 預檢錯誤需列出檔案、工作表、Excel 列號、欄位、原始值、錯誤代碼、錯誤訊息與修正建議；格式錯誤或主檔對應錯誤時不可寫入該筆資料。
+- 驗證：文件內容與工作池排序檢查完成；本次不修改程式、不匯入資料、不建置、不發布。
+
 ## 2026-10-14（SPC 10 月藥液匯入預檢報告）
 - 目的：執行 `SPC-CHEM-OCT-IMPORT-TASK-001`，讓 10 月藥液匯入失敗時可直接看到來源檔、工作表、Excel 列號、錯誤欄位、錯誤代碼與修正建議。
 - 規格：更新 `specs/20261014-chemical-october-import-failure-plan/spec.md`，新增 `verification.md`。
