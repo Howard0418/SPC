@@ -208,23 +208,13 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
             </div>
           </div>
 
-          <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
-            <div class="font-black text-sm text-blue-800 dark:text-blue-300">計量型資料匯入</div>
+          <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3 lg:col-span-2">
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">TransFiles 資料匯入與 SPC 批次追蹤</div>
             <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「資料匯入與量測 / 計量型資料匯入」。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">準備檔案：</span>檔案需包含產品料號、製程代號、機台代號、特性代號、量測值、量測時間與樣本號。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">上傳預覽：</span>選擇檔案後先看預覽結果，確認有效筆數與錯誤筆數。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">確認匯入：</span>預覽無誤後按「確認匯入」，系統會寫入量測資料並觸發 SPC 運算。</p>
-            </div>
-          </div>
-
-          <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
-            <div class="font-black text-sm text-blue-800 dark:text-blue-300">計數型資料匯入</div>
-            <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「資料匯入與量測 / 計數型資料匯入」。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">準備欄位：</span>P/NP 圖常用檢驗數與不良數，C/U 圖常用缺點數與單位數。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">上傳預覽：</span>匯入後先檢查資料是否對應到正確產品、製程與品質特性。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">確認匯入：</span>確認後系統會產生計數型量測資料，並更新對應管制圖與異常判定。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">匯入方式：</span>藥液、製程與落塵監控資料改由 TransFiles 轉檔工具執行檢查與匯入，SPC 網站不再提供 Excel 上傳確認匯入。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">查看批次：</span>到「資料匯入與量測 / 匯入批次查詢」，確認 TransFiles 匯入時間、來源檔案、成功筆數與錯誤筆數。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">修正錯誤：</span>若批次含錯誤，點「查看」確認檔案、工作表、Excel 列號、欄位、原始值、錯誤代碼與修正建議，再回 TransFiles 修正來源資料後重新匯入。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">確認製圖：</span>匯入成功後從批次頁或首頁新資料提示進入 SPC 管制圖／趨勢圖，核對點數、日期、線別、槽位、製程與管制項目。</p>
             </div>
           </div>
 

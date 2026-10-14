@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-14（SPC 資料匯入頁完全改為 TransFiles 追蹤）
+- 目的：依使用者補充，既然不走網頁資料匯入，SPC 網站的資料匯入功能也要收斂為批次查詢、錯誤追蹤與製圖確認，不再保留網頁確認匯入動作。
+- 規格：更新 `specs/20261014-spc-import-via-transfiles-only-plan/spec.md`，新增 `SPC-TRANSFILES-IMPORT-TASK-006`。
+- 修改：`UploadPreviewView` 移除「確認轉入正式 SPC 運算」、「放棄並刪除此暫存」與重複資料處理方式；未匯入批次顯示回 TransFiles 完成匯入的提示。`SystemGuideView` 將計量/計數型網頁匯入說明改為 TransFiles 匯入與 SPC 批次追蹤。
+- 驗證：`npm run build` 通過；既有 Vite chunk size warning 可接受。文字檢查確認 `UploadPreviewView` 與 `SystemGuideView` 不再包含「確認轉入正式 SPC 運算」、「放棄並刪除此暫存」、「重複資料處理方式」等網頁匯入操作文案。
+- 發布：已刷新 SPC 測試站 frontend，備份 `release/test/frontend.backup-transfiles-readonly-preview-20261014-150705`；PowerShell 對 `https://SPCTEST.pmr.com.tw/` 仍發生 SSL 連線失敗，需以瀏覽器或受信任憑證環境補做外部 smoke。正式站未發布。
+
 ## 2026-10-14（SPC 改由 TransFiles 直接匯入完成）
 - 目的：完成 `SPC-TRANSFILES-IMPORT-TASK-001`～`TASK-005`，讓 SPC 網站不再引導 Excel 上傳匯入，改由 TransFiles 直接匯入後回 SPC 查批次、錯誤與製圖結果。
 - 規格：更新 `specs/20261014-spc-import-via-transfiles-only-plan/spec.md`，新增 `verification.md`；新增契約文件 `docs/imports/transfiles-direct-import-contract.md`。

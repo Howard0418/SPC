@@ -24,7 +24,6 @@ const err = ref("");
 const loading = ref(false);
 const batchId = computed(() => route.params.batchId);
 const chartPpcId = ref(null);
-const importMode = ref("insertOnly");
 
 function formatMeasuredAt(value) {
   if (!value) return "即時";
@@ -209,41 +208,6 @@ async function createMissingMappings() {
   }
 }
 
-async function confirmImport() {
-  if (errors.value.length > 0 && Number(batch.value?.validRows || 0) === 0) {
-    err.value = "無有效資料可匯入。請先修正錯誤或重新上傳。";
-    return;
-  }
-  loading.value = true;
-  err.value = "";
-  try {
-    await api.post(`/uploads/${batchId.value}/confirm`, null, { params: { mode: importMode.value } });
-    await load();
-    if (isImported.value) {
-      goToChart();
-    }
-  } catch (e) {
-    err.value = getApiErrorMessage(e);
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function discardImport() {
-  if (!confirm("確定要放棄本次匯入並刪除暫存資料嗎？")) return;
-  loading.value = true;
-  err.value = "";
-  try {
-    await api.delete(`/uploads/${batchId.value}`);
-    const isVariable = batch.value?.uploadType === "Variable";
-    router.push(isVariable ? "/uploads/variable" : "/uploads/attribute");
-  } catch (e) {
-    err.value = "放棄匯入失敗：" + getApiErrorMessage(e);
-  } finally {
-    loading.value = false;
-  }
-}
-
 // Check if a specific cell key is invalid
 function hasCellError(detailItem, fieldName) {
   return detailItem.errorsList.some(e => e.fieldName?.toLowerCase() === fieldName.toLowerCase());
@@ -307,7 +271,7 @@ onMounted(load);
       <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div class="space-y-2">
           <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 w-max text-xs font-bold text-cyan-200 border border-white/20">
-            <Server class="w-3.5 h-3.5" /> Stage 2: 暫存批次校驗與確認匯入
+            <Server class="w-3.5 h-3.5" /> 匯入批次檢核與錯誤追蹤
           </div>
           <h1 class="text-3xl font-black tracking-tight">匯入資料檢核與異常對照預覽</h1>
           <p class="text-indigo-100 text-sm max-w-xl">
@@ -323,29 +287,8 @@ onMounted(load);
             <CheckCircle2 v-if="isImported" class="w-4 h-4" />
             <AlertTriangle v-else-if="errors.length > 0" class="w-4 h-4 animate-bounce" />
             <Sparkles v-else class="w-4 h-4" />
-            {{ isImported ? '已成功匯入正式資料表' : errors.length > 0 ? '含有格式/主檔異常' : ' Stage 2 檢驗通過' }}
+            {{ isImported ? '已匯入資料表' : errors.length > 0 ? '含有格式/主檔異常' : '待 TransFiles 匯入確認' }}
           </span>
-
-          <button
-            v-if="!isImported"
-            @click="confirmImport"
-            :disabled="loading || Number(batch?.validRows || 0) === 0"
-            class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-500 text-white hover:bg-emerald-400 font-black shadow-xl shadow-emerald-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
-          >
-            <RefreshCw v-if="loading" class="w-4 h-4 animate-spin text-white" />
-            <ArrowRight v-else class="w-4 h-4 text-white" />
-            確認轉入正式 SPC 運算
-          </button>
-
-          <button
-            v-if="!isImported"
-            @click="discardImport"
-            :disabled="loading"
-            class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow-xl shadow-indigo-900/30 disabled:opacity-50 transition-all text-sm"
-          >
-            <XCircle class="w-4 h-4 text-white" />
-            放棄並刪除此暫存
-          </button>
 
           <button
             v-if="isImported"
@@ -363,6 +306,13 @@ onMounted(load);
     <!-- API Errors -->
     <div v-if="err" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
       <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ err }}
+    </div>
+
+    <div v-if="!isImported" class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300">
+      <p class="font-black">此頁僅供檢視與修正追蹤</p>
+      <p class="mt-1 text-sm">
+        SPC 網站已停用網頁確認匯入。請回 TransFiles 轉檔工具完成匯入；若本頁顯示錯誤，請依來源檔案、工作表、列號與欄位修正後重新由 TransFiles 執行。
+      </p>
     </div>
 
     <div v-if="!isImported && missingMappingCount > 0" class="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -390,15 +340,6 @@ onMounted(load);
           手動設定
         </button>
       </div>
-    </div>
-
-    <div v-if="!isImported" class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-      <label class="block text-sm font-black text-slate-800 dark:text-white mb-2">重複資料處理方式</label>
-      <select v-model="importMode" class="w-full md:w-96 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
-        <option value="insertOnly">僅新增，重複資料略過（預設）</option>
-        <option value="upsert">重複資料覆蓋舊資料</option>
-      </select>
-      <p class="mt-2 text-xs text-slate-500">重複鍵值：管制項目＋量測時間＋批號＋樣本號。</p>
     </div>
 
     <!-- Validation Summary Card -->
@@ -605,7 +546,7 @@ onMounted(load);
             <!-- Empty Rows fallback -->
             <tr v-if="errorDetails.length === 0">
               <td colspan="16" class="p-8 text-center text-slate-400 text-sm">
-                {{ Number(batch?.errorRows || 0) === 0 ? '無未通過資料，系統將直接匯入。' : '仍有未通過資料，請重新整理後查看。' }}
+                {{ Number(batch?.errorRows || 0) === 0 ? '無未通過資料。若尚未匯入，請回 TransFiles 完成匯入；若已匯入，可前往 SPC 管制圖確認。' : '仍有未通過資料，請重新整理後查看。' }}
               </td>
             </tr>
           </tbody>

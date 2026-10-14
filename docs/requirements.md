@@ -1,6 +1,6 @@
 # SPC 現行需求索引
 
-- SPC 匯入入口調整為 TransFiles 直接匯入：[SPC-IMPORT-VIA-TRANSFILES-ONLY-20261014](../specs/20261014-spc-import-via-transfiles-only-plan/spec.md)；SPC 網站不再作為 Excel 人工匯入入口，匯入改由 TransFiles 轉檔工具直接寫入資料庫；SPC Web 保留匯入批次查詢、錯誤追蹤、新資料提示、主檔維護與製圖確認。已完成契約文件、`GET /api/uploads`、`GET /api/uploads/recent-imports`、批次查詢頁與首頁新資料提示；已發布 SPC 測試站 backend/frontend，正式站未發布。
+- SPC 匯入入口調整為 TransFiles 直接匯入：[SPC-IMPORT-VIA-TRANSFILES-ONLY-20261014](../specs/20261014-spc-import-via-transfiles-only-plan/spec.md)；SPC 網站不再作為 Excel 人工匯入入口，匯入改由 TransFiles 轉檔工具直接寫入資料庫；SPC Web 保留匯入批次查詢、錯誤追蹤、新資料提示、主檔維護與製圖確認。已完成契約文件、`GET /api/uploads`、`GET /api/uploads/recent-imports`、批次查詢頁、首頁新資料提示，並將批次預覽頁收斂為唯讀追蹤，不再提供網頁確認匯入、放棄暫存或重複資料覆蓋選項；已發布 SPC 測試站 backend/frontend，正式站未發布。
 - SPC 10 月藥液匯入失敗分析與預檢報告：[SPC-CHEM-OCTOBER-IMPORT-FAILURE-20261014](../specs/20261014-chemical-october-import-failure-plan/spec.md)；指定檔案 `docs/SPC文件/批次轉換結果_藥液匯入檔_2026-10.xlsx` 本體欄位完整且 676 筆必填欄位無空白，初步判斷較可能為主檔對應、單位不一致、槽位名稱、重複上傳或日期時間解析口徑造成。`SPC-CHEM-OCT-IMPORT-TASK-001` 已完成，匯入預覽會顯示來源檔、工作表、Excel 列號、錯誤欄位、錯誤代碼與修正建議；已發布 SPC 測試站 backend/frontend，正式站未發布。
 - SPC 管制線計算公式文案釐清：[SPC-CONTROL-LINE-FORMULA-LABEL-20261014](../specs/20261014-control-line-formula-label/spec.md)；SPC 管制項目編輯頁進階設定公式區須顯示為「管制線計算公式」，說明其影響 UCL／CL／LCL，並明確不同於常態檢定方法。已發布 SPC 測試站 frontend，正式站未發布。
 - SPC 管制項目編輯畫面直覺化：[SPC-PPC-EDIT-UI-SIMPLIFICATION-20261014](../specs/20261014-ppc-edit-ui-simplification/spec.md)；新增／編輯抽屜改為固定分頁，基本資料、規格與抽樣、圖表設定、藥液公式、進階設定分區操作；顯示方式與管制圖類型各只保留一處，畫面文字統一使用「槽位」。已發布 SPC 測試站 frontend，正式站未發布。
