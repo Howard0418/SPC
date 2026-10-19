@@ -10,6 +10,13 @@ using Microsoft.EntityFrameworkCore;
 public class EtchTests
 {
     [Fact]
+    public void Preview_DoesNotRequireWriteTransaction()
+    {
+        Assert.False(EtchReportSyncService.RequiresWriteTransaction(preview:true));
+        Assert.True(EtchReportSyncService.RequiresWriteTransaction(preview:false));
+    }
+
+    [Fact]
     public async Task ChartKeepsCompleteGroupsBeyond1000_AndDoesNotMixLegacySummary()
     {
         await using var c=new SqliteConnection("Data Source=:memory:;Foreign Keys=False");await c.OpenAsync();

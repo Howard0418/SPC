@@ -15,26 +15,31 @@ using MesSpc.Api.Services.Security;
 var builder = WebApplication.CreateBuilder(args);
 
 var authEnabled = builder.Configuration.GetValue("Auth:Enabled", false);
-if (authEnabled)
+var jwtKey = builder.Configuration["Auth:JwtKey"];
+var jwtConfigured = AuthenticationStartupPlanner.ShouldConfigureJwt(jwtKey);
+if (AuthenticationStartupPlanner.RequiresJwtKey(authEnabled, jwtKey))
 {
-    var jwtKey = builder.Configuration["Auth:JwtKey"];
-    if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+    if (jwtKey!.Length < 32)
         throw new InvalidOperationException("Auth:Enabled 為 true 時，必須設定 Auth:JwtKey（至少 32 字元）。");
+}
 
+if (jwtConfigured)
+{
+    var configuredJwtKey = jwtKey!;
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(o =>
         {
             o.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuredJwtKey)),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.FromMinutes(2)
             };
         });
-    builder.Services.AddAuthorization();
 }
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -158,10 +163,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-if (authEnabled)
+if (jwtConfigured)
 {
     app.UseAuthentication();
     app.UseAuthorization();
+}
+if (authEnabled)
+{
     app.UseMiddleware<ViewerWriteGuardMiddleware>();
 }
 

@@ -755,3 +755,6 @@
 
 ## 2026-10-19：Portal 咬蝕預覽診斷轉送驗證目的
 - 為既有 SPC-ETCH-PREVIEW-500-PORTAL-FORWARDING-20261015 T-003 新增本機失敗路徑測試，驗證 TransFiles 真實 client/GUI 處理函式的提示與 JSON LOG 可見錯誤代碼及 Trace ID；不修改應用程式、不連線或寫入測試/正式資料庫、不打包或發布。
+
+## 2026-10-19 SPC＋Portal 正式發布目的
+- 使用者已明確選擇正式站；先核對遠端 IIS、來源、版本與 schema 相容性，準備隔離套件及備份/rollback。不解除原型工具 Production 防護，不操作未評估的正式 migration，不更新 KM。

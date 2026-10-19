@@ -1,3 +1,4 @@
+using System.Data.Common;
 using MesSpc.Api.Services;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -32,5 +33,17 @@ public sealed class EtchTestImportController(EtchReportSyncService service,AppDb
         }
         catch(ArgumentException e){return BadRequest(new{success=false,data=(object?)null,message=e.Message});}
         catch(InvalidOperationException e){logger.LogWarning("Strict etch import rejected: {Reason}",e.Message);return Conflict(new{success=false,data=(object?)null,message=e.Message});}
+        catch(DbException e)
+        {
+            var failure=EtchPreviewFailureResponses.Create(e,HttpContext.TraceIdentifier);
+            logger.LogError(e,"Strict etch import database failure {ErrorCode} {TraceId} {Action} {Date} {Line}",failure.ErrorCode,HttpContext.TraceIdentifier,apply?"confirm":"preview",report.ReportDate,report.LineCode);
+            return StatusCode(failure.StatusCode,new{success=false,data=(object?)null,errorCode=failure.ErrorCode,traceId=HttpContext.TraceIdentifier,message=failure.Message});
+        }
+        catch(Exception e)
+        {
+            var failure=EtchPreviewFailureResponses.Create(e,HttpContext.TraceIdentifier);
+            logger.LogError(e,"Strict etch import server failure {ErrorCode} {TraceId} {Action} {Date} {Line}",failure.ErrorCode,HttpContext.TraceIdentifier,apply?"confirm":"preview",report.ReportDate,report.LineCode);
+            return StatusCode(failure.StatusCode,new{success=false,data=(object?)null,errorCode=failure.ErrorCode,traceId=HttpContext.TraceIdentifier,message=failure.Message});
+        }
     }
 }

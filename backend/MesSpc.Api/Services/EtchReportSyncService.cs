@@ -17,6 +17,7 @@ public sealed record EtchSyncResult(Guid BatchId, bool Unchanged, int PointCount
 public sealed class EtchReportSyncService(AppDbContext db)
 {
     public static readonly string[] Codes = ["ETCH_A_AVG", "ETCH_B_AVG", "ETCH_RATE"];
+    public static bool RequiresWriteTransaction(bool preview) => !preview;
     public static (int Ops, decimal Length) Rule(string line) => line switch
     {
         "PT1" => (5, .975m),
@@ -53,8 +54,10 @@ public sealed class EtchReportSyncService(AppDbContext db)
         var content = JsonSerializer.Serialize(new { request.ReportDate, request.LineCode, request.LineSpeed, request.OperatorName, Points = ordered });
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content)));
         var key = $"ETCH:{request.ReportDate:yyyy-MM-dd}:{request.LineCode}";
-        await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
-        if (db.Database.IsSqlServer())
+        await using var tx = RequiresWriteTransaction(preview)
+            ? await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct)
+            : null;
+        if (tx is not null && db.Database.IsSqlServer())
         {
             // Transaction-owned lock also serializes first insertion, when no measurement rows exist yet.
             await db.Database.ExecuteSqlInterpolatedAsync($"DECLARE @r int; EXEC @r=sys.sp_getapplock @Resource={key}, @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=15000; IF @r<0 THROW 51000, 'Etch report lock unavailable', 1;", ct);
@@ -87,10 +90,10 @@ public sealed class EtchReportSyncService(AppDbContext db)
             var batchId = existing[0].UploadBatchId;
             var oldHash = await db.UploadBatches.Where(b => b.UploadBatchId == batchId).Select(b => b.FileHash).SingleOrDefaultAsync(ct)
                 ?? throw new InvalidOperationException($"同日同線既有資料缺少匯入批次：{key}，請先核對既有資料來源。");
-            if (oldHash == hash) { await tx.CommitAsync(ct); return new(batchId, true, desired.Count); }
+            if (oldHash == hash) { if(tx is not null)await tx.CommitAsync(ct); return new(batchId, true, desired.Count); }
         }
         if (existing.Count > 0 && !allowUpdate) throw new InvalidOperationException("同日同線內容不同，嚴格匯入拒絕覆寫。");
-        if (preview) { await tx.CommitAsync(ct); return new(Guid.Empty, false, desired.Count); }
+        if (preview) return new(Guid.Empty, false, desired.Count);
         var batch = new UploadBatch { SourceType = "EtchReport", UploadType = "Variable", ImportStatus = "Imported", OriginalFileName = key, FileHash = hash, TotalRows = desired.Count, ValidRows = desired.Count, ConfirmedAt = DateTime.UtcNow, CreatedBy = actor };
         db.UploadBatches.Add(batch);
         db.UploadDetails.Add(new() { UploadBatchId = batch.UploadBatchId, RowNo = 1, IsValid = true, CreatedBy = actor, PayloadJson = JsonSerializer.Serialize(new { BusinessKey = key, Actor = actor, Before = existing.Select(x => new { x.Id, x.UploadBatchId, x.SampleNo, x.PartProcessCharacteristicId, x.MeasuredValue, x.Operator }).ToList(), Report = request }) });
@@ -100,7 +103,7 @@ public sealed class EtchReportSyncService(AppDbContext db)
             if (row is null) { row = new() { PartId = item.Mapping.PartId ?? 0, ProcessId = item.Mapping.ProcessId, MachineId = machine.Id, CharacteristicId = item.Mapping.CharacteristicId, PartProcessCharacteristicId = item.Mapping.Id, SampleNo = item.SampleNo, MeasuredAt = request.ReportDate, SourceReference = key, SerialNo = key, LotNo = key, SourceType = SourceType.Manual, CreatedBy = actor }; db.VariableMeasurements.Add(row); }
             row.MeasuredValue = item.Value; row.Operator = request.OperatorName; row.UploadBatchId = batch.UploadBatchId; row.UpdatedAt = DateTime.UtcNow; row.UpdatedBy = actor;
         }
-        await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
+        await db.SaveChangesAsync(ct); await tx!.CommitAsync(ct);
         return new(batch.UploadBatchId, false, desired.Count);
     }
 }

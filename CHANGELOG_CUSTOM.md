@@ -1612,3 +1612,11 @@
 - 發現：`PreviewAsync` 與確認匯入共用序列化交易及 `sp_getapplock`；預覽不寫入資料，該鎖只需要確認匯入，且與全部日報立即 HTTP 500 的現象一致。
 - 修改：預覽改為真正唯讀；確認匯入仍保留資料庫交易、應用程式鎖與嚴格覆寫保護。
 - 驗證：咬蝕相關測試 24 passed，backend build 0 warnings / 0 errors；已發布 SPC 測試 backend，備份 `backend.backup-etch-preview-readonly-20261015-112638`，health 回 `ok`／`test`。待使用日報 25/50 點對單筆預覽、確認匯入與管制圖進行人工驗證；正式站未發布。
+
+## 2026-10-19 正式發布前測試目的
+- 依使用者正式發布授權，修正全量測試發現的過期fixture與測試環境依賴；不修改產品權限、業務邏輯或正式資料。主規格位於 SPC specs/20261019-spc-portal-production-release/。
+
+## 2026-10-19 SPC／Portal 正式更新
+- 使用者更正授權後完成三筆 DB 相容 migration；兩庫 COPY_ONLY/CHECKSUM 備份及 RESTORE VERIFYONLY 通過，網站/IIS 同批備份保留。
+- 正式 SPC API 0.1.60／Web 0.1.63；Portal API 1.0.178／Web 1.0.221。健康、版本、首頁/登入頁、匿名 401、SPC 資產 MIME 檢查通過。
+- 設定與附件保留，未改 binding；登入後人工驗收待使用者進行。完整紀錄：D:/SPC/specs/20261019-spc-portal-production-release/verification.md。
