@@ -1660,3 +1660,7 @@
 
 ## 2026-10-19 Portal會議室正式站更新
 - 使用者正式授權後，完成PMR-WEB Portal API1.0.182／Web1.0.225；無migration，正式備份驗證、hash與smoke通過。SPC不變，未完成小工作0件；正式真人登入驗收待使用者。追溯D:/PmrPortal/specs/20261019-meeting-production-release/verification.md。
+
+## 2026-10-19 SPC正式最新版核對
+- 使用者授權正式更新後，確認正式API0.1.60／Web0.1.63已與已驗證交付包相同；前端4檔及API主DLL hash相符，產品來源自be89ae94無變更，正式健康200。
+- 測試站API0.1.59／Web0.1.62較舊，本次不降版、不重複部署、不重啟或變更DB。待辦0件。詳見specs/20261019-spc-production-latest-check/spec.md。
