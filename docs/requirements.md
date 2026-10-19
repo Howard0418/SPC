@@ -197,3 +197,5 @@
 - 發布環境切換與遠端入口：[RELEASE-ENVIRONMENT-SWITCH-20261019](../specs/20261019-release-environment-switch/spec.md)。固定Test／Production與SPC／Portal四組目標，預設Test／Plan；實際四組Plan通過，不混用主機、IIS、DB；SPC前端須分環境build。本次未Apply／Rollback。
 
 - Windows更新執行檔：[RELEASE-UPDATER-EXE-20261019](../specs/20261019-release-updater-exe/spec.md)。單EXE內嵌遠端引擎，提供環境／系統／交付包選擇、預檢綁定、兩項授權、確認、更新／回復及背景紀錄；C#20＋PowerShell新增4／既有35通過，僅Plan與負向驗證完成，未實際更新。
+
+- EXE 製作交付包：[DESKTOP-BUNDLE-CREATION-20261019](../specs/20261019-desktop-bundle-creation/spec.md)。1.1.0 新增製作視窗，自動產生 manifest／ZIP，靜態讀取 API metadata、只讀目標版本，驗證後返回主畫面；不自動更新。

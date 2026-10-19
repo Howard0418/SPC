@@ -8,7 +8,7 @@ using System.Text;
 using System.Web.Script.Serialization;
 namespace Pmr.ReleaseUpdater {
  internal static class EmbeddedTools {
-  internal static readonly string[] Names={"Invoke-Release.ps1","ReleaseRemote.psm1","ProductionRelease.psm1","Invoke-ReleaseOnServer.ps1","Start-ReleaseWorker.ps1","Invoke-DesktopRelease.ps1"};
+  internal static readonly string[] Names={"Invoke-Release.ps1","ReleaseRemote.psm1","ProductionRelease.psm1","Invoke-ReleaseOnServer.ps1","Start-ReleaseWorker.ps1","Invoke-DesktopRelease.ps1","Invoke-DesktopBundle.ps1","New-ProductionReleaseBundle.ps1","MetadataInspector.exe"};
   internal static byte[] Read(string name) {
    using(Stream stream=Assembly.GetExecutingAssembly().GetManifestResourceStream("Updater."+name)) {
     if(stream==null)throw new InvalidDataException("內建資源缺少："+name);
@@ -41,7 +41,7 @@ namespace Pmr.ReleaseUpdater {
    VerifyAll();
    string root=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),"PMR-Release-Updater");
    NoReparse(root);Directory.CreateDirectory(root);Secure(root);
-   string dir=Path.Combine(root,"1.0.0-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(dir);Secure(dir);
+   string dir=Path.Combine(root,"1.1.0-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(dir);Secure(dir);
    foreach(string name in Names) {
     string path=Path.Combine(dir,name);using(var output=new FileStream(path,FileMode.CreateNew,FileAccess.Write,FileShare.None)){byte[] bytes=Read(name);output.Write(bytes,0,bytes.Length);}
     if(ManifestInfo.HashBytes(File.ReadAllBytes(path))!=ManifestInfo.HashBytes(Read(name)))throw new IOException("工具寫入驗證失敗。");

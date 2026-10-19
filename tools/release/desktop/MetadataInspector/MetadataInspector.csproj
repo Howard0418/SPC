@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><PublishSingleFile>true</PublishSingleFile><PublishTrimmed>true</PublishTrimmed><SelfContained>true</SelfContained><RuntimeIdentifier>win-x64</RuntimeIdentifier><EnableCompressionInSingleFile>true</EnableCompressionInSingleFile></PropertyGroup>
+</Project>

@@ -94,9 +94,10 @@ namespace Pmr.ReleaseUpdater {
    string command="$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';[Console]::OutputEncoding=New-Object System.Text.UTF8Encoding($false); & '"+bridge.Replace("'","''")+"' -RequestBase64 '"+data+"'; if(!$?){exit 1}; exit $LASTEXITCODE";
    return Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
   }
-  internal static ProcessStartInfo StartInfo(string toolRoot,string request) {
+  internal static ProcessStartInfo StartInfo(string toolRoot,string request,string bridge="Invoke-DesktopRelease.ps1") {
+   if(bridge!="Invoke-DesktopRelease.ps1" && bridge!="Invoke-DesktopBundle.ps1")throw new InvalidOperationException("不支援的桌面程序。");
    string ps=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),@"System32\WindowsPowerShell\v1.0\powershell.exe");
-   var start=new ProcessStartInfo {FileName=ps,Arguments="-NoProfile -NonInteractive -OutputFormat Text -EncodedCommand "+EncodeCommand(Path.Combine(toolRoot,"Invoke-DesktopRelease.ps1"),request),UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8,WorkingDirectory=toolRoot};
+   var start=new ProcessStartInfo {FileName=ps,Arguments="-NoProfile -NonInteractive -OutputFormat Text -EncodedCommand "+EncodeCommand(Path.Combine(toolRoot,bridge),request),UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8,WorkingDirectory=toolRoot};
    // A desktop EXE can inherit PowerShell 7's PSModulePath. The 5.1 worker needs its own modules.
    start.EnvironmentVariables["PSModulePath"]=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),@"System32\WindowsPowerShell\v1.0\Modules")+";"+Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),@"WindowsPowerShell\Modules")+";"+Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),@"WindowsPowerShell\Modules");
    return start;

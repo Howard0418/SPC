@@ -6,6 +6,7 @@ using System.Web.Script.Serialization;
 namespace Pmr.ReleaseUpdater {
  internal static class CoreTests {
   static int count;
+  static BundleDraft CreateDraft(string root) {var api=Path.Combine(root,"api-input");var web=Path.Combine(root,"web-input");Directory.CreateDirectory(api);Directory.CreateDirectory(web);return new BundleDraft {EnvironmentName="Test",SystemName="SPC",ApiDirectory=api,WebDirectory=web,OutputParent=root,ReleaseId="BUNDLE-001",ApiVersion="1.0.0",WebVersion="1.0.1",PreviousApiVersion="0.9.0",SourceCommit=new string('a',40),ApiSha256=""};}
   static void Check(string name, Action action) { action(); count++; Console.WriteLine("PASS " + name); }
   static void Assert(bool value) { if (!value) throw new Exception("Assertion failed"); }
   static void Reject(Action action) { bool rejected=false; try { action(); } catch { rejected=true; } Assert(rejected); }
@@ -60,6 +61,17 @@ namespace Pmr.ReleaseUpdater {
      var lines=ReleaseLog.Lines("<Objs xmlns='http://schemas.microsoft.com/powershell/2004/04'><S S='Error'>failed_x000A_details</S></Objs>");Assert(lines.Length==1 && lines[0]=="failed\ndetails");
     });
     Check("malformed logs remain visible",()=>{string text="<Objs error";Assert(ReleaseLog.Lines(text)[0]==text);});
+    Check("bundle requires real source identity",()=>{
+     var draft=CreateDraft(root);draft.SourceCommit="";
+     Reject(()=>draft.Validate());draft.SourceCommit=new string('a',40);draft.Validate();
+    });
+    Check("bundle SQL and migration IDs must be paired",()=>{
+     var draft=CreateDraft(root);draft.MigrationSql="x.sql";Reject(()=>draft.Validate());draft.MigrationSql="";draft.MigrationIds="20261008183026_AddSpcPointRemarks";Reject(()=>draft.Validate());
+    });
+    Check("bundle output cannot overwrite an existing delivery",()=>{
+     var draft=CreateDraft(root);Directory.CreateDirectory(draft.OutputDirectory);Reject(()=>draft.Validate());
+    });
+    Check("Portal requires current Web version",()=>{var draft=CreateDraft(root);draft.ReleaseId="BUNDLE-002";draft.SystemName="Portal";draft.PreviousWebVersion="";Reject(()=>draft.Validate());});
     Check("embedded tools hashes match",()=>{EmbeddedTools.VerifyAll();});
     Console.WriteLine("TOTAL "+count+" passed");return 0;
    } catch(Exception ex){Console.Error.WriteLine(ex.ToString());return 1;}

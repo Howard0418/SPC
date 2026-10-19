@@ -1,6 +1,6 @@
 ﻿#requires -Version 5.1
 [CmdletBinding()]
-param([string]$OutputDirectory=(Join-Path $PSScriptRoot '../../../release-staging/ReleaseUpdater-1.0.0'))
+param([string]$OutputDirectory=(Join-Path $PSScriptRoot '../../../release-staging/ReleaseUpdater-1.1.0'))
 $ErrorActionPreference='Stop'
 Import-Module (Join-Path $PSScriptRoot '../ProductionRelease.psm1') -Force
 $out=[IO.Path]::GetFullPath($OutputDirectory);Assert-ReleaseWorkspacePath $out
@@ -14,6 +14,16 @@ $profiles=@();foreach($environmentName in @('Test','Production')){foreach($syste
 }}
 $profiles|ConvertTo-Json -Depth 12|Set-Content (Join-Path $build 'profiles.json') -Encoding UTF8
 $resources=@{};foreach($name in @('Invoke-Release.ps1','ReleaseRemote.psm1','ProductionRelease.psm1','Invoke-ReleaseOnServer.ps1','Start-ReleaseWorker.ps1')){$resources[$name]=Join-Path $PSScriptRoot ('../'+$name)}
+$resources['MetadataInspector.exe']=Join-Path $build 'inspector/MetadataInspector.exe'
+# Always rebuild from source so a cached helper cannot hide source changes.
+if($true){
+ & dotnet publish (Join-Path $PSScriptRoot 'MetadataInspector/MetadataInspector.csproj') -c Release -r win-x64 --self-contained true -o (Join-Path $build 'inspector')
+ if($LASTEXITCODE -ne 0){throw 'Metadata helper build failed'}
+}
+& $resources['MetadataInspector.exe'] --self-test
+if($LASTEXITCODE -ne 0){throw 'Metadata helper tests failed'}
+$resources['New-ProductionReleaseBundle.ps1']=Join-Path $PSScriptRoot '../New-ProductionReleaseBundle.ps1'
+$resources['Invoke-DesktopBundle.ps1']=Join-Path $PSScriptRoot 'Invoke-DesktopBundle.ps1'
 $resources['Invoke-DesktopRelease.ps1']=Join-Path $PSScriptRoot 'Invoke-DesktopRelease.ps1'
 $resources['profiles.json']=Join-Path $build 'profiles.json'
 $hashes=@{};foreach($name in $resources.Keys){$hashes[$name]=Get-ReleaseHash $resources[$name]}
@@ -21,9 +31,9 @@ $hashes|ConvertTo-Json|Set-Content (Join-Path $build 'asset-hashes.json') -Encod
 $resources['asset-hashes.json']=Join-Path $build 'asset-hashes.json'
 $reference=@('/nologo','/platform:x64','/optimize+','/utf8output','/langversion:5','/r:System.dll','/r:System.Core.dll','/r:System.Xml.dll','/r:System.Drawing.dll','/r:System.Windows.Forms.dll','/r:System.Web.Extensions.dll')
 foreach($name in $resources.Keys){$reference+=('/resource:'+$resources[$name]+',Updater.'+$name)}
-$core=@((Join-Path $PSScriptRoot 'ReleaseCore.cs'),(Join-Path $PSScriptRoot 'EmbeddedTools.cs'))
+$core=@((Join-Path $PSScriptRoot 'BundleCore.cs'),(Join-Path $PSScriptRoot 'ReleaseCore.cs'),(Join-Path $PSScriptRoot 'EmbeddedTools.cs'))
 $exe=Join-Path $out 'PMR.ReleaseUpdater.exe'
-& $csc @reference '/target:winexe' ('/win32manifest:'+(Join-Path $PSScriptRoot 'app.manifest')) ('/out:'+$exe) @core (Join-Path $PSScriptRoot 'UpdaterForm.cs')
+& $csc @reference '/target:winexe' ('/win32manifest:'+(Join-Path $PSScriptRoot 'app.manifest')) ('/out:'+$exe) @core (Join-Path $PSScriptRoot 'UpdaterForm.cs') (Join-Path $PSScriptRoot 'BundleForm.cs')
 if($LASTEXITCODE -ne 0){throw 'Updater compilation failed'}
 $tests=Join-Path $build 'CoreTests.exe'
 & $csc @reference '/target:exe' ('/out:'+$tests) @core (Join-Path $PSScriptRoot 'CoreTests.cs')

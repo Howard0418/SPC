@@ -1637,3 +1637,8 @@
 - 新增繁體中文WinForms單EXE，內嵌發布引擎、私有快取與逐檔hash；預設Test／SPC，選manifest、背景預檢後才可確認授權更新，回復保留DBschema。
 - 安全JSON Base64參數、Windows PowerShell模組路徑隔離、UTF8輸出及progress過濾；修復worker／正式wrapper失敗碼遺失，避免誤判成功。
 - C#20項、PowerShell新增4＋既有35項通過；UI檢視與EXE Test SPC／Production Portal只讀Plan通過，缺ZIP回失敗。產出EXE／ZIP／SHA256，未簽章；未執行站台更新或migration。
+
+## 2026-10-19 更新工具1.1.0製作交付包
+- 新增製作交付包視窗，選來源／版本／輸出後自動產生 manifest、ZIP、hash 並返回主畫面。
+- 靜態metadata helper核對真實commit與migration，支援只讀現行版本查詢；既有輸出拒絕覆蓋，完成驗證才更名。
+- C#24＋metadata6＋PowerShell44通過，SPC／Portal實際來源產包及UI檢視通過；僅交付工具，未Apply／Rollback，站台發布不適用。
