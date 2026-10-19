@@ -15,6 +15,7 @@ public sealed class ChemicalAnalysisFormulaVersionService(AppDbContext db)
         string? reason,
         CancellationToken ct)
     {
+        if (ValidateReason(reason) is { } error) throw new InvalidOperationException(error);
         if (ConfigEquals(previousConfigJson, newConfigJson))
         {
             return new ChemicalAnalysisFormulaVersionChangeResult(false, null);
@@ -41,6 +42,7 @@ public sealed class ChemicalAnalysisFormulaVersionService(AppDbContext db)
         string? reason,
         CancellationToken ct)
     {
+        if (ValidateReason(reason) is { } error) throw new InvalidOperationException(error);
         var mapping = await GetChemicalMappingAsync(partProcessCharacteristicId, ct);
         var targetVersion = await db.ChemicalAnalysisFormulaVersions
             .AsNoTracking()
@@ -116,6 +118,9 @@ public sealed class ChemicalAnalysisFormulaVersionService(AppDbContext db)
         await db.SaveChangesAsync(ct);
         return version;
     }
+
+    public static string? ValidateReason(string? reason)
+        => reason?.Trim().Length > 500 ? "參照文件／修改依據最多500字，請縮短文件名稱或說明。" : null;
 
     private static bool ConfigEquals(string? left, string? right)
         => string.Equals(NormalizeConfig(left), NormalizeConfig(right), StringComparison.Ordinal);

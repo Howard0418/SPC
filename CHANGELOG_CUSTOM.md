@@ -1686,3 +1686,8 @@
 ## 2026-10-19 工作排序改為SPC優先
 - 依使用者要求暫緩KM三件，SPC公式追溯→歷史日期篩選循序處理；待辦總數仍5件（SPC2、KM暫緩3）。
 - 本次僅文件排程更新，保留先前不立即實作限制，未執行程式測試、build、DB或發布；內容與diff檢查後提交上傳。
+
+## 2026-10-19 SPC公式備註／共用歷史完成
+- 設定頁補參照文件／修改依據，總覽補同PPC版本歷史、公式快照與重試；批次成功刷新歷史、失敗保留草稿，沿用同一表與API。
+- 前後端500字驗證，Controller與Restore在寫入前拒絕超長。後端17／瀏覽器6通過，Release publish及testhost build成功；3項既有較廣回歸失敗已以基準重現，詳見specs/20261019-chemical-formula-reference-history/verification.md。
+- 發布SpcSingleTest API0.1.61／Web0.1.64，hash／設定保留／健康通過，備份與中途發布修正留存；無migration，正式未發布。剩4件（SPC1、KM暫緩3）。

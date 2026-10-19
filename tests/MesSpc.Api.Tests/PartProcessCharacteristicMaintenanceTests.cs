@@ -13,6 +13,23 @@ namespace MesSpc.Api.Tests;
 public class PartProcessCharacteristicMaintenanceTests
 {
     [Fact]
+    public async Task Update_RejectsLongFormulaReferenceBeforeSavingAnyFields()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var item = new PartProcessCharacteristic { ControlScope = "CHEM", ChemicalAnalysisConfigJson = "old", Unit = "g/L" };
+        db.Add(item);
+        await db.SaveChangesAsync();
+        var result = await new PartProcessCharacteristicsController(db).Update(item.Id,
+            new PartProcessCharacteristic { ControlScope = "CHEM", ChemicalAnalysisConfigJson = "new", Unit = "changed", ChemicalAnalysisFormulaVersionReason = new string('文', 501) });
+        result.Should().BeOfType<BadRequestObjectResult>();
+        System.Text.Json.JsonSerializer.Serialize(((BadRequestObjectResult)result).Value).Should().Contain("500");
+        item.ChemicalAnalysisConfigJson.Should().Be("old");
+        item.Unit.Should().Be("g/L");
+        (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
     public async Task Create_Should_Use_Configured_Group_FieldRequirements()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()

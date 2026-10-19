@@ -19,3 +19,6 @@ SPC前端兩頁ChemicalAnalysisOverviewView.vue／PartProcessCharacteristicsView
 ## 發布與回復
 本次僅規劃，無建置／部署。未來此單一小工作完成必要驗證後依規範發布SPC release/test，核對實際測試目標；不發布D:/Sites/PmrPortal。正式發布需另行授權，不沿用前次版本發布授權。
 發布前備份相關前後端產物與設定；失敗回復同批程式備份，資料不刪除、不整庫回復；歷史新增保留。若出現migration先停下更新計畫，不與其他DB／IIS高風險工作並行。
+
+## 實際執行更新
+2026-10-19使用者確認後完成本案。無migration，測試發布SpcSingleTest（D:/SPC/release/test/backend）與同級frontend，API0.1.61／Web0.1.64。實際結果及限制見[驗證](verification.md)。

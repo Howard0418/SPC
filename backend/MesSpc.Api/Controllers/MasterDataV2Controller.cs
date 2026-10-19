@@ -526,6 +526,8 @@ public class PartProcessCharacteristicsController(
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, PartProcessCharacteristic req)
     {
+        if (ChemicalAnalysisFormulaVersionService.ValidateReason(req.ChemicalAnalysisFormulaVersionReason) is { } reasonError)
+            return BadRequest(new { message = reasonError });
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
         var previousDisplayMode = x.DisplayMode;
         var previousFormulaConfigJson = x.FormulaConfigJson;

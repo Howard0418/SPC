@@ -75,6 +75,7 @@ const formTabs = computed(() => [
   ...(form.value.controlScope === CONTROL_SCOPE.CHEM ? [{ id: 4, label: "藥液公式" }] : []),
   { id: 5, label: "進階設定" }
 ]);
+const formulaVersionReason = ref("");
 const chemicalFormulaVersions = ref([]);
 const chemicalFormulaVersionsVisible = ref(false);
 const chemicalFormulaVersionsLoading = ref(false);
@@ -136,6 +137,9 @@ function chemicalAnalysisDisplay(item) {
 
 function buildChemicalAnalysisConfigJson() {
   const chemical = form.value.chemicalAnalysis;
+  if (modalMode.value === "edit" && JSON.stringify(chemical) === JSON.stringify(parseChemicalAnalysisConfig(form.value.chemicalAnalysisConfigJson))) {
+    return form.value.chemicalAnalysisConfigJson || "";
+  }
   if (form.value.controlScope === CONTROL_SCOPE.CHEM && chemical?.enabled) {
     return JSON.stringify({
       enabled: true, version: String(chemical.version || "1").trim(),
@@ -757,6 +761,7 @@ function scrollToModalTop() {
 }
 
 async function openCreateModal() {
+  formulaVersionReason.value = "";
   modalMode.value = "create";
   currentId.value = null;
   currentStep.value = 1;
@@ -802,6 +807,7 @@ async function openCreateModal() {
 }
 
 async function openEditModal(item) {
+  formulaVersionReason.value = "";
   modalMode.value = "edit";
   currentId.value = item.id;
   currentStep.value = 1;
@@ -878,6 +884,10 @@ async function openEditModal(item) {
 }
 
 async function save() {
+  if (formulaVersionReason.value.trim().length > 500) {
+    formErr.value = "參照文件／修改依據最多500字，請縮短文件名稱或說明。";
+    return;
+  }
   if (!hasDisplayModeGroup(form.value.displayMode)) {
     formErr.value = `目前「${scopeLabel(form.value.controlScope)}」尚未啟用${selectedDisplayModeLabel.value}大類別。`;
     return;
@@ -962,6 +972,7 @@ async function save() {
       displayMode: form.value.displayMode,
       chartTypeId: form.value.displayMode === "CONTROL_CHART" && form.value.chartTypeId ? parseInt(form.value.chartTypeId) : null,
       formulaConfigJson: form.value.displayMode === "CONTROL_CHART" ? form.value.formulaConfigJson : null,
+      chemicalAnalysisFormulaVersionReason: form.value.controlScope === CONTROL_SCOPE.CHEM ? formulaVersionReason.value.trim() || null : null,
       chemicalAnalysisConfigJson: form.value.controlScope === CONTROL_SCOPE.CHEM ? buildChemicalAnalysisConfigJson() : null
     };
 
@@ -1986,6 +1997,10 @@ onBeforeUnmount(() => {
                       <label class="flex items-center gap-2 text-xs font-bold"><input v-model="form.chemicalAnalysis.enabled" type="checkbox" class="w-4 h-4">啟用</label>
                     </div>
                   </div>
+                  <label class="block text-sm font-bold">參照文件／修改依據（選填，最多500字）
+                    <textarea v-model="formulaVersionReason" aria-label="參照文件／修改依據" maxlength="500" rows="2" class="mt-1 w-full rounded-lg border bg-transparent p-2" placeholder="WI-CA-001｜Rev.03｜5.2節｜調整原因"></textarea>
+                    <span class="text-xs font-normal text-slate-500">公式變更時保存為版本依據；僅改備註不會建立版本，也不改寫歷史。</span>
+                  </label>
                   <div v-if="chemicalFormulaVersionsVisible" class="rounded-xl border border-emerald-200 bg-white/80 p-3 dark:border-emerald-900 dark:bg-slate-900/60">
                     <div class="mb-2 flex items-center justify-between gap-3">
                       <h5 class="text-xs font-black text-emerald-800 dark:text-emerald-200">公式版本紀錄</h5>
@@ -2025,7 +2040,7 @@ onBeforeUnmount(() => {
                           </div>
                         </div>
                         <div class="mt-1 text-slate-500 dark:text-slate-400">
-                          {{ version.changedBy || 'System' }}<span v-if="version.reason">｜{{ version.reason }}</span>
+                          {{ version.changedBy || 'System' }}<span class="block whitespace-pre-wrap break-all">參照文件／修改依據：{{ version.reason || '未填寫' }}</span>
                         </div>
                         <div class="mt-1 truncate font-mono text-[11px] text-emerald-700 dark:text-emerald-300" :title="formulaVersionSummary(version)">
                           {{ formulaVersionSummary(version) }}

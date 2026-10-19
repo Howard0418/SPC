@@ -5,6 +5,10 @@ import * as XLSX from "xlsx";
 import { Download, FlaskConical, RefreshCw, Save, Search, Settings2 } from "lucide-vue-next";
 import { api, getApiErrorMessage } from "../api/client";
 
+import ChemicalFormulaHistory from "../components/ChemicalFormulaHistory.vue";
+
+const selectedHistory = ref(null);
+const historyRevision = ref(0);
 const router = useRouter();
 const loading = ref(false);
 const saving = ref(false);
@@ -163,11 +167,16 @@ function buildSavePayload(row) {
   };
 }
 async function saveChanges() {
+  if (saving.value) return;
   const rows = dirtyRows.value;
   error.value = ""; message.value = "";
   saveResults.value = {};
+  if (formulaVersionReason.value.trim().length > 500) {
+    error.value = "參照文件／修改依據最多500字，請縮短文件名稱或說明。";
+    return;
+  }
   if (!rows.length) {
-    message.value = "目前沒有需要儲存的公式變更。";
+    message.value = "公式未變更；僅修改備註不會建立版本。";
     return;
   }
   const preview = rows.slice(0, 8).map(x => `- ${x.line} / ${x.tank} / ${x.chemical}`).join("\n");
@@ -176,10 +185,11 @@ async function saveChanges() {
   if (!window.confirm(`即將儲存 ${rows.length} 筆藥液公式變更：\n${preview}${more}\n\n版本參照/依據：${reasonText}\n\n是否繼續？`)) return;
 
   saving.value = true;
+  const payloads = new Map(rows.map(row => [row.id, buildSavePayload(row)]));
   const results = {};
   for (const row of rows) {
     try {
-      await api.put(`/part-process-characteristics/${row.id}`, buildSavePayload(row));
+      await api.put(`/part-process-characteristics/${row.id}`, payloads.get(row.id));
       results[row.id] = { status: "saved", message: "已儲存" };
     } catch (e) {
       results[row.id] = { status: "failed", message: getApiErrorMessage(e) };
@@ -190,6 +200,8 @@ async function saveChanges() {
   const failedCount = Object.values(results).filter(x => x.status === "failed").length;
   message.value = `儲存完成：成功 ${successCount} 筆，失敗 ${failedCount} 筆。`;
   if (failedCount > 0) error.value = "部分藥液公式儲存失敗，請查看表格中的錯誤訊息。";
+  if (successCount) historyRevision.value++;
+  if (!failedCount) formulaVersionReason.value = "";
   await load(false);
   saving.value = false;
 }
@@ -210,9 +222,10 @@ onMounted(load);
     <div v-if="error" class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ error }}</div>
     <div v-if="message" class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{{ message }}</div>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4"><button v-for="item in summaries" :key="item.line" @click="showLine(item.line)" class="rounded-2xl border bg-white p-4 text-left shadow-sm hover:border-emerald-400 dark:bg-slate-800 dark:border-slate-700"><div class="flex justify-between"><strong>{{ item.line }}</strong><span class="text-xs text-slate-500">{{ item.tanks }} 槽</span></div><div class="mt-3 text-3xl font-black text-emerald-600">{{ item.enabled }}<span class="ml-1 text-sm text-slate-500">啟用項目</span></div><div class="mt-2 text-xs text-slate-500">滴定值 2：{{ item.secondary }}　停用：{{ item.disabled }}　<span :class="item.issues ? 'text-amber-600 font-bold' : ''">警示：{{ item.issues }}</span></div></button></div>
-    <div class="rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700"><div class="grid gap-3 md:grid-cols-5"><select v-model="line" @change="tank=''; resetPage()" class="field"><option value="">全部線別</option><option v-for="value in lines" :key="value">{{ value }}</option></select><select v-model="tank" @change="resetPage" class="field"><option value="">全部槽體</option><option v-for="value in tanks" :key="value">{{ value }}</option></select><select v-model="status" @change="resetPage" class="field"><option value="all">全部狀態</option><option value="enabled">僅啟用</option><option value="secondary">僅有滴定值 2</option><option value="issues">僅設定警示</option></select><select v-model.number="pageSize" @change="resetPage" class="field"><option :value="5">每頁 5 筆</option><option :value="10">每頁 10 筆</option><option :value="20">每頁 20 筆</option></select><div class="flex items-center text-sm text-slate-500"><Search class="mr-2 w-4 h-4" />顯示 {{ filtered.length }} 個項目</div></div><div class="mt-3"><input v-model="formulaVersionReason" class="field w-full" maxlength="500" placeholder="版本參照文件或修改依據備註（會寫入公式版本記錄）" /></div></div>
-    <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700"><table class="min-w-[1260px] text-sm"><thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900"><tr><th>線別</th><th>槽體</th><th>分析項目</th><th>狀態</th><th>濃度公式</th><th>調整公式</th><th>調整量公式</th><th>小數位</th><th>設定狀態</th><th>儲存結果</th><th></th></tr></thead><tbody><tr v-for="item in pagedRows" :key="item.id" class="border-t dark:border-slate-700" :class="item.saveResult?.status === 'failed' ? 'bg-red-50/70 dark:bg-red-950/20' : item.dirty ? 'bg-amber-50/70 dark:bg-amber-950/20' : ''"><td>{{ item.line }}</td><td><div>{{ item.tank }}</div><small class="text-slate-400">{{ item.tankCode }}</small></td><td class="font-bold"><div>{{ item.chemical }}</div><small v-if="item.secondary" class="text-slate-400">滴定值 2：{{ item.secondary }}</small></td><td><span :class="item.enabled ? 'badge-green' : 'badge-gray'">{{ item.enabled ? '啟用' : '停用' }}</span><span v-if="item.dirty" class="ml-2 badge-amber">已變更</span></td><td><textarea v-if="isEditing(item)" v-model="item.draft.concentrationFormula" rows="5" class="formula-field" placeholder="濃度公式"></textarea><pre v-else class="formula-preview">{{ item.formula || '未設定' }}</pre></td><td><textarea v-if="isEditing(item)" v-model="item.draft.adjustmentFormula" rows="5" class="formula-field" placeholder="調整公式"></textarea><pre v-else class="formula-preview">{{ item.adjustmentFormula || '未設定' }}</pre></td><td><textarea v-if="isEditing(item)" v-model="item.draft.adjustmentAmountFormula" rows="5" class="formula-field" placeholder="調整量公式"></textarea><pre v-else class="formula-preview">{{ item.adjustmentAmountFormula || '未設定' }}</pre></td><td><input v-model.number="item.draft.decimalPlaces" type="number" min="0" max="8" class="field w-20" /></td><td><span :class="item.issue ? 'text-amber-600 font-bold' : 'text-emerald-600'">{{ item.formulaMissing ? '缺濃度公式' : item.limitsMissing ? '缺規格' : '完整' }}</span></td><td class="max-w-56"><span v-if="item.saveResult?.status === 'saved'" class="badge-green">已儲存</span><span v-else-if="item.saveResult?.status === 'failed'" class="text-xs font-bold text-red-600">{{ item.saveResult.message }}</span><span v-else class="text-slate-400">—</span></td><td><div class="flex flex-col gap-2"><button @click="edit(item)" class="text-blue-600 hover:underline"><Settings2 class="inline w-4 h-4" /> {{ isEditing(item) ? '完成' : '編輯' }}</button><button v-if="item.dirty" @click="resetRow(item)" class="text-slate-500 hover:underline">還原</button></div></td></tr><tr v-if="!loading && !filtered.length"><td colspan="11" class="p-8 text-center text-slate-500">沒有符合條件的藥液分析項目。</td></tr></tbody></table></div>
+    <div class="rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700"><div class="grid gap-3 md:grid-cols-5"><select v-model="line" @change="tank=''; resetPage()" class="field"><option value="">全部線別</option><option v-for="value in lines" :key="value">{{ value }}</option></select><select v-model="tank" @change="resetPage" class="field"><option value="">全部槽體</option><option v-for="value in tanks" :key="value">{{ value }}</option></select><select v-model="status" @change="resetPage" class="field"><option value="all">全部狀態</option><option value="enabled">僅啟用</option><option value="secondary">僅有滴定值 2</option><option value="issues">僅設定警示</option></select><select v-model.number="pageSize" @change="resetPage" class="field"><option :value="5">每頁 5 筆</option><option :value="10">每頁 10 筆</option><option :value="20">每頁 20 筆</option></select><div class="flex items-center text-sm text-slate-500"><Search class="mr-2 w-4 h-4" />顯示 {{ filtered.length }} 個項目</div></div><div class="mt-3"><label class="text-sm font-bold">參照文件／修改依據（選填，最多500字；套用本批所有異動項目）<input aria-label="參照文件／修改依據" :disabled="saving" v-model="formulaVersionReason" class="field w-full" maxlength="500" placeholder="參照文件／修改依據：如 WI-CA-001｜Rev.03｜5.2節｜調整原因" /></label></div></div>
+    <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700"><table class="min-w-[1260px] text-sm"><thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900"><tr><th>線別</th><th>槽體</th><th>分析項目</th><th>狀態</th><th>濃度公式</th><th>調整公式</th><th>調整量公式</th><th>小數位</th><th>設定狀態</th><th>儲存結果</th><th></th></tr></thead><tbody><tr v-for="item in pagedRows" :key="item.id" class="border-t dark:border-slate-700" :class="item.saveResult?.status === 'failed' ? 'bg-red-50/70 dark:bg-red-950/20' : item.dirty ? 'bg-amber-50/70 dark:bg-amber-950/20' : ''"><td>{{ item.line }}</td><td><div>{{ item.tank }}</div><small class="text-slate-400">{{ item.tankCode }}</small></td><td class="font-bold"><div>{{ item.chemical }}</div><small v-if="item.secondary" class="text-slate-400">滴定值 2：{{ item.secondary }}</small></td><td><span :class="item.enabled ? 'badge-green' : 'badge-gray'">{{ item.enabled ? '啟用' : '停用' }}</span><span v-if="item.dirty" class="ml-2 badge-amber">已變更</span></td><td><textarea v-if="isEditing(item)" v-model="item.draft.concentrationFormula" rows="5" class="formula-field" placeholder="濃度公式"></textarea><pre v-else class="formula-preview">{{ item.formula || '未設定' }}</pre></td><td><textarea v-if="isEditing(item)" v-model="item.draft.adjustmentFormula" rows="5" class="formula-field" placeholder="調整公式"></textarea><pre v-else class="formula-preview">{{ item.adjustmentFormula || '未設定' }}</pre></td><td><textarea v-if="isEditing(item)" v-model="item.draft.adjustmentAmountFormula" rows="5" class="formula-field" placeholder="調整量公式"></textarea><pre v-else class="formula-preview">{{ item.adjustmentAmountFormula || '未設定' }}</pre></td><td><input v-model.number="item.draft.decimalPlaces" type="number" min="0" max="8" class="field w-20" /></td><td><span :class="item.issue ? 'text-amber-600 font-bold' : 'text-emerald-600'">{{ item.formulaMissing ? '缺濃度公式' : item.limitsMissing ? '缺規格' : '完整' }}</span></td><td class="max-w-56"><span v-if="item.saveResult?.status === 'saved'" class="badge-green">已儲存</span><span v-else-if="item.saveResult?.status === 'failed'" class="text-xs font-bold text-red-600">{{ item.saveResult.message }}</span><span v-else class="text-slate-400">—</span></td><td><div class="flex flex-col gap-2"><button :disabled="saving" @click="selectedHistory = { id: item.id, title: `${item.line} / ${item.tank} / ${item.chemical}` }" class="text-emerald-700 hover:underline dark:text-emerald-400">版本歷史</button><button :disabled="saving" @click="edit(item)" class="text-blue-600 hover:underline"><Settings2 class="inline w-4 h-4" /> {{ isEditing(item) ? '完成' : '編輯' }}</button><button v-if="item.dirty" @click="resetRow(item)" class="text-slate-500 hover:underline">還原</button></div></td></tr><tr v-if="!loading && !filtered.length"><td colspan="11" class="p-8 text-center text-slate-500">沒有符合條件的藥液分析項目。</td></tr></tbody></table></div>
     <div v-if="filtered.length" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-3 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"><div>第 {{ safePage }} / {{ totalPages }} 頁，顯示 {{ (safePage - 1) * pageSize + 1 }} - {{ Math.min(safePage * pageSize, filtered.length) }} 筆，共 {{ filtered.length }} 筆</div><div class="flex gap-2"><button class="btn-outline" :disabled="safePage <= 1" :class="{ 'opacity-50': safePage <= 1 }" @click="changePage(safePage - 1)">上一頁</button><button class="btn-outline" :disabled="safePage >= totalPages" :class="{ 'opacity-50': safePage >= totalPages }" @click="changePage(safePage + 1)">下一頁</button></div></div>
+    <div v-if="selectedHistory" class="space-y-2"><button type="button" @click="selectedHistory = null" class="btn-outline">關閉版本歷史</button><ChemicalFormulaHistory :key="`${selectedHistory.id}-${historyRevision}`" :ppc-id="selectedHistory.id" :title="selectedHistory.title" /></div>
   </section>
 </template>
 

@@ -1,0 +1,2 @@
+import { defineConfig } from '@playwright/test';
+export default defineConfig({ testDir: './tests', testMatch: 'chemical-formula-history.spec.ts', workers: 1, webServer: { command: 'node node_modules/vite/bin/vite.js --mode test --host 127.0.0.1 --port 5189', url: 'http://127.0.0.1:5189', reuseExistingServer: true, env: { VITE_AUTH_ENABLED: 'false', VITE_API_BASE: '/api', VITE_APP_ENV: 'test' } }, reporter: 'list', use: { baseURL: 'http://127.0.0.1:5189', headless: true } });

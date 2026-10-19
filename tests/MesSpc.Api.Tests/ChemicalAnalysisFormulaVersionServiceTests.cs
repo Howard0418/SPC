@@ -83,6 +83,43 @@ public class ChemicalAnalysisFormulaVersionServiceTests
         result.Version.PreviousConfigJson.Should().Be("""{"formula":"current"}""");
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(500)]
+    public async Task RecordChange_AllowsReferenceBoundary(int length)
+    {
+        await using var db = CreateDb();
+        var item = await AddMappingAsync(db, "CHEM", "old");
+        var result = await new ChemicalAnalysisFormulaVersionService(db).RecordChangeAsync(
+            item.Id, "old", "new", "測試人員", new string('文', length), CancellationToken.None);
+        result.Version!.Reason.Should().Be(length == 0 ? null : new string('文', length));
+    }
+
+    [Fact]
+    public async Task RecordChange_RejectsLongReferenceWithoutVersion()
+    {
+        await using var db = CreateDb();
+        var item = await AddMappingAsync(db, "CHEM", "old");
+        Func<Task> act = () => new ChemicalAnalysisFormulaVersionService(db).RecordChangeAsync(
+            item.Id, "old", "new", "測試人員", new string('文', 501), CancellationToken.None);
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*500*");
+        (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(0);
+        item.ChemicalAnalysisConfigJson.Should().Be("old");
+    }
+
+    [Fact]
+    public async Task Restore_RejectsLongReferenceBeforeChangingMapping()
+    {
+        await using var db = CreateDb();
+        var item = await AddMappingAsync(db, "CHEM", "old");
+        var service = new ChemicalAnalysisFormulaVersionService(db);
+        var version = await service.RecordChangeAsync(item.Id, "old", "new", "測試人員", null, CancellationToken.None);
+        Func<Task> act = () => service.RestoreAsync(item.Id, version.Version!.Id, "測試人員", new string('文', 501), CancellationToken.None);
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        item.ChemicalAnalysisConfigJson.Should().Be("old");
+        (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(1);
+    }
+
     private static AppDbContext CreateDb()
         => new(new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase($"chemical-formula-version-service-{Guid.NewGuid():N}")
