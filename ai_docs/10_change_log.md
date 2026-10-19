@@ -730,3 +730,25 @@
 - 目的：依使用者要求，將 SPC、入口網站與 KM 的 Web/API 對外網址統一為站台根網址加 `/api`，避免 Web/API 分成不同外部 URL 或設定誤填 `/api` 造成 `/api/api`。
 - 範圍：跨系統設定基準、Portal/KM 相關設定與 BaseUrl 防呆；不操作正式站、不修改資料庫。
 
+## [2026-10-15] - SPC-ETCH-PREVIEW-500-SERVER-DIAGNOSTIC 咬蝕預覽伺服器錯誤可追蹤化
+- 目的：處理測試站咬蝕量預覽 123 筆 HTTP 500，提供不含 SQL 或連線機敏內容的錯誤代碼與 Trace ID，以便定位實際資料庫交易例外。
+- 範圍：SPC `EtchTestImportController` 安全錯誤回應與結構化紀錄、對應測試；不改 Excel、主檔、計算、schema、Portal、TransFiles 或資料匯入。
+- 驗證：先補錯誤回應與既有預覽不寫入測試，再執行後端 build；通過後發布 SPC 測試站 backend，僅以一筆預覽驗證。
+
+## [2026-10-15] - SPC-ETCH-PREVIEW-500-SERVER-DIAGNOSTIC 預覽交易鎖定修正
+- 目的：咬蝕量預覽不寫入資料，卻與確認匯入共用 SQL `sp_getapplock`；將該鎖保留於確認寫入，避免測試站 124 份唯讀預覽全部在鎖定路徑失敗。
+- 範圍：`EtchReportSyncService` 的預覽交易判斷與測試；不改 Excel、主檔、計算、schema、Portal、TransFiles 或確認匯入鎖定。
+- 驗證：先補預覽不得要求寫入交易的單元測試，再執行咬蝕測試、後端 build 與測試站單筆預覽；通過後發布 SPC 測試 backend。
+
+## [2026-10-15] - SPC-ETCH-PREVIEW-AUTH-SCHEME 修正
+- 目的：咬蝕量預覽控制器具有 `[Authorize]`，但測試站 `Auth:Enabled=false` 時程式未註冊 JWT Authentication Scheme，授權挑戰因此拋出 500。
+- 範圍：依 JWT 設定存在與否註冊 Authentication/Authorization；保留 `Auth:Enabled` 作為全站 controller 預設授權開關，不調整 JWT 金鑰、角色、資料庫、Excel 或匯入內容。
+- 驗證：先補啟動決策單元測試，再執行相關測試與 backend build；通過後發布 SPC 測試 backend，僅做未授權預覽回 401 的 smoke test。
+
+
+## 2026-10-19：咬蝕預覽人工驗證接續
+- 目的：依使用者「確認，請開始」接續既有 SPC-ETCH-PREVIEW-500-SERVER-DIAGNOSTIC-20261015 T-004；先驗證測試站登入與既有資料製圖，保留預覽不寫入的既定範圍。
+- 範圍：本次先補人工驗證紀錄，不修改程式、設定或資料；TransFiles 25/50 點預覽待實際操作結果，不先標示完成。
+
+## 2026-10-19：咬蝕預覽驗證收尾目的
+- 依使用者提供的預覽及確認匯入完成畫面，唯讀核對本機結果檔與測試站新增日期製圖，更新 T-004、需求、TODO 與變更紀錄；不修改程式、不再寫入資料、不重新發布。

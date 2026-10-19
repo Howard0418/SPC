@@ -1,5 +1,16 @@
 # 客製需求與回歸檢查
 
+## 2026-10-19（咬蝕預覽 HTTP 500 修正驗證完成）
+- `SPC-ETCH-PREVIEW-500-SERVER-DIAGNOSTIC-20261015` T-004 完成：使用者 TransFiles 兩站預覽 130/130，衝突 0、隔離 12 不匯入；另行確認測試庫匯入 130 SUCCESS、衝突略過 0、待重試 0。
+- 唯讀核對本機結果：125 unchanged、5 新增/補同步，包含 10/16 四線及 10/17 QE2；25/50 點模式結果均存在。SPC 新增日期四線總表及 PT1/QE2 Xbar-S 製圖通過。
+- 本次僅驗證與文件同步，不修改程式；沿用 2026-10-15 測試站發布，未重新發布、未操作正式站。Portal 錯誤代碼/Trace ID 顯示仍待獨立人工驗證，目前剩餘未完成小工作 1 件。
+
+## 2026-10-15（咬蝕量預覽 HTTP 500 授權方案修正）
+- 根因：測試站 IIS `.NET Runtime` 事件紀錄確認 `POST /api/v1/etch-import-test/preview` 在授權階段拋出 `No authenticationScheme was specified`。測試設定 `Auth:Enabled=false` 使 JWT Authentication Scheme 未註冊，但咬蝕預覽控制器仍具有 `[Authorize]`，故請求在進入預覽邏輯前回 500。
+- 修改：新增 `AuthenticationStartupPlanner`；只要存在 JWT 金鑰即註冊 JWT Authentication/Authorization middleware，`Auth:Enabled` 僅保留為全站 controller 預設授權及 Viewer 寫入防護開關。不改角色、金鑰、資料庫、Excel、咬蝕量計算或匯入資料。
+- 驗證：`AuthenticationStartupPlannerTests` 與咬蝕相關測試共 26 passed；backend build 0 warnings / 0 errors。測試站健康檢查 `ok/test`；未帶權杖的 preview 現在正確回 401，未寫入資料。
+- 發布：已發布 SPC 測試站 backend，遠端備份 `release/test/backend.backup-20261015-etch-preview-auth-scheme`；正式站未發布。
+
 ## 2026-10-14（SPC 咬蝕量預覽 500 診斷修正）
 - 目的：修正 TransFiles 咬蝕量匯入預覽只顯示 `HTTP 500: SPC預覽拒絕，未匯入`，讓 SPC 對可預期主檔/既有資料狀態回傳可讀錯誤。
 - 規格：新增 `specs/20261014-etch-preview-500-diagnostics/spec.md`。
@@ -1585,3 +1596,14 @@
 - 完成 `RELEASE-TOOL-TASK-002`：新增非正式目標備份/回復 PowerShell 原型 `tools/release/ReleaseBackupRestore.ps1`，支援網站資料夾備份、IIS 設定匯出、hash 紀錄與回復；已驗證語法、Production 阻擋與 `D:\Sites\PmrPortal` 阻擋。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
 - 完成 `RELEASE-TOOL-TASK-003`：新增非正式目標網站資料夾更新 PowerShell 原型 `tools/release/ReleaseApplyPackage.ps1`，支援 app_offline 建立、app pool 停啟、複製交付包、保留環境設定與 smoke test evidence；`app_offline.htm` 移除已列入待刪除清單，未自動刪除。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
 - 完成 `RELEASE-TOOL-TASK-004`：使用非正式 sandbox 完成備份、套用與 rollback 演練；修正 release 工具 wildcard copy 問題，重跑後備份、套用、回復均通過，回復後測試環境設定保留。Sandbox 證據輸出未提交，`app_offline.htm` 與 sandbox 目錄未刪除並列入待刪除清單；未連線正式機、未讀取機敏設定、未發布。
+# 2026-10-15 SPC 咬蝕量預覽伺服器錯誤可追蹤化（待單筆診斷）
+
+- 測試站 123 筆咬蝕量預覽 HTTP 500 已確認請求進入 SPC `SpcSingleTest`，不是 Excel、Portal、DNS 或 TLS 連線失敗。
+- `EtchTestImportController` 現在對資料庫例外回傳 `503`／`ETCH_PREVIEW_DATABASE_FAILURE`，對其他未預期例外回傳 `500`／`ETCH_PREVIEW_SERVER_FAILURE`；訊息只包含 Trace ID，例外詳情僅記錄伺服器端。
+- 咬蝕相關測試 23 passed，後端 build 0 warnings / 0 errors；已發布 SPC 測試站 backend，health/version smoke 通過。正式站未發布，待以單筆預覽取得錯誤代碼與 Trace ID 後再修正根因。
+
+# 2026-10-15 SPC 咬蝕量預覽移除寫入交易鎖（待人工匯入驗證）
+
+- 發現：`PreviewAsync` 與確認匯入共用序列化交易及 `sp_getapplock`；預覽不寫入資料，該鎖只需要確認匯入，且與全部日報立即 HTTP 500 的現象一致。
+- 修改：預覽改為真正唯讀；確認匯入仍保留資料庫交易、應用程式鎖與嚴格覆寫保護。
+- 驗證：咬蝕相關測試 24 passed，backend build 0 warnings / 0 errors；已發布 SPC 測試 backend，備份 `backend.backup-etch-preview-readonly-20261015-112638`，health 回 `ok`／`test`。待使用日報 25/50 點對單筆預覽、確認匯入與管制圖進行人工驗證；正式站未發布。

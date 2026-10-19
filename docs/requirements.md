@@ -1,5 +1,7 @@
 # SPC 現行需求索引
 
+- SPC 咬蝕量預覽 HTTP 500 根因診斷：[SPC-ETCH-PREVIEW-500-SERVER-DIAGNOSTIC-20261015](../specs/20261015-etch-preview-500-server-diagnostic/spec.md)；咬蝕量預覽不使用確認匯入專用 SQL 交易鎖，且在 `Auth:Enabled=false` 但 JWT 金鑰存在時仍須註冊 JWT 驗證，避免 `[Authorize]` 端點回 500。測試站 backend 已發布，未授權 preview 已驗證回 401；2026-10-19 已完成兩站預覽 130/130、測試庫匯入 130 SUCCESS（125 unchanged、5 新增/補同步）及新增日期 PT1/QE2 Xbar-S 製圖驗證；正式站未發布。
+
 - SPC 咬蝕量預覽 500 診斷修正：[SPC-ETCH-PREVIEW-500-DIAGNOSTICS-20261014](../specs/20261014-etch-preview-500-diagnostics/spec.md)；TransFiles 透過 Portal 呼叫 SPC 咬蝕量預覽時，未知/停用線別與既有資料缺批次等可預期問題需回可讀 409，不得只顯示 HTTP 500。已發布 SPC 測試站 backend，正式站未發布。
 - SPC N1/N2 藥液開收線顯示修正：[SPC-CHEM-N1N2-CLOSE-LABEL-20261014](../specs/20261014-chemical-n1n2-close-label/spec.md)；N1/N2 藥液管制圖 tooltip、X 軸與點位明細需以短標籤顯示：早班開線=`早(開)`、早班收線=`早(收)`、中班開線=`中(開)`、中班收線=`中(收)`，不得將 CLOSE 歸成「晚班」；一般線別舊班別相容仍保留 `CLOSE=晚班`。已發布 SPC 測試站 frontend，正式站未發布。
 - SPC 匯入入口調整為 TransFiles 直接匯入：[SPC-IMPORT-VIA-TRANSFILES-ONLY-20261014](../specs/20261014-spc-import-via-transfiles-only-plan/spec.md)；SPC 網站不再作為 Excel 人工匯入入口，匯入改由 TransFiles 轉檔工具直接寫入資料庫；SPC Web 保留匯入批次查詢、錯誤追蹤、新資料提示、主檔維護與製圖確認。已完成契約文件、`GET /api/uploads`、`GET /api/uploads/recent-imports`、批次查詢頁、首頁新資料提示，並將批次預覽頁收斂為唯讀追蹤，不再提供網頁確認匯入、放棄暫存或重複資料覆蓋選項；已發布 SPC 測試站 backend/frontend，正式站未發布。
