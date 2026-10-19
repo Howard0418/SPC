@@ -1,6 +1,8 @@
 # SPC／Portal 正式版更新工具
 
-版本 2.0｜2026-10-19｜規格：[RELEASE-PRODUCTION-TOOL-20261019](../../specs/20261019-production-release-tool/spec.md)
+版本 2.1｜2026-10-19｜規格：[RELEASE-PRODUCTION-TOOL-20261019](../../specs/20261019-production-release-tool/spec.md)
+
+新增跨環境操作入口見[測試／正式切換與遠端發布](remote-release-runbook.md)。本頁保留正式機端操作及備份回復規則。
 
 ## 入口與範圍
 
@@ -50,7 +52,7 @@ Portal 的 ApiProject 改為 `D:\PmrPortal\src\PmrPortal.Api\PmrPortal.Api.cspro
 
 ## 3. 預檢與更新
 
-將整個交付目錄及兩支執行檔（Invoke-ProductionRelease.ps1、ProductionRelease.psm1；Export／New 留在產包機）交付到對應正式主機的獨立目錄。不要放在網站目錄。套用命令在該正式主機執行：
+將整個交付目錄及三份執行來源（Invoke-ProductionRelease.ps1、Invoke-ReleaseOnServer.ps1、ProductionRelease.psm1；Export／New 留在產包機）交付到對應正式主機的獨立目錄。不要放在網站目錄。套用命令在該正式主機執行：
 
 ```powershell
 .\Invoke-ProductionRelease.ps1 -Mode Plan -ManifestPath <交付目錄>\manifest.json
@@ -83,7 +85,7 @@ Portal 的 ApiProject 改為 `D:\PmrPortal\src\PmrPortal.Api\PmrPortal.Api.cspro
 
 新產生檔案與舊資產保留、不自動刪除；回復還原舊 entrypoint／deps／DLL，由舊程式選取舊資產。evidence 的 newFiles 列出新增項目供另行審查；不保證清除新版本檔案，不刪任何附件。
 
-每次備份保留於 `C:\ProgramData\PMR-Releases\<release-id>`，僅 SYSTEM 與 Administrators 可存取。內含 plan、pool-state、backup hashes、私有設定備份、database／iis 記錄與 evidence；SQL .bak 位於 SQL Server 的預設備份目錄。不得把這些備份或 evidence 推送 Git。失敗輸出只顯示階段／錯誤類別，不印設定、SQL 例外或回應內容。工具不建立 app_offline，不刪備份，不回復整台 IIS 全域設定（避免覆蓋其他站台）。
+每次備份保留於 `C:\ProgramData\PMR-Releases\Production\<release-id>`，僅 SYSTEM 與 Administrators 可存取。內含 plan、pool-state、backup hashes、私有設定備份、database／iis 記錄與 evidence；SQL .bak 位於 SQL Server 的預設備份目錄。不得把這些備份或 evidence 推送 Git。失敗輸出只顯示階段／錯誤類別，不印設定、SQL 例外或回應內容。工具不建立 app_offline，不刪備份，不回復整台 IIS 全域設定（避免覆蓋其他站台）。
 
 更新後同步規格、版本、測試與發布狀態；登入後 SSO、真實查詢／製圖須另記人工驗收，不以 HTTP 200 代替完整業務驗收。
 

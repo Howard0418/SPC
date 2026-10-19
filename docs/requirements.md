@@ -193,3 +193,5 @@
 - 2026-10-19 SPC／Portal 正式更新已完成：使用者授權三筆 DB 相容 migration，備份驗證、版本/健康與匿名授權檢查通過；登入後人工驗收待執行。追溯 D:/SPC/specs/20261019-spc-portal-production-release/verification.md。
 
 - 正式版更新工具：[RELEASE-PRODUCTION-TOOL-20261019](../specs/20261019-production-release-tool/spec.md)。SPC／Portal 獨立正式入口，支援預檢／備份更新／回復、固定主機目標、manifest SHA256、實際 EF pending 比對、SQL 備份驗證及失敗復原。舊非正式原型仍阻擋 Production；本次完成隔離驗證，未在正式機執行新版工具。
+
+- 發布環境切換與遠端入口：[RELEASE-ENVIRONMENT-SWITCH-20261019](../specs/20261019-release-environment-switch/spec.md)。固定Test／Production與SPC／Portal四組目標，預設Test／Plan；實際四組Plan通過，不混用主機、IIS、DB；SPC前端須分環境build。本次未Apply／Rollback。

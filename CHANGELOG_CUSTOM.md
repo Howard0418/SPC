@@ -1627,3 +1627,8 @@
 - 新增正式 Plan／Apply／Rollback 入口、EF 離線 catalogue／SQL 匯出、SPC／Portal manifest 與 ZIP 產包；固定白名單、逐檔 SHA256、設定／附件保留、SQL COPY_ONLY/CHECKSUM＋VERIFYONLY。
 - 新增備份私有權限、原 AppPool 狀態回復、精確 migration 核准比對、失敗自動回復與新舊版 smoke；回復失敗停止服務，schema／新增檔不自動刪除。
 - 隔離測試 Windows PowerShell5.1／PowerShell7 各21通過，真實兩系統離線交付包驗證通過；更新手冊。未執行正式 Apply／Rollback，無產品程式變更，測試站發布不適用。
+
+## 2026-10-19 環境切換與遠端發布入口
+- 新增Invoke-Release.ps1選擇Test／Production、SPC／Portal，預設Test／Plan；固定目標、雙端hash、私有incoming、目前Windows帳號Kerberos，不儲存密碼／修改trust。
+- 共用server engine及64位元worker，保留舊Production-only入口；相容單一SpcSingleTest及Portal測試pool；產包支援環境，不改寫前端編譯設定。
+- 既有21＋新增14項隔離測試於PowerShell7／Windows5.1通過，四組真實Plan通過；更新操作手冊。未停止服務、備份正式DB、migration或發布網站。

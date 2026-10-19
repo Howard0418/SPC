@@ -1,16 +1,31 @@
 ﻿Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 
-function Get-ProductionProfile([ValidateSet('SPC','Portal')][string]$System) {
-    if($System -eq 'SPC') {
-        return @{HostName='PMR-SPC-SRV.pmr.com.tw'; Machine='PMR-SPC-SRV'; Database='PMR_SPC_2026'; Hosts=@('PMR-SPC-SRV.pmr.com.tw','172.16.119.140'); Targets=@(
-            @{Site='SpcApi';Pool='SpcApi';Path='C:\inetpub\wwwroot\production\backend'},
-            @{Site='SpcWeb';Pool='SpcWeb';Path='C:\inetpub\wwwroot\production\frontend'})}
+function Get-ReleaseProfile([ValidateSet('SPC','Portal')][string]$System,[ValidateSet('Test','Production')][string]$Environment) {
+    if($Environment -eq 'Test') {
+        if($System -eq 'SPC') {
+            $p=@{HostName='PC-PA16560048.pmr.com.tw';Machine='PC-PA16560048';Database='PMR_SPC_TEST';Hosts=@('PC-PA16560048.pmr.com.tw','172.16.110.27','SPCTEST.pmr.com.tw');ApiBase='https://SPCTEST.pmr.com.tw';WebBase='https://SPCTEST.pmr.com.tw';Targets=@(
+                @{Site='SpcSingleTest';Pool='SpcSingleTest';Path='D:\SPC\release\test\backend';IisPath='D:\SPC\release\test\backend';Role='Api'},
+                @{Site='SpcSingleTest';Pool='SpcSingleTest';Path='D:\SPC\release\test\frontend';IisPath='D:\SPC\release\test\backend';Role='Web'})}
+        }else{
+            $p=@{HostName='PC-PA16560048.pmr.com.tw';Machine='PC-PA16560048';Database='PMR_PORTAL_TEST';Hosts=@('PC-PA16560048.pmr.com.tw','172.16.110.27','portaltest.pmr.com.tw');ApiBase='http://172.16.110.27:8091';WebBase='https://portaltest.pmr.com.tw';Targets=@(
+                @{Site='PmrPortalApi';Pool='PmrPortal';Path='D:\PmrPortal\publish\portal-api';IisPath='D:\PmrPortal\publish\portal-api';Role='Api'},
+                @{Site='PmrPortalWeb';Pool='PmrPortalWeb';Path='D:\PmrPortal\publish\portal-web';IisPath='D:\PmrPortal\publish\portal-web';Role='Web'})}
+        }
+    }elseif($System -eq 'SPC'){
+        $p=@{HostName='PMR-SPC-SRV.pmr.com.tw'; Machine='PMR-SPC-SRV'; Database='PMR_SPC_2026'; Hosts=@('PMR-SPC-SRV.pmr.com.tw','172.16.119.140');ApiBase='http://172.16.119.140:8081';WebBase='http://172.16.119.140'; Targets=@(
+            @{Site='SpcApi';Pool='SpcApi';Path='C:\inetpub\wwwroot\production\backend';IisPath='C:\inetpub\wwwroot\production\backend';Role='Api'},
+            @{Site='SpcWeb';Pool='SpcWeb';Path='C:\inetpub\wwwroot\production\frontend';IisPath='C:\inetpub\wwwroot\production\frontend';Role='Web'})}
+    }else{
+        $p=@{HostName='PMR-WEB.pmr.com.tw'; Machine='PMR-WEB'; Database='PMR_PORTAL_UAT'; Hosts=@('PMR-WEB.pmr.com.tw','172.16.119.130','login.pmr.com.tw');ApiBase='http://172.16.119.130:81';WebBase='https://login.pmr.com.tw'; Targets=@(
+            @{Site='PmrPortalApi';Pool='PmrPortalApi';Path='C:\inetpub\wwwroot\publish\portal-api';IisPath='C:\inetpub\wwwroot\publish\portal-api';Role='Api'},
+            @{Site='PmrPortalWeb';Pool='PmrPortalWeb';Path='C:\inetpub\wwwroot\publish\portal-web';IisPath='C:\inetpub\wwwroot\publish\portal-web';Role='Web'})}
     }
-    return @{HostName='PMR-WEB.pmr.com.tw'; Machine='PMR-WEB'; Database='PMR_PORTAL_UAT'; Hosts=@('PMR-WEB.pmr.com.tw','172.16.119.130','login.pmr.com.tw'); Targets=@(
-        @{Site='PmrPortalApi';Pool='PmrPortalApi';Path='C:\inetpub\wwwroot\publish\portal-api'},
-        @{Site='PmrPortalWeb';Pool='PmrPortalWeb';Path='C:\inetpub\wwwroot\publish\portal-web'})}
+    $p.Environment=if($Environment -eq 'Test'){'Test'}else{'Production'}
+    $p.RuntimeEnvironment='Production';$p.SqlServer='172.16.110.16'
+    return $p
 }
+function Get-ProductionProfile([ValidateSet('SPC','Portal')][string]$System) {Get-ReleaseProfile $System Production}
 
 function Assert-ReleaseRelativePath([string]$Path) {
     if([string]::IsNullOrWhiteSpace($Path) -or $Path -match '[:\\]' -or $Path.StartsWith('/') -or $Path -match '[\x00-\x1f]' ) {throw 'Invalid relative path'}
@@ -33,22 +48,24 @@ function Assert-ReleaseWorkspacePath([string]$Path) {
     $full=[IO.Path]::GetFullPath($Path).TrimEnd('\','/')
     $blocked=[IO.Path]::GetFullPath('D:\Sites\PmrPortal').TrimEnd('\','/')
     if($full -ieq $blocked -or $full.StartsWith($blocked+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Forbidden Portal directory'}
+    foreach($systemName in @('SPC','Portal')){foreach($environmentName in @('Test','Production')){foreach($target in (Get-ReleaseProfile $systemName $environmentName).Targets){if($full -ieq $target.Path -or $full.StartsWith($target.Path+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Workspace must be outside every test/production website'}}}}
     Assert-NoReleaseReparse $full
 }
 function Get-ReleaseHash([string]$Path) {(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()}
 function Write-ReleaseJson($Value,[string]$Path) {$Value|ConvertTo-Json -Depth 30|Set-Content -LiteralPath $Path -Encoding UTF8}
 
-function Test-ProductionManifest($Manifest,[string]$Bundle,[string]$MachineName) {
-    $m=$Manifest;$p=Get-ProductionProfile $m.system
+function Test-ReleaseManifest($Manifest,[string]$Bundle,[string]$MachineName,[ValidateSet('Test','Production')][string]$Environment) {
+    $m=$Manifest;$p=Get-ReleaseProfile $m.system $Environment
     if($m.system -cnotin @('SPC','Portal')){throw 'Unsupported system'}
-    if($m.schemaVersion -ne 1 -or $m.environment -cne 'Production' -or $m.releaseId -notmatch '^[A-Za-z0-9][A-Za-z0-9_-]{2,79}$' -or $m.sourceCommit -notmatch '^[a-fA-F0-9]{40}$'){throw 'Invalid manifest identity'}
+    if($m.schemaVersion -ne 1 -or $m.environment -cne $p.Environment -or $m.releaseId -notmatch '^[A-Za-z0-9][A-Za-z0-9_-]{2,79}$' -or $m.sourceCommit -notmatch '^[a-fA-F0-9]{40}$'){throw 'Invalid manifest identity'}
     if($m.host -ine $p.HostName -or $MachineName -inotmatch ('^'+[regex]::Escape($p.Machine)+'(\.pmr\.com\.tw)?$') -or $m.database.name -cne $p.Database){throw 'Production host/database mismatch'}
-    if(@($m.packages).Count -ne 2 -or @($m.packages.site|Select-Object -Unique).Count -ne 2){throw 'Exactly two distinct site packages required'}
+    if(@($m.packages).Count -ne 2 -or @($m.packages.path|Select-Object -Unique).Count -ne 2){throw 'Exactly two distinct target paths required'}
     $bundleRoot=[IO.Path]::GetFullPath($Bundle).TrimEnd('\','/')
     Assert-NoReleaseReparse $bundleRoot
+    Add-Type -AssemblyName System.IO.Compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     foreach($pkg in $m.packages){
-        $target=@($p.Targets|Where-Object {$_.Site -ceq $pkg.site})
+        $target=@($p.Targets|Where-Object {$_.Site -ceq $pkg.site -and $_.Path -ieq [IO.Path]::GetFullPath($pkg.path).TrimEnd('\')})
         if($target.Count -ne 1 -or $pkg.pool -cne $target[0].Pool -or [IO.Path]::GetFullPath($pkg.path).TrimEnd('\') -ine $target[0].Path){throw 'Site/pool/path not in production allowlist'}
         if($bundleRoot -ieq $target[0].Path -or $bundleRoot.StartsWith($target[0].Path+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Bundle must be outside website'}
         if($pkg.version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$' -or $pkg.sha256 -notmatch '^[a-fA-F0-9]{64}$'){throw 'Missing package version/hash'}
@@ -91,6 +108,8 @@ function Test-ProductionManifest($Manifest,[string]$Bundle,[string]$MachineName)
     }elseif($m.database.migrationFile -or $m.database.migrationSha256){throw 'Migration list/file mismatch'}
     return $p
 }
+
+function Test-ProductionManifest($Manifest,[string]$Bundle,[string]$MachineName) {Test-ReleaseManifest $Manifest $Bundle $MachineName Production}
 
 function Assert-ProductionPendingMigrations([string[]]$Pending,[string[]]$Approved) {
     if((@($Pending|Sort-Object) -join ',') -cne (@($Approved|Sort-Object) -join ',')){throw 'Actual pending migrations differ from approved SQL list'}
@@ -159,6 +178,7 @@ function Invoke-ProductionTransaction($Plan,[string]$Bundle,[string]$ReleaseRoot
             if($pkg.PSObject.Properties['sha256'] -and (Get-ReleaseHash (Join-Path $Bundle $pkg.archive)) -ine $pkg.sha256){throw 'Archive changed during release'}
             [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $Bundle $pkg.archive),$stage)
             $dll=@{SpcApi='MesSpc.Api.dll';PmrPortalApi='PmrPortal.Api.dll';PmrPortalWeb='PmrPortal.Web.dll'}
+            if($pkg.site -eq 'SpcSingleTest' -and (Split-Path $pkg.path -Leaf) -eq 'backend'){$dll.SpcSingleTest='MesSpc.Api.dll'}
             if($dll.ContainsKey($pkg.site)){
                 $binary=Join-Path $stage $dll[$pkg.site]
                 $actual=[Diagnostics.FileVersionInfo]::GetVersionInfo($binary).FileVersion
@@ -197,4 +217,4 @@ function Invoke-ProductionTransaction($Plan,[string]$Bundle,[string]$ReleaseRoot
     $e.finishedAt=[DateTime]::UtcNow.ToString('o');Write-ReleaseJson $e (Join-Path $ReleaseRoot 'evidence.json')
     return $e
 }
-Export-ModuleMember -Function Get-ProductionProfile,Assert-ReleaseWorkspacePath,Assert-ProductionPendingMigrations,Assert-ReleaseRelativePath,Assert-ReleasePayloadPath,Assert-NoReleaseReparse,Get-ReleaseHash,Test-ProductionManifest,Restore-ProductionFiles,Invoke-ProductionTransaction,Write-ReleaseJson
+Export-ModuleMember -Function Get-ReleaseProfile,Test-ReleaseManifest,Get-ProductionProfile,Assert-ReleaseWorkspacePath,Assert-ProductionPendingMigrations,Assert-ReleaseRelativePath,Assert-ReleasePayloadPath,Assert-NoReleaseReparse,Get-ReleaseHash,Test-ProductionManifest,Restore-ProductionFiles,Invoke-ProductionTransaction,Write-ReleaseJson
