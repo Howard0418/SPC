@@ -1620,3 +1620,5 @@
 - 使用者更正授權後完成三筆 DB 相容 migration；兩庫 COPY_ONLY/CHECKSUM 備份及 RESTORE VERIFYONLY 通過，網站/IIS 同批備份保留。
 - 正式 SPC API 0.1.60／Web 0.1.63；Portal API 1.0.178／Web 1.0.221。健康、版本、首頁/登入頁、匿名 401、SPC 資產 MIME 檢查通過。
 - 設定與附件保留，未改 binding；登入後人工驗收待使用者進行。完整紀錄：D:/SPC/specs/20261019-spc-portal-production-release/verification.md。
+
+- 2026-10-19 發布收尾：經使用者明確授權指定 GitHub 遠端後，SPC be89ae94 與 Portal 9dbb42b 已上傳；正式發布小工作結案，登入後人工業務驗收仍待執行。

@@ -38,3 +38,6 @@
 
 ## 來源上傳狀態
 正式部署已完成；自動核准審查拒絕 GitHub push，原因為內部程式/測試/發布文件的特定遠端外傳尚未獲明確授權。未繞過審查；先完成本機提交，遠端上傳保留待辦。
+
+## GitHub 上傳完成
+使用者明確回覆「允許上傳」，授權 Howard0418/SPC 與 Howard0418/WebSiteApi。SPC Develop：be89ae94；Portal main：9dbb42b，兩者 git push 均成功。此步僅上傳來源與文件，不重新發布或操作正式 DB。
