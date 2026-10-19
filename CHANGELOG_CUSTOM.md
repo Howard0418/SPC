@@ -1,5 +1,10 @@
 # 客製需求與回歸檢查
 
+## 2026-10-19（Portal 咬蝕預覽診斷轉送驗收完成）
+- 完成 `SPC-ETCH-PREVIEW-500-PORTAL-FORWARDING-20261015` T-003；新增離線驗收工具，對實際 TransFiles client/GUI 失敗分支注入 500/503，確認錯誤代碼及 Trace ID 可見於提示、操作日誌與 JSON LOG，且首筆失敗停止預覽並阻擋確認匯入。
+- 驗證：TransFiles 原始碼失敗路徑測試 4 passed；Portal EtchStrictTests 5 passed。涵蓋 400/409、無效 JSON、安全遮罩與確認閘門；未刻意製造站台故障，未執行打包 EXE 人工故障視窗。
+- 無應用程式變更，不打包或重新發布；沿用既有測試 API 發布，正式站未操作。文件與測試工具可由 revert 本次提交回復；目前剩餘未完成小工作 0 件。
+
 ## 2026-10-19（咬蝕預覽 HTTP 500 修正驗證完成）
 - `SPC-ETCH-PREVIEW-500-SERVER-DIAGNOSTIC-20261015` T-004 完成：使用者 TransFiles 兩站預覽 130/130，衝突 0、隔離 12 不匯入；另行確認測試庫匯入 130 SUCCESS、衝突略過 0、待重試 0。
 - 唯讀核對本機結果：125 unchanged、5 新增/補同步，包含 10/16 四線及 10/17 QE2；25/50 點模式結果均存在。SPC 新增日期四線總表及 PT1/QE2 Xbar-S 製圖通過。

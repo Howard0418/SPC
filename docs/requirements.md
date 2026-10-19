@@ -1,5 +1,7 @@
 # SPC 現行需求索引
 
+- Portal 咬蝕預覽安全診斷轉送：[SPC-ETCH-PREVIEW-500-PORTAL-FORWARDING-20261015](../specs/20261015-etch-preview-500-portal-forwarding/spec.md)；保留 SPC HTTP status、錯誤代碼與 Trace ID，TransFiles 提示與日誌可顯示安全診斷。2026-10-19 TransFiles 離線錯誤路徑測試 4 passed、Portal 回歸 5 passed；測試 API 沿用 2026-10-15 發布，未重新發布或操作正式站。未執行打包 EXE 人工故障驗收，詳見驗證紀錄。
+
 - SPC 咬蝕量預覽 HTTP 500 根因診斷：[SPC-ETCH-PREVIEW-500-SERVER-DIAGNOSTIC-20261015](../specs/20261015-etch-preview-500-server-diagnostic/spec.md)；咬蝕量預覽不使用確認匯入專用 SQL 交易鎖，且在 `Auth:Enabled=false` 但 JWT 金鑰存在時仍須註冊 JWT 驗證，避免 `[Authorize]` 端點回 500。測試站 backend 已發布，未授權 preview 已驗證回 401；2026-10-19 已完成兩站預覽 130/130、測試庫匯入 130 SUCCESS（125 unchanged、5 新增/補同步）及新增日期 PT1/QE2 Xbar-S 製圖驗證；正式站未發布。
 
 - SPC 咬蝕量預覽 500 診斷修正：[SPC-ETCH-PREVIEW-500-DIAGNOSTICS-20261014](../specs/20261014-etch-preview-500-diagnostics/spec.md)；TransFiles 透過 Portal 呼叫 SPC 咬蝕量預覽時，未知/停用線別與既有資料缺批次等可預期問題需回可讀 409，不得只顯示 HTTP 500。已發布 SPC 測試站 backend，正式站未發布。

@@ -14,10 +14,7 @@
 
 ## 目前小工作排序（2026-10-14）
 
-### 第一順位：Portal 預覽錯誤診斷欄位人工驗證
-
-
-`SPC-ETCH-PREVIEW-500-PORTAL-FORWARDING-20261015`：Portal 代理端需保留 SPC 預覽的安全錯誤代碼與 Trace ID，供 TransFiles 顯示；規格：`specs/20261015-etch-preview-500-portal-forwarding/`。只發布 Portal 測試 API，不寫入資料。
+目前未完成小工作：**0 件**（2026-10-19）。已完成項目保留於變更紀錄與對應規格。
 
 ### 已完成追溯：SPC 改由 TransFiles 直接匯入（阻擋測試匯入／資料正確性）
 
