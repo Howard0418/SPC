@@ -205,3 +205,5 @@
 - SPC正式最新版核對（2026-10-19）：[核對紀錄](../specs/20261019-spc-production-latest-check/spec.md)。正式API0.1.60／Web0.1.63已為已驗證最新版，本次無需重新部署；測試版本較舊，不作正式更新來源。
 
 - 已規劃、未實作：[SPC-CHEM-REFERENCE-HISTORY-20261019](../specs/20261019-chemical-formula-reference-history/spec.md)。補設定頁版本依據欄位、總覽共用歷史入口及500字錯誤提示；沿用既有版本服務與Reason，保留20261007前案，功能驗收與發布未執行。
+
+- 已規劃、待前案完成：[SPC-VERSION-HISTORY-DATE-FILTER-20261019](../specs/20261019-version-history-date-filter/spec.md)。使用者確認規格界線／藥液公式／F表版本歷史按修改日期查詢，非設定生效期；含台北日期日界、單邊區間、格式錯誤與先篩後分頁。規格異動稽核來源須先核實，未實作或發布。
