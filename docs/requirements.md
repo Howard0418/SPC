@@ -203,3 +203,5 @@
 - Portal會議室正式更新（2026-10-19）：[Portal發布驗證](D:/PmrPortal/specs/20261019-meeting-production-release/verification.md)，API1.0.182／Web1.0.225，migration0，備份／健康／版本檢查通過。
 
 - SPC正式最新版核對（2026-10-19）：[核對紀錄](../specs/20261019-spc-production-latest-check/spec.md)。正式API0.1.60／Web0.1.63已為已驗證最新版，本次無需重新部署；測試版本較舊，不作正式更新來源。
+
+- 已規劃、未實作：[SPC-CHEM-REFERENCE-HISTORY-20261019](../specs/20261019-chemical-formula-reference-history/spec.md)。補設定頁版本依據欄位、總覽共用歷史入口及500字錯誤提示；沿用既有版本服務與Reason，保留20261007前案，功能驗收與發布未執行。
