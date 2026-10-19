@@ -14,7 +14,7 @@
 
 ## 目前小工作排序（2026-10-14）
 
-目前未完成小工作：0 件。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。本次 SPC／Portal 正式站更新及來源上傳已完成。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
+目前未完成小工作：2 件（Portal 會議室，僅規劃待執行）。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。本次 SPC／Portal 正式站更新及來源上傳已完成。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
 
 ### 已完成追溯：SPC 改由 TransFiles 直接匯入（阻擋測試匯入／資料正確性）
 
@@ -200,3 +200,10 @@
 - `RELEASE-TOOL-TASK-002`：已完成備份與回復流程原型。新增 `tools/release/ReleaseBackupRestore.ps1` 與 `specs/20261009-release-tool-task002/`，支援非正式目標備份網站資料夾、IIS 設定匯出、hash 紀錄與回復；已驗證語法、Production 阻擋與 `D:\Sites\PmrPortal` 阻擋。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
 - `RELEASE-TOOL-TASK-003`：已完成更新 IIS 網站資料夾流程原型。新增 `tools/release/ReleaseApplyPackage.ps1` 與 `specs/20261009-release-tool-task003/`，支援非正式目標 app_offline 建立、app pool 停啟、複製交付包、保留環境設定與 smoke test evidence；`app_offline.htm` 移除列入待刪除清單，未自動刪除。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
 - `RELEASE-TOOL-TASK-004`：已完成非正式 sandbox 備份、套用與 rollback 演練。Sandbox root 為 `release-staging/release-tool-task004/run-20261009-201622`；首次演練抓到 wildcard copy 問題並修正；重跑後備份、套用、回復均通過，回復後測試環境設定保留，`app_offline.htm` 依規則未刪除並列入待刪除清單。本次未連線正式機、未讀取機敏設定、未刪除資料、未發布。
+
+## 優先待執行：Portal會議室預約可見性（2026-10-19）
+
+1. `PORTAL-MEETING-VISIBILITY-TASK-001`：P1，預約資料查核、依可見範圍查詢與日期邊界。
+2. `PORTAL-MEETING-VISIBILITY-TASK-002`：P2，依賴001，成功定位、格式提示與防重送。
+
+[Portal主規格](D:/PmrPortal/specs/20261019-meeting-reservation-visibility/spec.md)；使用者要求本次僅規劃，不立即執行。

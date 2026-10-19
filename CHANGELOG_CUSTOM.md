@@ -1642,3 +1642,6 @@
 - 新增製作交付包視窗，選來源／版本／輸出後自動產生 manifest、ZIP、hash 並返回主畫面。
 - 靜態metadata helper核對真實commit與migration，支援只讀現行版本查詢；既有輸出拒絕覆蓋，完成驗證才更名。
 - C#24＋metadata6＋PowerShell44通過，SPC／Portal實際來源產包及UI檢視通過；僅交付工具，未Apply／Rollback，站台發布不適用。
+
+## 2026-10-19 Portal會議室小工作規劃
+- 已將Portal預約可見性P1與成功／格式提示P2兩項加入全系統工作池，主規格位於D:/PmrPortal/specs/20261019-meeting-reservation-visibility/。本次只讀調查與文件，未實作或發布。
