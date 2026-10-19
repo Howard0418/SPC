@@ -14,7 +14,7 @@
 
 ## 目前小工作排序（2026-10-14）
 
-目前未完成小工作：2 件（Portal 會議室，僅規劃待執行）。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。本次 SPC／Portal 正式站更新及來源上傳已完成。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
+目前未完成小工作：1 件（Portal 會議室 TASK-002）。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。本次 SPC／Portal 正式站更新及來源上傳已完成。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
 
 ### 已完成追溯：SPC 改由 TransFiles 直接匯入（阻擋測試匯入／資料正確性）
 
@@ -203,7 +203,6 @@
 
 ## 優先待執行：Portal會議室預約可見性（2026-10-19）
 
-1. `PORTAL-MEETING-VISIBILITY-TASK-001`：P1，預約資料查核、依可見範圍查詢與日期邊界。
-2. `PORTAL-MEETING-VISIBILITY-TASK-002`：P2，依賴001，成功定位、格式提示與防重送。
+1. `PORTAL-MEETING-VISIBILITY-TASK-002`：P2，依賴001，成功定位、格式提示與防重送。
 
-[Portal主規格](D:/PmrPortal/specs/20261019-meeting-reservation-visibility/spec.md)；使用者要求本次僅規劃，不立即執行。
+[Portal主規格](D:/PmrPortal/specs/20261019-meeting-reservation-visibility/spec.md)；TASK-001已依後續授權完成測試站，TASK-002待執行，正式站未發布。

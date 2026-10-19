@@ -1645,3 +1645,6 @@
 
 ## 2026-10-19 Portal會議室小工作規劃
 - 已將Portal預約可見性P1與成功／格式提示P2兩項加入全系統工作池，主規格位於D:/PmrPortal/specs/20261019-meeting-reservation-visibility/。本次只讀調查與文件，未實作或發布。
+
+## 2026-10-19 Portal會議室P1完成
+- PORTAL-MEETING-VISIBILITY-TASK-001修正遠月及終日資料不可見，Web12／JS5／API12與隔離瀏覽器驗證通過；Portal測試站API1.0.180／Web1.0.223。正式站未發布，TASK-002仍待執行；主驗證位於Portal specs/20261019-meeting-reservation-visibility/verification.md。
