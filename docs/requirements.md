@@ -199,3 +199,5 @@
 - Windows更新執行檔：[RELEASE-UPDATER-EXE-20261019](../specs/20261019-release-updater-exe/spec.md)。單EXE內嵌遠端引擎，提供環境／系統／交付包選擇、預檢綁定、兩項授權、確認、更新／回復及背景紀錄；C#20＋PowerShell新增4／既有35通過，僅Plan與負向驗證完成，未實際更新。
 
 - EXE 製作交付包：[DESKTOP-BUNDLE-CREATION-20261019](../specs/20261019-desktop-bundle-creation/spec.md)。1.1.0 新增製作視窗，自動產生 manifest／ZIP，靜態讀取 API metadata、只讀目標版本，驗證後返回主畫面；不自動更新。
+
+- Portal會議室正式更新（2026-10-19）：[Portal發布驗證](D:/PmrPortal/specs/20261019-meeting-production-release/verification.md)，API1.0.182／Web1.0.225，migration0，備份／健康／版本檢查通過。

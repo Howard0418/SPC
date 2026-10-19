@@ -1657,3 +1657,6 @@
 
 ## 2026-10-19 Portal會議室整月查詢完成
 - PORTAL-MEETING-MONTH-QUERY-TASK-001已完成月／週與箭頭整月查詢、跨月行程保留與同模式刷新，57項測試及隔離瀏覽器通過。Portal測試站API1.0.182／Web1.0.225，正式站未發布，待辦0件。
+
+## 2026-10-19 Portal會議室正式站更新
+- 使用者正式授權後，完成PMR-WEB Portal API1.0.182／Web1.0.225；無migration，正式備份驗證、hash與smoke通過。SPC不變，未完成小工作0件；正式真人登入驗收待使用者。追溯D:/PmrPortal/specs/20261019-meeting-production-release/verification.md。

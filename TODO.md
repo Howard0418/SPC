@@ -204,10 +204,10 @@
 ## Portal會議室預約可見性（2026-10-19，已完成）
 
 
-[Portal主規格](D:/PmrPortal/specs/20261019-meeting-reservation-visibility/spec.md)；TASK-001／002已依後續授權完成測試站，正式站未發布。
+[Portal主規格](D:/PmrPortal/specs/20261019-meeting-reservation-visibility/spec.md)；TASK-001／002已依後續授權完成測試站，正式站已發布（API1.0.182／Web1.0.225）。
 
 
 ## Portal會議室完整月份查詢（2026-10-19，已完成測試站）
 
 - 已完成完整月份查詢與跨月行程保留，前案PRG／成功定位不變。
-- [Portal主規格](D:/PmrPortal/specs/20261019-meeting-calendar-month-query/spec.md)。已依後續授權完成實作、驗證及Portal測試站發布；正式站未發布。
+- [Portal主規格](D:/PmrPortal/specs/20261019-meeting-calendar-month-query/spec.md)。已依後續授權完成實作、驗證及Portal測試站發布；正式站已發布（API1.0.182／Web1.0.225）。
