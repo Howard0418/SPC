@@ -1622,3 +1622,8 @@
 - 設定與附件保留，未改 binding；登入後人工驗收待使用者進行。完整紀錄：D:/SPC/specs/20261019-spc-portal-production-release/verification.md。
 
 - 2026-10-19 發布收尾：經使用者明確授權指定 GitHub 遠端後，SPC be89ae94 與 Portal 9dbb42b 已上傳；正式發布小工作結案，登入後人工業務驗收仍待執行。
+
+## 2026-10-19 完成正式版更新工具
+- 新增正式 Plan／Apply／Rollback 入口、EF 離線 catalogue／SQL 匯出、SPC／Portal manifest 與 ZIP 產包；固定白名單、逐檔 SHA256、設定／附件保留、SQL COPY_ONLY/CHECKSUM＋VERIFYONLY。
+- 新增備份私有權限、原 AppPool 狀態回復、精確 migration 核准比對、失敗自動回復與新舊版 smoke；回復失敗停止服務，schema／新增檔不自動刪除。
+- 隔離測試 Windows PowerShell5.1／PowerShell7 各21通過，真實兩系統離線交付包驗證通過；更新手冊。未執行正式 Apply／Rollback，無產品程式變更，測試站發布不適用。
