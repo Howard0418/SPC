@@ -195,3 +195,5 @@
 - 正式版更新工具：[RELEASE-PRODUCTION-TOOL-20261019](../specs/20261019-production-release-tool/spec.md)。SPC／Portal 獨立正式入口，支援預檢／備份更新／回復、固定主機目標、manifest SHA256、實際 EF pending 比對、SQL 備份驗證及失敗復原。舊非正式原型仍阻擋 Production；本次完成隔離驗證，未在正式機執行新版工具。
 
 - 發布環境切換與遠端入口：[RELEASE-ENVIRONMENT-SWITCH-20261019](../specs/20261019-release-environment-switch/spec.md)。固定Test／Production與SPC／Portal四組目標，預設Test／Plan；實際四組Plan通過，不混用主機、IIS、DB；SPC前端須分環境build。本次未Apply／Rollback。
+
+- Windows更新執行檔：[RELEASE-UPDATER-EXE-20261019](../specs/20261019-release-updater-exe/spec.md)。單EXE內嵌遠端引擎，提供環境／系統／交付包選擇、預檢綁定、兩項授權、確認、更新／回復及背景紀錄；C#20＋PowerShell新增4／既有35通過，僅Plan與負向驗證完成，未實際更新。

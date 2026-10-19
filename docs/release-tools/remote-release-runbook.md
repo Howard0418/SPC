@@ -2,6 +2,8 @@
 
 版本 1.0｜2026-10-19｜[規格](../../specs/20261019-release-environment-switch/spec.md)｜[備份與回復細節](production-release-runbook.md)
 
+可使用[Windows更新執行檔](desktop-updater-guide.md)操作相同流程。
+
 使用 [Invoke-Release.ps1](../../tools/release/Invoke-Release.ps1)，從工作電腦選擇環境與系統。預設為 **Test／Plan**，正式須明確指定 Production；不接受自行指定主機、站台或路徑。執行前需完成該次授權、測試及交付包審查。
 
 | 選擇 | 主機 | IIS／pool | DB |

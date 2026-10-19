@@ -72,6 +72,6 @@ try{
  }
  Invoke-ReleaseDispatch $request $transport
 }catch{
- Write-Error ('Release dispatch failed ('+$_.Exception.GetType().Name+'). Check selected environment, bundle, destination access and private evidence. No credentials or configuration are printed.') -ErrorAction Continue
+ Write-Error ('Release dispatch failed ('+$_.Exception.GetType().Name+$(if($_.Exception -is [Management.Automation.CommandNotFoundException]){': '+$_.Exception.CommandName}else{''})+'). Check selected environment, bundle, destination access and private evidence. No credentials or configuration are printed.') -ErrorAction Continue
  exit 1
 }

@@ -1,0 +1,19 @@
+PMR 系統更新工具 1.0.0
+
+1. 雙擊 PMR.ReleaseUpdater.exe，同意 Windows 系統管理員提示。
+2. 選擇「測試環境／正式環境」及「SPC／Portal」。
+3. 選擇完整交付包中的 manifest.json；ZIP、SQL 與 manifest 必須在原交付目錄。
+4. 按「執行預檢」，確認目標主機、資料庫與版本及結果。
+5. 確認本次應用與資料庫／啟動授權後勾選兩項，按「開始更新」，核對確認視窗後執行。
+6. 等候完成；執行期間不可關閉程式。完成後自行登入驗收功能。
+
+回復：選擇同一批原 manifest，確認兩項授權後按「回復此批應用」。
+依同批備份回復應用；資料庫 schema 與新增檔保留，不自動還原整庫。
+
+需求與限制：
+- 單一EXE內含發布引擎，不需SDK或PowerShell7；需Windows x64／.NET Framework4.8／Windows PowerShell5.1。
+- 使用目前Windows帳號，須具備目標WinRM／IIS／DB權限，不儲存密碼、不修改執行原則。
+- 正式／測試manifest必須分開；SPC前端仍須依環境build，切換不改寫ZIP內容。
+- 本程式未使用程式碼簽章憑證；請核對交付來源及SHA256SUMS.txt。
+- 內建引擎抽取至ProgramData\PMR-Release-Updater私有目錄；交付暫存／備份沿用現行引擎，不自動清除。
+- 交付EXE不代表已更新站台；Apply／Rollback須由操作人員確認本次範圍。

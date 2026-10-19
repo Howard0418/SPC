@@ -1632,3 +1632,8 @@
 - 新增Invoke-Release.ps1選擇Test／Production、SPC／Portal，預設Test／Plan；固定目標、雙端hash、私有incoming、目前Windows帳號Kerberos，不儲存密碼／修改trust。
 - 共用server engine及64位元worker，保留舊Production-only入口；相容單一SpcSingleTest及Portal測試pool；產包支援環境，不改寫前端編譯設定。
 - 既有21＋新增14項隔離測試於PowerShell7／Windows5.1通過，四組真實Plan通過；更新操作手冊。未停止服務、備份正式DB、migration或發布網站。
+
+## 2026-10-19 Windows更新執行檔1.0.0
+- 新增繁體中文WinForms單EXE，內嵌發布引擎、私有快取與逐檔hash；預設Test／SPC，選manifest、背景預檢後才可確認授權更新，回復保留DBschema。
+- 安全JSON Base64參數、Windows PowerShell模組路徑隔離、UTF8輸出及progress過濾；修復worker／正式wrapper失敗碼遺失，避免誤判成功。
+- C#20項、PowerShell新增4＋既有35項通過；UI檢視與EXE Test SPC／Production Portal只讀Plan通過，缺ZIP回失敗。產出EXE／ZIP／SHA256，未簽章；未執行站台更新或migration。
