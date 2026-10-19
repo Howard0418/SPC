@@ -221,7 +221,7 @@
 上述3件為KM既有工作池同步，非本次新增範圍；外部附件掃毒／SSO nonce選型另列。
 
 ## 目前執行排序（2026-10-19，使用者指定SPC優先）
-1. SPC-VERSION-HISTORY-DATE-FILTER-20261019：規格界線／藥液公式／F表歷史依修改日期篩選；[規格](specs/20261019-version-history-date-filter/spec.md)。前案已完成，規格稽核來源須先核實。
+1. SPC-VERSION-HISTORY-DATE-FILTER-20261019：規格界線／藥液公式／F表歷史依修改日期篩選；[規格](specs/20261019-version-history-date-filter/spec.md)。前案已完成；已確認規格缺逐次歷史，v2新增歷史表提案待使用者確認，本案尚未實作。
 
 已完成：SPC-CHEM-REFERENCE-HISTORY-20261019，公式備註／總覽共用歷史，後端17、前端6測試通過；測試站API0.1.61／Web0.1.64，正式未發布。
 

@@ -206,4 +206,4 @@
 
 - 測試站已完成：[SPC-CHEM-REFERENCE-HISTORY-20261019](../specs/20261019-chemical-formula-reference-history/spec.md)。補設定頁版本依據欄位、總覽共用歷史入口及500字錯誤提示；沿用既有版本服務與Reason，保留20261007前案，後端17／前端6測試通過，測試站API0.1.61／Web0.1.64；正式未發布。
 
-- 已規劃、待前案完成：[SPC-VERSION-HISTORY-DATE-FILTER-20261019](../specs/20261019-version-history-date-filter/spec.md)。使用者確認規格界線／藥液公式／F表版本歷史按修改日期查詢，非設定生效期；含台北日期日界、單邊區間、格式錯誤與先篩後分頁。規格異動稽核來源須先核實，未實作或發布。
+- 已規劃、待前案完成：[SPC-VERSION-HISTORY-DATE-FILTER-20261019](../specs/20261019-version-history-date-filter/spec.md)。使用者確認規格界線／藥液公式／F表版本歷史按修改日期查詢，非設定生效期；含台北日期日界、單邊區間、格式錯誤與先篩後分頁。已確認規格只有最後狀態，v2規格版本表提案待確認，未實作、未migration或發布。

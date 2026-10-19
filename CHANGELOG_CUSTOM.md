@@ -1691,3 +1691,7 @@
 - 設定頁補參照文件／修改依據，總覽補同PPC版本歷史、公式快照與重試；批次成功刷新歷史、失敗保留草稿，沿用同一表與API。
 - 前後端500字驗證，Controller與Restore在寫入前拒絕超長。後端17／瀏覽器6通過，Release publish及testhost build成功；3項既有較廣回歸失敗已以基準重現，詳見specs/20261019-chemical-formula-reference-history/verification.md。
 - 發布SpcSingleTest API0.1.61／Web0.1.64，hash／設定保留／健康通過，備份與中途發布修正留存；無migration，正式未發布。剩4件（SPC1、KM暫緩3）。
+
+## 2026-10-19 歷史日期篩選前置核對
+- 規格只有PPC／分段目前值及最後更新時間，沒有逐次快照，無法只用日期參數提供完整歷史；未拿生效日期替代修改日期。
+- 提出新增SpecificationLimitVersions、統一EF寫入追蹤與隔離migration／交易測試方案，依已同意計畫先待使用者確認，未新增表／程式或操作正式庫。待辦仍4件（SPC1待擴充確認、KM暫緩3）。
