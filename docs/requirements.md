@@ -1,6 +1,6 @@
 # SPC 現行需求索引
 
-- 藥液公式日期選版與追溯：[SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020 v2](../specs/20261020-formula-effective-trace-plan/spec.md)。TASK-001[來源／精度基準及直接DB契約](../specs/20261020-formula-trace-task001/spec.md)已完成，後續5件未執行；沿用既有公式版本，依量測日期選版並留存輸入／結果／F快照。使用者已確認TransFiles仍須直接寫DB，現有來源API匯入不得當作目標完成。SQL程序／權限／原子性待後續隔離實證；測試站維持API0.1.63／Web0.1.67，正式未操作。
+- 藥液公式日期選版與追溯：[主規格v3](../specs/20261020-formula-effective-trace-plan/spec.md)。TASK-001[來源／精度基準](../specs/20261020-formula-trace-task001/spec.md)及TASK-002[schema／真實SQL隔離驗證](../specs/20261020-formula-trace-task002/spec.md)已完成；後續4件未執行。六張關聯表沿用既有公式／F歷史，nullable量測關聯不回填舊版；期限、immutable、跨PPC、併發、rollback及直寫role拒絕已隔離驗證，尚無實際匯入程序與client。使用者要求TransFiles真正直接DB，不以既有API代替；共用測試／正式DB未升級，仍API0.1.63／Web0.1.67。
 
 - 管制圖日期分段版本明細：[SPC-CHART-SEGMENT-VERSION-20261020](../specs/20261020-chart-segment-version-detail/spec.md)；2026-10-20依使用者選擇完成v2唯讀查閱，管制圖／藥液趨勢圖可查看目前分段與公式修改歷史，無證據明示未知。測試API0.1.63／Web0.1.67已發布，正式未更新；[Antigravity案例](../specs/20261020-chart-segment-version-detail/antigravity-tests.md)待真人操作。公式有效期／自動選版／實際版本留存保留後續規劃，未實作。
 

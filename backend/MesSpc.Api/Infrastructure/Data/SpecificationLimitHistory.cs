@@ -8,6 +8,7 @@ public partial class AppDbContext
     private sealed record SpecChange(EntityEntry Entry,string Kind,string Action,string? Previous,string? Current);
     private List<SpecChange> PendingSpecificationChanges()
     {
+        ValidateChemicalImmutableEntries();
         ChangeTracker.DetectChanges();
         if(ChangeTracker.Entries<SpecificationLimitVersion>().Any(e=>e.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("規格版本歷史不可修改或刪除。");

@@ -1,9 +1,9 @@
 # 功能規格：藥液公式生效日期、自動選版與版本留存
 - 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020
-- 版本：2
-- 狀態：TASK-001基準／契約已完成；TASK-002～006尚未執行。
+- 版本：3
+- 狀態：TASK-001基準／契約及TASK-002 schema隔離驗證已完成；TASK-003～006尚未執行。
 - 涉及專案：SPC主責；Portal量測輸入、TransFiles轉檔／直接匯入相依。
-- 授權：先完成規劃，使用者後續要求開始SPC實作；本次只執行TASK-001，並確認TransFiles仍需直接寫DB。無DB、migration或站台操作。
+- 授權：使用者確認逐件實作，本次TASK-002僅在全新前綴隔離庫驗證migration與防護；共用測試／正式DB及站台未升級。TransFiles仍須直接寫DB。
 - 基準：[需求索引](../../docs/requirements.md)、[TransFiles直接匯入契約](../../docs/imports/transfiles-direct-import-contract.md)。
 - 前案：[唯讀分段明細v2](../20261020-chart-segment-version-detail/spec.md)，測試API0.1.63／Web0.1.67；不把歷史修改日期當生效日期。
 
@@ -39,8 +39,9 @@
 - 建議對已被量測引用的有效期間禁止原地回溯修改；必要修正需另案影響清單、理由與授權，不改舊量測追溯。
 - 基準精度：先沿用已確認的未四捨五入判定、顯示／儲存精度；實作前核對Portal／Excel／SPC的差異，不能順便改公式語法、精度或單位。
 - TASK-001已確認來源日期／精度反例及直接DB目標，見[契約基準](../20261020-formula-trace-task001/contract.md)。實際DB程序／權限／併發、部署EXE與F快照不可變性留TASK-002／005實證，不把無副作用測試當SQL驗收。
-- 每次只執行一件；TASK-001完成後停止，不開始TASK-002。正式DB／發布仍需另行授權。
+- 每次只執行一件；TASK-002完成後停止，不開始TASK-003。共用schema／API發布依後續階段執行；正式DB／發布仍需另行授權。
 
 ## 版本
 - v1／2026-10-20：沿用既有架構的建議規格與序列化計畫，未實作。
 - v2／2026-10-20：TASK-001完成，確認直接DB決策，新增真實來源測試與可信receipt／原子寫入／統計工作契約；未實作DB功能。
+- v3／2026-10-20：TASK-002六表與nullable關聯migration、期間／immutable／fail-closed防護及真實SQL隔離演練完成；[證據](../20261020-formula-trace-task002/verification.md)。沒有發布或啟用共用環境。

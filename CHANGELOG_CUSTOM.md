@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-20（SPC-FORMULA-TRACE-TASK-002 schema隔離驗證完成）
+- EF新增20261020040256_AddChemicalFormulaTraceSchema：六張排程／有效期／政策／receipt／trace／統計job關聯表、量測nullable關聯與來源hash，沿用既有公式與F快照，無歷史回填。
+- 真實SQL Server隔離Up重跑／Down／Up、既有值hash、半開區間／跨PPC／不可變／並發、四表故障rollback與role DML229拒絕通過，COPY_ONLY／CHECKSUM／VERIFYONLY成功；最終庫SPC_FORMULA_SCHEMA_VERIFY_20261020_5942ebad，診斷庫與備份保留。
+- 42相關測試passed、2個opt-in明確Skip；SQL完整scenario另行通過；Release build成功。新API、受控匯入procedure、receipt發行與統計consumer未實作。
+- 此件僅隔離schema交付，不發布會自動Migrate的DLL；共用測試庫新表／欄位／role仍0、migration57、量測13739、公式歷史7；health維持ok/test/0.1.63，Web0.1.67。正式／其他系統未操作。
+- 剩未完成7件：SPC4件、KM暫緩3件；停止在TASK-002。
+
 ## 2026-10-20（SPC-FORMULA-TRACE-TASK-001完成）
 - 完成實際Portal／SPC計算器與TransFiles純函數基準：共同算式／F引用、IF語法、八位輸出／缺參數差異、日期回退與日曆驗證缺口、滴定值提前取2位皆有可重跑測試。未修正運行中行為或歷史資料。
 - 核對GUI目前經API預覽／確認，使用者再次確認需真正直接DB；完成可信計算暫存、受控SQL交易、量測／trace原子保存及統計工作契約。DB程序、權限／併發及部署EXE未驗證，留TASK-002／005／006。

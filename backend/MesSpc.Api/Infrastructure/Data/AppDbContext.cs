@@ -68,6 +68,7 @@ public partial class AppDbContext(DbContextOptions<AppDbContext> options, Micros
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ConfigureCalibration();
+        ConfigureChemicalTrace(modelBuilder);
         modelBuilder.Entity<Product>().HasIndex(x => x.ProductCode).IsUnique();
         modelBuilder.Entity<Station>().HasIndex(x => x.StationCode).IsUnique();
         modelBuilder.Entity<InspectionItem>().HasIndex(x => x.ItemCode).IsUnique();

@@ -1,5 +1,5 @@
 # 任務順序（每次一件）
-- 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020；spec v2。
+- 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020；spec v3。
 - [規格](spec.md)｜[計畫](plan.md)｜[驗證](verification.md)
 - [x] PLAN-001：本次完成現況、建議規則、相依、執行順序與驗收規劃。
 
@@ -12,5 +12,5 @@
 | 5／SPC-FORMULA-TRACE-TASK-005 | TransFiles實際入口契約、直接交易保存與舊版寫入閘門 | AC-001／006／007／009；跨日同批、缺輸入隔離、重送冪等、失敗回復及不影響咬蝕／落塵。 |
 | 6／SPC-FORMULA-TRACE-TASK-006 | 分段／逐點明細展示實際版本，端到端與Antigravity案例 | AC-008及全回歸；新舊混合、F變更後重現、多版本區間；測試站實際驗收，正式另授權。 |
 
-TASK-001已完成[來源測試與契約](../20261020-formula-trace-task001/spec.md)：Python10、跨引擎／日期9 passed，相關預設回歸23 passed／1明確Skip。TASK-002～006未執行，下一件不得略過SQL Server隔離庫、直接DB寫入／權限及receipt／統計工作原子性驗證。不將本表視為正式DB／跨系統發布授權。
+TASK-001已完成[來源測試與契約](../20261020-formula-trace-task001/spec.md)。TASK-002已完成[schema／真實SQL隔離演練](../20261020-formula-trace-task002/spec.md)：42相關passed／2 opt-in Skip，完整SQL scenario通過。TASK-003～006未執行，後續仍須實作受控匯入procedure、到期／排程修訂驗證、receipt發行及統計consumer；目前角色fail closed，不宣稱已可直寫。不將本表視為正式DB／跨系統發布授權。
 獨立規格／管制界限有效期及統計分段另案，避免與本批公式計算同時改動。

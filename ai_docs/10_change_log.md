@@ -793,3 +793,7 @@
 ## [2026-10-20] - SPC-FORMULA-TRACE-TASK-001 基準實作目的
 - 建立實際計算器／轉檔來源的無副作用相容性基準；使用者明確要求TransFiles仍需直接寫DB，現有GUI API路徑僅為現況，不作目標替代。
 - 只改SPC測試／runner／SDD契約，不改應用程式、Portal／TransFiles來源、DB、權限、migration或發布。
+
+## [2026-10-20] - SPC-FORMULA-TRACE-TASK-002 schema目的
+- 先建關聯／不可變／回復測試，再建立公式有效期、receipt／trace及統計工作最小模型與migration；只在固定前綴隔離庫演練。
+- 未授權共用測試／正式DB升級；不發布會在啟動自動Migrate的新DLL、不啟用模式、不修改其他系統。

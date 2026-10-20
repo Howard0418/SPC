@@ -807,7 +807,134 @@ namespace MesSpc.Api.Migrations
                     b.ToTable("ChemicalAnalysisFormulaVersions", null, t =>
                         {
                             t.HasComment("Version history for chemical analysis formulas stored on PartProcessCharacteristics.");
+
+                            t.HasTrigger("TR_ChemicalFormulaPinned");
                         });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalCalculationReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("EffectivityId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("EngineVersion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InputHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("MeasuredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PartProcessCharacteristicId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PrecisionPolicy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SourceKeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EffectivityId", "PartProcessCharacteristicId");
+
+                    b.HasIndex("PartProcessCharacteristicId", "SourceKeyHash");
+
+                    b.ToTable("ChemicalCalculationReceipts", null, t =>
+                        {
+                            t.HasComment("Immutable server-prepared evidence; canonical values and F snapshots in payload.");
+
+                            t.HasTrigger("TR_ChemicalReceiptImmutable");
+
+                            t.HasCheckConstraint("CK_ChemicalReceipt_Expiry", "[CreatedAtUtc] < [ExpiresAtUtc]");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalCalculationTrace", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Phase")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("RawResultCanonical")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("ReceiptId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("StoredResultCanonical")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("VariableMeasurementId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("VersionNo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiptId", "Phase")
+                        .IsUnique();
+
+                    b.HasIndex("VariableMeasurementId", "Phase", "VersionNo")
+                        .IsUnique();
+
+                    b.ToTable("ChemicalCalculationTraces", null, t =>
+                        {
+                            t.HasComment("Append-only phase versions; legacy measurements have no invented trace.");
+
+                            t.HasTrigger("TR_ChemicalTraceIntegrity");
+
+                            t.HasCheckConstraint("CK_ChemicalTrace_Phase", "[Phase] IN ('Initial','Recheck') AND [VersionNo] > 0");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFTableCell", b =>
@@ -1101,7 +1228,186 @@ namespace MesSpc.Api.Migrations
                     b.HasIndex("VersionNo")
                         .IsUnique();
 
-                    b.ToTable("ChemicalFTableVersionHistories");
+                    b.ToTable("ChemicalFTableVersionHistories", t =>
+                        {
+                            t.HasTrigger("TR_ChemicalFHistoryPinned");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFormulaEffectivity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("EffectiveFromUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EffectiveUntilUtcExclusive")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("FTableHistoryId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FormulaVersionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("PartProcessCharacteristicId")
+                        .HasColumnType("int");
+
+                    b.Property<long>("ScheduleRevisionId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FTableHistoryId");
+
+                    b.HasIndex("FormulaVersionId", "PartProcessCharacteristicId");
+
+                    b.HasIndex("ScheduleRevisionId", "EffectiveFromUtc")
+                        .IsUnique();
+
+                    b.HasIndex("ScheduleRevisionId", "PartProcessCharacteristicId");
+
+                    b.ToTable("ChemicalFormulaEffectivities", null, t =>
+                        {
+                            t.HasComment("Half-open UTC intervals referencing existing formula and F snapshots.");
+
+                            t.HasTrigger("TR_ChemicalEffectivityIntegrity");
+
+                            t.HasCheckConstraint("CK_ChemicalEffectivity_Range", "[EffectiveUntilUtcExclusive] IS NULL OR [EffectiveFromUtc] < [EffectiveUntilUtcExclusive]");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFormulaPolicy", b =>
+                {
+                    b.Property<int>("PartProcessCharacteristicId")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("ActiveScheduleRevisionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.HasKey("PartProcessCharacteristicId");
+
+                    b.HasIndex("ActiveScheduleRevisionId", "PartProcessCharacteristicId");
+
+                    b.ToTable("ChemicalFormulaPolicies", null, t =>
+                        {
+                            t.HasComment("Per-PPC opt-in; existing PPCs are not enabled or backfilled.");
+
+                            t.HasTrigger("TR_ChemicalPolicyIntegrity");
+
+                            t.HasCheckConstraint("CK_ChemicalPolicy_Active", "[IsEnabled] = 0 OR [ActiveScheduleRevisionId] IS NOT NULL");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFormulaScheduleRevision", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PartProcessCharacteristicId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PublishedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("RevisionNo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartProcessCharacteristicId", "RevisionNo")
+                        .IsUnique();
+
+                    b.ToTable("ChemicalFormulaScheduleRevisions", null, t =>
+                        {
+                            t.HasComment("Immutable published formula schedule revision sets.");
+
+                            t.HasTrigger("TR_ChemicalScheduleFrozen");
+
+                            t.HasCheckConstraint("CK_ChemicalSchedule_Revision", "[RevisionNo] > 0");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalStatisticsJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("NextAttemptAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ReceiptId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<long>("VariableMeasurementId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiptId");
+
+                    b.HasIndex("Status", "NextAttemptAtUtc");
+
+                    b.HasIndex("VariableMeasurementId", "ReceiptId")
+                        .IsUnique();
+
+                    b.ToTable("ChemicalStatisticsJobs", null, t =>
+                        {
+                            t.HasComment("Transactional statistics outbox, consumer delivered separately.");
+
+                            t.HasTrigger("TR_ChemicalJobIntegrity");
+
+                            t.HasCheckConstraint("CK_ChemicalJob_State", "[Attempts] >= 0 AND [Status] IN ('Pending','Processing','Completed','Failed')");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ControlChartGroup", b =>
@@ -3973,6 +4279,13 @@ namespace MesSpc.Api.Migrations
                     b.Property<int?>("ChemicalId")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("ChemicalReceiptId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ChemicalSourceKeyHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -4077,6 +4390,8 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("ChemicalId");
 
+                    b.HasIndex("ChemicalReceiptId");
+
                     b.HasIndex("LineId");
 
                     b.HasIndex("SlotId");
@@ -4085,13 +4400,22 @@ namespace MesSpc.Api.Migrations
 
                     b.HasIndex("UploadBatchId");
 
+                    b.HasIndex("PartProcessCharacteristicId", "ChemicalSourceKeyHash")
+                        .IsUnique()
+                        .HasFilter("[ChemicalSourceKeyHash] IS NOT NULL");
+
                     b.HasIndex("PartId", "ProcessId", "CharacteristicId", "MeasuredAt");
 
                     b.HasIndex("PartProcessCharacteristicId", "PortalDailyDate", "SamplingPhase", "SamplingStage")
                         .IsUnique()
                         .HasFilter("[PortalDailyDate] IS NOT NULL");
 
-                    b.ToTable("VariableMeasurements");
+                    b.ToTable("VariableMeasurements", t =>
+                        {
+                            t.HasTrigger("TR_ChemicalMeasurementGate");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.WorkOrder", b =>
@@ -4252,6 +4576,31 @@ namespace MesSpc.Api.Migrations
                     b.Navigation("RestoredFromVersion");
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalCalculationReceipt", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalFormulaEffectivity", null)
+                        .WithMany()
+                        .HasForeignKey("EffectivityId", "PartProcessCharacteristicId")
+                        .HasPrincipalKey("Id", "PartProcessCharacteristicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalCalculationTrace", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalCalculationReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("ReceiptId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.VariableMeasurement", null)
+                        .WithMany()
+                        .HasForeignKey("VariableMeasurementId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFTableCell", b =>
                 {
                     b.HasOne("MesSpc.Api.Domain.Entities.ChemicalFTableVersion", "Version")
@@ -4297,6 +4646,67 @@ namespace MesSpc.Api.Migrations
                     b.Navigation("FTableVersion");
 
                     b.Navigation("RestoredFromHistory");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFormulaEffectivity", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalFTableVersionHistory", null)
+                        .WithMany()
+                        .HasForeignKey("FTableHistoryId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalAnalysisFormulaVersion", null)
+                        .WithMany()
+                        .HasForeignKey("FormulaVersionId", "PartProcessCharacteristicId")
+                        .HasPrincipalKey("Id", "PartProcessCharacteristicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalFormulaScheduleRevision", null)
+                        .WithMany()
+                        .HasForeignKey("ScheduleRevisionId", "PartProcessCharacteristicId")
+                        .HasPrincipalKey("Id", "PartProcessCharacteristicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFormulaPolicy", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.PartProcessCharacteristic", null)
+                        .WithMany()
+                        .HasForeignKey("PartProcessCharacteristicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalFormulaScheduleRevision", null)
+                        .WithMany()
+                        .HasForeignKey("ActiveScheduleRevisionId", "PartProcessCharacteristicId")
+                        .HasPrincipalKey("Id", "PartProcessCharacteristicId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalFormulaScheduleRevision", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.PartProcessCharacteristic", null)
+                        .WithMany()
+                        .HasForeignKey("PartProcessCharacteristicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.ChemicalStatisticsJob", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalCalculationReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("ReceiptId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.VariableMeasurement", null)
+                        .WithMany()
+                        .HasForeignKey("VariableMeasurementId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.ControlChartType", b =>
@@ -4631,6 +5041,11 @@ namespace MesSpc.Api.Migrations
                     b.HasOne("MesSpc.Api.Domain.Entities.Chemical", "Chemical")
                         .WithMany()
                         .HasForeignKey("ChemicalId");
+
+                    b.HasOne("MesSpc.Api.Domain.Entities.ChemicalCalculationReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("ChemicalReceiptId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("MesSpc.Api.Domain.Entities.ProductionLine", "Line")
                         .WithMany()

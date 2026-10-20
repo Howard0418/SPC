@@ -1,6 +1,7 @@
 # 驗證規劃與本次結果
 - v1規劃階段僅文件檢查；v2的TASK-001[實際基準與回歸結果](../20261020-formula-trace-task001/verification.md)已完成，不代表下列日期選版／DB功能已通過。
 - 既有測試站維持API0.1.63／Web0.1.67，不修改正式／測試DB或Portal／TransFiles。
+- v3 TASK-002已完成[六表schema、42相關回歸與真實SQL隔離演練](../20261020-formula-trace-task002/verification.md)；只在固定前綴隔離庫，下面的端到端選版與直寫功能仍未驗收。
 
 ## 後續功能驗收資料（尚未執行）
 所有資料使用隔離fixture／授權的測試PPC，不能改正式主檔。

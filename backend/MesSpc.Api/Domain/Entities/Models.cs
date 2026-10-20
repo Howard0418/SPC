@@ -539,6 +539,8 @@ public class UploadError : BaseEntity<long>
 
 public class VariableMeasurement : BaseEntity<long>
 {
+    public Guid? ChemicalReceiptId { get; set; }
+    public string? ChemicalSourceKeyHash { get; set; }
     public Guid UploadBatchId { get; set; }
     public int PartId { get; set; }
     public int ProcessId { get; set; }

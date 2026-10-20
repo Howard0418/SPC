@@ -1,6 +1,7 @@
 # 直接DB寫入契約與實測基準
 - 狀態：TASK-001契約基準；DTO／SQL名稱為後續設計名稱，尚未存在或套用。
 - 決策：2026-10-20使用者確認「仍需TransFiles直接寫資料庫」。不得把既有API匯入或僅匯出Excel當成目標完成。
+- 後續進度：[TASK-002](../20261020-formula-trace-task002/verification.md)已完成schema與隔離SQL防護／rollback／權限驗證；本文件的實際匯入procedure、receipt發行與consumer仍屬後續，不把schema完成視為直寫可用。
 
 ## 1. 實際來源位置
 路徑根：SPC=D:/SPC；Portal=D:/PmrPortal；TransFiles=使用者既有SPC開發/TransFiles工作區。來源路徑可透過runner參數指定，未驗證其他電腦部署EXE。
