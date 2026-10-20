@@ -24,3 +24,8 @@
 ## TASK-003完成補充
 - [日期排程／計算契約驗證](../20261020-formula-trace-task003/verification.md)：78後端、7新增／9既有瀏覽器、SQL scenario及build通過；備份驗證後發布測試API0.1.64／Web0.1.68及TASK-002 schema，policy未啟用。正式未更新；正常登入完整畫面人工驗收受瀏覽器自動審核阻擋，留案例，不冒稱通過。
 - TASK-004～006未執行，總未完成6件（SPC3、KM暫緩3）。
+
+
+## TASK-004完成補充
+- [Portal整合驗證](../20261020-formula-trace-task004/verification.md)：原子交易／trace／raw規格判定、自動化與SQL隔離驗收完成，SPC API0.1.65與Portal API1.0.183／Web1.0.226測試發布；正式未更新。
+- TASK-005～006未執行；剩5件（SPC2、KM暫緩3）。真人案例待驗，不回填假版本。

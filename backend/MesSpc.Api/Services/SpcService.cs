@@ -10,7 +10,7 @@ namespace MesSpc.Api.Services;
 
 public class SpcService(AppDbContext db, IEmailNotificationService emailService, IConfiguration config)
 {
-    public async Task<SpcCalculationResult?> CalculateVariableAsync(VariableMeasurement measurement, CancellationToken ct = default)
+    public async Task<SpcCalculationResult?> CalculateVariableAsync(VariableMeasurement measurement, CancellationToken ct = default, bool deferNotification = false)
     {
         var mapping = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.Id == measurement.PartProcessCharacteristicId && x.IsEnabled, ct);
         if (mapping is null || !mapping.ChartTypeId.HasValue) return null;
@@ -36,8 +36,23 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
         var actualValue = measurement.RecheckValue ?? measurement.MeasuredValue;
 
-        var isOutOfSpec = !recordOnly && ((activeUsl.HasValue && actualValue > activeUsl.Value)
-                          || (activeLsl.HasValue && actualValue < activeLsl.Value));
+        // Scheduled chemistry retains its server raw result; specification judgment must match preview.
+        // Statistical/control values remain the saved measurement. Never re-evaluate a historical formula.
+        decimal? chemicalRaw = null;
+        if (measurement.ChemicalReceiptId.HasValue)
+        {
+            var phase = measurement.RecheckValue.HasValue ? "Recheck" : "Initial";
+            var raw = await db.ChemicalCalculationTraces.AsNoTracking()
+                .Where(x => x.VariableMeasurementId == measurement.Id && x.Phase == phase)
+                .OrderByDescending(x => x.VersionNo).Select(x => x.RawResultCanonical).FirstOrDefaultAsync(ct)
+                ?? throw new InvalidOperationException("日期公式量測缺少對應階段追溯，拒絕猜測規格判定。");
+            chemicalRaw = ChemicalFormulaCalculation.ReadDecimal(raw, "已保存原始結果");
+        }
+        var isOutOfSpec = !recordOnly && (chemicalRaw.HasValue
+            ? ((activeUsl.HasValue && chemicalRaw.Value > Convert.ToDecimal(activeUsl.Value))
+                || (activeLsl.HasValue && chemicalRaw.Value < Convert.ToDecimal(activeLsl.Value)))
+            : ((activeUsl.HasValue && actualValue > activeUsl.Value)
+                || (activeLsl.HasValue && actualValue < activeLsl.Value)));
         var isOutOfControl = !recordOnly && ((activeUcl.HasValue && actualValue > activeUcl.Value)
                              || (activeLcl.HasValue && actualValue < activeLcl.Value));
         var ruleGroupId = await GetWeRuleGroupIdAsync(ct);
@@ -93,7 +108,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         if (isOutOfSpec || isOutOfControl)
         {
             var alertMessage = isOutOfSpec
-                ? $"Variable measurement violates spec limit. Value={actualValue}"
+                ? $"Variable measurement violates spec limit. Value={chemicalRaw?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? actualValue.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
                 : $"Variable measurement violates control limit. Value={actualValue}";
 
             if (violations?.Count > 0)
@@ -109,14 +124,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 CharacteristicId = measurement.CharacteristicId,
                 UploadBatchId = measurement.UploadBatchId,
                 VariableMeasurementId = measurement.Id,
-                ActualValue = actualValue,
+                ActualValue = isOutOfSpec && chemicalRaw.HasValue ? (double)chemicalRaw.Value : actualValue,
                 AlertType = isOutOfSpec ? AlertType.OutOfSpec : AlertType.OutOfControl,
                 Message = alertMessage
             };
             db.AlertEvents.Add(alert);
             await db.SaveChangesAsync(ct);
 
-            await SendAlertEmailAsync(alert, "品管工程師");
+            if (!deferNotification) await SendAlertEmailAsync(alert, "品管工程師");
         }
 
         return result;
@@ -249,6 +264,16 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             }
         }
         return alerts;
+    }
+
+    /// <summary>Dispatch only committed batch alerts. The normal legacy calculation path still dispatches immediately.</summary>
+    public async Task NotifyCommittedVariableBatchAsync(Guid batchId,CancellationToken ct)
+    {
+        if(db.Database.CurrentTransaction is not null)throw new InvalidOperationException("Notifications require a committed transaction.");
+        var alerts=await (from alert in db.AlertEvents.AsNoTracking()
+            join measurement in db.VariableMeasurements.AsNoTracking() on alert.VariableMeasurementId equals measurement.Id
+            where measurement.UploadBatchId==batchId select alert).ToListAsync(ct);
+        foreach(var alert in alerts)await SendAlertEmailAsync(alert,"品管工程師");
     }
 
     private async Task SendAlertEmailAsync(AlertEvent alert, string fallbackName)

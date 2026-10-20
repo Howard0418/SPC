@@ -33,14 +33,15 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
     private async Task<IDbContextTransaction?> LockAsync(int ppcId, CancellationToken ct)
     {
         if (!db.Database.IsRelational()) return null; // Test-only InMemory provider; SQL concurrency is tested separately.
-        var tx = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        var ownsTransaction = db.Database.CurrentTransaction is null;
+        var tx = ownsTransaction ? await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct) : null;
         try
         {
             if (db.Database.IsSqlServer())
                 await db.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM dbo.PartProcessCharacteristics WITH (UPDLOCK,HOLDLOCK) WHERE Id={ppcId}", ct);
             return tx;
         }
-        catch { await tx.DisposeAsync(); throw; }
+        catch { if (tx is not null) await tx.DisposeAsync(); throw; }
     }
 
     private async Task<PartProcessCharacteristic> MappingAsync(int id, CancellationToken ct)

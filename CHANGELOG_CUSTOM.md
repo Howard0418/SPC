@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-20（SPC-FORMULA-TRACE-TASK-004完成）
+- Portal依量測日期取得SPC公式試算，初驗／複驗原始字串及版號各自保留；日期或讀值變更清token，歷史不自動重算，可明確重新預覽。
+- SPC沿用日報儲存與統計，以整批交易保存receipt／trace／量測，重送冪等，失敗全回復；raw結果判規格、儲存值算統計，commit後通知。個人token代理、確認限Admin／Editor，未啟用共用policy。
+- 核心22、藥液／咬蝕59、Portal API18、Node14及瀏覽器12通過；真實SQL並發／gate／晚期故障回復通過。擴大回歸有一項既有InMemory交易失敗，未宣稱全套通過。
+- 測試SPC API0.1.65／Web0.1.68、Portal API1.0.183／Web1.0.226已發布；Portal依既有publisher並加設定防覆蓋保護，隔離驗證通過。備份VERIFYONLY、設定／資料指紋及匿名401核對通過，無新migration。
+- [驗證／備份與rollback](specs/20261020-formula-trace-task004/verification.md)；[Antigravity案例](specs/20261020-formula-trace-task004/antigravity-tests.md)真人待驗。正式／TransFiles／KM未更新；剩5件（SPC2、KM暫緩3），停止不開始TASK-005。
+
 ## 2026-10-20（SPC-FORMULA-TRACE-TASK-003完成）
 - 沿用既有公式歷史新增台北日期排程、量測時間選版、F固定快照及相容Portal Excel精度計算；拒絕缺版／重疊／缺輸入。發布鎖定PPC及修訂，已發行憑證時點不可回溯換版。
 - 新增受認證API及設定UI，10分鐘保護token與receipt準備；改日期／輸入／規格／排程／actor或到期須重預覽。不寫量測、不啟用匯入policy；Portal／TransFiles整合及真實版本圖表留後續。

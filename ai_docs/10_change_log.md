@@ -801,3 +801,7 @@
 ## [2026-10-20] SPC-FORMULA-TRACE-TASK-003
 - 目的：沿用公式歷史，建立台北日期排程、共用計算及過期預覽防護；核心先測試，不提早啟用寫入閘門。
 - 範圍：SPC服務／API／UI及測試，測試站需備份驗證後發布；Portal／TransFiles整合留下一件，正式不操作。
+
+## [2026-10-20] SPC-FORMULA-TRACE-TASK-004
+- 目的：Portal沿用SPC日期計算，原子保存初驗／複驗receipt、量測及trace；核心先測試，既有匯入未啟用policy不受影響。
+- 範圍：SPC交易／UploadService hook與Portal代理／表單；無新schema，測試站依順序發布，正式／TransFiles不操作。

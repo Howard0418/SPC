@@ -1,8 +1,8 @@
 # SPC 現行需求索引
 
-- 藥液公式日期選版與追溯：[主規格v4](../specs/20261020-formula-effective-trace-plan/spec.md)。TASK-001／002基準與schema已完成，TASK-003[日期排程／計算契約與UI](../specs/20261020-formula-trace-task003/spec.md)完成；依量測時點選已發布版、固定F歷史、保留原始字串／精度識別，預覽過期／變更拒絕，prepare僅發receipt不寫量測。78後端、7新增／9既有瀏覽器、SQL並發scenario通過；已驗證備份後發布測試API0.1.64／Web0.1.68及TASK-002 migration，policy維持未啟用、既有資料fingerprint不變。使用者要求TransFiles真正直接DB；TASK-004 Portal、005受控DB匯入／consumer、006實際版本圖表待做；[人工案例](../specs/20261020-formula-trace-task003/antigravity-tests.md)待驗，正式未更新。
+- 藥液公式日期選版與追溯：[主規格v5](../specs/20261020-formula-effective-trace-plan/spec.md)；TASK-001～004完成。[Portal日期預覽及原子留存](../specs/20261020-formula-trace-task004/spec.md)支援初複驗、日期失效、冪等／全批交易與raw規格判定；[驗證](../specs/20261020-formula-trace-task004/verification.md)及[Antigravity案例](../specs/20261020-formula-trace-task004/antigravity-tests.md)。測試SPC API0.1.65／Web0.1.68、Portal API1.0.183／Web1.0.226，既有設定及資料不變，policy未啟用。TASK-005真正TransFiles DB直寫／consumer及006實際版本圖表仍待做；真人案例待驗，正式未更新。
 
-- 管制圖日期分段版本明細：[SPC-CHART-SEGMENT-VERSION-20261020](../specs/20261020-chart-segment-version-detail/spec.md)；2026-10-20依使用者選擇完成v2唯讀查閱，管制圖／藥液趨勢圖可查看目前分段與公式修改歷史，無證據明示未知。測試API0.1.63／Web0.1.67已發布，正式未更新；[Antigravity案例](../specs/20261020-chart-segment-version-detail/antigravity-tests.md)待真人操作。公式排程及自動選版契約已由TASK-003完成；入口匯入留存及圖表展示仍TASK-004～006，不宣稱已整合。
+- 管制圖日期分段版本明細：[SPC-CHART-SEGMENT-VERSION-20261020](../specs/20261020-chart-segment-version-detail/spec.md)；2026-10-20依使用者選擇完成v2唯讀查閱，管制圖／藥液趨勢圖可查看目前分段與公式修改歷史，無證據明示未知。測試API0.1.63／Web0.1.67已發布，正式未更新；[Antigravity案例](../specs/20261020-chart-segment-version-detail/antigravity-tests.md)待真人操作。公式排程及自動選版契約已由TASK-003完成；Portal留存已由TASK-004整合；TransFiles與圖表展示仍TASK-005～006，不宣稱已整合。
 
 - Portal 咬蝕預覽安全診斷轉送：[SPC-ETCH-PREVIEW-500-PORTAL-FORWARDING-20261015](../specs/20261015-etch-preview-500-portal-forwarding/spec.md)；保留 SPC HTTP status、錯誤代碼與 Trace ID，TransFiles 提示與日誌可顯示安全診斷。2026-10-19 TransFiles 離線錯誤路徑測試 4 passed、Portal 回歸 5 passed；測試 API 沿用 2026-10-15 發布，未重新發布或操作正式站。未執行打包 EXE 人工故障驗收，詳見驗證紀錄。
 

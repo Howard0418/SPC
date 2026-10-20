@@ -517,10 +517,13 @@ public class UploadService(AppDbContext db, SpcService spcService)
         await db.SaveChangesAsync(ct);
     }
 
-    public async Task<object?> ConfirmAsync(Guid uploadBatchId, string mode = "upsert", CancellationToken ct = default)
+    public async Task<object?> ConfirmAsync(Guid uploadBatchId, string mode = "upsert", CancellationToken ct = default,
+        IReadOnlyDictionary<int, ChemicalPortalEvidence>? chemicalEvidence = null, bool deferVariableNotifications = false)
     {
         var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
         if (batch is null) return null;
+        if (chemicalEvidence?.Count > 0 && (batch.SourceType != "PortalDaily" || db.Database.CurrentTransaction is null))
+            throw new InvalidOperationException("公式追溯確認須在日報交易中執行。");
         if (batch.ImportStatus == "Imported") return new { batch, message = "Batch already processed." };
 
         if (batch.ImportStatus != "Importing")
@@ -561,6 +564,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
             var resolved = await ResolveReferencesAsync(payload, ct);
             if (resolved is null) continue;
             var ctx = resolved.Value;
+            ChemicalPortalEvidence? prepared = null;
+            chemicalEvidence?.TryGetValue(ctx.Mapping.Id, out prepared);
 
             if (batch.UploadType == "Variable")
             {
@@ -632,7 +637,9 @@ public class UploadService(AppDbContext db, SpcService spcService)
                         existingVm.SampleNo = sampleNo;
                         existingVm.UpdatedAt = DateTime.UtcNow;
                         existingVm.UpdatedBy = Get(payload, "Operator");
+                        ApplyChemicalReceipt(existingVm, prepared);
                         await db.SaveChangesAsync(ct);
+                        await AppendChemicalTracesAsync(existingVm, prepared, ct);
                         await AddPortalDailyAuditAsync(batch.UploadBatchId, "ManualMeasurementUpdated", Get(payload, "Operator"), new
                         {
                             measurementId = existingVm.Id,
@@ -642,7 +649,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                         }, ct);
                         updated++;
                         imported++;
-                        var updatedResult = await spcService.CalculateVariableAsync(existingVm, ct);
+                        var updatedResult = await spcService.CalculateVariableAsync(existingVm, ct, deferVariableNotifications);
                         if (updatedResult is not null)
                         {
                             spcCount++;
@@ -681,8 +688,10 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     AdjustAction = Get(payload, "AdjustAction"),
                     AdjustAmount = NormalizeAdjustmentAmount(Get(payload, "AdjustAmount"))
                 };
+                ApplyChemicalReceipt(vm, prepared);
                 db.VariableMeasurements.Add(vm);
                 await db.SaveChangesAsync(ct);
+                await AppendChemicalTracesAsync(vm, prepared, ct);
                 if (isPortalDaily)
                 {
                     await AddPortalDailyAuditAsync(batch.UploadBatchId, "ManualMeasurementCreated", Get(payload, "Operator"), new
@@ -693,7 +702,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     }, ct);
                 }
                 imported++;
-                var result = await spcService.CalculateVariableAsync(vm, ct);
+                var result = await spcService.CalculateVariableAsync(vm, ct, deferVariableNotifications);
                 if (result is not null)
                 {
                     spcCount++;
@@ -766,6 +775,34 @@ public class UploadService(AppDbContext db, SpcService spcService)
         return new { batch, mode, imported, inserted, updated, skipped, spcCount, alertCount };
     }
 
+    /// <summary>Resolve the same authoritative mapping used by staging/confirmation, rather than trusting a browser PPC ID.</summary>
+    public async Task<int?> ResolveMappingIdAsync(Dictionary<string,string?> row,CancellationToken ct)
+        => (await ResolveReferencesAsync(row,ct))?.Mapping.Id;
+
+    private static void ApplyChemicalReceipt(VariableMeasurement measurement,ChemicalPortalEvidence? evidence)
+    {
+        if(evidence is null)return;
+        measurement.ChemicalReceiptId=evidence.Initial.Id;
+        measurement.ChemicalSourceKeyHash=evidence.Initial.SourceKeyHash;
+    }
+
+    private async Task AppendChemicalTracesAsync(VariableMeasurement measurement,ChemicalPortalEvidence? evidence,CancellationToken ct)
+    {
+        if(evidence is null)return;
+        foreach(var entry in new[]{("Initial",evidence.Initial),("Recheck",evidence.Recheck)})
+        {
+            var (phase,receipt)=entry;if(receipt is null)continue;
+            var result=ChemicalPortalMeasurementService.Result(receipt);
+            var version=(await db.ChemicalCalculationTraces.Where(x=>x.VariableMeasurementId==measurement.Id && x.Phase==phase)
+                .MaxAsync(x=>(int?)x.VersionNo,ct)??0)+1;
+            db.ChemicalCalculationTraces.Add(new(){VariableMeasurementId=measurement.Id,ReceiptId=receipt.Id,Phase=phase,VersionNo=version,
+                RawResultCanonical=result.Raw,StoredResultCanonical=result.Stored,CreatedAtUtc=DateTime.UtcNow});
+        }
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Notifications run only after the controlled Portal transaction commits.</summary>
+    public Task NotifyCommittedVariableBatchAsync(Guid batchId,CancellationToken ct) => spcService.NotifyCommittedVariableBatchAsync(batchId,ct);
     private static string NormalizeSamplingPhase(string? value) => value?.Trim().ToUpperInvariant() switch
     {
         "OPEN" => "OPEN",

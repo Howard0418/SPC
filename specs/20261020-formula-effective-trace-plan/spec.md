@@ -1,7 +1,7 @@
 # 功能規格：藥液公式生效日期、自動選版與版本留存
 - 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020
-- 版本：4
-- 狀態：TASK-001基準／契約及TASK-002 schema隔離驗證已完成；TASK-003已完成並發布測試API0.1.64／Web0.1.68；TASK-004～006未執行。
+- 版本：5
+- 狀態：TASK-001基準／契約及TASK-002 schema隔離驗證已完成；TASK-003已完成並發布測試API0.1.64／Web0.1.68；TASK-004已完成Portal整合並發布測試API0.1.65／Portal API1.0.183／Web1.0.226；TASK-005～006未執行。
 - 涉及專案：SPC主責；Portal量測輸入、TransFiles轉檔／直接匯入相依。
 - 授權：使用者確認逐件實作，TASK-002完成隔離演練，TASK-003經使用者確認後備份驗證並升級共用測試庫與站台；正式未操作。TransFiles仍須直接寫DB。
 - 基準：[需求索引](../../docs/requirements.md)、[TransFiles直接匯入契約](../../docs/imports/transfiles-direct-import-contract.md)。
