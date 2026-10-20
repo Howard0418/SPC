@@ -25,4 +25,12 @@
     <ProjectReference Include="..\..\backend\MesSpc.Api\MesSpc.Api.csproj" />
   </ItemGroup>
 
+  <!-- Explicit local cross-repository baseline; no copied implementation or machine-specific path. -->
+  <PropertyGroup Condition="'$(FormulaCompatibilityPortalSource)' != ''">
+    <DefineConstants>$(DefineConstants);PORTAL_FORMULA_COMPATIBILITY</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(FormulaCompatibilityPortalSource)' != ''">
+    <Compile Include="$(FormulaCompatibilityPortalSource)" Link="Compatibility/PortalExcelFormulaEvaluator.cs" />
+  </ItemGroup>
+
 </Project>

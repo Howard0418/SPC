@@ -789,3 +789,7 @@
 ## [2026-10-20] - SPC-FORMULA-EFFECTIVE-TRACE 規劃目的
 - 使用者指定只規劃生效日期、自動選版與留存；沿用既有公式版本，提出量測日期解析、有效期間關聯、F快照、追溯與跨入口契約。
 - 僅spec／plan／tasks／verification及索引工作池同步；不改程式、DB、不執行migration或發布。
+
+## [2026-10-20] - SPC-FORMULA-TRACE-TASK-001 基準實作目的
+- 建立實際計算器／轉檔來源的無副作用相容性基準；使用者明確要求TransFiles仍需直接寫DB，現有GUI API路徑僅為現況，不作目標替代。
+- 只改SPC測試／runner／SDD契約，不改應用程式、Portal／TransFiles來源、DB、權限、migration或發布。

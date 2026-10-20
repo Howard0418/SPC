@@ -1,6 +1,6 @@
 # 技術計畫
-- 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020；spec v1，[規格](spec.md)。
-- 本次交付僅規劃；下列都是建議，非既有功能／已套用schema。
+- 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020；spec v2，[規格](spec.md)。
+- TASK-001來源基準／契約已完成；下列資料模型與應用功能仍為規劃，非既有功能／已套用schema。
 
 ## 責任與最小資料模型
 1. 沿用ChemicalAnalysisFormulaVersions作為不可變公式快照；補強所有新增／修改／還原路徑與同PPC版號併發保護，不能另複製一套公式內容維護。
@@ -14,7 +14,8 @@
 - SPC提供effective-formula解析、chemical-calculation預覽／確認所需契約；請求含PPCId、具時區的MeasuredAt、原始初驗／複驗值。回傳版號、有效期間、F快照、精度、預覽雜湊與排程修訂；不接受自由公式字串作為正式選版來源。
 - 純預覽不寫入業務／追溯資料；確認於交易內重新驗證日期／排程／輸入及版本狀態，與量測／追溯一同保存。批次逐筆選版並保留原本逐筆失敗／隔離報告口徑，不擅改成整批原子。
 - Portal只送輸入與量測時間，顯示SPC回傳結果，日期或輸入變更需重預覽。沿用既有QA／Editor權限，查閱者不能發布排程。
-- TransFiles保留既有直接匯入契約；先定位真正寫入端。建議由SPC解析／計算，直寫端在同交易內校驗排程修訂並寫量測與追溯。具體DB約束／受控寫入介面須TASK-001驗證可行，無法阻擋缺追溯舊客戶端時不得啟用。
+- TASK-001確認來源GUI其實經API匯入；使用者仍要求直接DB。後續新增低權限TransFiles DB client及受控程序，不把API匯入當新模式；SPC計算先產生可信計算暫存，純預覽維持不寫入，確認後TransFiles同交易落量測／trace並消耗暫存。
+- DB尚未實證；TASK-002／005須驗證receipt、直寫權限與原子回復，且同交易留下可重試統計工作，避免繞過原SpcService統計／警報。詳見[TASK-001契約](../20261020-formula-trace-task001/contract.md)，可能需附加receipt／outbox表，不宣稱原兩張關聯表已足夠。
 - 不將direct_import.py規劃器當成真實DB匯入實作；不在規劃階段決定把直寫改成API匯入。若閘門必須改變既有契約，先提出具體方案與影響再確認。
 
 ## 相容性與併發

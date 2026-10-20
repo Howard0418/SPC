@@ -14,7 +14,7 @@
 
 ## 目前小工作排序（2026-10-14）
 
-目前未完成小工作：9 件（SPC選版規劃已完成、拆為6件實作待確認，KM暫緩3件；測試Web0.1.67／API0.1.63，正式未更新）。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。本次 SPC／Portal 正式站更新及來源上傳已完成。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
+目前未完成小工作：8 件（SPC選版TASK-001基準已完成，後續5件未執行；KM暫緩3件；測試Web0.1.67／API0.1.63維持，正式未更新）。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。本次 SPC／Portal 正式站更新及來源上傳已完成。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
 
 ### 已完成追溯：SPC 改由 TransFiles 直接匯入（阻擋測試匯入／資料正確性）
 
@@ -221,11 +221,10 @@
 上述3件為KM既有工作池同步，非本次新增範圍；外部附件掃毒／SSO nonce選型另列。
 
 ## 目前執行排序（2026-10-19，使用者指定SPC優先）
-本批SPC明細查閱及選版規劃已完成；未完成9件（SPC選版實作6件待確認、KM暫緩3件），不自動執行。
+本批SPC明細、規劃及選版TASK-001基準已完成；未完成8件（SPC後續5件、KM暫緩3件），每次只執行一件。
 
 ### 待確認後序列執行：SPC公式日期選版與追溯
-- 規劃：[SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020](specs/20261020-formula-effective-trace-plan/spec.md)；[工作與驗收](specs/20261020-formula-effective-trace-plan/tasks.md)。規劃已完成，實作未執行。
-- SPC-FORMULA-TRACE-TASK-001：實際寫入端、日期／精度／直寫閘門契約與基準fixture。
+- 規劃：[SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020](specs/20261020-formula-effective-trace-plan/spec.md)；[工作與驗收](specs/20261020-formula-effective-trace-plan/tasks.md)。TASK-001基準已完成，TASK-002～006未執行。使用者確認仍需TransFiles直接寫DB，不能用現有API匯入代替。
 - SPC-FORMULA-TRACE-TASK-002：有效期間／追溯schema及隔離migration驗證。
 - SPC-FORMULA-TRACE-TASK-003：SPC選版、排程UI／計算契約、衝突與過期預覽保護。
 - SPC-FORMULA-TRACE-TASK-004：Portal日期預覽、確認與初驗／複驗留存。
@@ -234,6 +233,7 @@
 - 資料正確性優先；只允許一次執行一件，DB／公式高風險不併行。規格／界限獨立有效期保留後案需求，未納入本批實作；不視為已授權正式DB或發布。
 
 已完成：
+- SPC-FORMULA-TRACE-TASK-001：[真實來源測試與直寫契約](specs/20261020-formula-trace-task001/spec.md)已完成；Python10、跨引擎／日期9 passed，預設相關回歸23 passed／1明確Skip。本件無應用／DB變更或發布；真正直寫、SQL權限與併發實證留後續。
 - SPC-CHART-SEGMENT-VERSION-TASK-001：版本2唯讀明細已完成並發布測試API0.1.63／Web0.1.67；41後端相關、11新增瀏覽器案例及9既有回歸通過。真人Antigravity驗收待執行，測試庫無分段，完整選段以fixture驗證；正式未更新。
 - SPC-CHEM-REFERENCE-HISTORY-20261019：公式備註與總覽共用歷史；原測試站API0.1.61／Web0.1.64，已由後案更新。
 - SPC-VERSION-HISTORY-DATE-FILTER-20261019：[三類日期歷史](specs/20261019-version-history-date-filter/spec.md)，2026-10-20完成規格歷史、F既有migration補齊及台北日期篩選，37相關／9瀏覽器通過，測試站API0.1.62／Web0.1.65；正式未發布。全套6既有失敗已基準比對記錄。
