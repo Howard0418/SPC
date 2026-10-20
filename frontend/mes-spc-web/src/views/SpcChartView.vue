@@ -42,6 +42,7 @@ import {
   StickyNote
 } from "lucide-vue-next";
 import SpcSummaryTable from "../components/SpcSummaryTable.vue";
+import ChartSegmentDetails from "../components/ChartSegmentDetails.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -138,6 +139,7 @@ const selectedSummaryRow = ref(null);
 const chartResult = ref(null);
 let chartInstance = null;
 const chartEl = ref(null);
+const segmentDetails = ref(null);
 
 // Click Drill-down State
 const selectedPoint = ref(null);
@@ -1241,7 +1243,7 @@ function renderECharts() {
     const findStartIndex = (startDate) => {
       const start = startDate ? new Date(startDate).getTime() : -Infinity;
       const idx = rawTopPoints.findIndex(p => p.measuredAt && new Date(p.measuredAt).getTime() >= start);
-      return idx >= 0 ? idx : rawTopPoints.length - 1;
+      return idx;
     };
     const findEndIndex = (endDate) => {
       if (!endDate) return rawTopPoints.length - 1;
@@ -1249,18 +1251,19 @@ function renderECharts() {
       for (let i = rawTopPoints.length - 1; i >= 0; i--) {
         if (rawTopPoints[i].measuredAt && new Date(rawTopPoints[i].measuredAt).getTime() <= end) return i;
       }
-      return 0;
+      return -1;
     };
     const addSegmentLine = (segment, field, name, color, style, width) => {
       const value = segment[field];
       if (value == null || Number.isNaN(Number(value))) return;
       const startIndex = findStartIndex(segment.startDate);
       const endIndex = findEndIndex(segment.endDate);
-      if (startIndex > endIndex) return;
+      if (startIndex < 0 || endIndex < 0 || startIndex > endIndex) return;
       addTopLimitValue(value);
       markLinesTop.push([
         {
           name,
+          segmentId: segment.id,
           xAxis: startIndex,
           yAxis: Number(value),
           lineStyle: { color, width, type: style },
@@ -1664,6 +1667,10 @@ function renderECharts() {
   // Attach Point Click listener for Drill-down cards
   chartInstance.on("click", (params) => {
     hidePointContextMenu();
+    if (params.componentType === "markLine" && params.data?.segmentId) {
+      segmentDetails.value?.openSegment(params.data.segmentId);
+      return;
+    }
     if (params.componentType === "series") {
       const idx = params.dataIndex;
       selectedPointIndex.value = idx;
@@ -2414,6 +2421,8 @@ onBeforeUnmount(() => {
         <div v-if="chartResult.subgroupSizeNote" class="mb-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2">
           <AlertTriangle class="w-4 h-4 flex-shrink-0" /> {{ chartResult.subgroupSizeNote }}
         </div>
+
+        <ChartSegmentDetails v-if="activePpcIdValue" ref="segmentDetails" :ppc-id="activePpcIdValue" chart-line-entry />
 
         <div class="relative">
           <div class="absolute top-1 right-12 z-20 flex items-center gap-1">

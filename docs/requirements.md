@@ -1,6 +1,6 @@
 # SPC 現行需求索引
 
-- 管制圖日期分段版本明細：[SPC-CHART-SEGMENT-VERSION-20261020](../specs/20261020-chart-segment-version-detail/spec.md)；點擊分段查看對應公式、規格、管制界限及適用 F 表版本；區分設定適用與量測實際使用版本，缺證據不以最新公式代填。2026-10-20 僅登錄需求，尚未實作／發布。
+- 管制圖日期分段版本明細：[SPC-CHART-SEGMENT-VERSION-20261020](../specs/20261020-chart-segment-version-detail/spec.md)；2026-10-20依使用者選擇完成v2唯讀查閱，管制圖／藥液趨勢圖可查看目前分段與公式修改歷史，無證據明示未知。測試API0.1.63／Web0.1.67已發布，正式未更新；[Antigravity案例](../specs/20261020-chart-segment-version-detail/antigravity-tests.md)待真人操作。公式有效期／自動選版／實際版本留存保留後續規劃，未實作。
 
 - Portal 咬蝕預覽安全診斷轉送：[SPC-ETCH-PREVIEW-500-PORTAL-FORWARDING-20261015](../specs/20261015-etch-preview-500-portal-forwarding/spec.md)；保留 SPC HTTP status、錯誤代碼與 Trace ID，TransFiles 提示與日誌可顯示安全診斷。2026-10-19 TransFiles 離線錯誤路徑測試 4 passed、Portal 回歸 5 passed；測試 API 沿用 2026-10-15 發布，未重新發布或操作正式站。未執行打包 EXE 人工故障驗收，詳見驗證紀錄。
 

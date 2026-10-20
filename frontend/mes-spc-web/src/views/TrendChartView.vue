@@ -16,6 +16,7 @@ import {
   StickyNote
 } from "lucide-vue-next";
 import SpcSummaryTable from "../components/SpcSummaryTable.vue";
+import ChartSegmentDetails from "../components/ChartSegmentDetails.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -1414,6 +1415,8 @@ const trendStats = computed(() => {
             <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block border border-slate-500"></span>已排除點</span>
           </div>
         </div>
+
+        <ChartSegmentDetails v-if="activePpcIdValue" :ppc-id="activePpcIdValue" />
 
         <!-- Line Meaning Guide Bar -->
         <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/60 text-xs flex flex-wrap gap-x-6 gap-y-2 text-slate-600 dark:text-slate-300">

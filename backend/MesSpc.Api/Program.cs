@@ -71,6 +71,7 @@ builder.Services.AddScoped<FormulaEngineService>();
 builder.Services.AddScoped<ChemicalFTableService>();
 builder.Services.AddScoped<ChemicalAnalysisFormulaVersionService>();
 builder.Services.AddScoped<SpcService>();
+builder.Services.AddScoped<ChartSegmentDetailsService>();
 builder.Services.AddScoped<UploadService>();
 builder.Services.AddScoped<ParticleUploadService>();
 builder.Services.AddScoped<ParticleQueryService>();

@@ -405,6 +405,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var specLimitSegments = segments
             .Select(x => new
             {
+                x.Id,
                 x.StartDate,
                 x.EndDate,
                 USL = x.USL ?? mapping.USL,
