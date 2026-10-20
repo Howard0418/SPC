@@ -1,0 +1,107 @@
+--- a/batch_convert_gui.py
++++ b/batch_convert_gui.py
+@@ -439,0 +440,7 @@
++        chemical_frame = ttk.Frame(bottom_frame, style="TFrame")
++        chemical_frame.pack(anchor=tk.CENTER, pady=3)
++        self.chemical_direct_btn = ttk.Button(chemical_frame, text="日期公式DB匯入（測試）", command=self.chemical_direct_import, style="Tool.TButton")
++        self.chemical_direct_btn.pack(side=tk.LEFT, padx=4)
++        ttk.Button(chemical_frame, text="建立原始值範本", command=self.create_chemical_raw_template, style="Tool.TButton").pack(side=tk.LEFT, padx=4)
++        ttk.Button(chemical_frame, text="查詢日期公式統計狀態", command=self.check_chemical_direct_status, style="Tool.TButton").pack(side=tk.LEFT, padx=4)
++
+@@ -728,0 +736,96 @@
++
++    def create_chemical_raw_template(self):
++        path = filedialog.asksaveasfilename(title="建立日期公式原始值範本", defaultextension=".xlsx", filetypes=[("Excel", "*.xlsx")])
++        if not path:
++            return
++        workbook = openpyxl.Workbook()
++        sheet = workbook.active
++        sheet.title = "Raw"
++        sheet.append(["PpcId", "MeasuredAt", "Primary", "Secondary", "RecheckPrimary", "RecheckSecondary", "SamplingPhase", "SamplingStage"])
++        sheet.append(["請填測試PPC編號", "2026-10-18T09:10:00+08:00", "1.23456789", "", "", "", "OPEN", "GENERAL"])
++        for row in sheet:
++            for cell in row:
++                cell.number_format = "@"
++        workbook.save(path)
++        messagebox.showinfo("原始值範本", "請填測試PPC編號及實際原始值；日期需含時區。不可用舊濃度值冒充原始滴定值。")
++
++    def check_chemical_direct_status(self):
++        from chemical_direct_writer import SqlDirectWriter
++        path = filedialog.askopenfilename(title="選擇日期公式DB匯入結果JSON", filetypes=[("匯入結果", "chemical_direct_result_*.json")])
++        if not path:
++            return
++        try:
++            results = json.loads(Path(path).read_text(encoding="utf-8"))["results"]
++            if not self.login_and_sync_spc_master():
++                return
++            writer = SqlDirectWriter(self.spc_username, BASE_DIR / "chemical_direct_write.ps1")
++            for result in results:
++                if result.get("initialReceiptId"):
++                    status = writer.status(result["initialReceiptId"])
++                    self.log(f"[統計狀態] 工作表{result['sheet']}／列{result['row']}：{status.get('statisticsStatus', '查無或操作者不同')}")
++            messagebox.showinfo("統計狀態", "已於日誌顯示。Completed才表示統計完成；Pending／Failed請等待或檢查管制圖設定。")
++        except Exception:
++            messagebox.showerror("查詢失敗", "請選正確報告並核對個人Windows資料庫權限；未更動資料。")
++
++    def chemical_direct_import(self):
++        from chemical_direct_writer import load_rows, preview_rows, confirm_rows, SpcCalculationApi, SqlDirectWriter
++        try:
++            base_url, environment = self.spc_target()
++            if "spctest.pmr.com.tw" not in base_url.lower():
++                raise ValueError("日期公式DB匯入目前只開放測試站。")
++            # Check configuration without opening a connection or changing credentials.
++            SqlDirectWriter("configuration-check", BASE_DIR / "chemical_direct_write.ps1")
++        except ValueError as exc:
++            messagebox.showerror("日期公式DB匯入", str(exc))
++            return
++        path = filedialog.askopenfilename(title="選擇日期公式原始值Excel（非舊濃度匯入格式）", filetypes=[("Excel", "*.xlsx")])
++        if not path:
++            return
++        if not self.login_and_sync_spc_master():
++            return
++        api = SpcCalculationApi(base_url, self.spc_auth_token)
++        writer = SqlDirectWriter(self.spc_username, BASE_DIR / "chemical_direct_write.ps1")
++        self.chemical_direct_btn.configure(state=tk.DISABLED)
++        def run_preview():
++            try:
++                rows, errors = load_rows(path)
++                previews = preview_rows(rows, api)
++                good = [row for row in previews if not row.get("error")]
++                errors += [dict(sheet=row["sheet"], row=row["row"], error=row["error"]) for row in previews if row.get("error")]
++                def confirm():
++                    self.chemical_direct_btn.configure(state=tk.NORMAL)
++                    for error in errors:
++                        self.log(f"[日期公式] 工作表 {error['sheet']}／列 {error['row']}：{error['error']}")
++                    if not good:
++                        messagebox.showwarning("格式／公式需修正", "沒有可確認資料。欄位須含 PpcId、MeasuredAt（含+08:00）、Primary、SamplingPhase、SamplingStage；詳見日誌。")
++                        return
++                    for row in good:
++                        preview = row["initialPreview"]
++                        self.log(f"[日期公式預覽] {row['sheet']}:{row['row']}／PPC {row['ppcId']}／公式v{preview.get('formulaVersionNo')}／結果 {preview.get('result', {}).get('stored', '')}")
++                    if not messagebox.askyesno("確認直接寫入測試資料庫", f"預覽可匯入 {len(good)} 列，需修正 {len(errors)} 列。\n僅確認可匯入列；每列原子保存，錯誤列不送出。\n寫入後需等待SPC統計完成，是否開始？"):
++                        return
++                    self.chemical_direct_btn.configure(state=tk.DISABLED)
++                    def commit():
++                        results = confirm_rows(good, api, writer)
++                        output = Path(self.selected_output_dir)
++                        try:
++                            output.mkdir(parents=True, exist_ok=True)
++                            report = output / ("chemical_direct_result_" + uuid.uuid4().hex[:8] + ".json")
++                            report.write_text(json.dumps(dict(results=results, errors=errors), ensure_ascii=False, indent=2), encoding="utf-8")
++                            report_message = str(report)
++                        except OSError:
++                            report_message = "報告無法寫入，請查看日誌並查回資料；勿直接重新新增。"
++                        def finish():
++                            self.chemical_direct_btn.configure(state=tk.NORMAL)
++                            for result in results:
++                                self.log(f"[日期公式DB結果] {result}")
++                            messagebox.showinfo("直接匯入結果", f"請核對逐列結果；Pending表示資料已落地、統計尚未完成。\n報告：{report_message}")
++                        self.root.after(0, finish)
++                    threading.Thread(target=commit, daemon=True).start()
++                self.root.after(0, confirm)
++            except Exception:
++                def failed():
++                    self.chemical_direct_btn.configure(state=tk.NORMAL)
++                    messagebox.showerror("預覽失敗", "原始值Excel無法讀取或服務不可用，未確認資料。請依日期公式欄位格式修正後重試。")
++                self.root.after(0, failed)
++        threading.Thread(target=run_preview, daemon=True).start()

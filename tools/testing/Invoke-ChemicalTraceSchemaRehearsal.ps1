@@ -1,4 +1,4 @@
-param([string]$TestSettingsPath = (Join-Path $PSScriptRoot '..\..\release\test\backend\appsettings.json'),[ValidateSet('ChemicalTraceSqlRehearsalTests','ChemicalFormulaScheduleSqlTests','ChemicalPortalMeasurementSqlTests')][string]$TestFilter='ChemicalTraceSqlRehearsalTests')
+﻿param([string]$TestSettingsPath = (Join-Path $PSScriptRoot '..\..\release\test\backend\appsettings.json'),[ValidateSet('ChemicalTraceSqlRehearsalTests','ChemicalFormulaScheduleSqlTests','ChemicalPortalMeasurementSqlTests','ChemicalDirectWriterSqlTests')][string]$TestFilter='ChemicalTraceSqlRehearsalTests')
 $ErrorActionPreference='Stop'
 $taskRepo=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $taskCfg=Get-Content -LiteralPath $TestSettingsPath -Raw|ConvertFrom-Json

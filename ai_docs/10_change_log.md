@@ -805,3 +805,6 @@
 ## [2026-10-20] SPC-FORMULA-TRACE-TASK-004
 - 目的：Portal沿用SPC日期計算，原子保存初驗／複驗receipt、量測及trace；核心先測試，既有匯入未啟用policy不受影響。
 - 範圍：SPC交易／UploadService hook與Portal代理／表單；無新schema，測試站依順序發布，正式／TransFiles不操作。
+
+## 2026-10-20 TASK-005目的
+沿用既有公式憑證新增受控SQL直寫及統計consumer，讓TransFiles真正落資料庫；核心先建測試、隔離驗證後只發布測試，不操作KM或正式站。

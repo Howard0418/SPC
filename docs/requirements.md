@@ -1,6 +1,6 @@
 # SPC 現行需求索引
 
-- 藥液公式日期選版與追溯：[主規格v5](../specs/20261020-formula-effective-trace-plan/spec.md)；TASK-001～004完成。[Portal日期預覽及原子留存](../specs/20261020-formula-trace-task004/spec.md)支援初複驗、日期失效、冪等／全批交易與raw規格判定；[驗證](../specs/20261020-formula-trace-task004/verification.md)及[Antigravity案例](../specs/20261020-formula-trace-task004/antigravity-tests.md)。測試SPC API0.1.65／Web0.1.68、Portal API1.0.183／Web1.0.226，既有設定及資料不變，policy未啟用。TASK-005真正TransFiles DB直寫／consumer及006實際版本圖表仍待做；真人案例待驗，正式未更新。
+- 藥液公式日期選版與追溯：[主規格v5](../specs/20261020-formula-effective-trace-plan/spec.md)；TASK-001～005完成。[Portal日期預覽及原子留存](../specs/20261020-formula-trace-task004/spec.md)支援初複驗、日期失效、冪等／全批交易與raw規格判定；[驗證](../specs/20261020-formula-trace-task004/verification.md)及[Antigravity案例](../specs/20261020-formula-trace-task004/antigravity-tests.md)。測試SPC API0.1.66／Web0.1.68、Portal API1.0.183／Web1.0.226，既有設定及資料不變，policy未啟用。[TASK-005真正DB直寫／consumer](../specs/20261020-formula-trace-task005/spec.md)及本人低權限連線已完成；TASK-006實際版本圖表仍待做；真人案例待驗，正式未更新。
 
 - 管制圖日期分段版本明細：[SPC-CHART-SEGMENT-VERSION-20261020](../specs/20261020-chart-segment-version-detail/spec.md)；2026-10-20依使用者選擇完成v2唯讀查閱，管制圖／藥液趨勢圖可查看目前分段與公式修改歷史，無證據明示未知。測試API0.1.63／Web0.1.67已發布，正式未更新；[Antigravity案例](../specs/20261020-chart-segment-version-detail/antigravity-tests.md)待真人操作。公式排程及自動選版契約已由TASK-003完成；Portal留存已由TASK-004整合；TransFiles與圖表展示仍TASK-005～006，不宣稱已整合。
 

@@ -35,8 +35,8 @@ public sealed class ChemicalFormulaScheduleController(ChemicalFormulaScheduleSer
     [Authorize(Roles="Admin," + UserRoles.Editor)]
     public Task<IActionResult> Prepare(int ppcId, ChemicalPrepareRequest request, CancellationToken ct) => Execute(async () => {
         var receipt=await service.PrepareAsync(ppcId,request,Actor,ct);
-        return (object)new { receiptId=receipt.Id, receipt.ExpiresAtUtc, receipt.InputHash, receipt.SourceKeyHash,
-            message="僅建立計算憑證，尚未匯入量測；直接DB確認程序留TASK-005。" };
+        return (object)new { receiptId=receipt.Id, receipt.Actor, receipt.ExpiresAtUtc, receipt.InputHash, receipt.SourceKeyHash,
+            message="僅建立計算憑證，尚未匯入量測；須由TransFiles受控DB程序確認並查核統計狀態。" };
     });
 
     private async Task<IActionResult> Execute(Func<Task<object>> work)

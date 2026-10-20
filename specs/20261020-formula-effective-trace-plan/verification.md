@@ -29,3 +29,6 @@
 ## TASK-004完成補充
 - [Portal整合驗證](../20261020-formula-trace-task004/verification.md)：原子交易／trace／raw規格判定、自動化與SQL隔離驗收完成，SPC API0.1.65與Portal API1.0.183／Web1.0.226測試發布；正式未更新。
 - TASK-005～006未執行；剩5件（SPC2、KM暫緩3）。真人案例待驗，不回填假版本。
+
+## TASK-005
+- [受控DB與consumer驗證](../20261020-formula-trace-task005/verification.md)：測試API0.1.66、個人低權限與SQL隔離驗收通過；剩SPC1／KM3暫緩，正式未更新。

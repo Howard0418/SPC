@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-20（SPC-FORMULA-TRACE-TASK-005）
+- TransFiles新增原始值Excel預覽／確認入口，真正透過受控SQL程序原子保存batch／量測／初複驗trace／Pending統計job，API僅計算／prepare；原始字串與時區驗證、逐列錯誤回報及狀態查詢，不回退API匯入。
+- consumer提供可重試／交易／並發去重；低權限actor綁定、來源／到期／修訂／規格與既有日報衝突拒絕。沿用既有公式、儲存及統計，無重複公式表。
+- 核心23、藥液59、Python19及真實SQL scenario通過，Up/Down/Up、權限、並發與晚期故障rollback已驗證。備份VERIFYONLY後發布測試API0.1.66，Web0.1.68不變，既有資料／設定指紋不變。
+- 使用者指定PMR\ihao_ting已完成僅測試writer授權；本人整合連線通過、DML/SELECT拒絕229，Python→PowerShell→SQL唯讀鏈驗證通過；不授予正式DB或管理者權限。
+- [驗證及rollback](specs/20261020-formula-trace-task005/verification.md)；[可版控的TransFiles交付來源](tools/transfiles-chemical-direct/README.md)。正常真人業務操作待驗，正式／Portal／KM未更新。剩4件＝SPC1＋KM暫緩3，依本次授權接續TASK-006。
+
 ## 2026-10-20（SPC-FORMULA-TRACE-TASK-004完成）
 - Portal依量測日期取得SPC公式試算，初驗／複驗原始字串及版號各自保留；日期或讀值變更清token，歷史不自動重算，可明確重新預覽。
 - SPC沿用日報儲存與統計，以整批交易保存receipt／trace／量測，重送冪等，失敗全回復；raw結果判規格、儲存值算統計，commit後通知。個人token代理、確認限Admin／Editor，未啟用共用policy。
