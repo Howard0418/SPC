@@ -1,5 +1,9 @@
 # 客製需求與回歸檢查
 
+## 2026-10-20（管制圖日期分段版本明細需求登錄）
+- 依使用者補充登錄 SPC-CHART-SEGMENT-VERSION-20261020：點擊分段查看公式、規格、管制界限與 F 表版本；明示無法追溯及跨版本子區間。
+- 同步需求索引與 TODO；僅文件檢查，不修改程式／DB、不執行 migration、build 或發布；功能未實作。未完成小工作4件（SPC 1件，KM暫緩3件）。
+
 ## 2026-10-19（Portal 咬蝕預覽診斷轉送驗收完成）
 - 完成 `SPC-ETCH-PREVIEW-500-PORTAL-FORWARDING-20261015` T-003；新增離線驗收工具，對實際 TransFiles client/GUI 失敗分支注入 500/503，確認錯誤代碼及 Trace ID 可見於提示、操作日誌與 JSON LOG，且首筆失敗停止預覽並阻擋確認匯入。
 - 驗證：TransFiles 原始碼失敗路徑測試 4 passed；Portal EtchStrictTests 5 passed。涵蓋 400/409、無效 JSON、安全遮罩與確認閘門；未刻意製造站台故障，未執行打包 EXE 人工故障視窗。

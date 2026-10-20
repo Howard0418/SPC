@@ -778,3 +778,6 @@
 - 先建立日期邊界／版本／交易測試，隔離庫演練Up／Down後備份驗證測試庫，再發布SpcSingleTest；無舊歷史虛構回填。
 ## [2026-10-20] - SPC-TEST-WEB-API-SAME-ORIGIN-20261020
 - 修正testhost舊VITE_API_BASE污染產物，API client固定同站/api；先補瀏覽器回歸，實際bundle驗證後僅發布測試前端，DB／後端不動。
+## [2026-10-20] - SPC-CHART-SEGMENT-VERSION 需求登錄
+- 目的：將點擊管制圖日期分段查看版本與分析公式加入工作池，保留歷史證據不足及相依功能限制。
+- 範圍：僅 spec、TODO、需求索引與變更紀錄；無程式、資料庫或發布操作。
