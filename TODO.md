@@ -14,7 +14,7 @@
 
 ## 目前小工作排序（2026-10-14）
 
-目前未完成小工作：7 件（SPC選版TASK-001／002已完成，後續4件未執行；KM暫緩3件；共用測試Web0.1.67／API0.1.63維持，正式未更新）。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。本次 SPC／Portal 正式站更新及來源上傳已完成。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
+目前未完成小工作：6 件（SPC選版TASK-001～003已完成，後續3件未執行；KM暫緩3件；測試Web0.1.68／API0.1.64已發布，正式未更新）。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。本次 SPC／Portal 正式站更新及來源上傳已完成。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
 
 ### 已完成追溯：SPC 改由 TransFiles 直接匯入（阻擋測試匯入／資料正確性）
 
@@ -221,17 +221,17 @@
 上述3件為KM既有工作池同步，非本次新增範圍；外部附件掃毒／SSO nonce選型另列。
 
 ## 目前執行排序（2026-10-19，使用者指定SPC優先）
-本批SPC選版TASK-001／002已完成；未完成7件（SPC後續4件、KM暫緩3件），每次只執行一件。
+本批SPC選版TASK-001～003已完成；未完成6件（SPC後續3件、KM暫緩3件），每次只執行一件。
 
 ### 待確認後序列執行：SPC公式日期選版與追溯
-- 規劃：[SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020](specs/20261020-formula-effective-trace-plan/spec.md)；[工作與驗收](specs/20261020-formula-effective-trace-plan/tasks.md)。TASK-001／002已完成，TASK-003～006未執行。真正TransFiles DB直寫仍需受控程序及client，不用現有API匯入代替。
-- SPC-FORMULA-TRACE-TASK-003：SPC選版、排程UI／計算契約、衝突與過期預覽保護。
+- 規劃：[SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020](specs/20261020-formula-effective-trace-plan/spec.md)；[工作與驗收](specs/20261020-formula-effective-trace-plan/tasks.md)。TASK-001～003已完成，TASK-004～006未執行。真正TransFiles DB直寫仍需受控程序及client，不用現有API匯入代替。
 - SPC-FORMULA-TRACE-TASK-004：Portal日期預覽、確認與初驗／複驗留存。
 - SPC-FORMULA-TRACE-TASK-005：TransFiles實際直寫入口、同交易保存與舊客戶端閘門。
 - SPC-FORMULA-TRACE-TASK-006：實際版本明細、跨系統與Antigravity驗收。
 - 資料正確性優先；只允許一次執行一件，DB／公式高風險不併行。規格／界限獨立有效期保留後案需求，未納入本批實作；不視為已授權正式DB或發布。
 
 已完成：
+- SPC-FORMULA-TRACE-TASK-003：[日期選版與計算契約](specs/20261020-formula-trace-task003/spec.md)完成；78後端、7新增／9既有瀏覽器及SQL scenario通過。測試API0.1.64／Web0.1.68與TASK-002 schema已發布，policy未啟用；正式未操作，人工案例待驗。
 - SPC-FORMULA-TRACE-TASK-002：[schema及真實SQL隔離演練](specs/20261020-formula-trace-task002/spec.md)完成；42相關passed／2 opt-in Skip，完整SQL scenario通過Up／Down／Up、期間／FK／immutable、四表故障rollback、併發及DML拒絕，備份VERIFYONLY成功。未升級共用測試／正式DB，未發布帶migration的新DLL。
 - SPC-FORMULA-TRACE-TASK-001：[真實來源測試與直寫契約](specs/20261020-formula-trace-task001/spec.md)已完成；Python10、跨引擎／日期9 passed，預設相關回歸23 passed／1明確Skip。本件無應用／DB變更或發布；真正直寫、SQL權限與併發實證留後續。
 - SPC-CHART-SEGMENT-VERSION-TASK-001：版本2唯讀明細已完成並發布測試API0.1.63／Web0.1.67；41後端相關、11新增瀏覽器案例及9既有回歸通過。真人Antigravity驗收待執行，測試庫無分段，完整選段以fixture驗證；正式未更新。

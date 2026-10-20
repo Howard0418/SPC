@@ -1,4 +1,5 @@
 <script setup>
+import ChemicalFormulaSchedule from '../components/ChemicalFormulaSchedule.vue';
 import VersionHistoryRange from "../components/VersionHistoryRange.vue";
 import SpecificationLimitHistory from "../components/SpecificationLimitHistory.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
@@ -2002,6 +2003,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Formula Config -->
+                <ChemicalFormulaSchedule v-if="currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM && modalMode === 'edit'" :key="currentId" :ppc-id="currentId" />
                 <div v-if="currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 space-y-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/70">
                   <div class="flex items-center justify-between gap-3">
                     <div><h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">藥液分析公式</h4><p class="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">只套用目前線別、槽位與分析項目；可用 Primary、Secondary、LSL、USL、Target、Concentration。</p></div>

@@ -1,4 +1,4 @@
-param([string]$TestSettingsPath = (Join-Path $PSScriptRoot '..\..\release\test\backend\appsettings.json'))
+param([string]$TestSettingsPath = (Join-Path $PSScriptRoot '..\..\release\test\backend\appsettings.json'),[ValidateSet('ChemicalTraceSqlRehearsalTests','ChemicalFormulaScheduleSqlTests')][string]$TestFilter='ChemicalTraceSqlRehearsalTests')
 $ErrorActionPreference='Stop'
 $taskRepo=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $taskCfg=Get-Content -LiteralPath $TestSettingsPath -Raw|ConvertFrom-Json
@@ -44,7 +44,7 @@ try{
     try{
         $env:SPC_FORMULA_SCHEMA_TEST_CONNECTION=$taskBuilder.ConnectionString
         Write-Output ('ISOLATION_DATABASE='+$taskName)
-        & dotnet test (Join-Path $taskRepo 'tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj') --no-build --no-restore --filter ChemicalTraceSqlRehearsalTests -p:DefineConstants=CHEMICAL_TRACE_SQL_TESTS --verbosity quiet --logger 'console;verbosity=normal'
+        & dotnet test (Join-Path $taskRepo 'tests\MesSpc.Api.Tests\MesSpc.Api.Tests.csproj') --no-build --no-restore --filter $TestFilter -p:DefineConstants=CHEMICAL_TRACE_SQL_TESTS --verbosity quiet --logger 'console;verbosity=normal'
         if($LASTEXITCODE -ne 0){throw 'Isolated SQL tests failed; database retained for diagnosis.'}
     }finally{$env:SPC_FORMULA_SCHEMA_TEST_CONNECTION=$taskPreviousConnection}
     $taskFinalBak=Join-Path ([string]$taskPaths.Rows[0].Bak) ($taskName+'-verified.bak')

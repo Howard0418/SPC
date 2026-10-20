@@ -1,5 +1,13 @@
 # 客製需求與回歸檢查
 
+## 2026-10-20（SPC-FORMULA-TRACE-TASK-003完成）
+- 沿用既有公式歷史新增台北日期排程、量測時間選版、F固定快照及相容Portal Excel精度計算；拒絕缺版／重疊／缺輸入。發布鎖定PPC及修訂，已發行憑證時點不可回溯換版。
+- 新增受認證API及設定UI，10分鐘保護token與receipt準備；改日期／輸入／規格／排程／actor或到期須重預覽。不寫量測、不啟用匯入policy；Portal／TransFiles整合及真實版本圖表留後續。
+- 78後端、7新增／9既有瀏覽器及真實SQL scenario通過，前後端build成功；先可驗證備份後發布測試API0.1.64／Web0.1.68與TASK-002 schema，設定及既有資料指紋不變、health／匿名401／14同源API核對正常。
+- 正常SSO已見新版號；完整公式頁面驗收遭瀏覽器自動審核判為內網來源而阻擋，未繞過，人工案例待做。以金鑰自行簽token驗證亦被審核拒絕、未執行，實際Viewer403保留人工案例。
+- [驗證／備份與rollback](specs/20261020-formula-trace-task003/verification.md)；[Antigravity AG-01～08](specs/20261020-formula-trace-task003/antigravity-tests.md)。正式／Portal／TransFiles／KM未操作。
+- 剩未完成6件：SPC3件、KM暫緩3件；停止在TASK-003。
+
 ## 2026-10-20（SPC-FORMULA-TRACE-TASK-002 schema隔離驗證完成）
 - EF新增20261020040256_AddChemicalFormulaTraceSchema：六張排程／有效期／政策／receipt／trace／統計job關聯表、量測nullable關聯與來源hash，沿用既有公式與F快照，無歷史回填。
 - 真實SQL Server隔離Up重跑／Down／Up、既有值hash、半開區間／跨PPC／不可變／並發、四表故障rollback與role DML229拒絕通過，COPY_ONLY／CHECKSUM／VERIFYONLY成功；最終庫SPC_FORMULA_SCHEMA_VERIFY_20261020_5942ebad，診斷庫與備份保留。

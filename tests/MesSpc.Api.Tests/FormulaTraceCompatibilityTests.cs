@@ -36,6 +36,20 @@ public class FormulaTraceCompatibilityTests
     }
 
 #if PORTAL_FORMULA_COMPATIBILITY
+    [Theory]
+    [InlineData("Primary*2")]
+    [InlineData("Primary/3")]
+    [InlineData("IF(Primary>2,10,20)")]
+    [InlineData("ROUND(Primary,0)")]
+    [InlineData("Primary*F!$B$3")]
+    [InlineData("IFERROR(Primary/0,7)")]
+    public void ScheduledEngineMatchesRealPortalEvaluator(string formula)
+    {
+        var cells=new Dictionary<string,decimal>(StringComparer.OrdinalIgnoreCase) { ["PRIMARY"]=2.5m,["F!B3"]=1.02m };
+        var config=System.Text.Json.JsonSerializer.Serialize(new { enabled=true,concentrationFormula=formula,decimalPlaces=8 });
+        var result=ChemicalFormulaCalculation.Calculate(config,"2.5",null,"[{\"CellAddress\":\"F!B3\",\"NumericValue\":1.02}]",null,null,null);
+        decimal.Parse(result.Raw,CultureInfo.InvariantCulture).Should().Be(PortalEvaluator.EvaluateNumber(formula,cells));
+    }
     private static async Task<decimal> Spc(string formula, Dictionary<string, decimal>? variables = null)
     {
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()

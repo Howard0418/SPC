@@ -1,13 +1,13 @@
 # 功能規格：藥液公式生效日期、自動選版與版本留存
 - 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020
-- 版本：3
-- 狀態：TASK-001基準／契約及TASK-002 schema隔離驗證已完成；TASK-003～006尚未執行。
+- 版本：4
+- 狀態：TASK-001基準／契約及TASK-002 schema隔離驗證已完成；TASK-003已完成並發布測試API0.1.64／Web0.1.68；TASK-004～006未執行。
 - 涉及專案：SPC主責；Portal量測輸入、TransFiles轉檔／直接匯入相依。
-- 授權：使用者確認逐件實作，本次TASK-002僅在全新前綴隔離庫驗證migration與防護；共用測試／正式DB及站台未升級。TransFiles仍須直接寫DB。
+- 授權：使用者確認逐件實作，TASK-002完成隔離演練，TASK-003經使用者確認後備份驗證並升級共用測試庫與站台；正式未操作。TransFiles仍須直接寫DB。
 - 基準：[需求索引](../../docs/requirements.md)、[TransFiles直接匯入契約](../../docs/imports/transfiles-direct-import-contract.md)。
 - 前案：[唯讀分段明細v2](../20261020-chart-segment-version-detail/spec.md)，測試API0.1.63／Web0.1.67；不把歷史修改日期當生效日期。
 
-## 現況與證據
+## 規劃時現況與證據（後續實作見各TASK規格）
 - `backend/MesSpc.Api/Domain/Entities/Models.cs`：ChemicalAnalysisFormulaVersion有ConfigJson、VersionNo、ChangedAt，沒有生效期間；VariableMeasurement未記公式版本／計算原始輸入。
 - `Services/ChemicalAnalysisFormulaVersionService.cs` RecordChangeAsync／RestoreAsync：保存修改快照與目前配置，尚未排程；還原目前配置不應改寫歷史生效紀錄。
 - `Services/ChemicalFTableService.cs` GetActiveVersionAsync／EvaluateChemicalFormulaAsync：取目前IsActive版本；ApplyCellsAsync可更動同VersionId的儲存格。只存FTableVersionId不足以重現，需固定CellsJson歷史快照或使用值快照。
@@ -20,7 +20,7 @@
 規格／管制界限獨立有效期與能力分析跨段計算留後案；本案只保留其來源關聯的擴充位置，不宣稱已整合獨立界限版本。
 不自動回填舊資料實際版本、不自動重算歷史、不更換匯入主入口、不上正式站。
 
-## 建議規則與BDD（待使用者確認後實作）
+## 已確認規則與BDD（依TASK序列實作）
 | ID | 建議規則 | Given / When / Then驗收 |
 |---|---|---|
 | R-001／AC-001 | 依PPC業務映射＋量測時間選唯一已發布公式，與匯入／系統時間無關 | Given v1到10/31、v2自11/01，When 同批匯入兩日量測，Then 各自使用v1／v2並留存ID；延遲匯入不改選版。 |
@@ -39,9 +39,11 @@
 - 建議對已被量測引用的有效期間禁止原地回溯修改；必要修正需另案影響清單、理由與授權，不改舊量測追溯。
 - 基準精度：先沿用已確認的未四捨五入判定、顯示／儲存精度；實作前核對Portal／Excel／SPC的差異，不能順便改公式語法、精度或單位。
 - TASK-001已確認來源日期／精度反例及直接DB目標，見[契約基準](../20261020-formula-trace-task001/contract.md)。實際DB程序／權限／併發、部署EXE與F快照不可變性留TASK-002／005實證，不把無副作用測試當SQL驗收。
-- 每次只執行一件；TASK-002完成後停止，不開始TASK-003。共用schema／API發布依後續階段執行；正式DB／發布仍需另行授權。
+- 每次只執行一件；TASK-003完成後停止，不開始TASK-004。共用schema／API發布依後續階段執行；正式DB／發布仍需另行授權。
 
 ## 版本
 - v1／2026-10-20：沿用既有架構的建議規格與序列化計畫，未實作。
 - v2／2026-10-20：TASK-001完成，確認直接DB決策，新增真實來源測試與可信receipt／原子寫入／統計工作契約；未實作DB功能。
 - v3／2026-10-20：TASK-002六表與nullable關聯migration、期間／immutable／fail-closed防護及真實SQL隔離演練完成；[證據](../20261020-formula-trace-task002/verification.md)。沒有發布或啟用共用環境。
+
+- v4／2026-10-20：TASK-003日期排程、共用計算、預覽防護及設定UI完成；[驗證](../20261020-formula-trace-task003/verification.md)。測試API0.1.64／Web0.1.68、TASK-002 schema已部署，policy未啟用；正式未更新。
