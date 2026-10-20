@@ -214,14 +214,14 @@
 
 ## KM待辦同步（2026-10-19）
 
-1. KM-DEPS-SECURITY-20261019：既有套件弱點評估修補。
+1. 已完成 KM-DEPS-SECURITY-20261019：Negotiate/Pkcs 10.0.13、43項回歸、測試站1.6.5，正式未更新。
 2. KM-VERIFY-034-20261019：文件櫃畫面／發布核對。
 3. KM-VERIFY-036-20261019：版本差異摘要驗證。
 
-上述3件為KM既有工作池同步，非本次新增範圍；外部附件掃毒／SSO nonce選型另列。
+上述為KM既有工作池同步，目前未完成2件，非本次新增範圍；外部附件掃毒／SSO nonce選型另列。
 
-## 目前執行排序（2026-10-19，使用者指定SPC優先）
-本批SPC選版TASK-001～006已完成；未完成3件（僅KM暫緩3件），每次只執行一件。
+## 目前執行排序（2026-10-20，使用者恢復KM）
+本批SPC選版TASK-001～006已完成；未完成2件（KM文件櫃與版本差異驗證），每次只執行一件。
 
 ### 已完成：SPC公式日期選版與追溯（工作池無未完成SPC項目）
 - 規劃：[SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020](specs/20261020-formula-effective-trace-plan/spec.md)；[工作與驗收](specs/20261020-formula-effective-trace-plan/tasks.md)。TASK-001～006已完成，正常真人操作依交付案例確認，不新增假造歷史。真正TransFiles DB直寫仍需受控程序及client，不用現有API匯入代替。
@@ -238,12 +238,12 @@
 - SPC-CHEM-REFERENCE-HISTORY-20261019：公式備註與總覽共用歷史；原測試站API0.1.61／Web0.1.64，已由後案更新。
 - SPC-VERSION-HISTORY-DATE-FILTER-20261019：[三類日期歷史](specs/20261019-version-history-date-filter/spec.md)，2026-10-20完成規格歷史、F既有migration補齊及台北日期篩選，37相關／9瀏覽器通過，測試站API0.1.62／Web0.1.65；正式未發布。全套6既有失敗已基準比對記錄。
 
-### 暫緩：KM（使用者明確要求先不要執行）
-- KM-DEPS-SECURITY-20261019：既有套件弱點評估修補。
+### KM：已恢復，依序單件執行
+- 已完成 KM-DEPS-SECURITY-20261019：[TASK-039](C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/KM/specs/tasks/TASK-039-dependency-security-patches.md)，測試站1.6.5，正式未更新。
 - KM-VERIFY-034-20261019：文件櫃畫面／發布核對。
 - KM-VERIFY-036-20261019：版本差異摘要驗證。
 
-每次只做一件；KM保留待辦，不自動恢復。使用者後續已確認SPC執行計畫；依序單件完成，正式發布仍需另行授權。
+每次只做一件；2026-10-20使用者已恢復KM，本次完成安全修補。剩餘2件保留待辦，正式發布仍需另行授權。共用Hosting Bundle/Runtime更新另列維運評估，不在本案單站升級。
 
 ## 緊急修正完成（2026-10-20）
 - SPC-TEST-WEB-API-SAME-ORIGIN-20261020：[測試前端同源API](specs/20261020-test-web-api-same-origin/spec.md)，已修復／驗證並發布測試Web0.1.66；API0.1.62／DB不變，1新測試＋9回歸及實際bundle請求驗證通過，真正12個主檔API均200。此項不列入未完成數。
