@@ -16,6 +16,7 @@ import {
   StickyNote
 } from "lucide-vue-next";
 import SpcSummaryTable from "../components/SpcSummaryTable.vue";
+import ChemicalCalculationDetails from "../components/ChemicalCalculationDetails.vue";
 import ChartSegmentDetails from "../components/ChartSegmentDetails.vue";
 
 const route = useRoute();
@@ -1443,7 +1444,7 @@ const trendStats = computed(() => {
         </div>
 
         <div class="relative">
-          <div ref="trendChartEl" class="h-[480px] w-full min-h-[320px]"></div>
+          <div ref="trendChartEl" data-testid="chemical-trend-chart" class="h-[480px] w-full min-h-[320px]"></div>
           <div
             v-if="pointContextMenu.visible"
             class="absolute z-30 w-52 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden"
@@ -1582,6 +1583,7 @@ const trendStats = computed(() => {
           data-testid="trend-point-details"
           class="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/20 p-4 space-y-4"
         >
+          <ChemicalCalculationDetails v-if="activePpcIdValue" :ppc-id="activePpcIdValue" :measurement-id="selectedPointDetails.point.variableMeasurementId||null" point-mode />
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p class="text-xs font-bold text-indigo-500">量測點明細</p>

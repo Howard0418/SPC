@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from "vue";
+import ChemicalCalculationDetails from "./ChemicalCalculationDetails.vue";
 import { api, getApiErrorMessage } from "../api/client";
 
 const props = defineProps({ ppcId: { type: [Number, String], required: true }, chartLineEntry: Boolean });
@@ -78,7 +79,7 @@ defineExpose({ openSegment });
 <template>
   <section aria-label="日期分段與版本明細" class="my-3 min-w-0 break-words rounded-xl border border-slate-200 dark:border-slate-700 p-3 text-sm text-slate-700 dark:text-slate-200">
     <h3 class="font-bold">日期分段與版本明細</h3>
-    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ chartLineEntry ? '點選日期區間或圖上的分段規格線查看。' : '點選日期區間查看。' }}以下為目前設定與修改歷史，查閱不會重新計算資料。</p>
+    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ chartLineEntry ? '點選日期區間或圖上的分段規格線查看。' : '點選日期區間查看。' }}以下為目前設定、修改歷史及已保存計算證據，查閱不會重新計算資料。</p>
     <div v-if="listError" role="alert" class="mt-2 text-red-600 dark:text-red-400">
       {{ listError }} <button type="button" class="underline" @click="loadSegments">重試分段清單</button>
     </div>
@@ -105,6 +106,7 @@ defineExpose({ openSegment });
           </div>
         </div>
         <p class="text-xs text-amber-700 dark:text-amber-400">規格／界限顯示目前設定；修改快照不是量測使用版本。管制界限尚無獨立版本歷史，無法確認當時版本。未設定的管制界限可能由圖型統計推算，請對照圖表。</p>
+        <ChemicalCalculationDetails v-if="isChemical" :ppc-id="ppcId" :segment-id="selectedId" />
         <section aria-label="分段規格修改歷史" class="space-y-2">
           <h4 class="font-bold">{{ detail.segmentId ? '本分段' : '主檔' }}規格修改歷史</h4>
           <p v-if="!detail.specificationHistory.length">沒有規格版本紀錄；不補造歷史。</p>
@@ -118,7 +120,7 @@ defineExpose({ openSegment });
         <section aria-label="分析公式與版本歷史" class="space-y-2">
           <h4 class="font-bold">分析公式與版本歷史</h4>
           <template v-if="isChemical">
-            <p class="text-amber-700 dark:text-amber-400">當時實際使用的公式版本：無法確認當時版本。修改日期不是生效日期，以下歷史涵蓋此管制項目全部修改，不代表本分段適用公式。</p>
+            <p class="text-amber-700 dark:text-amber-400">未留存追溯資料之當時實際使用的公式版本：無法確認當時版本。新資料請看上方實際證據；修改日期不是生效日期，以下歷史涵蓋此管制項目全部修改，不代表本分段適用公式。</p>
             <h5 class="font-bold">目前分析公式（僅供參考）</h5>
             <pre class="whitespace-pre-wrap break-words rounded bg-slate-50 dark:bg-slate-800 p-2 text-xs">{{ formulaText(detail.currentFormulaConfigJson) }}</pre>
             <p v-if="!detail.formulaHistory.length">沒有公式版本紀錄；不補造歷史。</p>
@@ -129,7 +131,7 @@ defineExpose({ openSegment });
               <pre class="whitespace-pre-wrap break-words text-xs mt-2">{{ formulaText(row.configJson) }}</pre>
             </details>
             <div class="flex flex-wrap gap-3"><button type="button" class="underline disabled:opacity-40" :disabled="formulaSkip === 0" @click="changePage('formula', -pageSize)">公式上一頁</button><span>第 {{ formulaSkip / pageSize + 1 }} 頁</span><button type="button" class="underline disabled:opacity-40" :disabled="!detail.hasMoreFormula" @click="changePage('formula', pageSize)">公式下一頁</button></div>
-            <p>F 表使用版本：無法確認當時版本（量測未保存版本關聯）。</p>
+            <p>F 表使用版本：無法確認當時版本（僅針對未保存計算追溯的舊量測；新資料見實際證據）。</p>
           </template>
           <p v-else>藥液分析公式與 F 表：不適用。</p>
           <details v-if="detail.currentStatisticalConfigJson"><summary class="cursor-pointer">目前管制線計算設定（非當時版本證據）</summary><pre class="whitespace-pre-wrap break-words text-xs mt-2">{{ snapshotText(detail.currentStatisticalConfigJson) }}</pre></details>

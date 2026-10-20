@@ -1,5 +1,12 @@
 # 客製需求與回歸檢查
 
+## 2026-10-20（SPC-FORMULA-TRACE-TASK-006完成）
+- 分段及管制圖／藥液趨勢圖逐點整合實際receipt／trace：顯示公式版號、固定公式／依據、F歷史與引用值、原始／儲存結果、初複驗及歷程分頁；目前值與歷史留存分開，不以目前公式或修改日期推定舊資料。
+- 新舊／多版本、缺證據及非藥液明示；子組缺全部成員ID不拿第一筆冒充唯一公式，改由分段逐筆查閱。唯讀、不重算、不改schema／role／AD或既有圖表計算。
+- 28後端、17分段／逐點及7排程瀏覽器通過；真實SQL跨日期直接寫入、統計及實際版本查閱scenario通過。build與備份VERIFYONLY後發布測試API0.1.67／Web0.1.69；資料／設定／migration／policy／role會員不變，匿名401及實際bundle14 API同源驗證通過。
+- [驗證／rollback](specs/20261020-formula-trace-task006/verification.md)；[Antigravity操作案例](specs/20261020-formula-trace-task006/antigravity-tests.md)正常真人操作待驗。正式／Portal／KM本件未更新。
+- SPC本批小工作全部完成；僅剩KM暫緩3件，依使用者指示不執行其他工作。
+
 ## 2026-10-20（SPC-FORMULA-TRACE-TASK-005）
 - TransFiles新增原始值Excel預覽／確認入口，真正透過受控SQL程序原子保存batch／量測／初複驗trace／Pending統計job，API僅計算／prepare；原始字串與時區驗證、逐列錯誤回報及狀態查詢，不回退API匯入。
 - consumer提供可重試／交易／並發去重；低權限actor綁定、來源／到期／修訂／規格與既有日報衝突拒絕。沿用既有公式、儲存及統計，無重複公式表。

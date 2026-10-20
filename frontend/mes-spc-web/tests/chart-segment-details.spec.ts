@@ -15,7 +15,7 @@ function detail(id: number | null, chemical = true, skip = 0) {
     specificationHistory: [{ id: 1, versionNo: 3, snapshotJson: '{"USL":15}', changedAt: '2026-10-19T00:00:00Z', changedBy: '工程師', changeType: 'Update' }],
     hasMoreFormula: !skip, hasMoreSpecification: false };
 }
-async function setup(page: Page, chemical = true, empty = false, chartType = 'I_MR', pagePath = '/spc') {
+async function setup(page: Page, chemical = true, empty = false, chartType = 'I_MR', pagePath = '/spc', pointN = 0) {
   const writes: string[] = []; const calls: URL[] = []; const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.addInitScript(() => localStorage.setItem('mes_spc_user', JSON.stringify({ role: 'Viewer' })));
@@ -26,6 +26,7 @@ async function setup(page: Page, chemical = true, empty = false, chartType = 'I_
     if (route.request().method() !== 'GET') writes.push(route.request().method() + u.pathname);
     let json: any = [];
     if (u.pathname.endsWith('/version')) json = { environment: 'test', version: '0.1.63' };
+    else if (u.pathname.endsWith('/chemical-calculation-traces')) json = {data:{applicable:chemical,totalMeasurements:0,unknownMeasurements:0,multipleFormulaVersions:false,rows:[],hasMore:false,hasMoreTrace:false}};
     else if (u.pathname.endsWith('/chart-segment-details')) {
       calls.push(u); json = { success: true, data: detail(u.searchParams.has('segmentId') ? Number(u.searchParams.get('segmentId')) : null, chemical, Number(u.searchParams.get('formulaSkip'))) };
       if (empty) { json.data.formulaHistory = []; json.data.specificationHistory = []; json.data.hasMoreFormula = false; }
@@ -37,7 +38,7 @@ async function setup(page: Page, chemical = true, empty = false, chartType = 'I_
     else if (u.pathname.endsWith('/control-chart-types')) json = [{ id: 1, chartTypeCode: 'I_MR', dataCategory: 'Variable' }];
     else if (u.pathname.endsWith('/control-chart-groups')) json = [{ id: 1, groupCode: chemical ? 'CHEM' : 'PRODUCT', groupType: 'CONTROL_CHART', businessScopeCode: chemical ? 'CHEM' : 'PRODUCT', isEnabled: true }];
     else if (u.pathname.endsWith('/spc/chart')) {
-      const points = [1, 5, 10, 11, 15, 20].map((day, i) => ({ measuredAt: `2026-10-${String(day).padStart(2, '0')}T12:00:00`, value: 8 + i * .2, violatedRules: [] }));
+      const points = [1, 5, 10, 11, 15, 20].map((day, i) => ({ measuredAt: `2026-10-${String(day).padStart(2, '0')}T12:00:00`, value: 8 + i * .2, variableMeasurementId: pointN?500+i:undefined, n:pointN||undefined, violatedRules: [] }));
       json = { chartType, limits: { usl: 99, lsl: 1, ucl: 18, cl: 10, lcl: 2 }, chartData: { points },
         secondaryChartData: { points: [] }, rawDataPoints: points, specLimitSegments: empty ? [] : segments, subgroupSize: 1 };
     }
@@ -168,4 +169,55 @@ test('chart segment line is clickable and original point drilldown still works',
   await page.getByTestId('primary-spc-chart').click({ position: { x: pointPixel[0], y: pointPixel[1] } });
   await expect(page.getByText('點位品質追溯詳細資料 (點位 #2)')).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+function savedCalc(phase='Initial',version=2){return {phase,phaseVersion:1,evidenceStatus:'Recorded',formulaVersionId:version*10,formulaVersionNo:version,formulaConfigJson:JSON.stringify({concentrationFormula:'Primary*F!B3'}),reason:'WI-SAVED-004',fTableHistoryId:77,effectiveFromUtc:'2026-10-18T16:00:00Z',revisionId:9,primary:'1.23456789',rawResult:'2.46913578',storedResult:'2.47',judgment:'OK',actor:'editor',engineVersion:'portal-excel8-v1',precisionPolicy:'decimal-excel8-away-from-zero-v1',specification:{lsl:'0',usl:'10'},fCells:[{address:'B3',numericValue:'2'}]};}
+async function traceFixture(page:Page,pagePath='/spc',pointN=0){
+ const state=await setup(page,true,false,pointN>1?'XBAR_R':'I_MR',pagePath,pointN),traceCalls:URL[]=[];
+ await page.route('**/api/v1/part-process-characteristics/1/chemical-calculation-traces**',async route=>{
+  const u=new URL(route.request().url());traceCalls.push(u);const point=u.searchParams.has('measurementId');
+  const rows:any[]=[{measurementId:501,measuredAt:'2026-10-19T04:00:00Z',initialStored:2.47,recheckStored:4.69,samplingPhase:'OPEN',samplingStage:'GENERAL',status:'Recorded',statisticsStatus:'Completed',calculations:u.searchParams.get('traceSkip')==='20'?[savedCalc('Initial',1)]:[savedCalc(),savedCalc('Recheck')]},
+   {measurementId:502,measuredAt:'2026-10-18T04:00:00Z',initialStored:99,samplingPhase:'OPEN',samplingStage:'GENERAL',status:'Unknown',statisticsStatus:'NotRecorded',calculations:[]}];
+  return route.fulfill({json:{data:{applicable:true,totalMeasurements:point?1:2,unknownMeasurements:point?0:1,multipleFormulaVersions:true,rows:point?[rows[0]]:rows,hasMore:false,hasMoreTrace:point&&u.searchParams.get('traceSkip')!=='20'}}});
+ });return {...state,traceCalls};
+}
+test('saved initial recheck and F snapshots coexist with unknown legacy',async({page})=>{
+ const {region,writes}=await traceFixture(page);await region.getByRole('button',{name:/2026-10-01/}).click();const e=region.getByRole('region',{name:'實際公式計算證據'});
+ await expect(e).toContainText('保存多個公式版本');await expect(e).toContainText('無法確認當時版本（舊量測未保存追溯）');
+ await e.locator('summary').filter({hasText:'初驗追溯'}).click();for(const text of ['WI-SAVED-004','Primary*F!B3','引用 B3 = 2','1.23456789','2.46913578'])await expect(e).toContainText(text);
+ await e.locator('summary').filter({hasText:'複驗追溯'}).click();await expect(e).toContainText('F歷史快照 77');expect(writes).toEqual([]);
+});
+test('exact measurement history pagination and return retain scope',async({page})=>{
+ const {region,traceCalls}=await traceFixture(page);await region.getByRole('button',{name:/2026-10-01/}).click();const e=region.getByRole('region',{name:'實際公式計算證據'});
+ await e.getByRole('button',{name:'量測 #501 所有計算歷程'}).click();await expect(e).toContainText('此量測已保存');expect(traceCalls.at(-1)?.searchParams.get('measurementId')).toBe('501');
+ await e.getByRole('button',{name:'歷程下一頁'}).click();await expect(e.locator('summary')).toContainText('公式 v1');expect(traceCalls.at(-1)?.searchParams.get('traceSkip')).toBe('20');
+ await e.getByRole('button',{name:'返回區間量測'}).click();await expect(e).toContainText('未保存版本關聯 1 筆');expect(traceCalls.at(-1)?.searchParams.has('measurementId')).toBe(false);
+});
+test('trace errors retry and stale response does not replace selected range',async({page})=>{
+ const {region}=await setup(page);let fail=true;
+ await page.route('**/chemical-calculation-traces**',async route=>{
+  const u=new URL(route.request().url());if(fail)return route.fulfill({status:503,json:{message:'計算證據暫時不可用'}});
+  if(u.searchParams.get('segmentId')==='11')await new Promise(r=>setTimeout(r,350));
+  return route.fulfill({json:{data:{applicable:true,totalMeasurements:Number(u.searchParams.get('segmentId')),unknownMeasurements:0,rows:[],hasMore:false,hasMoreTrace:false}}});
+ });
+ await region.getByRole('button',{name:/2026-10-01/}).click();const e=region.getByRole('region',{name:'實際公式計算證據'});await expect(e.getByRole('alert')).toContainText('計算證據暫時不可用');fail=false;
+ await e.getByRole('button',{name:'重試計算證據'}).click();await region.getByRole('button',{name:/2026-10-11/}).click();await expect(e).toContainText('全部量測 12 筆');await page.waitForTimeout(450);await expect(e).toContainText('全部量測 12 筆');
+});
+
+async function clickSavedPoint(page:Page,testId:string){
+ await expect(page.getByTestId(testId).locator('canvas')).toBeVisible();await page.waitForTimeout(1100);
+ const pixel=await page.evaluate(async testId=>{
+  const url=performance.getEntriesByType('resource').map(x=>x.name).find(x=>/\/echarts\.js\?/.test(x));const echarts=await import(url!);
+  return echarts.getInstanceByDom(document.querySelector(`[data-testid="${testId}"]`)).convertToPixel({xAxisIndex:0,yAxisIndex:0},[1,8.2]);
+ },testId);
+ await page.getByTestId(testId).click({position:{x:pixel[0],y:pixel[1]}});
+}
+for(const path of ['/spc','/trend-chart'])test(`exact measurement evidence opens from chart point ${path}`,async({page})=>{
+ const {traceCalls,errors}=await traceFixture(page,path,1);await clickSavedPoint(page,path==='/spc'?'primary-spc-chart':'chemical-trend-chart');
+ const e=page.getByRole('region',{name:'實際公式計算證據'});await expect(e).toContainText('此量測已保存');await expect(e).toContainText('量測 #501');
+ expect(traceCalls.at(-1)?.searchParams.get('measurementId')).toBe('501');expect(errors).toEqual([]);
+});
+test('multi-measurement subgroup never claims the first member formula as whole subgroup',async({page})=>{
+ const {traceCalls}=await traceFixture(page,'/spc',3);await clickSavedPoint(page,'primary-spc-chart');
+ await expect(page.getByRole('region',{name:'實際公式計算證據'})).toContainText('此點為多筆子組');expect(traceCalls).toEqual([]);
 });

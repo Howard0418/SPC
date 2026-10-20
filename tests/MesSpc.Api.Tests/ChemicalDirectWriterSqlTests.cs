@@ -45,8 +45,8 @@ public class ChemicalDirectWriterSqlTests
         // Prove the receipt hook also works with the SQL write gate, without enabling any real PPC.
         await seed.Database.ExecuteSqlInterpolatedAsync($"UPDATE ChemicalFormulaPolicies SET IsEnabled=1 WHERE PartProcessCharacteristicId={ppc.Id}");
 
-        async Task<(Guid a,Guid b)> Receipts(string primary,string key){
-            var input=new ChemicalPreviewInput("2026-10-20T12:00:00+08:00",primary,null,key);
+        async Task<(Guid a,Guid b)> Receipts(string primary,string key,string at="2026-10-20T12:00:00+08:00"){
+            var input=new ChemicalPreviewInput(at,primary,null,key);
             var a=await Schedule(seed).PreviewAsync(ppc.Id,input,"Task005Writer",default);
             var b=await Schedule(seed).PreviewAsync(ppc.Id,input with{Primary="2.3456"},"Task005Writer",default);
             return ((await Schedule(seed).PrepareAsync(ppc.Id,new(input,a.Token),"Task005Writer",default)).Id,
@@ -108,6 +108,21 @@ public class ChemicalDirectWriterSqlTests
             status.Parameters.AddWithValue("@receipt",receipts.a);
             await using var statusReader=await status.ExecuteReaderAsync();(await statusReader.ReadAsync()).Should().BeTrue();
             statusReader.GetString(statusReader.GetOrdinal("statisticsStatus")).Should().Be("Completed");
+            var evidence=(await new ChemicalTraceQueryService(seed).GetAsync(ppc.Id,null,vm.Id,0,0,default))!;
+            evidence.Rows.Single().Calculations.Should().HaveCount(2);
+            evidence.Rows.Single().Calculations.Single(x=>x.Phase=="Initial").RawResult.Should().Be("2.469");
+            (await new ChemicalTraceQueryService(seed).GetAsync(ppc.Id,null,null,0,0,default))!.Rows.Should().Contain(x=>x.MeasurementId==vm.Id);
+            // One file crossing two effective dates: the same real DB path keeps both actual versions.
+            var oldDateFormula=new ChemicalAnalysisFormulaVersion{PartProcessCharacteristicId=ppc.Id,VersionNo=2,ConfigJson="{\"enabled\":true,\"concentrationFormula\":\"Primary*3\",\"decimalPlaces\":2}"};
+            seed.Add(oldDateFormula);await seed.SaveChangesAsync();
+            var currentRevision=await seed.ChemicalFormulaPolicies.AsNoTracking().Where(x=>x.PartProcessCharacteristicId==ppc.Id).Select(x=>x.ActiveScheduleRevisionId).SingleAsync();
+            await Schedule(seed).PublishAsync(ppc.Id,new(currentRevision,"cross-date file",[new(oldDateFormula.Id,null,"2026-10-01","2026-10-18"),new(formula.Id,null,"2026-10-19",null)]),"Task005Writer",default);
+            var earlier=await Receipts("1.2345",key.Replace("\"row\":2","\"row\":4"),"2026-10-18T12:00:00+08:00");
+            var earlierVm=await Commit(earlier);
+            var mixed=(await new ChemicalTraceQueryService(seed).GetAsync(ppc.Id,null,null,0,0,default))!;
+            mixed.MultipleFormulaVersions.Should().BeTrue();
+            mixed.Rows.Single(x=>x.MeasurementId==earlierVm).Calculations.Single(x=>x.Phase=="Initial").StoredResult.Should().Be("3.7");
+            mixed.Rows.Single(x=>x.MeasurementId==vm.Id).Calculations.Single(x=>x.Phase=="Initial").StoredResult.Should().Be("2.47");
         }finally{await seed.Database.ExecuteSqlRawAsync("ALTER ROLE SpcChemicalDirectWriter DROP MEMBER Task005Writer; DROP USER Task005Writer;");}
  }
 }

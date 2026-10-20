@@ -32,3 +32,6 @@
 
 ## TASK-005
 - [受控DB與consumer驗證](../20261020-formula-trace-task005/verification.md)：測試API0.1.66、個人低權限與SQL隔離驗收通過；剩SPC1／KM3暫緩，正式未更新。
+
+## TASK-006最終
+- [實際版本驗證](../20261020-formula-trace-task006/verification.md)：28後端、17分段／逐點、7排程及SQL跨日直寫／查閱通過，測試API0.1.67／Web0.1.69已發布；[Antigravity案例](../20261020-formula-trace-task006/antigravity-tests.md)正常真人待驗。SPC本批清空，僅KM3件暫緩，正式未更新。

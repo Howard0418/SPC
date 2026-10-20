@@ -1,6 +1,6 @@
 # 技術計畫
-- 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020；spec v3，[規格](spec.md)。
-- TASK-002資料模型與migration已在隔離庫驗證，詳[紀錄](../20261020-formula-trace-task002/verification.md)；下列API／直寫應用功能仍未實作，共用測試／正式schema未套用。
+- 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020；spec v6，[規格](spec.md)。
+- 現況：TASK-001～006已依序實作及測試發布，詳[最終驗證](../20261020-formula-trace-task006/verification.md)；以下保留最初技術計畫，不將規劃時未完成敘述當成目前狀態。正式未更新。
 
 ## 責任與最小資料模型
 1. 沿用ChemicalAnalysisFormulaVersions作為不可變公式快照；補強所有新增／修改／還原路徑與同PPC版號併發保護，不能另複製一套公式內容維護。

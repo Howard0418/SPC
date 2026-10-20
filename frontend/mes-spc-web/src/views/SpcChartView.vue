@@ -42,6 +42,7 @@ import {
   StickyNote
 } from "lucide-vue-next";
 import SpcSummaryTable from "../components/SpcSummaryTable.vue";
+import ChemicalCalculationDetails from "../components/ChemicalCalculationDetails.vue";
 import ChartSegmentDetails from "../components/ChartSegmentDetails.vue";
 
 const route = useRoute();
@@ -2654,6 +2655,7 @@ onBeforeUnmount(() => {
 
         <!-- Point Detail Drilldown Card -->
         <div v-if="selectedPoint" class="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 shadow-inner transition-all duration-300">
+          <ChemicalCalculationDetails v-if="activePpcIdValue" :ppc-id="activePpcIdValue" :measurement-id="selectedPoint.variableMeasurementId||null" :aggregate="Number(selectedPoint.n||1)>1" point-mode />
           <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">
             <h4 class="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>

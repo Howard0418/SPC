@@ -1,7 +1,7 @@
 # 功能規格：藥液公式生效日期、自動選版與版本留存
 - 功能 ID：SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020
-- 版本：5
-- 狀態：TASK-001基準／契約及TASK-002 schema隔離驗證已完成；TASK-003已完成並發布測試API0.1.64／Web0.1.68；TASK-004已完成Portal整合並發布測試API0.1.65／Portal API1.0.183／Web1.0.226；TASK-005已完成受控DB直寫、統計與測試API0.1.66；TASK-006待做。
+- 版本：6
+- 狀態：TASK-001基準／契約及TASK-002 schema隔離驗證已完成；TASK-003已完成並發布測試API0.1.64／Web0.1.68；TASK-004已完成Portal整合並發布測試API0.1.65／Portal API1.0.183／Web1.0.226；TASK-005已完成受控DB直寫、統計與測試API0.1.66；TASK-006已完成實際版本查閱並發布測試API0.1.67／Web0.1.69；正常真人操作依交付案例待驗。
 - 涉及專案：SPC主責；Portal量測輸入、TransFiles轉檔／直接匯入相依。
 - 授權：使用者確認逐件實作，TASK-002完成隔離演練，TASK-003經使用者確認後備份驗證並升級共用測試庫與站台；正式未操作。TransFiles仍須直接寫DB。
 - 基準：[需求索引](../../docs/requirements.md)、[TransFiles直接匯入契約](../../docs/imports/transfiles-direct-import-contract.md)。
@@ -39,7 +39,7 @@
 - 建議對已被量測引用的有效期間禁止原地回溯修改；必要修正需另案影響清單、理由與授權，不改舊量測追溯。
 - 基準精度：先沿用已確認的未四捨五入判定、顯示／儲存精度；實作前核對Portal／Excel／SPC的差異，不能順便改公式語法、精度或單位。
 - TASK-001已確認來源日期／精度反例及直接DB目標，見[契約基準](../20261020-formula-trace-task001/contract.md)。實際DB程序／權限／併發、部署EXE與F快照不可變性留TASK-002／005實證，不把無副作用測試當SQL驗收。
-- 每次只執行一件；TASK-003完成後停止，不開始TASK-004。共用schema／API發布依後續階段執行；正式DB／發布仍需另行授權。
+- 依2026-10-20最新授權，已序列完成SPC全部TASK；不執行KM或其他工作。正式DB／發布仍需另行授權。
 
 ## 版本
 - v1／2026-10-20：沿用既有架構的建議規格與序列化計畫，未實作。
@@ -47,3 +47,6 @@
 - v3／2026-10-20：TASK-002六表與nullable關聯migration、期間／immutable／fail-closed防護及真實SQL隔離演練完成；[證據](../20261020-formula-trace-task002/verification.md)。沒有發布或啟用共用環境。
 
 - v4／2026-10-20：TASK-003日期排程、共用計算、預覽防護及設定UI完成；[驗證](../20261020-formula-trace-task003/verification.md)。測試API0.1.64／Web0.1.68、TASK-002 schema已部署，policy未啟用；正式未更新。
+
+- v5／2026-10-20：TASK-004 Portal初複驗及原子留存完成並發布測試站。
+- v6／2026-10-20：TASK-005真正DB直寫／consumer／個人低權限及TASK-006實際版本查閱完成；[最終驗證](../20261020-formula-trace-task006/verification.md)，正常真人操作待驗，正式未更新。
