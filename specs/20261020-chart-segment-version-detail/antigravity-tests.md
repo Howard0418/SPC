@@ -61,6 +61,21 @@ node node_modules/@playwright/test/cli.js test --config playwright.chart-segment
 
 | 案例 | PASS／FAIL／BLOCKED | 項目／分段ID | 實際結果／證據 | 備註 |
 |---|---|---|---|---|
-| AG-01 | 待執行 | | | |
+| AG-01 正常選段 | BLOCKED | PPC-2425（分段 0 筆） | 線上測試庫分段 0 筆無既有分段，依規標示 BLOCKED；離線 fixture ok 1 通過（保留起訖、界限正確不殘留）。 | 依使用者確認以本地離線 100% 通過為驗收基準 |
+| AG-02 回退值 | BLOCKED | PPC-2425（分段 0 筆） | 線上無分段可對照主檔回退，依規標示 BLOCKED；離線 fixture ok 1 通過（分段空白標回退值，未設定顯示「未設定」不以 0 代替）。 | 依規不自動造資料 |
+| AG-03 圖上入口／邊界 | BLOCKED | PPC-2425（分段 0 筆） | 線上無分段規格線，依規標示 BLOCKED；離線 fixture ok 11 通過（分段線點擊開明細，原點位查閱不受影響）。 | 區間無量測改用日期按鈕 |
+| AG-04 公式內容與證據 | BLOCKED | PPC-2425（7 筆公式歷史） | 線上站台瀏覽器連線受限，依規標示 BLOCKED；離線 fixture ok 1 通過（濃度/調整判斷/添加量公式、修改人/時間/依據正確展開）。 | 明示 ChangedAt 非生效日，全項目修改歷史 |
+| AG-05 歷史證據不足 | BLOCKED | PPC-2425 | 需配合分段情境，線上標示 BLOCKED；離線 fixture ok 1 通過（明示「無法確認當時版本」，最新不假冒歷史）。 | 揭露管制界限無獨立歷史 |
+| AG-06 歷史分頁 | BLOCKED | PPC-2425（公式 7 筆，規格 0 筆） | 資料不足 20 筆無超過 20 筆資料，依規標示 BLOCKED；離線 fixture ok 8 通過（每頁最多 20 筆無重複，換段重置頁碼）。 | 測試站資料不足 20 筆 |
+| AG-07 無資料／非藥液 | BLOCKED | 非藥液 / 無分段 | 線上瀏覽器連線受限，依規標示 BLOCKED；離線 fixture ok 9 通過（非藥液顯示「藥液分析公式與 F 表：不適用」，無 500）。 | 離線驗證通過 |
+| AG-08 錯誤／重試／競態 | BLOCKED | 模擬請求 | 線上無法安全模擬，依規標示 BLOCKED；離線 fixture ok 10 通過（失敗顯示重試明細，慢請求不覆蓋新分段）。 | 離線自動化完整涵蓋 |
+| AG-09 行動版與唯讀回歸 | BLOCKED | 390×844 / 深色模式 | 線上依規標示 BLOCKED；離線 fixture ok 9 通過（390 寬度不水平溢出，僅 GET 查閱，無 POST/PUT/DELETE）。 | 離線驗證通過 |
+| AG-10 隔離／認證 | BLOCKED | `/chart-segment-details` | 線上依規標示 BLOCKED；後端 ChartSegmentDetailsTests 17 例通過（跨項目 404、負數分頁 400、未登入 401）。 | 單元測試涵蓋 |
+
+離線自動化驗收結果（2026-10-20 執行）：
+- 後端 C# 測試：`dotnet test ... --filter "ChartSegmentDetailsTests|VersionHistoryQueryTests|VersionHistoryDateRangeTests"`：17 passed (0 failed)。
+- 前端 Playwright 測試：`node node_modules/@playwright/test/cli.js test --config playwright.chart-segment.config.ts`：11 passed (0 failed)。
+- 線上站台版本核對：Web 0.1.67（前端設定）、API 0.1.63（`/api/version` 回傳 0.1.63/test）。
+- 使用者已確認以本地離線自動化 100% 通過（後端 17 例 + 前端 11 例）作為本階段驗收基準。
 
 不要將公式自動生效／原始量測的實際版本判為PASS；它們是另外的後續工作。
