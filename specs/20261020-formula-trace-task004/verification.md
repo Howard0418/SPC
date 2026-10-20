@@ -31,3 +31,6 @@
 ## 限制及下一步
 - 實際Viewer登入403及正常SSO跨站新增／複驗／圖表真人操作仍待人工案例；自動化權限／回歸不冒充真人完成。
 - 真正TransFiles DB直寫／consumer是TASK-005，圖表呈現逐點實際trace是TASK-006；本次停止。剩5件＝SPC2＋KM暫緩3。
+
+## 提交／上傳狀態
+- SPC提交`5747caa5`已上傳origin/Develop。Portal本機提交`f4f95d0`完成；推送至`https://github.com/Howard0418/WebSiteApi.git` main遭自動核准審查拒絕（無該目的地及精確推送的明確授權、所有權未確認），已請使用者核准，未繞過。測試站發布已完成、不受影響。
