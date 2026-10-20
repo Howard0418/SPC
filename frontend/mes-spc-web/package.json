@@ -1,6 +1,6 @@
 {
   "name": "mes-spc-web",
-  "version": "0.1.65",
+  "version": "0.1.66",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,6 +10,7 @@
     "build:test": "vite build --mode testhost",
     "build:production": "vite build --mode production",
     "preview": "vite preview",
+    "verify:built-api": "node scripts/verify-built-api.mjs",
     "test:e2e": "playwright test",
     "test:ui": "playwright test --ui"
   },

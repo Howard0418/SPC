@@ -1,7 +1,8 @@
 import axios from "axios";
 import { clearAuthSession } from "../utils/auth";
 
-const baseURL = import.meta.env.VITE_API_BASE || "/api";
+// Web and API share one public origin; legacy build environment URLs must not override it.
+const baseURL = "/api";
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 let apiEnvironment = "unknown";
 

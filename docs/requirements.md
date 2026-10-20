@@ -207,3 +207,5 @@
 - 測試站已完成：[SPC-CHEM-REFERENCE-HISTORY-20261019](../specs/20261019-chemical-formula-reference-history/spec.md)。補設定頁版本依據欄位、總覽共用歷史入口及500字錯誤提示；沿用既有版本服務與Reason，保留20261007前案，後端17／前端6測試通過，測試站API0.1.61／Web0.1.64；正式未發布。
 
 - 測試站已完成：[SPC-VERSION-HISTORY-DATE-FILTER-20261019](../specs/20261019-version-history-date-filter/spec.md)。使用者確認規格界線／藥液公式／F表版本歷史按修改日期查詢，非設定生效期；含台北日期日界、單邊區間、格式錯誤與先篩後分頁。2026-10-20經同意新增規格版本表並補齊測試庫既有F歷史migration，無虛構回填；37相關／9瀏覽器通過，測試站API0.1.62／Web0.1.65，正式未更新。
+
+- SPC測試前端同源API修復：[SPC-TEST-WEB-API-SAME-ORIGIN-20261020](../specs/20261020-test-web-api-same-origin/spec.md)。API client固定/api，舊VITE_API_BASE不可覆蓋；Web0.1.66測試站發布、線上bundle14請求同源及12真實主檔API200驗證通過，API0.1.62／DB／正式不變。

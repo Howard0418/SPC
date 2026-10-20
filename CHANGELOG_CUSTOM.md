@@ -1702,3 +1702,8 @@
 - 相關37／瀏覽器9通過；全套132例為120通過、6既有失敗、6略過，完整原碼基準重跑同6失敗，無新增失敗。Release publish／testhost build成功，既有套件及chunk警告保留。
 - 備份VERIFYONLY、IIS／檔案備份與逐檔hash通過，PMR_SPC_TEST兩筆migration及SpcSingleTest API0.1.62／Web0.1.65發布完成；原規格／F值與保護設定hash不變，三歷史GET200／無效日期400，HTTP資產hash匹配。正式未更新，剩3件均KM暫緩。
 - 詳見specs/20261019-version-history-date-filter/verification.md；正式日後需先核對F實表／舊migration紀錄，不直接複製本測試包啟動Migrate。
+
+## 2026-10-20 修復SPC測試前端誤連舊8081 API
+- 使用者回報https://spctest.pmr.com.tw/檢驗基準頁無法載入；確認testhost舊環境把瀏覽器API導向http://172.16.110.27:8081/api。先前健康／資產hash驗證漏查實際瀏覽器baseURL，已補回歸與發布檢查，不歸因使用者快取。
+- client固定同源/api，保持原JWT／攔截器與環境寫入隔離；舊環境回歸先失敗後通過，既有9項瀏覽器回歸通過。新增verify:built-api檢查實際bundle，本機與線上各14 API請求同源；真實12主檔API全部200。
+- 備份後僅發布測試前端Web0.1.66，HTTP bundle hash匹配、舊8081 API字串不在新包；API0.1.62及設定hash不變，無DB或正式變更。備份／限制見specs/20261020-test-web-api-same-origin/spec.md。剩3件KM暫緩。

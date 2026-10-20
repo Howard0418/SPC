@@ -776,3 +776,5 @@
 ## [2026-10-20] - SPC-VERSION-HISTORY-DATE-FILTER-20261019 實作
 - 使用者同意規格版本表與測試庫migration。新增不可變規格快照，統一EF寫入紀錄；三類歷史依台北修改日期先篩後分頁。正式與KM不動。
 - 先建立日期邊界／版本／交易測試，隔離庫演練Up／Down後備份驗證測試庫，再發布SpcSingleTest；無舊歷史虛構回填。
+## [2026-10-20] - SPC-TEST-WEB-API-SAME-ORIGIN-20261020
+- 修正testhost舊VITE_API_BASE污染產物，API client固定同站/api；先補瀏覽器回歸，實際bundle驗證後僅發布測試前端，DB／後端不動。

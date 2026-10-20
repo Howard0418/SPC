@@ -1,0 +1,2 @@
+import { defineConfig } from '@playwright/test';
+export default defineConfig({testDir:'./tests',testMatch:'api-same-origin.spec.ts',workers:1,reporter:'list',use:{baseURL:'http://127.0.0.1:5194'},webServer:{command:'node node_modules/vite/bin/vite.js --mode testhost --host 127.0.0.1 --port 5194',url:'http://127.0.0.1:5194',reuseExistingServer:true,env:{VITE_API_BASE:'http://172.16.110.27:8081/api',VITE_AUTH_ENABLED:'false',VITE_APP_ENV:'test'}}});
