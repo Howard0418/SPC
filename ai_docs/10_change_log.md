@@ -785,3 +785,7 @@
 ## [2026-10-20] - SPC-CHART-SEGMENT-VERSION 明細實作目的
 - 使用者確認先完成分段明細查閱；新增唯讀API及管制圖入口，列出目前設定及既有歷史，缺版本證據明示未知。
 - 先建立隔離／分頁／無寫入測試；不改計算、不新增有效期、不改DB或Portal／TransFiles；驗證後僅發布SPC測試站。
+
+## [2026-10-20] - SPC-FORMULA-EFFECTIVE-TRACE 規劃目的
+- 使用者指定只規劃生效日期、自動選版與留存；沿用既有公式版本，提出量測日期解析、有效期間關聯、F快照、追溯與跨入口契約。
+- 僅spec／plan／tasks／verification及索引工作池同步；不改程式、DB、不執行migration或發布。
