@@ -215,13 +215,13 @@
 ## KM待辦同步（2026-10-19）
 
 1. 已完成 KM-DEPS-SECURITY-20261019：Negotiate/Pkcs 10.0.13、43項回歸、測試站1.6.5，正式未更新。
-2. KM-VERIFY-034-20261019：文件櫃畫面／發布核對。
+2. 已完成 KM-VERIFY-034-20261019：文件清單修正、50項測試、測試站1.6.6與桌面/手機空狀態驗收。
 3. KM-VERIFY-036-20261019：版本差異摘要驗證。
 
-上述為KM既有工作池同步，目前未完成2件，非本次新增範圍；外部附件掃毒／SSO nonce選型另列。
+上述為KM既有工作池同步，目前未完成1件，非本次新增範圍；外部附件掃毒／SSO nonce選型另列。
 
 ## 目前執行排序（2026-10-20，使用者恢復KM）
-本批SPC選版TASK-001～006已完成；未完成2件（KM文件櫃與版本差異驗證），每次只執行一件。
+本批SPC選版TASK-001～006已完成；未完成1件（KM版本差異驗證），每次只執行一件。
 
 ### 已完成：SPC公式日期選版與追溯（工作池無未完成SPC項目）
 - 規劃：[SPC-FORMULA-EFFECTIVE-TRACE-PLAN-20261020](specs/20261020-formula-effective-trace-plan/spec.md)；[工作與驗收](specs/20261020-formula-effective-trace-plan/tasks.md)。TASK-001～006已完成，正常真人操作依交付案例確認，不新增假造歷史。真正TransFiles DB直寫仍需受控程序及client，不用現有API匯入代替。
@@ -240,10 +240,10 @@
 
 ### KM：已恢復，依序單件執行
 - 已完成 KM-DEPS-SECURITY-20261019：[TASK-039](C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/KM/specs/tasks/TASK-039-dependency-security-patches.md)，測試站1.6.5，正式未更新。
-- KM-VERIFY-034-20261019：文件櫃畫面／發布核對。
+- 已完成 KM-VERIFY-034-20261019：TASK-040文件清單修正及測試站1.6.6驗收；正式未更新。
 - KM-VERIFY-036-20261019：版本差異摘要驗證。
 
-每次只做一件；2026-10-20使用者已恢復KM，本次完成安全修補。剩餘2件保留待辦，正式發布仍需另行授權。共用Hosting Bundle/Runtime更新另列維運評估，不在本案單站升級。
+每次只做一件；2026-10-20使用者已恢復KM，已完成安全修補及文件櫃核對。剩餘1件保留待辦，正式發布仍需另行授權。共用Hosting Bundle/Runtime更新另列維運評估，不在本案單站升級。
 
 ## 緊急修正完成（2026-10-20）
 - SPC-TEST-WEB-API-SAME-ORIGIN-20261020：[測試前端同源API](specs/20261020-test-web-api-same-origin/spec.md)，已修復／驗證並發布測試Web0.1.66；API0.1.62／DB不變，1新測試＋9回歸及實際bundle請求驗證通過，真正12個主檔API均200。此項不列入未完成數。
