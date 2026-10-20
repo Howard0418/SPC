@@ -41,6 +41,7 @@ if (jwtConfigured)
 }
 builder.Services.AddAuthorization();
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddMemoryCache();

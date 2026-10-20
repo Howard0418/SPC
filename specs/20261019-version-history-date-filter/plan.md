@@ -21,3 +21,9 @@ Happy Path：三類各區間查詢、清除及兩公式入口一致（AC-001／0
 4. 完成規格只讀歷史API／UI與三類一致日期查詢，覆蓋AC-001～007、必要build／自動化／隔離瀏覽器驗收；成功後才套用測試庫migration並發布release/test。
 5. 回復：先回復同批程式，新增歷史表保留；不自動刪歷史或整庫回復。演練Down只在隔離空間；若正式日後需要更新，再提供獨立正式DB備份與發布方案取得授權。
 本次只完成具體提案；尚未新增實體、migration、API或執行DDL。正式環境不在此同意範圍內。
+
+## 實際執行與差異（2026-10-20）
+- 使用者已同意v2。本案完成：AppDbContext統一捕捉同步／非同步EF規格寫入，業務資料與快照同交易，伺服器actor、SQL同PPC更新鎖、過期規格拒絕；保留既有同步SaveChanges入口，不以同步等待包裝async。沒有使用SaveChanges(false)的規格路徑，該路徑明確拒絕以維持二階段快照原子性。
+- 真實SQL查詢發現舊F表歷史migration缺少識別標記、測試庫缺表；補正註冊並使用原EF migration SQL，不手動建表。隔離演練兩類Up／Down／重跑，原規格與F值不變。
+- 測試庫更新前再次COPY_ONLY/CHECKSUM＋VERIFYONLY與IIS／檔案備份，兩筆DDL在同一交易套用，逐檔／設定hash及三類HTTP驗證通過。實際IIS SpcSingleTest／release/test，API0.1.62、Web0.1.65。
+- 正式仍需另授權並核對F歷史實表與舊migration紀錄；不能直接把測試包拿到正式啟動Migrate。備份、已知基準失敗與回復細節見[驗證](verification.md)。

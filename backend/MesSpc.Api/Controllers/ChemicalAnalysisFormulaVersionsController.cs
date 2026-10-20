@@ -16,18 +16,25 @@ public sealed class ChemicalAnalysisFormulaVersionsController(
     ChemicalAnalysisFormulaVersionService versions) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetVersions(int partProcessCharacteristicId, CancellationToken ct)
+    public async Task<IActionResult> GetVersions(int partProcessCharacteristicId, CancellationToken ct, [FromQuery] string? fromDate = null, [FromQuery] string? toDate = null, [FromQuery] int skip = 0, [FromQuery] int? take = null)
     {
+        VersionHistoryDateRange range;
+        try { range = VersionHistoryDateRange.Parse(fromDate, toDate); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        if (skip < 0 || take is < 1 or > 100) return BadRequest(new { message = "無效的分頁範圍。" });
         var mapping = await db.PartProcessCharacteristics.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId, ct);
         if (mapping is null) return NotFound(new { message = "找不到指定的 SPC 管制項目。" });
         if (!string.Equals(ControlScopeCodes.Normalize(mapping.ControlScope), ControlScopeCodes.Chemical, StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { message = "只有藥液管制項目支援公式版本紀錄。" });
 
-        var data = await db.ChemicalAnalysisFormulaVersions.AsNoTracking()
-            .Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId)
+        var query = db.ChemicalAnalysisFormulaVersions.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
+        if (range.FromUtc.HasValue) query = query.Where(x => x.ChangedAt >= range.FromUtc.Value);
+        if (range.UntilUtc.HasValue) query = query.Where(x => x.ChangedAt < range.UntilUtc.Value);
+        var data = await query
             .OrderByDescending(x => x.VersionNo)
             .ThenByDescending(x => x.Id)
+            .Skip(skip).Take(take ?? int.MaxValue)
             .Select(x => new ChemicalAnalysisFormulaVersionResponse(
                 x.Id,
                 x.PartProcessCharacteristicId,
@@ -38,7 +45,7 @@ public sealed class ChemicalAnalysisFormulaVersionsController(
                 x.RestoredFromVersionId,
                 x.Reason,
                 x.ChangedBy,
-                x.ChangedAt))
+                DateTime.SpecifyKind(x.ChangedAt, DateTimeKind.Utc)))
             .ToListAsync(ct);
 
         return Ok(new { data });

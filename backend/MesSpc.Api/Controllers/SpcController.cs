@@ -906,10 +906,14 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
     }
 
     [HttpGet("versions")]
-    public async Task<IActionResult> Versions([FromQuery] int take, CancellationToken ct)
+    public async Task<IActionResult> Versions([FromQuery] int take, CancellationToken ct, [FromQuery] string? fromDate = null, [FromQuery] string? toDate = null, [FromQuery] int skip = 0)
     {
-        var result = await fTableService.GetVersionHistoryAsync(take <= 0 ? 50 : take, ct);
-        return Ok(result);
+        try
+        {
+            var result = await fTableService.GetVersionHistoryAsync(take <= 0 ? 50 : take, ct, fromDate, toDate, skip);
+            return Ok(result);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpGet("versions/{id:long}")]

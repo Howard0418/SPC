@@ -1,10 +1,14 @@
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using MesSpc.Api.Infrastructure.Data;
 
 #nullable disable
 
 namespace MesSpc.Api.Migrations
 {
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20261007090000_AddChemicalFTableVersionHistories")]
     public partial class AddChemicalFTableVersionHistories : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -7,6 +7,13 @@ namespace MesSpc.Api.Tests;
 public class ApiErrorResponseFactoryTests
 {
     [Fact]
+    public void ConcurrentUpdateHasActionableSafeMessage()
+    {
+        var response=ApiErrorResponseFactory.FromException(new DbUpdateConcurrencyException("secret"),false);
+        response.Code.Should().Be("CONCURRENT_UPDATE");response.Message.Should().Contain("重新載入");response.Detail.Should().BeNull();
+    }
+
+    [Fact]
     public void FromException_ShouldHideDetails_WhenDetailsDisabled()
     {
         var response = ApiErrorResponseFactory.FromException(

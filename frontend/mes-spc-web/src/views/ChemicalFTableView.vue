@@ -3,6 +3,9 @@ import { computed, onMounted, ref } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import { History, RefreshCw, RotateCcw, Save, Search, TestTube2 } from "lucide-vue-next";
 
+import VersionHistoryRange from "../components/VersionHistoryRange.vue";
+const historyMore = ref(false);
+let historyQuery = { skip: 0, take: 21 };
 const defaultCells = [
   { cellAddress: "F!B3", standardSolution: "1N NaOH", numericValue: 1.02 },
   { cellAddress: "F!B4", standardSolution: "0.2N HCl", numericValue: 0.983 },
@@ -72,11 +75,17 @@ async function save() {
   return apply(true);
 }
 
-async function loadHistory() {
+async function loadHistory(next) {
+  if (next && !(next instanceof Event)) historyQuery = next;
   historyLoading.value = true;
+  error.value = "";
+  historyRows.value = [];
+  historyMore.value = false;
   try {
-    const { data } = await api.get("/v1/chemical-f-table/versions", { params: { take: 20 } });
-    historyRows.value = Array.isArray(data) ? data : [];
+    const { data } = await api.get("/v1/chemical-f-table/versions", { params: historyQuery });
+    const result = Array.isArray(data) ? data : [];
+    historyMore.value = result.length > 20;
+    historyRows.value = result.slice(0, 20);
   } catch (err) {
     error.value = getApiErrorMessage(err);
   } finally {
@@ -249,13 +258,14 @@ onMounted(async () => {
             <h2 class="mr-auto text-sm font-black text-slate-800 dark:text-white">版本記錄</h2>
             <button @click="loadHistory" :disabled="historyLoading" class="rounded border px-2 py-1 text-xs font-bold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">更新</button>
           </div>
+          <VersionHistoryRange :loading="historyLoading" :has-more="historyMore" @change="loadHistory" />
           <div v-if="historyRows.length" class="space-y-2">
             <div v-for="row in historyRows" :key="row.id" class="rounded border p-2 text-xs dark:border-slate-800">
               <div class="flex items-start gap-2">
                 <div class="mr-auto">
                   <div class="font-mono font-bold">{{ row.versionCode }}</div>
                   <div class="text-slate-500">{{ row.displayName }}</div>
-                  <div class="text-slate-400">#{{ row.versionNo }} {{ row.changeType }} · {{ new Date(row.changedAt).toLocaleString() }}</div>
+                  <div class="text-slate-400">#{{ row.versionNo }} {{ row.changeType }} · {{ new Date(row.changedAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }) }}</div>
                 </div>
                 <button
                   @click="restoreHistory(row)"
@@ -269,7 +279,7 @@ onMounted(async () => {
               <div v-if="row.reason" class="mt-1 text-slate-500">{{ row.reason }}</div>
             </div>
           </div>
-          <div v-else class="text-sm text-slate-500">尚無版本記錄</div>
+          <div v-else class="text-sm text-slate-500">此修改日期區間沒有F表版本紀錄</div>
         </div>
       </aside>
     </section>

@@ -162,12 +162,17 @@ public class ChemicalFTableService(AppDbContext db)
         return new ChemicalFTableSyncResult(true, normalizedVersionCode, previousVersionCode, cells);
     }
 
-    public async Task<List<ChemicalFTableVersionHistorySummary>> GetVersionHistoryAsync(int take, CancellationToken ct)
+    public async Task<List<ChemicalFTableVersionHistorySummary>> GetVersionHistoryAsync(int take, CancellationToken ct, string? fromDate = null, string? toDate = null, int skip = 0)
     {
+        var range = VersionHistoryDateRange.Parse(fromDate, toDate);
+        if (skip < 0) throw new ArgumentException("無效的分頁範圍。");
         var limit = Math.Clamp(take, 1, 100);
-        return await db.ChemicalFTableVersionHistories
-            .AsNoTracking()
+        var query = db.ChemicalFTableVersionHistories.AsNoTracking();
+        if (range.FromUtc.HasValue) query = query.Where(x => x.ChangedAt >= range.FromUtc.Value);
+        if (range.UntilUtc.HasValue) query = query.Where(x => x.ChangedAt < range.UntilUtc.Value);
+        return await query
             .OrderByDescending(x => x.VersionNo)
+            .ThenByDescending(x => x.Id).Skip(skip)
             .Take(limit)
             .Select(x => new ChemicalFTableVersionHistorySummary(
                 x.Id,
@@ -176,7 +181,7 @@ public class ChemicalFTableService(AppDbContext db)
                 x.DisplayName,
                 x.PreviousVersionCode,
                 x.ChangeType,
-                x.ChangedAt,
+                DateTime.SpecifyKind(x.ChangedAt, DateTimeKind.Utc),
                 x.ChangedBy,
                 x.Reason,
                 x.RestoredFromHistoryId))

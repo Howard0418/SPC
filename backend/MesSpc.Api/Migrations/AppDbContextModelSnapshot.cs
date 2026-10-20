@@ -3452,6 +3452,60 @@ namespace MesSpc.Api.Migrations
                     b.ToTable("SpcRuleGroups");
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.SpecificationLimitVersion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ChangedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("PartProcessCharacteristicId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PreviousSnapshotJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SnapshotJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SourceKind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<int?>("SourceSegmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VersionNo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartProcessCharacteristicId", "ChangedAt");
+
+                    b.HasIndex("PartProcessCharacteristicId", "VersionNo")
+                        .IsUnique();
+
+                    b.ToTable("SpecificationLimitVersions", null, t =>
+                        {
+                            t.HasComment("工程規格不可變版本快照，僅記錄追蹤啟用後異動");
+                        });
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.Station", b =>
                 {
                     b.Property<int>("Id")

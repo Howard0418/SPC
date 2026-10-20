@@ -1695,3 +1695,10 @@
 ## 2026-10-19 歷史日期篩選前置核對
 - 規格只有PPC／分段目前值及最後更新時間，沒有逐次快照，無法只用日期參數提供完整歷史；未拿生效日期替代修改日期。
 - 提出新增SpecificationLimitVersions、統一EF寫入追蹤與隔離migration／交易測試方案，依已同意計畫先待使用者確認，未新增表／程式或操作正式庫。待辦仍4件（SPC1待擴充確認、KM暫緩3）。
+
+## 2026-10-20 SPC三類版本歷史日期篩選完成
+- 經使用者同意，新增規格不可變版本快照與統一EF寫入邊界，規格異動與快照同交易、伺服器actor、同PPC鎖／版號、過期快照409；三類歷史使用台北修改日期先篩後分頁、查詢／清除／錯誤提示與UTC時間回應。
+- 發現舊F歷史migration缺EF識別標記而測試庫缺表，補正註冊並以原migration補齊；不改原F值、不回填虛構歷史。兩類隔離Up／Down／重跑、真實SQL交易／併發及應用權限驗證通過。
+- 相關37／瀏覽器9通過；全套132例為120通過、6既有失敗、6略過，完整原碼基準重跑同6失敗，無新增失敗。Release publish／testhost build成功，既有套件及chunk警告保留。
+- 備份VERIFYONLY、IIS／檔案備份與逐檔hash通過，PMR_SPC_TEST兩筆migration及SpcSingleTest API0.1.62／Web0.1.65發布完成；原規格／F值與保護設定hash不變，三歷史GET200／無效日期400，HTTP資產hash匹配。正式未更新，剩3件均KM暫緩。
+- 詳見specs/20261019-version-history-date-filter/verification.md；正式日後需先核對F實表／舊migration紀錄，不直接複製本測試包啟動Migrate。

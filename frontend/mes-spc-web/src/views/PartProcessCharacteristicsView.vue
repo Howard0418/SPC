@@ -1,4 +1,6 @@
 <script setup>
+import VersionHistoryRange from "../components/VersionHistoryRange.vue";
+import SpecificationLimitHistory from "../components/SpecificationLimitHistory.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onBeforeUnmount, onMounted, ref, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -77,6 +79,10 @@ const formTabs = computed(() => [
 ]);
 const formulaVersionReason = ref("");
 const chemicalFormulaVersions = ref([]);
+const chemicalHistoryMore = ref(false);
+let chemicalHistoryQuery = { skip: 0, take: 21 };
+let chemicalHistoryRequest = 0;
+const specHistoryRevision = ref(0);
 const chemicalFormulaVersionsVisible = ref(false);
 const chemicalFormulaVersionsLoading = ref(false);
 const chemicalFormulaVersionsErr = ref("");
@@ -160,6 +166,7 @@ function formatFormulaVersionDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -186,18 +193,25 @@ function formulaVersionSummary(version) {
   }
 }
 
-async function loadChemicalFormulaVersions() {
+async function loadChemicalFormulaVersions(next) {
+  if (next && !(next instanceof Event)) chemicalHistoryQuery = next;
   if (!currentId.value || form.value.controlScope !== CONTROL_SCOPE.CHEM) return;
+  const request = ++chemicalHistoryRequest;
+  const ppcId = currentId.value;
+  chemicalFormulaVersions.value = [];
+  chemicalHistoryMore.value = false;
   chemicalFormulaVersionsVisible.value = true;
   chemicalFormulaVersionsLoading.value = true;
   chemicalFormulaVersionsErr.value = "";
   try {
-    const { data } = await api.get(`/part-process-characteristics/${currentId.value}/chemical-analysis-formula-versions`);
-    chemicalFormulaVersions.value = data?.data || [];
+    const { data } = await api.get(`/part-process-characteristics/${currentId.value}/chemical-analysis-formula-versions`, { params: chemicalHistoryQuery });
+    if (request !== chemicalHistoryRequest || ppcId !== currentId.value) return;
+    chemicalHistoryMore.value = (data?.data || []).length > 20;
+    chemicalFormulaVersions.value = (data?.data || []).slice(0, 20);
   } catch (e) {
-    chemicalFormulaVersionsErr.value = getApiErrorMessage(e);
+    if (request === chemicalHistoryRequest && ppcId === currentId.value) chemicalFormulaVersionsErr.value = getApiErrorMessage(e);
   } finally {
-    chemicalFormulaVersionsLoading.value = false;
+    if (request === chemicalHistoryRequest && ppcId === currentId.value) chemicalFormulaVersionsLoading.value = false;
   }
 }
 
@@ -807,6 +821,8 @@ async function openCreateModal() {
 }
 
 async function openEditModal(item) {
+  chemicalHistoryQuery = { skip: 0, take: 21 };
+  chemicalHistoryMore.value = false;
   formulaVersionReason.value = "";
   modalMode.value = "edit";
   currentId.value = item.id;
@@ -1098,6 +1114,7 @@ async function openSegmentModal(item) {
   };
   resetSegmentForm();
   await loadSegments();
+  specHistoryRevision.value++;
 }
 
 async function loadSegments() {
@@ -1155,6 +1172,7 @@ async function saveSegment() {
     }
     resetSegmentForm();
     await loadSegments();
+  specHistoryRevision.value++;
     await load();
   } catch (e) {
     segmentFormErr.value = getApiErrorMessage(e);
@@ -1183,6 +1201,7 @@ async function deleteSegment(seg) {
   try {
     await api.delete(`/control-limit-segments/${seg.id}`);
     await loadSegments();
+  specHistoryRevision.value++;
     await load();
   } catch (e) {
     alert("刪除失敗：" + getApiErrorMessage(e));
@@ -1815,6 +1834,8 @@ onBeforeUnmount(() => {
 
             <!-- STEP 2 CONTAINER -->
             <div v-show="currentStep === 2" class="space-y-5 animate-fade-in">
+                <SpecificationLimitHistory v-if="currentStep === 2 && modalMode === 'edit'" :key="currentId" :ppc-id="currentId" />
+
               <!-- Specs: USL, Target, LSL, Sample Size -->
               <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
@@ -2012,12 +2033,13 @@ onBeforeUnmount(() => {
                         收合
                       </button>
                     </div>
+                    <VersionHistoryRange :reset-key="currentId" :loading="chemicalFormulaVersionsLoading" :has-more="chemicalHistoryMore" @change="loadChemicalFormulaVersions" />
                     <div v-if="chemicalFormulaVersionsLoading" class="py-3 text-xs font-semibold text-slate-500">載入版本紀錄中...</div>
                     <div v-else-if="chemicalFormulaVersionsErr" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
                       {{ chemicalFormulaVersionsErr }}
                     </div>
                     <div v-else-if="chemicalFormulaVersions.length === 0" class="py-3 text-xs font-semibold text-slate-500">
-                      尚無公式版本紀錄；第一次修改並儲存後會自動建立。
+                      此修改日期區間沒有公式版本紀錄；首次修改儲存後開始記錄。
                     </div>
                     <div v-else class="max-h-52 space-y-2 overflow-y-auto pr-1">
                       <div
@@ -2209,6 +2231,7 @@ onBeforeUnmount(() => {
             
             <!-- Left Side: Trial Calculate -->
             <div class="w-full md:w-1/2 p-6 md:border-r border-slate-200 dark:border-slate-800 md:overflow-y-auto space-y-6 shrink-0 md:shrink">
+              <SpecificationLimitHistory v-if="selectedPpc" :key="`${selectedPpc.id}-${specHistoryRevision}`" :ppc-id="selectedPpc.id" />
               <div>
                 <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2">
                   <Activity class="w-4 h-4 text-amber-500" /> 管制界線試算工具

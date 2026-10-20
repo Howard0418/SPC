@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MesSpc.Api.Infrastructure.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public partial class AppDbContext(DbContextOptions<AppDbContext> options, Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContextAccessor = null) : DbContext(options)
 {
+    public DbSet<SpecificationLimitVersion> SpecificationLimitVersions => Set<SpecificationLimitVersion>();
+
     // Existing DB Sets
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Station> Stations => Set<Station>();
@@ -478,6 +480,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(x => x.SlotId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        var specHistory = modelBuilder.Entity<SpecificationLimitVersion>();
+        specHistory.ToTable("SpecificationLimitVersions", t => t.HasComment("工程規格不可變版本快照，僅記錄追蹤啟用後異動"));
+        specHistory.HasKey(x => x.Id);
+        specHistory.HasIndex(x => new { x.PartProcessCharacteristicId, x.VersionNo }).IsUnique();
+        specHistory.HasIndex(x => new { x.PartProcessCharacteristicId, x.ChangedAt });
+        specHistory.Property(x => x.SourceKind).HasMaxLength(16);
+        specHistory.Property(x => x.ChangeType).HasMaxLength(16);
+        specHistory.Property(x => x.ChangedBy).HasMaxLength(256);
+        // No cascading FK: deletion of the source must not erase its history.
         // ControlLimitSegment Mapping
         modelBuilder.Entity<ControlLimitSegment>().HasKey(x => x.Id);
         modelBuilder.Entity<ControlLimitSegment>().HasIndex(x => new { x.PartProcessCharacteristicId, x.StartDate });
@@ -507,16 +518,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        HandleAuditFields();
-        return base.SaveChangesAsync(cancellationToken);
-    }
-
-    public override int SaveChanges()
-    {
-        HandleAuditFields();
-        return base.SaveChanges();
-    }
+        => SaveWithSpecificationHistoryAsync(true, cancellationToken);
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        => SaveWithSpecificationHistoryAsync(acceptAllChangesOnSuccess, cancellationToken);
+    public override int SaveChanges() => SaveWithSpecificationHistory(true);
+    public override int SaveChanges(bool acceptAllChangesOnSuccess) => SaveWithSpecificationHistory(acceptAllChangesOnSuccess);
 
     private void HandleAuditFields()
     {

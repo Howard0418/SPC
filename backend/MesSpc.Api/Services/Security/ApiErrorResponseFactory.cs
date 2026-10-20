@@ -10,6 +10,8 @@ public static class ApiErrorResponseFactory
 
     public static ApiErrorResponse FromException(Exception? exception, bool includeDetails)
     {
+        if (exception is DbUpdateConcurrencyException)
+            return new ApiErrorResponse(false, "CONCURRENT_UPDATE", "資料已被其他使用者更新，請重新載入後再儲存。", null);
         if (exception is DbUpdateException dbUpdateException)
         {
             return FromDbUpdateException(dbUpdateException, includeDetails);
