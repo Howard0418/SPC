@@ -1830,3 +1830,7 @@
 ## 2026-10-21 SEC-FOLLOWUP-006正式API拓撲相容
 - Test同源防護保留；新增正式專用白名單端點helper，不採任意VITE_API_BASE、不安裝IIS模組。Node3/同源1/分段17共21通過，Web0.1.70兩環境build及測試前端發布完成。正式後端0.1.68/4筆schema完成；前端R1遇既有靜態站路由不符已回復0.1.63，R2待發布，不將工具smoke當瀏覽器成功。
 - Runtime依指示暫緩；KM正式1.6.7已完成，Portal191/234已正式發布，主要剩3件（006待R2、002受阻、004暫緩），TransFiles1件不變。
+
+## 2026-10-21 SEC-FOLLOWUP-006正式網站發布完成
+- SPC正式API0.1.68/Web0.1.70，四筆DB相容更新已套、日期policy0/正式writer0；R2的101檔及3份保護設定hash/備份驗證通過，真實SSO、公式歷史日期查詢及C5唯讀管制圖/直方圖正常。R1前端路由問題已單獨回復後以白名單相容修正完成R2，不更動IIS binding或Runtime。
+- Portal191/234正式發布，202檔/4份設定hash/備份與SMTP解密正常；KM1.6.7另005完成。未在正式寫測試資料或啟用全部日期公式。Runtime004暫緩、附件掃毒002受阻，主要剩2件，另TransFiles舊驗收1件。[驗證](specs/20261021-spc-portal-production-preflight/verification.md)。

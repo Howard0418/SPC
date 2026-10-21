@@ -241,3 +241,5 @@
 - 2026-10-21再次取得正式更新授權；依原18:00維護窗先執行系統映像及應用/附件預備份，完成驗證前不發布。[備份進度](../specs/20261021-runtime-maintenance/verification.md)。
 
 - 2026-10-21正式靜態站API相容：測試站仍固定同源/api且忽略舊VITE_API_BASE；正式包可明確指定既有白名單http://172.16.119.140:8081/api，其他URL拒絕。使用VITE_PRODUCTION_API_BASE，不安裝IIS代理模組。21項及兩環境build通過，測試前端0.1.70已發布，正式R2待驗；[驗證](../specs/20261021-spc-portal-production-preflight/verification.md)。
+
+- 2026-10-21網站正式更新完成：SPC API0.1.68/Web0.1.70（正式專用API白名單）、Portal191/234、KM1.6.7；必要SPC4筆/KM023已套，Runtime維持原版。正常SSO/公式歷史日期/唯讀製圖與保護設定驗證通過，日期policy不自動啟用。[驗證](../specs/20261021-spc-portal-production-preflight/verification.md)。

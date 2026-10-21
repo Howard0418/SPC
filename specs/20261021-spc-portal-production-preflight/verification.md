@@ -52,3 +52,12 @@
 - R1正式後端0.1.68，靜態SPC前端無/api代理導致新client不可用；已只回復原前端0.1.63，保留後端/schema。不能把工具smoke成功當作瀏覽器驗收成功。
 - 最小修正client使用resolveApiBase：Test始終/api且不採舊VITE_API_BASE；Production新明確VITE_PRODUCTION_API_BASE只允既有正式http://172.16.119.140:8081/api或/api，其餘URL fail closed。未改JWT/401/寫入環境閘門、IIS/SSO設定或Runtime。
 - 核心測試先紅（module未存在）後綠；Node3、既有同源瀏覽器1與分段17共21通過，兩環境Web0.1.70建置通過。Playwright在Windows清理fixture卡住，僅辨識並停止本次Vite子程序後runner正常exit0；沒有停止使用者瀏覽器或網站。既有234後端/化學通過與8略過沿用，未冒稱重跑。
+
+## 最終正式驗證與回復
+- SPC R2正式0.1.68/0.1.70發布完成，pending0；16:24:45～16:24:58發布流程約13秒。101個payload檔SHA256相同、3份保護設定與同批備份hash相同，SQL COPY_ONLY/CHECKSUM/VERIFYONLY通過。R2無新DDL，R1四筆保留；policy啟用0、receipt0、正式writer成員0，不建立個人正式權限。
+- Portal R1 API191/Web234完成，202個payload檔/4份保護設定hash相同，27個source EF catalogue pending0、無新DDL，SQL備份驗證通過。[Portal驗證](D:/PmrPortal/specs/20261021-websites-production-release/verification.md)。
+- 正式Portal→SPC實際SSO成功，現有編輯者角色；畫面Web0.1.70/API0.1.68、正式環境，線別主檔與公式總覽114項載入正常。開C5清潔硫酸公式版本歷史，以修改起日2026-10-01/迄日2026-10-21查詢無錯誤；沒有按儲存或回復版本。
+- 正式管制圖選藥液/鍍銅線(C5)，沿預設2026-07-21～2026-10-21查總表3筆，再第一筆製圖，2個canvas（管制圖/直方圖）與日期分段版本入口正常；該項無日期分段，呈現主檔可查，不假稱已驗正式多版本區間或有receipt的新資料。未建立公式/分段/量測。正常人工跨日匯入及新trace仍按原Antigravity案例在業務確認後進行。
+- 正式Portal首頁234/生日月日/人事兩卡/團保自動空資料結果已目視確認；更新後SMTP跨程序解密PASS、3key/hash不變、不寄信。KM正式1.6.7/真人Portal SSO另005完成。三機Runtime保持本機10.0.12/8.0.31、SPC10.0.11、Portal8.0.25；未安裝、重啟全IIS/OS或改binding/SSO key。
+- 回復：各自正式工具同manifest Rollback、兩個Authorized開關；備份分別在對應正式機C:/ProgramData/PMR-Releases/Production/SPC-WEBSITE-20261021-R2及PORTAL-WEBSITE-20261021-R1。R1原schema前備份保留；回復應用不自動Down或整庫還原。R1前端曾回復，R2最終已完整發布並驗證，不混稱R1工具smoke就是瀏覽器成功。
+- 所有release-staging/sql clone/ZIP/JSON/截圖/設定/備份均不提交，唯一新code是端點helper/client接線與Web版號；文件及連結/diff檢查通過。006 DONE；主要未完成2件（002政策受阻、004使用者暫緩），TransFiles舊驗收1件另列。

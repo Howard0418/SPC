@@ -44,3 +44,8 @@
 - 應用預先備份批次backup_20261021_154518，目標D:/PMR-MaintenanceBackups，先套Administrators/SYSTEM ACL。複製六個應用、兩個KM附件目錄及C上Portal測試keyring；不使用mirror/purge/delete、不停站。腳本語法檢查通過；複製/hash仍在執行，尚未標PASS。
 - KM正式Storage:Path及測試Storage:Path分別核對為D:/PMR_KM_Files及D:/PMR_KM_TEST_Files；本機IIS實際五站（SPC前端另含在同站應用備份），不是六個獨立IIS站台。
 - 系統映像日誌C約71%，仍在執行，完成碼/catalog待確認。正式應用未覆寫、正式DDL未執行、Runtime未安裝；18:00維護窗不變，未建立自動排程。
+
+## Runtime暫緩與備份實際結果
+- 使用者最新指示Runtime先不升級、網站先發布；004改暫緩，沒有18:00自動維護排程，不安裝Hosting、不重啟全機IIS/OS。網站發布僅操作各站pool，兩者分開。
+- 本機WBAdmin完成exit0，get versions可列10/21/2026-07:23（畫面本地備份時間15:23），目錄列Volume/File/Application/Bare Metal/System State可回復項目；實際未執行還原演練，不稱整機回復測試通過。映像C/allCritical位於D:/WindowsImageBackup。
+- D:/PMR-MaintenanceBackups/backup_20261021_154518預先複製因KM發布造成來源hash變動而安全失敗；未標完成、不刪除該批、不視為一致回復點。正式各站已另取得本次停寫SQL/應用備份VERIFYONLY及hash驗證，不依賴此未完成預先複製。將來Runtime維護前須重新核對最新一致備份。兩正式VM未建checkpoint。

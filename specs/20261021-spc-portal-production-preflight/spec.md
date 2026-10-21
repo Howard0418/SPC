@@ -1,5 +1,5 @@
 # SEC-FOLLOWUP-006 SPC/Portal正式更新前核對
-2026-10-21；狀態IN PROGRESS，未發布。使用者要求執行下個工作，005/004保留待辦；本次只唯讀核對，無併行正式變更。
+2026-10-21；狀態DONE（網站正式發布完成，Runtime另案暫緩）。以下保留最初唯讀核對與規劃，最新授權及發布驗證見末節。
 
 ## 範圍/相依
 - 主協調SPC；Portal為公式輸入/代理相依，TransFiles僅核對直寫協定，不改EXE或個人授權。
@@ -11,11 +11,11 @@
 - Given正式DB When唯讀比對migration/物件 Then記錄實際缺項，不以來源存在代表已套用。
 - GivenAPI啟動會遷移 When未完成DDL審查/備份 Then不得直接以新DLL啟動正式站。
 - [x] 版本/正式DB名稱/遷移歷史與必要物件唯讀核對。
-- [ ] 比對完整payload與來源基準、前端正式API端點、設定/SSO/金鑰保存及相依契約。
+- [x] 比對完整payload與來源基準、前端正式API端點、設定/SSO/金鑰保存及相依契約。
 - [x] 審查4筆DDL新增物件/權限/歷史資料影響，見[具體範圍](database-scope.md)。
 - [x] 取得4筆DDL具體授權；正式COPY_ONLY/CHECKSUM備份及VERIFYONLY，正式備份複本4筆Up/重跑/原60表資料指紋與約束通過。
-- [ ] 新舊匯入/公式/製圖業務相容性驗證及正式發布前Pkcs既有弱點處理。
-- [ ] 必要測試、各自發布及真人登入/公式/圖表驗收。
+- [x] 沿用新舊匯入/公式自動回歸、補複本舊量測更新與正式唯讀製圖，Pkcs處理完成；正常業務人工跨日匯入仍依案例後驗，不在正式寫測試資料。
+- [x] 必要測試、各自正式發布及真人登入/公式歷史/唯讀圖表驗收。
 - Happy核對/備份/複本/分站部署；Boundary歷史資料不回填及公式policy預設停用；Invalid目標/備份/遷移差異即停止；Regression原匯入/角色/SSO/SMTP/公告/圖表。
 - 回復：同批應用備份並保留環境設定/附件/金鑰，新增schema保留；不自動Down、drop或整庫還原。直寫角色不得臨時放大帳號權限。
 - [已執行核對](verification.md)。未改程式，build/測試站發布不適用；未完成全部發布驗證，不標DONE。
@@ -28,3 +28,7 @@
 - R1後端0.1.68/4筆schema已成功，瀏覽器揭露SpcWeb無/api代理，R1前端已單獨回復0.1.63。不安裝IIS模組、不改binding/驗證/SSO key。
 - BDD Given Test且帶舊絕對API設定 When初始化client Then仍固定/api；Given Production明確指定本案既有正式端點http://172.16.119.140:8081/api When初始化client Then只允此端點（或明確同源/api）；其他主機/路徑/帳密/query/hash/協定均拒絕，不能外送JWT。環境寫入閘門/Authorization/401流程不變。
 - 先新增Node單元測試紅燈再加resolveApiBase helper；Happy正式白名單，Boundary同源/尾斜線/測試忽略，Invalid測試站/其他主機/userinfo等，Regression既有同源API測試。Web升0.1.70，先備份發布測試前端、再正式R2完整受控包（API沿用0.1.68、pending0），最後正常SSO/圖表讀取驗證。
+
+## 完成狀態（2026-10-21）
+- DONE：SPC正式API0.1.68/Web0.1.70（R2），Portal正式API1.0.191/Web1.0.234。四筆SPC schema已套，Portalpending0；Runtime未升級。
+- 正式登入/主檔/藥液管制圖/直方圖/公式歷史日期查詢、Portal生日/人事/團保與SMTP解密均完成；無正式測試資料匯入。公式policy仍0、正式writer成員0，舊資料不補造版本。真人跨日正常匯入仍依既有案例後續驗收，不宣稱自動開啟所有公式排程。
