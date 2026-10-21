@@ -1,5 +1,8 @@
 # SPC 現行需求索引
 
+- Runtime維護：[SEC-FOLLOWUP-004](../specs/20261021-runtime-maintenance/spec.md)，7份官方新舊Hosting包hash/簽章驗證完成，使用者確認三機有可回復備份；尚待備份/隔離演練與具體停機授權，未安裝或重啟。
+
+
 - 後續安全/正式更新：[主規格](../specs/20261020-security-production-followups/spec.md)；001唯讀盤點及[維護決策](../specs/20261020-security-production-followups/verification.md)、003 KM共享nonce完成（測試1.6.7，81項/真實SSO通過），剩002及004～006共4件；002政策受阻。KM主機有WithSecure服務運行、Defender停止；未啟用防毒/安裝Runtime或發布站台。
 
 

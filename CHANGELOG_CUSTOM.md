@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-21（SEC-FOLLOWUP-004安裝準備）
+- 下載官方8.0.32/31/25、10.0.13/12/11及6.0.16 Hosting包，SHA512與有效Microsoft簽章均通過，未執行。完成[逐機維護/回復計畫](specs/20261021-runtime-maintenance/plan.md)。
+- 使用者確認三台皆有可回復備份，仍待核對識別/時點、隔離演練與維護授權；三機既有FileRenamePending，無CBS/WindowsUpdate重啟旗標，不清除旗標或自行重啟。
+- 無程式/DB/防毒/站台變更，004仍未完成，共4件；安裝包及證據JSON不提交。
+
+
 ## 2026-10-21（SEC-FOLLOWUP-003 KM共享nonce完成）
 - KM沿用Portal簽章契約，以SQL唯一hash原子消費、DBUTC窗口/TTL及安全拒絕取代單機記憶體；81項（含實際兩程序/SQL並發）與真實Portal入口SSO通過。
 - 023測試庫已備份VERIFYONLY/重跑，KM-Test1.6.7及備份/設定hash/匿名隔離通過，正式未操作；[KM驗證與回復](C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/KM/specs/20261021-shared-sso-nonce/verification.md)。
