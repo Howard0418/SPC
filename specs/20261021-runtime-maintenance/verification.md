@@ -39,3 +39,8 @@
 - 使用者委託代為指定回復方案；已核對本機實體雙磁碟、WinRE及64位WBAdmin，系統映像備份已啟動至D:/WindowsImageBackup，C及allCritical、VSS copy。15:30日誌顯示C約20%，仍執行中；尚未通過完成碼及版本目錄核對，不標示備份完成。未停站或重啟。
 - 已核對兩正式VM之客體/宿主GUID、VSS整合健康及CSV約6376GiB可用；尚未建立checkpoint。18:00停寫後採ProductionOnly，失敗不退回standard；實際識別與時點屆時記錄。詳細回復方式見[計畫](plan.md)。
 - D應用/附件備份及完成後目錄核對仍待；無整機還原演練，不宣稱可回復實測。Runtime仍未安裝，004未完成。
+
+## 正式更新授權後備份執行（15:50）
+- 應用預先備份批次backup_20261021_154518，目標D:/PMR-MaintenanceBackups，先套Administrators/SYSTEM ACL。複製六個應用、兩個KM附件目錄及C上Portal測試keyring；不使用mirror/purge/delete、不停站。腳本語法檢查通過；複製/hash仍在執行，尚未標PASS。
+- KM正式Storage:Path及測試Storage:Path分別核對為D:/PMR_KM_Files及D:/PMR_KM_TEST_Files；本機IIS實際五站（SPC前端另含在同站應用備份），不是六個獨立IIS站台。
+- 系統映像日誌C約71%，仍在執行，完成碼/catalog待確認。正式應用未覆寫、正式DDL未執行、Runtime未安裝；18:00維護窗不變，未建立自動排程。

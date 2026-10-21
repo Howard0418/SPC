@@ -237,3 +237,5 @@
 - SPC測試前端同源API修復：[SPC-TEST-WEB-API-SAME-ORIGIN-20261020](../specs/20261020-test-web-api-same-origin/spec.md)。API client固定/api，舊VITE_API_BASE不可覆蓋；Web0.1.66測試站發布、線上bundle14請求同源及12真實主檔API200驗證通過，API0.1.62／DB／正式不變。
 
 - 2026-10-21維護續辦：使用者委託指定整機回復方案，本機系統映像備份進行中，正式VM回復點維持18:00停寫後建立；[計畫](../specs/20261021-runtime-maintenance/plan.md)。Portal正式SMTP儲存405與新密文驗證已完成子步驟，非整版正式發布；[整合驗證](../specs/20261021-spc-portal-production-preflight/verification.md)。
+
+- 2026-10-21再次取得正式更新授權；依原18:00維護窗先執行系統映像及應用/附件預備份，完成驗證前不發布。[備份進度](../specs/20261021-runtime-maintenance/verification.md)。

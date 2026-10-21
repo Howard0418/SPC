@@ -278,3 +278,5 @@
 - 004：使用者委託指定備份，本機WBAdmin C/allCritical映像執行中（約20%，未完成）；兩正式Hyper-V客體/宿主與空間核對完成，18:00後ProductionOnly checkpoint尚未建立。Runtime未安裝，D應用備份待完成。
 - 006：Portal正式SMTP WebDAV 405已修正，使用者儲存成功及新密文解密通過，金鑰不變/未寄信；此子步驟完成，非整版更新。[驗證](specs/20261021-spc-portal-production-preflight/verification.md)。
 - 主要未完成仍4件（002外部政策阻擋、004進行中、005/006待後續）；TransFiles明列舊驗收1件不變。
+
+- 2026-10-21使用者再次授權正式更新；004現正執行系統映像及應用/附件/keyring預先備份，尚未通過完成驗證；既定18:00停站窗不變、無自動排程。005/006依序保留，主要4件/TransFiles1件不變。
