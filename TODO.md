@@ -253,7 +253,7 @@
 1. SEC-FOLLOWUP-001：已完成主機/Defender/Runtime/發布相依盤點與更新評估（唯讀），見[驗證與維護決策](specs/20261020-security-production-followups/verification.md)。
 2. SEC-FOLLOWUP-002：KM附件隔離/掃描整合（受阻：WithSecure簽章/help/單一合成檔掃描成功，使用者無法確認不外送樣本政策；IIS身分尚待驗證，不逕啟Defender）；[KM最小方案](C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/KM/specs/20261021-attachment-scan-integration/plan.md)。
 3. SEC-FOLLOWUP-003：已完成SQL共享nonce（使用者同意002受阻時獨立執行）；81項及真實Portal SSO驗證通過，測試庫023/測試站1.6.7；[驗證](C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/KM/specs/20261021-shared-sso-nonce/verification.md)，正式未更新。
-4. SEC-FOLLOWUP-004：Runtime/Hosting Bundle升級準備中；7份官方新舊包SHA512/簽章通過，使用者確認三機皆有備份，無演練環境，改提逐台維護；待備份識別/回復方式及接受未演練限制與具體維護窗/停機授權；[計畫](specs/20261021-runtime-maintenance/plan.md)，未安裝。
+4. SEC-FOLLOWUP-004：Runtime/Hosting Bundle升級準備中；7份官方新舊包SHA512/簽章通過，使用者確認三機皆有備份，無演練環境，改提逐台維護；已確認10/21 18:00及必要重啟，待實際備份識別/時點與回復方式核對；[計畫](specs/20261021-runtime-maintenance/plan.md)，未安裝。
 5. SEC-FOLLOWUP-005：KM已驗證新版正式更新（相依安全前置）。
 6. SEC-FOLLOWUP-006：SPC/Portal已驗證新版正式更新（先核對migration並具體授權）。
 先前小工作0件為原工作池歷史；本批001及003完成後未完成4件（002受阻、004～006待執行）。正式更新已取得使用者執行意向，未知DB變更與共用主機維護仍須具體核對。
