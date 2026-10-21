@@ -1,5 +1,7 @@
 # SPC 現行需求索引
 
+- TransFiles舊500核銷：[紀錄](../specs/20261021-transfiles-500-reconciliation/spec.md)，主要4件不變，TransFiles明列舊待驗剩2件，不重複匯入。
+
 - 正式更新前核對：[SEC-FOLLOWUP-006](../specs/20261021-spc-portal-production-preflight/spec.md)，SPC正式缺4筆遷移（含F表歷史），Portal正式金鑰保存另待核對，未發布。
 
 - Runtime維護：[SEC-FOLLOWUP-004](../specs/20261021-runtime-maintenance/spec.md)，7份官方新舊Hosting包hash/簽章驗證完成，使用者確認三機有可回復備份；已確認無演練環境，逐台維護已確認10/21 18:00及必要重啟；尚待實際備份識別/回復方式核對，未安裝或重啟。

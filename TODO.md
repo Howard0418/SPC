@@ -257,3 +257,6 @@
 5. SEC-FOLLOWUP-005：KM已驗證新版正式更新（相依安全前置）。
 6. SEC-FOLLOWUP-006：發布前核對中，SPC缺4筆migration、Portal正式金鑰保存待核對；[核對](specs/20261021-spc-portal-production-preflight/verification.md)，未發布。
 先前小工作0件為原工作池歷史；本批001及003完成後未完成4件（002受阻、004～006待執行）。正式更新已取得使用者執行意向，未知DB變更與共用主機維護仍須具體核對。
+
+## 2026-10-21 TransFiles歷史記錄核銷
+[舊500診斷](specs/20261021-transfiles-500-reconciliation/spec.md)已核銷；主要4件不變，TransFiles明列舊待驗3降2（TASK-003/005），首筆LOG人工故障驗收另保留註記。
