@@ -267,3 +267,5 @@
 主要4件不變；TransFiles TASK-003已由使用者成功畫面核銷，明列舊驗收剩1件TASK-005，首筆LOG人工故障驗收註記保留。
 
 - TransFiles TASK-005 [自動GUI續驗](specs/20261021-transfiles-login-failure-validation/spec.md)：59測試通過，實體EXE故障類別未驗，主要4/明列舊待驗1件不變。
+
+- SEC-FOLLOWUP-006 [四筆正式DDL範圍](specs/20261021-spc-portal-production-preflight/database-scope.md)已完成源碼審查與前置物件唯讀核對，待具體授權/複本/正式金鑰/發布；主要4件不變。

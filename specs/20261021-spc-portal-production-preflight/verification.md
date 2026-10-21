@@ -22,3 +22,8 @@
 - Portal Program.cs:58～62與PortalDataProtection.TestKeyDirectory限制為測試目標；目前測試金鑰修補不等於正式SMTP持久化完成，需正式環境金鑰保存方案與重啟相容檢查。
 - Portal兩份使用者修改的團保xlsx/docx僅status確認，未讀內容或提交。
 - 無安裝、停站、DB寫入、寄信或正式發布。文件檢查通過；build/測試發布不適用。SEC-FOLLOWUP-006未完成，總剩4件。
+
+## 四筆DDL審查完成，未套用
+- 已讀4筆Up及2份凍結SQL，整理[授權範圍](database-scope.md)：8表/2可空欄/21索引/9 trigger/2程序/直寫角色，無歷史回填或policy啟用，不加入個人角色。
+- 7張前置實體表存在，2新增欄/公式複合唯一約束/TR_Chemical% trigger查無。只有sys目錄唯讀查詢，無業務資料輸出或修改。
+- 文件內容/連結/diff檢查通過，build/發布不適用。正式複本驗證、正式金鑰相容及正式套用未執行，仍剩主要4件/TransFiles1件。

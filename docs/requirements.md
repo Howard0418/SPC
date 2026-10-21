@@ -1,5 +1,7 @@
 # SPC 現行需求索引
 
+- SPC正式4筆DDL [具體範圍](../specs/20261021-spc-portal-production-preflight/database-scope.md)已審查，待具體授權與正式複本驗證；未套用。
+
 - TransFiles TASK-005：[故障回呼續驗](../specs/20261021-transfiles-login-failure-validation/spec.md)，59測試通過，EXE實際故障畫面仍待驗。
 
 - TransFiles TASK-003 [人工驗收完成](../specs/20261021-transfiles-login-delivery-check/spec.md)：測試登入成功，未預覽/匯入；主要4件、TransFiles明列舊待驗1件。

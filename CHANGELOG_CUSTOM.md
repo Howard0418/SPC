@@ -1,5 +1,8 @@
 # 客製需求與回歸檢查
 
+## 2026-10-21 SEC-FOLLOWUP-006四筆DDL範圍審查
+- 整理8表/2欄/21索引/9 trigger/2程序及直寫角色；無回填/重算/日期policy自動啟用或個人角色授權，正式僅唯讀核對前置物件。未執行DDL/發布，主要4件不變。
+
 ## 2026-10-21 TransFiles TASK-005故障回呼驗證
 - [驗證](specs/20261021-transfiles-login-failure-validation/verification.md)3新測試/9情境及56回歸共59通過；無產品修改/匯入/發布。EXE人工故障待驗，主要4/舊驗收1不變。
 
