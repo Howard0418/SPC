@@ -45,3 +45,10 @@
 - 正式IIS既有HKLM SID金鑰庫3份，唯讀跨程序加解密通過；未改金鑰儲存架構。使用者重新儲存密碼後，實際新密文解密通過，金鑰數量/hash不變，無寄信。
 - 正式Web繼承WebDAV攔截PUT造成405；僅移除該站WebDAV handler/module，保留環境設定。使用者再次儲存後，畫面顯示SMTP設定已儲存、已儲存密碼及人事收件可用。僅此設定修正已套正式，並非Portal全版更新。
 - [金鑰驗證](D:/PmrPortal/specs/20261021-production-keyring-preflight/verification.md)、[405修正](D:/PmrPortal/specs/20261021-formal-smtp-webdav-405/verification.md)。Portal上傳提交6007b51；整體006仍待正式DDL、業務相容驗證及完整發布。
+
+## 網站優先正式發布與前端拓撲修正
+- 使用者暫緩Runtime，004不作發布前置。KM005已正式1.6.7完成，Portal191/234正式完成（另見Portal規格），006保留SPC前端R2驗證。
+- 精確交付SQL生成遇到CREATE TRIGGER/PROCEDURE不能位於IF包裝內；改將同一9個trigger/2個procedure原文以EXEC(N'...')包裝，未改原migration/業務定義。fresh SQL複本完整執行兩次，60原表原欄位/筆數指紋與約束通過；舊量測no-op更新交易rollback通過。4筆schema正式已套用，policy0/writer成員0/receipt0。
+- R1正式後端0.1.68，靜態SPC前端無/api代理導致新client不可用；已只回復原前端0.1.63，保留後端/schema。不能把工具smoke成功當作瀏覽器驗收成功。
+- 最小修正client使用resolveApiBase：Test始終/api且不採舊VITE_API_BASE；Production新明確VITE_PRODUCTION_API_BASE只允既有正式http://172.16.119.140:8081/api或/api，其餘URL fail closed。未改JWT/401/寫入環境閘門、IIS/SSO設定或Runtime。
+- 核心測試先紅（module未存在）後綠；Node3、既有同源瀏覽器1與分段17共21通過，兩環境Web0.1.70建置通過。Playwright在Windows清理fixture卡住，僅辨識並停止本次Vite子程序後runner正常exit0；沒有停止使用者瀏覽器或網站。既有234後端/化學通過與8略過沿用，未冒稱重跑。

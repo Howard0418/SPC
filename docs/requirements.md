@@ -239,3 +239,5 @@
 - 2026-10-21維護續辦：使用者委託指定整機回復方案，本機系統映像備份進行中，正式VM回復點維持18:00停寫後建立；[計畫](../specs/20261021-runtime-maintenance/plan.md)。Portal正式SMTP儲存405與新密文驗證已完成子步驟，非整版正式發布；[整合驗證](../specs/20261021-spc-portal-production-preflight/verification.md)。
 
 - 2026-10-21再次取得正式更新授權；依原18:00維護窗先執行系統映像及應用/附件預備份，完成驗證前不發布。[備份進度](../specs/20261021-runtime-maintenance/verification.md)。
+
+- 2026-10-21正式靜態站API相容：測試站仍固定同源/api且忽略舊VITE_API_BASE；正式包可明確指定既有白名單http://172.16.119.140:8081/api，其他URL拒絕。使用VITE_PRODUCTION_API_BASE，不安裝IIS代理模組。21項及兩環境build通過，測試前端0.1.70已發布，正式R2待驗；[驗證](../specs/20261021-spc-portal-production-preflight/verification.md)。

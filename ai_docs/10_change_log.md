@@ -820,3 +820,6 @@
 以已保存receipt／trace查閱實際版本，整合日期分段及逐點畫面；舊資料與子組缺證據明示未知。先建核心測試，唯讀查詢、不改計算或資料庫。
 # 2026-10-21 SPC日期公式/管制圖示範資料
 - 依使用者授權建立獨立測試資料；僅PMR_SPC_TEST，沿用引擎選版/計算/保存與圖表，不改核心程式、schema或正式環境。規格：specs/20261021-formula-chart-demo/spec.md。
+
+## 2026-10-21 SEC-FOLLOWUP-006正式前端API拓撲相容
+目的：正式SpcWeb無/api代理，需集中client明確支援既有正式API白名單；Test同源及舊環境URL防護保留。不安裝Runtime/IIS模組、不改權限或SSO key。先建測試，再做最小helper與client接線，依規範測試/測試站/正式驗證。

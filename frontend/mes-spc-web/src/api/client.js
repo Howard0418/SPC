@@ -1,9 +1,9 @@
 import axios from "axios";
 import { clearAuthSession } from "../utils/auth";
+import { resolveApiBase } from "../utils/apiBase";
 
-// Web and API share one public origin; legacy build environment URLs must not override it.
-const baseURL = "/api";
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
+const baseURL = resolveApiBase(webEnvironment, import.meta.env.VITE_PRODUCTION_API_BASE);
 let apiEnvironment = "unknown";
 
 export const api = axios.create({ baseURL });

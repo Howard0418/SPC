@@ -19,3 +19,12 @@
 - Happy核對/備份/複本/分站部署；Boundary歷史資料不回填及公式policy預設停用；Invalid目標/備份/遷移差異即停止；Regression原匯入/角色/SSO/SMTP/公告/圖表。
 - 回復：同批應用備份並保留環境設定/附件/金鑰，新增schema保留；不自動Down、drop或整庫還原。直寫角色不得臨時放大帳號權限。
 - [已執行核對](verification.md)。未改程式，build/測試站發布不適用；未完成全部發布驗證，不標DONE。
+
+## 本次網站優先授權更新
+- 使用者明示Runtime暫不升級、網站先發布。004改暫緩，不再作006硬性前置；先核對現有Runtime可載入交付runtimeconfig、完成既有驗證與正式發布檢查。先005單件結束，再006；只停對應網站pool，不變更共用Runtime/IIS binding或OS。
+- 仍只執行已授權4筆SPC migration及Portal既有schema相容核對，不啟用公式policy、不授權正式個人writer、不搬測試資料至正式。
+
+## 正式靜態站API相容修正（006發布阻擋）
+- R1後端0.1.68/4筆schema已成功，瀏覽器揭露SpcWeb無/api代理，R1前端已單獨回復0.1.63。不安裝IIS模組、不改binding/驗證/SSO key。
+- BDD Given Test且帶舊絕對API設定 When初始化client Then仍固定/api；Given Production明確指定本案既有正式端點http://172.16.119.140:8081/api When初始化client Then只允此端點（或明確同源/api）；其他主機/路徑/帳密/query/hash/協定均拒絕，不能外送JWT。環境寫入閘門/Authorization/401流程不變。
+- 先新增Node單元測試紅燈再加resolveApiBase helper；Happy正式白名單，Boundary同源/尾斜線/測試忽略，Invalid測試站/其他主機/userinfo等，Regression既有同源API測試。Web升0.1.70，先備份發布測試前端、再正式R2完整受控包（API沿用0.1.68、pending0），最後正常SSO/圖表讀取驗證。
