@@ -1,5 +1,8 @@
 # 客製需求與回歸檢查
 
+## 2026-10-21 TransFiles TASK-003完成
+- 使用者提供測試登入成功與未預覽/匯入畫面，配合12項與交付hash核銷TASK-003；主要4件不變，TransFiles明列舊待驗剩1件TASK-005。無程式或部署變更。
+
 ## 2026-10-21 TransFiles登入交付續驗
 - [TASK-003](specs/20261021-transfiles-login-delivery-check/spec.md)：EXE hash一致、12測試通過、操作路徑修正；仍待GUI成功驗收。無發布/匯入，主要4/舊驗收2件不變。
 

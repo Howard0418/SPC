@@ -1,5 +1,7 @@
 # SPC 現行需求索引
 
+- TransFiles TASK-003 [人工驗收完成](../specs/20261021-transfiles-login-delivery-check/spec.md)：測試登入成功，未預覽/匯入；主要4件、TransFiles明列舊待驗1件。
+
 - TransFiles舊500核銷：[紀錄](../specs/20261021-transfiles-500-reconciliation/spec.md)，主要4件不變，TransFiles明列舊待驗剩2件，不重複匯入。
 
 - 正式更新前核對：[SEC-FOLLOWUP-006](../specs/20261021-spc-portal-production-preflight/spec.md)，SPC正式缺4筆遷移（含F表歷史），Portal正式金鑰保存另待核對，未發布。
