@@ -260,3 +260,5 @@
 
 ## 2026-10-21 TransFiles歷史記錄核銷
 [舊500診斷](specs/20261021-transfiles-500-reconciliation/spec.md)已核銷；主要4件不變，TransFiles明列舊待驗3降2（TASK-003/005），首筆LOG人工故障驗收另保留註記。
+
+- TransFiles TASK-003 [續驗](specs/20261021-transfiles-login-delivery-check/spec.md)：12測試/hash通過，指南指現存EXE，待使用者按測試登入；主要4/舊驗收2不變。
