@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-21（SEC-FOLLOWUP-003 KM共享nonce完成）
+- KM沿用Portal簽章契約，以SQL唯一hash原子消費、DBUTC窗口/TTL及安全拒絕取代單機記憶體；81項（含實際兩程序/SQL並發）與真實Portal入口SSO通過。
+- 023測試庫已備份VERIFYONLY/重跑，KM-Test1.6.7及備份/設定hash/匿名隔離通過，正式未操作；[KM驗證與回復](C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/KM/specs/20261021-shared-sso-nonce/verification.md)。
+- 002樣本外送政策受阻，004～006未執行，目前剩4件。SPC/Portal應用無變更，不重新發布。
+
+
 ## 2026-10-21（SEC-FOLLOWUP-001唯讀評估完成）
 - 三台IIS之x86/x64 Runtime、ANCM、站台/池、Defender與應用版本完成盤點；補查確認KM主機登錄WithSecure且相關服務運行，不能按先前無防毒資訊啟動Defender。
 - 官方8.0.32/10.0.13及支援政策核對，建立逐機維護/主機層rollback與正式發布相依門檻；僅文件，未安裝/停站/改防毒或DB。

@@ -1,6 +1,6 @@
 # SPC 現行需求索引
 
-- 後續安全/正式更新：[主規格](../specs/20261020-security-production-followups/spec.md)；001唯讀盤點及[維護決策](../specs/20261020-security-production-followups/verification.md)完成，剩002～006共5件。KM主機有WithSecure服務運行、Defender停止；未啟用防毒/安裝Runtime或發布站台。
+- 後續安全/正式更新：[主規格](../specs/20261020-security-production-followups/spec.md)；001唯讀盤點及[維護決策](../specs/20261020-security-production-followups/verification.md)、003 KM共享nonce完成（測試1.6.7，81項/真實SSO通過），剩002及004～006共4件；002政策受阻。KM主機有WithSecure服務運行、Defender停止；未啟用防毒/安裝Runtime或發布站台。
 
 
 - 日期公式示範資料：[PPC2636操作/驗證](../specs/20261021-formula-chart-demo/verification.md)。2026-10-21按使用者授權建立測試專用12日/兩公式/兩分段/一異常，原始值與初複驗追溯由現有服務保存，不修改業務PPC或正式環境。驗收後由使用者依專用ID範圍處理，永久清除追溯需受控方案。
