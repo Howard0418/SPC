@@ -1,5 +1,11 @@
 # 客製需求與回歸檢查
 
+## 2026-10-21（SEC-FOLLOWUP-001唯讀評估完成）
+- 三台IIS之x86/x64 Runtime、ANCM、站台/池、Defender與應用版本完成盤點；補查確認KM主機登錄WithSecure且相關服務運行，不能按先前無防毒資訊啟動Defender。
+- 官方8.0.32/10.0.13及支援政策核對，建立逐機維護/主機層rollback與正式發布相依門檻；僅文件，未安裝/停站/改防毒或DB。
+- [驗證與決策](specs/20261020-security-production-followups/verification.md)，001完成剩5件；其他工作未執行。
+
+
 ## 2026-10-21（SPC日期公式/管制圖示範資料）
 - 補[頁面及逐筆輸入MD紀錄](specs/20261021-formula-chart-demo/input-record.md)，列出主檔/公式排程/兩分段/12日初複驗raw及結果，明示服務工具寫入而非網頁逐筆輸入；本次只補文件，未重寫資料或發布。
 - 依使用者授權只對PMR_SPC_TEST建立DEMO-FORMULA-20261021，PPC2636、12量測、24初複驗trace、12統計、2公式/2分段；10/15與10/16相同raw1.2345→2.47/3.7，10/21複驗4.8刻意超界，其餘11正常。

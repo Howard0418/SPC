@@ -14,7 +14,7 @@
 
 ## 目前小工作排序（2026-10-14）
 
-目前未完成小工作：3 件（SPC選版TASK-001～006已完成；KM暫緩3件；測試SPC Web0.1.69／API0.1.67、Portal API1.0.183／Web1.0.226，正式未更新）。EXE 1.1.0 製作交付包功能已完成。Windows更新EXE已完成並交付；本次未執行實際更新。環境切換與遠端入口已完成，四組真實預檢通過；本次未執行更新。正式版更新工具已完成隔離驗證；工具本次未在正式機執行更新。先前 SPC／Portal 正式站紀錄依各案驗證；本批公式追溯僅更新測試站。登入後人工業務驗收尚未執行，詳見發布驗證紀錄。
+目前有效未完成小工作：5 件（SEC-FOLLOWUP-002～006，見文末安全/正式更新工作池）。SEC-FOLLOWUP-001唯讀盤點/評估完成；舊批次完成與版本紀錄以各specs驗證為準，不代表本次有安裝或正式更新。
 
 ### 已完成追溯：SPC 改由 TransFiles 直接匯入（阻擋測試匯入／資料正確性）
 
@@ -247,3 +247,13 @@
 
 ## 緊急修正完成（2026-10-20）
 - SPC-TEST-WEB-API-SAME-ORIGIN-20261020：[測試前端同源API](specs/20261020-test-web-api-same-origin/spec.md)，已修復／驗證並發布測試Web0.1.66；API0.1.62／DB不變，1新測試＋9回歸及實際bundle請求驗證通過，真正12個主檔API均200。此項不列入未完成數。
+
+## 後續安全與正式更新（2026-10-20，使用者已要求執行）
+主規格：[SECURITY-PRODUCTION-FOLLOWUPS-20261020](specs/20261020-security-production-followups/spec.md)。本批原6件；001已於2026-10-21完成，現剩5件，每次只做1件：
+1. SEC-FOLLOWUP-001：已完成主機/Defender/Runtime/發布相依盤點與更新評估（唯讀），見[驗證與維護決策](specs/20261020-security-production-followups/verification.md)。
+2. SEC-FOLLOWUP-002：KM附件隔離/掃描整合（001完成；發現WithSecure登錄及服務運行，先確認受支援掃描方式，不逕啟Defender）。
+3. SEC-FOLLOWUP-003：KM多機共享nonce（待002，獨立schema/SSO演練）。
+4. SEC-FOLLOWUP-004：Runtime/Hosting Bundle實際升級（依001維護方案）。
+5. SEC-FOLLOWUP-005：KM已驗證新版正式更新（相依安全前置）。
+6. SEC-FOLLOWUP-006：SPC/Portal已驗證新版正式更新（先核對migration並具體授權）。
+先前小工作0件為原工作池歷史；本批001完成後未完成5件。正式更新已取得使用者執行意向，未知DB變更與共用主機維護仍須具體核對。
