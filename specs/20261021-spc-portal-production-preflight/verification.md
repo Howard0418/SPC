@@ -40,3 +40,8 @@
 
 ## Pkcs後續修補完成
 先前既有Pkcs警告已由[安全子步驟](../20261021-spc-pkcs-security/verification.md)處理，測試API0.1.68，234通過/8略過、線上audit未回報弱點。正式仍未更新。
+
+## Portal金鑰與正式SMTP儲存已核銷
+- 正式IIS既有HKLM SID金鑰庫3份，唯讀跨程序加解密通過；未改金鑰儲存架構。使用者重新儲存密碼後，實際新密文解密通過，金鑰數量/hash不變，無寄信。
+- 正式Web繼承WebDAV攔截PUT造成405；僅移除該站WebDAV handler/module，保留環境設定。使用者再次儲存後，畫面顯示SMTP設定已儲存、已儲存密碼及人事收件可用。僅此設定修正已套正式，並非Portal全版更新。
+- [金鑰驗證](D:/PmrPortal/specs/20261021-production-keyring-preflight/verification.md)、[405修正](D:/PmrPortal/specs/20261021-formal-smtp-webdav-405/verification.md)。Portal上傳提交6007b51；整體006仍待正式DDL、業務相容驗證及完整發布。

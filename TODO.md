@@ -273,3 +273,8 @@
 - SEC-FOLLOWUP-006已獲四筆DDL授權並完成正式備份/SQL複本升級兩次與60原表指紋核對；正式未套用。Pkcs既有警告/業務相容/Runtime/Portal金鑰仍待，主要4件不變。
 
 - SEC-FOLLOWUP-006安全套件子步驟完成：Pkcs10.0.13、234通過/8略過，測試API0.1.68及設定/DB指紋正常；正式發布與其他前置仍待，主要4件/TransFiles1件不變。
+
+## 2026-10-21 15:30最新進度
+- 004：使用者委託指定備份，本機WBAdmin C/allCritical映像執行中（約20%，未完成）；兩正式Hyper-V客體/宿主與空間核對完成，18:00後ProductionOnly checkpoint尚未建立。Runtime未安裝，D應用備份待完成。
+- 006：Portal正式SMTP WebDAV 405已修正，使用者儲存成功及新密文解密通過，金鑰不變/未寄信；此子步驟完成，非整版更新。[驗證](specs/20261021-spc-portal-production-preflight/verification.md)。
+- 主要未完成仍4件（002外部政策阻擋、004進行中、005/006待後續）；TransFiles明列舊驗收1件不變。

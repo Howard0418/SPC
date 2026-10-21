@@ -36,3 +36,15 @@
 - 使用者同意逐台方式，指定當日18:00（Asia/Taipei）開始，允許必要IIS及主機重啟；不在18:00前安裝/停站。
 - 備份命名方式為 `backup_日期時間`，回復負責人為使用者本人；此為命名規則，不是已核對的實際備份識別。執行前核對第一台最新備份完整名稱/時間及本人可執行回復的方式。
 - 無隔離演練環境之限制已告知並獲確認。當前沒有建立排程、自動安裝或執行重啟；到時需在有效工作階段完成執行前核對。
+
+## 使用者委託指定回復方案（2026-10-21）
+使用者要求代為指定，已確認宿主機管理可達；不再把pmr-km-backups的8/4網站檔案當整機備份。
+- PC-PA16560048：實體ASUS，C=Disk0、D=Disk1/NTFS/Healthy，D約882GiB可用，WinRE Enabled；64位wbadmin可用，get versions未找到備份。先建立C及allCritical系統映像至D:/WindowsImageBackup（原位置不存在，受限ACL），另保存D上六個IIS站台與KM storage。此為系統卷回復+應用檔案備份，不是D全卷映像；不可把C/D位於同一硬碟的假設套用（已確認不同DiskNumber）。
+- 本機備份使用VSS copy，不清交易記錄、不刪舊備份、不停站/重啟；不安裝新工具。準備階段可先執行耗時系統映像，18:00安裝前核對最新狀態，若其後有需納入的C/金鑰變更則更新備份。
+- PMR-SPC-SRV：客體名PMR-SPC、VM GUID d3e5f990-4b43-485e-8036-c95a27ebf8aa，宿主PMR-SRV-04.pmr.com.tw。
+- PMR-WEB：客體名PMR-WEB、VM GUID 813fcee5-5bed-478a-8fa5-d100985f898b，宿主PMR-SRV-01.pmr.com.tw。
+- 兩VM之Guest Parameters與宿主Get-VM GUID一致，checkpoint目前Production（可退回standard），指定18:00停寫後採ProductionOnly建立維護前checkpoint，失敗不得退回standard。事先核對CSV真實儲存空間，不以宿主C槽空間代替；不建立/套用checkpoint或改VM設定於核對階段。
+- 名稱使用PMR_PREUPDATE_主機名_yyyyMMdd_HHmm，維護批次為20261021_1800；實際備份時點另記，不能提前把未建立checkpoint標完成。VM checkpoint是同儲存回復點，不是異地完整備份。
+- 本機回復由本人透過已啟用WinRE「系統映像修復」選D映像，搭配同批D應用備份與DB一致性核對；兩VM由既有宿主維運連線按精確GUID/checkpoint還原，還原本身破壞性，失敗時先停止後續更新並核對業務一致性，不自行整庫回復。
+- 尚無實際整機還原演練，限制已告知/接受；備份完成、目錄可列與WBAdmin/Hyper-V metadata只是可用性核對，不冒稱還原成功。
+官方依據：Microsoft wbadmin start backup及Hyper-V checkpoints文件（含vssCopy/allCritical與ProductionOnly語意）。

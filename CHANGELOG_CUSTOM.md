@@ -1819,3 +1819,7 @@
 - 使用者回報https://spctest.pmr.com.tw/檢驗基準頁無法載入；確認testhost舊環境把瀏覽器API導向http://172.16.110.27:8081/api。先前健康／資產hash驗證漏查實際瀏覽器baseURL，已補回歸與發布檢查，不歸因使用者快取。
 - client固定同源/api，保持原JWT／攔截器與環境寫入隔離；舊環境回歸先失敗後通過，既有9項瀏覽器回歸通過。新增verify:built-api檢查實際bundle，本機與線上各14 API請求同源；真實12主檔API全部200。
 - 備份後僅發布測試前端Web0.1.66，HTTP bundle hash匹配、舊8081 API字串不在新包；API0.1.62及設定hash不變，無DB或正式變更。備份／限制見specs/20261020-test-web-api-same-origin/spec.md。剩3件KM暫緩。
+
+## 2026-10-21 維護備份與Portal正式SMTP子步驟
+- 已指定本機WBAdmin系統映像及兩正式VM ProductionOnly回復方式；本機備份執行中，未標完成，Runtime維持18:00後。無整機還原演練。
+- Portal正式WebDAV 405修正已核對使用者儲存成功、新SMTP密文可解密及金鑰不變；未寄信，非全版正式更新。詳見[整合驗證](specs/20261021-spc-portal-production-preflight/verification.md)。主要4件/TransFiles舊驗收1件不變。
