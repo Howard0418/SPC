@@ -251,7 +251,7 @@
 ## 後續安全與正式更新（2026-10-20，使用者已要求執行）
 主規格：[SECURITY-PRODUCTION-FOLLOWUPS-20261020](specs/20261020-security-production-followups/spec.md)。本批原6件；001已於2026-10-21完成，現剩5件，每次只做1件：
 1. SEC-FOLLOWUP-001：已完成主機/Defender/Runtime/發布相依盤點與更新評估（唯讀），見[驗證與維護決策](specs/20261020-security-production-followups/verification.md)。
-2. SEC-FOLLOWUP-002：KM附件隔離/掃描整合（001完成；發現WithSecure登錄及服務運行，先確認受支援掃描方式，不逕啟Defender）。
+2. SEC-FOLLOWUP-002：KM附件隔離/掃描整合（進行中：WithSecure簽章/help/單一合成檔掃描成功，待不外送樣本政策及IIS身分驗證，不逕啟Defender）；[KM最小方案](C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/KM/specs/20261021-attachment-scan-integration/plan.md)。
 3. SEC-FOLLOWUP-003：KM多機共享nonce（待002，獨立schema/SSO演練）。
 4. SEC-FOLLOWUP-004：Runtime/Hosting Bundle實際升級（依001維護方案）。
 5. SEC-FOLLOWUP-005：KM已驗證新版正式更新（相依安全前置）。
