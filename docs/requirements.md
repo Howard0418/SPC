@@ -1,5 +1,7 @@
 # SPC 現行需求索引
 
+- 日期公式示範資料：[PPC2636操作/驗證](../specs/20261021-formula-chart-demo/verification.md)。2026-10-21按使用者授權建立測試專用12日/兩公式/兩分段/一異常，原始值與初複驗追溯由現有服務保存，不修改業務PPC或正式環境。驗收後由使用者依專用ID範圍處理，永久清除追溯需受控方案。
+
 - 藥液公式日期選版與追溯：[主規格v6](../specs/20261020-formula-effective-trace-plan/spec.md)；TASK-001～006完成。[Portal日期預覽及原子留存](../specs/20261020-formula-trace-task004/spec.md)支援初複驗、日期失效、冪等／全批交易與raw規格判定；[驗證](../specs/20261020-formula-trace-task004/verification.md)及[Antigravity案例](../specs/20261020-formula-trace-task004/antigravity-tests.md)。測試SPC API0.1.67／Web0.1.69、Portal API1.0.183／Web1.0.226，既有設定及資料不變，policy未啟用。[TASK-005真正DB直寫／consumer](../specs/20261020-formula-trace-task005/spec.md)及本人低權限連線已完成；[TASK-006分段／逐點實際版本](../specs/20261020-formula-trace-task006/spec.md)已完成，提供[Antigravity案例](../specs/20261020-formula-trace-task006/antigravity-tests.md)；真人案例待驗，正式未更新。
 
 - 管制圖日期分段版本明細：[SPC-CHART-SEGMENT-VERSION-20261020](../specs/20261020-chart-segment-version-detail/spec.md)；2026-10-20依使用者選擇完成v2唯讀查閱，管制圖／藥液趨勢圖可查看目前分段與公式修改歷史，無證據明示未知。測試API0.1.63／Web0.1.67已發布，正式未更新；[Antigravity案例](../specs/20261020-chart-segment-version-detail/antigravity-tests.md)待真人操作。公式排程及自動選版契約已由TASK-003完成；Portal留存已由TASK-004整合；TransFiles與實際版本圖表已由TASK-005／006整合；舊量測仍明示未知，獨立規格／管制界限版本不在本批範圍。
