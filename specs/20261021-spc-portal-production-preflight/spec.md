@@ -4,7 +4,7 @@
 ## 範圍/相依
 - 主協調SPC；Portal為公式輸入/代理相依，TransFiles僅核對直寫協定，不改EXE或個人授權。
 - SPC正式PMR-SPC-SRV，C:/inetpub/wwwroot/production/backend及frontend；Portal正式PMR-WEB，C:/inetpub/wwwroot/publish/portal-api及portal-web。不得套本機測試路徑或D:/Sites/PmrPortal。
-- 正式發布已有意向授權；本次發現的具體4筆SPC migration/角色與程序範圍需另行確認，不承襲KM nonce授權。
+- 正式發布已有意向授權；使用者已另行同意具體4筆SPC migration/角色與程序範圍，不承襲或混用KM nonce授權。
 - 前置004維護未完成；005未發布，002仍受阻。本次不修改DB/IIS/環境設定。
 
 ## BDD/任務
@@ -13,7 +13,8 @@
 - [x] 版本/正式DB名稱/遷移歷史與必要物件唯讀核對。
 - [ ] 比對完整payload與來源基準、前端正式API端點、設定/SSO/金鑰保存及相依契約。
 - [x] 審查4筆DDL新增物件/權限/歷史資料影響，見[具體範圍](database-scope.md)。
-- [ ] 取得4筆DDL具體授權；正式備份VERIFYONLY與複本演練。
+- [x] 取得4筆DDL具體授權；正式COPY_ONLY/CHECKSUM備份及VERIFYONLY，正式備份複本4筆Up/重跑/原60表資料指紋與約束通過。
+- [ ] 新舊匯入/公式/製圖業務相容性驗證及正式發布前Pkcs既有弱點處理。
 - [ ] 必要測試、各自發布及真人登入/公式/圖表驗收。
 - Happy核對/備份/複本/分站部署；Boundary歷史資料不回填及公式policy預設停用；Invalid目標/備份/遷移差異即停止；Regression原匯入/角色/SSO/SMTP/公告/圖表。
 - 回復：同批應用備份並保留環境設定/附件/金鑰，新增schema保留；不自動Down、drop或整庫還原。直寫角色不得臨時放大帳號權限。

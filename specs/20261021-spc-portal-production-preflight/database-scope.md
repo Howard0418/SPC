@@ -1,5 +1,5 @@
 # SEC-FOLLOWUP-006 SPC正式DDL授權範圍
-2026-10-21；只審查，尚未執行、尚未取得本範圍授權。
+2026-10-21；使用者已同意本4筆DDL範圍；實際正式套用尚未執行。
 
 | 遷移 | 新增範圍 |
 |---|---|
@@ -28,3 +28,11 @@
 4. 逐步保存前後指紋及同批應用備份；應用回復保留新增schema與原設定/資料，不自動Down/drop/整庫還原。正式直寫帳號仍不啟用。
 
 本文件為可審查範圍，不是可直接執行的SQL包。源碼依據為backend/MesSpc.Api/Migrations/上表四個cs及ChemicalTraceSqlV1.cs、ChemicalDirectWriterSqlV1.cs。原始程式與資料庫未修改，build/發布不適用；複本與正式DDL尚未執行。
+
+## 授權後準備
+- 使用者回覆同意，授權上述4筆migration及角色/程序，不加入個人正式writer。
+- 先從實際正式IIS設定取得既有連線，核對DB_NAME與來源，執行COPY_ONLY/CHECKSUM備份及RESTORE VERIFYONLY；不停止站台。備份留SQL原受限預設位置，不輸出/提交機敏設定。
+- 後續若可建立SQL隔離庫，使用唯一PMR_SPC_RELEASE_VERIFY前綴、不覆蓋既有庫/檔；不將SQL複本當成主機Runtime演練。正式遷移仍待維護及驗證前置。
+
+## 實際驗證進度
+已完成正式COPY_ONLY/CHECKSUM與VERIFYONLY、獨立SQL複本還原、四筆Up兩次及原60表資料指紋/約束檢查；詳verification.md。正式未套用，業務全流程、Runtime及Pkcs既有弱點仍待處理。備份與隔離庫保留，非整機回復證據。
