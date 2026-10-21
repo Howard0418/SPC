@@ -85,6 +85,7 @@ public class SpcSummaryTests
         };
 
         db.AddRange(
+            new ControlChartGroup { Id = 1, GroupCode = "CHEM", GroupName = "藥液管制", GroupType = "CONTROL_CHART", BusinessScopeCode = "CHEM" },
             process,
             machine,
             characteristic,
@@ -123,7 +124,7 @@ public class SpcSummaryTests
         rows.Should().ContainSingle();
         var row = rows.Single();
         row.ControlCategory.Should().Be("藥液管制");
-        row.LineOrProcessName.Should().Be("蝕刻製程 / A線");
+        row.LineOrProcessName.Should().Be("蝕刻製程", "總覽優先顯示製程名稱，無製程才使用機台名稱");
         row.ChartName.Should().Be("銅離子濃度");
         row.ChartType.Should().Be("單值-移動全距圖");
         row.OosCount.Should().Be(1);

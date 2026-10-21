@@ -37,3 +37,6 @@
 - 正式站SpcApi/SpcWeb仍Started，正式4筆新migration計數仍0。此次只有備份與獨立SQL庫寫入，正式無DDL/業務資料變更、無停站/發布。
 - --no-restore建置成功0錯誤；保留4個既有NU1902/NU1903（System.Security.Cryptography.Pkcs 9.0.4）警告，本次未變更套件；正式發布前仍需處理，不聲稱安全掃描通過。
 - 文件與diff檢查通過。複本/備份保留，不自動刪除；正式套用待004維護與其他發布前置。總剩主要4件/TransFiles1件。
+
+## Pkcs後續修補完成
+先前既有Pkcs警告已由[安全子步驟](../20261021-spc-pkcs-security/verification.md)處理，測試API0.1.68，234通過/8略過、線上audit未回報弱點。正式仍未更新。

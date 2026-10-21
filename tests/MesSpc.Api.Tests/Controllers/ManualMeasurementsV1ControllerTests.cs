@@ -61,7 +61,10 @@ public class ManualMeasurementsV1ControllerTests
     public async Task DeleteItem_RemovesPortalDailyMeasurementAndDerivedRecords()
     {
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase($"delete-daily-measurement-{Guid.NewGuid():N}").Options);
+            .UseInMemoryDatabase($"delete-daily-measurement-{Guid.NewGuid():N}")
+            // This unit test verifies deletion/audit content, not transaction rollback.
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
+            .Options);
         var measurement = CreateMeasurement("MIDDLE", 96.4, new DateTime(2028, 8, 3, 14, 0, 0));
         db.VariableMeasurements.Add(measurement);
         await db.SaveChangesAsync();
@@ -88,7 +91,10 @@ public class ManualMeasurementsV1ControllerTests
         Assert.Empty(await db.AlertEvents.ToListAsync());
         var audit = Assert.Single(await db.UploadDetails.ToListAsync());
         Assert.False(audit.IsValid);
-        Assert.Equal("qa-user", audit.CreatedBy);
+        // Generic audit metadata is stamped by AppDbContext; the deletion actor lives in its immutable payload.
+        Assert.Equal("System", audit.CreatedBy);
+        using var evidence = System.Text.Json.JsonDocument.Parse(audit.PayloadJson);
+        Assert.Equal("qa-user", evidence.RootElement.GetProperty("actor").GetString());
         Assert.Contains("ManualMeasurementDeleted", audit.PayloadJson);
         Assert.Contains("96.4", audit.PayloadJson);
     }

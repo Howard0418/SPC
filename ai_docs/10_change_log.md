@@ -1,3 +1,10 @@
+## [2026-10-21] SEC-FOLLOWUP-006 回歸基準與fixture修正
+- Pkcs修改前後相同6項失敗；僅修正符合已確認WE/SSO/結構化錯誤基準的過時測試與缺失主檔，不改產品邏輯或放寬授權。
+
+## [2026-10-21] SEC-FOLLOWUP-006 Pkcs相依安全修補
+- 目的：直接鎖定Pkcs10.0.13移除SqlClient傳遞9.0.4警告；只改參照與API版號0.1.68，無計算/資料庫/權限變更。
+- 驗證：API/化學回歸、Release build/publish與deps核對，測試站受控發布；正式維護仍依18:00與前置規則。
+
 ## [2026-10-14] - SPC-ETCH-PREVIEW-500-DIAGNOSTICS 咬蝕量預覽 500 診斷修正
 - 目的：TransFiles 咬蝕量預覽遇 SPC 拒絕時須顯示可修正原因，避免只看到 HTTP 500。
 - 範圍：SPC `EtchReportSyncService` 主檔與既有批次缺漏錯誤處理、咬蝕測試；不修改計算公式、不匯入正式資料、不改 TransFiles 解析。

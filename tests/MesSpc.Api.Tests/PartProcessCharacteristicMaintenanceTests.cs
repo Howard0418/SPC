@@ -55,11 +55,12 @@ public class PartProcessCharacteristicMaintenanceTests
         });
 
         result.Should().BeOfType<BadRequestObjectResult>();
-        ((BadRequestObjectResult)result).Value.Should().Be("自訂範圍管制項目必須選擇線別/機台。");
+        System.Text.Json.JsonSerializer.Serialize(((BadRequestObjectResult)result).Value)
+            .Should().Contain(System.Text.Json.JsonSerializer.Serialize("自訂範圍管制項目必須選擇線別/機台。").Trim('"'));
     }
 
     [Fact]
-    public async Task Update_Should_Save_Unit_And_ItemSpecificRules()
+    public async Task Update_Should_Save_Unit_And_Reject_ItemSpecificRules()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -135,16 +136,17 @@ public class PartProcessCharacteristicMaintenanceTests
             item.Id,
             new PartProcessCharacteristicsController.ItemRulesUpdateRequest(["RULE_1"]));
 
-        updateResult.Should().BeOfType<OkObjectResult>();
-        rulesResult.Should().BeOfType<OkObjectResult>();
+        updateResult.Should().BeOfType<OkObjectResult>(
+            System.Text.Json.JsonSerializer.Serialize((updateResult as BadRequestObjectResult)?.Value));
+        rulesResult.Should().BeOfType<BadRequestObjectResult>();
         var saved = await db.PartProcessCharacteristics.SingleAsync(x => x.Id == item.Id);
         saved.Unit.Should().Be("μm");
         saved.FormulaConfigJson.Should().Be(formulaConfig);
-        saved.RuleGroupId.Should().NotBeNull();
-        (await db.SpcRules.SingleAsync(x => x.RuleGroupId == saved.RuleGroupId && x.RuleCode == "RULE_1"))
+        saved.RuleGroupId.Should().BeNull();
+        (await db.SpcRules.SingleAsync(x => x.RuleGroupId == libraryGroup.Id && x.RuleCode == "RULE_1"))
             .IsEnabled.Should().BeTrue();
-        (await db.SpcRules.SingleAsync(x => x.RuleGroupId == saved.RuleGroupId && x.RuleCode == "RULE_2"))
-            .IsEnabled.Should().BeFalse();
+        (await db.SpcRules.SingleAsync(x => x.RuleGroupId == libraryGroup.Id && x.RuleCode == "RULE_2"))
+            .IsEnabled.Should().BeTrue();
     }
 
     [Fact]
@@ -374,7 +376,7 @@ public class PartProcessCharacteristicMaintenanceTests
     }
 
     [Fact]
-    public async Task Calculation_Should_Prefer_ItemRuleGroup_Over_ChartTypeRuleGroup()
+    public async Task Calculation_Should_Use_Shared_WeRules_Over_ItemAndChartGroups()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -383,7 +385,8 @@ public class PartProcessCharacteristicMaintenanceTests
         await using var db = new AppDbContext(options);
         var chartRules = new SpcRuleGroup { RuleGroupCode = "CHART", RuleGroupName = "管制圖規則" };
         var itemRules = new SpcRuleGroup { RuleGroupCode = "ITEM", RuleGroupName = "項目規則" };
-        db.AddRange(chartRules, itemRules);
+        var sharedRules = new SpcRuleGroup { RuleGroupCode = "WE", RuleGroupName = "共用WE規則" };
+        db.AddRange(chartRules, itemRules, sharedRules);
         await db.SaveChangesAsync();
 
         var chartType = new ControlChartType
@@ -427,7 +430,7 @@ public class PartProcessCharacteristicMaintenanceTests
         var result = await service.CalculateVariableAsync(measurement);
 
         result.Should().NotBeNull();
-        result!.RuleGroupId.Should().Be(itemRules.Id);
+        result!.RuleGroupId.Should().Be(sharedRules.Id);
         result.IsOutOfSpec.Should().BeFalse("複驗值存在時應以複驗值進行規格判定");
     }
 }

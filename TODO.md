@@ -271,3 +271,5 @@
 - SEC-FOLLOWUP-006 [四筆正式DDL範圍](specs/20261021-spc-portal-production-preflight/database-scope.md)已完成源碼審查與前置物件唯讀核對，待具體授權/複本/正式金鑰/發布；主要4件不變。
 
 - SEC-FOLLOWUP-006已獲四筆DDL授權並完成正式備份/SQL複本升級兩次與60原表指紋核對；正式未套用。Pkcs既有警告/業務相容/Runtime/Portal金鑰仍待，主要4件不變。
+
+- SEC-FOLLOWUP-006安全套件子步驟完成：Pkcs10.0.13、234通過/8略過，測試API0.1.68及設定/DB指紋正常；正式發布與其他前置仍待，主要4件/TransFiles1件不變。

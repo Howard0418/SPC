@@ -1,5 +1,9 @@
 # 客製需求與回歸檢查
 
+## 2026-10-21 SEC-FOLLOWUP-006 Pkcs修補測試發布
+- 直接參照Pkcs10.0.13，官方NuGet全相依未回報已知弱點；修正6個既有過時驗收/fixture，API175及Chemical59通過，8條件式略過不計通過。
+- 測試API0.1.68已發布，設定/DB指紋不變，Web0.1.69及正式不動。[驗證](specs/20261021-spc-pkcs-security/verification.md)；主要4件不變。
+
 ## 2026-10-21 SEC-FOLLOWUP-006正式備份複本驗證
 - 已取得4筆DDL授權；正式備份COPY_ONLY/CHECKSUM/VERIFYONLY及唯一SQL複本升級兩次通過，60原表指紋/筆數一致、8新表空、約束正常。正式無DDL/停站/發布。建置既有Pkcs安全警告仍待處理，主要4件不變。
 

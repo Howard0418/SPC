@@ -24,6 +24,10 @@ public class AuthControllerTests
             ["Auth:JwtKey"] = jwtKey
         }).Build();
         var controller = new AuthController(configuration, db);
+        db.Operators.Add(new MesSpc.Api.Domain.Entities.Operator
+        { Username = "qa.user", OperatorCode = "QA_USER", OperatorName = "QA User", IsActive = true });
+        await db.SaveChangesAsync();
+        // Legacy SSO may authenticate an existing operator, but cannot provision one.
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var nonce = Guid.NewGuid().ToString("N");
         const string username = "qa.user";
