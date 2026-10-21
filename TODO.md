@@ -265,3 +265,5 @@
 
 ## 最新計數（2026-10-21 TASK-003人工驗收後）
 主要4件不變；TransFiles TASK-003已由使用者成功畫面核銷，明列舊驗收剩1件TASK-005，首筆LOG人工故障驗收註記保留。
+
+- TransFiles TASK-005 [自動GUI續驗](specs/20261021-transfiles-login-failure-validation/spec.md)：59測試通過，實體EXE故障類別未驗，主要4/明列舊待驗1件不變。

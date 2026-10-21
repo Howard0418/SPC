@@ -1,5 +1,8 @@
 # 客製需求與回歸檢查
 
+## 2026-10-21 TransFiles TASK-005故障回呼驗證
+- [驗證](specs/20261021-transfiles-login-failure-validation/verification.md)3新測試/9情境及56回歸共59通過；無產品修改/匯入/發布。EXE人工故障待驗，主要4/舊驗收1不變。
+
 ## 2026-10-21 TransFiles TASK-003完成
 - 使用者提供測試登入成功與未預覽/匯入畫面，配合12項與交付hash核銷TASK-003；主要4件不變，TransFiles明列舊待驗剩1件TASK-005。無程式或部署變更。
 

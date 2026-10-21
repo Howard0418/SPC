@@ -1,5 +1,7 @@
 # SPC 現行需求索引
 
+- TransFiles TASK-005：[故障回呼續驗](../specs/20261021-transfiles-login-failure-validation/spec.md)，59測試通過，EXE實際故障畫面仍待驗。
+
 - TransFiles TASK-003 [人工驗收完成](../specs/20261021-transfiles-login-delivery-check/spec.md)：測試登入成功，未預覽/匯入；主要4件、TransFiles明列舊待驗1件。
 
 - TransFiles舊500核銷：[紀錄](../specs/20261021-transfiles-500-reconciliation/spec.md)，主要4件不變，TransFiles明列舊待驗剩2件，不重複匯入。
