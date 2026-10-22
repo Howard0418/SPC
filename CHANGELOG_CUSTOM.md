@@ -1843,3 +1843,7 @@
 ## 2026-10-22 SPC-PARTICLE-EMPTY 規劃完成
 - 唯讀原Excel與既有轉檔／Particle預覽確認／圖表流程：截圖範圍可解析4點，原檔發現2個日期格與6個計數說明格問題；少於20點仍應有原始points，實際批次原因未查。
 - 提出格式建議、2件P1工作與32事件測試子集方案，未寫入、修改程式或原Excel、未發布。文件／連結及原檔hash核對；build／程式測試不適用。[規格](specs/20261022-particle-empty-chart-plan/spec.md)。
+
+## 2026-10-22 SPC-PARTICLE-EMPTY-TASK-001完成
+- 唯讀核對spctest test／API0.1.68、PMR_SPC_TEST Particle量測及批次0；來源流程缺口以4測試重現，最小接回既有預覽與確認畫面，不自動匯入。
+- TransFiles相關51／SPC Particle12通過，獨立EXE產包及程序啟動通過、可見GUI／實站匯入尚未驗收；原EXE保留。外部無repo，必要patch在SPC integrations追溯，無二進位／資料輸出提交。未寫測試資料或發布無變更網站。[驗證](specs/20261022-particle-empty-chart-plan/task001-verification.md)。

@@ -823,3 +823,6 @@
 
 ## 2026-10-21 SEC-FOLLOWUP-006正式前端API拓撲相容
 目的：正式SpcWeb無/api代理，需集中client明確支援既有正式API白名單；Test同源及舊環境URL防護保留。不安裝Runtime/IIS模組、不改權限或SSO key。先建測試，再做最小helper與client接線，依規範測試/測試站/正式驗證。
+
+## 2026-10-22 PARTICLE-EMPTY-TASK-001
+- 目的：測試Particle表／批次0，TransFiles落塵工作執行緒只匯出Excel，漏接既有預覽上傳。先補回歸再修最小分支，保留使用者確認，不改統計或資料庫。

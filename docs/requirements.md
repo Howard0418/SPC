@@ -247,3 +247,5 @@
 - 2026-10-22 I18N-TASK-01分析完成：[規格](../specs/20261022-i18n-task01/spec.md)／[可行性報告](../specs/20261022-i18n-task01/analysis.md)。三語zh-TW預設／fallback、zh-CN、en-US；建議SPC Vue I18n、Portal／KM沿用Razor及JSON介接，保留資料／統計／文件／權限。僅分析，20個後續工作包待確認，未建立語系功能、未查實庫或發布，人工翻譯品質尚未驗收。
 
 - 2026-10-22 落塵空圖規劃：[SPC-PARTICLE-EMPTY-20261022](../specs/20261022-particle-empty-chart-plan/spec.md)。唯讀來源及程式盤點發現日期／計數格式問題；實際批次未查，新增2件P1小工作，先追溯再測試資料。只規劃，不寫入或發布，不修改R1～R9／C/U及儀器隔離基準。
+
+- 2026-10-22 SPC-PARTICLE-EMPTY-TASK-001完成：[驗證](../specs/20261022-particle-empty-chart-plan/task001-verification.md)。測試Particle量測／批次0，最小修補TransFiles落塵未呼叫預覽分支，保留使用者確認；51工具／12 SPC測試通過，獨立EXE交付。未改網站／DB／正式站，下一件寫入及製圖未開始。

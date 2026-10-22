@@ -1,0 +1,92 @@
+diff --git a/batch_convert_gui.py b/batch_convert_gui.py
+--- a/batch_convert_gui.py
++++ b/batch_convert_gui.py
+@@ -1368,8 +1368,13 @@
+                 self.output_file_paths.append(output_path)
+                 self.log(f"[寫入] 成功儲存：{output_path.name}")
+             self.output_file_path = self.output_file_paths[0]
+-            self.update_status(f"落塵監控轉換成功，共產生 {len(self.output_file_paths)} 個檔案！", len(files))
+-            self.root.after(0, lambda: self.show_success_dialog(len(all_rows)))
++            if self.upload_after_conversion:
++                upload_results = self.upload_outputs_to_spc_preview()
++                self.update_status(f"落塵已上傳 SPC 預覽，共建立 {len(upload_results)} 個批次。", len(files))
++                self.root.after(0, lambda results=upload_results: self.show_upload_success_dialog(results))
++            else:
++                self.update_status(f"落塵監控轉換成功，共產生 {len(self.output_file_paths)} 個檔案！", len(files))
++                self.root.after(0, lambda: self.show_success_dialog(len(all_rows)))
+         except Exception as exc:
+             self.log(f"[落塵轉檔失敗] {exc}")
+             self.update_status("落塵監控轉檔失敗", len(files))
+diff --git a/test_dust_conversion_flow.py b/test_dust_conversion_flow.py
+new file mode 100644
+--- /dev/null
++++ b/test_dust_conversion_flow.py
+@@ -0,0 +1,68 @@
++import unittest
++from datetime import datetime
++from pathlib import Path
++from unittest.mock import Mock, patch
++
++from batch_convert_gui import ConversionGUI
++
++
++class DustConversionFlowTests(unittest.TestCase):
++    def make_app(self, upload):
++        app = ConversionGUI.__new__(ConversionGUI)
++        app.data_type_var = Mock(get=Mock(return_value="落塵監控"))
++        app.export_scope_var = Mock(get=Mock(return_value="全部資料"))
++        app.upload_after_conversion = upload
++        app.selected_output_dir = Path("synthetic-output")
++        for method in ("log", "update_status", "write_dust_attribute_template", "enable_controls",
++                       "show_success_dialog", "show_upload_success_dialog", "confirm_spc_batches"):
++            setattr(app, method, Mock())
++        app.root = Mock()
++        app.root.after.side_effect = lambda delay, action: action()
++        app.upload_outputs_to_spc_preview = Mock(return_value=[{"uploadBatchId": "synthetic", "errorRows": 0}])
++        return app
++
++    def run_flow(self, app):
++        with patch("batch_convert_gui.extract_dust_measurements", return_value=[object()]), \
++             patch("batch_convert_gui.dust_rows_for_attribute_upload", return_value=[[0] * 8 + [datetime(2026, 9, 22)]]), \
++             patch("batch_convert_gui.extract_particle_preview_rows", return_value=[{"location": "R1"}]), \
++             patch("batch_convert_gui.build_particle_preview_request", return_value={"rows": [{"location": "R1"}]}), \
++             patch("batch_convert_gui.messagebox.showerror") as error:
++            app.run_conversion_thread([Path("synthetic.xlsx")])
++        return error
++
++    def test_worker_uploads_particle_preview_but_does_not_confirm(self):
++        app = self.make_app(True)
++        self.run_flow(app)
++        app.upload_outputs_to_spc_preview.assert_called_once()
++        app.show_upload_success_dialog.assert_called_once_with([{"uploadBatchId": "synthetic", "errorRows": 0}])
++        app.show_success_dialog.assert_not_called()
++        app.confirm_spc_batches.assert_not_called()
++        app.enable_controls.assert_called_once()
++
++    def test_conversion_only_does_not_upload(self):
++        app = self.make_app(False)
++        self.run_flow(app)
++        app.upload_outputs_to_spc_preview.assert_not_called()
++        app.show_success_dialog.assert_called_once_with(1)
++        app.show_upload_success_dialog.assert_not_called()
++
++    def test_upload_failure_does_not_report_success(self):
++        app = self.make_app(True)
++        app.upload_outputs_to_spc_preview.side_effect = RuntimeError("synthetic upload failure")
++        error = self.run_flow(app)
++        error.assert_called_once()
++        app.show_success_dialog.assert_not_called()
++        app.show_upload_success_dialog.assert_not_called()
++        app.enable_controls.assert_called_once()
++
++    def test_invalid_preview_is_passed_to_existing_dialog_without_confirmation(self):
++        app = self.make_app(True)
++        preview = [{"uploadBatchId": "synthetic", "errorRows": 78}]
++        app.upload_outputs_to_spc_preview.return_value = preview
++        self.run_flow(app)
++        app.show_upload_success_dialog.assert_called_once_with(preview)
++        app.confirm_spc_batches.assert_not_called()
++
++
++if __name__ == "__main__":
++    unittest.main()
