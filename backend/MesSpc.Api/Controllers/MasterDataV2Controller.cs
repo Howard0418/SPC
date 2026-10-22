@@ -789,7 +789,7 @@ public class PartProcessCharacteristicsController(
         if (selectedGroup.RequiresTank && (!req.TankId.HasValue || req.TankId.Value <= 0))
             return $"{selectedGroup.GroupName}管制項目必須選擇槽體。";
         if (!selectedGroup.RequiresPart) req.PartId = null;
-        if (!selectedGroup.RequiresMachine) req.MachineId = null;
+        // An optional machine is allowed to be selected; do not erase its business key.
         if (!selectedGroup.RequiresTank) req.TankId = null;
         if (req.SlotId.HasValue)
         {

@@ -1870,3 +1870,9 @@
 - 正式完整八欄識別鍵重複群組0，後端Create/Update存檔前409拒絕且Update排除自身；正式存在兩個啟用條件式唯一索引。未將提示解讀為已寫入兩筆。
 - 尚待使用者新增/編輯及項目Id，未判定具體根因；既有TASK-001調整為P1定位及NULL/並發保護審查，計數不增加。僅SELECT/文件，不改程式/DB/發布。
 - [證據與建議](specs/20261022-production-connection-format-plan/verification.md)。
+
+## 2026-10-22 PPC2620編輯誤判重複修正
+- 正式唯讀確認2620有Machine247，但PROC大類RequiresMachine=false被當成必須清空，與空線別2610衝突；只改LSL不應改業務鍵。移除該清空行，保留必填檢查及真正重複409。
+- 先建4項Controller/SQLite回歸，修前1fail/3pass；修後API47pass/1skip，Release成功，測試SpcSingleTest API0.1.70/health正常、設定hash不變。
+- 正式以原0.1.68隔離來源單行修正為0.1.71，獨立4回歸/產包/Production Plan通過，前端0.1.70 payload不變、不含Particle新功能。正式未Apply/改資料，待具體授權及真人儲存。
+- [規格、來源與回復](specs/20261022-ppc-optional-machine-edit/spec.md)。本件仍1＋i18n20包＝21件，另受阻/暫緩2、舊驗收1。
