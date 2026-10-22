@@ -1881,3 +1881,7 @@
 - 使用者同意後Apply SPC-PPC-OPTIONAL-MACHINE-20261022-R2，正式API0.1.71/Web0.1.70；台灣16:39:37～16:39:47流程完成。
 - IIS/應用/DB COPY_ONLY/CHECKSUM/VERIFYONLY備份成功，101payload與3份設定hash一致、兩pool Started、version/health production正常。無migration/正式資料修補，不夾帶Particle新功能。
 - [正式驗證與回復](specs/20261022-ppc-optional-machine-edit/verification.md)。2620真人儲存待確認1項；連同i18n20包仍21件，另受阻/暫緩2、舊驗收1。
+
+## 2026-10-22 PPC2620真人驗收結案
+- 使用者回覆「P1已確認」，2620規格下限0.2儲存驗收完成，SPC-PROD-CONFIG-TASK-001 DONE；正式API0.1.71沿用，不重跑測試/發布或修改正式資料。
+- [驗證](specs/20261022-ppc-optional-machine-edit/verification.md)。待辦由21降為i18n20包；受阻/暫緩2件及TransFiles舊驗收1件另列，不自動執行下一項。

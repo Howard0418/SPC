@@ -1,5 +1,5 @@
 # PPC編輯保留選填線別
-- ID：SPC-PPC-OPTIONAL-MACHINE-20261022；版本1；狀態：正式API0.1.71發布完成，2620真人儲存待確認。
+- ID：SPC-PPC-OPTIONAL-MACHINE-20261022；版本1；狀態：DONE；正式API0.1.71發布且使用者確認P1驗收完成。
 - 使用者要求解決正式編輯受阻，提供2620與LSL改0.2；先測試修正，正式發布仍另行授權。
 - 主系統SPC；無Portal/TransFiles/DB schema影響；本次最小修正RequiresMachine=false時不清除已選MachineId。
 - R-001：非必填線別表示可不填，不得抹除已填線別；必填檢查及真正重複攔截保留。

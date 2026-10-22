@@ -263,3 +263,5 @@
 - PPC線別選填不等於清空：2620只改LSL不得清MachineId；[單行修正與驗證](../specs/20261022-ppc-optional-machine-edit/spec.md)。測試API0.1.70已發布；正式0.1.71具體包/Plan完成待授權，不改索引或正式資料。
 
 - 2026-10-22 PPC選填線別修正已正式發布API0.1.71/Web0.1.70，無DDL/資料修補，2620真人儲存待確認。[正式結果](../specs/20261022-ppc-optional-machine-edit/verification.md)。
+
+- 2026-10-22 PPC2620編輯受阻修正完成：使用者明確確認P1驗收，正式API0.1.71；[結案驗證](../specs/20261022-ppc-optional-machine-edit/verification.md)。本件DONE。

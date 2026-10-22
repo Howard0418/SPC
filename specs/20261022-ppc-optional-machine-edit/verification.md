@@ -34,3 +34,7 @@
 - 101個payload逐檔SHA256及3份受保護設定與同批備份hash一致；正式前端仍0.1.70，未帶入Particle新功能。
 - 備份根PMR-SPC-SRV C:/ProgramData/PMR-Releases/Production/SPC-PPC-OPTIONAL-MACHINE-20261022-R2；回復使用同bundle-r2 manifest Rollback至API0.1.68/Web0.1.70，不整庫還原。
 - 未替使用者提交2620的LSL或其他正式欄位；實際編輯儲存尚待本人確認，不以health代替真人驗收。
+
+## 真人驗收結案（2026-10-22）
+- 使用者明確回覆「P1已確認」，對應2620規格下限改0.2後儲存驗收。本件DONE，覆蓋先前待真人確認狀態。
+- 本次僅依使用者確認同步文件，未再次修改正式資料/執行測試/發布。build與發布不適用。
