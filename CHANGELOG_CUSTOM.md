@@ -1865,3 +1865,8 @@
 - 未發現現有格式不符；區分API三段與DLL四段版本，記錄JSON/連線字串/API URL格式核對方式，不虛構Excel或payload錯誤，不自行升版。
 - [規格/驗證/排序](specs/20261022-production-connection-format-plan/spec.md)；新增P2待確認1件，連同i18n20包共21件；受阻／暫緩2件及TransFiles舊驗收1件另列。
 - 本次僅文件與唯讀確認，不修改程式/DB/設定/IIS/Runtime，不build或發布，規劃後STOP。
+
+## 2026-10-22 PPC重複阻擋唯讀釐清
+- 正式完整八欄識別鍵重複群組0，後端Create/Update存檔前409拒絕且Update排除自身；正式存在兩個啟用條件式唯一索引。未將提示解讀為已寫入兩筆。
+- 尚待使用者新增/編輯及項目Id，未判定具體根因；既有TASK-001調整為P1定位及NULL/並發保護審查，計數不增加。僅SELECT/文件，不改程式/DB/發布。
+- [證據與建議](specs/20261022-production-connection-format-plan/verification.md)。

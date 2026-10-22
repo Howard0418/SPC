@@ -313,3 +313,5 @@
 - [規格與核對](specs/20261022-production-connection-format-plan/spec.md)／[排序](specs/20261022-production-connection-format-plan/tasks.md)。正式SQL172.16.110.16/PMR_SPC_2026已連線確認，API0.1.68/DLL0.1.68.0一致，無已知格式錯誤。
 - [ ] SPC-PROD-CONFIG-TASK-001（P2，待具體調整對象／格式）：先明確現況與預期範例，再依阻斷/安全/資料正確/高頻/文案排序最小修正；本次只規劃，不立即執行。
 - 新增待確認1件＋既有i18n20包＝21件待辦／待確認；既有受阻／暫緩2件、TransFiles舊人工驗收1件分列。規劃完成後STOP，不重啟其他工作。
+
+- SPC-PROD-CONFIG-TASK-001具體化為P1：PPC重複阻擋定位與NULL/並發防護覆蓋審查；正式完整鍵重複0組，已有後端409及條件式唯一索引。待使用者新增/編輯情境與項目識別，僅規劃，不實作/修資料。仍1件＋i18n20包＝21件，另受阻/暫緩2、舊驗收1。

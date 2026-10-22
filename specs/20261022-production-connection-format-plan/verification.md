@@ -27,3 +27,12 @@
 - 規格/工作池/需求/變更紀錄內容及相對連結檢查；git diff --check。
 - 不修改任何程式/正式設定/資料/IIS/角色/Runtime；不啟動應用、migration或發布。build與發布不適用（文件型工作）。
 - 原始唯讀腳本tmp_production_config_plan/inspect.ps1不提交；未記錄密碼、完整連線字串或業務資料。
+
+## 補充：正式PPC重複提示唯讀調查
+- 使用者回報「此SPC管制項目已存在相同…」提示。來源為MasterDataV2Controller Create/Update在SaveChanges之前的查重，回HTTP409；Update條件排除自身Id。
+- 正式PMR_SPC_2026按ControlScope/PartId/ProcessId/MachineId/TankId/SlotId/CharacteristicId/Unit分組，COUNT>1之群組數為0。此為本次查詢時點結果，不保證未來或其他定義下永無重複。
+- sys.indexes證實兩個啟用中的條件式業務唯一索引：PartId IS NULL；以及PartId/MachineId/TankId/SlotId/Unit皆非NULL。不可將條件式索引描述成所有NULL組合都有資料庫層完整保證；後續須審查nullable組合及並發覆蓋。
+- 此提示代表本次送出的識別欄位與既有另一Id相符，並不代表已成功寫入第二筆。查重未過濾停用狀態，所以既有停用項目亦可能衝突；尚未定位使用者實際項目，不將可能原因當成根因。
+- 尚需新增/編輯情境及項目ID或線別/槽體/檢驗特性，才能確認是合理阻擋、欄位被改成其他項目、前端送錯Id或既有資料問題。
+- 建議先唯讀定位衝突項目，再評估顯示衝突Id與編輯入口；不得為避開提示而任意改單位/槽位或刪除有追溯資料的主檔。
+- 本次只SQL SELECT及來源閱讀，未新增/修改/刪除正式PPC，未實作或發布。
