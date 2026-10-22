@@ -299,9 +299,9 @@
 ## 2026-10-22 落塵空圖工作池（僅規劃，不立即執行）
 - [規格](specs/20261022-particle-empty-chart-plan/spec.md)／[計畫](specs/20261022-particle-empty-chart-plan/plan.md)／[任務](specs/20261022-particle-empty-chart-plan/tasks.md)：原檔有日期／Count格式問題，實際批次與入庫狀態尚未查；不以少於20點解釋所有0筆。
 - [x] SPC-PARTICLE-EMPTY-TASK-001（P1，已完成）：先追蹤原匯入落點／錯誤／查詢及必要最小修正。
-- [ ] SPC-PARTICLE-EMPTY-TASK-002（P1，相依001，待確認）：核准後測試子集寫入、製圖及MD紀錄。
+- [x] SPC-PARTICLE-EMPTY-TASK-002（P1，已完成）：測試子集1152筆、32／4點與9位置比較已驗證；API 0.1.69已發布測試站，資料保留供驗收。
 - 本次不改原Excel／程式、不寫DB、不發布；完成規劃後STOP。新2件＋i18n20包＝22件待辦／待確認，原受阻及暫緩2件、TransFiles舊驗收1件分列，不恢復其他工作。
 
 ## 2026-10-22 落塵TASK-001完成
 - SPC-PARTICLE-EMPTY-TASK-001：測試站／測試庫量測及Particle批次0；轉檔工具漏接預覽分支已最小修正，51 Python／12 SPC測試與來源patch重現通過，獨立新EXE交付；網站及正式站未改、未寫測試資料。[驗證](specs/20261022-particle-empty-chart-plan/task001-verification.md)。
-- 本案剩TASK-002一件，與i18n20包合計21件待辦；原受阻／暫緩2件及TransFiles舊人工驗收1件分列，不自動執行下一件。
+- 本案TASK-002完成：[操作與資料](specs/20261022-particle-empty-chart-plan/task002-input-record.md)、[驗證](specs/20261022-particle-empty-chart-plan/task002-verification.md)。本案無剩餘小工作；i18n20包待確認／待辦，原受阻／暫緩2件及TransFiles舊人工驗收1件另列，不自動執行。

@@ -13,3 +13,9 @@
 ## 2026-10-22最新執行結果
 - TASK-001完成：使用者確認測試站，PMR_SPC_TEST量測／Particle批次0；重現並修補TransFiles落塵漏接預覽分支，51 Python／12 SPC測試通過，獨立新EXE與來源patch交付。
 - TASK-002尚未開始，未寫入測試資料／實站製圖；本案剩1件＋i18n20包＝21件，原受阻／暫緩2件與TransFiles舊驗收1件不變。[驗證](task001-verification.md)。
+
+## 2026-10-22 TASK-002完成
+- [x] 測試API預覽／確認有效32事件1152筆，保留原始來源；32／4點及R1～R9比較實站驗證完成。
+- [x] UTC回傳回歸先失敗再通過；Particle13項、API176通過／8略過，Release publish成功；測試API0.1.69，正式未更新。
+- [x] [輸入記錄](task002-input-record.md)與[驗證](task002-verification.md)同步。先前「未開始」為歷史狀態。
+- 本案剩0件，其他i18n20包待辦；受阻／暫緩2件及舊人工驗收1件另列，STOP。

@@ -9,6 +9,38 @@ namespace MesSpc.Api.Tests;
 public class ParticleQueryServiceTests
 {
     [Fact]
+    public async Task SqlUtcTimes_ShouldKeepTicksAndRoundTripToLocationComparison()
+    {
+        await using var db = CreateContext();
+        var batch = AddBatch(db);
+        var stored = new DateTime(2026, 9, 29, 0, 8, 0, DateTimeKind.Unspecified);
+        for (var location = 1; location <= 9; location++)
+        {
+            Add(db, batch, $"R{location}", 0.5m, location * 10, 749, $"C{location}");
+        }
+        foreach (var entry in db.ChangeTracker.Entries<ParticleMeasurement>()) entry.Entity.MeasurementTime = stored;
+        await db.SaveChangesAsync();
+        var service = new ParticleQueryService(db);
+        var from = stored.AddDays(-1);
+        var to = stored.AddDays(1);
+        var page = await service.GetMeasurementsAsync(from, to, ["R1"], [0.5m], null, null, 1, 50, false);
+        var trend = await service.GetTrendAsync(from, to, "R1", 0.5m, null);
+        var chart = await service.GetSpcAsync(from, to, "R1", 0.5m, null, "C");
+        foreach (var time in new[] { page.Items.Single().MeasurementTime, trend.Points.Single().Time, chart.Points.Single().Time })
+        {
+            time.Kind.Should().Be(DateTimeKind.Utc);
+            time.Ticks.Should().Be(stored.Ticks);
+        }
+        var json = System.Text.Json.JsonSerializer.Serialize(chart, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+        var timestamp = document.RootElement.GetProperty("points")[0].GetProperty("time").GetString()!;
+        timestamp.Should().EndWith("Z");
+        var comparison = await service.GetLocationComparisonAsync(DateTimeOffset.Parse(timestamp).UtcDateTime, 0.5m, null, batch.UploadBatchId, "Sheet1", 749);
+        comparison.Items.Should().HaveCount(9).And.OnlyContain(item => !item.IsMissing && item.Count.HasValue);
+        comparison.Items.Select(item => item.Count).Should().Equal(Enumerable.Range(1, 9).Select(value => (long?)(value * 10)));
+    }
+
+    [Fact]
     public async Task Trend_ShouldIsolateLocationAndParticleSize()
     {
         await using var db = CreateContext();

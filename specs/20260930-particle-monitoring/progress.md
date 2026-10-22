@@ -86,3 +86,6 @@
 - 本機免登入頁面實際確認控制列、C/U 選擇、錯誤提示、圖表區及原始資料表版面正常。Playwright runner 未正常結束，未將其列為通過。
 - 最終測試站確認 frontend hash 一致、Particle 頁面與資產 200、API health 200、version `0.1.59/test`；正式站未發布。
 - 功能規格、任務、驗證、需求索引與變更紀錄已同步，Particle Monitoring 工作完成。
+
+## 2026-10-22 後續實站驗收
+SPC-PARTICLE-EMPTY-TASK-002完成：1152筆有來源測試子集已入測試庫，32／4點與九位置比較實站通過；修正Particle UTC輸出標記，測試API0.1.69。詳見[操作](../20261022-particle-empty-chart-plan/task002-input-record.md)與[驗證](../20261022-particle-empty-chart-plan/task002-verification.md)。正式未改，資料保留供驗收。

@@ -1847,3 +1847,8 @@
 ## 2026-10-22 SPC-PARTICLE-EMPTY-TASK-001完成
 - 唯讀核對spctest test／API0.1.68、PMR_SPC_TEST Particle量測及批次0；來源流程缺口以4測試重現，最小接回既有預覽與確認畫面，不自動匯入。
 - TransFiles相關51／SPC Particle12通過，獨立EXE產包及程序啟動通過、可見GUI／實站匯入尚未驗收；原EXE保留。外部無repo，必要patch在SPC integrations追溯，無二進位／資料輸出提交。未寫測試資料或發布無變更網站。[驗證](specs/20261022-particle-empty-chart-plan/task001-verification.md)。
+
+## 2026-10-22 SPC-PARTICLE-EMPTY-TASK-002 測試資料及實站製圖
+- 既有預覽→確認匯入32事件1152筆，保留來源與批次；實站32／4點趨勢、九位置比較及時間驗證完成，提供[頁面輸入記錄](specs/20261022-particle-empty-chart-plan/task002-input-record.md)。
+- 修正Particle SQL UTC時間輸出缺Z，未改ticks／公式；先紅後綠，Particle13／API176通過、8略過，Release publish成功。
+- 僅測試API0.1.69發布，設定不變且有backend備份；正式未更新，資料保留供使用者驗收。[驗證](specs/20261022-particle-empty-chart-plan/task002-verification.md)。本案0件，i18n20包及另列受阻／暫緩2件、舊人工驗收1件不執行。

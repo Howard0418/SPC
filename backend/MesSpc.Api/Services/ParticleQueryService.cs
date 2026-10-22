@@ -31,7 +31,7 @@ public sealed class ParticleQueryService(AppDbContext db)
         var total = await query.CountAsync(ct);
         query = ascending ? query.OrderBy(item => item.MeasurementTime).ThenBy(item => item.Id) : query.OrderByDescending(item => item.MeasurementTime).ThenByDescending(item => item.Id);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).Select(item => new ParticleMeasurementItem(
-            item.Id, item.UploadBatchId, item.MeasurementTime, item.Location, item.ParticleSize, item.Count,
+            item.Id, item.UploadBatchId, DateTime.SpecifyKind(item.MeasurementTime, DateTimeKind.Utc), item.Location, item.ParticleSize, item.Count,
             item.SamplingVolume, item.SamplingVolumeUnit, item.SamplingDurationSeconds, item.DeviceCode, item.Remark, item.SourceSheet, item.SourceRow, item.SourceColumn)).ToListAsync(ct);
         return new(items, total, page, pageSize);
     }
@@ -43,7 +43,7 @@ public sealed class ParticleQueryService(AppDbContext db)
         var count = await query.CountAsync(ct);
         if (count > 10_000) throw new InvalidOperationException("TOO_MANY_POINTS");
         var points = await query.OrderBy(item => item.MeasurementTime).ThenBy(item => item.Id)
-            .Select(item => new ParticleTrendPoint(item.Id, item.MeasurementTime, item.Count)).ToListAsync(ct);
+            .Select(item => new ParticleTrendPoint(item.Id, DateTime.SpecifyKind(item.MeasurementTime, DateTimeKind.Utc), item.Count)).ToListAsync(ct);
         var key = $"{location}|{particleSize.ToString(CultureInfo.InvariantCulture)}|{(string.IsNullOrWhiteSpace(deviceCode) ? "DEFAULT" : deviceCode)}";
         return new(key, "count", points, count, null);
     }
@@ -85,9 +85,9 @@ public sealed class ParticleQueryService(AppDbContext db)
         var normalizedChartType = chartType.Trim().ToUpperInvariant();
         ParticleChartResult chart = normalizedChartType switch
         {
-            "C" or "C_CHART" => ParticleCChartCalculator.Calculate(rows.Select(item => new ParticleCChartInput(item.Id, item.MeasurementTime, item.Count)).ToList()),
+            "C" or "C_CHART" => ParticleCChartCalculator.Calculate(rows.Select(item => new ParticleCChartInput(item.Id, DateTime.SpecifyKind(item.MeasurementTime, DateTimeKind.Utc), item.Count)).ToList()),
             "U" or "U_CHART" => ParticleUChartCalculator.Calculate(rows.Select(item => new ParticleUChartInput(
-                item.Id, item.MeasurementTime, item.Count, item.SamplingVolume, item.SamplingVolumeUnit)).ToList()),
+                item.Id, DateTime.SpecifyKind(item.MeasurementTime, DateTimeKind.Utc), item.Count, item.SamplingVolume, item.SamplingVolumeUnit)).ToList()),
             _ => throw new ArgumentException("CHART_TYPE_UNSUPPORTED", nameof(chartType))
         };
         var key = $"{location}|{particleSize.ToString(CultureInfo.InvariantCulture)}|{(string.IsNullOrWhiteSpace(deviceCode) ? "DEFAULT" : deviceCode)}";
