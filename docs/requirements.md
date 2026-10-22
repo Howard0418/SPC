@@ -267,3 +267,5 @@
 - 2026-10-22 PPC2620編輯受阻修正完成：使用者明確確認P1驗收，正式API0.1.71；[結案驗證](../specs/20261022-ppc-optional-machine-edit/verification.md)。本件DONE。
 
 - 2026-10-22 TransFiles TASK-005依使用者指定：自動化59項通過，EXE人工故障驗收暫緩；無隔離環境，不列立即實作、不標完整驗收DONE。[狀態紀錄](../specs/20261021-transfiles-login-failure-validation/verification.md)。
+
+- 常態分析新需求（僅規劃，未實作）：[固定AD與移除偏態/峰態](../specs/20261022-normality-fixed-ad-plan/spec.md)。管制圖及量測趨勢取消檢定下拉、固定Anderson-Darling，API預設建議同步AD並保留舊明確AJB相容；未取代目前執行版本，實作完成後才取代20261014網站切換規則。P2小工作1件，不立即執行。

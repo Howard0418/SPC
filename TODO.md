@@ -330,3 +330,7 @@
 ## TransFiles人工故障驗收暫緩（2026-10-22）
 - 使用者指定：TASK-005「自動化驗證通過，EXE 人工故障驗收暫緩」。既有59項通過，無隔離環境，不安排立即驗收、不標DONE。[規格](specs/20261021-transfiles-login-failure-validation/spec.md)。
 - 工作池仍i18n20包待確認；另列附件掃毒受阻1件、Runtime暫緩1件、TransFiles人工故障驗收暫緩1件。Portal既有真人確認另列，不受本次影響。
+
+## 常態分析固定AD（2026-10-22，僅規劃）
+- [ ] SPC-NORMALITY-AD-TASK-001（P2，待執行確認）：移除偏態/峰態、取消方法下拉，管制圖/量測趨勢固定Anderson-Darling，後端預設與測試同步。[規格](specs/20261022-normality-fixed-ad-plan/spec.md)／[排序與限制](specs/20261022-normality-fixed-ad-plan/tasks.md)。
+- 本件排於i18n之前；本次不立即實作/測試/發布。現共21件＝本件1＋i18n20包；另附件掃毒受阻1、Runtime/TransFiles驗收暫緩2，不自動恢復。
