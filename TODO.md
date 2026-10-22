@@ -295,3 +295,9 @@
 - I18N-TASK-01 DONE；TASK-02～21 共20個待確認工作包，尚未開始；每次單件、單一系統，可能再拆小，不能視為實作或正式更新授權。
 - 既有主要未完成仍2件：SEC-FOLLOWUP-002附件掃毒受阻、004 Runtime暫緩；TransFiles舊人工驗收TASK-005另1件。i18n規劃包與既有受阻／暫緩事項分列，不重啟維護。
 - TASK-01完成後STOP，等待確認。
+
+## 2026-10-22 落塵空圖工作池（僅規劃，不立即執行）
+- [規格](specs/20261022-particle-empty-chart-plan/spec.md)／[計畫](specs/20261022-particle-empty-chart-plan/plan.md)／[任務](specs/20261022-particle-empty-chart-plan/tasks.md)：原檔有日期／Count格式問題，實際批次與入庫狀態尚未查；不以少於20點解釋所有0筆。
+- [ ] SPC-PARTICLE-EMPTY-TASK-001（P1，待確認）：先追蹤原匯入落點／錯誤／查詢及必要最小修正。
+- [ ] SPC-PARTICLE-EMPTY-TASK-002（P1，相依001，待確認）：核准後測試子集寫入、製圖及MD紀錄。
+- 本次不改原Excel／程式、不寫DB、不發布；完成規劃後STOP。新2件＋i18n20包＝22件待辦／待確認，原受阻及暫緩2件、TransFiles舊驗收1件分列，不恢復其他工作。
