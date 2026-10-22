@@ -1859,3 +1859,9 @@
 ## 2026-10-22 U-chart有來源測試資料完成
 - 依使用者確認原始計數、全筆28.3 L，原Excel5～6月有效32事件1152筆經預覽→確認；TEST-U-28P3L為明示隔離標記，不改8～9月C圖。
 - 真實32點／單點U圖及九位置比較、Particle13測試通過；無程式／部署／schema變更，資料保留。[操作與驗證](specs/20261022-particle-u-acceptance/input-record.md)。剩20包及另列2＋1件。
+
+## 2026-10-22 SPC正式連線與API調整規劃
+- 使用者澄清為調整規劃；唯讀確認正式PMR-SPC-SRV、SQL172.16.110.16/PMR_SPC_2026，SELECT DB_NAME()一致且連線成功；API0.1.68/DLL0.1.68.0、production/health正常，無相關環境覆寫。
+- 未發現現有格式不符；區分API三段與DLL四段版本，記錄JSON/連線字串/API URL格式核對方式，不虛構Excel或payload錯誤，不自行升版。
+- [規格/驗證/排序](specs/20261022-production-connection-format-plan/spec.md)；新增P2待確認1件，連同i18n20包共21件；受阻／暫緩2件及TransFiles舊驗收1件另列。
+- 本次僅文件與唯讀確認，不修改程式/DB/設定/IIS/Runtime，不build或發布，規劃後STOP。

@@ -255,3 +255,5 @@
 - 2026-10-22 U-chart測試資料：[來源檢查與待辦](../specs/20261022-particle-u-acceptance/spec.md)。原Excel未找到採樣體積／單位；待補真實輸入或確認隔離模擬，不靜默填值、不改C圖。
 
 - 2026-10-22 U-chart測試資料完成：[操作與驗證](../specs/20261022-particle-u-acceptance/input-record.md)。使用者確認原始計數／每次28.3 L，原表5～6月32事件1152筆以TEST-U-28P3L隔離；真實32點／單點、九位置比較及13測試通過，既有C圖不變；無程式／正式站更新。
+
+- SPC正式連線/API調整僅規劃：[規格](../specs/20261022-production-connection-format-plan/spec.md)、[現況與格式建議](../specs/20261022-production-connection-format-plan/verification.md)。2026-10-22唯讀確認PMR_SPC_2026連線成功/API0.1.68，無格式異常；後續P2小工作1件待具體調整範例，不立即實作。

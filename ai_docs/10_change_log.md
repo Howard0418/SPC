@@ -828,3 +828,6 @@
 - 目的：測試Particle表／批次0，TransFiles落塵工作執行緒只匯出Excel，漏接既有預覽上傳。先補回歸再修最小分支，保留使用者確認，不改統計或資料庫。
 ## [2026-10-22] SPC-PARTICLE-EMPTY-TASK-002 UTC回傳修正目的
 - 實站驗收發現SQL datetime2未帶Kind，Particle時間回傳缺Z，造成最新事件位置比較偏移。只在Particle輸出指定既存UTC語意，保留ticks、原始資料及統計公式；先建立SQL型態回歸測試，再發布測試API。
+
+## 2026-10-22 SPC正式連線與API調整規劃
+- 目的：唯讀核對正式連線/API版本並提出格式建議與小工作排序；不修改程式、DB、IIS或發布。

@@ -308,3 +308,8 @@
 
 ## 2026-10-22 U-chart實站測試（P1，待必要輸入）
 - SPC-PARTICLE-U-ACCEPTANCE-TASK-001已完成，移出待辦：[操作與驗證](specs/20261022-particle-u-acceptance/input-record.md)。依使用者確認原始計數／28.3 L匯入1152筆，32點與單點U圖驗證通過，原C圖不變。現剩i18n20包，受阻／暫緩2件及舊人工驗收1件另列。
+
+## SPC正式連線與API調整規劃（2026-10-22，僅規劃）
+- [規格與核對](specs/20261022-production-connection-format-plan/spec.md)／[排序](specs/20261022-production-connection-format-plan/tasks.md)。正式SQL172.16.110.16/PMR_SPC_2026已連線確認，API0.1.68/DLL0.1.68.0一致，無已知格式錯誤。
+- [ ] SPC-PROD-CONFIG-TASK-001（P2，待具體調整對象／格式）：先明確現況與預期範例，再依阻斷/安全/資料正確/高頻/文案排序最小修正；本次只規劃，不立即執行。
+- 新增待確認1件＋既有i18n20包＝21件待辦／待確認；既有受阻／暫緩2件、TransFiles舊人工驗收1件分列。規劃完成後STOP，不重啟其他工作。
