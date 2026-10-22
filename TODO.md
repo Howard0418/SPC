@@ -305,3 +305,6 @@
 ## 2026-10-22 落塵TASK-001完成
 - SPC-PARTICLE-EMPTY-TASK-001：測試站／測試庫量測及Particle批次0；轉檔工具漏接預覽分支已最小修正，51 Python／12 SPC測試與來源patch重現通過，獨立新EXE交付；網站及正式站未改、未寫測試資料。[驗證](specs/20261022-particle-empty-chart-plan/task001-verification.md)。
 - 本案TASK-002完成：[操作與資料](specs/20261022-particle-empty-chart-plan/task002-input-record.md)、[驗證](specs/20261022-particle-empty-chart-plan/task002-verification.md)。本案無剩餘小工作；i18n20包待確認／待辦，原受阻／暫緩2件及TransFiles舊人工驗收1件另列，不自動執行。
+
+## 2026-10-22 U-chart實站測試（P1，待必要輸入）
+- [ ] SPC-PARTICLE-U-ACCEPTANCE-TASK-001：[規格／來源檢查](specs/20261022-particle-u-acceptance/spec.md)。原Excel無採樣體積／單位，待使用者提供真實值或選擇明示假設的隔離模擬資料；未寫入，不覆蓋C圖。合計21件（本案1＋i18n20），原受阻／暫緩2件及舊人工驗收1件另列。

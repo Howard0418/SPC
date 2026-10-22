@@ -1852,3 +1852,6 @@
 - 既有預覽→確認匯入32事件1152筆，保留來源與批次；實站32／4點趨勢、九位置比較及時間驗證完成，提供[頁面輸入記錄](specs/20261022-particle-empty-chart-plan/task002-input-record.md)。
 - 修正Particle SQL UTC時間輸出缺Z，未改ticks／公式；先紅後綠，Particle13／API176通過、8略過，Release publish成功。
 - 僅測試API0.1.69發布，設定不變且有backend備份；正式未更新，資料保留供使用者驗收。[驗證](specs/20261022-particle-empty-chart-plan/task002-verification.md)。本案0件，i18n20包及另列受阻／暫緩2件、舊人工驗收1件不執行。
+
+## 2026-10-22 U-chart測試來源檢查
+- 唯讀確認原落塵表缺採樣體積／單位，已建立[測試規格與待辦](specs/20261022-particle-u-acceptance/spec.md)。未寫入資料或修改程式／部署，待必要輸入；21件待辦，另列項不變。
