@@ -243,3 +243,5 @@
 - 2026-10-21正式靜態站API相容：測試站仍固定同源/api且忽略舊VITE_API_BASE；正式包可明確指定既有白名單http://172.16.119.140:8081/api，其他URL拒絕。使用VITE_PRODUCTION_API_BASE，不安裝IIS代理模組。21項及兩環境build通過，測試前端0.1.70已發布，正式R2待驗；[驗證](../specs/20261021-spc-portal-production-preflight/verification.md)。
 
 - 2026-10-21網站正式更新完成：SPC API0.1.68/Web0.1.70（正式專用API白名單）、Portal191/234、KM1.6.7；必要SPC4筆/KM023已套，Runtime維持原版。正常SSO/公式歷史日期/唯讀製圖與保護設定驗證通過，日期policy不自動啟用。[驗證](../specs/20261021-spc-portal-production-preflight/verification.md)。
+
+- 2026-10-22 I18N-TASK-01分析完成：[規格](../specs/20261022-i18n-task01/spec.md)／[可行性報告](../specs/20261022-i18n-task01/analysis.md)。三語zh-TW預設／fallback、zh-CN、en-US；建議SPC Vue I18n、Portal／KM沿用Razor及JSON介接，保留資料／統計／文件／權限。僅分析，20個後續工作包待確認，未建立語系功能、未查實庫或發布，人工翻譯品質尚未驗收。
