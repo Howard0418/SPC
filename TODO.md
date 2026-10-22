@@ -307,4 +307,4 @@
 - 本案TASK-002完成：[操作與資料](specs/20261022-particle-empty-chart-plan/task002-input-record.md)、[驗證](specs/20261022-particle-empty-chart-plan/task002-verification.md)。本案無剩餘小工作；i18n20包待確認／待辦，原受阻／暫緩2件及TransFiles舊人工驗收1件另列，不自動執行。
 
 ## 2026-10-22 U-chart實站測試（P1，待必要輸入）
-- [ ] SPC-PARTICLE-U-ACCEPTANCE-TASK-001：[規格／來源檢查](specs/20261022-particle-u-acceptance/spec.md)。原Excel無採樣體積／單位，待使用者提供真實值或選擇明示假設的隔離模擬資料；未寫入，不覆蓋C圖。合計21件（本案1＋i18n20），原受阻／暫緩2件及舊人工驗收1件另列。
+- SPC-PARTICLE-U-ACCEPTANCE-TASK-001已完成，移出待辦：[操作與驗證](specs/20261022-particle-u-acceptance/input-record.md)。依使用者確認原始計數／28.3 L匯入1152筆，32點與單點U圖驗證通過，原C圖不變。現剩i18n20包，受阻／暫緩2件及舊人工驗收1件另列。

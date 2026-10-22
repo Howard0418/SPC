@@ -253,3 +253,5 @@
 - 2026-10-22 SPC-PARTICLE-EMPTY-TASK-002完成：[測試資料／操作](../specs/20261022-particle-empty-chart-plan/task002-input-record.md)、[驗證](../specs/20261022-particle-empty-chart-plan/task002-verification.md)。測試庫1152筆有來源子集，實站32／4點及九位置比較通過；Particle時間回傳保留UTC ticks並標Z，API0.1.69測試發布，無統計／正式資料變更。
 
 - 2026-10-22 U-chart測試資料：[來源檢查與待辦](../specs/20261022-particle-u-acceptance/spec.md)。原Excel未找到採樣體積／單位；待補真實輸入或確認隔離模擬，不靜默填值、不改C圖。
+
+- 2026-10-22 U-chart測試資料完成：[操作與驗證](../specs/20261022-particle-u-acceptance/input-record.md)。使用者確認原始計數／每次28.3 L，原表5～6月32事件1152筆以TEST-U-28P3L隔離；真實32點／單點、九位置比較及13測試通過，既有C圖不變；無程式／正式站更新。
