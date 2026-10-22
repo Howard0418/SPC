@@ -1876,3 +1876,8 @@
 - 先建4項Controller/SQLite回歸，修前1fail/3pass；修後API47pass/1skip，Release成功，測試SpcSingleTest API0.1.70/health正常、設定hash不變。
 - 正式以原0.1.68隔離來源單行修正為0.1.71，獨立4回歸/產包/Production Plan通過，前端0.1.70 payload不變、不含Particle新功能。正式未Apply/改資料，待具體授權及真人儲存。
 - [規格、來源與回復](specs/20261022-ppc-optional-machine-edit/spec.md)。本件仍1＋i18n20包＝21件，另受阻/暫緩2、舊驗收1。
+
+## 2026-10-22 PPC選填線別正式修正發布
+- 使用者同意後Apply SPC-PPC-OPTIONAL-MACHINE-20261022-R2，正式API0.1.71/Web0.1.70；台灣16:39:37～16:39:47流程完成。
+- IIS/應用/DB COPY_ONLY/CHECKSUM/VERIFYONLY備份成功，101payload與3份設定hash一致、兩pool Started、version/health production正常。無migration/正式資料修補，不夾帶Particle新功能。
+- [正式驗證與回復](specs/20261022-ppc-optional-machine-edit/verification.md)。2620真人儲存待確認1項；連同i18n20包仍21件，另受阻/暫緩2、舊驗收1。

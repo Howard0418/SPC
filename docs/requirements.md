@@ -261,3 +261,5 @@
 - PPC重複提示補充：正式完整鍵重複0組；後端409及條件式唯一索引存在。既有調整TASK-001提升P1定位實際衝突與防護覆蓋，待項目Id、不立即修正。[唯讀證據](../specs/20261022-production-connection-format-plan/verification.md)。
 
 - PPC線別選填不等於清空：2620只改LSL不得清MachineId；[單行修正與驗證](../specs/20261022-ppc-optional-machine-edit/spec.md)。測試API0.1.70已發布；正式0.1.71具體包/Plan完成待授權，不改索引或正式資料。
+
+- 2026-10-22 PPC選填線別修正已正式發布API0.1.71/Web0.1.70，無DDL/資料修補，2620真人儲存待確認。[正式結果](../specs/20261022-ppc-optional-machine-edit/verification.md)。

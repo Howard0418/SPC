@@ -25,3 +25,12 @@
 - 原NULL/並發索引全面審查不屬此單行缺陷，不宣稱已完成；沒有改動schema。
 
 - 正式API採三段版號0.1.71，因/api/version使用ToString(3)，不可用四段patch作版本smoke。版號調整未改行為，不重跑已通過同來源4項回歸。
+
+## 2026-10-22 正式發布完成（覆蓋前述待授權/未發布狀態）
+- 使用者明確回覆同意後，以既有R2 manifest Apply完成；releaseId SPC-PPC-OPTIONAL-MACHINE-20261022-R2。
+- evidence completed/complete，UTC08:39:37.558～08:39:47.986，台灣16:39:37～16:39:47約10秒發布流程。
+- IIS/應用及PMR_SPC_2026 COPY_ONLY/CHECKSUM/VERIFYONLY備份成功，database.json verified=True；無migration SQL/DDL/業務資料修補。
+- 正式DLL0.1.71.0、API version0.1.71/environment production、health ok；SpcApi/SpcWeb pool皆Started。
+- 101個payload逐檔SHA256及3份受保護設定與同批備份hash一致；正式前端仍0.1.70，未帶入Particle新功能。
+- 備份根PMR-SPC-SRV C:/ProgramData/PMR-Releases/Production/SPC-PPC-OPTIONAL-MACHINE-20261022-R2；回復使用同bundle-r2 manifest Rollback至API0.1.68/Web0.1.70，不整庫還原。
+- 未替使用者提交2620的LSL或其他正式欄位；實際編輯儲存尚待本人確認，不以health代替真人驗收。
