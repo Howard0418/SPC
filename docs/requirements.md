@@ -265,3 +265,5 @@
 - 2026-10-22 PPC選填線別修正已正式發布API0.1.71/Web0.1.70，無DDL/資料修補，2620真人儲存待確認。[正式結果](../specs/20261022-ppc-optional-machine-edit/verification.md)。
 
 - 2026-10-22 PPC2620編輯受阻修正完成：使用者明確確認P1驗收，正式API0.1.71；[結案驗證](../specs/20261022-ppc-optional-machine-edit/verification.md)。本件DONE。
+
+- 2026-10-22 TransFiles TASK-005依使用者指定：自動化59項通過，EXE人工故障驗收暫緩；無隔離環境，不列立即實作、不標完整驗收DONE。[狀態紀錄](../specs/20261021-transfiles-login-failure-validation/verification.md)。

@@ -1885,3 +1885,7 @@
 ## 2026-10-22 PPC2620真人驗收結案
 - 使用者回覆「P1已確認」，2620規格下限0.2儲存驗收完成，SPC-PROD-CONFIG-TASK-001 DONE；正式API0.1.71沿用，不重跑測試/發布或修改正式資料。
 - [驗證](specs/20261022-ppc-optional-machine-edit/verification.md)。待辦由21降為i18n20包；受阻/暫緩2件及TransFiles舊驗收1件另列，不自動執行下一項。
+
+## 2026-10-22 TransFiles故障人工驗收暫緩
+- 使用者確認無隔離環境，明確指定「自動化驗證通過，EXE 人工故障驗收暫緩」；保留59項通過與未完成人工驗收，不標DONE、不另架環境或製造故障。
+- 僅文件狀態/連結/diff檢查，不重跑測試/打包/發布。[規格](specs/20261021-transfiles-login-failure-validation/spec.md)。工作池i18n20包，另受阻1、暫緩2（含TransFiles）。

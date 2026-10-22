@@ -326,3 +326,7 @@
 - [x] SPC-PROD-CONFIG-TASK-001：使用者回覆「P1已確認」，2620規格下限0.2儲存驗收完成；正式API0.1.71，本件DONE，不再列入未完成數。
 - 目前剩i18n TASK-02～21共20個待確認工作包；附件掃毒受阻及Runtime暫緩2件、TransFiles舊人工驗收1件另列。Portal三項真人確認未因本次SPC驗收自動核銷。
 - 本次僅文件結案，不重跑測試或發布，不開始下一工作。
+
+## TransFiles人工故障驗收暫緩（2026-10-22）
+- 使用者指定：TASK-005「自動化驗證通過，EXE 人工故障驗收暫緩」。既有59項通過，無隔離環境，不安排立即驗收、不標DONE。[規格](specs/20261021-transfiles-login-failure-validation/spec.md)。
+- 工作池仍i18n20包待確認；另列附件掃毒受阻1件、Runtime暫緩1件、TransFiles人工故障驗收暫緩1件。Portal既有真人確認另列，不受本次影響。
