@@ -273,3 +273,5 @@
 - 2026-10-23常態分析測試版現行基準：管制圖/量測趨勢不顯示偏態/峰態與方法下拉，固定Anderson-Darling；後端省略/未知方法預設AD、明確AJB舊呼叫相容，API數值欄保留。測試API0.1.72/Web0.1.71，正式未更新。[驗證](../specs/20261022-normality-fixed-ad-plan/verification.md)。取代20261014在測試網站允許切換/預設AJB的規則。
 
 - 2026-10-24 I18N-TASK-02完成：[共用契約/詞彙/檢查設計](i18n/README.md)、[規格與驗證](../specs/20261024-i18n-task02/spec.md)。三語29鍵範例/87draft與18故障fixture機械驗證通過；真人審稿、產品介接/偏好/CI未實作，不發布。剩TASK-03～21共19包。
+
+- 2026-10-24 I18N-TASK-03設計完成：[Portal本人偏好/身分/schema提案](i18n/preferences-plan.md)、[規格驗證](../specs/20261024-i18n-task03/spec.md)。以Portal Users.Id為本人權威，SPC Operators.Id不可直接對應；獨立偏好表/條件式API僅提案，共用警衛政策及跨站委派未決，未執行migration/API或發布。剩18包。

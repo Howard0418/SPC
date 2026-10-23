@@ -1905,3 +1905,8 @@
 - 依使用者授權只執行第一件國際化小工作：JSON nested穩定key/具名參數multiset/locale及逐key繁中fallback/格式安全/版本與來源hash、譯文hash/審核規範；附25項詞彙初稿與缺漏檢查設計。
 - [交付入口](docs/i18n/README.md)，三語各29鍵、87筆draft審核列，參數/hash/保護token及18故障fixture通過，文件連結/diff檢查；範例不是全站翻譯，未冒稱真人97%或CI/產品runtime已完成。
 - [規格與驗證](specs/20261024-i18n-task02/spec.md)。純文件/參考資源，不修改三站程式/DB/套件/IIS或發布；TASK-02 DONE後STOP，剩19包，另受阻1/暫緩2。
+
+## 2026-10-24 國際化TASK-03偏好持久化設計
+- 只執行下一小工作：Portal Users.Id本人偏好、獨立UserLocalePreferences表/FK/unique/CHECK/rowversion提案、GET/PUT/DELETE/CSRF/條件式更新、快取與換人隔離、失敗不丟表單與回復安排。
+- 已確認SPC JWT是Operators.Id、KM現有signed account不含Portal穩定ID/locale；不假稱跨站cookie/JWT可直接共用。共用警衛政策/安全委派保留後續決策，不改SSO/角色。
+- [方案](docs/i18n/preferences-plan.md)與[驗證](specs/20261024-i18n-task03/verification.md)：13項JSON案例/文件連結/diff檢查通過，僅文件不是API或SQL測試。不查實庫、不執行schema/程式/build/發布，TASK-03 DONE後STOP，剩18包，另受阻1/暫緩2。

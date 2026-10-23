@@ -344,3 +344,8 @@
 - [x] I18N-TASK-02：共用JSON/key/placeholder/locale/fallback契約v1.0.0、25項詞彙初稿、缺漏檢查設計完成。[規格](specs/20261024-i18n-task02/spec.md)／[共用規範](docs/i18n/README.md)。
 - 三語29鍵、87筆draft審核列與hash/參數檢查及18故障fixture通過；尚無真人翻譯品質成果、產品checker/三語UI/偏好功能，不改程式或發布。
 - 剩TASK-03～21共19個待執行/待確認包；另附件掃毒受阻1、Runtime與TransFiles人工故障驗收暫緩2。只完成本件，STOP，不直接開始03或04。
+
+## 國際化TASK-03完成（2026-10-24）
+- [x] I18N-TASK-03：Portal本人語言偏好/Users.Id映射、獨立偏好表及條件式API/CSRF/快取/回復提案完成。[規格](specs/20261024-i18n-task03/spec.md)／[方案](docs/i18n/preferences-plan.md)。
+- 13項JSON提案案例一致性/文件連結檢查通過；不是端點、權限、migration或跨站同步實作。共用警衛帳號政策及跨站委派待後續決策，不在本件修改。
+- 剩TASK-04～21共18個待執行/待確認包；另附件掃毒受阻1、Runtime/TransFiles人工故障驗收暫緩2。不開始TASK-04/09，不發布。

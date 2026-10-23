@@ -1,0 +1,172 @@
+{
+  "status": "proposal-only",
+  "path": "/api/me/locale",
+  "supportedLocales": [
+    "zh-TW",
+    "zh-CN",
+    "en-US"
+  ],
+  "baseLocale": "zh-TW",
+  "fixtureAssumption": "除anonymous/sharedGuard/inactive等指定狀態外，皆為有效同源cookie且CSRF通過；各例只隔離所述錯誤條件，未列header由共同fixture提供。範例不是已執行測試結果。",
+  "cases": [
+    {
+      "id": "anonymousGet",
+      "actor": "anonymous",
+      "method": "GET",
+      "body": null,
+      "expectedStatus": 401,
+      "writesPreference": false
+    },
+    {
+      "id": "noPreference",
+      "actor": "person",
+      "method": "GET",
+      "body": null,
+      "expectedStatus": 200,
+      "writesPreference": false,
+      "response": {
+        "success": true,
+        "data": {
+          "preferredLocale": null,
+          "effectiveLocale": "zh-TW",
+          "source": "default"
+        },
+        "message": ""
+      }
+    },
+    {
+      "id": "createPreference",
+      "actor": "person",
+      "method": "PUT",
+      "headers": {
+        "If-None-Match": "*",
+        "X-CSRF-TOKEN": "synthetic-test-token"
+      },
+      "body": {
+        "locale": "en-US"
+      },
+      "expectedStatus": 200,
+      "writesPreference": true,
+      "response": {
+        "success": true,
+        "data": {
+          "preferredLocale": "en-US",
+          "effectiveLocale": "en-US",
+          "source": "user"
+        },
+        "message": ""
+      }
+    },
+    {
+      "id": "updatePreference",
+      "actor": "person",
+      "method": "PUT",
+      "headers": {
+        "If-Match": "\"AAAAAAAAAAE=\"",
+        "X-CSRF-TOKEN": "synthetic-test-token"
+      },
+      "body": {
+        "locale": "zh-CN"
+      },
+      "expectedStatus": 200,
+      "writesPreference": true
+    },
+    {
+      "id": "resetPreference",
+      "actor": "person",
+      "method": "DELETE",
+      "headers": {
+        "If-Match": "\"AAAAAAAAAAE=\"",
+        "X-CSRF-TOKEN": "synthetic-test-token"
+      },
+      "body": null,
+      "expectedStatus": 204,
+      "writesPreference": true
+    },
+    {
+      "id": "badAlias",
+      "actor": "person",
+      "method": "PUT",
+      "body": {
+        "locale": "en_US"
+      },
+      "expectedStatus": 400,
+      "writesPreference": false
+    },
+    {
+      "id": "badNull",
+      "actor": "person",
+      "method": "PUT",
+      "body": {
+        "locale": null
+      },
+      "expectedStatus": 400,
+      "writesPreference": false
+    },
+    {
+      "id": "extraUserId",
+      "actor": "person",
+      "method": "PUT",
+      "body": {
+        "locale": "en-US",
+        "userId": 1002
+      },
+      "expectedStatus": 400,
+      "writesPreference": false
+    },
+    {
+      "id": "sharedGuard",
+      "actor": "local_guard",
+      "method": "PUT",
+      "body": {
+        "locale": "en-US"
+      },
+      "expectedStatus": 403,
+      "writesPreference": false
+    },
+    {
+      "id": "inactiveUser",
+      "actor": "inactive",
+      "method": "GET",
+      "body": null,
+      "expectedStatus": 403,
+      "writesPreference": false
+    },
+    {
+      "id": "staleRevision",
+      "actor": "person",
+      "method": "PUT",
+      "headers": {
+        "If-Match": "\"AAAAAAAAAAE=\""
+      },
+      "body": {
+        "locale": "zh-TW"
+      },
+      "expectedStatus": 412,
+      "writesPreference": false
+    },
+    {
+      "id": "missingPrecondition",
+      "actor": "person",
+      "method": "PUT",
+      "body": {
+        "locale": "en-US"
+      },
+      "expectedStatus": 428,
+      "writesPreference": false
+    },
+    {
+      "id": "databaseUnavailable",
+      "actor": "person",
+      "method": "PUT",
+      "headers": {
+        "If-Match": "\"AAAAAAAAAAE=\""
+      },
+      "body": {
+        "locale": "en-US"
+      },
+      "expectedStatus": 503,
+      "writesPreference": false
+    }
+  ]
+}

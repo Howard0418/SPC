@@ -4,3 +4,6 @@
 - [TASK-02規格與驗證](../../specs/20261024-i18n-task02/spec.md)｜[完整工作池](../../specs/20261022-i18n-task01/tasks.md)。
 - 主文件只在SPC維護。後續各系統建置採本機版本化快照，不能在執行時依賴SPC網站或外部翻譯；本次不複製到Portal/KM。
 - 範例機械檢查通過不等於三語文意合格；所有翻譯初稿尚待業務審核，沒有97%驗收或三語UI成果。
+
+## TASK-03偏好設計（未實作）
+- [本人偏好/身分與schema提案](preferences-plan.md)｜[後續驗證設計](preferences-validation.md)｜[契約案例](examples/preference-api-cases.json)。僅文件，不代表已有跨站同步或偏好資料表。
