@@ -1,4 +1,5 @@
 <script setup>
+import { formatNormalityPValue, normalityConclusion, normalityUnavailableReason } from "../utils/normalityPresentation";
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
@@ -108,7 +109,7 @@ const getDefaultEndDateStr = () => isMonthlyChartPage.value ? getMonthEndStr() :
 
 const startDate = ref(getDefaultStartDateStr());
 const endDate = ref(getDefaultEndDateStr());
-const normalityMethod = ref("AJB");
+const normalityMethod = "AD";
 const reportPeriodType = ref("MONTH");
 const reportMonth = ref(getCurrentMonthStr());
 const reportWeek = ref(getCurrentIsoWeekStr());
@@ -625,7 +626,7 @@ watch([showSpecLimits, showControlLimits, showPointValues], () => {
 });
 
 const getChartQueryParams = (activePpcId) => {
-  const params = { ppcId: activePpcId, normalityMethod: normalityMethod.value };
+  const params = { ppcId: activePpcId, normalityMethod: normalityMethod };
   if (uploadBatchId.value) params.uploadBatchId = uploadBatchId.value;
   if (batchId.value) params.batchNo = batchId.value;
   if (selectedDimension.value === "PRODUCT" && productQueryMode.value === "PART") {
@@ -1985,10 +1986,8 @@ function renderHistogramChart() {
 
         let normalityInfo = "";
         if (data.normality) {
-          const pValStr = data.normality.pValue !== null ? formatNumber(data.normality.pValue, 4) : "N/A";
-          const normalStatus = data.normality.isNormal
-            ? "<span style='color:#34d399;font-weight:bold'>符合常態</span>"
-            : "<span style='color:#f87171;font-weight:bold'>偏離常態</span>";
+          const pValStr = data.normality.pValue !== null ? formatNormalityPValue(data.normality.pValue) : "N/A";
+          const normalStatus = normalityConclusion(data.normality);
           const methodNote = data.normality.methodNote
             ? `<div style="margin-top:4px;color:#cbd5e1">${data.normality.methodNote}</div>`
             : "";
@@ -2181,10 +2180,7 @@ onBeforeUnmount(() => {
 
           <div v-if="!isMonthlyChartPage" class="w-full">
             <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">常態檢定方法</label>
-            <select v-model="normalityMethod" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-              <option value="AJB">Adjusted Jarque-Bera</option>
-              <option value="AD">Anderson-Darling</option>
-            </select>
+            <p data-testid="normality-method" class="px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white">Anderson-Darling</p>
           </div>
 
         </div>
@@ -2588,7 +2584,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold">
             <div class="space-y-1">
               <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">納入樣本數</span>
               <span class="text-slate-800 dark:text-slate-200 font-mono">
@@ -2614,31 +2610,19 @@ onBeforeUnmount(() => {
               </span>
             </div>
             <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">偏態 (Skewness)</span>
-              <span class="text-slate-800 dark:text-slate-200 font-mono">
-                {{ chartResult.normality ? formatNumber(chartResult.normality.skewness, 4) : 'N/A' }}
-              </span>
-            </div>
-            <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">峰態 (Kurtosis)</span>
-              <span class="text-slate-800 dark:text-slate-200 font-mono">
-                {{ chartResult.normality ? formatNumber(chartResult.normality.kurtosis, 4) : 'N/A' }}
-              </span>
-            </div>
-            <div class="space-y-1">
               <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">常態性檢定 (P-val)</span>
               <span class="text-slate-800 dark:text-slate-200 font-mono">
-                {{ chartResult.normality && chartResult.normality.pValue !== null ? formatNumber(chartResult.normality.pValue, 4) : 'N/A' }}
+                {{ chartResult.normality && chartResult.normality.pValue !== null ? formatNormalityPValue(chartResult.normality.pValue) : 'N/A' }}
               </span>
             </div>
             <div class="space-y-1">
               <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">常態判定</span>
               <div>
-                <span v-if="chartResult.normality?.pValue === null" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <span v-if="normalityConclusion(chartResult.normality) === '無法檢定'" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                   無法檢定
                 </span>
-                <span v-else-if="chartResult.normality?.isNormal" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  符合常態
+                <span v-else-if="normalityConclusion(chartResult.normality) === '未拒絕常態假設'" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  未拒絕常態假設
                 </span>
                 <span v-else-if="chartResult.normality" class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse">
                   偏離常態
@@ -2647,6 +2631,9 @@ onBeforeUnmount(() => {
               </div>
             </div>
           </div>
+          <p v-if="normalityUnavailableReason(chartResult.normality)" data-testid="normality-unavailable" class="text-xs text-amber-700 dark:text-amber-300">
+            {{ normalityUnavailableReason(chartResult.normality) }}
+          </p>
           <p v-if="chartResult.normality?.methodNote" class="text-xs text-slate-500 dark:text-slate-400">
             {{ chartResult.normality.methodNote }}
           </p>

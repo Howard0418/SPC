@@ -332,5 +332,10 @@
 - 工作池仍i18n20包待確認；另列附件掃毒受阻1件、Runtime暫緩1件、TransFiles人工故障驗收暫緩1件。Portal既有真人確認另列，不受本次影響。
 
 ## 常態分析固定AD（2026-10-22，僅規劃）
-- [ ] SPC-NORMALITY-AD-TASK-001（P2，待執行確認）：移除偏態/峰態、取消方法下拉，管制圖/量測趨勢固定Anderson-Darling，後端預設與測試同步。[規格](specs/20261022-normality-fixed-ad-plan/spec.md)／[排序與限制](specs/20261022-normality-fixed-ad-plan/tasks.md)。
+- [x] SPC-NORMALITY-AD-TASK-001（P2，待執行確認）：移除偏態/峰態、取消方法下拉，管制圖/量測趨勢固定Anderson-Darling，後端預設與測試同步。[規格](specs/20261022-normality-fixed-ad-plan/spec.md)／[排序與限制](specs/20261022-normality-fixed-ad-plan/tasks.md)。
 - 本件排於i18n之前；本次不立即實作/測試/發布。現共21件＝本件1＋i18n20包；另附件掃毒受阻1、Runtime/TransFiles驗收暫緩2，不自動恢復。
+
+## 常態分析固定AD完成（2026-10-23）
+- [x] SPC-NORMALITY-AD-TASK-001：兩頁移除偏態/峰態與方法下拉、固定AD，後端預設同步且保留AJB明確呼叫；測試API0.1.72/Web0.1.71已發布。
+- 234項後端通過/9條件式略過、Node3、兩頁8情境及已發布8情境/同源路由通過，無資料修補。正式未更新。[驗證與回復](specs/20261022-normality-fixed-ad-plan/verification.md)。
+- 本件DONE，工作池由21降為i18n20個待確認包；另附件掃毒受阻1、Runtime及TransFiles人工故障驗收暫緩2，不開始其他工作。

@@ -269,3 +269,5 @@
 - 2026-10-22 TransFiles TASK-005依使用者指定：自動化59項通過，EXE人工故障驗收暫緩；無隔離環境，不列立即實作、不標完整驗收DONE。[狀態紀錄](../specs/20261021-transfiles-login-failure-validation/verification.md)。
 
 - 常態分析新需求（僅規劃，未實作）：[固定AD與移除偏態/峰態](../specs/20261022-normality-fixed-ad-plan/spec.md)。管制圖及量測趨勢取消檢定下拉、固定Anderson-Darling，API預設建議同步AD並保留舊明確AJB相容；未取代目前執行版本，實作完成後才取代20261014網站切換規則。P2小工作1件，不立即執行。
+
+- 2026-10-23常態分析測試版現行基準：管制圖/量測趨勢不顯示偏態/峰態與方法下拉，固定Anderson-Darling；後端省略/未知方法預設AD、明確AJB舊呼叫相容，API數值欄保留。測試API0.1.72/Web0.1.71，正式未更新。[驗證](../specs/20261022-normality-fixed-ad-plan/verification.md)。取代20261014在測試網站允許切換/預設AJB的規則。

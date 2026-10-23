@@ -25,7 +25,7 @@ public class NormalityTest
         // THEN: It should calculate stats
         result.Should().NotBeNull();
         result.Normality.Should().NotBeNull();
-        result.Normality!.TestName.Should().Be("Adjusted Jarque-Bera");
+        result.Normality!.TestName.Should().Be("Anderson-Darling");
         result.Normality.MethodNote.Should().Contain("Minitab");
         result.Normality.PValue.Should().NotBeNull();
         
@@ -78,7 +78,7 @@ public class NormalityTest
         var initialResult = new ControlChartResult();
 
         // WHEN: Calling PopulateNormalityAndCurve
-        var result = SpcService.PopulateNormalityAndCurve(initialResult, rawPoints, limits);
+        var result = SpcService.PopulateNormalityAndCurve(initialResult, rawPoints, limits, "AJB");
 
         // THEN: The adjusted statistic should mark it as non-normal.
         result.Normality.Should().NotBeNull();
@@ -95,7 +95,7 @@ public class NormalityTest
         var rawPoints = values.Select(v => new SpcDataPoint { Value = v }).ToList();
         var limits = new ControlLimits { USL = 8.5, LSL = 7.5, Target = 8.0 };
 
-        var result = SpcService.PopulateNormalityAndCurve(new ControlChartResult(), rawPoints, limits);
+        var result = SpcService.PopulateNormalityAndCurve(new ControlChartResult(), rawPoints, limits, "AJB");
 
         result.Normality.Should().NotBeNull();
         result.Normality!.TestName.Should().Be("Adjusted Jarque-Bera");
@@ -173,5 +173,33 @@ public class NormalityTest
         result.Normality!.PValue.Should().BeNull();
         result.Normality.Note.Should().Contain("數據無變異");
         result.NormalCurve.Should().BeNullOrEmpty();
+    }
+    [Theory]
+    [InlineData(null)][InlineData("")][InlineData("  ")][InlineData("unknown")]
+    [InlineData("AD")][InlineData("Anderson-Darling")][InlineData("anderson_darling")]
+    public void DefaultAndAliases_MatchExplicitAd(string? method)
+    {
+        var points = new double[] {7.92,7.75,7.87,7.81,7.95,7.77,7.83,7.86,7.9,7.79,7.84,7.88}
+            .Select(v => new SpcDataPoint {Value=v}).ToList();
+        var limits = new ControlLimits();
+        var expected=SpcService.PopulateNormalityAndCurve(new(),points,limits,"AD");
+        var actual=SpcService.PopulateNormalityAndCurve(new(),points,limits,method);
+        actual.Normality!.TestName.Should().Be("Anderson-Darling");
+        actual.Normality.PValue.Should().Be(expected.Normality!.PValue);
+        actual.Normality.Statistic.Should().Be(expected.Normality.Statistic);
+    }
+    [Theory][InlineData(0)][InlineData(1)][InlineData(2)]
+    public void InsufficientData_DoesNotInventNormality(int count)
+    {
+        var points=Enumerable.Range(0,count).Select(i=>new SpcDataPoint {Value=i}).ToList();
+        SpcService.PopulateNormalityAndCurve(new(),points,new()).Normality.Should().BeNull();
+    }
+    [Fact]public void ExcludedPoints_DoNotChangeAdResult()
+    {
+        var points=new double[]{1,2,3,4,5}.Select(v=>new SpcDataPoint {Value=v}).ToList();
+        var expected=SpcService.PopulateNormalityAndCurve(new(),points,new(),"AD");
+        points.Add(new SpcDataPoint {Value=9999,IsExcluded=true});
+        var actual=SpcService.PopulateNormalityAndCurve(new(),points,new());
+        actual.Normality!.PValue.Should().Be(expected.Normality!.PValue);
     }
 }

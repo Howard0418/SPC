@@ -1032,10 +1032,11 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             .Replace("_", "", StringComparison.Ordinal)
             .Replace(" ", "", StringComparison.Ordinal);
 
-        return value.Equals("AD", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("AndersonDarling", StringComparison.OrdinalIgnoreCase)
-            ? NormalityMethod.AndersonDarling
-            : NormalityMethod.AdjustedJarqueBera;
+        // Only an explicit legacy request selects AJB; the website and omitted methods use AD.
+        return value.Equals("AJB", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("AdjustedJarqueBera", StringComparison.OrdinalIgnoreCase)
+            ? NormalityMethod.AdjustedJarqueBera
+            : NormalityMethod.AndersonDarling;
     }
 
     private static (double Statistic, double PValue) CalculateAndersonDarling(List<double> values, double mean, double stdDev)

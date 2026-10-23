@@ -1894,3 +1894,9 @@
 - 使用者要求先規劃：偏峰依畫面解讀偏態Skewness，與峰態Kurtosis均移除顯示；第二方法確為Anderson-Darling，規劃兩頁取消下拉/固定AD，後端預設同步但API欄位/明確AJB舊呼叫相容保留。
 - 整理名稱、AD參數、p-value四位/極小值/空值與原始值判定的格式建議；既有AD算法不重寫，不改管制線/能力指標/量測或歷史資料。
 - [規格、計畫、驗收與小工作](specs/20261022-normality-fixed-ad-plan/spec.md)；P2排在i18n之前，21件待辦/待確認，另受阻1/暫緩2。文件內容/連結/diff檢查，無程式/DB/測試/build/發布。規劃後STOP。
+
+## 2026-10-23 常態分析固定AD測試發布
+- 依使用者授權完成：兩頁移除偏態/峰態與檢定下拉、固定AD查詢；後端預設AD且保留明確AJB相容，不重寫AD算法/DTO/管制線/能力或量測資料。p-value極小值/缺值及判定格式一致。
+- 先紅後綠：常態19項全過；後端兩組234pass/9skip，Node3項、兩頁8項本機及8項已部署mock查詢、產物14請求同源檢查通過。API Release/Web testhost build成功，既有警告另記，不冒稱零警告。
+- 測試API0.1.72/Web0.1.71發布，IIS/備份及部署payload/設定hash、真實version/health正常；正式未發布/未修資料。[證據與回復](specs/20261022-normality-fixed-ad-plan/verification.md)。
+- 本件DONE，剩i18n20包，另受阻1/暫緩2；不開啟下一工作。
