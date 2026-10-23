@@ -1,0 +1,11 @@
+# TASK-02驗證（2026-10-24）
+- 交付：[共用入口](../../docs/i18n/README.md)、契約v1.0.0、25項詞彙初稿、缺漏檢查/CI設計、三語參考字典、manifest、metadata與審核ledger。
+- AC-001/004：文件定義UTF-8無BOM/nested穩定key/locale白名單/具名參數multiset/逐key繁中fallback、編碼與不可翻譯machine值；保留跨框架適配限制，未冒稱.NET或Vue2可直接共用Vue3 runtime。
+- AC-002：一次性本機檢查三語各29個leaf key/參數一致，逐key繁中sourceHash/逐locale translationHash可重算，protectedTokens一致；87個審核列全draft、無假審核者/日期。
+- AC-003：18個故障fixture正確拒絕：重複JSON成員、BOM、缺locale、缺/多key、非字串、空白、字面點key、參數改名/重複次數/位置參數、HTML、linked-message語法、原文舊hash、review來源hash過期、reviewed缺審核者、保護token改寫、譯文改變而hash未更新。
+- Boundary額外檢查：同名參數重複但次數一致/順序調整允許；未知locale→zh-TW、英文字典缺key→繁中逐key回退、全缺→[key]的設計fixture符合契約。
+- AC-005：release readiness正確為false（全draft），未把機械結構一致視為真人語意驗收，也未宣稱97%/翻譯覆蓋率完成。
+- 暫存腳本與結果在.codex-tmp/i18n-task02，僅用於本次參考資料檢查，不提交、不視為正式checker/CI或產品fallback實作。真正adapter/CI接線與runtime安全/狀態測試留各系統後續Task。
+- 內容、相對連結及git diff檢查通過；無應用程式變更，build/應用測試/測試站及正式發布均不適用。未安裝套件或查改DB/登入/權限/站台。
+- 回復僅文件修訂；無網站或DB回復需求。
+- TASK-02 DONE，國際化後續TASK-03～21剩19包；附件掃毒受阻1、Runtime/TransFiles人工故障驗收暫緩2不變。完成後STOP，未開始TASK-03或04。

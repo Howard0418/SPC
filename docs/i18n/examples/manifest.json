@@ -1,0 +1,18 @@
+{
+  "contractVersion": "1.0.0",
+  "glossaryVersion": "1.0.0",
+  "baseLocale": "zh-TW",
+  "supportedLocales": [
+    "zh-TW",
+    "zh-CN",
+    "en-US"
+  ],
+  "status": "reference-draft",
+  "catalogs": {
+    "zh-TW": "zh-TW.json",
+    "zh-CN": "zh-CN.json",
+    "en-US": "en-US.json"
+  },
+  "messageMetadata": "message-metadata.json",
+  "reviewLedger": "review-ledger.json"
+}

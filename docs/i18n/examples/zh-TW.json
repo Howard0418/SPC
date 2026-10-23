@@ -1,0 +1,69 @@
+{
+  "common": {
+    "actions": {
+      "save": "儲存",
+      "cancel": "取消",
+      "search": "查詢",
+      "close": "關閉",
+      "signOut": "登出"
+    },
+    "status": {
+      "loading": "載入中…",
+      "noResults": "查無資料"
+    },
+    "validation": {
+      "required": "請填寫{field}。"
+    },
+    "results": {
+      "count": "共有{count}筆"
+    },
+    "errors": {
+      "retry": "作業失敗，請稍後再試。"
+    },
+    "locales": {
+      "traditionalChinese": "繁體中文",
+      "simplifiedChinese": "简体中文",
+      "english": "English"
+    }
+  },
+  "spc": {
+    "navigation": {
+      "controlChart": "SPC 管制分析"
+    },
+    "chart": {
+      "controlLimits": "管制界線",
+      "specificationLimits": "規格界線",
+      "capabilityIndex": "製程能力指數（Cpk）"
+    },
+    "normality": {
+      "method": "Anderson-Darling",
+      "notRejected": "未拒絕常態假設",
+      "rejected": "偏離常態",
+      "unavailable": "無法檢定"
+    }
+  },
+  "portal": {
+    "navigation": {
+      "home": "首頁"
+    },
+    "visitors": {
+      "reservation": "訪客預約"
+    },
+    "employees": {
+      "number": "工號"
+    },
+    "meetings": {
+      "created": "會議「{subject}」已建立。"
+    }
+  },
+  "km": {
+    "documents": {
+      "library": "文件櫃",
+      "version": "版本{version}",
+      "accessDenied": "您沒有存取此文件的權限。"
+    },
+    "approvals": {
+      "pending": "待簽核"
+    }
+  }
+}

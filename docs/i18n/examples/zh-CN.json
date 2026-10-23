@@ -1,0 +1,69 @@
+{
+  "common": {
+    "actions": {
+      "save": "保存",
+      "cancel": "取消",
+      "search": "查询",
+      "close": "关闭",
+      "signOut": "退出登录"
+    },
+    "status": {
+      "loading": "加载中…",
+      "noResults": "未找到数据"
+    },
+    "validation": {
+      "required": "请填写{field}。"
+    },
+    "results": {
+      "count": "共{count}条"
+    },
+    "errors": {
+      "retry": "操作失败，请稍后重试。"
+    },
+    "locales": {
+      "traditionalChinese": "繁體中文",
+      "simplifiedChinese": "简体中文",
+      "english": "English"
+    }
+  },
+  "spc": {
+    "navigation": {
+      "controlChart": "SPC 控制分析"
+    },
+    "chart": {
+      "controlLimits": "控制限",
+      "specificationLimits": "规格限",
+      "capabilityIndex": "过程能力指数（Cpk）"
+    },
+    "normality": {
+      "method": "Anderson-Darling",
+      "notRejected": "未拒绝正态假设",
+      "rejected": "偏离正态",
+      "unavailable": "无法检验"
+    }
+  },
+  "portal": {
+    "navigation": {
+      "home": "首页"
+    },
+    "visitors": {
+      "reservation": "访客预约"
+    },
+    "employees": {
+      "number": "工号"
+    },
+    "meetings": {
+      "created": "会议“{subject}”已创建。"
+    }
+  },
+  "km": {
+    "documents": {
+      "library": "文档库",
+      "version": "版本{version}",
+      "accessDenied": "您没有访问此文档的权限。"
+    },
+    "approvals": {
+      "pending": "待审批"
+    }
+  }
+}

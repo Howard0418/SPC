@@ -339,3 +339,8 @@
 - [x] SPC-NORMALITY-AD-TASK-001：兩頁移除偏態/峰態與方法下拉、固定AD，後端預設同步且保留AJB明確呼叫；測試API0.1.72/Web0.1.71已發布。
 - 234項後端通過/9條件式略過、Node3、兩頁8情境及已發布8情境/同源路由通過，無資料修補。正式未更新。[驗證與回復](specs/20261022-normality-fixed-ad-plan/verification.md)。
 - 本件DONE，工作池由21降為i18n20個待確認包；另附件掃毒受阻1、Runtime及TransFiles人工故障驗收暫緩2，不開始其他工作。
+
+## 國際化TASK-02完成（2026-10-24）
+- [x] I18N-TASK-02：共用JSON/key/placeholder/locale/fallback契約v1.0.0、25項詞彙初稿、缺漏檢查設計完成。[規格](specs/20261024-i18n-task02/spec.md)／[共用規範](docs/i18n/README.md)。
+- 三語29鍵、87筆draft審核列與hash/參數檢查及18故障fixture通過；尚無真人翻譯品質成果、產品checker/三語UI/偏好功能，不改程式或發布。
+- 剩TASK-03～21共19個待執行/待確認包；另附件掃毒受阻1、Runtime與TransFiles人工故障驗收暫緩2。只完成本件，STOP，不直接開始03或04。

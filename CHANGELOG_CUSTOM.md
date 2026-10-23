@@ -1900,3 +1900,8 @@
 - 先紅後綠：常態19項全過；後端兩組234pass/9skip，Node3項、兩頁8項本機及8項已部署mock查詢、產物14請求同源檢查通過。API Release/Web testhost build成功，既有警告另記，不冒稱零警告。
 - 測試API0.1.72/Web0.1.71發布，IIS/備份及部署payload/設定hash、真實version/health正常；正式未發布/未修資料。[證據與回復](specs/20261022-normality-fixed-ad-plan/verification.md)。
 - 本件DONE，剩i18n20包，另受阻1/暫緩2；不開啟下一工作。
+
+## 2026-10-24 國際化TASK-02共用契約
+- 依使用者授權只執行第一件國際化小工作：JSON nested穩定key/具名參數multiset/locale及逐key繁中fallback/格式安全/版本與來源hash、譯文hash/審核規範；附25項詞彙初稿與缺漏檢查設計。
+- [交付入口](docs/i18n/README.md)，三語各29鍵、87筆draft審核列，參數/hash/保護token及18故障fixture通過，文件連結/diff檢查；範例不是全站翻譯，未冒稱真人97%或CI/產品runtime已完成。
+- [規格與驗證](specs/20261024-i18n-task02/spec.md)。純文件/參考資源，不修改三站程式/DB/套件/IIS或發布；TASK-02 DONE後STOP，剩19包，另受阻1/暫緩2。

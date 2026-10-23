@@ -1,0 +1,221 @@
+{
+  "common.actions.save": {
+    "context": "按鈕；提交目前表單",
+    "surface": "text",
+    "sourceHash": "dba44ed3f54f2012941c8fb13fc2a13c4960a6df4b89166424f17ae9d796521f",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.actions.cancel": {
+    "context": "按鈕；放棄目前操作",
+    "surface": "text",
+    "sourceHash": "2cd0f3be8738a86cede1a1452f874f31d569864bbb00cacd4130990f4610cb5c",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.actions.search": {
+    "context": "按鈕；執行查詢",
+    "surface": "text",
+    "sourceHash": "e62523053be4b23e4b02172e8d18dda6ac034c3ac62619ee3e4e97110ca20ec7",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.actions.close": {
+    "context": "視窗關閉",
+    "surface": "text",
+    "sourceHash": "c7fdddf79eaa8c4f71f4976d88201a632dad2c10b518207c8dac164252ff63ce",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.actions.signOut": {
+    "context": "結束目前登入工作階段",
+    "surface": "text",
+    "sourceHash": "057f31bc16c89da77115ac1e6f7523ea3d7d9c3a9eadace3c6ad9a674285c7d6",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.status.loading": {
+    "context": "非阻斷狀態",
+    "surface": "text",
+    "sourceHash": "1145661d74cab2388df3860d45a66f0aa1af761e9a84b3f082b054648f9fd5c0",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.status.noResults": {
+    "context": "空清單",
+    "surface": "text",
+    "sourceHash": "b0e3ab5b01e084df8b5beb3ffba2ebef765daa4e8d537e9d058d0e25dff8eb21",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.validation.required": {
+    "context": "field為已翻譯顯示標籤，不是機器欄名",
+    "surface": "text",
+    "sourceHash": "76cc585ee4e06dbb77eeee39c6ea458a73a8b84c1a6033a312b503d586128f4c",
+    "placeholders": {
+      "field": 1
+    },
+    "protectedTokens": []
+  },
+  "common.results.count": {
+    "context": "count為顯示字串，非DB寫入值",
+    "surface": "text",
+    "sourceHash": "4dea4bfa6102cfeeeb6c4ea4072e479a623983f66f19c517f2e410e770f93936",
+    "placeholders": {
+      "count": 1
+    },
+    "protectedTokens": []
+  },
+  "common.errors.retry": {
+    "context": "安全通用錯誤；不含例外內容",
+    "surface": "text",
+    "sourceHash": "e3546dd3d12de17af43a47c689ae6551836ce58b38dbfc30b6e5fced380eca40",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.locales.traditionalChinese": {
+    "context": "語言選單原生名稱",
+    "surface": "text",
+    "sourceHash": "1c95ab9b144ea2f5b3bbf3635472e3274e8995c31a8a783f283e38790ec63ad9",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.locales.simplifiedChinese": {
+    "context": "語言選單原生名稱",
+    "surface": "text",
+    "sourceHash": "9937e365aaf3a0854053a3179584ad9cd82e1164ea8535b50c1e6ae7102b373c",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "common.locales.english": {
+    "context": "語言選單原生名稱",
+    "surface": "text",
+    "sourceHash": "ba118bf7fc9c1aedc1edb28a0aa86e0b43b681f222af6616e13c43be87815b06",
+    "placeholders": {},
+    "protectedTokens": [
+      "English"
+    ]
+  },
+  "spc.navigation.controlChart": {
+    "context": "導覽標題",
+    "surface": "text",
+    "sourceHash": "673f9d07fc5c730c9ddba74566e471c6b5150387f08feba8aaa9f911420bf8d8",
+    "placeholders": {},
+    "protectedTokens": [
+      "SPC"
+    ]
+  },
+  "spc.chart.controlLimits": {
+    "context": "與規格界線不同",
+    "surface": "text",
+    "sourceHash": "f2a717d2681ed3059d2e3cc1827c7eaff502c4cde0920bd686e972130e155b2f",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "spc.chart.specificationLimits": {
+    "context": "工程/客戶規格",
+    "surface": "text",
+    "sourceHash": "8e2b39003b762fd10f08b92988175a9952bd57ea97fdf0e92bd875bcb1b85534",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "spc.chart.capabilityIndex": {
+    "context": "統計顯示；Cpk保持代碼",
+    "surface": "text",
+    "sourceHash": "a93f99bb1541d661c5b0d4a8b9dab2c7f6ac758cc85bad760c2e367201e4ffb0",
+    "placeholders": {},
+    "protectedTokens": [
+      "Cpk"
+    ]
+  },
+  "spc.normality.method": {
+    "context": "固定方法名稱；不恢復下拉",
+    "surface": "text",
+    "sourceHash": "a5f3cfc2c4aa4ae282ce6bce1d940ee3e323a1c7e483d07a001bfee815b3ccef",
+    "placeholders": {},
+    "protectedTokens": [
+      "Anderson-Darling"
+    ]
+  },
+  "spc.normality.notRejected": {
+    "context": "統計結論，非保證資料常態",
+    "surface": "text",
+    "sourceHash": "a69733f3417bcc6bef792b7c7bc09851c34c5b44c20e704c768117411ab42450",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "spc.normality.rejected": {
+    "context": "統計結論",
+    "surface": "text",
+    "sourceHash": "b60d8dceed95a2de43a6bf14b251747a1d913e39d70b91e702138142f4fbb909",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "spc.normality.unavailable": {
+    "context": "樣本不足/無變異等，原因另列",
+    "surface": "text",
+    "sourceHash": "4f5b0632a1e7989390b7d7a838702d85c827700cf4591592f2e87775d44b8ff6",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "portal.navigation.home": {
+    "context": "導覽標題",
+    "surface": "text",
+    "sourceHash": "a782f2754c833394b95d20ed9727eb0915b24dbce8a0dea6747fe04db412f53a",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "portal.visitors.reservation": {
+    "context": "申請/填報頁標題",
+    "surface": "text",
+    "sourceHash": "e5738b9ac83f8306742fce03969b98100c722079b4f8079ec49cba65d30ab74e",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "portal.employees.number": {
+    "context": "不可翻譯實際工號值",
+    "surface": "text",
+    "sourceHash": "e7998d4dd02ede292b796c14e48bf99ae27f6df35deb5555993f6d917d7b4a80",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "portal.meetings.created": {
+    "context": "subject為使用者原文，不翻譯且安全編碼",
+    "surface": "text",
+    "sourceHash": "ef3716b659bb6b6c2cacef5e3f5dd065e8c7d25fdc5b1cac50b97731f26293a1",
+    "placeholders": {
+      "subject": 1
+    },
+    "protectedTokens": []
+  },
+  "km.documents.library": {
+    "context": "文件導覽",
+    "surface": "text",
+    "sourceHash": "8915b438e6fe31381443c13cff74726dce3bac234d7f6e77074d201a42cf0c45",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "km.documents.version": {
+    "context": "version為不可翻譯版本字串",
+    "surface": "text",
+    "sourceHash": "5299a1cff9a37fb0ec49c884db8bdf326f3c39fb27cfc7209fac01c3681db0ee",
+    "placeholders": {
+      "version": 1
+    },
+    "protectedTokens": []
+  },
+  "km.documents.accessDenied": {
+    "context": "安全敏感；不洩漏不可見文件內容",
+    "surface": "text",
+    "sourceHash": "92743942c270e7e0a1bb3978b5baa86f2999ce65573a6446cfe4879ab442e4b6",
+    "placeholders": {},
+    "protectedTokens": []
+  },
+  "km.approvals.pending": {
+    "context": "只翻譯顯示，不改狀態值",
+    "surface": "text",
+    "sourceHash": "c140b20cbdc3b9456100fa86e0ceafd75df500879a2fb862468d9ca24498e8da",
+    "placeholders": {},
+    "protectedTokens": []
+  }
+}
