@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { Info, ChevronDown, ChevronUp } from 'lucide-vue-next';
 
 const props = defineProps({
+  toggleLabel: { type: String, default: '' },
   title: {
     type: String,
     default: '模組指南'
@@ -29,7 +30,7 @@ function toggle() {
         </div>
         <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300 m-0">{{ title }}</h4>
       </div>
-      <button class="p-1.5 rounded-lg hover:bg-blue-200/50 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 transition-colors focus:outline-none">
+      <button type="button" :aria-label="toggleLabel || title" :aria-expanded="isExpanded" class="p-1.5 rounded-lg hover:bg-blue-200/50 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 transition-colors focus:outline-none">
         <ChevronUp v-if="isExpanded" class="w-5 h-5" />
         <ChevronDown v-else class="w-5 h-5" />
       </button>

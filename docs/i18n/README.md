@@ -11,3 +11,7 @@
 ## TASK-04 SPC測試站試點
 - [規格/驗證/回復](../../specs/20261024-i18n-task04/verification.md)：共用App47鍵三語與隔離本機偏好；測試Web0.1.72，Portal偏好API未接入、頁面內文未翻譯。
 - [初稿審核帳本](../../specs/20261024-i18n-task04/translation-review.json)：141列均draft；不是真人審稿或全站交付。
+
+## TASK-05A 基本主檔（測試站）
+- [規格/驗證](../../specs/20261024-i18n-task05a/verification.md)：Parts/Characteristics固定UI新增110鍵，共157鍵三語；抽屜復用原本機語言控制，原API模型與資料名稱保留。測試Web0.1.73，非全部TASK-05完成。
+- [本批審核帳本](../../specs/20261024-i18n-task05a/translation-review.json)：330新draft列，與pilot141列共471列；尚無真人審核。

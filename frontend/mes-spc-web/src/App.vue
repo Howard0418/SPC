@@ -1,5 +1,7 @@
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, provide } from "vue";
+import LocalePicker from "./components/LocalePicker.vue";
+import { localeControlKey } from "./i18n/context";
 import { useRoute } from "vue-router";
 import {
   LineChart,
@@ -81,6 +83,7 @@ function changeLocale(event) {
   locale.value = value;
   localeUnavailable.value = !saveLocale(localeStorage, webEnvironment, localeSubject.value, value);
 }
+provide(localeControlKey, changeLocale);
 
 
 const isDark = ref(true);
@@ -211,14 +214,7 @@ function returnToPortal() {
       </div>
       
       <div class="flex items-center flex-wrap gap-3 min-w-0">
-        <label class="flex flex-wrap items-center gap-2 text-xs">
-          <span>{{ t('common.language.label') }}</span>
-          <select data-testid="locale-select" :aria-label="t('common.language.label')" :value="locale" @change="changeLocale" class="rounded-lg border border-slate-600 bg-slate-800 text-white px-2 py-2 focus:outline focus:outline-2 focus:outline-blue-400">
-            <option value="zh-TW">繁體中文</option>
-            <option value="zh-CN">简体中文</option>
-            <option value="en-US">English</option>
-          </select>
-        </label>
+        <LocalePicker />
         <!-- Theme Toggle Button -->
         <button
           @click="toggleDarkMode"

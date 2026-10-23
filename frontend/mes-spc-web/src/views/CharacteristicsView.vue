@@ -1,4 +1,6 @@
 <script setup>
+import { useI18n } from "vue-i18n";
+import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
@@ -22,9 +24,12 @@ const { embedded } = defineProps({
   embedded: { type: Boolean, default: false }
 });
 
+const { t } = useI18n({ useScope: "global" });
+
 const rows = ref([]);
 const err = ref("");
-const successMsg = ref("");
+const successMsg = ref(null);
+const successText = computed(() => successMsg.value ? t(successMsg.value.key, successMsg.value.args) : "");
 const loading = ref(false);
 
 const searchQuery = ref("");
@@ -46,6 +51,8 @@ const form = ref({
   isEnabled: true
 });
 const formErr = ref("");
+const formErrKey = ref("");
+const formError = computed(() => formErrKey.value ? t(formErrKey.value) : formErr.value);
 
 async function load() {
   err.value = "";
@@ -90,6 +97,7 @@ function openCreateModal() {
     isEnabled: true
   };
   formErr.value = "";
+  formErrKey.value = "";
   showModal.value = true;
 }
 
@@ -108,15 +116,17 @@ function openEditModal(item) {
     isEnabled: item.isEnabled ?? true
   };
   formErr.value = "";
+  formErrKey.value = "";
   showModal.value = true;
 }
 
 async function save() {
   if (!form.value.characteristicName?.trim()) {
-    formErr.value = "特性中文名稱為必填欄位。";
+    formErrKey.value = "spc.characteristics.required";
     return;
   }
   formErr.value = "";
+  formErrKey.value = "";
   loading.value = true;
 
   try {
@@ -125,12 +135,12 @@ async function save() {
     if (modalMode.value === "create") {
       const { data } = await api.post("/characteristics", payload);
       rows.value.push(data);
-      successAlert("成功建立新特性：" + data.characteristicName);
+      successAlert("spc.characteristics.created", { name: String(data.characteristicName) });
     } else {
       const { data } = await api.put(`/characteristics/${currentId.value}`, payload);
       const idx = rows.value.findIndex(x => x.id === currentId.value);
       if (idx !== -1) rows.value[idx] = data;
-      successAlert("成功更新特性：" + data.characteristicName);
+      successAlert("spc.characteristics.updated", { name: String(data.characteristicName) });
     }
     showModal.value = false;
   } catch (e) {
@@ -141,12 +151,12 @@ async function save() {
 }
 
 async function confirmDelete(item) {
-  if (!confirm(`確定要刪除品質特性「${item.characteristicName}」嗎？`)) return;
+  if (!confirm(t("spc.characteristics.confirmDelete", { name: String(item.characteristicName) }))) return;
   loading.value = true;
   try {
     await api.delete(`/characteristics/${item.id}`);
     rows.value = rows.value.filter(x => x.id !== item.id);
-    successAlert("成功刪除特性：" + item.characteristicName);
+    successAlert("spc.characteristics.deleted", { name: String(item.characteristicName) });
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -154,9 +164,9 @@ async function confirmDelete(item) {
   }
 }
 
-function successAlert(msg) {
-  successMsg.value = msg;
-  setTimeout(() => { successMsg.value = ""; }, 3000);
+function successAlert(key, args) {
+  successMsg.value = { key, args };
+  setTimeout(() => { successMsg.value = null; }, 3000);
 }
 
 onMounted(load);
@@ -166,48 +176,48 @@ onMounted(load);
   <section class="space-y-6">
     <!-- Title & Actions -->
     <div v-if="!embedded" class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <div class="p-3 bg-gradient-to-tr from-pink-600 to-rose-500 rounded-xl shadow-lg shadow-pink-500/30 text-white">
           <Sliders class="w-7 h-7" />
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">品質檢驗特性主檔維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">定義全廠計量型與計數型檢驗特徵名稱、測量單位及預設 SPC 管制圖</p>
+          <h1 class="text-2xl font-black break-words text-slate-800 dark:text-slate-100 tracking-tight">{{ t('spc.characteristics.title') }}</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ t('spc.characteristics.subtitle') }}</p>
         </div>
       </div>
       
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <button
           @click="load"
           type="button"
           :disabled="loading"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all border border-slate-200 dark:border-slate-700"
         >
-          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> 重新整理
+          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> {{ t('common.actions.refresh') }}
         </button>
         <button
-          @click="openCreateModal"
+          data-testid="master-add" @click="openCreateModal"
           type="button"
           class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white text-sm font-bold shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transition-all transform hover:-translate-y-0.5"
         >
-          <Plus class="w-4 h-4" /> 新增特性
+          <Plus class="w-4 h-4" /> {{ t('spc.characteristics.add') }}
         </button>
       </div>
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <ModuleGuide v-if="!embedded" title="模組指南：品質檢驗特性主檔">
+    <ModuleGuide :toggle-label="t('common.actions.toggleGuide')" v-if="!embedded" :title="t('spc.characteristics.guideTitle')">
       <p class="text-xs text-pink-700 dark:text-pink-400/80 mt-1.5 leading-relaxed">
-          此模組用於建置全廠的「檢驗項目字典」(如：長度、重量、銅離子濃度等)。<br/>
-          💡 <strong>資料類型說明：</strong><br/>
-          - <strong>計量：</strong>可以量測出具體數值的特性（如：長度 10.5 mm）。<br/>
-          - <strong>計數：</strong>以不良數、不良率或缺點數表示的特性。
+          {{ t('spc.characteristics.guideIntro') }}<br/>
+          💡 <strong>{{ t('spc.characteristics.guideTypes') }}</strong><br/>
+          - <strong>{{ t('spc.characteristics.variable') }}：</strong>{{ t('spc.characteristics.guideVariable') }}<br/>
+          - <strong>{{ t('spc.characteristics.attribute') }}：</strong>{{ t('spc.characteristics.guideAttribute') }}
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-pink-700 dark:text-pink-400/80 leading-relaxed">
-          <div class="font-black text-pink-900 dark:text-pink-300">品質檢驗特性主檔頁面操作說明</div>
-          <p><strong>查詢特性：</strong>輸入中文或英文名稱，快速篩選檢驗項目。</p>
-          <p><strong>新增特性：</strong>按「新增特性」，填入中英文名稱、資料類型與輸入方式。</p>
-          <p><strong>選擇類型：</strong>連續數值請選計量型；不良數、缺點數或比例資料請選計數型。</p>
+          <div class="font-black text-pink-900 dark:text-pink-300">{{ t('spc.characteristics.guideHeading') }}</div>
+          <p><strong>{{ t('spc.characteristics.guideSearchLabel') }}</strong>{{ t('spc.characteristics.guideSearch') }}</p>
+          <p><strong>{{ t('spc.characteristics.guideAddLabel') }}</strong>{{ t('spc.characteristics.guideAdd') }}</p>
+          <p><strong>{{ t('spc.characteristics.guideTypeLabel') }}</strong>{{ t('spc.characteristics.guideType') }}</p>
         </div>
     </ModuleGuide>
 
@@ -219,7 +229,7 @@ onMounted(load);
 
     <div v-if="successMsg" class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl shadow-sm animate-fade-in">
       <CheckCircle2 class="w-6 h-6 flex-shrink-0 text-emerald-500" />
-      <div class="text-sm font-semibold">{{ successMsg }}</div>
+      <div class="text-sm font-semibold">{{ successText }}</div>
     </div>
 
     <!-- Filters & Search Bar -->
@@ -229,9 +239,9 @@ onMounted(load);
           <Search class="w-4 h-4" />
         </span>
         <input
-          v-model="searchQuery"
+          data-testid="master-search" v-model="searchQuery"
           type="text"
-          placeholder="搜尋代號、名稱或單位..."
+          :placeholder="t('spc.characteristics.search')"
           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500 transition-all"
         />
       </div>
@@ -240,7 +250,7 @@ onMounted(load);
         <!-- Category Filter -->
         <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
           <button
-            v-for="c in [{id:'all', label:'全屬性'}, {id:'Variable', label:'計量'}, {id:'Attribute', label:'計數'}]"
+            v-for="c in [{id:'all', label:'spc.characteristics.allCategories'}, {id:'Variable', label:'spc.characteristics.variable'}, {id:'Attribute', label:'spc.characteristics.attribute'}]"
             :key="c.id"
             @click="categoryFilter = c.id"
             type="button"
@@ -251,14 +261,14 @@ onMounted(load);
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             ]"
           >
-            {{ c.label }}
+            {{ t(c.label) }}
           </button>
         </div>
 
         <!-- Status Filter -->
         <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
           <button
-            v-for="f in [{id:'all', label:'全部狀態'}, {id:'active', label:'已啟用'}, {id:'inactive', label:'已停用'}]"
+            v-for="f in [{id:'all', label:'common.status.all'}, {id:'active', label:'common.status.enabled'}, {id:'inactive', label:'common.status.inactive'}]"
             :key="f.id"
             @click="statusFilter = f.id"
             type="button"
@@ -269,7 +279,7 @@ onMounted(load);
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             ]"
           >
-            {{ f.label }}
+            {{ t(f.label) }}
           </button>
         </div>
       </div>
@@ -282,19 +292,19 @@ onMounted(load);
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               <th class="py-4 px-6">ID</th>
-              <th class="py-4 px-6">品質特性名稱</th>
-              <th class="py-4 px-6">資料類型</th>
-              <th class="py-4 px-6 text-center">SPC 運算</th>
-              <th class="py-4 px-6 text-center">啟用狀態</th>
-              <th class="py-4 px-6 text-right">操作</th>
+              <th class="py-4 px-6">{{ t('spc.characteristics.nameColumn') }}</th>
+              <th class="py-4 px-6">{{ t('spc.characteristics.dataCategory') }}</th>
+              <th class="py-4 px-6 text-center">{{ t('spc.characteristics.spcCalculation') }}</th>
+              <th class="py-4 px-6 text-center">{{ t('spc.characteristics.enabledField') }}</th>
+              <th class="py-4 px-6 text-right">{{ t('common.columns.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="6" class="py-12 text-center text-slate-400">正在載入品質特性清單...</td>
+              <td colspan="6" class="py-12 text-center text-slate-400">{{ t('spc.characteristics.loading') }}</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="6" class="py-12 text-center text-slate-400">找不到相符的品質特性資料</td>
+              <td colspan="6" class="py-12 text-center text-slate-400">{{ t('spc.characteristics.empty') }}</td>
             </tr>
             <tr
               v-else
@@ -316,7 +326,7 @@ onMounted(load);
                     ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
                     : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
                 ]">
-                  {{ item.dataCategory === 'Variable' ? '計量' : '計數' }}
+                  {{ t(item.dataCategory === 'Variable' ? 'spc.characteristics.variable' : 'spc.characteristics.attribute') }}
                 </span>
               </td>
               <td class="py-6 px-6 text-center">
@@ -335,23 +345,23 @@ onMounted(load);
                   ]"
                 >
                   <span :class="['w-1.5 h-1.5 rounded-full', item.isEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400']"></span>
-                  {{ item.isEnabled ? '啟用中' : '已停用' }}
+                  {{ t(item.isEnabled ? 'common.status.active' : 'common.status.inactive') }}
                 </span>
               </td>
               <td class="py-6 px-6 text-right space-x-2">
                 <button
-                  @click="openEditModal(item)"
+                  data-testid="master-edit" @click="openEditModal(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 transition-all border border-blue-200 dark:border-slate-700"
-                  title="編輯特性"
+                  :title="t('spc.characteristics.edit')"
                 >
                   <Edit class="w-4 h-4" />
                 </button>
                 <button
-                  @click="confirmDelete(item)"
+                  data-testid="master-delete" @click="confirmDelete(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-red-50 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-950 text-red-600 dark:text-red-400 transition-all border border-red-200 dark:border-slate-700"
-                  title="刪除特性"
+                  :title="t('spc.characteristics.delete')"
                 >
                   <Trash2 class="w-4 h-4" />
                 </button>
@@ -362,7 +372,7 @@ onMounted(load);
       </div>
 
       <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-        <span>顯示第 1 至 {{ filteredRows.length }} 項結果（總計 {{ rows.length }} 筆特性）</span>
+        <span>{{ t('spc.characteristics.count', { start: String(filteredRows.length ? 1 : 0), end: String(filteredRows.length), total: String(rows.length) }) }}</span>
       </div>
     </div>
 
@@ -377,17 +387,18 @@ onMounted(load);
     >
       <div v-if="showModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
         <div class="absolute inset-0 cursor-pointer" @click="showModal = false"></div>
-        <div class="relative w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+        <div role="dialog" aria-modal="true" :aria-label="t(modalMode === 'create' ? 'spc.characteristics.createTitle' : 'spc.characteristics.editTitle')" class="relative w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
           <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
-          <div class="flex items-center gap-3">
+          <div class="flex flex-wrap items-center gap-3">
             <div class="p-2.5 bg-pink-600 text-white rounded-xl shadow-md shadow-pink-500/20">
               <Sliders class="w-5 h-5" />
             </div>
-            <h3 class="text-lg font-black text-slate-800 dark:text-white">
-              {{ modalMode === 'create' ? '新增品質特性' : '編輯品質特性' }}
+            <h3 class="text-lg font-black break-words text-slate-800 dark:text-white">
+              {{ t(modalMode === 'create' ? 'spc.characteristics.createTitle' : 'spc.characteristics.editTitle') }}
             </h3>
           </div>
           <button
+            :aria-label="t('common.actions.close')"
             @click="showModal = false"
             type="button"
             class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all"
@@ -396,38 +407,39 @@ onMounted(load);
           </button>
         </div>
 
+        <div class="px-6 py-2 border-b border-slate-200 dark:border-slate-700 shrink-0"><LocalePicker /></div>
         <form @submit.prevent="save" class="flex flex-col h-full overflow-hidden">
           <div class="flex-1 overflow-y-auto p-6 space-y-5">
-          <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
-            <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
+          <div v-if="formError" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
+            <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formError }}
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性中文名稱 <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.characteristics.nameField') }} <span class="text-red-500">*</span></label>
               <input
-                v-model="form.characteristicName"
+                data-testid="characteristicName" v-model="form.characteristicName"
                 type="text"
                 required
-                placeholder="例如：銅離子濃度"
+                :placeholder="t('spc.characteristics.namePlaceholder')"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
               />
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">特性英文名稱</label>
-              <input v-model="form.characteristicNameEn" type="text" placeholder="例如：Copper Ion Concentration" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.characteristics.nameEnField') }}</label>
+              <input data-testid="characteristicNameEn" v-model="form.characteristicNameEn" type="text" :placeholder="t('spc.characteristics.nameEnPlaceholder')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">資料類型</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.characteristics.dataCategory') }}</label>
               <select
-                v-model="form.dataCategory"
+                data-testid="dataCategory" v-model="form.dataCategory"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
               >
-                <option value="Variable">計量型數值</option>
-                <option value="Attribute">計數型資料</option>
+                <option value="Variable">{{ t('spc.characteristics.variableOption') }}</option>
+                <option value="Attribute">{{ t('spc.characteristics.attributeOption') }}</option>
               </select>
             </div>
 
@@ -435,39 +447,39 @@ onMounted(load);
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600">輸入模式</label>
-              <select v-model="form.inputMode" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl">
-                <option value="FORMULA">公式計算</option>
-                <option value="DIRECT">直接輸入濃度</option>
-                <option value="RECORD_ONLY">僅記錄、不判定</option>
+              <label class="block text-xs font-bold text-slate-600">{{ t('spc.characteristics.inputMode') }}</label>
+              <select data-testid="inputMode" v-model="form.inputMode" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl">
+                <option value="FORMULA">{{ t('spc.characteristics.formulaOption') }}</option>
+                <option value="DIRECT">{{ t('spc.characteristics.directOption') }}</option>
+                <option value="RECORD_ONLY">{{ t('spc.characteristics.recordOption') }}</option>
               </select>
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600">數值欄位名稱</label>
-              <input v-model="form.valueLabel" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl" placeholder="例如：濃度" />
+              <label class="block text-xs font-bold text-slate-600">{{ t('spc.characteristics.valueLabel') }}</label>
+              <input data-testid="valueLabel" v-model="form.valueLabel" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl" :placeholder="t('spc.characteristics.valuePlaceholder')" />
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600">小數位數</label>
-              <input v-model.number="form.decimalPlaces" type="number" min="0" max="8" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl" />
+              <label class="block text-xs font-bold text-slate-600">{{ t('spc.characteristics.decimalPlaces') }}</label>
+              <input data-testid="decimalPlaces" v-model.number="form.decimalPlaces" type="number" min="0" max="8" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">SPC 即時運算引擎</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">{{ t('spc.characteristics.engine') }}</label>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input v-model="form.isSpcEnabled" type="checkbox" class="sr-only peer" />
+                <input data-testid="isSpcEnabled" v-model="form.isSpcEnabled" type="checkbox" class="sr-only peer" />
                 <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 dark:peer-focus:ring-pink-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isSpcEnabled ? '開啟算圖' : '不執行算圖' }}</span>
+                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ t(form.isSpcEnabled ? 'spc.characteristics.chartOn' : 'spc.characteristics.chartOff') }}</span>
               </label>
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">啟用設定</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">{{ t('spc.characteristics.enabledSetting') }}</label>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
+                <input data-testid="isEnabled" v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
                 <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 dark:peer-focus:ring-pink-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
-                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用' : '停用' }}</span>
+                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ t(form.isEnabled ? 'common.status.on' : 'common.status.off') }}</span>
               </label>
             </div>
           </div>
@@ -479,14 +491,14 @@ onMounted(load);
               type="button"
               class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all"
             >
-              取消
+              {{ t('common.actions.cancel') }}
             </button>
             <button
               type="submit"
               :disabled="loading"
               class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white text-sm font-bold shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transition-all transform hover:-translate-y-0.5"
             >
-              <Save class="w-4 h-4" /> 確認儲存
+              <Save class="w-4 h-4" /> {{ t('common.actions.save') }}
             </button>
           </div>
         </form>

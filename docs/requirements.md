@@ -277,3 +277,5 @@
 - 2026-10-24 I18N-TASK-03設計完成：[Portal本人偏好/身分/schema提案](i18n/preferences-plan.md)、[規格驗證](../specs/20261024-i18n-task03/spec.md)。以Portal Users.Id為本人權威，SPC Operators.Id不可直接對應；獨立偏好表/條件式API僅提案，共用警衛政策及跨站委派未決，未執行migration/API或發布。剩18包。
 
 - 2026-10-24 I18N-TASK-04共用介面試點完成：[規格/驗證](../specs/20261024-i18n-task04/verification.md)。SPC header/sidebar三語、本機環境/subject隔離偏好及繁中fallback，切換保留未送表單/查詢/圖表實例；26單元、測試站17+8瀏覽器驗證/build通過。測試Web0.1.72，API沿用0.1.72；無DB/正式/Portal/KM變更，頁面內文與真人翻譯審核仍待後續17包。
+
+- 2026-10-24 I18N-TASK-05A完成：[兩頁三語/驗證](../specs/20261024-i18n-task05a/verification.md)。產品料號/品質特性固定UI、指南、前端提示與刪除確認支援三語，抽屜復用本機語言控制，保留草稿/篩選/原DTO及資料名稱；零結果數量顯示0至0。30單元、本機39及發布39+17瀏覽器驗證/build通過，測試Web0.1.73/API沿用0.1.72。TASK-05依12頁範圍拆05A～05E，本次只做05A，剩20小工作；DB/正式及其他系統不變。
