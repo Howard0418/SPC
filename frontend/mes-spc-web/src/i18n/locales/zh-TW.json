@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": {
+      "label": "語言（本機）",
+      "unavailable": "本頁已切換，但無法保存本機偏好。"
+    },
+    "theme": {
+      "light": "切換亮色模式",
+      "dark": "切換深色模式"
+    }
+  },
+  "spc": {
+    "shell": {
+      "subtitle": "智能統計製程與製造品質分析系統",
+      "portal": "入口網站",
+      "portalTitle": "返回 PMR 入口網站",
+      "logout": "全部登出",
+      "viewer": "檢視者",
+      "editor": "編輯者",
+      "offline": "離線",
+      "mismatch": "⚠ WEB／API 環境不一致",
+      "production": "正式環境",
+      "test": "測試環境",
+      "unknown": "未知環境"
+    },
+    "navigation": {
+      "processAnalysis": "製程分析",
+      "equipmentMonitoring": "設備監控",
+      "importSampling": "自動化匯入與採樣",
+      "qualityMaster": "企業品質主檔設定",
+      "alertsTraceability": "異常管理與追溯",
+      "administration": "系統管理與通報設定",
+      "spcAnalysis": "SPC 管制分析",
+      "particleMonitoring": "Particle Monitoring",
+      "measurementTrends": "量測趨勢分析",
+      "periodReports": "SPC 週月報表",
+      "equipmentStatus": "設備即時狀態",
+      "equipmentPoints": "設備點位總覽",
+      "keyPoints": "重點點位監控",
+      "importBatches": "匯入批次查詢",
+      "controlItems": "SPC 管制項目設定",
+      "lineAnalysis": "線別分析項目總覽",
+      "chemicalTables": "藥液 F 表維護",
+      "processes": "工站製程主檔",
+      "parts": "產品料號主檔",
+      "characteristics": "品質特性項目",
+      "linesTanks": "線別槽體設定",
+      "chartCategories": "管制圖大類別維護",
+      "alertRules": "SPC 異常規則維護",
+      "alerts": "異常通報總覽",
+      "alertWorkflow": "異常單簽核處置",
+      "genealogy": "產品系譜圖 (Genealogy)",
+      "qualityHistory": "多維度品質履歷查詢",
+      "guide": "系統操作手冊",
+      "calibration": "儀器校正管理",
+      "smtp": "SMTP 郵件與預警設定",
+      "reportSettings": "SPC 週報月報設定",
+      "users": "系統使用者管理"
+    }
+  }
+}

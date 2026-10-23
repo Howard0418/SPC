@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": {
+      "label": "语言（本机）",
+      "unavailable": "本页已切换，但无法保存本机偏好。"
+    },
+    "theme": {
+      "light": "切换亮色模式",
+      "dark": "切换深色模式"
+    }
+  },
+  "spc": {
+    "shell": {
+      "subtitle": "智能统计制程与制造质量分析系统",
+      "portal": "门户网站",
+      "portalTitle": "返回 PMR 门户网站",
+      "logout": "全部退出",
+      "viewer": "查看者",
+      "editor": "编辑者",
+      "offline": "离线",
+      "mismatch": "⚠ WEB／API 环境不一致",
+      "production": "正式环境",
+      "test": "测试环境",
+      "unknown": "未知环境"
+    },
+    "navigation": {
+      "processAnalysis": "制程分析",
+      "equipmentMonitoring": "设备监控",
+      "importSampling": "自动化导入与采样",
+      "qualityMaster": "企业质量主档设置",
+      "alertsTraceability": "异常管理与追溯",
+      "administration": "系统管理与通知设置",
+      "spcAnalysis": "SPC 管制分析",
+      "particleMonitoring": "粒子监控",
+      "measurementTrends": "量测趋势分析",
+      "periodReports": "SPC 周月报表",
+      "equipmentStatus": "设备实时状态",
+      "equipmentPoints": "设备点位总览",
+      "keyPoints": "重点点位监控",
+      "importBatches": "导入批次查询",
+      "controlItems": "SPC 管制项目设置",
+      "lineAnalysis": "线别分析项目总览",
+      "chemicalTables": "药液 F 表维护",
+      "processes": "工站制程主档",
+      "parts": "产品料号主档",
+      "characteristics": "质量特性项目",
+      "linesTanks": "线别槽体设置",
+      "chartCategories": "管制图大类别维护",
+      "alertRules": "SPC 异常规则维护",
+      "alerts": "异常通知总览",
+      "alertWorkflow": "异常单审批处置",
+      "genealogy": "产品谱系图",
+      "qualityHistory": "多维度质量履历查询",
+      "guide": "系统操作手册",
+      "calibration": "仪器校准管理",
+      "smtp": "SMTP 邮件与预警设置",
+      "reportSettings": "SPC 周报月报设置",
+      "users": "系统用户管理"
+    }
+  }
+}

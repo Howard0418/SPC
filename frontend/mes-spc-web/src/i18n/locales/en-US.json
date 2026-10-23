@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": {
+      "label": "Language (local)",
+      "unavailable": "Language changed for this page; local preference could not be saved."
+    },
+    "theme": {
+      "light": "Switch to light mode",
+      "dark": "Switch to dark mode"
+    }
+  },
+  "spc": {
+    "shell": {
+      "subtitle": "Statistical process and manufacturing quality analysis",
+      "portal": "Portal",
+      "portalTitle": "Return to PMR Portal",
+      "logout": "Sign out everywhere",
+      "viewer": "Viewer",
+      "editor": "Editor",
+      "offline": "Offline",
+      "mismatch": "⚠ WEB/API environment mismatch",
+      "production": "Production environment",
+      "test": "Test environment",
+      "unknown": "Unknown environment"
+    },
+    "navigation": {
+      "processAnalysis": "Process analysis",
+      "equipmentMonitoring": "Equipment monitoring",
+      "importSampling": "Import and sampling",
+      "qualityMaster": "Quality master data",
+      "alertsTraceability": "Alerts and traceability",
+      "administration": "Administration and notifications",
+      "spcAnalysis": "SPC control analysis",
+      "particleMonitoring": "Particle monitoring",
+      "measurementTrends": "Measurement trends",
+      "periodReports": "SPC weekly/monthly reports",
+      "equipmentStatus": "Live equipment status",
+      "equipmentPoints": "Equipment points",
+      "keyPoints": "Key point monitoring",
+      "importBatches": "Import batches",
+      "controlItems": "SPC control items",
+      "lineAnalysis": "Line analysis overview",
+      "chemicalTables": "Chemical F tables",
+      "processes": "Processes",
+      "parts": "Product parts",
+      "characteristics": "Quality characteristics",
+      "linesTanks": "Lines and tanks",
+      "chartCategories": "Control chart categories",
+      "alertRules": "SPC alert rules",
+      "alerts": "Alert overview",
+      "alertWorkflow": "Alert approval and resolution",
+      "genealogy": "Product genealogy",
+      "qualityHistory": "Quality history search",
+      "guide": "User guide",
+      "calibration": "Instrument calibration",
+      "smtp": "SMTP and alert settings",
+      "reportSettings": "SPC report settings",
+      "users": "System users"
+    }
+  }
+}

@@ -1910,3 +1910,8 @@
 - 只執行下一小工作：Portal Users.Id本人偏好、獨立UserLocalePreferences表/FK/unique/CHECK/rowversion提案、GET/PUT/DELETE/CSRF/條件式更新、快取與換人隔離、失敗不丟表單與回復安排。
 - 已確認SPC JWT是Operators.Id、KM現有signed account不含Portal穩定ID/locale；不假稱跨站cookie/JWT可直接共用。共用警衛政策/安全委派保留後續決策，不改SSO/角色。
 - [方案](docs/i18n/preferences-plan.md)與[驗證](specs/20261024-i18n-task03/verification.md)：13項JSON案例/文件連結/diff檢查通過，僅文件不是API或SQL測試。不查實庫、不執行schema/程式/build/發布，TASK-03 DONE後STOP，剩18包，另受阻1/暫緩2。
+
+## 2026-10-24 I18N-TASK-04 SPC語言切換試點
+- 共用App介面47鍵三語、原生名稱選單、本機環境/使用者偏好、逐key繁中fallback及storage失敗提示；路由/角色/業務原值不變，未存表單、查詢及兩張圖實例保留。
+- Vue I18n11.4.16精確鎖定；26單元、本機17及已發布17+8瀏覽器驗證/build、同源14請求/資產SHA256/真實health通過。測試Web0.1.72，API沿用0.1.72，不停pool/不改DB/正式。
+- [驗證/限制/回復](specs/20261024-i18n-task04/verification.md)。譯文141列draft待真人審核；頁面內文尚未翻譯。剩TASK-05～21共17包，另受阻1/暫緩2，STOP於本件。

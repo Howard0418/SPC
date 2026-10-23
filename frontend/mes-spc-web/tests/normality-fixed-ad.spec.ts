@@ -71,6 +71,21 @@ for(const path of ['/spc','/trend-chart'])for(const scenario of ['normal','tiny'
   if(scenario==='tiny')await expect(page.getByText('<0.0001',{exact:true})).toBeVisible();
   if(scenario==='constant')await expect(page.getByTestId('normality-unavailable')).toContainText('無變異');
   if(scenario==='insufficient')await expect(page.getByTestId('normality-unavailable')).toContainText('至少3筆');
+  if(scenario==='normal') {
+    // I18N-TASK-04: shell language changes must not recreate chart instances or query state.
+    const chartNodes=page.locator('[_echarts_instance_]');
+    await expect(chartNodes.first()).toBeVisible();
+    const before=await chartNodes.evaluateAll(nodes=>nodes.map(node=>node.getAttribute('_echarts_instance_')));
+    const dates=await page.locator('input[type="date"]').evaluateAll(nodes=>nodes.map(node=>(node as HTMLInputElement).value));
+    const currentUrl=page.url();const requestCount=chartMethods.length;
+    for(const locale of ['en-US','zh-CN','zh-TW']) {
+      await page.getByTestId('locale-select').selectOption(locale);
+      expect(await chartNodes.evaluateAll(nodes=>nodes.map(node=>node.getAttribute('_echarts_instance_')))).toEqual(before);
+      expect(await page.locator('input[type="date"]').evaluateAll(nodes=>nodes.map(node=>(node as HTMLInputElement).value))).toEqual(dates);
+      expect(page.url()).toBe(currentUrl);expect(chartMethods.length).toBe(requestCount);
+      await expect(page.getByText('未拒絕常態假設',{exact:true})).toBeVisible();
+    }
+  }
   expect(writes).toEqual([]);expect(errors).toEqual([]);
   if(scenario==='normal')await page.screenshot({path:`test-results/normality-${path.slice(1)}.png`,fullPage:true});
  });

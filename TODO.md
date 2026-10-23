@@ -290,9 +290,9 @@
 - 本批原6件現未完成2件：002附件掃毒因不外送政策未確認而受阻；004 Runtime由使用者明示暫緩，無18:00自動維護。001/003/005/006已完成不再列入。
 - TransFiles明列舊驗收仍1件TASK-005，首筆LOG人工故障驗收註記保留。正常跨日業務匯入按既有驗收案例後續操作，不將正式receipt0冒稱已做人工追溯驗收。
 
-## 2026-10-22 I18N 工作池（僅 TASK-01 分析完成）
-- [國際化分析](specs/20261022-i18n-task01/spec.md)／[報告](specs/20261022-i18n-task01/analysis.md)／[後續任務](specs/20261022-i18n-task01/tasks.md)。使用者只允許分析；未改程式／DB／套件／站台。
-- I18N-TASK-01 DONE；TASK-02～21 共20個待確認工作包，尚未開始；每次單件、單一系統，可能再拆小，不能視為實作或正式更新授權。
+## I18N 工作池（2026-10-24最新：TASK-04完成，剩17包）
+- [後續任務](specs/20261022-i18n-task01/tasks.md)：TASK-05～21待執行/待確認；已完成TASK-01～04追溯見CHANGELOG_CUSTOM.md及各specs。
+- 每次單件、單一系統；下一項TASK-05（SPC主檔/公式維護/量測/匯入UI），尚未開始。測試發布不等於正式更新授權。
 - 既有主要未完成仍2件：SEC-FOLLOWUP-002附件掃毒受阻、004 Runtime暫緩；TransFiles舊人工驗收TASK-005另1件。i18n規劃包與既有受阻／暫緩事項分列，不重啟維護。
 - TASK-01完成後STOP，等待確認。
 
@@ -340,12 +340,6 @@
 - 234項後端通過/9條件式略過、Node3、兩頁8情境及已發布8情境/同源路由通過，無資料修補。正式未更新。[驗證與回復](specs/20261022-normality-fixed-ad-plan/verification.md)。
 - 本件DONE，工作池由21降為i18n20個待確認包；另附件掃毒受阻1、Runtime及TransFiles人工故障驗收暫緩2，不開始其他工作。
 
-## 國際化TASK-02完成（2026-10-24）
-- [x] I18N-TASK-02：共用JSON/key/placeholder/locale/fallback契約v1.0.0、25項詞彙初稿、缺漏檢查設計完成。[規格](specs/20261024-i18n-task02/spec.md)／[共用規範](docs/i18n/README.md)。
-- 三語29鍵、87筆draft審核列與hash/參數檢查及18故障fixture通過；尚無真人翻譯品質成果、產品checker/三語UI/偏好功能，不改程式或發布。
-- 剩TASK-03～21共19個待執行/待確認包；另附件掃毒受阻1、Runtime與TransFiles人工故障驗收暫緩2。只完成本件，STOP，不直接開始03或04。
-
-## 國際化TASK-03完成（2026-10-24）
-- [x] I18N-TASK-03：Portal本人語言偏好/Users.Id映射、獨立偏好表及條件式API/CSRF/快取/回復提案完成。[規格](specs/20261024-i18n-task03/spec.md)／[方案](docs/i18n/preferences-plan.md)。
-- 13項JSON提案案例一致性/文件連結檢查通過；不是端點、權限、migration或跨站同步實作。共用警衛帳號政策及跨站委派待後續決策，不在本件修改。
-- 剩TASK-04～21共18個待執行/待確認包；另附件掃毒受阻1、Runtime/TransFiles人工故障驗收暫緩2。不開始TASK-04/09，不發布。
+## 國際化目前待辦（2026-10-24）
+- TASK-05～21 共17包；[TASK-04驗證/回復](specs/20261024-i18n-task04/verification.md)已記錄，測試Web0.1.72/API沿用0.1.72。本機語言試點不等於全站翻譯或Portal偏好同步完成。
+- 另附件掃毒受阻1、Runtime與TransFiles人工故障驗收暫緩2；Portal既有真人確認另列。本次STOP於TASK-04，不自動開始05。

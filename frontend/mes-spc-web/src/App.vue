@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
   LineChart,
@@ -27,8 +27,11 @@ import {
 } from "lucide-vue-next";
 import { clearAuthSession, getCurrentUser } from "./utils/auth";
 import { api, setApiEnvironment } from "./api/client";
+import { useI18n } from "vue-i18n";
+import { readLocale, saveLocale, supportedLocales } from "./i18n/preferences";
 import pkg from "../package.json";
 
+const { t, locale } = useI18n({ useScope: "global" });
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
 const portalUrl = import.meta.env.VITE_PORTAL_URL || "http://172.16.110.27/";
 const portalHomeUrl = (() => {
@@ -48,7 +51,7 @@ const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 const apiVersion = ref("--");
 const apiEnvironment = ref("unknown");
 const apiOnline = ref(false);
-const environmentLabel = (value) => value === "production" ? "正式" : value === "test" ? "測試" : "未知";
+const environmentLabel = value => t(`spc.shell.${["production", "test"].includes(value) ? value : "unknown"}`);
 const environmentMismatch = computed(() =>
   apiOnline.value && apiEnvironment.value !== "unknown" && apiEnvironment.value !== webEnvironment
 );
@@ -59,6 +62,26 @@ const currentUser = computed(() => {
   return getCurrentUser();
 });
 const canEdit = computed(() => !authOn || currentUser.value?.role === "Editor");
+// Storage access itself can throw in restricted browser contexts.
+const localeStorage = {
+  getItem: key => window.localStorage.getItem(key),
+  setItem: (key, value) => window.localStorage.setItem(key, value),
+};
+const localeSubject = computed(() => authOn && currentUser.value ? (currentUser.value.id ?? 0) : null);
+const localeUnavailable = ref(false);
+watch(localeSubject, subject => {
+  const saved = readLocale(localeStorage, webEnvironment, subject);
+  locale.value = saved.locale;
+  localeUnavailable.value = !saved.available;
+}, { immediate: true });
+watch(locale, value => { document.documentElement.lang = value; }, { immediate: true });
+function changeLocale(event) {
+  const value = event.target.value;
+  if (!supportedLocales.includes(value)) return;
+  locale.value = value;
+  localeUnavailable.value = !saveLocale(localeStorage, webEnvironment, localeSubject.value, value);
+}
+
 
 const isDark = ref(true);
 
@@ -98,20 +121,20 @@ onMounted(() => {
 
 const viewerMenuCategories = [
   {
-    title: "製程分析",
+    title: "spc.navigation.processAnalysis",
     items: [
-      { to: "/spc", text: "SPC 管制分析", icon: LineChart },
-      { to: "/particle-monitoring", text: "Particle Monitoring", icon: Wind },
-      { to: "/trend-chart", text: "量測趨勢分析", icon: TrendingUp },
-      { to: "/monthly-control-chart", text: "SPC 週月報表", icon: CalendarClock }
+      { to: "/spc", text: "spc.navigation.spcAnalysis", icon: LineChart },
+      { to: "/particle-monitoring", text: "spc.navigation.particleMonitoring", icon: Wind },
+      { to: "/trend-chart", text: "spc.navigation.measurementTrends", icon: TrendingUp },
+      { to: "/monthly-control-chart", text: "spc.navigation.periodReports", icon: CalendarClock }
     ]
   },
   {
-    title: "設備監控",
+    title: "spc.navigation.equipmentMonitoring",
     items: [
-      { to: "/equipment-status", text: "設備即時狀態", icon: Activity },
-      { to: "/equipment-points", text: "設備點位總覽", icon: Search },
-      { to: "/equipment-monitor", text: "重點點位監控", icon: Activity }
+      { to: "/equipment-status", text: "spc.navigation.equipmentStatus", icon: Activity },
+      { to: "/equipment-points", text: "spc.navigation.equipmentPoints", icon: Search },
+      { to: "/equipment-monitor", text: "spc.navigation.keyPoints", icon: Activity }
     ]
   }
 ];
@@ -119,42 +142,42 @@ const viewerMenuCategories = [
 const editorMenuCategories = [
   ...viewerMenuCategories,
   {
-    title: "自動化匯入與採樣",
+    title: "spc.navigation.importSampling",
     items: [
-      { to: "/uploads", text: "匯入批次查詢", icon: UploadCloud }
+      { to: "/uploads", text: "spc.navigation.importBatches", icon: UploadCloud }
     ]
   },
   {
-    title: "企業品質主檔設定",
+    title: "spc.navigation.qualityMaster",
     items: [
-      { to: "/part-process-characteristics", text: "SPC 管制項目設定", icon: FolderTree },
-      { to: "/chemical-analysis-overview", text: "線別分析項目總覽", icon: FlaskConical },
-      { to: "/chemical-f-table", text: "藥液 F 表維護", icon: FlaskConical },
-      { to: "/processes", text: "工站製程主檔", icon: Layers },
-      { to: "/parts", text: "產品料號主檔", icon: Package },
-      { to: "/characteristics", text: "品質特性項目", icon: Sliders },
-      { to: "/traceability-master", text: "線別槽體設定", icon: Layers },
-      { to: "/control-chart-groups", text: "管制圖大類別維護", icon: Layers },
-      { to: "/spc-rule-groups", text: "SPC 異常規則維護", icon: Activity },
+      { to: "/part-process-characteristics", text: "spc.navigation.controlItems", icon: FolderTree },
+      { to: "/chemical-analysis-overview", text: "spc.navigation.lineAnalysis", icon: FlaskConical },
+      { to: "/chemical-f-table", text: "spc.navigation.chemicalTables", icon: FlaskConical },
+      { to: "/processes", text: "spc.navigation.processes", icon: Layers },
+      { to: "/parts", text: "spc.navigation.parts", icon: Package },
+      { to: "/characteristics", text: "spc.navigation.characteristics", icon: Sliders },
+      { to: "/traceability-master", text: "spc.navigation.linesTanks", icon: Layers },
+      { to: "/control-chart-groups", text: "spc.navigation.chartCategories", icon: Layers },
+      { to: "/spc-rule-groups", text: "spc.navigation.alertRules", icon: Activity },
     ]
   },
   {
-    title: "異常管理與追溯",
+    title: "spc.navigation.alertsTraceability",
     items: [
-      { to: "/alerts", text: "異常通報總覽", icon: AlertTriangle },
-      { to: "/alerts-workflow", text: "異常單簽核處置", icon: Activity },
-      { to: "/genealogy", text: "產品系譜圖 (Genealogy)", icon: FolderTree },
-      { to: "/spc/query", text: "多維度品質履歷查詢", icon: Search }
+      { to: "/alerts", text: "spc.navigation.alerts", icon: AlertTriangle },
+      { to: "/alerts-workflow", text: "spc.navigation.alertWorkflow", icon: Activity },
+      { to: "/genealogy", text: "spc.navigation.genealogy", icon: FolderTree },
+      { to: "/spc/query", text: "spc.navigation.qualityHistory", icon: Search }
     ]
   },
   {
-    title: "系統管理與通報設定",
+    title: "spc.navigation.administration",
     items: [
-      { to: "/guide", text: "系統操作手冊", icon: BookOpen },
-      { to: "/calibration-instruments", text: "儀器校正管理", icon: CalendarClock },
-      { to: "/settings/smtp", text: "SMTP 郵件與預警設定", icon: Sliders },
-      { to: "/settings/spc-reports", text: "SPC 週報月報設定", icon: CalendarClock },
-      { to: "/operators", text: "系統使用者管理", icon: Users }
+      { to: "/guide", text: "spc.navigation.guide", icon: BookOpen },
+      { to: "/calibration-instruments", text: "spc.navigation.calibration", icon: CalendarClock },
+      { to: "/settings/smtp", text: "spc.navigation.smtp", icon: Sliders },
+      { to: "/settings/spc-reports", text: "spc.navigation.reportSettings", icon: CalendarClock },
+      { to: "/operators", text: "spc.navigation.users", icon: Users }
     ]
   }
 ];
@@ -174,7 +197,7 @@ function returnToPortal() {
 <template>
   <div class="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
     <!-- Premium Top Navigation Bar -->
-    <header class="sticky top-0 z-50 flex items-center justify-between h-16 px-6 bg-slate-900/90 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 shadow-lg text-white">
+    <header class="sticky top-0 z-50 flex items-center justify-between min-h-16 flex-wrap gap-3 px-3 py-3 md:px-6 bg-slate-900/90 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 shadow-lg text-white">
       <div class="flex items-center gap-3">
         <div class="p-2.5 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-md shadow-indigo-500/20 flex items-center justify-center">
           <Activity class="w-6 h-6 text-white animate-pulse" />
@@ -183,46 +206,56 @@ function returnToPortal() {
           <h1 class="text-xl font-black tracking-wider bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
             PMR SPC <span class="text-xs px-2 py-0.5 ml-2 font-bold bg-blue-600/40 text-blue-300 border border-blue-500/30 rounded-full uppercase tracking-widest">Enterprise</span>
           </h1>
-          <p class="text-[11px] text-slate-400 -mt-1 tracking-tight font-medium">智能統計製程與製造品質分析系統</p>
+          <p class="text-[11px] text-slate-400 -mt-1 tracking-tight font-medium">{{ t("spc.shell.subtitle") }}</p>
         </div>
       </div>
       
-      <div class="flex items-center gap-4">
+      <div class="flex items-center flex-wrap gap-3 min-w-0">
+        <label class="flex flex-wrap items-center gap-2 text-xs">
+          <span>{{ t('common.language.label') }}</span>
+          <select data-testid="locale-select" :aria-label="t('common.language.label')" :value="locale" @change="changeLocale" class="rounded-lg border border-slate-600 bg-slate-800 text-white px-2 py-2 focus:outline focus:outline-2 focus:outline-blue-400">
+            <option value="zh-TW">繁體中文</option>
+            <option value="zh-CN">简体中文</option>
+            <option value="en-US">English</option>
+          </select>
+        </label>
         <!-- Theme Toggle Button -->
         <button
           @click="toggleDarkMode"
           type="button"
           class="p-2 rounded-xl bg-slate-800 dark:bg-slate-800 hover:bg-slate-700 text-yellow-400 dark:text-blue-300 transition-all shadow-sm border border-slate-700"
-          :title="isDark ? '切換亮色模式' : '切換深色模式'"
+          :title="t(isDark ? 'common.theme.light' : 'common.theme.dark')"
+          :aria-label="t(isDark ? 'common.theme.light' : 'common.theme.dark')"
         >
           <Sun v-if="isDark" class="w-5 h-5" />
           <Moon v-else class="w-5 h-5 text-indigo-400" />
         </button>
 
         <!-- Auth info -->
-        <div v-if="authOn" class="flex items-center gap-3 text-sm pl-4 border-l border-slate-700/80">
+        <div v-if="authOn" class="flex flex-wrap items-center gap-3 text-sm pl-2 border-l border-slate-700/80">
           <button
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-blue-600/80 hover:text-white border border-slate-700 transition-all text-slate-300"
-            title="返回 PMR 入口網站"
+            :title="t('spc.shell.portalTitle')"
             @click="returnToPortal"
           >
-            <House class="w-3.5 h-3.5" /> 入口網站
+            <House class="w-3.5 h-3.5" /> {{ t("spc.shell.portal") }}
           </button>
           <div v-if="currentUser" class="text-right leading-tight">
             <div class="text-xs font-bold text-white">{{ currentUser.displayName || currentUser.username }}</div>
-            <div class="text-[10px] text-blue-300">{{ currentUser.role === 'Viewer' ? '檢視者' : '編輯者' }}</div>
+            <div class="text-[10px] text-blue-300">{{ t(currentUser.role === 'Viewer' ? 'spc.shell.viewer' : 'spc.shell.editor') }}</div>
           </div>
           <button
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-red-600/80 hover:text-white border border-slate-700 transition-all text-slate-300"
             @click="logout"
           >
-            <LogOut class="w-3.5 h-3.5" /> 全部登出
+            <LogOut class="w-3.5 h-3.5" /> {{ t("spc.shell.logout") }}
           </button>
         </div>
       </div>
     </header>
+    <p v-if="localeUnavailable" role="status" class="px-4 py-2 bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-100">{{ t('common.language.unavailable') }}</p>
 
     <div v-if="showNav" class="flex flex-1 overflow-hidden" :class="route.path === '/calibration-instruments' ? 'flex-col md:flex-row' : ''">
       <!-- Premium Collapsible/Stylized Sidebar -->
@@ -230,7 +263,7 @@ function returnToPortal() {
         <div class="space-y-6">
           <div v-for="cat in menuCategories" :key="cat.title" class="space-y-1.5">
             <h3 class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {{ cat.title }}
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {{ t(cat.title) }}
             </h3>
             <div class="space-y-1">
               <router-link
@@ -240,8 +273,8 @@ function returnToPortal() {
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-slate-800/80 dark:hover:text-blue-400 transition-all group"
                 active-class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white dark:from-blue-600 dark:to-indigo-600 dark:text-white shadow-lg shadow-blue-500/20 dark:shadow-blue-900/30 font-bold"
               >
-                <component :is="m.icon" class="w-4 h-4 transition-transform group-hover:scale-110" />
-                <span class="flex-1 truncate">{{ m.text }}</span>
+                <component :is="m.icon" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                <span class="flex-1 min-w-0 whitespace-normal break-words">{{ t(m.text) }}</span>
                 <ChevronRight class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </router-link>
             </div>
@@ -257,12 +290,12 @@ function returnToPortal() {
               : 'border-amber-300 bg-amber-50 dark:border-amber-900/70 dark:bg-amber-950/30'"
           >
             <div class="flex items-center justify-between">
-              <span class="font-black tracking-wider">{{ environmentLabel(webEnvironment) }}環境</span>
+              <span class="font-black tracking-wider">{{ environmentLabel(webEnvironment) }}</span>
               <span class="h-2 w-2 rounded-full" :class="apiOnline ? 'bg-emerald-500' : 'bg-red-500'"></span>
             </div>
             <div class="flex justify-between"><span>WEB</span><span class="font-mono">v{{ appVersion }}</span></div>
-            <div class="flex justify-between"><span>API</span><span class="font-mono">{{ apiOnline ? `v${apiVersion}` : '離線' }}</span></div>
-            <p v-if="environmentMismatch" class="font-bold text-red-600 dark:text-red-400">⚠ WEB／API 環境不一致</p>
+            <div class="flex justify-between"><span>API</span><span class="font-mono">{{ apiOnline ? `v${apiVersion}` : t('spc.shell.offline') }}</span></div>
+            <p v-if="environmentMismatch" class="font-bold text-red-600 dark:text-red-400">{{ t('spc.shell.mismatch') }}</p>
           </div>
           <p class="text-center">© 2026 PMR Quality System</p>
         </div>
