@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from "vue-i18n";
+import LocalePicker from "../components/LocalePicker.vue";
+import { displayUiMessage } from "../i18n/uiMessage";
+const { t } = useI18n({ useScope: "global" });
+const messageText = value => displayUiMessage(t, value);
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -125,14 +130,14 @@ function nextPriority() {
 
 async function saveRule() {
   if (!form.value.ruleCode?.trim() || !form.value.ruleName?.trim()) {
-    formErr.value = "規則代號與規則名稱為必填。";
+    formErr.value = { key: "spc.rules.required" };
     return;
   }
 
   try {
     JSON.parse(form.value.ruleConfigJson || "{}");
   } catch {
-    formErr.value = "自訂參數 JSON 格式無效，請檢查語法。";
+    formErr.value = { key: "spc.rules.invalidJson" };
     return;
   }
 
@@ -150,12 +155,12 @@ async function saveRule() {
     if (modalMode.value === "create") {
       const { data } = await api.post("/spc-rules", payload);
       rules.value.push(data);
-      successAlert("成功新增異常規則：" + data.ruleName);
+      successAlert({ key: "spc.rules.created", args: { name: String(data.ruleName) } });
     } else {
       const { data } = await api.put(`/spc-rules/${currentRuleId.value}`, payload);
       const idx = rules.value.findIndex(x => x.id === currentRuleId.value);
       if (idx !== -1) rules.value[idx] = data;
-      successAlert("成功更新異常規則：" + data.ruleName);
+      successAlert({ key: "spc.rules.updated", args: { name: String(data.ruleName) } });
     }
     showModal.value = false;
     await loadAll();
@@ -167,12 +172,12 @@ async function saveRule() {
 }
 
 async function confirmDelete(rule) {
-  if (!confirm(`確定要刪除異常規則「${rule.ruleCode} - ${rule.ruleName}」嗎？`)) return;
+  if (!confirm(t("spc.rules.confirmDelete", { code: String(rule.ruleCode), name: String(rule.ruleName) }))) return;
   loading.value = true;
   try {
     await api.delete(`/spc-rules/${rule.id}`);
     rules.value = rules.value.filter(x => x.id !== rule.id);
-    successAlert("成功刪除異常規則");
+    successAlert({ key: "spc.rules.deleted" });
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -191,24 +196,24 @@ onMounted(loadAll);
 <template>
   <section class="space-y-6">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <div class="p-3 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-xl shadow-lg shadow-indigo-500/30 text-white">
           <Activity class="w-7 h-7" />
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">SPC 八大管制規則維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">固定使用西方電氣規則 1～8，可調整參數及啟用狀態</p>
+          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{{ t('spc.rules.title') }}</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ t('spc.rules.subtitle') }}</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <button
           @click="loadAll"
           type="button"
           :disabled="loading"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all border border-slate-200 dark:border-slate-700"
         >
-          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> 重新整理
+          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> {{ t('common.actions.refresh') }}
         </button>
       </div>
     </div>
@@ -218,20 +223,20 @@ onMounted(loadAll);
         <Settings2 class="w-5 h-5" />
       </div>
       <div>
-        <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">規則庫說明</h4>
+        <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">{{ t('spc.rules.guideTitle') }}</h4>
         <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
-          系統只保留西方電氣規則 1～8，不顯示管制圖或管制項目的內部規則群組，也不可新增第 9 種規則。
+          {{ t('spc.rules.guideIntro') }}
         </p>
       </div>
     </div>
 
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm">
       <AlertTriangle class="w-6 h-6 flex-shrink-0 text-red-500" />
-      <div class="text-sm font-semibold">{{ err }}</div>
+      <div class="text-sm font-semibold">{{ messageText(err) }}</div>
     </div>
     <div v-if="successMsg" class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl shadow-sm">
       <CheckCircle2 class="w-6 h-6 flex-shrink-0 text-emerald-500" />
-      <div class="text-sm font-semibold">{{ successMsg }}</div>
+      <div class="text-sm font-semibold">{{ messageText(successMsg) }}</div>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 items-center justify-between">
@@ -242,14 +247,14 @@ onMounted(loadAll);
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜尋規則代號、名稱或規則庫..."
+          :placeholder="t('spc.rules.search')"
           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
         />
       </div>
 
       <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
         <button
-          v-for="f in [{id:'all', label:'全部狀態'}, {id:'active', label:'已啟用'}, {id:'inactive', label:'已停用'}]"
+          v-for="f in [{id:'all', label:t('common.status.all')}, {id:'active', label:t('common.status.enabled')}, {id:'inactive', label:t('common.status.inactive')}]"
           :key="f.id"
           @click="statusFilter = f.id"
           type="button"
@@ -271,20 +276,20 @@ onMounted(loadAll);
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               <th class="py-4 px-6 w-16 text-center">ID</th>
-              <th class="py-4 px-6">規則代號 / 名稱</th>
-              <th class="py-4 px-6">規則庫</th>
-              <th class="py-4 px-6 text-center">優先序</th>
-              <th class="py-4 px-6">參數</th>
-              <th class="py-4 px-6 text-center">狀態</th>
-              <th class="py-4 px-6 text-right">操作</th>
+              <th class="py-4 px-6">{{ t('spc.rules.nameColumn') }}</th>
+              <th class="py-4 px-6">{{ t('spc.rules.library') }}</th>
+              <th class="py-4 px-6 text-center">{{ t('spc.rules.priority') }}</th>
+              <th class="py-4 px-6">{{ t('spc.rules.parameters') }}</th>
+              <th class="py-4 px-6 text-center">{{ t('common.columns.status') }}</th>
+              <th class="py-4 px-6 text-right">{{ t('common.columns.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rules.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400">載入中...</td>
+              <td colspan="7" class="py-12 text-center text-slate-400">{{ t('spc.rules.loading') }}</td>
             </tr>
             <tr v-else-if="filteredRules.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400">找不到相符的異常規則</td>
+              <td colspan="7" class="py-12 text-center text-slate-400">{{ t('spc.rules.empty') }}</td>
             </tr>
             <tr v-else v-for="rule in filteredRules" :key="rule.id" class="hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 transition-colors">
               <td class="py-5 px-6 font-mono text-xs text-slate-400 dark:text-slate-500 text-center">#{{ rule.id }}</td>
@@ -293,7 +298,7 @@ onMounted(loadAll);
                 <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ rule.ruleName }}</div>
               </td>
               <td class="py-5 px-6 text-xs text-slate-500 dark:text-slate-400">
-                {{ ruleGroupMap[rule.ruleGroupId] || `規則庫 #${rule.ruleGroupId}` }}
+                {{ ruleGroupMap[rule.ruleGroupId] || t('spc.rules.libraryFallback', { id: String(rule.ruleGroupId) }) }}
               </td>
               <td class="py-5 px-6 text-center font-mono font-bold text-xs">{{ rule.priority }}</td>
               <td class="py-5 px-6 font-mono text-[11px] text-slate-500 dark:text-slate-400 max-w-xs truncate" :title="rule.ruleConfigJson || '{}'">
@@ -302,15 +307,15 @@ onMounted(loadAll);
               <td class="py-5 px-6 text-center">
                 <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border tracking-wide', rule.isEnabled ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700']">
                   <span :class="['w-1.5 h-1.5 rounded-full', rule.isEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400']"></span>
-                  {{ rule.isEnabled ? '啟用中' : '已停用' }}
+                  {{ rule.isEnabled ? t('common.status.active') : t('common.status.inactive') }}
                 </span>
               </td>
               <td class="py-5 px-6 text-right space-x-2">
                 <button
-                  @click="openEditModal(rule)"
+                  data-testid="rule-edit" @click="openEditModal(rule)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 transition-all border border-blue-200 dark:border-slate-700"
-                  title="編輯異常規則"
+                  :title="t('spc.rules.edit')"
                 >
                   <Edit class="w-4 h-4" />
                 </button>
@@ -322,18 +327,18 @@ onMounted(loadAll);
     </div>
 
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div role="dialog" class="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80">
-          <div class="flex items-center gap-3">
+          <div class="flex flex-wrap items-center gap-3">
             <div class="p-2.5 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-500/20">
               <Activity class="w-5 h-5" />
             </div>
             <h3 class="text-lg font-black text-slate-800 dark:text-white">
-              {{ modalMode === 'create' ? '新增異常規則' : '編輯異常規則' }}
+              {{ modalMode === 'create' ? t('spc.rules.createTitle') : t('spc.rules.edit') }}
             </h3>
           </div>
           <button
-            @click="showModal = false"
+            :aria-label="t('common.actions.close')" @click="showModal = false"
             type="button"
             class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all"
           >
@@ -341,54 +346,55 @@ onMounted(loadAll);
           </button>
         </div>
 
+        <div class="px-6 py-2 shrink-0"><LocalePicker /></div>
         <form @submit.prevent="saveRule" class="p-6 space-y-5">
           <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
-            <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
+            <XCircle class="w-4 h-4 flex-shrink-0" /> {{ messageText(formErr) }}
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">所屬規則庫</label>
-            <select v-model="form.ruleGroupId" disabled class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-500 dark:text-slate-400">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.rules.parentLibrary') }}</label>
+            <select data-testid="form-ruleGroupId" v-model="form.ruleGroupId" disabled class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-500 dark:text-slate-400">
               <option v-for="group in ruleGroups" :key="group.id" :value="group.id">{{ group.ruleGroupCode }} - {{ group.ruleGroupName }}</option>
             </select>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">規則代號 <span class="text-red-500">*</span></label>
-              <input v-model="form.ruleCode" type="text" readonly class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-sm text-slate-500 dark:text-slate-400" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.rules.ruleCode') }} <span class="text-red-500">*</span></label>
+              <input data-testid="form-ruleCode" v-model="form.ruleCode" type="text" readonly class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-sm text-slate-500 dark:text-slate-400" />
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">規則名稱 <span class="text-red-500">*</span></label>
-              <input v-model="form.ruleName" type="text" required placeholder="例如：連續 3 點中有 2 點超出 2 Sigma" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.rules.ruleName') }} <span class="text-red-500">*</span></label>
+              <input data-testid="form-ruleName" v-model="form.ruleName" type="text" required :placeholder="t('spc.rules.nameExample')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">排序優先序</label>
-              <input v-model="form.priority" type="number" min="1" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.rules.priorityField') }}</label>
+              <input data-testid="form-priority" v-model="form.priority" type="number" min="1" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div class="space-y-1.5 pt-7">
               <label class="relative inline-flex items-center cursor-pointer">
-                <input v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
+                <input data-testid="form-isEnabled" v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
                 <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用此規則' : '停用此規則' }}</span>
+                <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? t('spc.rules.enabled') : t('spc.rules.disabled') }}</span>
               </label>
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">自訂參數 JSON</label>
-            <textarea v-model="form.ruleConfigJson" rows="5" placeholder="{}" class="w-full px-4 py-2.5 bg-slate-900 text-emerald-400 dark:bg-black font-mono text-xs rounded-xl border border-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.rules.json') }}</label>
+            <textarea data-testid="form-ruleConfigJson" v-model="form.ruleConfigJson" rows="5" placeholder="{}" class="w-full px-4 py-2.5 bg-slate-900 text-emerald-400 dark:bg-black font-mono text-xs rounded-xl border border-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
           </div>
 
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button @click="showModal = false" type="button" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all">
-              取消
+              {{ t('common.actions.cancel') }}
             </button>
             <button type="submit" :disabled="loading" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 transition-all">
-              <Save class="w-4 h-4" /> 儲存
+              <Save class="w-4 h-4" /> {{ t('common.actions.save') }}
             </button>
           </div>
         </form>

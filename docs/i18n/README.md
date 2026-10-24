@@ -15,3 +15,7 @@
 ## TASK-05A 基本主檔（測試站）
 - [規格/驗證](../../specs/20261024-i18n-task05a/verification.md)：Parts/Characteristics固定UI新增110鍵，共157鍵三語；抽屜復用原本機語言控制，原API模型與資料名稱保留。測試Web0.1.73，非全部TASK-05完成。
 - [本批審核帳本](../../specs/20261024-i18n-task05a/translation-review.json)：330新draft列，與pilot141列共471列；尚無真人審核。
+
+## TASK-05B 其餘基礎主檔（測試站）
+- [驗證/回復](../../specs/20261024-i18n-task05b/verification.md)：公開四頁新增188鍵（全字典345鍵），視窗與手機可操作，API模型與原資料/機器碼保留；測試Web0.1.74。圖表小分類/types分支及公式仍待05C，不宣稱整站完成。
+- [本批審核帳本](../../specs/20261024-i18n-task05b/translation-review.json)：564新draft列，加前批共1035列；文意尚待真人審核。

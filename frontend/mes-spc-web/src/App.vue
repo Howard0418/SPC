@@ -58,6 +58,10 @@ const environmentMismatch = computed(() =>
   apiOnline.value && apiEnvironment.value !== "unknown" && apiEnvironment.value !== webEnvironment
 );
 const route = useRoute();
+const stackedMobileNav = computed(() => [
+  '/calibration-instruments', '/processes', '/traceability-master',
+  '/control-chart-groups', '/spc-rule-groups',
+].includes(route.path));
 const showNav = computed(() => !authOn || route.path !== "/login");
 const currentUser = computed(() => {
   route.fullPath;
@@ -253,9 +257,9 @@ function returnToPortal() {
     </header>
     <p v-if="localeUnavailable" role="status" class="px-4 py-2 bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-100">{{ t('common.language.unavailable') }}</p>
 
-    <div v-if="showNav" class="flex flex-1 overflow-hidden" :class="route.path === '/calibration-instruments' ? 'flex-col md:flex-row' : ''">
+    <div v-if="showNav" class="flex flex-1 overflow-hidden" :class="stackedMobileNav ? 'flex-col md:flex-row' : ''">
       <!-- Premium Collapsible/Stylized Sidebar -->
-      <aside :class="route.path === '/calibration-instruments' ? 'max-md:w-full max-md:max-h-40' : ''" class="w-64 flex-shrink-0 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800/80 p-4 space-y-6 overflow-y-auto backdrop-blur-sm shadow-xl flex flex-col justify-between">
+      <aside :class="stackedMobileNav ? 'max-md:w-full max-md:max-h-40' : ''" class="w-64 flex-shrink-0 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800/80 p-4 space-y-6 overflow-y-auto backdrop-blur-sm shadow-xl flex flex-col justify-between">
         <div class="space-y-6">
           <div v-for="cat in menuCategories" :key="cat.title" class="space-y-1.5">
             <h3 class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
@@ -300,7 +304,7 @@ function returnToPortal() {
       <!-- Main Workspace -->
       <main
         class="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors"
-        :class="route.path === '/spc' ? 'p-3' : 'p-6'"
+        :class="[route.path === '/spc' ? 'p-3' : 'p-6', stackedMobileNav ? 'min-w-0' : '']"
       >
         <div
           class="w-full mx-auto space-y-6"

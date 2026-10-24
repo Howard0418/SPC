@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from "vue-i18n";
+import LocalePicker from "../components/LocalePicker.vue";
+import { displayUiMessage } from "../i18n/uiMessage";
+const { t } = useI18n({ useScope: "global" });
+const messageText = value => displayUiMessage(t, value);
 import { onMounted, ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
@@ -116,7 +121,7 @@ function openGroupsEdit(item) {
 
 async function saveGroup() {
   if (!groupsForm.value.groupCode?.trim() || !groupsForm.value.groupName?.trim() || !groupsForm.value.businessScopeCode?.trim()) {
-    groupsFormErr.value = "群組代號、名稱與業務範圍代碼皆為必填欄位。";
+    groupsFormErr.value = { key: "spc.groups.required" };
     return;
   }
   groupsFormErr.value = "";
@@ -125,12 +130,12 @@ async function saveGroup() {
     if (groupsModalMode.value === "create") {
       const { data } = await api.post("/control-chart-groups", groupsForm.value);
       groupsRows.value.push(data);
-      successAlert("成功建立大群組：" + data.groupName);
+      successAlert({ key: "spc.groups.created", args: { name: String(data.groupName) } });
     } else {
       const { data } = await api.put(`/control-chart-groups/${groupsCurrentId.value}`, groupsForm.value);
       const idx = groupsRows.value.findIndex(x => x.id === groupsCurrentId.value);
       if (idx !== -1) groupsRows.value[idx] = data;
-      successAlert("成功更新大群組：" + data.groupName);
+      successAlert({ key: "spc.groups.updated", args: { name: String(data.groupName) } });
     }
     groupsShowModal.value = false;
   } catch (e) {
@@ -141,12 +146,12 @@ async function saveGroup() {
 }
 
 async function deleteGroup(item) {
-  if (!confirm(`確定要刪除管制圖群組「${item.groupCode} (${item.groupName})」嗎？`)) return;
+  if (!confirm(t("spc.groups.confirmDelete", { code: String(item.groupCode), name: String(item.groupName) }))) return;
   loading.value = true;
   try {
     await api.delete(`/control-chart-groups/${item.id}`);
     groupsRows.value = groupsRows.value.filter(x => x.id !== item.id);
-    successAlert("成功刪除群組：" + item.groupName);
+    successAlert({ key: "spc.groups.deleted", args: { name: String(item.groupName) } });
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -434,7 +439,7 @@ async function loadAll() {
     await loadRuleLibrary();
     await loadTypes();
   } catch (e) {
-    err.value = "載入設定失敗：" + getApiErrorMessage(e);
+    err.value = { key: "spc.groups.loadFailed", args: { error: getApiErrorMessage(e) } };
   } finally {
     loading.value = false;
   }
@@ -462,28 +467,28 @@ watch(() => route.query.tab, syncTabFromRoute);
   <section class="space-y-6">
     <!-- Header Banner -->
     <div v-if="!embedded" class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <div class="p-3 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-xl shadow-lg shadow-indigo-500/30 text-white">
           <Activity class="w-7 h-7" />
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">管制圖大類別維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">新增、編輯、刪除及啟停管制圖大類別</p>
+          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{{ t('spc.groups.title') }}</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ t('spc.groups.subtitle') }}</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <router-link
           to="/part-process-characteristics"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-amber-600 dark:text-amber-400 text-sm font-semibold transition-all border border-amber-200 dark:border-slate-700"
         >
-          <FolderTree class="w-4 h-4" /> 檢驗基準設定
+          <FolderTree class="w-4 h-4" /> {{ t('spc.groups.standards') }}
         </router-link>
         <router-link
           to="/spc"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 text-sm font-semibold transition-all border border-blue-200 dark:border-slate-700"
         >
-          <Activity class="w-4 h-4" /> SPC 管制圖
+          <Activity class="w-4 h-4" /> {{ t('spc.groups.charts') }}
         </router-link>
         <button
           @click="loadAll"
@@ -491,7 +496,7 @@ watch(() => route.query.tab, syncTabFromRoute);
           :disabled="loading"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all border border-slate-200 dark:border-slate-700"
         >
-          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> 重新整理
+          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> {{ t('common.actions.refresh') }}
         </button>
       </div>
     </div>
@@ -499,11 +504,11 @@ watch(() => route.query.tab, syncTabFromRoute);
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm">
       <AlertTriangle class="w-6 h-6 flex-shrink-0 text-red-500" />
-      <div class="text-sm font-semibold">{{ err }}</div>
+      <div class="text-sm font-semibold">{{ messageText(err) }}</div>
     </div>
     <div v-if="successMsg" class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl shadow-sm">
       <CheckCircle2 class="w-6 h-6 flex-shrink-0 text-emerald-500" />
-      <div class="text-sm font-semibold">{{ successMsg }}</div>
+      <div class="text-sm font-semibold">{{ messageText(successMsg) }}</div>
     </div>
 
     <!-- Tab Header -->
@@ -529,9 +534,9 @@ watch(() => route.query.tab, syncTabFromRoute);
       <div class="p-5 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-900/20 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
         <div class="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl text-indigo-600 dark:text-indigo-400 mt-0.5"><Info class="w-5 h-5" /></div>
         <div>
-          <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">模組指南：管制圖大群組主檔</h4>
+          <h4 class="text-sm font-bold text-indigo-900 dark:text-indigo-300">{{ t('spc.groups.guideTitle') }}</h4>
           <p class="text-xs text-indigo-700 dark:text-indigo-400/80 mt-1.5 leading-relaxed">
-            此模組用於設定 SPC 系統中最頂層的分類結構（如：PROC 製程管制、CHEM 藥液管制、PROD 產品管制），幫助您有效管理全廠各類型的管制圖類別。
+            {{ t('spc.groups.guideIntro') }}
           </p>
         </div>
       </div>
@@ -539,13 +544,13 @@ watch(() => route.query.tab, syncTabFromRoute);
       <div class="flex flex-col sm:flex-row gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 items-center justify-between">
         <div class="relative w-full sm:w-80">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400"><Search class="w-4 h-4" /></span>
-          <input v-model="groupsSearchQuery" type="text" placeholder="搜尋群組代號、名稱..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input v-model="groupsSearchQuery" type="text" :placeholder="t('spc.groups.search')" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
           <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
-            <button v-for="f in [{id:'all', label:'全部'}, {id:'active', label:'已啟用'}, {id:'inactive', label:'已停用'}]" :key="f.id" @click="groupsStatusFilter = f.id" type="button" :class="[ 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap', groupsStatusFilter === f.id ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-850' ]">{{ f.label }}</button>
+            <button v-for="f in [{id:'all', label:t('spc.groups.all')}, {id:'active', label:t('common.status.enabled')}, {id:'inactive', label:t('common.status.inactive')}]" :key="f.id" @click="groupsStatusFilter = f.id" type="button" :class="[ 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap', groupsStatusFilter === f.id ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-850' ]">{{ f.label }}</button>
           </div>
-          <button @click="openGroupsCreate" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 transition-all whitespace-nowrap"><Plus class="w-4 h-4" /> 新增大群組</button>
+          <button data-testid="group-add" @click="openGroupsCreate" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 transition-all whitespace-nowrap"><Plus class="w-4 h-4" /> {{ t('spc.groups.add') }}</button>
         </div>
       </div>
 
@@ -555,16 +560,16 @@ watch(() => route.query.tab, syncTabFromRoute);
             <thead>
               <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                 <th class="py-4 px-6 w-16 text-center">ID</th>
-                <th class="py-4 px-6">群組代號 / 名稱</th>
-                <th class="py-4 px-6">群組類型</th>
-                <th class="py-4 px-6">說明描述</th>
-                <th class="py-4 px-6 text-center">狀態</th>
-                <th class="py-4 px-6 text-right">操作</th>
+                <th class="py-4 px-6">{{ t('spc.groups.nameColumn') }}</th>
+                <th class="py-4 px-6">{{ t('spc.groups.typeColumn') }}</th>
+                <th class="py-4 px-6">{{ t('spc.groups.description') }}</th>
+                <th class="py-4 px-6 text-center">{{ t('common.columns.status') }}</th>
+                <th class="py-4 px-6 text-right">{{ t('common.columns.actions') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <tr v-if="loading && groupsRows.length === 0"><td colspan="6" class="py-12 text-center text-slate-400">正在載入群組清單...</td></tr>
-              <tr v-else-if="filteredGroups.length === 0"><td colspan="6" class="py-12 text-center text-slate-400">找不到相符的群組資料</td></tr>
+              <tr v-if="loading && groupsRows.length === 0"><td colspan="6" class="py-12 text-center text-slate-400">{{ t('spc.groups.loading') }}</td></tr>
+              <tr v-else-if="filteredGroups.length === 0"><td colspan="6" class="py-12 text-center text-slate-400">{{ t('spc.groups.empty') }}</td></tr>
               <tr v-else v-for="g in filteredGroups" :key="g.id" class="hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                 <td class="py-4 px-6 font-mono text-xs text-slate-400 dark:text-slate-500 text-center">#{{ g.id }}</td>
                 <td class="py-4 px-6">
@@ -573,19 +578,19 @@ watch(() => route.query.tab, syncTabFromRoute);
                 </td>
                 <td class="py-4 px-6">
                   <span :class="[ 'px-2.5 py-1 rounded-lg text-xs font-bold border tracking-wide', g.groupType === 'TREND_CHART' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800' : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800' ]">
-                    {{ g.groupType === 'TREND_CHART' ? '趨勢圖' : '管制圖' }}
+                    {{ g.groupType === 'TREND_CHART' ? t('spc.groups.trend') : t('spc.groups.control') }}
                   </span>
                 </td>
                 <td class="py-4 px-6 text-slate-600 dark:text-slate-300">{{ g.description || '-' }}</td>
                 <td class="py-4 px-6 text-center">
                   <span :class="[ 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border tracking-wide', g.isEnabled ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700' ]">
                     <span :class="['w-1.5 h-1.5 rounded-full', g.isEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400']"></span>
-                    {{ g.isEnabled ? '啟用中' : '已停用' }}
+                    {{ g.isEnabled ? t('common.status.active') : t('common.status.inactive') }}
                   </span>
                 </td>
                 <td class="py-4 px-6 text-right space-x-2">
-                  <button @click="openGroupsEdit(g)" type="button" class="inline-flex items-center justify-center p-2 rounded-xl bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-slate-700" title="編輯群組"><Edit class="w-4 h-4" /></button>
-                  <button @click="deleteGroup(g)" type="button" class="inline-flex items-center justify-center p-2 rounded-xl bg-red-50 dark:bg-slate-800 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-slate-700" title="刪除群組"><Trash2 class="w-4 h-4" /></button>
+                  <button data-testid="group-edit" @click="openGroupsEdit(g)" type="button" class="inline-flex items-center justify-center p-2 rounded-xl bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-slate-700" :title="t('spc.groups.edit')"><Edit class="w-4 h-4" /></button>
+                  <button data-testid="group-delete" @click="deleteGroup(g)" type="button" class="inline-flex items-center justify-center p-2 rounded-xl bg-red-50 dark:bg-slate-800 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-slate-700" :title="t('spc.groups.delete')"><Trash2 class="w-4 h-4" /></button>
                 </td>
               </tr>
             </tbody>
@@ -689,61 +694,62 @@ watch(() => route.query.tab, syncTabFromRoute);
 
     <!-- MODAL: Groups -->
     <div v-if="groupsShowModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div role="dialog" class="bg-white dark:bg-slate-900 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80">
-          <div class="flex items-center gap-3">
+          <div class="flex flex-wrap items-center gap-3">
             <div class="p-2.5 bg-indigo-600 text-white rounded-xl shadow-md"><Layers class="w-5 h-5" /></div>
-            <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ groupsModalMode === 'create' ? '新增管制圖群組' : '編輯管制圖群組' }}</h3>
+            <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ groupsModalMode === 'create' ? t('spc.groups.createTitle') : t('spc.groups.editTitle') }}</h3>
           </div>
-          <button @click="groupsShowModal = false" type="button" class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"><X class="w-5 h-5" /></button>
+          <button :aria-label="t('common.actions.close')" @click="groupsShowModal = false" type="button" class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"><X class="w-5 h-5" /></button>
         </div>
+        <div class="px-6 py-2 shrink-0"><LocalePicker /></div>
         <form @submit.prevent="saveGroup" class="p-6 space-y-5">
-          <div v-if="groupsFormErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 rounded-xl text-xs font-bold"><XCircle class="w-4 h-4" /> {{ groupsFormErr }}</div>
+          <div v-if="groupsFormErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 rounded-xl text-xs font-bold"><XCircle class="w-4 h-4" /> {{ messageText(groupsFormErr) }}</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">群組代號 (Code) *</label>
-              <input v-model="groupsForm.groupCode" type="text" required placeholder="例如：PROC" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.groups.codeField') }}</label>
+              <input data-testid="groupsForm-groupCode" v-model="groupsForm.groupCode" type="text" required :placeholder="t('spc.groups.codeExample')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">群組名稱 (Name) *</label>
-              <input v-model="groupsForm.groupName" type="text" required placeholder="例如：製程管制項目" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.groups.nameField') }}</label>
+              <input data-testid="groupsForm-groupName" v-model="groupsForm.groupName" type="text" required :placeholder="t('spc.groups.nameExample')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
           </div>
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">群組類型 *</label>
-            <select v-model="groupsForm.groupType" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="CONTROL_CHART">管制圖 (Control Chart)</option>
-              <option value="TREND_CHART">趨勢圖 (Trend Chart)</option>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.groups.typeField') }}</label>
+            <select data-testid="groupsForm-groupType" v-model="groupsForm.groupType" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="CONTROL_CHART">{{ t('spc.groups.controlOption') }}</option>
+              <option value="TREND_CHART">{{ t('spc.groups.trendOption') }}</option>
             </select>
           </div>
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">業務範圍代碼 *</label>
-            <input v-model="groupsForm.businessScopeCode" type="text" required placeholder="例如：CHEM" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold uppercase text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <p class="text-[11px] text-slate-500">相同業務流程的管制圖與趨勢圖請使用相同代碼。</p>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.groups.scopeField') }}</label>
+            <input data-testid="groupsForm-businessScopeCode" v-model="groupsForm.businessScopeCode" type="text" required :placeholder="t('spc.groups.scopeExample')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold uppercase text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <p class="text-[11px] text-slate-500">{{ t('spc.groups.scopeHelp') }}</p>
           </div>
           <div class="space-y-2">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">資料必填規則</label>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.groups.requiredRules') }}</label>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input v-model="groupsForm.requiresPart" type="checkbox" class="w-4 h-4" /> 產品料號</label>
-              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input v-model="groupsForm.requiresMachine" type="checkbox" class="w-4 h-4" /> 線別／機台</label>
-              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input v-model="groupsForm.requiresTank" type="checkbox" class="w-4 h-4" /> 槽體</label>
+              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input data-testid="groupsForm-requiresPart" v-model="groupsForm.requiresPart" type="checkbox" class="w-4 h-4" /> {{ t('spc.groups.part') }}</label>
+              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input data-testid="groupsForm-requiresMachine" v-model="groupsForm.requiresMachine" type="checkbox" class="w-4 h-4" /> {{ t('spc.groups.machine') }}</label>
+              <label class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold"><input data-testid="groupsForm-requiresTank" v-model="groupsForm.requiresTank" type="checkbox" class="w-4 h-4" /> {{ t('spc.groups.tank') }}</label>
             </div>
           </div>
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">說明描述 (Description)</label>
-            <textarea v-model="groupsForm.description" rows="3" placeholder="請輸入描述..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.groups.descriptionField') }}</label>
+            <textarea data-testid="groupsForm-description" v-model="groupsForm.description" rows="3" :placeholder="t('spc.groups.descriptionExample')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
           </div>
           <div class="space-y-1.5 pt-2">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">啟用狀態</label>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">{{ t('spc.groups.enabled') }}</label>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input v-model="groupsForm.isEnabled" type="checkbox" class="sr-only peer" />
+              <input data-testid="groupsForm-isEnabled" v-model="groupsForm.isEnabled" type="checkbox" class="sr-only peer" />
               <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-              <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ groupsForm.isEnabled ? '啟用' : '停用' }}</span>
+              <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ groupsForm.isEnabled ? t('common.status.on') : t('common.status.off') }}</span>
             </label>
           </div>
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button @click="groupsShowModal = false" type="button" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold">取消</button>
-            <button type="submit" :disabled="loading" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-bold shadow-lg shadow-indigo-500/20"><Save class="w-4 h-4" /> 儲存</button>
+            <button @click="groupsShowModal = false" type="button" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold">{{ t('common.actions.cancel') }}</button>
+            <button type="submit" :disabled="loading" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-bold shadow-lg shadow-indigo-500/20"><Save class="w-4 h-4" /> {{ t('common.actions.save') }}</button>
           </div>
         </form>
       </div>
