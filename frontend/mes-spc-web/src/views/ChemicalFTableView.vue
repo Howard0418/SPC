@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from "vue-i18n";
+import { displayUiMessage } from "../i18n/uiMessage";
+const { t } = useI18n({ useScope: "global" });
+const messageText = value => displayUiMessage(t, value);
 import { computed, onMounted, ref } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import { History, RefreshCw, RotateCcw, Save, Search, TestTube2 } from "lucide-vue-next";
@@ -58,7 +62,7 @@ async function load() {
     if (err?.response?.status === 404) {
       active.value = null;
       loadIntoForm(null);
-      message.value = "尚未建立 F 表，已載入第一版預設資料。";
+      message.value = { key: "spc.fTable.firstVersion" };
     } else {
       error.value = getApiErrorMessage(err);
     }
@@ -94,7 +98,7 @@ async function loadHistory(next) {
 }
 
 async function restoreHistory(row) {
-  if (!window.confirm(`回復到 ${row.versionCode}？目前啟用 F 表會被此版本取代。`)) return;
+  if (!window.confirm(t("spc.fTable.confirmRestore", { version: row.versionCode }))) return;
   restoringHistoryId.value = row.id;
   error.value = "";
   message.value = "";
@@ -102,7 +106,7 @@ async function restoreHistory(row) {
     await api.post(`/v1/chemical-f-table/versions/${row.id}/restore`, {
       reason: `由畫面回復版本 ${row.versionNo}`
     });
-    message.value = `已回復到 ${row.versionCode}，並建立回復紀錄。`;
+    message.value = { key: "spc.fTable.restored", args: { version: row.versionCode } };
     await load();
     await loadHistory();
     await loadImpact();
@@ -130,8 +134,8 @@ async function apply(applyChanges) {
     };
     const { data } = await api.post("/v1/chemical-f-table/apply", payload);
     message.value = applyChanges
-      ? `已套用 ${data.versionCode}，並重建公式引用索引。`
-      : `Dry-run 完成：${data.cells?.filter(x => x.action !== "Unchanged").length || 0} 格將異動。`;
+      ? { key: "spc.fTable.applied", args: { version: data.versionCode } }
+      : { key: "spc.fTable.previewComplete", args: { count: data.cells?.filter(x => x.action !== "Unchanged").length || 0 } };
     if (applyChanges) {
       await load();
       await loadHistory();
@@ -181,82 +185,82 @@ onMounted(async () => {
   <div class="p-6 space-y-5">
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 class="text-2xl font-black text-slate-900 dark:text-white">藥液 F 表維護</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400">濃度公式可引用 F!B3 這類儲存格，計算時會使用目前啟用版本。</p>
+        <h1 class="text-2xl font-black text-slate-900 dark:text-white">{{ t('spc.fTable.title') }}</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ t('spc.fTable.subtitle') }}</p>
       </div>
       <button @click="load" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white text-sm font-bold hover:bg-slate-700">
-        <RefreshCw class="w-4 h-4" /> 重新整理
+        <RefreshCw class="w-4 h-4" /> {{ t('common.actions.refresh') }}
       </button>
     </div>
 
-    <div v-if="error" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{{ error }}</div>
-    <div v-if="message" class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{{ message }}</div>
+    <div v-if="error" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{{ messageText(error) }}</div>
+    <div v-if="message" class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{{ messageText(message) }}</div>
 
-    <section class="grid gap-4 lg:grid-cols-[1fr_360px]">
-      <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+    <section class="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+      <div class="min-w-0 rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
         <div class="mb-4 grid gap-3 md:grid-cols-2">
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-300">新版代碼
-            <input v-model="form.versionCode" class="mt-1 w-full rounded-lg border px-3 py-2 font-mono dark:bg-slate-950 dark:border-slate-700" />
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-300">{{ t('spc.fTable.versionCode') }}
+            <input data-testid="f-code" v-model="form.versionCode" class="mt-1 w-full rounded-lg border px-3 py-2 font-mono dark:bg-slate-950 dark:border-slate-700" />
           </label>
-          <label class="text-xs font-bold text-slate-600 dark:text-slate-300">版本名稱
-            <input v-model="form.displayName" class="mt-1 w-full rounded-lg border px-3 py-2 dark:bg-slate-950 dark:border-slate-700" />
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-300">{{ t('spc.fTable.versionName') }}
+            <input data-testid="f-name" v-model="form.displayName" class="mt-1 w-full rounded-lg border px-3 py-2 dark:bg-slate-950 dark:border-slate-700" />
           </label>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
+          <table class="min-w-[440px] w-full text-sm">
             <thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-950 dark:text-slate-400">
-              <tr><th class="px-3 py-2">儲存格</th><th class="px-3 py-2">標準液</th><th class="px-3 py-2">F 值</th></tr>
+              <tr><th class="px-3 py-2">{{ t('spc.fTable.cell') }}</th><th class="px-3 py-2">{{ t('spc.fTable.solution') }}</th><th class="px-3 py-2">{{ t('spc.fTable.factor') }}</th></tr>
             </thead>
             <tbody>
               <tr v-for="cell in form.cells" :key="cell.cellAddress" class="border-t dark:border-slate-800">
                 <td class="px-3 py-2 font-mono font-bold">{{ cell.cellAddress }}</td>
-                <td class="px-3 py-2"><input v-model="cell.standardSolution" class="w-full rounded border px-2 py-1 dark:bg-slate-950 dark:border-slate-700" /></td>
-                <td class="px-3 py-2"><input v-model.number="cell.numericValue" type="number" step="0.000001" class="w-32 rounded border px-2 py-1 font-mono dark:bg-slate-950 dark:border-slate-700" /></td>
+                <td class="px-3 py-2"><input data-testid="f-solution" v-model="cell.standardSolution" class="w-full min-w-32 rounded border px-2 py-1 dark:bg-slate-950 dark:border-slate-700" /></td>
+                <td class="px-3 py-2"><input data-testid="f-value" v-model.number="cell.numericValue" type="number" step="0.000001" class="w-32 rounded border px-2 py-1 font-mono dark:bg-slate-950 dark:border-slate-700" /></td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="mt-4 flex gap-2">
-          <button @click="preview" :disabled="saving" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
-            <Search class="w-4 h-4" /> Dry-run
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button data-testid="f-preview" @click="preview" :disabled="saving" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+            <Search class="w-4 h-4" /> {{ t('spc.fTable.dryRun') }}
           </button>
-          <button @click="save" :disabled="saving" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-500">
-            <Save class="w-4 h-4" /> 套用新版
+          <button data-testid="f-apply" @click="save" :disabled="saving" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-500">
+            <Save class="w-4 h-4" /> {{ t('spc.fTable.apply') }}
           </button>
         </div>
       </div>
 
-      <aside class="space-y-4">
-        <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
-          <h2 class="mb-2 text-sm font-black text-slate-800 dark:text-white">目前啟用版本</h2>
+      <aside class="min-w-0 space-y-4">
+        <div class="min-w-0 rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+          <h2 class="mb-2 text-sm font-black text-slate-800 dark:text-white">{{ t('spc.fTable.active') }}</h2>
           <div v-if="hasActive" class="text-sm text-slate-600 dark:text-slate-300">
             <div class="font-mono font-bold">{{ active.versionCode }}</div>
             <div>{{ active.displayName }}</div>
             <div class="text-xs text-slate-400">{{ new Date(active.effectiveAt).toLocaleString() }}</div>
           </div>
-          <div v-else class="text-sm text-slate-500">尚未建立</div>
+          <div v-else class="text-sm text-slate-500">{{ t('spc.fTable.notCreated') }}</div>
         </div>
 
-        <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
-          <h2 class="mb-3 text-sm font-black text-slate-800 dark:text-white">公式測試</h2>
-          <input v-model="formula" class="mb-2 w-full rounded border px-3 py-2 font-mono text-sm dark:bg-slate-950 dark:border-slate-700" />
-          <input v-model.number="primaryValue" type="number" class="mb-2 w-full rounded border px-3 py-2 font-mono text-sm dark:bg-slate-950 dark:border-slate-700" />
-          <button @click="evaluateFormula" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500">
-            <TestTube2 class="w-4 h-4" /> 試算
+        <div class="min-w-0 rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+          <h2 class="mb-3 text-sm font-black text-slate-800 dark:text-white">{{ t('spc.fTable.formulaTest') }}</h2>
+          <input :aria-label="t('spc.fTable.expressionLabel')" data-testid="f-formula" v-model="formula" class="mb-2 w-full rounded border px-3 py-2 font-mono text-sm dark:bg-slate-950 dark:border-slate-700" />
+          <input :aria-label="t('spc.fTable.primaryLabel')" data-testid="f-primary" v-model.number="primaryValue" type="number" class="mb-2 w-full rounded border px-3 py-2 font-mono text-sm dark:bg-slate-950 dark:border-slate-700" />
+          <button data-testid="f-evaluate" @click="evaluateFormula" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500">
+            <TestTube2 class="w-4 h-4" /> {{ t('spc.fTable.evaluate') }}
           </button>
           <div v-if="formulaResult" class="mt-3 rounded bg-slate-50 p-3 text-xs dark:bg-slate-950">
-            <div>結果：<span class="font-mono font-bold">{{ formulaResult.value }}</span></div>
-            <div>版本：<span class="font-mono">{{ formulaResult.versionCode }}</span></div>
+            <div>{{ t('spc.fTable.resultLabel') }}<span class="font-mono font-bold">{{ formulaResult.value }}</span></div>
+            <div>{{ t('spc.fTable.versionLabel') }}<span class="font-mono">{{ formulaResult.versionCode }}</span></div>
           </div>
         </div>
 
-        <div class="rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+        <div class="min-w-0 rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
           <div class="mb-3 flex items-center gap-2">
             <History class="w-4 h-4 text-slate-500" />
-            <h2 class="mr-auto text-sm font-black text-slate-800 dark:text-white">版本記錄</h2>
-            <button @click="loadHistory" :disabled="historyLoading" class="rounded border px-2 py-1 text-xs font-bold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">更新</button>
+            <h2 class="mr-auto text-sm font-black text-slate-800 dark:text-white">{{ t('spc.fTable.history') }}</h2>
+            <button @click="loadHistory" :disabled="historyLoading" class="rounded border px-2 py-1 text-xs font-bold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">{{ t('spc.fTable.update') }}</button>
           </div>
           <VersionHistoryRange :loading="historyLoading" :has-more="historyMore" @change="loadHistory" />
           <div v-if="historyRows.length" class="space-y-2">
@@ -268,36 +272,36 @@ onMounted(async () => {
                   <div class="text-slate-400">#{{ row.versionNo }} {{ row.changeType }} · {{ new Date(row.changedAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }) }}</div>
                 </div>
                 <button
-                  @click="restoreHistory(row)"
+                  data-testid="f-restore" @click="restoreHistory(row)"
                   :disabled="restoringHistoryId === row.id"
                   class="inline-flex items-center gap-1 rounded bg-amber-600 px-2 py-1 font-bold text-white hover:bg-amber-500"
-                  title="回復此版本"
+                  :title="t('spc.fTable.restoreTitle')"
                 >
-                  <RotateCcw class="w-3 h-3" /> 回復
+                  <RotateCcw class="w-3 h-3" /> {{ t('spc.fTable.restore') }}
                 </button>
               </div>
               <div v-if="row.reason" class="mt-1 text-slate-500">{{ row.reason }}</div>
             </div>
           </div>
-          <div v-else class="text-sm text-slate-500">此修改日期區間沒有F表版本紀錄</div>
+          <div v-else class="text-sm text-slate-500">{{ t('spc.fTable.emptyHistory') }}</div>
         </div>
       </aside>
     </section>
 
     <section class="rounded-lg border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800">
       <div class="mb-3 flex flex-wrap items-center gap-2">
-        <h2 class="mr-auto text-sm font-black text-slate-800 dark:text-white">受影響項目</h2>
-        <select v-model="selectedCell" class="rounded-lg border px-3 py-2 text-sm dark:bg-slate-950 dark:border-slate-700">
+        <h2 class="mr-auto text-sm font-black text-slate-800 dark:text-white">{{ t('spc.fTable.impact') }}</h2>
+        <select data-testid="f-cell" v-model="selectedCell" class="rounded-lg border px-3 py-2 text-sm dark:bg-slate-950 dark:border-slate-700">
           <option v-for="cell in form.cells" :key="cell.cellAddress" :value="cell.cellAddress">{{ cell.cellAddress }}</option>
         </select>
-        <button @click="loadImpact" :disabled="impactLoading" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs font-bold hover:bg-slate-700">
-          <Search class="w-4 h-4" /> 查詢
+        <button data-testid="f-impact" @click="loadImpact" :disabled="impactLoading" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs font-bold hover:bg-slate-700">
+          <Search class="w-4 h-4" /> {{ t('spc.fTable.search') }}
         </button>
       </div>
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-950 dark:text-slate-400">
-            <tr><th class="px-3 py-2">線別/製程</th><th class="px-3 py-2">槽體</th><th class="px-3 py-2">分析項目</th><th class="px-3 py-2">公式</th></tr>
+            <tr><th class="px-3 py-2">{{ t('spc.fTable.lineProcess') }}</th><th class="px-3 py-2">{{ t('spc.fTable.tank') }}</th><th class="px-3 py-2">{{ t('spc.fTable.item') }}</th><th class="px-3 py-2">{{ t('spc.fTable.formula') }}</th></tr>
           </thead>
           <tbody>
             <tr v-for="row in impactRows" :key="`${row.partProcessCharacteristicId}-${row.referenceContext}`" class="border-t dark:border-slate-800">
@@ -306,7 +310,7 @@ onMounted(async () => {
               <td class="px-3 py-2"><div class="font-bold">{{ row.characteristicName }}</div><small class="text-slate-400">{{ row.characteristicCode }}</small></td>
               <td class="px-3 py-2 font-mono text-xs">{{ row.sourceFormula }}</td>
             </tr>
-            <tr v-if="!impactRows.length"><td colspan="4" class="px-3 py-8 text-center text-slate-500">目前沒有引用 {{ selectedCell }} 的項目。</td></tr>
+            <tr v-if="!impactRows.length"><td colspan="4" class="px-3 py-8 text-center text-slate-500">{{ t('spc.fTable.noReferences', { cell: selectedCell }) }}</td></tr>
           </tbody>
         </table>
       </div>
