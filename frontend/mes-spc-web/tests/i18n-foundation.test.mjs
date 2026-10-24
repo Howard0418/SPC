@@ -24,7 +24,6 @@ for(const view of ['ProcessesView','TraceabilityMasterView','ControlChartGroupsV
  const source=readFileSync(new URL(`../src/views/${view}.vue`,import.meta.url),'utf8');
  const ast=baseParse(parseSfc(source).descriptor.template.content);
  function visit(node){
-  if(view==='ControlChartGroupsView'&&(node.props||[]).some(prop=>prop.type===7&&prop.name==='if'&&/types|groupsOnly/.test(prop.exp?.content||'')))return;
   if(node.type===2)assert.ok(!/[\u4e00-\u9fff]/.test(node.content),node.content);
   for(const prop of node.props||[])if(prop.type===6&&prop.value)assert.ok(!/[\u4e00-\u9fff]/.test(prop.value.content),prop.value.content);
   for(const child of node.children||[])visit(child);

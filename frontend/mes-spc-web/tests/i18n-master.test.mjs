@@ -16,7 +16,8 @@ test('master draft review metadata, parameters and complete runtime coverage',()
  const keys=review.metadata.map(row=>row.key);assert.equal(keys.length,110);
  assert.equal(review.ledger.length,330);assert.equal(new Set(review.ledger.map(row=>row.key+row.locale)).size,330);
  const next=JSON.parse(readFileSync(new URL('../../../specs/20261024-i18n-task05b/translation-review.json',import.meta.url),'utf8'));
- assert.deepEqual([...pilot.metadata.map(row=>row.key),...keys,...next.metadata.map(row=>row.key)].sort(),Object.keys(flat['zh-TW']).sort());
+ const types=JSON.parse(readFileSync(new URL('../../../specs/20261024-i18n-task05c1/translation-review.json',import.meta.url),'utf8'));
+ assert.deepEqual([...types.metadata.map(row=>row.key),...pilot.metadata.map(row=>row.key),...keys,...next.metadata.map(row=>row.key)].sort(),Object.keys(flat['zh-TW']).sort());
  const sha=value=>createHash('sha256').update(value,'utf8').digest('hex');
  for(const row of review.ledger){
   assert.equal(row.sourceHash,sha(flat['zh-TW'][row.key]));assert.equal(row.translationHash,sha(flat[row.locale][row.key]));

@@ -230,6 +230,12 @@ function getTypeGroupLabel(type) {
   return groupId ? (groupLabelMap.value[groupId] || `大類別 #${groupId}`) : "未指定大類別";
 }
 
+// Display fallback is localized separately from the original search label.
+function getTypeGroupDisplayLabel(type) {
+  const id = getTypeGroupId(type);
+  return id ? (groupLabelMap.value[id] || t('spc.chartTypes.missingGroup', { id })) : t('spc.chartTypes.unassignedGroup');
+}
+
 function resetTypeRuleOptions(options = null) {
   const source = options || ruleLibraryRows.value.map(x => ({ ...x, isSelected: false }));
   typeRuleOptions.value = source.map(x => ({ ...x }));
@@ -363,19 +369,19 @@ async function openTypesEdit(item) {
   try {
     await loadTypeRules(item.id);
   } catch (e) {
-    typesFormErr.value = "載入小分類管制規則失敗：" + getApiErrorMessage(e);
+    typesFormErr.value = { key: "spc.chartTypes.loadRulesFailed", args: { error: getApiErrorMessage(e) } };
   }
 }
 
 async function saveType() {
   if (!typesForm.value.chartTypeCode?.trim() || !typesForm.value.chartTypeName?.trim() || !typesForm.value.chartGroupId) {
-    typesFormErr.value = "所屬大類別、管制圖代號與名稱皆為必填欄位。";
+    typesFormErr.value = { key: "spc.chartTypes.required" };
     return;
   }
   try {
     JSON.parse(typesForm.value.formulaConfigJson || "{}");
   } catch(e) {
-    typesFormErr.value = "公式設定 JSON 格式無效，請檢查語法。";
+    typesFormErr.value = { key: "spc.chartTypes.invalidJson" };
     return;
   }
   typesFormErr.value = "";
@@ -392,11 +398,11 @@ async function saveType() {
     if (typesModalMode.value === "create") {
       const { data } = await api.post("/control-chart-types", payload);
       savedType = data;
-      successAlert("成功建立管制圖種類：" + data.chartTypeName);
+      successAlert({ key: "spc.chartTypes.created", args: { name: String(data.chartTypeName) } });
     } else {
       const { data } = await api.put(`/control-chart-types/${typesCurrentId.value}`, payload);
       savedType = data;
-      successAlert("成功更新管制圖種類：" + data.chartTypeName);
+      successAlert({ key: "spc.chartTypes.updated", args: { name: String(data.chartTypeName) } });
     }
     const idx = typesRows.value.findIndex(x => x.id === savedType.id);
     if (idx !== -1) typesRows.value[idx] = savedType;
@@ -414,12 +420,12 @@ async function deleteType(item) {
   const label = ["I_MR", "I-MR"].includes(String(item.chartTypeCode || "").toUpperCase())
     ? "I_MR"
     : `${item.chartTypeCode} (${item.chartTypeName})`;
-  if (!confirm(`確定要刪除管制圖種類「${label}」嗎？`)) return;
+  if (!confirm(t("spc.chartTypes.confirmDelete", { name: label }))) return;
   loading.value = true;
   try {
     await api.delete(`/control-chart-types/${item.id}`);
     typesRows.value = typesRows.value.filter(x => x.id !== item.id);
-    successAlert("成功刪除種類：" + item.chartTypeName);
+    successAlert({ key: "spc.chartTypes.deleted", args: { name: String(item.chartTypeName) } });
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -518,14 +524,14 @@ watch(() => route.query.tab, syncTabFromRoute);
         :class="activeTab === 'groups' ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-slate-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
         class="flex-1 py-3 px-4 rounded-xl text-center text-sm transition-all whitespace-nowrap"
       >
-        大類別總管
+        {{ t('spc.chartTypes.groupsTab') }}
       </button>
       <button
         @click="activeTab = 'types'"
         :class="activeTab === 'types' ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-slate-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
         class="flex-1 py-3 px-4 rounded-xl text-center text-sm transition-all whitespace-nowrap"
       >
-        小分類與公式配置
+        {{ t('spc.chartTypes.typesTab') }}
       </button>
     </div>
 
@@ -604,9 +610,9 @@ watch(() => route.query.tab, syncTabFromRoute);
       <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-900/20 border border-blue-100 dark:border-indigo-800/50 rounded-2xl flex items-start gap-4 shadow-sm">
         <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400 mt-0.5"><Info class="w-5 h-5" /></div>
         <div>
-          <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">模組指南：管制圖種類與公式配置 (Control Chart Types)</h4>
+          <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300">{{ t('spc.chartTypes.guideTitle') }}</h4>
           <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
-            此模組用於設定具體的 SPC 管制圖小分類（如 Xbar-R、I-MR 等），直接歸屬於上方大類別，並配置管制界限算法、抽樣組數與公式。
+            {{ t('spc.chartTypes.guideDescription') }}
           </p>
         </div>
       </div>
@@ -614,17 +620,17 @@ watch(() => route.query.tab, syncTabFromRoute);
       <div class="flex flex-col lg:flex-row gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 items-center justify-between">
         <div class="relative w-full lg:w-80">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400"><Search class="w-4 h-4" /></span>
-          <input v-model="typesSearchQuery" type="text" placeholder="搜尋種類代號、名稱..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input data-testid="type-search" v-model="typesSearchQuery" type="text" :placeholder="t('spc.chartTypes.search')" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-          <select v-model="typesGroupFilter" class="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="all">所有大類別</option>
+          <select data-testid="type-group-filter" v-model="typesGroupFilter" class="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="all">{{ t('spc.chartTypes.allGroups') }}</option>
             <option v-for="g in groupsRows" :key="g.id" :value="g.id">{{ g.groupCode }} - {{ g.groupName }}</option>
           </select>
           <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
-            <button v-for="f in [{id:'all', label:'全部'}, {id:'active', label:'已啟用'}, {id:'inactive', label:'已停用'}]" :key="f.id" @click="typesStatusFilter = f.id" type="button" :class="[ 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap', typesStatusFilter === f.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400' ]">{{ f.label }}</button>
+            <button v-for="f in [{id:'all', label:t('common.status.all')}, {id:'active', label:t('common.status.enabled')}, {id:'inactive', label:t('common.status.inactive')}]" :key="f.id" @click="typesStatusFilter = f.id" type="button" :class="[ 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap', typesStatusFilter === f.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-600 dark:text-slate-400' ]">{{ f.label }}</button>
           </div>
-          <button @click="openTypesCreate" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-blue-500/25 transition-all"><Plus class="w-4 h-4" /> 新增小分類</button>
+          <button data-testid="type-add" @click="openTypesCreate" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-blue-500/25 transition-all"><Plus class="w-4 h-4" /> {{ t('spc.chartTypes.add') }}</button>
         </div>
       </div>
 
@@ -634,24 +640,24 @@ watch(() => route.query.tab, syncTabFromRoute);
             <thead>
               <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                 <th class="py-4 px-6 w-16 text-center">ID</th>
-                <th class="py-4 px-6">所屬大類別</th>
-                <th class="py-4 px-6">圖別代號 / 名稱</th>
-                <th class="py-4 px-6">屬性分類</th>
-                <th class="py-4 px-6 text-center">抽樣數</th>
-                <th class="py-4 px-6">管制規則</th>
-                <th class="py-4 px-6">公式設定概要</th>
-                <th class="py-4 px-6 text-center">狀態</th>
-                <th class="py-4 px-6 text-right">操作</th>
+                <th class="py-4 px-6">{{ t('spc.chartTypes.groupColumn') }}</th>
+                <th class="py-4 px-6">{{ t('spc.chartTypes.typeColumn') }}</th>
+                <th class="py-4 px-6">{{ t('spc.chartTypes.categoryColumn') }}</th>
+                <th class="py-4 px-6 text-center">{{ t('spc.chartTypes.sampleColumn') }}</th>
+                <th class="py-4 px-6">{{ t('spc.chartTypes.rules') }}</th>
+                <th class="py-4 px-6">{{ t('spc.chartTypes.formulaColumn') }}</th>
+                <th class="py-4 px-6 text-center">{{ t('common.columns.status') }}</th>
+                <th class="py-4 px-6 text-right">{{ t('common.columns.actions') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <tr v-if="loading && typesRows.length === 0"><td colspan="9" class="py-12 text-center text-slate-400">正在載入管制圖小分類清單...</td></tr>
-              <tr v-else-if="filteredTypes.length === 0"><td colspan="9" class="py-12 text-center text-slate-400">找不到相符的小分類資料</td></tr>
+              <tr v-if="loading && typesRows.length === 0"><td colspan="9" class="py-12 text-center text-slate-400">{{ t('spc.chartTypes.loading') }}</td></tr>
+              <tr v-else-if="filteredTypes.length === 0"><td colspan="9" class="py-12 text-center text-slate-400">{{ t('spc.chartTypes.empty') }}</td></tr>
               <tr v-else v-for="item in filteredTypes" :key="item.id" class="hover:bg-blue-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                 <td class="py-4 px-6 font-mono text-xs text-slate-400 dark:text-slate-500 text-center">#{{ item.id }}</td>
                 <td class="py-4 px-6">
                   <span class="text-xs font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 px-2.5 py-1 rounded-lg">
-                    {{ getTypeGroupLabel(item) }}
+                    {{ getTypeGroupDisplayLabel(item) }}
                   </span>
                 </td>
                 <td class="py-4 px-6 font-bold text-slate-900 dark:text-white">
@@ -660,30 +666,30 @@ watch(() => route.query.tab, syncTabFromRoute);
                 </td>
                 <td class="py-4 px-6">
                   <span :class="[ 'px-2.5 py-1 rounded-lg text-xs font-bold border tracking-wide', item.dataCategory === 'Variable' ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800' : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800' ]">
-                    {{ item.dataCategory === 'Variable' ? '計量' : '計數' }}
+                    {{ item.dataCategory === 'Variable' ? t('spc.characteristics.variable') : t('spc.characteristics.attribute') }}
                   </span>
                 </td>
                 <td class="py-4 px-6 text-center font-mono font-bold text-xs text-slate-600 dark:text-slate-300">{{ item.requiredSampleSize }}</td>
                 <td class="py-4 px-6 text-xs text-slate-600 dark:text-slate-300">
                   <div v-if="getTypeRuleSummary(item).count" class="space-y-1">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold">
-                      已勾選 {{ getTypeRuleSummary(item).count }} 條
+                      {{ t('spc.chartTypes.selectedRules', { count: getTypeRuleSummary(item).count }) }}
                     </span>
                     <div class="max-w-[18rem] truncate" :title="getTypeRuleSummary(item).label">{{ getTypeRuleSummary(item).label }}</div>
                   </div>
                   <span v-else-if="item.ruleGroupId && getTypeRuleSummary(item).count === null" class="font-bold text-amber-600 dark:text-amber-400">{{ getTypeRuleSummary(item).label }}</span>
-                  <span v-else class="italic text-slate-400">不套用規則</span>
+                  <span v-else class="italic text-slate-400">{{ t('spc.chartTypes.noRules') }}</span>
                 </td>
                 <td class="py-4 px-6 font-mono text-[11px] text-slate-500 dark:text-slate-400 max-w-xs truncate" :title="item.formulaConfigJson">{{ item.formulaConfigJson }}</td>
                 <td class="py-4 px-6 text-center">
                   <span :class="[ 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border tracking-wide', item.isEnabled ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700' ]">
                     <span :class="['w-1.5 h-1.5 rounded-full', item.isEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400']"></span>
-                    {{ item.isEnabled ? '啟用中' : '已停用' }}
+                    {{ item.isEnabled ? t('common.status.active') : t('common.status.inactive') }}
                   </span>
                 </td>
                 <td class="py-4 px-6 text-right space-x-2">
-                  <button @click="openTypesEdit(item)" type="button" class="inline-flex items-center justify-center p-2 rounded-xl bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-slate-700" title="編輯圖表種類"><Edit class="w-4 h-4" /></button>
-                  <button @click="deleteType(item)" type="button" class="inline-flex items-center justify-center p-2 rounded-xl bg-red-50 dark:bg-slate-800 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-slate-700" title="刪除圖表種類"><Trash2 class="w-4 h-4" /></button>
+                  <button data-testid="type-edit" @click="openTypesEdit(item)" type="button" class="inline-flex items-center justify-center p-2 rounded-xl bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-slate-700" :title="t('spc.chartTypes.edit')"><Edit class="w-4 h-4" /></button>
+                  <button data-testid="type-delete" @click="deleteType(item)" type="button" class="inline-flex items-center justify-center p-2 rounded-xl bg-red-50 dark:bg-slate-800 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-slate-700" :title="t('spc.chartTypes.delete')"><Trash2 class="w-4 h-4" /></button>
                 </td>
               </tr>
             </tbody>
@@ -757,50 +763,51 @@ watch(() => route.query.tab, syncTabFromRoute);
 
     <!-- MODAL: Types -->
     <div v-if="typesShowModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
+      <div role="dialog" class="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
         <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-md"><Activity class="w-5 h-5" /></div>
-            <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ typesModalMode === 'create' ? '新增管制圖小分類' : '編輯管制圖小分類' }}</h3>
+            <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ typesModalMode === 'create' ? t('spc.chartTypes.createTitle') : t('spc.chartTypes.editTitle') }}</h3>
           </div>
-          <button @click="typesShowModal = false" type="button" class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"><X class="w-5 h-5" /></button>
+          <button :aria-label="t('common.actions.close')" @click="typesShowModal = false" type="button" class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"><X class="w-5 h-5" /></button>
         </div>
+        <div class="px-6 py-2"><LocalePicker /></div>
         <form @submit.prevent="saveType" class="p-6 space-y-5">
-          <div v-if="typesFormErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 rounded-xl text-xs font-bold"><XCircle class="w-4 h-4" /> {{ typesFormErr }}</div>
+          <div v-if="typesFormErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 rounded-xl text-xs font-bold"><XCircle class="w-4 h-4" /> {{ messageText(typesFormErr) }}</div>
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">所屬管制圖大類別 *</label>
-            <select v-model="typesForm.chartGroupId" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option disabled :value="null">-- 請選擇所屬大類別 --</option>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.chartTypes.groupField') }}</label>
+            <select data-testid="type-chartGroupId" v-model="typesForm.chartGroupId" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option disabled :value="null">{{ t('spc.chartTypes.groupPrompt') }}</option>
               <option v-for="g in groupsRows" :key="g.id" :value="g.id">{{ g.groupCode }} - {{ g.groupName }}</option>
             </select>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">小分類代號 (Code) *</label>
-              <input v-model="typesForm.chartTypeCode" type="text" required placeholder="例如：XBAR_R" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.chartTypes.codeField') }}</label>
+              <input data-testid="type-chartTypeCode" v-model="typesForm.chartTypeCode" type="text" required :placeholder="t('spc.chartTypes.codeExample')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">小分類名稱 (Name) *</label>
-              <input v-model="typesForm.chartTypeName" type="text" required placeholder="例如：平均數與全距圖" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.chartTypes.nameField') }}</label>
+              <input data-testid="type-chartTypeName" v-model="typesForm.chartTypeName" type="text" required :placeholder="t('spc.chartTypes.nameExample')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">資料類型 (Category)</label>
-              <select v-model="typesForm.dataCategory" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="Variable">計量型 (Variable)</option>
-                <option value="Attribute">計數型 (Attribute)</option>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.chartTypes.categoryField') }}</label>
+              <select data-testid="type-dataCategory" v-model="typesForm.dataCategory" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="Variable">{{ t('spc.chartTypes.variableOption') }}</option>
+                <option value="Attribute">{{ t('spc.chartTypes.attributeOption') }}</option>
               </select>
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">標準抽樣組數</label>
-              <input v-model="typesForm.requiredSampleSize" type="number" min="1" max="50" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.chartTypes.sampleField') }}</label>
+              <input data-testid="type-requiredSampleSize" v-model="typesForm.requiredSampleSize" type="number" min="1" max="50" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <!-- Rule Selection -->
           <div class="space-y-2 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl">
-            <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-2"><Sliders class="w-4 h-4" /> 管制規則</label>
-            <p class="text-[11px] text-amber-700 dark:text-amber-400/80">全部管制項目固定使用 WE 八大規則，不支援管制圖或項目專屬規則。</p>
+            <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-2"><Sliders class="w-4 h-4" /> {{ t('spc.chartTypes.rules') }}</label>
+            <p class="text-[11px] text-amber-700 dark:text-amber-400/80">{{ t('spc.chartTypes.fixedRules') }}</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               <label v-for="rule in typeRuleOptions" :key="rule.ruleCode" class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 cursor-pointer hover:border-amber-400 transition-colors">
                 <input type="checkbox" :value="rule.ruleCode" v-model="selectedTypeRuleCodes" disabled class="mt-0.5 w-4 h-4 rounded accent-amber-500" />
@@ -810,29 +817,29 @@ watch(() => route.query.tab, syncTabFromRoute);
                 </div>
               </label>
               <div v-if="typeRuleOptions.length === 0" class="col-span-2 text-xs text-slate-400 text-center py-3">
-                目前系統內無可用管制規則，請先至規則維護模組新增規則。
+                {{ t('spc.chartTypes.emptyRules') }}
               </div>
             </div>
           </div>
           <!-- Formula JSON -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2"><Code2 class="w-4 h-4" /> 公式設定 JSON</label>
-            <textarea v-model="typesForm.formulaConfigJson" rows="6" spellcheck="false" class="w-full px-4 py-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl font-mono text-xs text-green-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2"><Code2 class="w-4 h-4" /> {{ t('spc.chartTypes.formulaField') }}</label>
+            <textarea data-testid="type-formulaConfigJson" v-model="typesForm.formulaConfigJson" rows="6" spellcheck="false" class="w-full px-4 py-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl font-mono text-xs text-green-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
           </div>
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">說明描述</label>
-            <textarea v-model="typesForm.description" rows="2" placeholder="請輸入小分類說明..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.chartTypes.descriptionField') }}</label>
+            <textarea data-testid="type-description" v-model="typesForm.description" rows="2" :placeholder="t('spc.chartTypes.descriptionExample')" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
           </div>
           <div class="space-y-1.5 pt-2">
             <label class="relative inline-flex items-center cursor-pointer">
-              <input v-model="typesForm.isEnabled" type="checkbox" class="sr-only peer" />
+              <input data-testid="type-isEnabled" v-model="typesForm.isEnabled" type="checkbox" class="sr-only peer" />
               <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ typesForm.isEnabled ? '啟用' : '停用' }}</span>
+              <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ typesForm.isEnabled ? t('common.status.on') : t('common.status.off') }}</span>
             </label>
           </div>
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button @click="typesShowModal = false" type="button" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold">取消</button>
-            <button type="submit" :disabled="loading" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-blue-500/20"><Save class="w-4 h-4" /> 儲存</button>
+            <button @click="typesShowModal = false" type="button" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold">{{ t('common.actions.cancel') }}</button>
+            <button type="submit" :disabled="loading" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-blue-500/20"><Save class="w-4 h-4" /> {{ t('common.actions.save') }}</button>
           </div>
         </form>
       </div>
