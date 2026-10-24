@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { displayUiMessage } from "../i18n/uiMessage";
 import { useRoute, useRouter } from "vue-router";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -17,6 +19,7 @@ import {
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n({ useScope: "global" });
 const batch = ref(null);
 const details = ref([]);
 const errors = ref([]);
@@ -26,7 +29,7 @@ const batchId = computed(() => route.params.batchId);
 const chartPpcId = ref(null);
 
 function formatMeasuredAt(value) {
-  if (!value) return "即時";
+  if (!value) return t('spc.uploads.now');
   const text = String(value).trim();
   const normalized = /^(\d{4})(\d{2})(\d{2})(.*)$/.test(text)
     ? text.replace(/^(\d{4})(\d{2})(\d{2})(.*)$/, "$1-$2-$3$4")
@@ -138,7 +141,7 @@ async function resolveChartPpcId() {
 
 function goToChart() {
   if (!chartPpcId.value) {
-    err.value = "找不到此匯入批次對應的 SPC 管制項目，無法開啟管制圖。";
+    err.value = { key: 'spc.uploads.noChart' };
     return;
   }
   router.push({
@@ -158,7 +161,7 @@ function goToMissingMappings() {
 }
 
 async function createMissingMappings() {
-  if (!confirm(`確定批次建立缺少的品質特性設定？共影響 ${missingMappingCount.value} 列。`)) return;
+  if (!confirm(t('spc.uploads.confirmCreate', { count: missingMappingCount.value }))) return;
   loading.value = true;
   err.value = "";
   revalidateProgress.value = {
@@ -191,13 +194,13 @@ async function createMissingMappings() {
     };
     await load();
     alert([
-      `建立品質特性：${data.createdCharacteristics || 0}`,
-      `建立槽位主檔：${data.createdTanks || 0}`,
-      `建立線別／槽位設定：${data.createdMappings || 0}`,
-      `重用既有設定：${data.reusedMappings || 0}`,
-      `因槽位不存在略過：${data.skippedMissingTank || 0}`,
-      `因其他主檔不存在略過：${data.skippedMissingMasterData || 0}`,
-      `原批次已重新驗證。`
+      t('spc.uploads.createdCharacteristics', { count: data.createdCharacteristics || 0 }),
+      t('spc.uploads.createdTanks', { count: data.createdTanks || 0 }),
+      t('spc.uploads.createdMappings', { count: data.createdMappings || 0 }),
+      t('spc.uploads.reusedMappings', { count: data.reusedMappings || 0 }),
+      t('spc.uploads.skippedTank', { count: data.skippedMissingTank || 0 }),
+      t('spc.uploads.skippedMaster', { count: data.skippedMissingMasterData || 0 }),
+      t('spc.uploads.revalidated')
     ].join("\n"));
   } catch (e) {
     err.value = getApiErrorMessage(e);
@@ -227,7 +230,7 @@ function matchState(detailItem, section) {
     line: { fields: ["MachineCode", "ProcessCode"], resolved: detailItem.resolvedMachineCode },
     tank: { fields: ["TankCode"], resolved: detailItem.resolvedTankName || detailItem.resolvedTankCode, blockedBy: ["MachineCode", "ProcessCode"] },
     characteristic: { fields: ["CharacteristicCode"], resolved: detailItem.resolvedCharacteristicName || detailItem.resolvedCharacteristicCode },
-    unit: { fields: ["Unit"], resolved: detailItem.resolvedMappingId ? (detailItem.resolvedUnit || "（空白）") : detailItem.resolvedUnit, blockedBy: ["TankCode", "CharacteristicCode"] },
+    unit: { fields: ["Unit"], resolved: detailItem.resolvedMappingId ? (detailItem.resolvedUnit || t('spc.uploads.blank')) : detailItem.resolvedUnit, blockedBy: ["TankCode", "CharacteristicCode"] },
     mapping: { fields: ["PartProcessCharacteristic"], resolved: detailItem.resolvedMappingId, blockedBy: ["MachineCode", "ProcessCode", "TankCode", "CharacteristicCode", "Unit"] }
   };
   const config = configs[section];
@@ -245,7 +248,7 @@ function matchStateClass(state) {
 }
 
 function matchStateLabel(state) {
-  return state === "success" ? "已對應" : state === "error" ? "未通過" : "待前項確認";
+  return state === "success" ? t('spc.uploads.matched') : state === "error" ? t('spc.uploads.failed') : t('spc.uploads.pending');
 }
 
 onMounted(load);
@@ -256,26 +259,26 @@ onMounted(load);
     <div v-if="revalidateProgress" class="fixed inset-0 z-[100] bg-slate-950/60 flex items-center justify-center p-4">
       <div class="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-2xl">
         <div class="flex justify-between text-sm font-black text-slate-800 dark:text-white mb-3">
-          <span>正在批次建立並重新驗證</span>
+          <span>{{ t('spc.uploads.revalidating') }}</span>
           <span>{{ revalidateProgress.processed }} / {{ revalidateProgress.total }}（{{ revalidateProgress.percent }}%）</span>
         </div>
         <div class="h-4 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
           <div class="h-full bg-amber-500 transition-all duration-300" :style="{ width: `${revalidateProgress.percent}%` }"></div>
         </div>
-        <p class="mt-3 text-xs text-slate-500">請勿關閉頁面，完成後會自動刷新驗證結果。</p>
+        <p class="mt-3 text-xs text-slate-500">{{ t('spc.uploads.stayOnPage') }}</p>
       </div>
     </div>
     <!-- Header -->
-    <div class="p-8 rounded-3xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 text-white shadow-xl relative overflow-hidden">
+    <div class="p-4 sm:p-8 rounded-3xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 text-white shadow-xl relative overflow-hidden">
       <div class="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div class="space-y-2">
-          <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 w-max text-xs font-bold text-cyan-200 border border-white/20">
-            <Server class="w-3.5 h-3.5" /> 匯入批次檢核與錯誤追蹤
+          <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 w-fit max-w-full text-xs font-bold text-cyan-200 border border-white/20">
+            <Server class="w-3.5 h-3.5" /> {{ t('spc.uploads.previewBadge') }}
           </div>
-          <h1 class="text-3xl font-black tracking-tight">匯入資料檢核與異常對照預覽</h1>
+          <h1 class="text-3xl font-black tracking-tight">{{ t('spc.uploads.previewTitle') }}</h1>
           <p class="text-indigo-100 text-sm max-w-xl">
-            批次識別碼：<code class="px-2 py-0.5 rounded bg-black/30 font-mono text-xs">{{ batchId }}</code>
+            {{ t('spc.uploads.batchId') }}<code class="px-2 py-0.5 rounded bg-black/30 font-mono text-xs">{{ batchId }}</code>
           </p>
         </div>
 
@@ -287,17 +290,18 @@ onMounted(load);
             <CheckCircle2 v-if="isImported" class="w-4 h-4" />
             <AlertTriangle v-else-if="errors.length > 0" class="w-4 h-4 animate-bounce" />
             <Sparkles v-else class="w-4 h-4" />
-            {{ isImported ? '已匯入資料表' : errors.length > 0 ? '含有格式/主檔異常' : '待 TransFiles 匯入確認' }}
+            {{ isImported ? t('spc.uploads.importedTable') : errors.length > 0 ? t('spc.uploads.formatIssues') : t('spc.uploads.pendingImport') }}
           </span>
 
           <button
             v-if="isImported"
             @click="goToChart"
+            data-testid="uploads-chart"
             :disabled="!chartPpcId"
             class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black shadow-xl shadow-black/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
           >
             <ArrowRight class="w-4 h-4" />
-            查看管制圖
+            {{ t('spc.uploads.chart') }}
           </button>
         </div>
       </div>
@@ -305,39 +309,39 @@ onMounted(load);
 
     <!-- API Errors -->
     <div v-if="err" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
-      <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ err }}
+      <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ displayUiMessage(t, err) }}
     </div>
 
     <div v-if="!isImported" class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300">
-      <p class="font-black">此頁僅供檢視與修正追蹤</p>
+      <p class="font-black">{{ t('spc.uploads.viewOnly') }}</p>
       <p class="mt-1 text-sm">
-        SPC 網站已停用網頁確認匯入。請回 TransFiles 轉檔工具完成匯入；若本頁顯示錯誤，請依來源檔案、工作表、列號與欄位修正後重新由 TransFiles 執行。
+        {{ t('spc.uploads.viewHelp') }}
       </p>
     </div>
 
     <div v-if="!isImported && missingMappingCount > 0" class="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div>
-        <p class="font-black text-amber-800 dark:text-amber-300">有 {{ missingMappingCount }} 列缺少品質特性或「線別＋槽位＋管制項目」設定</p>
+        <p class="font-black text-amber-800 dark:text-amber-300">{{ t('spc.uploads.missingMappings', { count: missingMappingCount }) }}</p>
         <p class="text-xs text-amber-700 dark:text-amber-400 mt-1">
-          可直接建立：{{ actionableSetupCount }} 列；因線別／槽位主檔不存在而阻擋：{{ blockedSetupCount }} 列。
+          {{ t('spc.uploads.setupCounts', { actionable: actionableSetupCount, blocked: blockedSetupCount }) }}
         </p>
         <details class="mt-2 text-xs text-amber-800 dark:text-amber-300">
-          <summary class="cursor-pointer font-bold">查看比對與建立規則</summary>
+          <summary class="cursor-pointer font-bold">{{ t('spc.uploads.mappingRules') }}</summary>
           <ol class="list-decimal ml-5 mt-2 space-y-1">
-            <li>線別先比對原代碼；找不到再比對「原代碼＋1」。</li>
-            <li>槽位限定在線別底下，以槽位代碼或名稱比對。</li>
-            <li>管制項目限定 CHEM，以代碼／名稱，再以項目＋單位比對。</li>
-            <li>線別、槽位及管制項目已存在但單位不同時，可複製同項目設定並建立該單位的 SPC 管制項目。</li>
-            <li>三者都存在才建立「線別＋槽位＋管制項目」設定；缺少槽位時會略過並保留錯誤。</li>
+            <li>{{ t('spc.uploads.lineRule') }}</li>
+            <li>{{ t('spc.uploads.tankRule') }}</li>
+            <li>{{ t('spc.uploads.characteristicRule') }}</li>
+            <li>{{ t('spc.uploads.unitRule') }}</li>
+            <li>{{ t('spc.uploads.createRule') }}</li>
           </ol>
         </details>
       </div>
-      <div class="flex gap-2">
-        <button @click="createMissingMappings" :disabled="loading" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-black">
-          批次建立並重新驗證
+      <div class="flex flex-wrap gap-2">
+        <button @click="createMissingMappings" data-testid="uploads-create" :disabled="loading" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-black">
+          {{ t('spc.uploads.create') }}
         </button>
-        <button @click="goToMissingMappings" class="px-4 py-2.5 rounded-xl border border-amber-500 text-amber-700 dark:text-amber-300 text-sm font-bold">
-          手動設定
+        <button @click="goToMissingMappings" data-testid="uploads-manual" class="px-4 py-2.5 rounded-xl border border-amber-500 text-amber-700 dark:text-amber-300 text-sm font-bold">
+          {{ t('spc.uploads.manual') }}
         </button>
       </div>
     </div>
@@ -349,8 +353,8 @@ onMounted(load);
           <Table class="w-6 h-6" />
         </div>
         <div>
-          <p class="text-xs text-slate-400 font-bold uppercase">總上傳列數 (Total)</p>
-          <h3 class="text-2xl font-black text-slate-800 dark:text-white">{{ batch?.totalRows || 0 }} 筆</h3>
+          <p class="text-xs text-slate-400 font-bold uppercase">{{ t('spc.uploads.totalUploaded') }}</p>
+          <h3 class="text-2xl font-black text-slate-800 dark:text-white">{{ t('spc.uploads.rowCount', { count: batch?.totalRows || 0 }) }}</h3>
         </div>
       </div>
 
@@ -359,9 +363,9 @@ onMounted(load);
           <CheckCircle2 class="w-6 h-6" />
         </div>
         <div>
-          <p class="text-xs text-slate-400 font-bold uppercase">通過校驗列數 (Valid)</p>
+          <p class="text-xs text-slate-400 font-bold uppercase">{{ t('spc.uploads.validRows') }}</p>
           <h3 class="text-2xl font-black text-slate-800 dark:text-white text-emerald-600 dark:text-emerald-400">
-            {{ batch?.validRows || 0 }} 筆
+            {{ t('spc.uploads.rowCount', { count: batch?.validRows || 0 }) }}
           </h3>
         </div>
       </div>
@@ -371,9 +375,9 @@ onMounted(load);
           <XCircle class="w-6 h-6" />
         </div>
         <div>
-          <p class="text-xs text-slate-400 font-bold uppercase">攔截錯誤列數 (Errors)</p>
+          <p class="text-xs text-slate-400 font-bold uppercase">{{ t('spc.uploads.errorRows') }}</p>
           <h3 class="text-2xl font-black" :class="errors.length > 0 ? 'text-red-500 animate-pulse' : 'text-slate-550 dark:text-slate-400'">
-            {{ batch?.errorRows || 0 }} 筆
+            {{ t('spc.uploads.rowCount', { count: batch?.errorRows || 0 }) }}
           </h3>
         </div>
       </div>
@@ -383,31 +387,31 @@ onMounted(load);
     <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-850 pb-4">
         <h3 class="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
-          <Table class="w-5 h-5 text-blue-500" /> 未通過資料與錯誤原因
+          <Table class="w-5 h-5 text-blue-500" /> {{ t('spc.uploads.rejected') }}
         </h3>
-        <span class="text-xs text-slate-400 font-bold">全部資料皆已驗證；下方顯示所有未通過資料。</span>
+        <span class="text-xs text-slate-400 font-bold">{{ t('spc.uploads.allValidated') }}</span>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs border-collapse">
           <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-400 uppercase text-[11px] font-bold tracking-wider border-b border-slate-250 dark:border-slate-800">
             <tr>
-              <th class="p-3 w-16">列號</th>
-              <th class="p-3">來源</th>
-              <th class="p-3">產品料號 (PartNo)</th>
-              <th class="p-3">製程對應</th>
-              <th class="p-3">線別對應</th>
-              <th class="p-3">槽位對應</th>
-              <th class="p-3">品質特性對應</th>
-              <th class="p-3">單位對應</th>
-              <th class="p-3">SPC 管制項目</th>
-              <th class="p-3">量測數值 (Value)</th>
-              <th class="p-3">複驗 (Recheck)</th>
-              <th class="p-3">調整 (Adjust)</th>
-              <th class="p-3">調整量</th>
-              <th class="p-3">時間 (Time)</th>
-              <th class="p-3">人員 (OP)</th>
-              <th class="p-3 w-72">校驗狀態 / 錯誤詳細原因</th>
+              <th class="p-3 w-16">{{ t('spc.uploads.row') }}</th>
+              <th class="p-3">{{ t('spc.uploads.source') }}</th>
+              <th class="p-3">{{ t('spc.uploads.partNo') }}</th>
+              <th class="p-3">{{ t('spc.uploads.processMapping') }}</th>
+              <th class="p-3">{{ t('spc.uploads.lineMapping') }}</th>
+              <th class="p-3">{{ t('spc.uploads.tankMapping') }}</th>
+              <th class="p-3">{{ t('spc.uploads.characteristicMapping') }}</th>
+              <th class="p-3">{{ t('spc.uploads.unitMapping') }}</th>
+              <th class="p-3">{{ t('spc.uploads.controlItem') }}</th>
+              <th class="p-3">{{ t('spc.uploads.value') }}</th>
+              <th class="p-3">{{ t('spc.uploads.recheck') }}</th>
+              <th class="p-3">{{ t('spc.uploads.adjust') }}</th>
+              <th class="p-3">{{ t('spc.uploads.adjustAmount') }}</th>
+              <th class="p-3">{{ t('spc.uploads.timeColumn') }}</th>
+              <th class="p-3">{{ t('spc.uploads.operator') }}</th>
+              <th class="p-3 w-72">{{ t('spc.uploads.validationDetails') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-650 dark:text-slate-300 font-medium">
@@ -420,7 +424,7 @@ onMounted(load);
               <td class="p-3 align-top">
                 <div class="font-bold text-slate-700 dark:text-slate-200">{{ d.sourceFile || batch?.originalFileName || '-' }}</div>
                 <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  {{ d.sourceSheet || '工作表' }} · Excel 第 {{ d.sourceRow || d.rowNo }} 列
+                  {{ d.sourceSheet || t('spc.uploads.sheet') }} · {{ t('spc.uploads.excelRow', { row: d.sourceRow || d.rowNo }) }}
                 </div>
               </td>
 
@@ -472,7 +476,7 @@ onMounted(load);
               </td>
 
               <td class="p-3 align-top">
-                <div class="font-bold">{{ d.unit || '（空白）' }} → {{ d.resolvedMappingId ? (d.resolvedUnit || '（空白）') : '-' }}</div>
+                <div class="font-bold">{{ d.unit || t('spc.uploads.blank') }} → {{ d.resolvedMappingId ? (d.resolvedUnit || t('spc.uploads.blank')) : '-' }}</div>
                 <span class="inline-flex mt-1 px-2 py-0.5 rounded border text-[10px] font-black" :class="matchStateClass(matchState(d, 'unit'))">
                   {{ matchStateLabel(matchState(d, 'unit')) }}
                 </span>
@@ -494,7 +498,7 @@ onMounted(load);
               <!-- MeasuredValue / Counts -->
               <td class="p-3 font-mono font-bold" :class="{ 'relative group': hasCellError(d, 'MeasuredValue') }">
                 <span :class="hasCellError(d, 'MeasuredValue') ? 'text-red-500 border-b border-dashed border-red-500' : ''">
-                  {{ d.measuredValue !== null ? `${d.measuredValue}` : `不良/總數: ${d.defectQty || 0} / ${d.inspectedQty || 0}` }}
+                  {{ d.measuredValue !== null ? `${d.measuredValue}` : t('spc.uploads.defectTotal', { defect: d.defectQty || 0, total: d.inspectedQty || 0 }) }}
                 </span>
                 <div v-if="hasCellError(d, 'MeasuredValue')" class="absolute z-50 left-10 bottom-6 hidden group-hover:block bg-red-900 text-red-100 text-[10px] p-2 rounded shadow-lg whitespace-nowrap border border-red-500">
                   {{ getCellErrorMessage(d, 'MeasuredValue') }}
@@ -520,13 +524,13 @@ onMounted(load);
 
               <!-- Operator -->
               <td class="p-3">
-                {{ d.operator || '系統自動' }}
+                {{ d.operator || t('spc.uploads.system') }}
               </td>
 
               <!-- Verification Messages -->
               <td class="p-3 font-semibold">
                 <div v-if="d.isValid && d.duplicateStatus" class="text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  {{ `重複：${d.duplicateStatus}` }}
+                  {{ t('spc.uploads.duplicate', { status: d.duplicateStatus }) }}
                 </div>
                 <div v-else class="text-red-500 space-y-1">
                   <div v-for="errItem in d.errorsList" :key="errItem.id" class="space-y-0.5 text-[11px]">
@@ -536,7 +540,7 @@ onMounted(load);
                       <span>{{ errItem.errorMessage }}</span>
                     </div>
                     <div v-if="errItem.suggestion" class="ml-4 text-amber-700 dark:text-amber-300">
-                      建議：{{ errItem.suggestion }}
+                      {{ t('spc.uploads.suggestion', { text: errItem.suggestion }) }}
                     </div>
                   </div>
                 </div>
@@ -546,7 +550,7 @@ onMounted(load);
             <!-- Empty Rows fallback -->
             <tr v-if="errorDetails.length === 0">
               <td colspan="16" class="p-8 text-center text-slate-400 text-sm">
-                {{ Number(batch?.errorRows || 0) === 0 ? '無未通過資料。若尚未匯入，請回 TransFiles 完成匯入；若已匯入，可前往 SPC 管制圖確認。' : '仍有未通過資料，請重新整理後查看。' }}
+                {{ Number(batch?.errorRows || 0) === 0 ? t('spc.uploads.noRejected') : t('spc.uploads.refreshRejected') }}
               </td>
             </tr>
           </tbody>
@@ -556,7 +560,7 @@ onMounted(load);
       <!-- Back redirect button -->
       <div v-if="isImported" class="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
         <router-link to="/spc" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold transition-all text-xs border border-cyan-500/20">
-          <ArrowLeft class="w-4 h-4" /> 返回 SPC 管制圖首頁
+          <ArrowLeft class="w-4 h-4" /> {{ t('spc.uploads.backCharts') }}
         </router-link>
       </div>
     </div>

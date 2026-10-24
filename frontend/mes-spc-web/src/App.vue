@@ -62,7 +62,7 @@ const stackedMobileNav = computed(() => [
   '/calibration-instruments', '/processes', '/traceability-master',
   '/control-chart-groups', '/spc-rule-groups',
   '/chemical-analysis-overview', '/chemical-f-table', '/part-process-characteristics', '/measurements',
-].includes(route.path));
+].includes(route.path) || route.path === '/uploads' || /^\/uploads\/[^/]+\/preview$/.test(route.path));
 const showNav = computed(() => !authOn || route.path !== "/login");
 const currentUser = computed(() => {
   route.fullPath;
