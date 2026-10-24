@@ -61,7 +61,7 @@ const route = useRoute();
 const stackedMobileNav = computed(() => [
   '/calibration-instruments', '/processes', '/traceability-master',
   '/control-chart-groups', '/spc-rule-groups',
-  '/chemical-analysis-overview', '/chemical-f-table',
+  '/chemical-analysis-overview', '/chemical-f-table', '/part-process-characteristics',
 ].includes(route.path));
 const showNav = computed(() => !authOn || route.path !== "/login");
 const currentUser = computed(() => {

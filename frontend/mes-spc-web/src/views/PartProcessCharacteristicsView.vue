@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
+import { displayUiMessage } from '../i18n/uiMessage';
+const { t } = useI18n({ useScope: 'global' });
+const messageText = value => displayUiMessage(t, value);
+import LocalePicker from '../components/LocalePicker.vue';
 import ChemicalFormulaSchedule from '../components/ChemicalFormulaSchedule.vue';
 import VersionHistoryRange from "../components/VersionHistoryRange.vue";
 import SpecificationLimitHistory from "../components/SpecificationLimitHistory.vue";
@@ -72,11 +77,11 @@ const isHydratingForm = ref(false);
 const advancedMode = ref(localStorage.getItem("ppcAdvancedMode") === "true");
 const formMode = ref("quick"); // 'quick', 'advanced'
 const formTabs = computed(() => [
-  { id: 1, label: "基本資料" },
-  { id: 2, label: "規格與抽樣" },
-  { id: 3, label: "圖表設定" },
-  ...(form.value.controlScope === CONTROL_SCOPE.CHEM ? [{ id: 4, label: "藥液公式" }] : []),
-  { id: 5, label: "進階設定" }
+  { id: 1, label: t("spc.ppc.basicInformation") },
+  { id: 2, label: t("spc.ppc.specificationsAndSampling") },
+  { id: 3, label: t("spc.ppc.chartSettings") },
+  ...(form.value.controlScope === CONTROL_SCOPE.CHEM ? [{ id: 4, label: t("spc.ppc.chemicalFormulas") }] : []),
+  { id: 5, label: t("spc.ppc.advancedSettings") }
 ]);
 const formulaVersionReason = ref("");
 const chemicalFormulaVersions = ref([]);
@@ -178,15 +183,15 @@ function formatFormulaVersionDate(value) {
 
 function formulaVersionSummary(version) {
   const raw = version?.configJson || "";
-  if (!raw) return "空白公式設定";
+  if (!raw) return t("spc.ppc.emptyFormulaConfiguration");
   try {
     const parsed = JSON.parse(raw);
     const fields = [
-      parsed.enabled === false ? "停用" : "啟用",
-      parsed.version ? `版本 ${parsed.version}` : "",
-      parsed.concentrationFormula ? `濃度：${parsed.concentrationFormula}` : "",
-      parsed.adjustmentFormula ? `調整：${parsed.adjustmentFormula}` : "",
-      parsed.adjustmentAmountFormula ? `調整量：${parsed.adjustmentAmountFormula}` : ""
+      parsed.enabled === false ? t("spc.ppc.disabled") : t("spc.ppc.enabled"),
+      parsed.version ? t("spc.ppc.versionSummary", { version: parsed.version }) : "",
+      parsed.concentrationFormula ? t("spc.ppc.concentrationSummary", { formula: parsed.concentrationFormula }) : "",
+      parsed.adjustmentFormula ? t("spc.ppc.adjustmentSummary", { formula: parsed.adjustmentFormula }) : "",
+      parsed.adjustmentAmountFormula ? t("spc.ppc.amountSummary", { formula: parsed.adjustmentAmountFormula }) : ""
     ].filter(Boolean);
     return fields.join("｜") || raw;
   } catch {
@@ -219,8 +224,7 @@ async function loadChemicalFormulaVersions(next) {
 async function restoreChemicalFormulaVersion(version) {
   if (!currentId.value || !version?.id) return;
   const confirmed = confirm(
-    `確定要回復到公式版本 v${version.versionNo}？\n\n` +
-    "目前表單中的藥液分析公式會被此版本覆蓋，系統會新增一筆回復紀錄。"
+    t("spc.ppc.restoreConfirm", { version: version.versionNo })
   );
   if (!confirmed) return;
 
@@ -236,7 +240,7 @@ async function restoreChemicalFormulaVersion(version) {
     form.value.chemicalAnalysisConfigJson = updated?.chemicalAnalysisConfigJson || "";
     form.value.chemicalAnalysis = parseChemicalAnalysisConfig(form.value.chemicalAnalysisConfigJson);
     await loadChemicalFormulaVersions();
-    successAlert(`已回復藥液公式至 v${version.versionNo}`);
+    successAlert({ key: "spc.ppc.restored", args: { version: version.versionNo } });
   } catch (e) {
     chemicalFormulaVersionsErr.value = getApiErrorMessage(e);
   } finally {
@@ -364,15 +368,15 @@ const formulaOptions = [
 ];
 
 function formulaLabel(config) {
-  if (!config) return "系統標準公式";
+  if (!config) return t("spc.ppc.standardSystemFormulas");
   try {
     const parsed = JSON.parse(config);
     const method = parsed.XbarCalculationMethod;
-    if (method === "MOVING_RANGE_OF_XBAR" || method === "MR_METHOD") return "平均移動全距法";
-    if (method === "SIGMA_METHOD" || method === "SAMPLE_STD_DEV") return "樣本標準差法";
-    return "標準全距法";
+    if (method === "MOVING_RANGE_OF_XBAR" || method === "MR_METHOD") return t("spc.ppc.meanMovingRangeMethod");
+    if (method === "SIGMA_METHOD" || method === "SAMPLE_STD_DEV") return t("spc.ppc.sampleStandardDeviationMethod");
+    return t("spc.ppc.standardRangeMethod");
   } catch {
-    return "自訂公式";
+    return t("spc.ppc.customFormulas");
   }
 }
 
@@ -529,7 +533,7 @@ function getControlScopeGroupType(scope) {
 }
 
 const selectedDisplayModeLabel = computed(() =>
-  form.value.displayMode === "TREND_CHART" ? "趨勢圖" : "管制圖"
+  form.value.displayMode === "TREND_CHART" ? t("spc.ppc.trendChart") : t("spc.ppc.controlChart")
 );
 
 const availableChartTypes = computed(() =>
@@ -703,49 +707,49 @@ function validateStep(step) {
   formErr.value = "";
   if (step === 1) {
     if (!form.value.controlScope) {
-      formErr.value = "請選擇管制類型";
+      formErr.value = { key: "spc.ppc.selectAControlScope" };
       return false;
     }
     if (!form.value.processId) {
-      formErr.value = "請選擇工站製程";
+      formErr.value = { key: "spc.ppc.selectAProcess" };
       return false;
     }
     if (form.value.controlScope === "PRODUCT" && !form.value.partId) {
-      formErr.value = "請選擇產品料號";
+      formErr.value = { key: "spc.ppc.selectAPartNumber" };
       return false;
     }
     if (form.value.controlScope === CONTROL_SCOPE.CHEM) {
       if (!form.value.machineId) {
-        formErr.value = "請選擇生產設備機台";
+        formErr.value = { key: "spc.ppc.selectAProductionMachine" };
         return false;
       }
       if (!form.value.tankId) {
-        formErr.value = "請選擇生產槽位";
+        formErr.value = { key: "spc.ppc.selectAProductionTank" };
         return false;
       }
     }
     if (!form.value.characteristicId) {
-      formErr.value = "請選擇品質檢驗特性";
+      formErr.value = { key: "spc.ppc.selectAnInspectionCharacteristic" };
       return false;
     }
   } else if (step === 2) {
     if (form.value.sampleSize === null || form.value.sampleSize === undefined || form.value.sampleSize <= 0) {
-      formErr.value = "子組大小必須大於 0";
+      formErr.value = { key: "spc.ppc.subgroupSizeMustBeGreaterThan0" };
       return false;
     }
     const usl = finiteSpecNumber(form.value.usl);
     const lsl = finiteSpecNumber(form.value.lsl);
     if (usl !== null && lsl !== null && usl <= lsl) {
-      formErr.value = "規格上限 (USL) 必須大於規格下限 (LSL)";
+      formErr.value = { key: "spc.ppc.uslMustBeGreaterThanLSL" };
       return false;
     }
     const target = finiteSpecNumber(form.value.targetValue);
     if (target !== null && lsl !== null && target < lsl) {
-      formErr.value = "目標值不可小於規格下限 (LSL)";
+      formErr.value = { key: "spc.ppc.targetMustNotBeBelowLSL" };
       return false;
     }
     if (target !== null && usl !== null && target > usl) {
-      formErr.value = "目標值不可大於規格上限 (USL)";
+      formErr.value = { key: "spc.ppc.targetMustNotExceedUSL" };
       return false;
     }
   }
@@ -895,18 +899,18 @@ async function openEditModal(item) {
       .filter(rule => rule.isSelected)
       .map(rule => rule.ruleCode) : [];
   } catch (e) {
-    formErr.value = "載入管制規則失敗：" + getApiErrorMessage(e);
+    formErr.value = { key: "spc.ppc.ruleLoadFailed", args: { error: getApiErrorMessage(e) } };
   }
   showModal.value = true;
 }
 
 async function save() {
   if (formulaVersionReason.value.trim().length > 500) {
-    formErr.value = "參照文件／修改依據最多500字，請縮短文件名稱或說明。";
+    formErr.value = { key: "spc.chemicalOverview.reasonTooLong" };
     return;
   }
   if (!hasDisplayModeGroup(form.value.displayMode)) {
-    formErr.value = `目前「${scopeLabel(form.value.controlScope)}」尚未啟用${selectedDisplayModeLabel.value}大類別。`;
+    formErr.value = { key: "spc.ppc.missingGroup", args: { scope: scopeDisplayLabel(form.value.controlScope), type: selectedDisplayModeLabel.value } };
     return;
   }
   if (formMode.value !== "advanced") {
@@ -926,44 +930,41 @@ async function save() {
   if (!validateStep(1) || !validateStep(2)) return;
 
   if (form.value.controlScope === "PRODUCT" && !form.value.partId) {
-    formErr.value = "產品管制項目必須選擇產品料號。";
+    formErr.value = { key: "spc.ppc.aProductControlItemRequiresAPartNumber" };
     return;
   }
   if (!form.value.processId || !form.value.characteristicId) {
-    formErr.value = "工站製程與檢驗特性皆為必填項目。";
+    formErr.value = { key: "spc.ppc.processAndInspectionCharacteristicAreRequired" };
     return;
   }
   if (form.value.controlScope === CONTROL_SCOPE.CHEM && (!form.value.machineId || !form.value.tankId)) {
-    formErr.value = "藥水管制項目必須選擇線別/機台與槽位。";
+    formErr.value = { key: "spc.ppc.chemicalControlRequiresALineMachineAndTank" };
     return;
   }
   if (form.value.displayMode === "CONTROL_CHART" && !form.value.chartTypeId) {
     form.value.chartTypeId = findDefaultChartTypeId(form.value.displayMode, selectedCharacteristic.value?.dataCategory);
   }
   if (form.value.displayMode === "CONTROL_CHART" && !form.value.chartTypeId) {
-    formErr.value = `請選擇${selectedDisplayModeLabel.value}類型。`;
+    formErr.value = { key: "spc.ppc.selectChart", args: { type: selectedDisplayModeLabel.value } };
     return;
   }
   if (form.value.displayMode === "CONTROL_CHART" && getChartTypeGroupType(form.value.chartTypeId) !== form.value.displayMode) {
-    formErr.value = `目前選擇的是${selectedDisplayModeLabel.value}，不能同時選擇另一種圖表類型。`;
+    formErr.value = { key: "spc.ppc.differentChart", args: { type: selectedDisplayModeLabel.value } };
     return;
   }
   if (form.value.controlScope === CONTROL_SCOPE.CHEM && form.value.chemicalAnalysis?.enabled
       && !String(form.value.chemicalAnalysis.concentrationFormula || "").trim()) {
-    formErr.value = "啟用藥液分析公式時，濃度公式為必填。";
+    formErr.value = { key: "spc.ppc.concentrationFormulaIsRequiredWhenChemicalAnalysisFormulasAreEnabled" };
     return;
   }
   if (modalMode.value === "edit" && originalDisplayMode.value !== form.value.displayMode) {
-    const fromLabel = originalDisplayMode.value === "TREND_CHART" ? "量測值趨勢圖" : "SPC 管制圖";
-    const toLabel = form.value.displayMode === "TREND_CHART" ? "量測值趨勢圖" : "SPC 管制圖";
+    const fromLabel = originalDisplayMode.value === "TREND_CHART" ? t("spc.ppc.measurementTrendChart") : t("spc.ppc.spcControlChart");
+    const toLabel = form.value.displayMode === "TREND_CHART" ? t("spc.ppc.measurementTrendChart") : t("spc.ppc.spcControlChart");
     const cleared = form.value.displayMode === "TREND_CHART"
-      ? "管制圖類型、UCL／CL／LCL、公式、判異規則，以及可重新計算的舊 SPC 計算結果"
-      : "可重新計算的舊圖表計算結果";
+      ? t("spc.ppc.chartTypeUCLCLLCLFormulasRulesAndOldSPCCalculationResultsThatCanBeRecalculated")
+      : t("spc.ppc.oldChartCalculationResultsThatCanBeRecalculated");
     const confirmed = confirm(
-      `確定將「${fromLabel}」轉換為「${toLabel}」？\n\n` +
-      `保留：所有量測資料、USL／LSL、目標值、單位、製程與槽位。\n` +
-      `清除：${cleared}。\n\n` +
-      "此操作不會刪除原始量測資料。"
+      t("spc.ppc.convertConfirm", { from: fromLabel, to: toLabel, cleared })
     );
     if (!confirmed) return;
   }
@@ -997,11 +998,11 @@ async function save() {
     if (modalMode.value === "create") {
       const { data } = await api.post("/part-process-characteristics", payload);
       savedItem = data;
-      successAlert("成功建立新檢驗基準");
+      successAlert({ key: "spc.ppc.controlItemCreated" });
     } else {
       const { data } = await api.put(`/part-process-characteristics/${currentId.value}`, payload);
       savedItem = data;
-      successAlert("成功更新檢驗基準");
+      successAlert({ key: "spc.ppc.controlItemUpdated" });
     }
     showModal.value = false;
     await load();
@@ -1015,12 +1016,12 @@ async function save() {
 async function confirmDelete(item) {
   const pNo = item.controlScope === "PRODUCT" ? (item.part?.partNo || item.partId) : scopeLabel(item.controlScope);
   const cName = item.characteristic?.characteristicName || item.characteristicId;
-  if (!confirm(`確定要刪除「${pNo} - ${cName}」的檢驗規範基準嗎？`)) return;
+  if (!confirm(t("spc.ppc.confirmDelete", { name: `${pNo} - ${cName}` }))) return;
   loading.value = true;
   try {
     await api.delete(`/part-process-characteristics/${item.id}`);
     rows.value = rows.value.filter(x => x.id !== item.id);
-    successAlert("成功刪除檢驗基準");
+    successAlert({ key: "spc.ppc.controlItemDeleted" });
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -1037,25 +1038,25 @@ async function confirmPurge(item) {
   try {
     const { data: impact } = await api.get(`/part-process-characteristics/${item.id}/delete-impact`);
     const impactText = [
-      `計量量測：${impact.variableMeasurements} 筆`,
-      `計數量測：${impact.attributeMeasurements} 筆`,
-      `SPC 計算結果：${impact.calculationResults} 筆`,
-      `異常警報：${impact.alerts} 筆`,
-      `管制界限分段：${impact.controlLimitSegments} 筆`
+      t("spc.ppc.variableImpact", { count: impact.variableMeasurements }),
+      t("spc.ppc.attributeImpact", { count: impact.attributeMeasurements }),
+      t("spc.ppc.calculationImpact", { count: impact.calculationResults }),
+      t("spc.ppc.alertImpact", { count: impact.alerts }),
+      t("spc.ppc.segmentImpact", { count: impact.controlLimitSegments })
     ].join("\n");
     if (impact.closedAlerts > 0) {
-      alert(`無法永久清除「${label}」。\n\n此項目包含 ${impact.closedAlerts} 筆已結案異常，請改為停用。`);
+      alert(t("spc.ppc.purgeBlocked", { name: label, count: impact.closedAlerts }));
       return;
     }
-    if (!confirm(`永久清除「${label}」？\n\n${impactText}\n\n此動作無法復原，且不會刪除同一匯入批次的其他管制項目。`)) return;
-    const typed = prompt(`請輸入「${label}」確認永久清除：`);
+    if (!confirm(t("spc.ppc.confirmPurge", { name: label, impact: impactText }))) return;
+    const typed = prompt(t("spc.ppc.typePurge", { name: label }));
     if (typed !== label) {
-      if (typed !== null) alert("輸入內容不符，已取消永久清除。");
+      if (typed !== null) alert(t("spc.ppc.theEnteredTextDoesNotMatchPermanentRemovalWasCancelled"));
       return;
     }
     await api.delete(`/part-process-characteristics/${item.id}`, { params: { purge: true } });
     rows.value = rows.value.filter(x => x.id !== item.id);
-    successAlert("已永久清除管制項目及其關聯量測資料");
+    successAlert({ key: "spc.ppc.theControlItemAndItsRelatedMeasurementsWerePermanentlyRemoved" });
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -1127,7 +1128,7 @@ async function loadSegments() {
     });
     segments.value = res.data || [];
   } catch (e) {
-    alert("無法載入分段資訊：" + getApiErrorMessage(e));
+    alert(t("spc.ppc.segmentLoadFailed", { error: getApiErrorMessage(e) }));
   } finally {
     loadingSegments.value = false;
   }
@@ -1198,14 +1199,14 @@ function editSegment(seg) {
 }
 
 async function deleteSegment(seg) {
-  if (!confirm("確定要刪除此分段設定嗎？")) return;
+  if (!confirm(t("spc.ppc.deleteThisLimitSegment"))) return;
   try {
     await api.delete(`/control-limit-segments/${seg.id}`);
     await loadSegments();
   specHistoryRevision.value++;
     await load();
   } catch (e) {
-    alert("刪除失敗：" + getApiErrorMessage(e));
+    alert(t("spc.ppc.segmentDeleteFailed", { error: getApiErrorMessage(e) }));
   }
 }
 
@@ -1288,8 +1289,18 @@ watch(advancedMode, (value) => {
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateTableScrollMax);
 });
-</script>
 
+
+
+const scopeDisplayLabel = scope => {
+ const id = normalizeControlScope(scope);
+ const enabled = groups.value.filter(g => g.isEnabled !== false);
+ const group = enabled.find(g => getGroupScope(g) === id && g.groupType === 'CONTROL_CHART') || enabled.find(g => getGroupScope(g) === id);
+ const labels = {"PRODUCT": "spc.ppc.productControl", "PROCESS": "spc.ppc.processControl", "CHEM": "spc.ppc.chemicalControl"};
+ return group?.groupName || (labels[id] ? t(labels[id]) : scopeLabel(id));
+};
+const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas", "標準全距法": "spc.ppc.standardRangeMethod", "平均移動全距法": "spc.ppc.meanMovingRangeMethod", "樣本標準差法": "spc.ppc.sampleStandardDeviationMethod"};
+</script>
 <template>
   <section class="space-y-6">
     <!-- Title & Actions -->
@@ -1299,8 +1310,8 @@ onBeforeUnmount(() => {
           <FolderTree class="w-7 h-7" />
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">SPC 管制項目設定與規格維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">依製程管制、藥水管制與產品管制設定檢驗項目、規格界限與子組樣本數</p>
+          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{{ t('spc.ppc.spcControlItemsAndSpecifications') }}</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ t('spc.ppc.configureInspectionItemsSpecificationLimitsAndSubgroupSizesForProcessChemicalAndProductControl') }}</p>
         </div>
       </div>
       
@@ -1311,44 +1322,44 @@ onBeforeUnmount(() => {
           :disabled="loading"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all border border-slate-200 dark:border-slate-700"
         >
-          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> 重新整理
+          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> {{ t('spc.ppc.refresh') }}
         </button>
         <button
-          @click="openCreateModal"
+          data-testid="ppc-add" @click="openCreateModal"
           type="button"
           class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-bold shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all transform hover:-translate-y-0.5"
         >
-          <Plus class="w-4 h-4" /> 新增管制項目
+          <Plus class="w-4 h-4" /> {{ t('spc.ppc.addControlItem') }}
         </button>
       </div>
     </div>
 
     <div class="space-y-6">
     <!-- Guide / Wizard Tip -->
-    <ModuleGuide title="模組指南：SPC 管制項目設定">
+    <ModuleGuide :toggle-label="t('common.actions.toggleGuide')" :title="t('spc.ppc.moduleGuideSPCControlItems')">
       <p class="text-xs text-amber-700 dark:text-amber-400/80 mt-1.5 leading-relaxed">
-          這是整個 SPC 系統中最核心的設定。請先選擇管制類型：製程管制與藥水管制不需要產品料號；只有產品管制才需要綁定產品料號。<br/>
-          💡 <strong>功能說明：</strong> 檢驗數據上傳時，系統會比對這裡設定的規格界限。若未在此處建立管制項目，資料將無法進行 SPC 運算與判圖。
+          {{ t('spc.ppc.selectAControlScopeFirstProcessAndChemicalControlDoNotRequireAPartNumberProductControlRequiresAPartN') }}<br/>
+          💡 <strong>{{ t('spc.ppc.function') }}</strong> {{ t('spc.ppc.uploadedMeasurementsUseTheseSpecificationLimitsCreateAControlItemHereBeforeSPCCalculationsAndChartAn') }}
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-amber-700 dark:text-amber-400/80 leading-relaxed">
-          <div class="font-black text-amber-900 dark:text-amber-300">SPC 管制項目設定頁面操作說明</div>
-          <p><strong>查詢項目：</strong>可用管制類型、料號、製程或檢驗特性搜尋既有管制項目。</p>
-          <p><strong>新增項目：</strong>按「新增管制項目」，先選管制類型，再選必要主檔。</p>
-          <p><strong>設定規格：</strong>輸入 USL、LSL、目標值、樣本數與是否必檢。</p>
-          <p><strong>指定管制圖：</strong>依資料類型選擇 I-MR、XBAR-R、XBAR-S、P、NP、C 或 U 管制圖。</p>
-          <p><strong>啟用後使用：</strong>儲存並啟用後，資料匯入、現場量測與管制圖查詢才會套用此基準。</p>
+          <div class="font-black text-amber-900 dark:text-amber-300">{{ t('spc.ppc.usingControlItemSettings') }}</div>
+          <p><strong>{{ t('spc.ppc.searchItems') }}</strong>{{ t('spc.ppc.searchExistingItemsByScopePartNumberProcessOrInspectionCharacteristic') }}</p>
+          <p><strong>{{ t('spc.ppc.createItems') }}</strong>{{ t('spc.ppc.selectAddControlItemChooseAScopeThenSelectTheRequiredMasterData') }}</p>
+          <p><strong>{{ t('spc.ppc.setSpecifications') }}</strong>{{ t('spc.ppc.enterUSLLSLTargetSampleSizeAndWhetherInspectionIsRequired') }}</p>
+          <p><strong>{{ t('spc.ppc.selectAControlChart') }}</strong>{{ t('spc.ppc.selectIMRXBARRXBARSPNPCOrUAccordingToTheDataCategory') }}</p>
+          <p><strong>{{ t('spc.ppc.enableForUse') }}</strong>{{ t('spc.ppc.saveAndEnableTheItemToUseItForImportsMeasurementEntryAndChartQueries') }}</p>
         </div>
     </ModuleGuide>
 
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">
       <AlertTriangle class="w-6 h-6 flex-shrink-0 text-red-500" />
-      <div class="text-sm font-semibold">{{ err }}</div>
+      <div class="text-sm font-semibold">{{ messageText(err) }}</div>
     </div>
 
     <div v-if="successMsg" class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl shadow-sm animate-fade-in">
       <CheckCircle2 class="w-6 h-6 flex-shrink-0 text-emerald-500" />
-      <div class="text-sm font-semibold">{{ successMsg }}</div>
+      <div class="text-sm font-semibold">{{ messageText(successMsg) }}</div>
     </div>
 
     <!-- Filters & Search Bar -->
@@ -1358,9 +1369,9 @@ onBeforeUnmount(() => {
           <Search class="w-4 h-4" />
         </span>
         <input
-          v-model="searchQuery"
+          data-testid="ppc-searchQuery" v-model="searchQuery"
           type="text"
-          placeholder="搜尋料號、製程、槽位或檢驗特性..."
+          :placeholder="t('spc.ppc.searchPartNumbersProcessesTanksOrCharacteristics')"
           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all"
         />
       </div>
@@ -1368,30 +1379,30 @@ onBeforeUnmount(() => {
       <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
         <!-- Process Filter Dropdown -->
         <select
-          v-model="scopeFilter"
+          data-testid="ppc-scopeFilter" v-model="scopeFilter"
           class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all cursor-pointer"
         >
-          <option value="all">全部管制類型</option>
-          <option v-for="s in filterControlScopes" :key="s.id" :value="s.id">{{ s.label }}</option>
+          <option value="all">{{ t('spc.ppc.allControlScopes') }}</option>
+          <option v-for="s in filterControlScopes" :key="s.id" :value="s.id">{{ scopeDisplayLabel(s.id) }}</option>
         </select>
 
         <select
-          v-model="processFilter"
+          data-testid="ppc-processFilter" v-model="processFilter"
           class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all cursor-pointer"
         >
-          <option value="all">全廠所有製程</option>
+          <option value="all">{{ t('spc.ppc.allProcesses') }}</option>
           <option v-for="p in filterProcesses" :key="p.id" :value="p.id">
             {{ p.processName }}
           </option>
         </select>
 
         <select
-          v-model="tankFilter"
+          data-testid="ppc-tankFilter" v-model="tankFilter"
           :disabled="filterTanks.length === 0"
           class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          title="依槽位篩選 SPC 管制項目"
+          :title="t('spc.ppc.filterControlItemsByTank')"
         >
-          <option value="all">全部槽位</option>
+          <option value="all">{{ t('spc.ppc.allTanks') }}</option>
           <option v-for="tank in filterTanks" :key="tank.id" :value="tank.id">
             {{ tank.tankName }}
           </option>
@@ -1400,7 +1411,7 @@ onBeforeUnmount(() => {
         <!-- Status Filter -->
         <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
           <button
-            v-for="f in [{id:'all', label:'全部狀態'}, {id:'active', label:'已啟用'}, {id:'inactive', label:'已停用'}]"
+            v-for="f in [{id:'all', label:t('spc.ppc.allStatuses')}, {id:'active', label:t('spc.ppc.enabledItems')}, {id:'inactive', label:t('spc.ppc.inactive')}]"
             :key="f.id"
             @click="statusFilter = f.id"
             type="button"
@@ -1421,7 +1432,7 @@ onBeforeUnmount(() => {
     <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
       <div v-if="tableScrollMax > 0" class="px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
         <div class="flex items-center gap-3">
-          <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">水平捲動</span>
+          <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ t('spc.ppc.horizontalScroll') }}</span>
           <input
             v-model.number="tableScrollLeft"
             type="range"
@@ -1429,7 +1440,7 @@ onBeforeUnmount(() => {
             :max="tableScrollMax"
             step="1"
             class="w-full h-2 accent-amber-500 cursor-ew-resize"
-            aria-label="資料表水平捲動"
+            :aria-label="t('spc.ppc.scrollTableHorizontally')"
             @input="setTableScrollFromSlider"
           />
         </div>
@@ -1439,22 +1450,22 @@ onBeforeUnmount(() => {
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
               <th class="py-4 px-6 w-16 text-center">ID</th>
-              <th class="py-4 px-6">製程、線別與槽位</th>
-              <th class="py-4 px-6">管制類型與檢驗特性</th>
-              <th class="py-4 px-6">規格限值與抽樣配置</th>
-              <th class="py-4 px-6 text-center whitespace-nowrap">藥液分析公式</th>
-              <th class="py-4 px-6">管制圖與判異規則</th>
-              <th class="py-4 px-6 text-center">匯入筆數</th>
-              <th class="py-4 px-6 text-center">狀態</th>
-              <th class="py-4 px-6 text-right">操作</th>
+              <th class="py-4 px-6">{{ t('spc.ppc.processLineAndTank') }}</th>
+              <th class="py-4 px-6">{{ t('spc.ppc.controlScopeAndCharacteristic') }}</th>
+              <th class="py-4 px-6">{{ t('spc.ppc.specificationLimitsAndSampling') }}</th>
+              <th class="py-4 px-6 text-center whitespace-nowrap">{{ t('spc.ppc.chemicalAnalysisFormulas') }}</th>
+              <th class="py-4 px-6">{{ t('spc.ppc.controlChartAndDetectionRules') }}</th>
+              <th class="py-4 px-6 text-center">{{ t('spc.ppc.importedRecords') }}</th>
+              <th class="py-4 px-6 text-center">{{ t('spc.ppc.status') }}</th>
+              <th class="py-4 px-6 text-right">{{ t('spc.ppc.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="9" class="py-12 text-center text-slate-400">正在載入檢驗基準清單...</td>
+              <td colspan="9" class="py-12 text-center text-slate-400">{{ t('spc.ppc.loadingControlItems') }}</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="9" class="py-12 text-center text-slate-400">找不到相符的檢驗基準資料</td>
+              <td colspan="9" class="py-12 text-center text-slate-400">{{ t('spc.ppc.noMatchingControlItems') }}</td>
             </tr>
             <tr
               v-else
@@ -1466,18 +1477,18 @@ onBeforeUnmount(() => {
               <td class="py-5 px-6">
                 <div class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
                   <Layers class="w-4 h-4 text-cyan-500" />
-                  {{ item.process?.processName || '未命名製程' }}
+                  {{ item.process?.processName || t('spc.ppc.unnamedProcess') }}
                   <span class="text-slate-500 text-xs font-normal ml-1">{{ item.process?.processName }}</span>
                   <span v-if="item.process?.processNameEn" class="text-cyan-600 text-xs font-normal">{{ item.process.processNameEn }}</span>
                 </div>
                 <div class="mt-2 flex flex-col gap-1 text-[11px]">
                   <div class="flex items-center gap-1.5">
-                    <span class="text-slate-400 font-bold">線別:</span>
+                    <span class="text-slate-400 font-bold">{{ t('spc.ppc.line') }}</span>
                     <span class="font-mono font-bold text-teal-700 dark:text-teal-300">{{ item.machine?.machineCode || '-' }}</span>
                     <span class="text-slate-500 dark:text-slate-400">{{ item.machine?.machineName || '' }}</span>
                   </div>
                   <div v-if="normalizeControlScope(item.controlScope) === CONTROL_SCOPE.CHEM" class="flex items-center">
-                    <span class="text-slate-500 dark:text-slate-400 font-bold">槽位:{{ item.tank?.tankName || '-' }}</span>
+                    <span class="text-slate-500 dark:text-slate-400 font-bold">{{ t('spc.ppc.tank') }}{{ item.tank?.tankName || '-' }}</span>
                   </div>
                 </div>
               </td>
@@ -1485,7 +1496,7 @@ onBeforeUnmount(() => {
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
                   <Package v-if="(item.controlScope || 'PRODUCT') === 'PRODUCT'" class="w-4 h-4 text-blue-500" />
                   <Layers v-else class="w-4 h-4" :class="normalizeControlScope(item.controlScope) === CONTROL_SCOPE.CHEM ? 'text-teal-500' : 'text-purple-500'" />
-                  {{ scopeLabel(item.controlScope) }}
+                  {{ scopeDisplayLabel(item.controlScope) }}
                   <span v-if="(item.controlScope || 'PRODUCT') === 'PRODUCT'" class="text-slate-500 text-xs font-normal ml-1">
                     {{ item.part?.partNo || `Part #${item.partId}` }} {{ item.part?.partName }}
                   </span>
@@ -1495,7 +1506,7 @@ onBeforeUnmount(() => {
                   <span>{{ item.characteristic?.characteristicName || `Char #${item.characteristicId}` }}</span>
                   <span v-if="item.characteristic?.characteristicNameEn" class="text-cyan-600 dark:text-cyan-400 font-normal">{{ item.characteristic.characteristicNameEn }}</span>
                   <span v-if="item.unit || item.characteristic?.unit" class="text-xs text-slate-400 font-normal">({{ item.unit || item.characteristic?.unit }})</span>
-                  <span v-if="item.isRequired" class="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800 ml-1 tracking-wider">必檢</span>
+                  <span v-if="item.isRequired" class="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800 ml-1 tracking-wider">{{ t('spc.ppc.required') }}</span>
                 </div>
               </td>
               <td class="py-5 px-6">
@@ -1530,49 +1541,49 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-slate-500">
-                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">UCL: {{ item.ucl !== null ? item.ucl : '自動' }}</span>
-                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md font-bold text-amber-600 dark:text-amber-500">CL: {{ item.cl !== null ? item.cl : '自動' }}</span>
-                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">LCL: {{ item.lcl !== null ? item.lcl : '自動' }}</span>
+                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">UCL: {{ item.ucl !== null ? item.ucl : t('spc.ppc.automatic') }}</span>
+                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md font-bold text-amber-600 dark:text-amber-500">CL: {{ item.cl !== null ? item.cl : t('spc.ppc.automatic') }}</span>
+                  <span class="px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">LCL: {{ item.lcl !== null ? item.lcl : t('spc.ppc.automatic') }}</span>
                   <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800/80">
                     N={{ item.sampleSize || 1 }}
                   </span>
                 </div>
               </td>
               <td class="py-5 px-6 text-center align-middle">
-                <div v-if="normalizeControlScope(item.controlScope) !== CONTROL_SCOPE.CHEM" class="text-xs text-slate-400 italic">不適用</div>
+                <div v-if="normalizeControlScope(item.controlScope) !== CONTROL_SCOPE.CHEM" class="text-xs text-slate-400 italic">{{ t('spc.ppc.notApplicable') }}</div>
                 <div v-else-if="!chemicalAnalysisDisplay(item)?.enabled" class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                  未設定
+                  {{ t('spc.ppc.notConfigured') }}
                 </div>
-                <div v-else class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" title="點擊右側編輯按鈕查看或修改藥液分析公式">
-                  有設定
+                <div v-else class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" :title="t('spc.ppc.useTheEditButtonOnTheRightToViewOrChangeChemicalAnalysisFormulas')">
+                  {{ t('spc.ppc.configured') }}
                 </div>
               </td>
               <td class="py-5 px-6 text-xs space-y-2">
                 <div class="flex items-center gap-1.5">
                   <Activity class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
-                  <span v-if="item.displayMode === 'TREND_CHART'" class="font-bold text-indigo-600 dark:text-indigo-400">量測值趨勢圖</span>
-                  <span v-else-if="item.chartTypeId" class="font-bold text-indigo-600 dark:text-indigo-400">{{ chartTypeMap[item.chartTypeId] || `圖表 #${item.chartTypeId}` }}</span>
-                  <span v-else class="text-slate-400 italic">未設定管制圖</span>
+                  <span v-if="item.displayMode === 'TREND_CHART'" class="font-bold text-indigo-600 dark:text-indigo-400">{{ t('spc.ppc.measurementTrendChart') }}</span>
+                  <span v-else-if="item.chartTypeId" class="font-bold text-indigo-600 dark:text-indigo-400">{{ chartTypeMap[item.chartTypeId] || t('spc.ppc.chartFallback', { id: item.chartTypeId }) }}</span>
+                  <span v-else class="text-slate-400 italic">{{ t('spc.ppc.noControlChartConfigured') }}</span>
                 </div>
                 <div v-if="item.displayMode !== 'TREND_CHART'" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <AlertTriangle class="w-3 h-3 flex-shrink-0 opacity-70" />
                   <span v-if="getEffectiveRuleGroupId(item)" class="font-semibold">
-                    WE 八大規則
+                    {{ t('spc.ppc.eightWERules') }}
                   </span>
-                  <span v-else class="font-semibold">WE 八大規則</span>
+                  <span v-else class="font-semibold">{{ t('spc.ppc.eightWERules') }}</span>
                 </div>
                 <div v-if="item.displayMode !== 'TREND_CHART'" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <Sliders class="w-3 h-3 flex-shrink-0 opacity-70" />
-                  <span class="font-semibold">公式：{{ formulaLabel(item.formulaConfigJson) }}</span>
+                  <span class="font-semibold">{{ t('spc.ppc.formula') }}{{ formulaLabel(item.formulaConfigJson) }}</span>
                 </div>
               </td>
               <td class="py-5 px-6 text-center">
                 <div
                   class="inline-flex flex-col items-center justify-center min-w-20 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                  :title="`計量型 ${item.variableMeasurementCount || 0} 筆；計數型 ${item.attributeMeasurementCount || 0} 筆`"
+                  :title="t('spc.ppc.measurementCounts', { variable: item.variableMeasurementCount || 0, attribute: item.attributeMeasurementCount || 0 })"
                 >
                   <span class="text-lg font-black font-mono text-slate-900 dark:text-white">{{ item.measurementCount || 0 }}</span>
-                  <span class="text-[10px] font-bold text-slate-400">筆資料</span>
+                  <span class="text-[10px] font-bold text-slate-400">{{ t('spc.ppc.records') }}</span>
                 </div>
               </td>
               <td class="py-5 px-6 text-center">
@@ -1585,7 +1596,7 @@ onBeforeUnmount(() => {
                   ]"
                 >
                   <span :class="['w-1.5 h-1.5 rounded-full', item.isEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400']"></span>
-                  {{ item.isEnabled ? '啟用中' : '已停用' }}
+                  {{ item.isEnabled ? t('spc.ppc.active') : t('spc.ppc.inactive') }}
                 </span>
               </td>
               <td class="py-5 px-6 text-right space-x-2 whitespace-nowrap">
@@ -1593,41 +1604,41 @@ onBeforeUnmount(() => {
                   @click="viewChartOrTrend(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-600 dark:text-amber-400 transition-all border border-amber-200 dark:border-slate-700"
-                  :title="item.displayMode === 'TREND_CHART' ? '查看趨勢圖' : '查看 SPC 管制圖'"
+                  :title="item.displayMode === 'TREND_CHART' ? t('spc.ppc.viewTrendChart') : t('spc.ppc.viewSPCControlChart')"
                 >
                   <Activity class="w-4 h-4" />
                 </button>
                 <button
                   v-if="item.displayMode !== 'TREND_CHART'"
-                  @click="openSegmentModal(item)"
+                  data-testid="ppc-segments" @click="openSegmentModal(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-purple-50 dark:bg-slate-800 hover:bg-purple-100 dark:hover:bg-purple-950 text-purple-600 dark:text-purple-400 transition-all border border-purple-200 dark:border-slate-700"
-                  title="分段管制線與界線試算"
+                  :title="t('spc.ppc.limitSegmentsAndHistoricalCalculation')"
                 >
                   <Sliders class="w-4 h-4" />
                 </button>
                 <button
-                  @click="openEditModal(item)"
+                  data-testid="ppc-edit" @click="openEditModal(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 transition-all border border-blue-200 dark:border-slate-700"
-                  title="編輯檢驗基準"
+                  :title="t('spc.ppc.editControlItem')"
                 >
                   <Edit class="w-4 h-4" />
                 </button>
                 <button
-                  @click="confirmDelete(item)"
+                  data-testid="ppc-delete" @click="confirmDelete(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-red-50 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-950 text-red-600 dark:text-red-400 transition-all border border-red-200 dark:border-slate-700"
-                  title="刪除檢驗基準"
+                  :title="t('spc.ppc.deleteControlItem')"
                 >
                   <Trash2 class="w-4 h-4" />
                 </button>
                 <button
                   v-if="canPermanentlyDelete"
-                  @click="confirmPurge(item)"
+                  data-testid="ppc-purge" @click="confirmPurge(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-all border border-red-700"
-                  title="永久清除管制項目及關聯量測資料"
+                  :title="t('spc.ppc.permanentlyRemoveTheItemAndRelatedMeasurements')"
                 >
                   <AlertTriangle class="w-4 h-4" />
                 </button>
@@ -1638,7 +1649,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-        <span>顯示第 1 至 {{ filteredRows.length }} 項結果（總計 {{ rows.length }} 筆檢驗基準）</span>
+        <span>{{ t('spc.ppc.tableCount', { count: filteredRows.length, total: rows.length }) }}</span>
       </div>
     </div>
     </div>
@@ -1654,21 +1665,21 @@ onBeforeUnmount(() => {
     >
       <div v-if="showModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
         <div class="absolute inset-0 cursor-pointer" @click="showModal = false"></div>
-        <div class="relative w-full max-w-4xl h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+        <div role="dialog" data-testid="ppc-dialog" class="relative w-full max-w-4xl h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
           <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-amber-600 text-white rounded-xl shadow-md shadow-amber-500/20">
               <FolderTree class="w-5 h-5" />
             </div>
             <h3 class="text-lg font-black text-slate-800 dark:text-white">
-              {{ modalMode === 'create' ? '新增 SPC 管制項目' : '編輯 SPC 管制項目' }}
+              {{ modalMode === 'create' ? t('spc.ppc.addSPCControlItem') : t('spc.ppc.editSPCControlItem') }}
             </h3>
           </div>
           <div class="ml-auto mr-4 hidden text-xs font-bold text-slate-500 dark:text-slate-400 sm:block">
             {{ modalMode === 'edit' ? `#${currentId}` : 'New' }}
           </div>
           <button
-            @click="showModal = false"
+            :aria-label="t('common.actions.close')" @click="showModal = false"
             type="button"
             class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all"
           >
@@ -1676,17 +1687,18 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
+        <div class="px-6 py-2 shrink-0"><LocalePicker /></div>
         <form @submit.prevent="save" class="flex flex-col h-full overflow-hidden">
           <div class="flex-1 overflow-y-auto p-6 space-y-5">
             <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
-              <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
+              <XCircle class="w-4 h-4 flex-shrink-0" /> {{ messageText(formErr) }}
             </div>
 
             <div class="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/60">
               <div class="flex min-w-max gap-1">
                 <button
                   v-for="tab in formTabs"
-                  :key="tab.id"
+                  :key="tab.id" :data-testid="`ppc-tab-${tab.id}`"
                   type="button"
                   @click="currentStep = tab.id"
                   class="px-4 py-2 rounded-lg text-xs font-black transition-all"
@@ -1703,13 +1715,13 @@ onBeforeUnmount(() => {
             <div v-show="currentStep === 1" class="space-y-5 animate-fade-in">
               <!-- Control Scope Selector -->
               <div class="space-y-2">
-                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制類型 <span class="text-red-500">*</span></label>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.controlScope') }} <span class="text-red-500">*</span></label>
                 <div class="grid grid-cols-3 gap-2">
                   <button
                     v-for="s in controlScopes"
                     :key="s.id"
                     type="button"
-                    @click="form.controlScope = s.id"
+                    :data-testid="`ppc-scope-${s.id}`" @click="form.controlScope = s.id"
                     :class="[
                       'px-3 py-2.5 rounded-xl text-xs font-black border transition-all',
                       form.controlScope === s.id
@@ -1717,20 +1729,20 @@ onBeforeUnmount(() => {
                         : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-300'
                     ]"
                   >
-                    {{ s.label }}
+                    {{ scopeDisplayLabel(s.id) }}
                   </button>
                 </div>
               </div>
 
               <!-- Process Selector (置於最上方) -->
               <div class="space-y-1.5">
-                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">工站製程 <span class="text-red-500">*</span></label>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.process') }} <span class="text-red-500">*</span></label>
                 <select
-                  v-model="form.processId"
+                  data-testid="ppc-form.processId" v-model="form.processId"
                   :required="currentStep === 1"
                   class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                 >
-                  <option disabled value="null">-- 選擇製程 --</option>
+                  <option disabled value="null">{{ t('spc.ppc.selectProcess') }}</option>
                   <option v-for="pr in formProcesses" :key="pr.id" :value="pr.id">{{ pr.processName }}</option>
                 </select>
               </div>
@@ -1739,10 +1751,10 @@ onBeforeUnmount(() => {
               <div v-if="form.processId && form.controlScope !== CONTROL_SCOPE.CHEM" class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-2">
                   <Cpu class="w-4 h-4 text-purple-500" />
-                  <span>此工站配置生產設備機台：</span>
+                  <span>{{ t('spc.ppc.machinesAssignedToThisProcess') }}</span>
                 </div>
                 <div v-if="machines.filter(m => m.processId === Number(form.processId)).length === 0" class="text-slate-400 dark:text-slate-500 italic">
-                  目前無配置任何機台設備。
+                  {{ t('spc.ppc.noMachinesAreAssigned') }}
                 </div>
                 <div v-else class="flex flex-wrap gap-2">
                   <span
@@ -1758,36 +1770,36 @@ onBeforeUnmount(() => {
               <div v-if="form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 bg-teal-50/60 dark:bg-teal-950/10 border border-teal-200 dark:border-teal-900/70 rounded-2xl space-y-4">
                 <div class="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300">
                   <Cpu class="w-4 h-4" />
-                  <span>藥水管制定位</span>
+                  <span>{{ t('spc.ppc.chemicalControlLocation') }}</span>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="space-y-1.5">
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">線別 / 機台 <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.lineMachine') }} <span class="text-red-500">*</span></label>
                     <select
-                      v-model="form.machineId"
+                      data-testid="ppc-form.machineId" v-model="form.machineId"
                       :required="form.controlScope === CONTROL_SCOPE.CHEM && currentStep === 1"
                       class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
                     >
-                      <option :value="null">-- 選擇線別/機台 --</option>
+                      <option :value="null">{{ t('spc.ppc.selectLineMachine') }}</option>
                       <option v-for="mach in availableMachines" :key="mach.id" :value="mach.id">{{ mach.machineCode }} - {{ mach.machineName }}</option>
                     </select>
                   </div>
 
                   <div class="space-y-1.5">
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">槽位 <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.tankLabel') }} <span class="text-red-500">*</span></label>
                     <select
-                      v-model="form.tankId"
+                      data-testid="ppc-form.tankId" v-model="form.tankId"
                       :required="form.controlScope === CONTROL_SCOPE.CHEM && currentStep === 1"
                       :disabled="!form.machineId"
                       class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
                     >
-                      <option :value="null">-- 選擇槽位 --</option>
+                      <option :value="null">{{ t('spc.ppc.selectTank') }}</option>
                       <option v-for="tank in availableTanks" :key="tank.id" :value="tank.id">{{ tank.tankName }}</option>
                     </select>
                   </div>
                 </div>
                 <p v-if="form.machineId && availableTanks.length === 0" class="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-                  此線別尚未建立槽位，請先到「線別槽位設定」新增槽位。
+                  {{ t('spc.ppc.thisLineHasNoTanksAddATankInLineAndTankSettingsFirst') }}
                 </p>
               </div>
 
@@ -1795,39 +1807,39 @@ onBeforeUnmount(() => {
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div v-if="form.controlScope === 'PRODUCT'" class="space-y-1.5">
                   <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                    <span>產品料號 <span class="text-red-500">*</span></span>
+                    <span>{{ t('spc.ppc.partNumber') }} <span class="text-red-500">*</span></span>
                   </label>
                   <select
-                    v-model="form.partId"
+                    data-testid="ppc-form.partId" v-model="form.partId"
                     :required="form.controlScope === 'PRODUCT' && currentStep === 1"
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   >
-                    <option disabled value="null">-- 選擇料號 --</option>
+                    <option disabled value="null">{{ t('spc.ppc.selectPartNumber') }}</option>
                     <option v-for="p in parts" :key="p.id" :value="p.id">{{ p.partNo }} - {{ p.partName }}</option>
                   </select>
                 </div>
 
                 <div v-else class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">產品料號</label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.partNumber') }}</label>
                   <div class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-500 dark:text-slate-400">
-                    {{ form.controlScope === CONTROL_SCOPE.CHEM ? '藥水管制不需產品料號' : '製程管制不需產品料號' }}
+                    {{ form.controlScope === CONTROL_SCOPE.CHEM ? t('spc.ppc.chemicalControlDoesNotRequireAPartNumber') : t('spc.ppc.processControlDoesNotRequireAPartNumber') }}
                   </div>
                 </div>
 
                 <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">檢驗特性 <span class="text-red-500">*</span></label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.inspectionCharacteristic') }} <span class="text-red-500">*</span></label>
                   <select
-                    v-model="form.characteristicId"
+                    data-testid="ppc-form.characteristicId" v-model="form.characteristicId"
                     :required="currentStep === 1"
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   >
-                    <option disabled value="null">-- 選擇特性 --</option>
+                    <option disabled value="null">{{ t('spc.ppc.selectCharacteristic') }}</option>
                     <option v-for="ch in availableCharacteristics" :key="ch.id" :value="ch.id">{{ ch.characteristicName }}{{ ch.characteristicNameEn ? ` / ${ch.characteristicNameEn}` : '' }}</option>
                   </select>
                 </div>
                 <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">排列順序</label>
-                  <input v-model.number="form.sequenceNo" type="number" min="0" step="1" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" />
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.displayOrder') }}</label>
+                  <input data-testid="ppc-form.sequenceNo" v-model.number="form.sequenceNo" type="number" min="0" step="1" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" />
                 </div>
               </div>
 
@@ -1840,47 +1852,47 @@ onBeforeUnmount(() => {
               <!-- Specs: USL, Target, LSL, Sample Size -->
               <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                  <Sliders class="w-4 h-4 text-amber-500" /> 規格界限與抽樣配置
+                  <Sliders class="w-4 h-4 text-amber-500" /> {{ t('spc.ppc.specificationLimitsAndSamplingSettings') }}
                 </h4>
                 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">下限 (LSL)</label>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">{{ t('spc.ppc.lowerSpecificationLimitLSL') }}</label>
                     <input
-                      v-model="form.lsl"
+                      data-testid="ppc-form.lsl" v-model="form.lsl"
                       type="number"
                       step="any"
-                      placeholder="如: 8.3"
+                      :placeholder="t('spc.ppc.forExample83')"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
                     />
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">目標值</label>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">{{ t('spc.ppc.targetValue') }}</label>
                     <input
-                      v-model="form.targetValue"
+                      data-testid="ppc-form.targetValue" v-model="form.targetValue"
                       type="number"
                       step="any"
-                      :placeholder="formSpecificationDisplay?.targetIsCalculated ? `自動: ${formatSpecNumber(formSpecificationDisplay.target)}` : '留空則自動計算'"
+                      :placeholder="formSpecificationDisplay?.targetIsCalculated ? t('spc.ppc.automaticTarget', { target: formatSpecNumber(formSpecificationDisplay.target) }) : t('spc.ppc.leaveBlankToCalculateAutomatically')"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
                     />
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">上限 (USL)</label>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400">{{ t('spc.ppc.upperSpecificationLimitUSL') }}</label>
                     <input
-                      v-model="form.usl"
+                      data-testid="ppc-form.usl" v-model="form.usl"
                       type="number"
                       step="any"
-                      placeholder="如: 8.7"
+                      :placeholder="t('spc.ppc.forExample87')"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-800 dark:text-white focus:ring-2 focus:ring-amber-500 transition-all"
                     />
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400">子組大小 <span class="text-red-500">*</span></label>
+                    <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400">{{ t('spc.ppc.subgroupSize') }} <span class="text-red-500">*</span></label>
                     <input
-                      v-model="form.sampleSize"
+                      data-testid="ppc-form.sampleSize" v-model="form.sampleSize"
                       type="number"
                       min="1"
                       max="50"
@@ -1893,7 +1905,7 @@ onBeforeUnmount(() => {
                   v-if="formSpecificationDisplay"
                   class="rounded-xl border border-amber-200 bg-white px-3 py-2.5 dark:border-amber-800 dark:bg-slate-900"
                 >
-                  <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">規格預覽</div>
+                  <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ t('spc.ppc.specificationPreview') }}</div>
                   <div class="mt-0.5 font-mono text-lg font-black text-amber-700 dark:text-amber-300">
                     <span v-if="formSpecificationDisplay.asymmetric" class="inline-flex items-center gap-1.5 whitespace-nowrap">
                       <span>{{ formatSpecNumber(formSpecificationDisplay.target) }}</span>
@@ -1902,7 +1914,7 @@ onBeforeUnmount(() => {
                     <template v-else>{{ formSpecificationDisplay.text }}</template>
                   </div>
                   <div class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                    {{ formSpecificationDisplay.detail }}{{ formSpecificationDisplay.targetIsCalculated ? '（目標值將自動帶入）' : '' }}
+                    {{ formSpecificationDisplay.detail }}{{ formSpecificationDisplay.targetIsCalculated ? t('spc.ppc.targetWillBeFilledAutomatically') : '' }}
                   </div>
                 </div>
               </div>
@@ -1910,20 +1922,20 @@ onBeforeUnmount(() => {
               <!-- Toggles -->
               <div class="grid grid-cols-2 gap-4 pt-2">
                 <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">是否必檢項目</label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">{{ t('spc.ppc.inspectionRequirement') }}</label>
                   <label class="relative inline-flex items-center cursor-pointer">
-                    <input v-model="form.isRequired" type="checkbox" class="sr-only peer" />
+                    <input data-testid="ppc-form.isRequired" v-model="form.isRequired" type="checkbox" class="sr-only peer" />
                     <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                    <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isRequired ? '必檢項目' : '非必檢' }}</span>
+                    <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isRequired ? t('spc.ppc.inspectionRequired') : t('spc.ppc.inspectionOptional') }}</span>
                   </label>
                 </div>
 
                 <div class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">啟用設定</label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">{{ t('spc.ppc.enableSetting') }}</label>
                   <label class="relative inline-flex items-center cursor-pointer">
-                    <input v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
+                    <input data-testid="ppc-form.isEnabled" v-model="form.isEnabled" type="checkbox" class="sr-only peer" />
                     <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                    <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? '啟用' : '停用' }}</span>
+                    <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isEnabled ? t('spc.ppc.enabled') : t('spc.ppc.disabled') }}</span>
                   </label>
                 </div>
               </div>
@@ -1933,72 +1945,72 @@ onBeforeUnmount(() => {
             <div v-show="currentStep === 3 || currentStep === 4 || currentStep === 5" class="space-y-5 animate-fade-in">
               <div v-if="currentStep === 3" class="p-4 bg-blue-50/60 dark:bg-blue-950/15 rounded-2xl border border-blue-200 dark:border-blue-900/70 space-y-4">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                  <Info class="w-4 h-4" /> 圖表顯示方式
+                  <Info class="w-4 h-4" /> {{ t('spc.ppc.chartDisplayMode') }}
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="space-y-1.5">
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">顯示方式</label>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.displayMode') }}</label>
                     <select
-                      v-model="form.displayMode"
+                      data-testid="ppc-form.displayMode" v-model="form.displayMode"
                       class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                     >
-                      <option value="CONTROL_CHART">SPC 管制圖</option>
-                      <option value="TREND_CHART" :disabled="!hasDisplayModeGroup('TREND_CHART')">量測值趨勢圖</option>
+                      <option value="CONTROL_CHART">{{ t('spc.ppc.spcControlChart') }}</option>
+                      <option value="TREND_CHART" :disabled="!hasDisplayModeGroup('TREND_CHART')">{{ t('spc.ppc.measurementTrendChart') }}</option>
                     </select>
                     <p v-if="!hasDisplayModeGroup('TREND_CHART')" class="text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                      此業務範圍尚未啟用趨勢圖大類別，因此暫不可選擇。
+                      {{ t('spc.ppc.trendChartsAreUnavailableBecauseThisScopeHasNoEnabledTrendChartCategory') }}
                     </p>
                   </div>
 
                   <div v-if="form.displayMode === 'CONTROL_CHART'" class="space-y-1.5">
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">管制圖類型</label>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.controlChartType') }}</label>
                     <select
-                      v-model="form.chartTypeId"
+                      data-testid="ppc-form.chartTypeId" v-model="form.chartTypeId"
                       class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
                     >
-                      <option :value="null" disabled>-- 請選擇{{ selectedDisplayModeLabel }}類型 --</option>
+                      <option :value="null" disabled>{{ t('spc.ppc.selectType', { type: selectedDisplayModeLabel }) }}</option>
                       <option v-for="ct in availableChartTypes" :key="ct.id" :value="ct.id">{{ ct.chartTypeCode }} - {{ ct.chartTypeName }}</option>
                     </select>
                   </div>
                 </div>
                 <p class="text-[11px] text-blue-700/70 dark:text-blue-300/70 font-semibold">
-                  切換為趨勢圖會保留量測資料、規格界限與目標值，並移除不適用的管制圖類型、管制線、公式與規則設定。
+                  {{ t('spc.ppc.switchingToATrendChartPreservesMeasurementsSpecificationLimitsAndTargetValuesAndRemovesInapplicableC') }}
                 </p>
               </div>
 
               <!-- Advanced Override items -->
               <div class="space-y-5">
                 <div v-if="currentStep === 3" class="space-y-1.5">
-                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">量測單位</label>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.measurementUnit') }}</label>
                   <input
                     v-model.trim="form.unit"
                     type="text"
                     maxlength="50"
-                    placeholder="例如：mm、μm、%、mg/L"
+                    :placeholder="t('spc.ppc.forExampleMmMMgL')"
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   />
-                  <p class="text-[11px] text-slate-400">單位只屬於此製程／槽位管制項目，可依實際量測方式設定。</p>
+                  <p class="text-[11px] text-slate-400">{{ t('spc.ppc.theUnitBelongsToThisProcessOrTankControlItemAndCanMatchItsMeasurementMethod') }}</p>
                 </div>
 
                 <!-- Custom Control Limits -->
                 <div v-if="currentStep === 3 && form.displayMode === 'CONTROL_CHART'" class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
-                  <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mb-2 block">固定統計管制線 (可留空由系統自動算圖)</span>
+                  <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mb-2 block">{{ t('spc.ppc.fixedStatisticalControlLimitsLeaveBlankForAutomaticCalculation') }}</span>
                   <div class="grid grid-cols-3 gap-3">
                     <div>
                       <label class="block text-[11px] text-slate-500">UCL</label>
-                      <input v-model="form.ucl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
+                      <input data-testid="ppc-form.ucl" v-model="form.ucl" type="number" step="any" :placeholder="t('spc.ppc.calculateAutomatically')" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-slate-500">中心線 (CL)</label>
-                      <input v-model="form.cl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
+                      <label class="block text-[11px] text-slate-500">{{ t('spc.ppc.centerLineCL') }}</label>
+                      <input data-testid="ppc-form.cl" v-model="form.cl" type="number" step="any" :placeholder="t('spc.ppc.calculateAutomatically')" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
                     </div>
                     <div>
                       <label class="block text-[11px] text-slate-500">LCL</label>
-                      <input v-model="form.lcl" type="number" step="any" placeholder="自動計算" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
+                      <input data-testid="ppc-form.lcl" v-model="form.lcl" type="number" step="any" :placeholder="t('spc.ppc.calculateAutomatically')" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300" />
                     </div>
                   </div>
                   <p class="mt-2 text-[11px]" :class="hasManualControlLimits ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'">
-                    {{ hasManualControlLimits ? '目前使用手動固定管制線；分段管制線仍會依日期區間覆寫。' : '目前未手動固定管制線，管制圖會自動計算或套用分段管制線。' }}
+                    {{ hasManualControlLimits ? t('spc.ppc.manualFixedControlLimitsAreInUseDateSegmentsCanOverrideThem') : t('spc.ppc.noManualFixedControlLimitsTheChartCalculatesLimitsOrUsesDateSegments') }}
                   </p>
                 </div>
 
@@ -2006,42 +2018,42 @@ onBeforeUnmount(() => {
                 <ChemicalFormulaSchedule v-if="currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM && modalMode === 'edit'" :key="currentId" :ppc-id="currentId" />
                 <div v-if="currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 space-y-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/70">
                   <div class="flex items-center justify-between gap-3">
-                    <div><h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">藥液分析公式</h4><p class="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">只套用目前線別、槽位與分析項目；可用 Primary、Secondary、LSL、USL、Target、Concentration。</p></div>
+                    <div><h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">{{ t('spc.ppc.chemicalAnalysisFormulas') }}</h4><p class="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">{{ t('spc.ppc.appliesOnlyToThisLineTankAndAnalysisItemAvailableVariablesPrimarySecondaryLSLUSLTargetConcentration') }}</p></div>
                     <div class="flex items-center gap-2">
                       <button
                         v-if="modalMode === 'edit'"
                         type="button"
-                        @click="loadChemicalFormulaVersions"
+                        data-testid="ppc-formula-history" @click="loadChemicalFormulaVersions"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
                       >
                         <History class="h-3.5 w-3.5" />
-                        版本紀錄
+                        {{ t('spc.ppc.versionHistory') }}
                       </button>
-                      <label class="flex items-center gap-2 text-xs font-bold"><input v-model="form.chemicalAnalysis.enabled" type="checkbox" class="w-4 h-4">啟用</label>
+                      <label class="flex items-center gap-2 text-xs font-bold"><input data-testid="ppc-form.chemicalAnalysis.enabled" v-model="form.chemicalAnalysis.enabled" type="checkbox" class="w-4 h-4">{{ t('spc.ppc.enabled') }}</label>
                     </div>
                   </div>
-                  <label class="block text-sm font-bold">參照文件／修改依據（選填，最多500字）
-                    <textarea v-model="formulaVersionReason" aria-label="參照文件／修改依據" maxlength="500" rows="2" class="mt-1 w-full rounded-lg border bg-transparent p-2" placeholder="WI-CA-001｜Rev.03｜5.2節｜調整原因"></textarea>
-                    <span class="text-xs font-normal text-slate-500">公式變更時保存為版本依據；僅改備註不會建立版本，也不改寫歷史。</span>
+                  <label class="block text-sm font-bold">{{ t('spc.ppc.referenceDocumentReasonOptionalUpTo500Characters') }}
+                    <textarea data-testid="ppc-formulaVersionReason" v-model="formulaVersionReason" :aria-label="t('spc.ppc.referenceDocumentReason')" maxlength="500" rows="2" class="mt-1 w-full rounded-lg border bg-transparent p-2" :placeholder="t('spc.ppc.wiCA001Rev03Section52ReasonForChange')"></textarea>
+                    <span class="text-xs font-normal text-slate-500">{{ t('spc.ppc.savedAsTheVersionReasonWhenFormulasChangeChangingOnlyTheReasonCreatesNoVersionAndDoesNotRewriteHisto') }}</span>
                   </label>
                   <div v-if="chemicalFormulaVersionsVisible" class="rounded-xl border border-emerald-200 bg-white/80 p-3 dark:border-emerald-900 dark:bg-slate-900/60">
                     <div class="mb-2 flex items-center justify-between gap-3">
-                      <h5 class="text-xs font-black text-emerald-800 dark:text-emerald-200">公式版本紀錄</h5>
+                      <h5 class="text-xs font-black text-emerald-800 dark:text-emerald-200">{{ t('spc.ppc.formulaVersionHistory') }}</h5>
                       <button
                         type="button"
                         @click="chemicalFormulaVersionsVisible = false"
                         class="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                       >
-                        收合
+                        {{ t('spc.ppc.collapse') }}
                       </button>
                     </div>
                     <VersionHistoryRange :reset-key="currentId" :loading="chemicalFormulaVersionsLoading" :has-more="chemicalHistoryMore" @change="loadChemicalFormulaVersions" />
-                    <div v-if="chemicalFormulaVersionsLoading" class="py-3 text-xs font-semibold text-slate-500">載入版本紀錄中...</div>
+                    <div v-if="chemicalFormulaVersionsLoading" class="py-3 text-xs font-semibold text-slate-500">{{ t('spc.ppc.loadingFormulaVersions') }}</div>
                     <div v-else-if="chemicalFormulaVersionsErr" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
                       {{ chemicalFormulaVersionsErr }}
                     </div>
                     <div v-else-if="chemicalFormulaVersions.length === 0" class="py-3 text-xs font-semibold text-slate-500">
-                      此修改日期區間沒有公式版本紀錄；首次修改儲存後開始記錄。
+                      {{ t('spc.ppc.noFormulaVersionsInThisModificationDateRangeHistoryBeginsWithTheFirstSavedChange') }}
                     </div>
                     <div v-else class="max-h-52 space-y-2 overflow-y-auto pr-1">
                       <div
@@ -2050,21 +2062,21 @@ onBeforeUnmount(() => {
                         class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-950/50"
                       >
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                          <span class="font-black text-slate-800 dark:text-slate-100">v{{ version.versionNo }}｜{{ version.changeType === 'Restore' ? '回復' : '修改' }}</span>
+                          <span class="font-black text-slate-800 dark:text-slate-100">v{{ version.versionNo }}｜{{ version.changeType === 'Restore' ? t('spc.ppc.restore') : t('spc.ppc.change') }}</span>
                           <div class="flex items-center gap-2">
                             <span class="font-semibold text-slate-400">{{ formatFormulaVersionDate(version.changedAt) }}</span>
                             <button
                               type="button"
-                              @click="restoreChemicalFormulaVersion(version)"
+                              data-testid="ppc-restore-formula" @click="restoreChemicalFormulaVersion(version)"
                               :disabled="restoringChemicalFormulaVersionId === version.id"
                               class="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
                             >
-                              {{ restoringChemicalFormulaVersionId === version.id ? '回復中' : '回復此版' }}
+                              {{ restoringChemicalFormulaVersionId === version.id ? t('spc.ppc.restoring') : t('spc.ppc.restoreThisVersion') }}
                             </button>
                           </div>
                         </div>
                         <div class="mt-1 text-slate-500 dark:text-slate-400">
-                          {{ version.changedBy || 'System' }}<span class="block whitespace-pre-wrap break-all">參照文件／修改依據：{{ version.reason || '未填寫' }}</span>
+                          {{ version.changedBy || 'System' }}<span class="block whitespace-pre-wrap break-all">{{ t('spc.ppc.referenceDocumentReasonLabel') }}{{ version.reason || t('spc.ppc.notProvided') }}</span>
                         </div>
                         <div class="mt-1 truncate font-mono text-[11px] text-emerald-700 dark:text-emerald-300" :title="formulaVersionSummary(version)">
                           {{ formulaVersionSummary(version) }}
@@ -2074,32 +2086,32 @@ onBeforeUnmount(() => {
                   </div>
                   <div v-if="form.chemicalAnalysis.enabled" class="space-y-3">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <label class="text-xs font-bold text-slate-600">版本<input v-model="form.chemicalAnalysis.version" class="mt-1 w-full px-3 py-2 rounded-lg border"></label>
-                      <label class="text-xs font-bold text-slate-600">主要輸入名稱<input v-model="form.chemicalAnalysis.primaryInputLabel" class="mt-1 w-full px-3 py-2 rounded-lg border" placeholder="滴定值"></label>
-                      <label class="text-xs font-bold text-slate-600">第二輸入名稱（選填）<input v-model="form.chemicalAnalysis.secondaryInputLabel" class="mt-1 w-full px-3 py-2 rounded-lg border" placeholder="留空代表不使用"></label>
+                      <label class="text-xs font-bold text-slate-600">{{ t('spc.ppc.version') }}<input data-testid="ppc-form.chemicalAnalysis.version" v-model="form.chemicalAnalysis.version" class="mt-1 w-full px-3 py-2 rounded-lg border"></label>
+                      <label class="text-xs font-bold text-slate-600">{{ t('spc.ppc.primaryInputLabel') }}<input data-testid="ppc-form.chemicalAnalysis.primaryInputLabel" v-model="form.chemicalAnalysis.primaryInputLabel" class="mt-1 w-full px-3 py-2 rounded-lg border" :placeholder="t('spc.ppc.titrationValue')"></label>
+                      <label class="text-xs font-bold text-slate-600">{{ t('spc.ppc.secondaryInputLabelOptional') }}<input data-testid="ppc-form.chemicalAnalysis.secondaryInputLabel" v-model="form.chemicalAnalysis.secondaryInputLabel" class="mt-1 w-full px-3 py-2 rounded-lg border" :placeholder="t('spc.ppc.leaveBlankIfUnused')"></label>
                     </div>
-                    <label class="block text-xs font-bold text-slate-600">濃度公式 *<input v-model="form.chemicalAnalysis.concentrationFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" placeholder="例如 Primary * 24.5 * 0.995"></label>
-                    <label class="block text-xs font-bold text-slate-600">調整公式（選填）<input v-model="form.chemicalAnalysis.adjustmentFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" placeholder='例如 IF(Concentration&lt;LSL,"添加",IF(Concentration&gt;USL,"稀釋",""))'></label>
-                    <label class="block text-xs font-bold text-slate-600">調整量公式（選填）<input v-model="form.chemicalAnalysis.adjustmentAmountFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" placeholder='例如 IF(Concentration&lt;LSL,ROUND((Target-Concentration)*10,1)&" L","")'></label>
-                    <label class="block text-xs font-bold text-slate-600">濃度小數位<input v-model.number="form.chemicalAnalysis.decimalPlaces" type="number" min="0" max="8" class="mt-1 w-28 px-3 py-2 rounded-lg border"></label>
-                    <p class="text-[11px] text-slate-500">支援 +、-、*、/、括號、IF、IFERROR、ROUND；公式由受限解析器執行，不會執行程式碼。</p>
+                    <label class="block text-xs font-bold text-slate-600">{{ t('spc.ppc.concentrationFormula') }}<input data-testid="ppc-form.chemicalAnalysis.concentrationFormula" v-model="form.chemicalAnalysis.concentrationFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" :placeholder="t('spc.ppc.forExamplePrimary2450995')"></label>
+                    <label class="block text-xs font-bold text-slate-600">{{ t('spc.ppc.adjustmentFormulaOptional') }}<input data-testid="ppc-form.chemicalAnalysis.adjustmentFormula" v-model="form.chemicalAnalysis.adjustmentFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" :placeholder="t('spc.ppc.formulaExample', { formula: &quot;IF(Concentration&lt;LSL,\&quot;添加\&quot;,IF(Concentration>USL,\&quot;稀釋\&quot;,\&quot;\&quot;))&quot; })"></label>
+                    <label class="block text-xs font-bold text-slate-600">{{ t('spc.ppc.adjustmentAmountFormulaOptional') }}<input data-testid="ppc-form.chemicalAnalysis.adjustmentAmountFormula" v-model="form.chemicalAnalysis.adjustmentAmountFormula" class="mt-1 w-full px-3 py-2 rounded-lg border font-mono" :placeholder="t('spc.ppc.formulaExample', { formula: &quot;IF(Concentration&lt;LSL,ROUND((Target-Concentration)*10,1)&amp;\&quot; L\&quot;,\&quot;\&quot;)&quot; })"></label>
+                    <label class="block text-xs font-bold text-slate-600">{{ t('spc.ppc.concentrationDecimalPlaces') }}<input data-testid="ppc-form.chemicalAnalysis.decimalPlaces" v-model.number="form.chemicalAnalysis.decimalPlaces" type="number" min="0" max="8" class="mt-1 w-28 px-3 py-2 rounded-lg border"></label>
+                    <p class="text-[11px] text-slate-500">{{ t('spc.ppc.supportsParenthesesIFIFERRORAndROUNDFormulasUseARestrictedParserAndDoNotExecuteCode') }}</p>
                   </div>
                 </div>
 
                 <div v-if="currentStep === 5 && form.displayMode === 'CONTROL_CHART'" class="p-4 space-y-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/15 border border-indigo-200 dark:border-indigo-900/70">
                   <div>
                     <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
-                      <Code2 class="w-4 h-4" /> 管制線計算公式
+                      <Code2 class="w-4 h-4" /> {{ t('spc.ppc.controlLimitFormulas') }}
                     </h4>
                     <p class="mt-1 text-[11px] text-indigo-700/70 dark:text-indigo-300/70">
-                      用於計算 SPC 管制線 UCL／CL／LCL，不是常態檢定方法；設定只影響目前這一個管制項目。
+                      {{ t('spc.ppc.calculatesSPCControlLimitsUCLCLLCLThisIsSeparateFromNormalityAnalysisAndAffectsOnlyThisItem') }}
                     </p>
                   </div>
 
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <button
                       v-for="option in formulaOptions"
-                      :key="option.label"
+                      :key="option.id"
                       type="button"
                       @click="form.formulaConfigJson = option.id"
                       class="p-3 rounded-xl border text-left transition-all"
@@ -2107,24 +2119,24 @@ onBeforeUnmount(() => {
                         ? 'bg-white dark:bg-slate-900 border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm'
                         : 'bg-indigo-50/40 dark:bg-slate-900/40 border-indigo-100 dark:border-slate-800 hover:border-indigo-300'"
                     >
-                      <span class="block text-xs font-black text-slate-800 dark:text-slate-100">{{ option.label }}</span>
+                      <span class="block text-xs font-black text-slate-800 dark:text-slate-100">{{ t(formulaOptionKeys[option.label]) }}</span>
                       <span class="block mt-1 text-[10px] text-slate-400">
-                        {{ option.id ? '套用後可在下方調整內容' : '由所選管制圖類型使用標準常數計算' }}
+                        {{ option.id ? t('spc.ppc.applyThenEditTheContentBelow') : t('spc.ppc.usesStandardConstantsForTheSelectedChartType') }}
                       </span>
                     </button>
                   </div>
 
                   <div class="space-y-1.5">
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">管制線計算公式 JSON</label>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.ppc.controlLimitFormulaJSON') }}</label>
                     <textarea
-                      v-model="form.formulaConfigJson"
+                      data-testid="ppc-form.formulaConfigJson" v-model="form.formulaConfigJson"
                       rows="7"
                       spellcheck="false"
-                      placeholder="留空代表使用系統標準管制線公式；也可貼入自訂管制線公式 JSON"
+                      :placeholder="t('spc.ppc.leaveBlankForStandardControlLimitFormulasOrPasteCustomControlLimitFormulaJSON')"
                       class="w-full px-4 py-3 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl font-mono text-xs leading-5 text-green-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
                     ></textarea>
                     <p class="text-[11px] text-slate-400">
-                      留空使用系統標準管制線公式；既有自訂管制線公式會完整帶入此欄位，可直接修改。常態檢定方法請在圖表查詢畫面切換。
+                      {{ t('spc.ppc.leaveBlankForStandardControlLimitFormulasExistingCustomJSONIsPreservedAndCanBeEditedHereNormalityAna') }}
                     </p>
                   </div>
                 </div>
@@ -2133,10 +2145,10 @@ onBeforeUnmount(() => {
                 <div v-if="currentStep === 3 && form.displayMode === 'CONTROL_CHART'" class="p-4 bg-amber-50/60 dark:bg-amber-950/15 rounded-2xl border border-amber-200 dark:border-amber-900/70 space-y-3">
                   <div>
                     <h4 class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-2">
-                      <AlertTriangle class="w-4 h-4" /> 管制規則
+                      <AlertTriangle class="w-4 h-4" /> {{ t('spc.ppc.controlRules') }}
                     </h4>
                     <p class="text-[11px] text-amber-700/70 dark:text-amber-300/70 mt-1">
-                      全部管制項目固定使用 WE 八大規則。
+                      {{ t('spc.ppc.allControlItemsUseTheEightWERules') }}
                     </p>
                   </div>
                   <div v-if="ruleLibrary.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2149,7 +2161,7 @@ onBeforeUnmount(() => {
                         : 'bg-amber-50/40 dark:bg-slate-900/40 border-amber-100 dark:border-slate-800 hover:border-amber-300'"
                     >
                       <input
-                        v-model="form.selectedRuleCodes"
+                        data-testid="ppc-form.selectedRuleCodes" v-model="form.selectedRuleCodes"
                         type="checkbox"
                         :value="rule.ruleCode"
                         disabled
@@ -2157,11 +2169,11 @@ onBeforeUnmount(() => {
                       />
                       <span class="min-w-0">
                         <span class="block text-xs font-black text-slate-800 dark:text-slate-100">{{ rule.ruleName }}</span>
-                        <span class="block text-[10px] text-slate-400 mt-0.5">優先序 {{ rule.priority }}</span>
+                        <span class="block text-[10px] text-slate-400 mt-0.5">{{ t('spc.ppc.priority') }} {{ rule.priority }}</span>
                       </span>
                     </label>
                   </div>
-                  <p v-else class="text-xs text-slate-400 italic">尚未建立可選擇的管制規則。</p>
+                  <p v-else class="text-xs text-slate-400 italic">{{ t('spc.ppc.noControlRulesAreAvailable') }}</p>
                 </div>
               </div>
             </div>
@@ -2173,7 +2185,7 @@ onBeforeUnmount(() => {
                 type="button"
                 class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all"
               >
-                取消
+                {{ t('spc.ppc.cancel') }}
               </button>
             </div>
             <div>
@@ -2182,7 +2194,7 @@ onBeforeUnmount(() => {
                 :disabled="loading"
                 class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-bold shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all transform hover:-translate-y-0.5"
               >
-                <Save class="w-4 h-4" /> 確認儲存
+                <Save class="w-4 h-4" /> {{ t('spc.ppc.saveChanges') }}
               </button>
             </div>
           </div>
@@ -2202,7 +2214,7 @@ onBeforeUnmount(() => {
     >
       <div v-if="showSegmentModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
         <div class="absolute inset-0 cursor-pointer" @click="showSegmentModal = false"></div>
-        <div class="relative w-full max-w-5xl h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+        <div role="dialog" data-testid="segment-dialog" class="relative w-full max-w-5xl h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
           
           <!-- Header -->
           <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
@@ -2212,7 +2224,7 @@ onBeforeUnmount(() => {
               </div>
               <div>
                 <h3 class="text-lg font-black text-slate-800 dark:text-white">
-                  分段管制線與界線試算
+                  {{ t('spc.ppc.limitSegmentsAndHistoricalCalculation') }}
                 </h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" v-if="selectedPpc">
                   {{ selectedPpc.process?.processName }} - {{ selectedPpc.characteristic?.characteristicName }}
@@ -2220,7 +2232,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <button
-              @click="showSegmentModal = false"
+              :aria-label="t('common.actions.close')" @click="showSegmentModal = false"
               type="button"
               class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all"
             >
@@ -2228,6 +2240,7 @@ onBeforeUnmount(() => {
             </button>
           </div>
 
+          <div class="px-6 py-2 shrink-0"><LocalePicker /></div>
           <!-- Body -->
           <div class="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row">
             
@@ -2236,10 +2249,10 @@ onBeforeUnmount(() => {
               <SpecificationLimitHistory v-if="selectedPpc" :key="`${selectedPpc.id}-${specHistoryRevision}`" :ppc-id="selectedPpc.id" />
               <div>
                 <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2">
-                  <Activity class="w-4 h-4 text-amber-500" /> 管制界線試算工具
+                  <Activity class="w-4 h-4 text-amber-500" /> {{ t('spc.ppc.historicalControlLimitCalculation') }}
                 </h4>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-                  選擇特定日期範圍內的歷史量測數據來試算統計學上的管制上限(UCL)、中心線(CL)及管制下限(LCL)。
+                  {{ t('spc.ppc.calculateStatisticalUCLCLAndLCLFromHistoricalMeasurementsInASelectedDateRange') }}
                 </p>
               </div>
 
@@ -2247,17 +2260,17 @@ onBeforeUnmount(() => {
               <div class="p-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 rounded-2xl space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                   <div class="space-y-1">
-                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">試算起日</label>
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.calculationStartDate') }}</label>
                     <input
-                      v-model="trialForm.startDate"
+                      data-testid="ppc-trialForm.startDate" v-model="trialForm.startDate"
                       type="date"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
                     />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">試算迄日</label>
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.calculationEndDate') }}</label>
                     <input
-                      v-model="trialForm.endDate"
+                      data-testid="ppc-trialForm.endDate" v-model="trialForm.endDate"
                       type="date"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
                     />
@@ -2266,24 +2279,24 @@ onBeforeUnmount(() => {
 
                 <button
                   type="button"
-                  @click="runTrialCalculate"
+                  data-testid="ppc-trial" @click="runTrialCalculate"
                   :disabled="trialLoading"
                   class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold shadow-md shadow-amber-500/25 transition-all"
                 >
                   <RefreshCw :class="['w-4 h-4', trialLoading ? 'animate-spin' : '']" />
-                  {{ trialLoading ? '試算中...' : '開始歷史數據試算' }}
+                  {{ trialLoading ? t('spc.ppc.calculating') : t('spc.ppc.calculateFromHistoricalData') }}
                 </button>
               </div>
 
               <!-- Trial Result Display -->
               <div v-if="trialErr" class="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-2xl text-xs text-red-600 dark:text-red-400">
-                試算錯誤：{{ trialErr }}
+                {{ t('spc.ppc.calculationError') }}{{ trialErr }}
               </div>
 
               <div v-if="trialResult" class="p-5 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl space-y-4 shadow-sm">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-700 dark:text-slate-300">試算統計結果</span>
-                  <span class="text-[10px] bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded text-slate-500 font-bold">量測點數: {{ trialResult.sampleCount }} 點</span>
+                  <span class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ t('spc.ppc.calculatedStatistics') }}</span>
+                  <span class="text-[10px] bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded text-slate-500 font-bold">{{ t('spc.ppc.measurementCount') }} {{ trialResult.sampleCount }} {{ t('spc.ppc.points') }}</span>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3 text-center">
@@ -2292,7 +2305,7 @@ onBeforeUnmount(() => {
                     <div class="text-sm font-mono font-bold text-slate-800 dark:text-slate-200 mt-0.5">{{ formatNumber(trialResult.ucl, 4) }}</div>
                   </div>
                   <div class="p-2 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/50 rounded-xl">
-                    <div class="text-[10px] text-amber-600 dark:text-amber-500">CL (中心線)</div>
+                    <div class="text-[10px] text-amber-600 dark:text-amber-500">{{ t('spc.ppc.clCenterLine') }}</div>
                     <div class="text-sm font-mono font-bold text-amber-800 dark:text-amber-300 mt-0.5">{{ formatNumber(trialResult.cl, 4) }}</div>
                   </div>
                   <div class="p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
@@ -2308,10 +2321,10 @@ onBeforeUnmount(() => {
                 <div class="flex gap-2">
                   <button
                     type="button"
-                    @click="applyTrialResultToSegment"
+                    data-testid="ppc-copy-trial" @click="applyTrialResultToSegment"
                     class="flex-1 px-3 py-2 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-bold transition-all hover:bg-purple-100"
                   >
-                    帶入右側分段表單
+                    {{ t('spc.ppc.copyToTheLimitSegmentForm') }}
                   </button>
                 </div>
               </div>
@@ -2321,34 +2334,34 @@ onBeforeUnmount(() => {
             <div class="w-full md:w-1/2 p-6 md:overflow-y-auto space-y-6 shrink-0 md:shrink">
               <div>
                 <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-2">
-                  <Sliders class="w-4 h-4 text-purple-500" /> 分段管制界線設定
+                  <Sliders class="w-4 h-4 text-purple-500" /> {{ t('spc.ppc.controlLimitSegmentSettings') }}
                 </h4>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-                  定義不同時間區間的規格與管制界線，系統會根據量測時間自動套用對應區間的 USL/Target/LSL 與 UCL/CL/LCL。
+                  {{ t('spc.ppc.defineSpecificationAndControlLimitsForDatePeriodsMeasurementTimeDeterminesWhichUSLTargetLSLAndUCLCLL') }}
                 </p>
               </div>
 
               <!-- Segment Add/Edit Form -->
               <form @submit.prevent="saveSegment" class="p-4 bg-purple-50/20 dark:bg-purple-950/10 border border-purple-100 dark:border-purple-900/50 rounded-2xl space-y-4">
                 <div v-if="segmentFormErr" class="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl text-xs text-red-600 dark:text-red-400">
-                  儲存失敗：{{ segmentFormErr }}
+                  {{ t('spc.ppc.saveFailed') }}{{ segmentFormErr }}
                 </div>
 
                 <!-- Date range -->
                 <div class="grid grid-cols-2 gap-4">
                   <div class="space-y-1">
-                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">生效起日 <span class="text-red-500">*</span></label>
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.effectiveStartDate') }} <span class="text-red-500">*</span></label>
                     <input
-                      v-model="segmentForm.startDate"
+                      data-testid="ppc-segmentForm.startDate" v-model="segmentForm.startDate"
                       type="date"
                       required
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
                     />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">失效止日 (選填，留空表無限期)</label>
+                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.effectiveEndDateOptionalBlankMeansNoExpiry') }}</label>
                     <input
-                      v-model="segmentForm.endDate"
+                      data-testid="ppc-segmentForm.endDate" v-model="segmentForm.endDate"
                       type="date"
                       class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
                     />
@@ -2359,40 +2372,40 @@ onBeforeUnmount(() => {
                 <div class="grid grid-cols-3 gap-3">
                   <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">USL</label>
-                    <input v-model="segmentForm.usl" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                    <input data-testid="ppc-segmentForm.usl" v-model="segmentForm.usl" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Target</label>
-                    <input v-model="segmentForm.targetValue" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                    <input data-testid="ppc-segmentForm.targetValue" v-model="segmentForm.targetValue" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">LSL</label>
-                    <input v-model="segmentForm.lsl" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                    <input data-testid="ppc-segmentForm.lsl" v-model="segmentForm.lsl" type="number" step="any" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
                   </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3">
                   <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">UCL <span class="text-red-500">*</span></label>
-                    <input v-model="segmentForm.ucl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                    <input data-testid="ppc-segmentForm.ucl" v-model="segmentForm.ucl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">CL <span class="text-red-500">*</span></label>
-                    <input v-model="segmentForm.cl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                    <input data-testid="ppc-segmentForm.cl" v-model="segmentForm.cl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">LCL <span class="text-red-500">*</span></label>
-                    <input v-model="segmentForm.lcl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
+                    <input data-testid="ppc-segmentForm.lcl" v-model="segmentForm.lcl" type="number" step="any" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-700 dark:text-white" />
                   </div>
                 </div>
 
                 <!-- Note -->
                 <div class="space-y-1">
-                  <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">說明備註</label>
+                  <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.ppc.notes') }}</label>
                   <input
-                    v-model="segmentForm.note"
+                    data-testid="ppc-segmentForm.note" v-model="segmentForm.note"
                     type="text"
-                    placeholder="例如：例行調整、換液、設備大修等..."
+                    :placeholder="t('spc.ppc.forExampleRoutineAdjustmentBathReplacementOrEquipmentOverhaul')"
                     class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white"
                   />
                 </div>
@@ -2404,42 +2417,42 @@ onBeforeUnmount(() => {
                     @click="resetSegmentForm"
                     class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-bold"
                   >
-                    取消編輯
+                    {{ t('spc.ppc.cancelEditing') }}
                   </button>
                   <button
                     type="submit"
                     class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold"
                   >
-                    {{ isEditingSegment ? '儲存更新' : '新增分段' }}
+                    {{ isEditingSegment ? t('spc.ppc.saveUpdate') : t('spc.ppc.addSegment') }}
                   </button>
                 </div>
               </form>
 
               <!-- Segments List -->
               <div class="space-y-3">
-                <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider">已設定的分段管制界線</h5>
+                <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider">{{ t('spc.ppc.configuredControlLimitSegments') }}</h5>
 
-                <div v-if="loadingSegments" class="text-center text-xs text-slate-400 py-6">載入分段設定中...</div>
+                <div v-if="loadingSegments" class="text-center text-xs text-slate-400 py-6">{{ t('spc.ppc.loadingLimitSegments') }}</div>
                 <div v-else-if="segments.length === 0" class="text-center text-xs text-slate-400 py-6 italic bg-slate-50 dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800 rounded-2xl">
-                  目前無設定任何分段管制界線，系統將採用全局預設管制界線。
+                  {{ t('spc.ppc.noLimitSegmentsAreConfiguredGlobalDefaultControlLimitsApply') }}
                 </div>
 
                 <div v-else class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm bg-white dark:bg-slate-900">
                   <table class="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr class="bg-slate-50 dark:bg-slate-800 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
-                        <th class="py-2.5 px-4">生效日期區間</th>
+                        <th class="py-2.5 px-4">{{ t('spc.ppc.effectiveDateRange') }}</th>
                         <th class="py-2.5 px-4">USL/Target/LSL</th>
                         <th class="py-2.5 px-4">UCL/CL/LCL</th>
-                        <th class="py-2.5 px-4">備註說明</th>
-                        <th class="py-2.5 px-4 text-right">操作</th>
+                        <th class="py-2.5 px-4">{{ t('spc.ppc.segmentNotes') }}</th>
+                        <th class="py-2.5 px-4 text-right">{{ t('spc.ppc.actions') }}</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300 font-mono">
                       <tr v-for="seg in segments" :key="seg.id" class="hover:bg-purple-50/20 dark:hover:bg-slate-800/40">
                         <td class="py-3 px-4 font-sans font-semibold">
                           <div>{{ seg.startDate?.split('T')[0] }}</div>
-                          <div class="text-[10px] text-slate-400 mt-0.5">至 {{ seg.endDate ? seg.endDate.split('T')[0] : '永久' }}</div>
+                          <div class="text-[10px] text-slate-400 mt-0.5">{{ t('spc.ppc.to') }} {{ seg.endDate ? seg.endDate.split('T')[0] : t('spc.ppc.noExpiry') }}</div>
                         </td>
                         <td class="py-3 px-4">
                           <div>USL: {{ formatNumber(seg.usl, 3) }}</div>
@@ -2457,17 +2470,17 @@ onBeforeUnmount(() => {
                         <td class="py-3 px-4 text-right space-x-1.5 font-sans">
                           <button
                             type="button"
-                            @click="editSegment(seg)"
+                            data-testid="ppc-edit-segment" @click="editSegment(seg)"
                             class="text-blue-500 hover:text-blue-400 font-bold"
                           >
-                            編輯
+                            {{ t('spc.ppc.edit') }}
                           </button>
                           <button
                             type="button"
-                            @click="deleteSegment(seg)"
+                            data-testid="ppc-delete-segment" @click="deleteSegment(seg)"
                             class="text-red-500 hover:text-red-400 font-bold"
                           >
-                            刪除
+                            {{ t('spc.ppc.delete') }}
                           </button>
                         </td>
                       </tr>
@@ -2482,11 +2495,11 @@ onBeforeUnmount(() => {
           <!-- Footer -->
           <div class="shrink-0 p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end">
             <button
-              @click="showSegmentModal = false"
+              :aria-label="t('common.actions.close')" @click="showSegmentModal = false"
               type="button"
               class="px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-bold transition-all"
             >
-              關閉視窗
+              {{ t('spc.ppc.closeWindow') }}
             </button>
           </div>
 

@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
+import { displayUiMessage } from '../i18n/uiMessage';
+const { t } = useI18n({ useScope: 'global' });
+const messageText = value => displayUiMessage(t, value);
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { api, getApiErrorMessage } from '../api/client';
 import { getCurrentUser } from '../utils/auth';
@@ -33,12 +37,12 @@ watch(() => props.ppcId, load, { immediate: true });
 watch([measuredAt, primary, secondary], () => result.value = null);
 function add() { periods.value.push({ formulaVersionId: versions.value[0]?.id || null, fTableHistoryId: null, fromDate: '', toDate: '' }); }
 async function publish() {
-  if (!periods.value.length || !reason.value.trim()) { error.value = '請新增期間並填寫發布依據。'; return; }
-  if (periods.value.some(p => !p.fromDate || !p.formulaVersionId || (p.toDate && p.fromDate > p.toDate))) { error.value = '請選版本與有效起迄日，起日不可晚於迄日。'; return; }
+  if (!periods.value.length || !reason.value.trim()) { error.value = { key: "spc.schedule.addAnEffectivePeriodAndEnterAPublicationReason" }; return; }
+  if (periods.value.some(p => !p.fromDate || !p.formulaVersionId || (p.toDate && p.fromDate > p.toDate))) { error.value = { key: "spc.schedule.selectAVersionAndEffectiveDatesStartDateMustNotBeLaterThanEndDate" }; return; }
   busy.value = true; error.value = ''; result.value = null; const request = generation;
   try {
     await api.post(url(), { baseRevisionId: revision.value, reason: reason.value, periods: periods.value.map(p => ({ ...p, toDate: p.toDate || null })) });
-    if (request === generation) { await load(); message.value = '排程發布成功；尚未切換既有量測寫入。'; }
+    if (request === generation) { await load(); message.value = { key: "spc.schedule.schedulePublishedExistingMeasurementWritesHaveNotBeenSwitched" }; }
   } catch (e) { if (request === generation) error.value = getApiErrorMessage(e); }
   finally { if (request === generation) busy.value = false; }
 }
@@ -52,52 +56,52 @@ async function preview() {
 }
 </script>
 <template>
-  <section aria-label="公式生效排程" class="rounded-xl border border-emerald-300 p-3 space-y-3 dark:border-emerald-800 dark:text-slate-100" @keydown.enter.prevent>
-    <h3 class="font-bold">公式生效排程（台北日期）</h3>
-    <p class="text-xs">沿用已儲存的公式版本；若剛修改公式，請先儲存再重新開啟。發布會取代整份排程，已發行憑證時點的公式／F快照須保留，可設定未使用日期的未來版本。</p>
-    <p class="text-xs text-amber-700 dark:text-amber-300">{{ message }} 日期空缺不會套用最新版本；迄日包含當天，空白代表無期限。</p>
-    <p v-if="error" role="alert" class="text-red-700 dark:text-red-300">{{ error }}</p>
-    <button type="button" :disabled="busy" @click="load" class="underline disabled:opacity-50">重新載入排程</button>
-    <p v-if="busy" role="status">處理中…</p>
+  <section :aria-label="t('spc.schedule.formulaEffectiveSchedule')" class="rounded-xl border border-emerald-300 p-3 space-y-3 dark:border-emerald-800 dark:text-slate-100" @keydown.enter.prevent>
+    <h3 class="font-bold">{{ t('spc.schedule.formulaEffectiveScheduleTaipeiDates') }}</h3>
+    <p class="text-xs">{{ t('spc.schedule.usesSavedFormulaVersionsSaveFormulaChangesAndReopenFirstPublishingReplacesTheEntireScheduleFormulaAn') }}</p>
+    <p class="text-xs text-amber-700 dark:text-amber-300">{{ messageText(message) }} {{ t('spc.schedule.dateGapsDoNotUseTheLatestVersionTheEndDateIsInclusiveBlankMeansNoExpiry') }}</p>
+    <p v-if="error" role="alert" class="text-red-700 dark:text-red-300">{{ messageText(error) }}</p>
+    <button type="button" :disabled="busy" data-testid="schedule-reload" @click="load" class="underline disabled:opacity-50">{{ t('spc.schedule.reloadSchedule') }}</button>
+    <p v-if="busy" role="status">{{ t('spc.schedule.processing') }}</p>
     <template v-if="loaded">
-      <p>目前排程修訂：{{ revision ?? '尚未發布' }}</p>
-      <p v-for="gap in gaps" :key="gap.fromUtc" class="text-amber-700 dark:text-amber-300">空缺日期：{{ taipeiDay(gap.fromUtc) }} 至 {{ taipeiDay(gap.untilUtc, true) }}，此期間無適用公式。</p>
+      <p>{{ t('spc.schedule.currentScheduleRevision') }}{{ revision ?? t('spc.schedule.notPublished') }}</p>
+      <p v-for="gap in gaps" :key="gap.fromUtc" class="text-amber-700 dark:text-amber-300">{{ t('spc.schedule.gap', { from: taipeiDay(gap.fromUtc), to: taipeiDay(gap.untilUtc, true) }) }}</p>
       <fieldset v-for="(p, index) in periods" :key="index" :disabled="busy || !canPublish" class="grid gap-2 md:grid-cols-2 rounded border p-2 dark:border-slate-700 disabled:opacity-60">
-        <label>公式版本
-          <select v-model="p.formulaVersionId" :aria-label="`期間${index + 1}公式版本`" class="w-full rounded border bg-white p-1 dark:bg-slate-900 dark:border-slate-600">
-            <option v-if="p.formulaVersionId && !versions.some(v => v.id === p.formulaVersionId)" :value="p.formulaVersionId">既有版本 ID {{ p.formulaVersionId }}</option>
-            <option v-for="v in versions" :key="v.id" :value="v.id">v{{ v.versionNo }} · {{ v.reason || '未填參照文件' }}</option>
+        <label>{{ t('spc.schedule.formulaVersion') }}
+          <select data-testid="schedule-p.formulaVersionId" v-model="p.formulaVersionId" :aria-label="t('spc.schedule.versionAria', { index: index + 1 })" class="w-full rounded border bg-white p-1 dark:bg-slate-900 dark:border-slate-600">
+            <option v-if="p.formulaVersionId && !versions.some(v => v.id === p.formulaVersionId)" :value="p.formulaVersionId">{{ t('spc.schedule.existingVersion', { id: p.formulaVersionId }) }}</option>
+            <option v-for="v in versions" :key="v.id" :value="v.id">v{{ v.versionNo }} · {{ v.reason || t('spc.schedule.noReferenceDocument') }}</option>
           </select>
         </label>
-        <label>F表歷史快照
-          <select v-model="p.fTableHistoryId" :aria-label="`期間${index + 1}F快照`" class="w-full rounded border bg-white p-1 dark:bg-slate-900 dark:border-slate-600">
-            <option :value="null">不使用F表</option>
-            <option v-if="p.fTableHistoryId && !fVersions.some(v => v.id === p.fTableHistoryId)" :value="p.fTableHistoryId">既有快照 ID {{ p.fTableHistoryId }}</option>
-            <option v-for="f in fVersions" :key="f.id" :value="f.id">{{ f.versionCode }} · 歷史v{{ f.versionNo }}</option>
+        <label>{{ t('spc.schedule.fTableHistorySnapshot') }}
+          <select data-testid="schedule-p.fTableHistoryId" v-model="p.fTableHistoryId" :aria-label="t('spc.schedule.snapshotAria', { index: index + 1 })" class="w-full rounded border bg-white p-1 dark:bg-slate-900 dark:border-slate-600">
+            <option :value="null">{{ t('spc.schedule.doNotUseAnFTable') }}</option>
+            <option v-if="p.fTableHistoryId && !fVersions.some(v => v.id === p.fTableHistoryId)" :value="p.fTableHistoryId">{{ t('spc.schedule.existingSnapshot', { id: p.fTableHistoryId }) }}</option>
+            <option v-for="f in fVersions" :key="f.id" :value="f.id">{{ f.versionCode }} · {{ t('spc.schedule.historyVersion', { version: f.versionNo }) }}</option>
           </select>
         </label>
-        <label>生效起日<input v-model="p.fromDate" type="date" :aria-label="`期間${index + 1}起日`" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
-        <label>生效迄日（含）<input v-model="p.toDate" type="date" :aria-label="`期間${index + 1}迄日`" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
-        <button v-if="canPublish" type="button" @click="periods.splice(index, 1)" class="text-red-600 dark:text-red-300">移除期間 {{ index + 1 }}</button>
+        <label>{{ t('spc.schedule.effectiveStartDate') }}<input data-testid="schedule-p.fromDate" v-model="p.fromDate" type="date" :aria-label="t('spc.schedule.fromAria', { index: index + 1 })" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
+        <label>{{ t('spc.schedule.effectiveEndDateInclusive') }}<input data-testid="schedule-p.toDate" v-model="p.toDate" type="date" :aria-label="t('spc.schedule.toAria', { index: index + 1 })" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
+        <button v-if="canPublish" type="button" @click="periods.splice(index, 1)" class="text-red-600 dark:text-red-300">{{ t('spc.schedule.removePeriod', { index: index + 1 }) }}</button>
       </fieldset>
-      <p v-if="!periods.length">尚無適用期間；所有日期皆無可選版本。</p>
-      <p class="text-xs">版本選項顯示最近100筆；已排程的較舊版本仍保留。F歷史為空時，須先在F表維護留下版本歷史。</p>
+      <p v-if="!periods.length">{{ t('spc.schedule.noEffectivePeriodsNoVersionIsAvailableForAnyDate') }}</p>
+      <p class="text-xs">{{ t('spc.schedule.optionsShowTheLatest100VersionsOlderScheduledVersionsAreRetainedIfFHistoryIsEmptyCreateVersionHistor') }}</p>
       <template v-if="canPublish">
-        <button type="button" :disabled="busy" @click="add" class="underline disabled:opacity-50">新增生效期間</button>
-        <label class="block">發布依據<input v-model="reason" maxlength="500" :disabled="busy" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
-        <button type="button" :disabled="busy" @click="publish" class="rounded bg-emerald-700 px-3 py-2 text-white disabled:opacity-50">發布公式排程</button>
+        <button type="button" :disabled="busy" data-testid="schedule-add" @click="add" class="underline disabled:opacity-50">{{ t('spc.schedule.addEffectivePeriod') }}</button>
+        <label class="block">{{ t('spc.schedule.publicationReason') }}<input data-testid="schedule-reason" v-model="reason" maxlength="500" :disabled="busy" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
+        <button type="button" :disabled="busy" data-testid="schedule-publish" @click="publish" class="rounded bg-emerald-700 px-3 py-2 text-white disabled:opacity-50">{{ t('spc.schedule.publishFormulaSchedule') }}</button>
       </template>
-      <h4 class="font-semibold">依日期試算（不儲存量測）</h4>
+      <h4 class="font-semibold">{{ t('spc.schedule.calculateByDateWithoutSavingMeasurements') }}</h4>
       <div class="grid gap-2 md:grid-cols-2">
-        <label>量測時間（含時區）<input v-model="measuredAt" :disabled="busy" placeholder="2026-11-01T00:00:00+08:00" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
-        <label>Primary原始值<input v-model="primary" :disabled="busy" inputmode="decimal" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
-        <label>Secondary原始值<input v-model="secondary" :disabled="busy" inputmode="decimal" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
+        <label>{{ t('spc.schedule.measurementTimeWithTimeZone') }}<input data-testid="schedule-measuredAt" v-model="measuredAt" :disabled="busy" placeholder="2026-11-01T00:00:00+08:00" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
+        <label>{{ t('spc.schedule.primaryRawValue') }}<input data-testid="schedule-primary" v-model="primary" :disabled="busy" inputmode="decimal" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
+        <label>{{ t('spc.schedule.secondaryRawValue') }}<input data-testid="schedule-secondary" v-model="secondary" :disabled="busy" inputmode="decimal" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
       </div>
-      <button type="button" :disabled="busy" @click="preview" class="underline disabled:opacity-50">依量測日期試算</button>
+      <button type="button" :disabled="busy" data-testid="schedule-preview" @click="preview" class="underline disabled:opacity-50">{{ t('spc.schedule.calculateByMeasurementDate') }}</button>
       <div v-if="result" role="status" class="rounded bg-emerald-50 p-2 dark:bg-emerald-950">
-        <p>套用公式 v{{ result.formulaVersionNo }}（ID {{ result.formulaVersionId }}），排程 {{ result.revisionId }}；F快照 {{ result.fTableHistoryId ?? '無' }}</p>
-        <p>原始計算結果 {{ result.result.raw }}；儲存結果 {{ result.result.stored }}；判定 {{ result.result.judgment }}</p>
-        <p class="text-xs">{{ result.engineVersion }}；此結果未匯入。</p>
+        <p>{{ t('spc.schedule.selectedResult', { version: result.formulaVersionNo, id: result.formulaVersionId, revision: result.revisionId, snapshot: result.fTableHistoryId ?? t('spc.schedule.none') }) }}</p>
+        <p>{{ t('spc.schedule.calculatedResult', { raw: result.result.raw, stored: result.result.stored, judgment: result.result.judgment }) }}</p>
+        <p class="text-xs">{{ t('spc.schedule.notImported', { engine: result.engineVersion }) }}</p>
       </div>
     </template>
   </section>
