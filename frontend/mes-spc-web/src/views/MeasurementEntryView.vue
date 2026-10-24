@@ -1,4 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
+import { displayUiMessage } from '../i18n/uiMessage';
+import LocalePicker from '../components/LocalePicker.vue';
+const { t } = useI18n({ useScope: 'global' });
+const messageText = value => displayUiMessage(t, value);
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, computed, onMounted, watch } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
@@ -87,9 +92,9 @@ function saveBinding() {
 }
 
 const boundStationName = computed(() => {
-  if (!boundStationId.value || stations.value.length === 0) return "尚未綁定";
+  if (!boundStationId.value || stations.value.length === 0) return t("spc.entry.notBound");
   const st = stations.value.find(s => s.id === boundStationId.value);
-  return st ? `${st.processName}${st.processNameEn ? ` / ${st.processNameEn}` : ""}` : "未知製程";
+  return st ? `${st.processName}${st.processNameEn ? ` / ${st.processNameEn}` : ""}` : t("spc.entry.unknownProcess");
 });
 
 async function loadMetadata() {
@@ -111,7 +116,7 @@ async function loadMetadata() {
       (a.processName || "").localeCompare(b.processName || "", "zh-Hant")
     );
   } catch (e) {
-    error.value = "載入主檔資料失敗：" + getApiErrorMessage(e);
+    error.value = { key: "spc.entry.loadFailed", args: { error: getApiErrorMessage(e) } };
   } finally {
     loading.value = false;
   }
@@ -231,7 +236,7 @@ function toLocalDateTimeInput(value) {
 
 async function loadExistingBatch() {
   if (!selectedMapping.value || !payload.value.measuredAt) {
-    error.value = "請先選擇檢驗項目與量測日期。";
+    error.value = { key: "spc.entry.selectAnInspectionItemAndMeasurementDateFirst" };
     return;
   }
   loadingExisting.value = true;
@@ -292,17 +297,17 @@ function handleEnter(index) {
 
 const submitBatch = async () => {
   if (!selectedMapping.value) {
-    error.value = "請確認檢驗項目已選擇。";
+    error.value = { key: "spc.entry.selectAnInspectionItem" };
     return;
   }
   if (!payload.value.operatorName.trim()) {
-    error.value = "請輸入作業人員名稱。";
+    error.value = { key: "spc.entry.enterAnOperatorName" };
     return;
   }
   
   const hasEmptyVal = payload.value.values.some(v => v.valueNumeric === null || v.valueNumeric === undefined || v.valueNumeric === "");
   if (hasEmptyVal) {
-    error.value = "請完整輸入所有樣本之量測值。";
+    error.value = { key: "spc.entry.enterAValueForEverySample" };
     return;
   }
 
@@ -341,7 +346,7 @@ const submitBatch = async () => {
     }
     
   } catch (e) {
-    error.value = "儲存量測資料失敗：" + getApiErrorMessage(e);
+    error.value = { key: "spc.entry.saveFailed", args: { error: getApiErrorMessage(e) } };
   } finally {
     submitting.value = false;
   }
@@ -349,7 +354,7 @@ const submitBatch = async () => {
 
 async function submitHandleAlerts() {
   if (!handleForm.value.rootCause.trim() || !handleForm.value.correctiveAction.trim()) {
-    alert("發生原因與初步對策為必填欄位！");
+    alert(t("spc.entry.rootCauseAndInitialCorrectiveActionAreRequired"));
     return;
   }
   
@@ -370,7 +375,7 @@ async function submitHandleAlerts() {
     resetForm();
     payload.value.operatorName = operator; 
   } catch (e) {
-    alert("提交失敗：" + getApiErrorMessage(e));
+    alert(t("spc.entry.handleFailed", { error: getApiErrorMessage(e) }));
   } finally {
     handlingAlerts.value = false;
   }
@@ -380,14 +385,14 @@ async function submitHandleAlerts() {
 <template>
   <div class="max-w-3xl mx-auto space-y-6">
     <!-- Local Station Binding Info -->
-    <div class="flex items-center justify-between px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-xl shadow-sm">
-      <div class="flex items-center gap-2">
+    <div class="flex flex-wrap gap-2 items-center justify-between px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-xl shadow-sm">
+      <div class="flex flex-wrap min-w-0 items-center gap-2">
         <MonitorCheck class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-        <span class="text-sm font-bold text-indigo-900 dark:text-indigo-300">本機預設綁定製程：</span>
+        <span class="text-sm font-bold text-indigo-900 dark:text-indigo-300">{{ t('spc.entry.defaultProcessOnThisDevice') }}</span>
         <span class="text-sm font-black text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 px-3 py-1 rounded-md border border-indigo-100 dark:border-indigo-700">{{ boundStationName }}</span>
       </div>
       <button @click="showBindModal = true" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1 bg-white/50 dark:bg-black/20 px-2 py-1.5 rounded-lg transition-colors">
-        <Settings class="w-3.5 h-3.5" /> 變更綁定設定
+        <Settings class="w-3.5 h-3.5" /> {{ t('spc.entry.changeProcessBinding') }}
       </button>
     </div>
 
@@ -395,43 +400,43 @@ async function submitHandleAlerts() {
     <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
       <div>
         <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">
-          <Activity class="w-4 h-4" /> 掃描驅動零失誤錄入
+          <Activity class="w-4 h-4" /> {{ t('spc.entry.barcodeAssistedEntry') }}
         </div>
-        <h1 class="text-2xl font-black text-slate-800 dark:text-white">現場量測數據錄入系統</h1>
+        <h1 class="text-2xl font-black text-slate-800 dark:text-white">{{ t('spc.entry.measurementEntry') }}</h1>
       </div>
-      <button @click="resetForm" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="重設表單">
+      <button data-testid="entry-reset" @click="resetForm" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" :title="t('spc.entry.resetForm')">
         <RefreshCw class="w-5 h-5" />
       </button>
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <ModuleGuide title="模組指南：現場量測數據錄入系統 (Measurement Entry)">
+    <ModuleGuide :toggle-label="t('common.actions.toggleGuide')" :title="t('spc.entry.moduleGuideMeasurementEntry')">
       <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
-          此模組用於產線現場人員以手動或掃碼方式輸入即時量測檢驗數據。系統將自動比對檢驗基準配置與西方電氣規則，並於異常時即時彈出警報單填寫畫面。
+          {{ t('spc.entry.enterMeasurementsManuallyOrUsingABarcodeScannerTheSystemChecksInspectionSettingsAndWesternElectricRu') }}
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
-          <div class="font-black text-blue-900 dark:text-blue-300">現場量測數據錄入頁面操作說明</div>
-          <p><strong>輸入工單：</strong>掃描或輸入工單號碼，作為本次量測資料的來源識別。</p>
-          <p><strong>選擇管制項目：</strong>依管制類型、製程與檢驗項目選擇正確的 SPC 管制項目。</p>
-          <p><strong>輸入量測值：</strong>依樣本數填入各筆量測值，確認單位與檢驗項目相符。</p>
-          <p><strong>送出資料：</strong>送出後系統會建立檢驗批號，並立即執行 SPC 判定。</p>
-          <p><strong>查看結果：</strong>上傳成功後可點「前往 SPC 管制圖查看趨勢」確認圖表與異常狀態。</p>
+          <div class="font-black text-blue-900 dark:text-blue-300">{{ t('spc.entry.usingMeasurementEntry') }}</div>
+          <p><strong>{{ t('spc.entry.enterWorkOrder') }}</strong>{{ t('spc.entry.scanOrEnterTheWorkOrderNumberToIdentifyTheSourceOfTheseMeasurements') }}</p>
+          <p><strong>{{ t('spc.entry.selectControlItem') }}</strong>{{ t('spc.entry.selectTheSPCControlItemByScopeProcessAndInspectionCharacteristic') }}</p>
+          <p><strong>{{ t('spc.entry.enterMeasurements') }}</strong>{{ t('spc.entry.enterEachSampleValueAndCheckThatTheUnitMatchesTheInspectionItem') }}</p>
+          <p><strong>{{ t('spc.entry.submitData') }}</strong>{{ t('spc.entry.submissionCreatesAnInspectionBatchAndPerformsSPCEvaluation') }}</p>
+          <p><strong>{{ t('spc.entry.viewResults') }}</strong>{{ t('spc.entry.afterUploadingOpenTheSPCChartToReviewTrendsAndAlerts') }}</p>
         </div>
     </ModuleGuide>
 
     <!-- Alert / Messages -->
     <div v-if="error" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
-      <AlertTriangle class="w-5 h-5 flex-shrink-0" /> {{ error }}
+      <AlertTriangle class="w-5 h-5 flex-shrink-0" /> {{ messageText(error) }}
     </div>
 
     <div v-if="successResult" class="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-sm space-y-2">
       <div class="flex items-center gap-2 font-bold">
-        <CheckCircle2 class="w-5 h-5" /> 量測數據上傳成功！
+        <CheckCircle2 class="w-5 h-5" /> {{ t('spc.entry.measurementsUploadedSuccessfully') }}
       </div>
-      <p class="text-xs">系統已自動建立檢驗批號 <strong>{{ successResult.batchNo }}</strong>，共計錄入 {{ successResult.values?.length }} 筆量測點。點位已進入 V1 SPC 管制引擎分析。</p>
+      <p class="text-xs">{{ t('spc.entry.successSummary', { batch: successResult.batchNo, count: successResult.values?.length }) }}</p>
       <div class="pt-2">
         <router-link :to="`/spc/?ppcId=${successPpcId}&batchId=${successResult.lotNo || successResult.batchNo}`" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm">
-          前往 SPC 管制圖查看趨勢 <ArrowRight class="w-3.5 h-3.5" />
+          {{ t('spc.entry.viewTrendsInTheSPCChart') }} <ArrowRight class="w-3.5 h-3.5" />
         </router-link>
       </div>
     </div>
@@ -441,26 +446,26 @@ async function submitHandleAlerts() {
       
       <!-- Work Order Section -->
       <div class="space-y-2 relative">
-        <label class="block text-sm font-black text-slate-700 dark:text-slate-300">請掃描或輸入工單號碼 (Work Order No)</label>
+        <label class="block text-sm font-black text-slate-700 dark:text-slate-300">{{ t('spc.entry.scanOrEnterWorkOrderNumber') }}</label>
         <div class="relative flex items-center">
           <Scan class="absolute left-4 w-6 h-6 text-indigo-400" />
           <input
-            v-model="inputWoNo"
+            data-testid="entry-inputWoNo" v-model="inputWoNo"
             @keydown.enter.prevent="fetchWorkOrder"
             :disabled="!boundStationId"
-            placeholder="使用掃描槍讀取條碼或手動輸入..."
+            :placeholder="t('spc.entry.scanABarcodeOrEnterANumber')"
             class="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-slate-800/80 text-xl font-bold text-indigo-900 dark:text-indigo-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all disabled:opacity-50"
           />
           <button 
-            @click="fetchWorkOrder"
+            data-testid="entry-work-order" @click="fetchWorkOrder"
             :disabled="!inputWoNo || !boundStationId"
             class="absolute right-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50"
           >
             <RefreshCw v-if="woLoading" class="w-4 h-4 animate-spin" />
-            <span v-else>帶入工單</span>
+            <span v-else>{{ t('spc.entry.useWorkOrder') }}</span>
           </button>
         </div>
-        <p class="text-xs font-bold text-slate-500 mt-1 pl-2">提示：工單可留空；量測資料會以 SPC 管制項目 ppcId 建立。</p>
+        <p class="text-xs font-bold text-slate-500 mt-1 pl-2">{{ t('spc.entry.workOrderIsOptionalMeasurementsAreCreatedForTheSelectedSPCControlItemPpcId') }}</p>
       </div>
 
       <transition enter-active-class="transition-all duration-300" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0">
@@ -468,39 +473,39 @@ async function submitHandleAlerts() {
           
           <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">管制類型</label>
-              <select v-model="selectedControlScope" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-                <option value="PROCESS">製程管制</option>
-                <option value="CHEM">藥液管制</option>
-                <option value="PRODUCT">產品管制</option>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">{{ t('spc.entry.controlScope') }}</label>
+              <select data-testid="entry-selectedControlScope" v-model="selectedControlScope" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="PROCESS">{{ t('spc.entry.processControl') }}</option>
+                <option value="CHEM">{{ t('spc.entry.chemicalControl') }}</option>
+                <option value="PRODUCT">{{ t('spc.entry.productControl') }}</option>
               </select>
             </div>
             <div v-if="selectedControlScope === 'PRODUCT'">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">產品料號 (Part)</label>
-              <select v-model="selectedProductId" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-                <option :value="null">-- 請選擇料號 --</option>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">{{ t('spc.entry.partNumber') }}</label>
+              <select data-testid="entry-selectedProductId" v-model="selectedProductId" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option :value="null">{{ t('spc.entry.selectPartNumber') }}</option>
                 <option v-for="p in products" :key="p.id" :value="p.id">[{{ p.partNo }}] {{ p.partName }}</option>
               </select>
             </div>
             <div v-else>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">產品料號 (Part)</label>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">{{ t('spc.entry.partNumber') }}</label>
               <div class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">
-                {{ selectedControlScope === 'CHEM' ? '藥液管制不需料號' : '製程管制不需料號' }}
+                {{ selectedControlScope === 'CHEM' ? t('spc.entry.chemicalControlDoesNotRequireAPartNumber') : t('spc.entry.processControlDoesNotRequireAPartNumber') }}
               </div>
             </div>
             <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">作業人員 (Operator) *</label>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">{{ t('spc.entry.operator') }}</label>
               <div class="relative">
-                <input v-model="payload.operatorName" placeholder="輸入人員名稱或工號..." class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
-                <User class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                <input data-testid="entry-payload.operatorName" v-model="payload.operatorName" :placeholder="t('spc.entry.enterOperatorNameOrEmployeeNumber')" class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+                <User class="pointer-events-none w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
               </div>
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2">請選擇檢驗項目 (Inspection Item) *</label>
-            <select v-model="selectedItemId" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-              <option value="">-- 請選擇 --</option>
+            <label class="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2">{{ t('spc.entry.inspectionItem') }}</label>
+            <select data-testid="entry-selectedItemId" v-model="selectedItemId" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+              <option value="">{{ t('spc.entry.select') }}</option>
               <option v-for="i in filteredItems" :key="i.mappingId" :value="i.mappingId">
                 {{ selectedControlScope === 'CHEM' ? `${i.tankName} · ` : '' }}{{ i.characteristicName }}{{ i.characteristicNameEn ? ` / ${i.characteristicNameEn}` : '' }}{{ i.unit ? `（${i.unit}）` : '' }}
               </option>
@@ -510,31 +515,31 @@ async function submitHandleAlerts() {
           <!-- Traceability Details (Accordion-style or simplified) -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label class="block text-[11px] font-bold text-slate-400 mb-1">生產批號 (Lot No)</label>
-              <input v-model="payload.lotNo" placeholder="如: LOT-2026A" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.entry.productionLotNumber') }}</label>
+              <input data-testid="entry-payload.lotNo" v-model="payload.lotNo" :placeholder="t('spc.entry.forExampleLOT2026A')" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-slate-400 mb-1">零件序號 (Serial No)</label>
-              <input v-model="payload.serialNo" placeholder="如: SN-0988" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.entry.serialNumber') }}</label>
+              <input data-testid="entry-payload.serialNo" v-model="payload.serialNo" :placeholder="t('spc.entry.forExampleSN0988')" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-slate-400 mb-1">量測時間</label>
-              <input type="datetime-local" v-model="payload.measuredAt" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.entry.measurementTime') }}</label>
+              <input type="datetime-local" data-testid="entry-payload.measuredAt" v-model="payload.measuredAt" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              @click="loadExistingBatch"
+              data-testid="entry-load-existing" @click="loadExistingBatch"
               :disabled="loadingExisting || !selectedItemId || !payload.measuredAt"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-xs font-black hover:bg-indigo-100 disabled:opacity-50"
             >
               <RefreshCw v-if="loadingExisting" class="w-4 h-4 animate-spin" />
               <Search v-else class="w-4 h-4" />
-              {{ loadingExisting ? '查詢中...' : '載入當日既有資料' }}
+              {{ loadingExisting ? t('spc.entry.loading') : t('spc.entry.loadExistingDataForThisDate') }}
             </button>
             <span v-if="editBatchId" class="px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-black">
-              編輯既有批次
+              {{ t('spc.entry.editingAnExistingBatch') }}
             </span>
           </div>
         </div>
@@ -542,12 +547,12 @@ async function submitHandleAlerts() {
 
       <!-- Dynamic Samples Grid -->
       <div v-if="selectedItemId" class="space-y-4 border-t border-slate-200 dark:border-slate-800 pt-6">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap gap-2 items-center justify-between">
           <h3 class="text-sm font-black text-slate-800 dark:text-white">
-            量測值鍵入區 (基準組數 N = {{ sampleSize }})
+            {{ t('spc.entry.sampleHeader', { count: sampleSize }) }}
           </h3>
           <span v-if="selectedItemDetails" class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-            規格界限：LSL = <strong class="text-slate-600 dark:text-slate-300">{{ selectedItemDetails.lsl ?? 'N/A' }}</strong>, 
+            {{ t('spc.entry.specificationLimitsLSL') }} <strong class="text-slate-600 dark:text-slate-300">{{ selectedItemDetails.lsl ?? 'N/A' }}</strong>,
             USL = <strong class="text-slate-600 dark:text-slate-300">{{ selectedItemDetails.usl ?? 'N/A' }}</strong>
           </span>
         </div>
@@ -555,16 +560,16 @@ async function submitHandleAlerts() {
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div v-for="(val, idx) in payload.values" :key="idx" class="space-y-1">
             <div class="flex items-center justify-between text-xs font-bold">
-              <span class="text-slate-500">樣本 #{{ val.sampleNo }}</span>
-              <span v-if="checkOutOfSpec(val.valueNumeric)" class="text-red-500 text-[10px] animate-pulse">⚠️ 超出規格</span>
+              <span class="text-slate-500">{{ t('spc.entry.sampleNumber', { number: val.sampleNo }) }}</span>
+              <span v-if="checkOutOfSpec(val.valueNumeric)" class="text-red-500 text-[10px] animate-pulse">{{ t('spc.entry.outOfSpecification') }}</span>
             </div>
             <input
               :ref="el => setInputRef(el, idx)"
               type="number"
               step="any"
-              v-model.number="val.valueNumeric"
+              data-testid="entry-val.valueNumeric" v-model.number="val.valueNumeric"
               @keydown.enter.prevent="handleEnter(idx)"
-              placeholder="輸入數值..."
+              :placeholder="t('spc.entry.enterAValue')"
               class="w-full px-4 py-3 rounded-xl border text-base font-extrabold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-800/80 focus:ring-2 transition-all"
               :class="checkOutOfSpec(val.valueNumeric) 
                 ? 'border-red-500 ring-2 ring-red-500/10 shadow-[0_0_10px_rgba(239,68,68,0.25)]' 
@@ -572,19 +577,19 @@ async function submitHandleAlerts() {
             />
           </div>
         </div>
-        <p class="text-[11px] font-bold text-slate-400 italic">💡 提示：輸入數值後按 <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-black border dark:border-slate-700">Enter</kbd> 鍵可自動跳轉至下一個樣本，在最後一格按 Enter 將自動送出！</p>
+        <p class="text-[11px] font-bold text-slate-400 italic">{{ t('spc.entry.tipAfterEnteringAValuePress') }} <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-black border dark:border-slate-700">Enter</kbd> {{ t('spc.entry.toMoveToTheNextSamplePressEnterInTheLastFieldToSubmit') }}</p>
       </div>
 
       <!-- Submit Footer -->
       <div v-if="selectedItemId" class="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
         <button
           type="button"
-          @click="submitBatch"
+          data-testid="entry-save" @click="submitBatch"
           :disabled="submitting"
           class="flex items-center gap-2 px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all text-sm"
         >
           <RefreshCw v-if="submitting" class="w-4 h-4 animate-spin" />
-          {{ submitting ? "正在儲存點位..." : (editBatchId ? "更新量測資料" : "儲存並上傳批次") }}
+          {{ submitting ? t('spc.entry.savingMeasurements') : (editBatchId ? t('spc.entry.updateMeasurements') : t('spc.entry.saveAndUploadBatch')) }}
         </button>
       </div>
     </div>
@@ -599,27 +604,28 @@ async function submitHandleAlerts() {
       leave-to-class="opacity-0 scale-95"
     >
       <div v-if="softHoldActive" class="fixed inset-0 z-50 flex items-center justify-center bg-red-950/80 backdrop-blur-md p-4">
-        <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-red-200 dark:border-red-900 overflow-hidden flex flex-col max-h-[90vh]">
+        <div role="dialog" data-testid="hold-dialog" class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-red-200 dark:border-red-900 overflow-hidden flex flex-col max-h-[90vh]">
+          <div class="px-6 py-2 shrink-0"><LocalePicker /></div>
           <!-- Danger Header -->
           <div class="bg-red-600 px-6 py-5 flex items-center gap-4 shrink-0">
             <div class="p-3 bg-white/20 rounded-full animate-pulse">
               <AlertTriangle class="w-8 h-8 text-white" />
             </div>
             <div>
-              <h2 class="text-xl font-black text-white tracking-wide">品質異常強制卡控 (Soft Hold)</h2>
-              <p class="text-red-100 text-sm font-medium mt-0.5">系統偵測到剛輸入的數據違反品質管制規則，請立刻填寫初步處置；案件會進入處置中，後續由 QE 或主管結案。</p>
+              <h2 class="text-xl font-black text-white tracking-wide">{{ t('spc.entry.qualityAlertInterlockSoftHold') }}</h2>
+              <p class="text-red-100 text-sm font-medium mt-0.5">{{ t('spc.entry.theEnteredDataViolatesQualityControlRulesEnterAnInitialResponseNowTheCaseMovesToInProgressAndIsLater') }}</p>
             </div>
           </div>
 
           <div class="p-6 overflow-y-auto flex-1 space-y-6">
             <!-- Alert Details List -->
             <div class="space-y-3">
-              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">觸發異常清單</h3>
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">{{ t('spc.entry.triggeredAlerts') }}</h3>
               <div v-for="al in activeAlerts" :key="al.id" class="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-xl">
                 <div class="flex items-start justify-between">
                   <div>
                     <div class="font-bold text-red-800 dark:text-red-300 text-sm mb-1">{{ al.message }}</div>
-                    <div class="text-xs text-red-600 dark:text-red-400 font-mono">觸發數值: {{ al.actualValue }}</div>
+                    <div class="text-xs text-red-600 dark:text-red-400 font-mono">{{ t('spc.entry.triggeredValue') }} {{ al.actualValue }}</div>
                   </div>
                   <span class="px-2 py-1 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 text-[10px] font-black rounded">{{ al.alertType }}</span>
                 </div>
@@ -629,24 +635,24 @@ async function submitHandleAlerts() {
             <!-- Mandatory Action Form -->
             <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
               <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                <CheckCircle2 class="w-4 h-4 text-emerald-500" /> 強制處置紀錄 (必填)
+                <CheckCircle2 class="w-4 h-4 text-emerald-500" /> {{ t('spc.entry.requiredInitialResponse') }}
               </h3>
               <div class="space-y-2">
-                <label class="block text-sm font-bold text-slate-700 dark:text-slate-200">初步發生原因 (Root Cause)</label>
-                <textarea v-model="handleForm.rootCause" rows="2" placeholder="請描述機台狀況、人員操作或材料問題..." class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"></textarea>
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-200">{{ t('spc.entry.initialRootCause') }}</label>
+                <textarea data-testid="entry-handleForm.rootCause" v-model="handleForm.rootCause" rows="2" :placeholder="t('spc.entry.describeEquipmentConditionsOperatorActionsOrMaterialIssues')" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"></textarea>
               </div>
               <div class="space-y-2">
-                <label class="block text-sm font-bold text-slate-700 dark:text-slate-200">緊急處置對策 (Corrective Action)</label>
-                <textarea v-model="handleForm.correctiveAction" rows="2" placeholder="例如：已停機隔離該批產品、重新校正刀具等..." class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"></textarea>
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-200">{{ t('spc.entry.immediateCorrectiveAction') }}</label>
+                <textarea data-testid="entry-handleForm.correctiveAction" v-model="handleForm.correctiveAction" rows="2" :placeholder="t('spc.entry.forExampleStopEquipmentQuarantineTheBatchOrRecalibrateTooling')" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"></textarea>
               </div>
             </div>
           </div>
 
           <!-- Footer Actions -->
           <div class="px-6 py-5 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shrink-0 flex justify-end">
-            <button type="button" @click="submitHandleAlerts" :disabled="handlingAlerts" class="flex items-center gap-2 px-8 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold shadow-lg shadow-red-500/30 disabled:opacity-50 transition-all text-sm">
+            <button type="button" data-testid="entry-handle-alerts" @click="submitHandleAlerts" :disabled="handlingAlerts" class="flex items-center gap-2 px-8 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold shadow-lg shadow-red-500/30 disabled:opacity-50 transition-all text-sm">
               <RefreshCw v-if="handlingAlerts" class="w-4 h-4 animate-spin" />
-              {{ handlingAlerts ? '正在提交...' : '提交初步處置並解除卡控' }}
+              {{ handlingAlerts ? t('spc.entry.submitting') : t('spc.entry.submitInitialResponseAndReleaseHold') }}
             </button>
           </div>
         </div>
@@ -656,22 +662,23 @@ async function submitHandleAlerts() {
     <!-- Station Binding Modal -->
     <transition enter-active-class="transition-all duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100">
       <div v-if="showBindModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
-        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 space-y-6">
+        <div role="dialog" data-testid="binding-dialog" class="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 space-y-6">
+          <LocalePicker />
           <div class="text-center space-y-2">
             <div class="mx-auto w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-4">
               <MonitorCheck class="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h2 class="text-2xl font-black text-slate-800 dark:text-white">設定本機所屬工站</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400">請設定這台電腦或平版，目前固定擺放在哪一個製程？系統將以此為基準帶出 SPC 管制項目。</p>
+            <h2 class="text-2xl font-black text-slate-800 dark:text-white">{{ t('spc.entry.setProcessForThisDevice') }}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ t('spc.entry.selectTheProcessWhereThisComputerOrTabletIsLocatedTheSystemUsesItToListSPCControlItems') }}</p>
           </div>
           <div>
-            <select v-model="boundStationId" class="w-full px-4 py-3 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition-all">
-              <option :value="null">-- 請選擇固定製程 --</option>
+            <select data-testid="entry-boundStationId" v-model="boundStationId" class="w-full px-4 py-3 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+              <option :value="null">{{ t('spc.entry.selectDeviceProcess') }}</option>
               <option v-for="s in stations" :key="s.id" :value="s.id">{{ s.processName }}{{ s.processNameEn ? ` / ${s.processNameEn}` : '' }}</option>
             </select>
           </div>
-          <button @click="saveBinding" :disabled="!boundStationId" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-50">
-            確認綁定設定
+          <button data-testid="entry-bind" @click="saveBinding" :disabled="!boundStationId" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-50">
+            {{ t('spc.entry.confirmProcessBinding') }}
           </button>
         </div>
       </div>

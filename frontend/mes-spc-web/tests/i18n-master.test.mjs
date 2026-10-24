@@ -19,7 +19,8 @@ test('master draft review metadata, parameters and complete runtime coverage',()
  const types=JSON.parse(readFileSync(new URL('../../../specs/20261024-i18n-task05c1/translation-review.json',import.meta.url),'utf8'));
  const chemical=JSON.parse(readFileSync(new URL('../../../specs/20261024-i18n-task05c2/translation-review.json',import.meta.url),'utf8'));
  const ppc=JSON.parse(readFileSync(new URL('../../../specs/20261024-i18n-task05c3/translation-review.json',import.meta.url),'utf8'));
- assert.deepEqual([...ppc.metadata.map(row=>row.key),...chemical.metadata.map(row=>row.key),...types.metadata.map(row=>row.key),...pilot.metadata.map(row=>row.key),...keys,...next.metadata.map(row=>row.key)].sort(),Object.keys(flat['zh-TW']).sort());
+ const entry=JSON.parse(readFileSync(new URL('../../../specs/20261024-i18n-task05d/translation-review.json',import.meta.url),'utf8'));
+ assert.deepEqual([...entry.metadata.map(row=>row.key),...ppc.metadata.map(row=>row.key),...chemical.metadata.map(row=>row.key),...types.metadata.map(row=>row.key),...pilot.metadata.map(row=>row.key),...keys,...next.metadata.map(row=>row.key)].sort(),Object.keys(flat['zh-TW']).sort());
  const sha=value=>createHash('sha256').update(value,'utf8').digest('hex');
  for(const row of review.ledger){
   assert.equal(row.sourceHash,sha(flat['zh-TW'][row.key]));assert.equal(row.translationHash,sha(flat[row.locale][row.key]));

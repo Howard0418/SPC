@@ -290,11 +290,11 @@
 - 本批原6件現未完成2件：002附件掃毒因不外送政策未確認而受阻；004 Runtime由使用者明示暫緩，無18:00自動維護。001/003/005/006已完成不再列入。
 - TransFiles明列舊驗收仍1件TASK-005，首筆LOG人工故障驗收註記保留。正常跨日業務匯入按既有驗收案例後續操作，不將正式receipt0冒稱已做人工追溯驗收。
 
-## I18N 工作池（2026-10-24最新：05C3完成，剩18小工作）
-- [後續任務](specs/20261022-i18n-task01/tasks.md)：05D、05E、06～21共18小工作待執行/待確認；已完成TASK-01～04、05A、05B及05C1～C3追溯見CHANGELOG_CUSTOM.md及各specs。
-- 每次單件、單一系統；下一項05D量測輸入UI，尚未開始。測試發布不等於正式更新授權。
+## I18N 工作池（2026-10-24最新：05D完成，剩17小工作）
+- [後續任務](specs/20261022-i18n-task01/tasks.md)：05E、06～21共17小工作待執行/待確認；已完成TASK-01～04、05A～05D（含05C三批）追溯見CHANGELOG_CUSTOM.md及各specs。
+- 每次單件、單一系統；下一項05E匯入批次/預覽UI，尚未開始（維持TransFiles匯入）。測試發布不等於正式更新授權。
 - 既有主要未完成仍2件：SEC-FOLLOWUP-002附件掃毒受阻、004 Runtime暫緩；TransFiles舊人工驗收TASK-005另1件。i18n規劃包與既有受阻／暫緩事項分列，不重啟維護。
-- 最新STOP為05C3，不自動開始05D。
+- 最新STOP為05D，不自動開始05E。
 
 ## 2026-10-22 落塵空圖工作池（僅規劃，不立即執行）
 - [規格](specs/20261022-particle-empty-chart-plan/spec.md)／[計畫](specs/20261022-particle-empty-chart-plan/plan.md)／[任務](specs/20261022-particle-empty-chart-plan/tasks.md)：原檔有日期／Count格式問題，實際批次與入庫狀態尚未查；不以少於20點解釋所有0筆。
@@ -341,12 +341,14 @@
 - 本件DONE，工作池由21降為i18n20個待確認包；另附件掃毒受阻1、Runtime及TransFiles人工故障驗收暫緩2，不開始其他工作。
 
 ## 國際化目前待辦（2026-10-24）
-- 05D、05E、06～21，共18個可追蹤小工作。05C三批已完成，下一項量測輸入UI尚未開始。
-- [05C3驗證/回復](specs/20261024-i18n-task05c3/verification.md)：測試Web0.1.77/API沿用0.1.72；全部譯文初稿真人審核在TASK-20。
-- 另附件掃毒受阻1、Runtime與TransFiles人工故障驗收暫緩2；Portal既有真人確認另列。STOP於05C3，不自動開始05D。
+- 05E、06～21，共17個可追蹤小工作。下一項匯入批次/預覽UI未開始，不恢復網頁匯入。
+- [05D驗證/回復](specs/20261024-i18n-task05d/verification.md)：測試Web0.1.78/API沿用0.1.72；全部譯文初稿真人審核在TASK-20。
+- 另附件掃毒受阻1、Runtime與TransFiles人工故障驗收暫緩2；Portal既有真人確認另列。STOP於05D，不自動開始05E。
 
 - 2026-10-24：05C依大小拆C1～C3，範圍不增加；C1完成後20件未完成；規格 `specs/20261024-i18n-task05c1/spec.md`。
 
 - 2026-10-24 05C2完成紀錄見CHANGELOG_CUSTOM.md及 `specs/20261024-i18n-task05c2/verification.md`；剩19件，未自動開始C3。
 
 - 2026-10-24 05C3完成紀錄見CHANGELOG_CUSTOM.md及 `specs/20261024-i18n-task05c3/verification.md`；剩18件，05D未開始。
+
+- 2026-10-24 05D完成紀錄見CHANGELOG_CUSTOM.md及 `specs/20261024-i18n-task05d/verification.md`；剩17件，05E未開始。
