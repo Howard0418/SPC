@@ -1955,3 +1955,11 @@
 - 本兩路徑沿用手機上下導覽，預覽badge及操作按鈕可換行。三語四尺寸可操作，語言切換保留DOM／URL／資料且無額外讀寫；原補建POST端點及空body保持。
 - 58單元、本機35＋共用17、發布35＋17、build／964鍵三語／14同源請求／真health與4檔SHA256通過。只發布測試Web0.1.79，API沿用0.1.72；備份49檔、payload4、保護設定4，不重啟pool、無DB／後端／正式變更。
 - [驗證/回復與限制](specs/20261025-i18n-task05e/verification.md)。業務API全mock，真實環境僅匿名唯讀健康與靜態驗證，真人審稿留TASK20。剩16件，另受阻1／暫緩2；STOP於05E，06未開始。
+
+## 2026-10-26 I18N-TASK-06A 分段版本與已保存計算證據三語
+- ChartSegmentDetails／ChemicalCalculationDetails固定UI、aria、統計狀態、公式標籤與提示104新鍵／312列draft，累計1068鍵三語；切語言保留DOM／展開／分段／量測與分頁，無額外API。固定格式錯誤在顯示時翻譯，API錯誤原文保持。
+- 原數值0／null、公式JSON、原因／備註／人員／enum、台北時間、分頁20及request generation保持；只讀已保存證據，不重算或推定舊版本；子組／無ID／多公式／不完整證據警語保留。兩主頁其餘文案未標完成。
+- 手機原側欄將明細壓為74px出現溢出，僅spc/trend-chart沿用既有堆疊導覽後三語四尺寸通過。未改演算法、數列、AD或已移除之偏態峰態規則。
+- 62單元、本機新28＋修正深連結fixture後1＝29情境、原分段17與shell17、發布29＋17/build/14同源/真health/四檔SHA256通過；舊設備頁dev模板及Vite大chunk既有提示未擴張處理。
+- 測試Web0.1.80/API沿用0.1.72，備份52檔／payload4／保護設定4、不重啟pool；無DB/後端/Portal/TransFiles/正式更新。[驗證與回復](specs/20261026-i18n-task06a/verification.md)。瀏覽器API全mock，不冒稱真DB/SSO或真人翻譯審核；draft待TASK20。
+- 06大包拆四批；06A完成後剩06B～D及07～21共18件，另受阻1／暫緩2。STOP於06A，不開始06B。
