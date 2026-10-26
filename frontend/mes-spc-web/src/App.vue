@@ -62,6 +62,7 @@ const stackedMobileNav = computed(() => [
   '/calibration-instruments', '/processes', '/traceability-master',
   '/control-chart-groups', '/spc-rule-groups',
   '/chemical-analysis-overview', '/chemical-f-table', '/part-process-characteristics', '/measurements',
+  '/settings/smtp', '/settings/spc-reports', '/operators',
   '/particle-monitoring', '/equipment-status', '/equipment-points', '/equipment-monitor',
   '/spc', '/trend-chart', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow',
   '/monthly-control-chart', '/process-analysis/capability', '/process-analysis/violations',

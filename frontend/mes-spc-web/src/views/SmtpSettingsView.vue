@@ -1,4 +1,7 @@
 <script setup>
+import {useI18n} from "vue-i18n";
+import {displayUiMessage} from "../i18n/uiMessage";
+const {t}=useI18n({useScope:"global"});
 import { computed, ref, onMounted } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import { Sliders, Mail, Save, CheckCircle2, ShieldAlert, RefreshCw, Send, HardDrive, Server, Key, User, AlertTriangle } from "lucide-vue-next";
@@ -70,7 +73,7 @@ async function loadSettings() {
       testEmail.value = form.value.defaultRecipientEmail;
     }
   } catch (e) {
-    errorMsg.value = "載入 SMTP 設定失敗：" + getApiErrorMessage(e);
+    errorMsg.value = {key:"spc.settings.smtpLoadFailed",args:{error:getApiErrorMessage(e)}};
   } finally {
     loading.value = false;
   }
@@ -103,10 +106,10 @@ async function saveSettings() {
       recipientOperatorIds: form.value.recipientOperatorIds
     };
     const res = await api.post("/settings/smtp", payload);
-    successMsg.value = res.data?.message || "SMTP 設定已成功更新並生效！";
+    successMsg.value = res.data?.message || {key:'spc.settings.smtpSaved'};
     setTimeout(() => { successMsg.value = ""; }, 5000);
   } catch (e) {
-    errorMsg.value = "儲存 SMTP 設定失敗：" + getApiErrorMessage(e);
+    errorMsg.value = {key:"spc.settings.smtpSaveFailed",args:{error:getApiErrorMessage(e)}};
   } finally {
     saving.value = false;
   }
@@ -132,7 +135,7 @@ async function sendTestEmail() {
       outboxFolder: res.data.outboxFolder
     };
   } catch (e) {
-    errorMsg.value = "測試郵件發送失敗：" + getApiErrorMessage(e);
+    errorMsg.value = {key:"spc.settings.smtpTestFailed",args:{error:getApiErrorMessage(e)}};
   } finally {
     testLoading.value = false;
   }
@@ -158,7 +161,7 @@ async function sendTestAlertEmail() {
       outboxFolder: res.data.outboxFolder
     };
   } catch (e) {
-    errorMsg.value = "品質異常通報測試發送失敗：" + getApiErrorMessage(e);
+    errorMsg.value = {key:"spc.settings.smtpAlertFailed",args:{error:getApiErrorMessage(e)}};
   } finally {
     testLoading.value = false;
   }
@@ -176,11 +179,11 @@ onMounted(() => {
       <div class="absolute right-0 top-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="relative z-10 space-y-2">
         <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 w-max text-xs font-bold text-violet-200 border border-white/20">
-          <Sliders class="w-3.5 h-3.5" /> 系統組態配置中心
+          <Sliders class="w-3.5 h-3.5" /> {{ t('spc.settings.configuration') }}
         </div>
-        <h1 class="text-3xl font-black tracking-tight">SMTP 郵件伺服器與異常預警通報設定</h1>
+        <h1 class="text-3xl font-black tracking-tight">{{ t('spc.settings.smtpTitle') }}</h1>
         <p class="text-indigo-100 text-sm max-w-xl">
-          管理 SPC 管制界限失控 (OOC) 或規格違規 (OOS) 時自動派發電子郵件之發送器參數與本地備份路徑。
+          {{ t('spc.settings.smtpDescription') }}
         </p>
       </div>
     </div>
@@ -193,43 +196,43 @@ onMounted(() => {
       <!-- Form Section (Col 1 & 2) -->
       <div class="md:col-span-2 space-y-6">
         <div v-if="successMsg" class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-sm font-bold flex items-center gap-3 shadow-sm">
-          <CheckCircle2 class="w-5 h-5 text-emerald-500 flex-shrink-0" /> {{ successMsg }}
+          <CheckCircle2 class="w-5 h-5 text-emerald-500 flex-shrink-0" /> {{ displayUiMessage(t,successMsg) }}
         </div>
         <div v-if="errorMsg" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm font-bold flex items-center gap-3 shadow-sm">
-          <ShieldAlert class="w-5 h-5 text-red-500 flex-shrink-0" /> {{ errorMsg }}
+          <ShieldAlert class="w-5 h-5 text-red-500 flex-shrink-0" /> {{ displayUiMessage(t,errorMsg) }}
         </div>
 
         <form @submit.prevent="saveSettings" class="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
           <div class="border-b border-slate-100 dark:border-slate-800 pb-4">
             <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <Server class="w-5 h-5 text-indigo-500" /> 伺服器與連線參數
+              <Server class="w-5 h-5 text-indigo-500" /> {{ t('spc.settings.connection') }}
             </h2>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">SMTP 伺服器主機 (Host)</label>
-              <input v-model="form.host" type="text" placeholder="例如: smtp.company.com 或 localhost" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ t('spc.settings.host') }}</label>
+              <input data-testid="settings-form.host" v-model="form.host" type="text" :placeholder="t('spc.settings.hostExample')" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">連接埠 (Port)</label>
-              <input v-model="form.port" type="text" placeholder="25 / 587 / 465 / 110s" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-mono" />
-              <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">💡 支援輸入帶有 's' 的連線埠 (如: 110s)，自動啟用 SSL 加密</p>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ t('spc.settings.port') }}</label>
+              <input data-testid="settings-form.port" v-model="form.port" type="text" placeholder="25 / 587 / 465 / 110s" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-mono" />
+              <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">{{ t('spc.settings.portHelp') }}</p>
             </div>
           </div>
 
           <div class="space-y-3 rounded-2xl border border-indigo-100 dark:border-slate-700 bg-indigo-50/50 dark:bg-slate-950/50 p-4">
             <div class="flex items-center justify-between gap-3">
               <div>
-                <h3 class="text-sm font-bold text-slate-800 dark:text-white">異常預警收件人</h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">已選 {{ selectedRecipientCount }} 位；未選時沿用預設收件人信箱。</p>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-white">{{ t('spc.settings.alertRecipients') }}</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ t('spc.settings.selectedPrefix') }} {{ selectedRecipientCount }} {{ t('spc.settings.recipientFallback') }}</p>
               </div>
               <div class="flex gap-2">
-                <button type="button" @click="selectAllRecipients" class="text-xs font-bold text-indigo-600 dark:text-indigo-300">全選</button>
-                <button type="button" @click="clearRecipients" class="text-xs font-bold text-slate-500">清除</button>
+                <button type="button" data-testid="settings-selectAllRecipients" @click="selectAllRecipients" class="text-xs font-bold text-indigo-600 dark:text-indigo-300">{{ t('spc.settings.selectAll') }}</button>
+                <button type="button" data-testid="settings-clearRecipients" @click="clearRecipients" class="text-xs font-bold text-slate-500">{{ t('spc.settings.clear') }}</button>
               </div>
             </div>
-            <select v-model="form.recipientDepartment" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm">
-              <option value="">全部部門</option>
+            <select data-testid="settings-form.recipientDepartment" v-model="form.recipientDepartment" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm">
+              <option value="">{{ t('spc.settings.allDepartments') }}</option>
               <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
             </select>
             <div class="max-h-48 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -238,60 +241,60 @@ onMounted(() => {
                 <span class="truncate text-slate-700 dark:text-slate-200">{{ user.operatorName }} ({{ user.operatorCode }})</span>
               </label>
             </div>
-            <p v-if="filteredOperators.length === 0" class="text-xs text-slate-500">目前沒有已設定 Email 的啟用中使用者。</p>
+            <p v-if="filteredOperators.length === 0" class="text-xs text-slate-500">{{ t('spc.settings.noActiveEmails') }}</p>
           </div>
 
           <div class="flex items-center gap-3 pt-2">
-            <input v-model="form.enableSsl" type="checkbox" id="ssl" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300" />
-            <label for="ssl" class="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">啟用 SSL / TLS 安全連線加密</label>
+            <input data-testid="settings-form.enableSsl" v-model="form.enableSsl" type="checkbox" id="ssl" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300" />
+            <label for="ssl" class="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">{{ t('spc.settings.enableSsl') }}</label>
           </div>
 
           <div class="border-b border-slate-100 dark:border-slate-800 pt-4 pb-4">
             <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <Key class="w-5 h-5 text-indigo-500" /> 帳號認證憑證 (若無驗證留空即可)
+              <Key class="w-5 h-5 text-indigo-500" /> {{ t('spc.settings.credentials') }}
             </h2>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">登入帳號 (Username)</label>
-              <input v-model="form.username" type="text" placeholder="例如: spc-bot" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ t('spc.settings.username') }}</label>
+              <input data-testid="settings-form.username" v-model="form.username" type="text" :placeholder="t('spc.settings.usernameExample')" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">登入密碼 (Password)</label>
-              <input v-model="form.password" type="password" :placeholder="form.hasPassword ? '已設定，留白可保留原密碼' : '請輸入密碼'" autocomplete="new-password" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ t('spc.settings.password') }}</label>
+              <input data-testid="settings-form.password" v-model="form.password" type="password" :placeholder="form.hasPassword ? t('spc.settings.passwordKeep') : t('spc.settings.passwordEnter')" autocomplete="new-password" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
             </div>
           </div>
 
           <div class="border-b border-slate-100 dark:border-slate-800 pt-4 pb-4">
             <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <Mail class="w-5 h-5 text-indigo-500" /> 寄發與接收信箱設定
+              <Mail class="w-5 h-5 text-indigo-500" /> {{ t('spc.settings.mailboxes') }}
             </h2>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">系統寄件人信箱 (Sender Email)</label>
-              <input v-model="form.senderEmail" type="email" required placeholder="spc-alert@pmr.com.tw" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ t('spc.settings.sender') }}</label>
+              <input data-testid="settings-form.senderEmail" v-model="form.senderEmail" type="email" required placeholder="spc-alert@pmr.com.tw" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">預設警報收件人信箱 (Default Recipient)</label>
-              <input v-model="form.defaultRecipientEmail" type="email" required placeholder="manager@pmr.com.tw" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ t('spc.settings.defaultRecipient') }}</label>
+              <input data-testid="settings-form.defaultRecipientEmail" v-model="form.defaultRecipientEmail" type="email" required placeholder="manager@pmr.com.tw" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
             </div>
           </div>
 
           <div class="border-b border-slate-100 dark:border-slate-800 pt-4 pb-4">
             <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <HardDrive class="w-5 h-5 text-indigo-500" /> 本地磁碟郵件歸檔與稽核留存
+              <HardDrive class="w-5 h-5 text-indigo-500" /> {{ t('spc.settings.archive') }}
             </h2>
           </div>
           <div class="space-y-4">
             <div class="flex items-center gap-3">
-              <input v-model="form.saveToLocalDisk" type="checkbox" id="local" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300" />
-              <label for="local" class="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">將發送的 HTML 郵件內容同步存檔於本地伺服器資料夾</label>
+              <input data-testid="settings-form.saveToLocalDisk" v-model="form.saveToLocalDisk" type="checkbox" id="local" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300" />
+              <label for="local" class="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">{{ t('spc.settings.saveLocal') }}</label>
             </div>
             <div v-if="form.saveToLocalDisk">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">本地儲存路徑 (Local Outbox Directory)</label>
-              <input v-model="form.localDiskFolder" type="text" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-mono text-xs focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
-              <p class="text-[11px] text-slate-400 mt-1">系統將於該路徑下自動產生 .html 信件備份，即便未連接真實外部 SMTP 亦可點擊查看信件排版。</p>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ t('spc.settings.outbox') }}</label>
+              <input data-testid="settings-form.localDiskFolder" v-model="form.localDiskFolder" type="text" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-mono text-xs focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100" />
+              <p class="text-[11px] text-slate-400 mt-1">{{ t('spc.settings.outboxHelp') }}</p>
             </div>
           </div>
 
@@ -303,7 +306,7 @@ onMounted(() => {
             >
               <RefreshCw v-if="saving" class="w-4 h-4 animate-spin" />
               <Save v-else class="w-4 h-4" />
-              {{ saving ? '儲存組態更新中...' : '儲存設定並寫入 appsettings.json' }}
+              {{ saving ? t('spc.settings.savingConfiguration') : t('spc.settings.saveConfiguration') }}
             </button>
           </div>
         </form>
@@ -314,35 +317,35 @@ onMounted(() => {
         <div class="p-8 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-xl space-y-6">
           <div class="space-y-2">
             <h3 class="text-lg font-bold flex items-center gap-2 text-cyan-300">
-              <Send class="w-5 h-5 text-cyan-400" /> 郵件連線與發送測試
+              <Send class="w-5 h-5 text-cyan-400" /> {{ t('spc.settings.testConnection') }}
             </h3>
             <p class="text-xs text-slate-400 leading-relaxed">
-              可立即發送一封格式化測試通報信件至指定電子信箱，以確認防火牆、主機位址與認證憑證是否正確無誤。
+              {{ t('spc.settings.testConnectionHelp') }}
             </p>
           </div>
 
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">測試信件收件人</label>
-              <input v-model="testEmail" type="email" placeholder="test@pmr.com.tw" class="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-sm focus:ring-2 focus:ring-cyan-500 text-white" />
+              <label class="block text-xs font-bold text-slate-300 mb-1">{{ t('spc.settings.testRecipient') }}</label>
+              <input data-testid="settings-testEmail" v-model="testEmail" type="email" placeholder="test@pmr.com.tw" class="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-sm focus:ring-2 focus:ring-cyan-500 text-white" />
             </div>
             <button
-              @click="sendTestEmail"
+              data-testid="settings-sendTestEmail" @click="sendTestEmail"
               :disabled="testLoading || (!testEmail && selectedRecipientCount === 0)"
               class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all text-sm"
             >
               <RefreshCw v-if="testLoading" class="w-4 h-4 animate-spin" />
               <Send v-else class="w-4 h-4" />
-              {{ testLoading ? '正在傳送連線測試郵件...' : '發送標準連線測試信' }}
+              {{ testLoading ? t('spc.settings.testSending') : t('spc.settings.testStandard') }}
             </button>
             <button
-              @click="sendTestAlertEmail"
+              data-testid="settings-sendTestAlertEmail" @click="sendTestAlertEmail"
               :disabled="testLoading || (!testEmail && selectedRecipientCount === 0)"
               class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow-lg shadow-rose-500/20 disabled:opacity-50 transition-all text-sm"
             >
               <RefreshCw v-if="testLoading" class="w-4 h-4 animate-spin" />
               <AlertTriangle v-else class="w-4 h-4" />
-              {{ testLoading ? '正在派發異常警報單...' : '模擬發送即時 OOS 品質異常通報單' }}
+              {{ testLoading ? t('spc.settings.alertSending') : t('spc.settings.testAlert') }}
             </button>
           </div>
 
@@ -351,39 +354,39 @@ onMounted(() => {
             <div class="flex items-center gap-2 font-bold text-base">
               <CheckCircle2 v-if="testResult.success" class="w-5 h-5 text-emerald-400 flex-shrink-0" />
               <ShieldAlert v-else class="w-5 h-5 text-amber-400 flex-shrink-0" />
-              {{ testResult.success ? '測試派發作業成功' : '外部 SMTP 伺服器傳送連線未建立' }}
+              {{ testResult.success ? t('spc.settings.testSuccess') : t('spc.settings.testConnectionFailed') }}
             </div>
             <p class="text-xs leading-relaxed text-slate-300">
-              <span v-if="testResult.success">已完成 {{ testResult.recipients?.length || 0 }} 位收件人的測試通報信件派送。</span>
-              <span v-else>由於測試主機位置 (<strong>{{ testResult.host }}:{{ testResult.port }}</strong>) 拒絕連線或未回應 (伺服器可能未執行或遭防火牆阻擋)，無法完成外部網路派發。</span>
+              <span v-if="testResult.success">{{ t('spc.settings.completedPrefix') }} {{ testResult.recipients?.length || 0 }} {{ t('spc.settings.completedSuffix') }}</span>
+              <span v-else>{{ t('spc.settings.hostFailedPrefix') }}<strong>{{ testResult.host }}:{{ testResult.port }}</strong>{{ t('spc.settings.hostFailedSuffix') }}</span>
             </p>
 
             <div v-if="testResult.recipients?.length" class="space-y-1 text-xs">
               <div v-for="recipient in testResult.recipients" :key="recipient.email" class="flex justify-between gap-2">
                 <span class="truncate">{{ recipient.name }} ({{ recipient.email }})</span>
-                <span :class="recipient.success ? 'text-emerald-300' : 'text-rose-300'">{{ recipient.success ? '成功' : (recipient.errorMessage || '失敗') }}</span>
+                <span :class="recipient.success ? 'text-emerald-300' : 'text-rose-300'">{{ recipient.success ? t('spc.settings.succeeded') : (recipient.errorMessage || t('spc.settings.failed')) }}</span>
               </div>
             </div>
 
             <div v-if="!testResult.success && form.saveToLocalDisk" class="p-3.5 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-200 text-xs space-y-1.5">
               <p class="font-bold flex items-center gap-1.5 text-cyan-300 text-sm">
-                <CheckCircle2 class="w-4 h-4 text-cyan-400 flex-shrink-0" /> 本地 HTML 測試郵件檔案已成功產生！
+                <CheckCircle2 class="w-4 h-4 text-cyan-400 flex-shrink-0" /> {{ t('spc.settings.localCopyCreated') }}
               </p>
-              <p class="text-slate-300 text-[11px] leading-relaxed">系統已順利將信件內容同步備份為網頁檔案，即使在無外部 SMTP 網路環境下，您亦可隨時開啟該路徑查看精美的預警通報信件排版效果：</p>
+              <p class="text-slate-300 text-[11px] leading-relaxed">{{ t('spc.settings.localCopyHelp') }}</p>
             </div>
 
             <div v-if="form.saveToLocalDisk" class="pt-2 border-t border-slate-700/50 text-xs font-mono text-cyan-300 break-all select-all">
-              📁 存放路徑：{{ testResult.outboxFolder }}
+              {{ t('spc.settings.folder') }}{{ testResult.outboxFolder }}
             </div>
           </div>
         </div>
 
         <div class="p-6 rounded-3xl bg-indigo-50 dark:bg-slate-900/50 border border-indigo-100 dark:border-slate-800 space-y-3">
           <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2 uppercase tracking-wider">
-            💡 關於自動通報與西方電氣規則
+            {{ t('spc.settings.rulesTitle') }}
           </h4>
           <p class="text-xs text-indigo-700 dark:text-slate-400 leading-relaxed">
-            當生產現場即時上傳或批次匯入檢驗數據時，SPC 引擎將於幕後平行計算。一旦符合西方電氣 8 大失控法則或超出 USL / LSL，系統即刻套用上述 SMTP 參數寄發品質警報單。
+            {{ t('spc.settings.rulesHelp') }}
           </p>
         </div>
       </div>

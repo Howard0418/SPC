@@ -1,4 +1,7 @@
 <script setup>
+import {useI18n} from "vue-i18n";
+import {displayUiMessage} from "../i18n/uiMessage";
+const {t}=useI18n({useScope:"global"});
 import { computed, onMounted, ref } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import {
@@ -32,15 +35,15 @@ const form = ref({
   isEnabled: true
 });
 
-const weekDays = [
-  { value: 1, label: "星期一" },
-  { value: 2, label: "星期二" },
-  { value: 3, label: "星期三" },
-  { value: 4, label: "星期四" },
-  { value: 5, label: "星期五" },
-  { value: 6, label: "星期六" },
-  { value: 0, label: "星期日" }
-];
+const weekDays = computed(() => [
+  { value: 1, label: t('spc.settings.monday') },
+  { value: 2, label: t('spc.settings.tuesday') },
+  { value: 3, label: t('spc.settings.wednesday') },
+  { value: 4, label: t('spc.settings.thursday') },
+  { value: 5, label: t('spc.settings.friday') },
+  { value: 6, label: t('spc.settings.saturday') },
+  { value: 0, label: t('spc.settings.sunday') }
+]);
 
 const filteredOperators = computed(() => {
   const department = form.value.department;
@@ -108,7 +111,7 @@ async function save() {
   successMsg.value = "";
   sendNowResult.value = null;
   if (form.value.recipientOperatorIds.length === 0) {
-    err.value = "請至少勾選一位有 Email 的收件人。";
+    err.value = {key:'spc.settings.recipientMissing'};
     return;
   }
   saving.value = true;
@@ -118,7 +121,7 @@ async function save() {
       weeklyDayOfWeek: Number(form.value.weeklyDayOfWeek),
       monthlyDay: Number(form.value.monthlyDay)
     });
-    successMsg.value = "SPC 週報/月報寄送設定已儲存。";
+    successMsg.value = {key:'spc.settings.reportSaved'};
     await load();
   } catch (e) {
     err.value = getApiErrorMessage(e);
@@ -132,7 +135,7 @@ async function sendNow(reportType) {
   successMsg.value = "";
   sendNowResult.value = null;
   if (form.value.recipientOperatorIds.length === 0) {
-    err.value = "請至少勾選一位有 Email 的收件人。";
+    err.value = {key:'spc.settings.recipientMissing'};
     return;
   }
   sendingNow.value = reportType;
@@ -142,7 +145,7 @@ async function sendNow(reportType) {
       recipientOperatorIds: form.value.recipientOperatorIds
     });
     sendNowResult.value = data;
-    successMsg.value = `${data.displayType || "報表"}立即寄送完成：成功 ${data.success} 位，失敗 ${data.failed} 位。`;
+    successMsg.value = {key:data.displayType?"spc.settings.sendNowComplete":"spc.settings.sendNowFallback",args:{type:data.displayType,success:data.success,failed:data.failed}};
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -182,42 +185,42 @@ onMounted(load);
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 class="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-2">
-          <CalendarClock class="w-6 h-6 text-blue-500" /> SPC 報表寄送設定
+          <CalendarClock class="w-6 h-6 text-blue-500" /> {{ t('spc.settings.reportTitle') }}
         </h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          設定 SPC 管制項目總覽週報與月報收件人，系統於指定時間匯出 Excel 並寄送。
+          {{ t('spc.settings.reportDescription') }}
         </p>
       </div>
       <div class="flex gap-2">
         <button
           type="button"
-          @click="load"
+          data-testid="settings-load" @click="load"
           :disabled="loading"
           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
-          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> 重新整理
+          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> {{ t('spc.settings.refresh') }}
         </button>
         <button
           type="button"
-          @click="exportExcel"
+          data-testid="settings-exportExcel" @click="exportExcel"
           :disabled="exporting"
           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-sm"
         >
-          <Download class="w-4 h-4" /> 匯出 Excel
+          <Download class="w-4 h-4" /> {{ t('spc.settings.export') }}
         </button>
       </div>
     </div>
 
     <div v-if="err" class="p-4 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-sm font-semibold text-red-600 dark:text-red-300">
-      {{ err }}
+      {{ displayUiMessage(t,err) }}
     </div>
     <div v-if="successMsg" class="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-sm font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-      <CheckCircle2 class="w-4 h-4" /> {{ successMsg }}
+      <CheckCircle2 class="w-4 h-4" /> {{ displayUiMessage(t,successMsg) }}
     </div>
     <div v-if="sendNowResult" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
       <div class="px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 class="font-black text-slate-800 dark:text-white">立即寄送結果</h3>
+          <h3 class="font-black text-slate-800 dark:text-white">{{ t('spc.settings.sendNowResult') }}</h3>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {{ sendNowResult.displayType }} · {{ sendNowResult.periodLabel }} · {{ sendNowResult.fileName }}
           </p>
@@ -230,7 +233,7 @@ onMounted(load);
               : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
           ]"
         >
-          成功 {{ sendNowResult.success }} / 失敗 {{ sendNowResult.failed }}
+          {{ t('spc.settings.succeeded') }} {{ sendNowResult.success }} {{ t('spc.settings.failedSeparator') }} {{ sendNowResult.failed }}
         </span>
       </div>
       <div class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -251,7 +254,7 @@ onMounted(load);
               recipient.success ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'
             ]"
           >
-            {{ recipient.success ? '寄送成功' : recipient.errorMessage || '寄送失敗' }}
+            {{ recipient.success ? t('spc.settings.deliverySuccess') : recipient.errorMessage || t('spc.settings.deliveryFailed') }}
           </div>
         </div>
       </div>
@@ -260,23 +263,23 @@ onMounted(load);
     <form @submit.prevent="save" class="grid grid-cols-1 xl:grid-cols-[minmax(360px,520px)_1fr] gap-6">
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm p-5 space-y-5">
         <div class="flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
-          <CalendarClock class="w-4 h-4 text-blue-500" /> 排程
+          <CalendarClock class="w-4 h-4 text-blue-500" /> {{ t('spc.settings.schedule') }}
         </div>
 
         <label class="flex items-center gap-3">
-          <input v-model="form.isEnabled" type="checkbox" class="w-4 h-4 accent-blue-600" />
-          <span class="text-sm font-bold text-slate-700 dark:text-slate-200">啟用自動寄送</span>
+          <input data-testid="settings-form.isEnabled" v-model="form.isEnabled" type="checkbox" class="w-4 h-4 accent-blue-600" />
+          <span class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ t('spc.settings.enableSchedule') }}</span>
         </label>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1">寄送時間</label>
-            <input v-model="form.sendTime" type="time" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm font-semibold" />
+            <label class="block text-xs font-bold text-slate-500 mb-1">{{ t('spc.settings.sendTime') }}</label>
+            <input data-testid="settings-form.sendTime" v-model="form.sendTime" type="time" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm font-semibold" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1">部門</label>
-            <select v-model="form.department" @change="pruneRecipients" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm font-semibold">
-              <option value="">全部部門</option>
+            <label class="block text-xs font-bold text-slate-500 mb-1">{{ t('spc.settings.department') }}</label>
+            <select data-testid="settings-form.department" v-model="form.department" @change="pruneRecipients" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm font-semibold">
+              <option value="">{{ t('spc.settings.allDepartments') }}</option>
               <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
             </select>
           </div>
@@ -285,18 +288,18 @@ onMounted(load);
         <div class="grid grid-cols-2 gap-4">
           <label class="space-y-2 rounded-lg border border-slate-200 dark:border-slate-800 p-3">
             <span class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
-              <input v-model="form.weeklyEnabled" type="checkbox" class="w-4 h-4 accent-blue-600" /> 週報
+              <input data-testid="settings-form.weeklyEnabled" v-model="form.weeklyEnabled" type="checkbox" class="w-4 h-4 accent-blue-600" /> {{ t('spc.settings.weekly') }}
             </span>
-            <select v-model="form.weeklyDayOfWeek" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm">
+            <select data-testid="settings-form.weeklyDayOfWeek" v-model="form.weeklyDayOfWeek" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm">
               <option v-for="day in weekDays" :key="day.value" :value="day.value">{{ day.label }}</option>
             </select>
           </label>
 
           <label class="space-y-2 rounded-lg border border-slate-200 dark:border-slate-800 p-3">
             <span class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
-              <input v-model="form.monthlyEnabled" type="checkbox" class="w-4 h-4 accent-blue-600" /> 月報
+              <input data-testid="settings-form.monthlyEnabled" v-model="form.monthlyEnabled" type="checkbox" class="w-4 h-4 accent-blue-600" /> {{ t('spc.settings.monthly') }}
             </span>
-            <input v-model="form.monthlyDay" type="number" min="1" max="28" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm" />
+            <input data-testid="settings-form.monthlyDay" v-model="form.monthlyDay" type="number" min="1" max="28" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm" />
           </label>
         </div>
 
@@ -305,25 +308,25 @@ onMounted(load);
           :disabled="saving"
           class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-sm font-black shadow-sm"
         >
-          <Save class="w-4 h-4" /> {{ saving ? "儲存中..." : "儲存寄送設定" }}
+          <Save class="w-4 h-4" /> {{ saving ? t('spc.settings.saving') : t('spc.settings.saveReport') }}
         </button>
 
         <div class="grid grid-cols-2 gap-3 pt-1">
           <button
             type="button"
-            @click="sendNow('weekly')"
+            data-testid="settings-sendWeekly" @click="sendNow('weekly')"
             :disabled="!!sendingNow"
             class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-xs font-black shadow-sm"
           >
-            <Send class="w-4 h-4" /> {{ sendingNow === 'weekly' ? '寄送中...' : '立即寄送週報' }}
+            <Send class="w-4 h-4" /> {{ sendingNow === 'weekly' ? t('spc.settings.sending') : t('spc.settings.sendWeekly') }}
           </button>
           <button
             type="button"
-            @click="sendNow('monthly')"
+            data-testid="settings-sendMonthly" @click="sendNow('monthly')"
             :disabled="!!sendingNow"
             class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-60 text-white text-xs font-black shadow-sm"
           >
-            <Send class="w-4 h-4" /> {{ sendingNow === 'monthly' ? '寄送中...' : '立即寄送月報' }}
+            <Send class="w-4 h-4" /> {{ sendingNow === 'monthly' ? t('spc.settings.sending') : t('spc.settings.sendMonthly') }}
           </button>
         </div>
       </div>
@@ -332,23 +335,23 @@ onMounted(load);
         <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 class="font-black text-slate-800 dark:text-white flex items-center gap-2">
-              <Users class="w-5 h-5 text-indigo-500" /> 收件人
+              <Users class="w-5 h-5 text-indigo-500" /> {{ t('spc.settings.recipients') }}
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">已勾選 {{ selectedCount }} 位，僅列出有 Email 的使用者。</p>
+            <p class="text-xs text-slate-400 mt-0.5">{{ t('spc.settings.checkedPrefix') }} {{ selectedCount }} {{ t('spc.settings.checkedSuffix') }}</p>
           </div>
           <div class="flex gap-2">
-            <button type="button" @click="selectAllVisible" class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold border border-indigo-200 dark:border-indigo-800">
-              全選
+            <button type="button" data-testid="settings-selectAllVisible" @click="selectAllVisible" class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold border border-indigo-200 dark:border-indigo-800">
+              {{ t('spc.settings.selectAll') }}
             </button>
-            <button type="button" @click="clearRecipients" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">
-              清除
+            <button type="button" data-testid="settings-clearRecipients" @click="clearRecipients" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">
+              {{ t('spc.settings.clear') }}
             </button>
           </div>
         </div>
 
-        <div v-if="loading" class="py-12 text-center text-sm font-bold text-slate-400">載入設定中...</div>
+        <div v-if="loading" class="py-12 text-center text-sm font-bold text-slate-400">{{ t('spc.settings.loadingSettings') }}</div>
         <div v-else-if="filteredOperators.length === 0" class="py-12 text-center text-sm font-bold text-slate-400">
-          此部門沒有可寄送 Email 的使用者
+          {{ t('spc.settings.noDepartmentEmails') }}
         </div>
         <div v-else class="max-h-[560px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
           <label
@@ -368,7 +371,7 @@ onMounted(load);
                 {{ user.operatorName }} <span class="text-xs text-slate-400">({{ user.operatorCode }})</span>
               </div>
               <div class="text-xs text-slate-500 dark:text-slate-400 truncate">
-                {{ user.department || "未指派部門" }} · {{ user.email }}
+                {{ user.department || t('spc.settings.noDepartment') }} · {{ user.email }}
               </div>
             </div>
           </label>

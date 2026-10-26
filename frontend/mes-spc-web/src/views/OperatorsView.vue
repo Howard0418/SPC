@@ -1,4 +1,8 @@
 <script setup>
+import {useI18n} from "vue-i18n";
+import {displayUiMessage} from "../i18n/uiMessage";
+const {t}=useI18n({useScope:"global"});
+import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
@@ -77,14 +81,14 @@ async function comparePortalUsers() {
 
 async function syncSelected() {
   if (!selectedPortalIds.value.length) return;
-  if (!confirm(`確定同步選取的 ${selectedPortalIds.value.length} 位人員？既有 SPC 權限與狀態會保留。`)) return;
+  if (!confirm(t('spc.settings.confirmSync',{count:selectedPortalIds.value.length}))) return;
   comparing.value = true;
   err.value = "";
   try {
     const { data } = await api.post("/v1/operators/directory-comparison/sync", {
       items: selectedPortalIds.value.map(portalUserId => ({ portalUserId }))
     });
-    successAlert(`同步完成：${data.succeeded || 0} 位成功。`);
+    successAlert({key:"spc.settings.syncComplete",args:{count:data.succeeded||0}});
     await load();
     await comparePortalUsers();
   } catch (e) {
@@ -95,7 +99,7 @@ async function syncSelected() {
 }
 
 const comparisonLabel = status => ({
-  Matched: "已結合", Different: "資料不同", PortalOnly: "僅 Portal", SpcOnly: "僅 SPC", Conflict: "衝突"
+  Matched: t('spc.settings.matched'), Different: t('spc.settings.different'), PortalOnly: t('spc.settings.portalOnly'), SpcOnly: t('spc.settings.spcOnly'), Conflict: t('spc.settings.conflict')
 }[status] || status);
 
 const filteredRows = computed(() => {
@@ -151,7 +155,7 @@ function openEditModal(item) {
 
 async function save() {
   if (!form.value.operatorCode?.trim() || !form.value.operatorName?.trim()) {
-    formErr.value = "作業員工號與姓名皆為必填欄位。";
+    formErr.value = {key:'spc.settings.operatorRequired'};
     return;
   }
   formErr.value = "";
@@ -163,12 +167,12 @@ async function save() {
     if (modalMode.value === "create") {
       const { data } = await api.post("/operators", payload);
       rows.value.push(data);
-      successAlert("成功建立新作業人員：" + data.operatorName);
+      successAlert({key:"spc.settings.operatorCreated",args:{name:data.operatorName}});
     } else {
       const { data } = await api.put(`/operators/${currentId.value}`, payload);
       const idx = rows.value.findIndex(x => x.id === currentId.value);
       if (idx !== -1) rows.value[idx] = data;
-      successAlert("成功更新作業人員：" + data.operatorName);
+      successAlert({key:"spc.settings.operatorUpdated",args:{name:data.operatorName}});
     }
     showModal.value = false;
   } catch (e) {
@@ -179,12 +183,12 @@ async function save() {
 }
 
 async function confirmDelete(item) {
-  if (!confirm(`確定要刪除作業人員「${item.operatorCode} (${item.operatorName})」嗎？`)) return;
+  if (!confirm(t('spc.settings.confirmDelete',{code:item.operatorCode,name:item.operatorName}))) return;
   loading.value = true;
   try {
     await api.delete(`/operators/${item.id}`);
     rows.value = rows.value.filter(x => x.id !== item.id);
-    successAlert("成功刪除作業人員：" + item.operatorName);
+    successAlert({key:"spc.settings.operatorDeleted",args:{name:item.operatorName}});
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -206,82 +210,82 @@ onMounted(load);
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
       <div class="flex items-center gap-3">
         <button
-          @click="comparePortalUsers"
+          data-testid="settings-comparePortalUsers" @click="comparePortalUsers"
           type="button"
           :disabled="comparing"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-all disabled:opacity-60"
         >
-          <RefreshCw :class="['w-4 h-4', comparing ? 'animate-spin' : '']" /> 比對 Portal 品保人員
+          <RefreshCw :class="['w-4 h-4', comparing ? 'animate-spin' : '']" /> {{ t('spc.settings.comparePortal') }}
         </button>
         <div class="p-3 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/30 text-white">
           <Users class="w-7 h-7" />
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">作業人員與權限主檔維護</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">管理全廠產線量測作業工程師、工號、所屬部門及電子郵件通知設定</p>
+          <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{{ t('spc.settings.operatorsTitle') }}</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ t('spc.settings.operatorsDescription') }}</p>
         </div>
       </div>
       
       <div class="flex items-center gap-3">
         <button
-          @click="load"
+          data-testid="settings-load" @click="load"
           type="button"
           :disabled="loading"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all border border-slate-200 dark:border-slate-700"
         >
-          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> 重新整理
+          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> {{ t('spc.settings.refresh') }}
         </button>
         <button
-          @click="openCreateModal"
+          data-testid="settings-openCreateModal" @click="openCreateModal"
           type="button"
           class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40 transition-all transform hover:-translate-y-0.5"
         >
-          <Plus class="w-4 h-4" /> 新增人員
+          <Plus class="w-4 h-4" /> {{ t('spc.settings.createOperator') }}
         </button>
       </div>
     </div>
 
     <!-- Guide / Wizard Tip -->
-    <ModuleGuide title="模組指南：作業人員主檔 (Operators)">
+    <ModuleGuide :title="t('spc.settings.operatorsGuide')">
       <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">
-          此模組用於設定現場量測人員的基本資料。當 SPC 數據發生異常時，系統會將告警信件發送至這裡設定的電子郵件信箱。
+          {{ t('spc.settings.operatorsGuideDescription') }}
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-blue-700 dark:text-blue-400/80 leading-relaxed">
-          <div class="font-black text-blue-900 dark:text-blue-300">作業人員主檔頁面操作說明</div>
-          <p><strong>查詢人員：</strong>可依工號、姓名、部門或 Email 搜尋。</p>
-          <p><strong>新增人員：</strong>按「新增人員」，填入工號、姓名、部門、職稱與電子郵件。</p>
-          <p><strong>設定通知：</strong>確認 Email 正確，異常通知與處置提醒才可送達。</p>
-          <p><strong>維護狀態：</strong>離職或不需通知的人員可停用，保留歷史資料但不再作為通知對象。</p>
+          <div class="font-black text-blue-900 dark:text-blue-300">{{ t('spc.settings.operatorsInstructions') }}</div>
+          <p><strong>{{ t('spc.settings.searchPeople') }}</strong>{{ t('spc.settings.searchPeopleHelp') }}</p>
+          <p><strong>{{ t('spc.settings.addPeople') }}</strong>{{ t('spc.settings.addPeopleHelp') }}</p>
+          <p><strong>{{ t('spc.settings.notifications') }}</strong>{{ t('spc.settings.notificationsHelp') }}</p>
+          <p><strong>{{ t('spc.settings.maintainStatus') }}</strong>{{ t('spc.settings.maintainStatusHelp') }}</p>
         </div>
     </ModuleGuide>
 
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">
       <AlertTriangle class="w-6 h-6 flex-shrink-0 text-red-500" />
-      <div class="text-sm font-semibold">{{ err }}</div>
+      <div class="text-sm font-semibold">{{ displayUiMessage(t,err) }}</div>
     </div>
 
     <div v-if="successMsg" class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl shadow-sm animate-fade-in">
       <CheckCircle2 class="w-6 h-6 flex-shrink-0 text-emerald-500" />
-      <div class="text-sm font-semibold">{{ successMsg }}</div>
+      <div class="text-sm font-semibold">{{ displayUiMessage(t,successMsg) }}</div>
     </div>
 
     <div v-if="comparison" class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
       <div class="p-5 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center justify-between gap-3">
-          <h2 class="font-black text-slate-800 dark:text-white">Portal／SPC 人員比對結果</h2>
-          <button @click="syncSelected" :disabled="!selectedPortalIds.length || comparing" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold disabled:opacity-40">
-            同步選取人員（{{ selectedPortalIds.length }}）
+          <h2 class="font-black text-slate-800 dark:text-white">{{ t('spc.settings.comparisonTitle') }}</h2>
+          <button data-testid="settings-syncSelected" @click="syncSelected" :disabled="!selectedPortalIds.length || comparing" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold disabled:opacity-40">
+            {{ t('spc.settings.syncPrefix') }}{{ selectedPortalIds.length }}）
           </button>
         </div>
-        <p class="mt-1 text-xs text-slate-500">唯讀比對：Portal 品保 {{ comparison.portalCount }} 人、SPC {{ comparison.spcCount }} 人；不會修改基本資料或權限。</p>
+        <p class="mt-1 text-xs text-slate-500">{{ t('spc.settings.comparisonPrefix') }} {{ comparison.portalCount }} {{ t('spc.settings.comparisonMiddle') }} {{ comparison.spcCount }} {{ t('spc.settings.comparisonSuffix') }}</p>
       </div>
       <div class="overflow-x-auto max-h-[32rem]">
         <table class="w-full text-left text-xs">
-          <thead class="sticky top-0 bg-slate-50 dark:bg-slate-800"><tr><th class="p-3">選取</th><th class="p-3">狀態</th><th class="p-3">AD 帳號／工號</th><th class="p-3">Portal</th><th class="p-3">SPC</th><th class="p-3">說明</th></tr></thead>
+          <thead class="sticky top-0 bg-slate-50 dark:bg-slate-800"><tr><th class="p-3">{{ t('spc.settings.select') }}</th><th class="p-3">{{ t('spc.settings.status') }}</th><th class="p-3">{{ t('spc.settings.accountCode') }}</th><th class="p-3">Portal</th><th class="p-3">SPC</th><th class="p-3">{{ t('spc.settings.description') }}</th></tr></thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             <tr v-for="item in comparison.rows" :key="`${item.status}-${item.portalUserId || 0}-${item.spcOperatorId || 0}`">
-              <td class="p-3"><input v-if="item.portalUserId && item.status !== 'Matched' && item.status !== 'Conflict'" v-model="selectedPortalIds" type="checkbox" :value="item.portalUserId" class="h-4 w-4" /><span v-else>-</span></td>
+              <td class="p-3"><input v-if="item.portalUserId && item.status !== 'Matched' && item.status !== 'Conflict'" data-testid="settings-selectedPortalIds" v-model="selectedPortalIds" type="checkbox" :value="item.portalUserId" class="h-4 w-4" /><span v-else>-</span></td>
               <td class="p-3 font-bold" :class="item.status === 'Matched' ? 'text-emerald-600' : item.status === 'Conflict' ? 'text-red-600' : 'text-amber-600'">{{ comparisonLabel(item.status) }}</td>
               <td class="p-3"><div>{{ item.adAccount || '-' }}</div><div class="text-slate-500">{{ item.employeeNo || '-' }}</div></td>
               <td class="p-3"><div>{{ item.portalName || '-' }}</div><div class="text-slate-500">{{ item.portalDepartment || '-' }}／{{ item.portalEmail || '-' }}</div></td>
@@ -300,16 +304,16 @@ onMounted(load);
           <Search class="w-4 h-4" />
         </span>
         <input
-          v-model="searchQuery"
+          data-testid="settings-searchQuery" v-model="searchQuery"
           type="text"
-          placeholder="搜尋工號、姓名、部門或 Email..."
+          :placeholder="t('spc.settings.operatorSearch')"
           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
         />
       </div>
 
       <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200 dark:border-slate-700 w-full sm:w-auto">
         <button
-          v-for="f in [{id:'all', label:'全部人員'}, {id:'active', label:'在職中'}, {id:'inactive', label:'已離職/停權'}]"
+          v-for="f in [{id:'all', label:t('spc.settings.allPeople')}, {id:'active', label:t('spc.settings.employed')}, {id:'inactive', label:t('spc.settings.inactivePeople')}]"
           :key="f.id"
           @click="statusFilter = f.id"
           type="button"
@@ -332,20 +336,20 @@ onMounted(load);
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
               <th class="py-4 px-6">ID</th>
-              <th class="py-4 px-6">姓名 / 工號</th>
-              <th class="py-4 px-6">所屬部門</th>
-              <th class="py-4 px-6">登入帳號 / 權限</th>
-              <th class="py-4 px-6">電子郵件 (警報通知)</th>
-              <th class="py-4 px-6 text-center">在職狀態</th>
-              <th class="py-4 px-6 text-right">操作</th>
+              <th class="py-4 px-6">{{ t('spc.settings.nameCode') }}</th>
+              <th class="py-4 px-6">{{ t('spc.settings.operatorDepartment') }}</th>
+              <th class="py-4 px-6">{{ t('spc.settings.accountRole') }}</th>
+              <th class="py-4 px-6">{{ t('spc.settings.alertEmail') }}</th>
+              <th class="py-4 px-6 text-center">{{ t('spc.settings.employment') }}</th>
+              <th class="py-4 px-6 text-right">{{ t('spc.settings.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400">正在載入人員清單...</td>
+              <td colspan="7" class="py-12 text-center text-slate-400">{{ t('spc.settings.loadingPeople') }}</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400 font-medium">找不到相符的作業人員資料</td>
+              <td colspan="7" class="py-12 text-center text-slate-400 font-medium">{{ t('spc.settings.noPeople') }}</td>
             </tr>
             <tr
               v-else
@@ -356,24 +360,24 @@ onMounted(load);
               <td class="py-4 px-6 font-mono text-xs text-slate-400 dark:text-slate-500">#{{ item.id }}</td>
               <td class="py-4 px-6">
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <UserCheck class="w-4 h-4 text-blue-500" /> {{ item.operatorName || '未命名人員' }}
+                  <UserCheck class="w-4 h-4 text-blue-500" /> {{ item.operatorName || t('spc.settings.unnamed') }}
                 </div>
                 <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">{{ item.operatorCode || '-' }}</div>
               </td>
               <td class="py-4 px-6 font-semibold text-xs text-slate-600 dark:text-slate-300">
                 <div class="flex items-center gap-1.5">
-                  <Building2 class="w-3.5 h-3.5 text-slate-400" /> {{ item.department || '未指派' }}
+                  <Building2 class="w-3.5 h-3.5 text-slate-400" /> {{ item.department || t('spc.settings.unassigned') }}
                 </div>
               </td>
               <td class="py-4 px-6 text-xs">
-                <div class="font-mono text-slate-700 dark:text-slate-200">{{ item.username || '尚未設定' }}</div>
+                <div class="font-mono text-slate-700 dark:text-slate-200">{{ item.username || t('spc.settings.notConfigured') }}</div>
                 <span :class="[
                   'mt-1 inline-flex rounded-full px-2 py-0.5 font-bold',
                   item.role === 'Editor'
                     ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
                     : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
                 ]">
-                  {{ item.role === 'Editor' ? '編輯者' : '檢視者' }}
+                  {{ item.role === 'Editor' ? t('spc.settings.editor') : t('spc.settings.viewer') }}
                 </span>
               </td>
               <td class="py-4 px-6 font-mono text-xs text-slate-600 dark:text-slate-300">
@@ -391,23 +395,23 @@ onMounted(load);
                   ]"
                 >
                   <span :class="['w-1.5 h-1.5 rounded-full', item.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400']"></span>
-                  {{ item.isActive ? '在職中' : '停權/離職' }}
+                  {{ item.isActive ? t('spc.settings.employed') : t('spc.settings.departed') }}
                 </span>
               </td>
               <td class="py-4 px-6 text-right space-x-2">
                 <button
-                  @click="openEditModal(item)"
+                  data-testid="settings-openEditModal" @click="openEditModal(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 transition-all border border-blue-200 dark:border-slate-700"
-                  title="編輯人員"
+                  :title="t('spc.settings.editOperator')"
                 >
                   <Edit class="w-4 h-4" />
                 </button>
                 <button
-                  @click="confirmDelete(item)"
+                  data-testid="settings-confirmDelete" @click="confirmDelete(item)"
                   type="button"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-red-50 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-950 text-red-600 dark:text-red-400 transition-all border border-red-200 dark:border-slate-700"
-                  title="刪除人員"
+                  :title="t('spc.settings.deleteOperator')"
                 >
                   <Trash2 class="w-4 h-4" />
                 </button>
@@ -418,7 +422,7 @@ onMounted(load);
       </div>
 
       <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-        <span>顯示第 1 至 {{ filteredRows.length }} 項結果（總計 {{ rows.length }} 位人員）</span>
+        <span>{{ t('spc.settings.rangePrefix') }} {{ filteredRows.length }} {{ t('spc.settings.rangeMiddle') }} {{ rows.length }} {{ t('spc.settings.rangeSuffix') }}</span>
       </div>
     </div>
 
@@ -433,14 +437,14 @@ onMounted(load);
     >
       <div v-if="showModal" class="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm">
         <div class="absolute inset-0 cursor-pointer" @click="showModal = false"></div>
-        <div class="relative w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
+        <div data-testid="settings-operator-dialog" role="dialog" :aria-label="t('spc.settings.editOperatorTitle')" class="relative w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col" @click.stop>
           <div class="flex items-center justify-between px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 shrink-0">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/20">
               <Users class="w-5 h-5" />
             </div>
             <h3 class="text-lg font-black text-slate-800 dark:text-white">
-              {{ modalMode === 'create' ? '新增作業人員' : '編輯人員資料' }}
+              {{ modalMode === 'create' ? t('spc.settings.createOperatorTitle') : t('spc.settings.editOperatorTitle') }}
             </h3>
           </div>
           <button
@@ -454,97 +458,98 @@ onMounted(load);
 
         <form @submit.prevent="save" class="flex flex-col h-full overflow-hidden">
           <div class="flex-1 overflow-y-auto p-6 space-y-5">
+<LocalePicker />
           <div v-if="formErr" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-xl text-xs font-bold">
-            <XCircle class="w-4 h-4 flex-shrink-0" /> {{ formErr }}
+            <XCircle class="w-4 h-4 flex-shrink-0" /> {{ displayUiMessage(t,formErr) }}
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">工號 (Code) <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.settings.operatorCode') }} <span class="text-red-500">*</span></label>
               <input
-                v-model="form.operatorCode"
+                data-testid="settings-form.operatorCode" v-model="form.operatorCode"
                 type="text"
                 required
-                placeholder="例如：OP-101 / PMR-01"
+                :placeholder="t('spc.settings.operatorCodeExample')"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
             
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">姓名 (Name) <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.settings.operatorName') }} <span class="text-red-500">*</span></label>
               <input
-                v-model="form.operatorName"
+                data-testid="settings-form.operatorName" v-model="form.operatorName"
                 type="text"
                 required
-                placeholder="例如：王大明"
+                :placeholder="t('spc.settings.operatorNameExample')"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
           </div>
 
           <div class="space-y-2">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">可瀏覽頁面</label>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.settings.visiblePages') }}</label>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <label v-for="permission in permissionCatalog" :key="permission.code" class="flex items-center gap-2 text-xs">
-                <input v-model="form.pagePermissions" type="checkbox" :value="permission.code" class="h-4 w-4" />
+                <input data-testid="settings-form.pagePermissions" v-model="form.pagePermissions" type="checkbox" :value="permission.code" class="h-4 w-4" />
                 <span>{{ permission.name }}</span>
               </label>
             </div>
-            <p class="text-xs text-slate-500">這裡只控制頁面可見範圍；編輯、匯入與管理操作仍受 Viewer／Editor 保護。</p>
+            <p class="text-xs text-slate-500">{{ t('spc.settings.permissionHelp') }}</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">登入帳號</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.settings.loginAccount') }}</label>
               <input
-                v-model="form.username"
+                data-testid="settings-form.username" v-model="form.username"
                 type="text"
                 autocomplete="off"
-                placeholder="留空表示不可登入"
+                :placeholder="t('spc.settings.noLogin')"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white"
               />
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">系統權限</label>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.settings.systemRole') }}</label>
             <select
-              v-model="form.role"
+              data-testid="settings-form.role" v-model="form.role"
               class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white"
             >
-              <option value="Viewer">檢視者－只能查看與查詢資料</option>
-              <option value="Editor">編輯者－完整系統權限</option>
+              <option value="Viewer">{{ t('spc.settings.viewerOption') }}</option>
+              <option value="Editor">{{ t('spc.settings.editorOption') }}</option>
             </select>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">所屬部門 (Dept)</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.settings.departmentLabel') }}</label>
               <input
-                v-model="form.department"
+                data-testid="settings-form.department" v-model="form.department"
                 type="text"
-                placeholder="例如：製造部一部 / 品管科"
+                :placeholder="t('spc.settings.departmentExample')"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">聯絡 Email (異常通報用)</label>
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.settings.contactEmail') }}</label>
               <input
-                v-model="form.email"
+                data-testid="settings-form.email" v-model="form.email"
                 type="email"
-                placeholder="例如：user@pmr.com.tw"
+                :placeholder="t('spc.settings.emailExample',{email:'user@pmr.com.tw'})"
                 class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
               />
             </div>
           </div>
 
           <div class="space-y-1.5 pt-2">
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">在職/帳號啟用設定</label>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">{{ t('spc.settings.accountStatus') }}</label>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input v-model="form.isActive" type="checkbox" class="sr-only peer" />
+              <input data-testid="settings-form.isActive" v-model="form.isActive" type="checkbox" class="sr-only peer" />
               <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isActive ? '啟用中 (Active)' : '停權/離職 (Inactive)' }}</span>
+              <span class="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">{{ form.isActive ? t('spc.settings.activeOption') : t('spc.settings.inactiveOption') }}</span>
             </label>
           </div>
 
@@ -555,14 +560,14 @@ onMounted(load);
               type="button"
               class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold transition-all"
             >
-              取消
+              {{ t('spc.settings.cancel') }}
             </button>
             <button
               type="submit"
               :disabled="loading"
               class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40 transition-all transform hover:-translate-y-0.5"
             >
-              <Save class="w-4 h-4" /> 確認儲存
+              <Save class="w-4 h-4" /> {{ t('spc.settings.save') }}
             </button>
           </div>
         </form>
