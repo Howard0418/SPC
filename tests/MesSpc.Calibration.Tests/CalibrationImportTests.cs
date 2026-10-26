@@ -12,6 +12,16 @@ namespace MesSpc.Calibration.Tests;
 
 public class CalibrationImportTests : IDisposable
 {
+    [Fact]
+    public void RowMessagesHaveExplicitIndexesWithoutChangingRawErrorsWarningsOrStatus()
+    {
+        var row=CalibrationImportParser.Parse(Workbook(Row(6,code:"",cycle:"unknown",last:"--",due:"--",method:new string('x',101))),Clock).Rows[0];
+        Assert.Equal("Invalid",row.Status);Assert.NotEmpty(row.Errors);Assert.NotEmpty(row.Warnings);
+        Assert.Equal(row.Errors.Count,row.ErrorMessages.Count);Assert.Equal(row.Warnings.Count,row.WarningMessages.Count);
+        Assert.All(row.ErrorMessages,m=>{Assert.Equal(row.Errors[m.Index],m.Descriptor.Message);Assert.StartsWith("spc.api.",m.Descriptor.MessageKey);});
+        Assert.All(row.WarningMessages,m=>Assert.Equal(row.Warnings[m.Index],m.Descriptor.Message));
+        Assert.Equal("",row.Code);Assert.Null(row.NextCalibrationDate);
+    }
     private readonly SqliteConnection connection = new("Data Source=:memory:");
     private readonly AppDbContext db;
     private readonly CalibrationImportService service;
@@ -216,6 +226,9 @@ public class CalibrationImportTests : IDisposable
         Assert.Empty(await db.Set<InstrumentCalibrationRecord>().ToListAsync());
         Assert.Empty(await db.Set<CalibrationNotification>().ToListAsync());
         Assert.Contains(await db.Set<CalibrationAuditLog>().ToListAsync(),x=>x.AfterJson.Contains("instruments.xlsx") && x.Actor=="qa");
+        var completed=await db.Set<CalibrationAuditLog>().Where(x=>x.Action=="InstrumentImportCompleted").ToListAsync();
+        Assert.NotEmpty(completed);Assert.All(completed,audit=>{Assert.DoesNotContain("MessageKey",audit.AfterJson);Assert.DoesNotContain("ErrorMessages",audit.AfterJson);});
+        foreach(var audit in completed){using var document=System.Text.Json.JsonDocument.Parse(audit.AfterJson);var result=document.RootElement.GetProperty("Result");Assert.Equal(new[]{"Added","Skipped","Failed","Rows"},result.EnumerateObject().Select(p=>p.Name));Assert.All(result.GetProperty("Rows").EnumerateArray(),row=>Assert.Equal(new[]{"RowNumber","Code","Status","Message"},row.EnumerateObject().Select(p=>p.Name)));}
         Assert.Equal("Existing",(await service.PreviewAsync(file,default)).Rows[0].Status);
     }
 

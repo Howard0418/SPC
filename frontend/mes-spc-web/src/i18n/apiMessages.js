@@ -20,7 +20,24 @@ export function resolveApiErrorDescriptor(data,source){
 
 export function formatApiErrorDescriptor(data,source,translate){
  const descriptor=resolveApiErrorDescriptor(data,source);
- return descriptor?translate(descriptor.key,descriptor.args):null;
+ if(!descriptor)return null;
+ const tree=resolveApiErrorTree(data,source);
+ if(!tree)return typeof data.message==='string'&&data.message?data.message:translate(descriptor.key,descriptor.args);
+ const render=node=>[translate(node.key,node.args),...node.details.map(render)].join('\n');
+ return render(tree);
+}
+
+// Normalize only known explicit descriptors; never compile raw text or nested arguments.
+export function resolveApiErrorTree(data,source){
+ const path=new Set();let nodes=0;
+ function visit(value,depth){
+  if(depth>3||++nodes>64||path.has(value))throw Error('Invalid display tree');
+  const item=resolveApiErrorDescriptor(value,source);if(!item)throw Error('Unknown display descriptor');
+  const details=value.details??[];if(!Array.isArray(details)||details.length>64)throw Error('Invalid display details');
+  path.add(value);const children=details.map(child=>visit(child,depth+1));path.delete(value);
+  return {...item,details:children};
+ }
+ try{return visit(data,0)}catch{return null}
 }
 
 // Additive metadata for old API endpoints whose response body must remain a string.

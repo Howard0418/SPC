@@ -1,0 +1,11 @@
+# I18N-TASK-08C4C 匯入逐列錯誤／警示與修正建議三語
+- 2026-10-26 DONE，必要驗證與測試發布完成，依[連續授權](../20261026-i18n-continuation/spec.md)，接續[C4B](../20261026-i18n-task08c4b/spec.md)。主系統SPC；不改Portal／TransFiles、schema／原匯入格式／角色／計算／日期精度與寫入結果。
+- R1 校驗預覽保留原Errors/Warnings字串陣列，新增明示索引metadata；已知錯誤建立點指定key/具名args，不從原文猜key。原表頭／欄名／raw日期或使用者原文保持資料。索引metadata須防止原陣列後續變更造成錯配。
+- R2 UploadErrors原ErrorCode/ErrorMessage/RawValue與DB資料保持；只在preview/history等讀取DTO依既有穩定ErrorCode提供安全三語摘要與fix suggestion descriptor。無需推定歷史主檔／公式，無新增寫入或payload欄位；原完整儲存錯誤可當原始證據保留，未知code退原文，不從譯文控制業務。既有動態診斷內容缺原參數時，三語摘要／建議不得冒充完整歷史原訊息翻譯。
+- R3 逐列校驗結果、批次失敗與藥液日報彙整提供明示父子descriptor；保留原Exception／Status／Code／Message及原資料，Details只含已知安全UI描述，不含inner Exception／SQL／token。前端字串介面不變，以受限depth/node count單次純文字組合父子譯文；C5再處理已存訊息即時切語言及逐頁接線。
+- R4 機器enum、欄位名／code／原檔或自由輸入不翻譯；不更動Errors.Count判定、row.Status／skip／atomic rollback／主檔建立／公式hash與儲存。原無法解析或未知例外保留安全fallback，不偽造原始範本或歷史參數。
+- BDD Happy：Given有效匯入，When預覽／確認，Then原筆數／欄位／資料相同，警示有正確索引descriptor。
+- BDD Boundary：Given欄位長度、公式快取值／非日期、重複／既有編號、0及多列錯誤，Then原拒絕／skip／rollback與原陣列不變，三語可識別列號與原因，原文含HTML/i18n符號不二次編譯。
+- BDD Invalid：Given未知code／無參數／索引不符／非法巢狀descriptor／超過深度與節點，Then安全回原文或已知摘要，不推定歷史、不洩露secret、不寫錯資料。
+- BDD Regression：核心先測，Upload/Particle、校驗生成範本／隔離HTTP、Portal藥液批次與既有公式／預覽回歸。CAL-VERIFY-001/002保留，完整校驗不冒稱全綠。build/test後核PMR_SPC_TEST/pending migrations與IIS，成對備份，只測試Web0.1.100/API0.1.81。
+- 回復前後端成對、保護設定與資料，無DB回復需求；正式另授權，譯文draft待20。[計畫](plan.md)／[任務](tasks.md)／[驗證](verification.md)。

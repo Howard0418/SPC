@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain.Enums;
 using System.Text.Json;
 using MesSpc.Api.Domain;
@@ -188,7 +189,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 x.CreatedBy,
                 ErrorCount = errorSamples.TryGetValue(x.UploadBatchId, out var sample) ? sample.ErrorCount : 0,
                 FirstErrorCode = errorSamples.TryGetValue(x.UploadBatchId, out sample) ? sample.FirstErrorCode : null,
-                FirstErrorMessage = errorSamples.TryGetValue(x.UploadBatchId, out sample) ? sample.FirstErrorMessage : null
+                FirstErrorMessage = errorSamples.TryGetValue(x.UploadBatchId, out sample) ? sample.FirstErrorMessage : null,
+                FirstErrorDescriptor = errorSamples.TryGetValue(x.UploadBatchId, out sample) ? UploadErrorUi.Describe(sample.FirstErrorCode,sample.FirstErrorMessage ?? "",null) : null
             })
         };
     }
@@ -524,7 +526,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         if (batch is null) return null;
         if (chemicalEvidence?.Count > 0 && (batch.SourceType != "PortalDaily" || db.Database.CurrentTransaction is null))
             throw new InvalidOperationException("公式追溯確認須在日報交易中執行。");
-        if (batch.ImportStatus == "Imported") return new { batch, message = "Batch already processed." };
+        if (batch.ImportStatus == "Imported") return new { batch, message = "Batch already processed.", messageKey = "spc.api.importAlreadyProcessed", args = ApiUiMessageCatalog.EmptyArguments };
 
         if (batch.ImportStatus != "Importing")
         {
@@ -1477,7 +1479,15 @@ public class UploadService(AppDbContext db, SpcService spcService)
         string? SourceSheet,
         int SourceRow,
         string? RawValue,
-        string Suggestion);
+        string Suggestion)
+    {
+        /// <summary>Display-only summary; original ErrorMessage and stored validation remain unchanged.</summary>
+        public string? MessageKey => UploadErrorUi.Describe(ErrorCode,ErrorMessage,FieldName)?.MessageKey;
+        /// <summary>Only explicit safe field-name arguments; no inferred historical master data.</summary>
+        public IReadOnlyDictionary<string,string> Args => UploadErrorUi.Describe(ErrorCode,ErrorMessage,FieldName)?.Args ?? ApiUiMessageCatalog.EmptyArguments;
+        /// <summary>Localized correction category, retaining the original Suggestion as evidence.</summary>
+        public ApiUiError? SuggestionMessage => UploadErrorUi.Suggest(ErrorCode,Suggestion,FieldName);
+    }
 
     private static bool NearlyEqual(double? actual, double? expected)
         => actual.HasValue && expected.HasValue && Math.Abs(actual.Value - expected.Value) < 0.000001;

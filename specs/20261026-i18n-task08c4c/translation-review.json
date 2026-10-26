@@ -1,0 +1,3115 @@
+{
+  "task": "I18N-TASK-08C4C",
+  "contractVersion": "1.0.0",
+  "status": "draft",
+  "metadata": [
+    {
+      "key": "spc.api.calibrationCodeRequired",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "921da8a5b1fec845acf5668364fe909b6d9e8b06bc4aa658f39f7ba4fb87c8da",
+      "placeholders": [],
+      "protectedTokens": [
+        "80"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationNameRequired",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "e944f4e441f63329ed84d84550eed9c6f3f84e1b9c3dbc168da3dab7593079db",
+      "placeholders": [],
+      "protectedTokens": [
+        "200"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationFixedValuesRequired",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "a7f626af17ed8cfb985bae20b7a91872dce03014e9ec1efb9fdd2af3994c4a1d",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.calibrationMethodCacheMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "9dbf40fb4fba229ef9d057989652076ba61c17c8912db904278547523ee9bf5c",
+      "placeholders": [],
+      "protectedTokens": [
+        "Excel"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationMethodCacheNotice",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "f24af6f5e72e7a37ed02ab4a73c833a13ed13f56b6e9b40ae5dceaca091042da",
+      "placeholders": [],
+      "protectedTokens": [
+        "Excel"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationCycleDeferred",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "8540176d929285065f18ccc368d9cd7e412fa932a98d45fe2ad3400a51845cce",
+      "placeholders": [],
+      "protectedTokens": [
+        "12"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationCycleFormatInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "20fb126e25cf36feb7cb07f2d51fa86e5c7212c2a76441608bf562b45dc01b8d",
+      "placeholders": [],
+      "protectedTokens": [
+        "12",
+        "1次/N年",
+        "1次/N月"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationExplicitDueNotice",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "a031218bf2287ce9dc580cacec65fb38e30e89b67de62bc2aa28c67a6376cfd8",
+      "placeholders": [],
+      "protectedTokens": [
+        "Excel"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationFileCodeDuplicate",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "f41c12c6c8397c06632b517d2c71b4e611b62268d76f184289a9a682c973a969",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.calibrationExistingCodeNotice",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "f5e641d14622507506ddb8383ea0bdabc3339e235a5a7aaed8a8072dbbce5404",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.calibrationDetailHeaderMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "74d97b485d87057c81976e244427ef0b2620a63c4a82da4f79d661a5947adfc2",
+      "placeholders": [
+        {
+          "name": "cell",
+          "count": 1
+        },
+        {
+          "name": "expected",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.calibrationFieldTooLong",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "43172e3c0185e9fa516c973d58bf4190b90a32d474838fce83e2a17d77ac6b92",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        }
+      ],
+      "protectedTokens": [
+        "200",
+        "2000"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationFieldFormulaMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "2950d5245849fcc04a37bea47f1671146a8b7f0bdb806def754f38ae65930110",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        }
+      ],
+      "protectedTokens": [
+        "Excel"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationFieldFormulaNotice",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "3b421db167bedf1c055d3cda88213db8cafcfeaab2503216c298c41196b15d71",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        }
+      ],
+      "protectedTokens": [
+        "Excel"
+      ]
+    },
+    {
+      "key": "spc.api.calibrationDateDeferred",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "d03ac488d57f26d20dd19b6613a5345078f66901a5fd5bdcb5c6766455a3c243",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        },
+        {
+          "name": "value",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.calibrationFieldRequired",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "1f31b0060875cf19addf5af45f522e0193bbb7aec55ec57c3aff98dc49bca866",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.calibrationDateUnrecognized",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "efea20da1d6ce0040a4c31fbb382ed0ddbe90e30409284643a76042846453dff",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        },
+        {
+          "name": "value",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importScopeMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "66f46e2c3888a546268a63e5759690ca3519d2f7cb3203d28c311b7bd25c1893",
+      "placeholders": [],
+      "protectedTokens": [
+        "ControlScope"
+      ]
+    },
+    {
+      "key": "spc.api.importValueRequired",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "f57fef5ba0370110fe2130e791f9db7c8f74c66411eec35a2e16d81042743604",
+      "placeholders": [],
+      "protectedTokens": [
+        "MeasuredValue"
+      ]
+    },
+    {
+      "key": "spc.api.importValueInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "bdf93b42e64068bb22cfcf28931bfd8526b4e97ad4be0618ad26e355f78ab7ae",
+      "placeholders": [],
+      "protectedTokens": [
+        "MeasuredValue"
+      ]
+    },
+    {
+      "key": "spc.api.importMeasuredAtInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "cf7d2fd65b09fcac8db4c6c3d311b194ade5ff3bf0ee3210f81de14954909cf6",
+      "placeholders": [],
+      "protectedTokens": [
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyyMMdd HH:mm:ss"
+      ]
+    },
+    {
+      "key": "spc.api.importPartMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "89c0ea7622d32e788cfa6e13c07838fa5bc4ac4c2fde9c60aad596a8d22a75ca",
+      "placeholders": [],
+      "protectedTokens": [
+        "PartNo"
+      ]
+    },
+    {
+      "key": "spc.api.importProcessMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "b36c1cd1f719d5ac73a4411b11f2340713beb8fbe375f5fe25796055d3764b81",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importMachineMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "d650ef6c102e6fee5fda4982ad5c97be13e3c923c64540d1130a59c5daaaeb01",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importMachineProcessMismatch",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "df0701c2c351cf103fd6c8607aac8ce6eb35d55434f1722e1811af6ba7b823dc",
+      "placeholders": [],
+      "protectedTokens": [
+        "MachineCode",
+        "ProcessCode"
+      ]
+    },
+    {
+      "key": "spc.api.importTankRequired",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "3671c35b02b8089c8487fcdbc5b33ba5c59cbf88f15131c126aecc519ecd4890",
+      "placeholders": [],
+      "protectedTokens": [
+        "TankCode/槽位"
+      ]
+    },
+    {
+      "key": "spc.api.importTankMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "37223c6023151667cb44e3aa233b6c206b3c03e8da610623935e53683fd730ad",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importCharacteristicMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "bc9ff6f57b66e0607f7368599a6d83d7ffedc8feb97e776c2073481ca5477f94",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importDataCategoryMismatch",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "60b59126edc8426e72b4fb3566186248e9608a2c96280b89ea1fb836ed57ce24",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importUnitMismatch",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "94f43ff9441a95cbd800bc9a898ccb4a067b3025a1a8aa77a9fba9b6105957b6",
+      "placeholders": [],
+      "protectedTokens": [
+        "Excel"
+      ]
+    },
+    {
+      "key": "spc.api.importMappingMissing",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "66343566da3b7a0865cfe9e01830f98cfffbf78984bdf1615a1c53c34cdc21e6",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.importMappingAmbiguous",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "840b22a4a760a94cd5aed1d1e76b38992c4c6c1fd602110204f8c17e51a2ae10",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importIntegerField",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "843d6ce61842b1125ecbce3f3f9fb87fce3bf83540e188e59f3f2aca270abf0e",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFieldInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "cba59aaa36791497075071c5e63fc1ab13abcc1ecac1a00862d8e15edb7c5e92",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importParticleTimeInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "3e8f9aa1a0b96021620d2b79a0c1cf0db7eed19361f968cd57df3a8175a6eac6",
+      "placeholders": [],
+      "protectedTokens": [
+        "ISO 8601"
+      ]
+    },
+    {
+      "key": "spc.api.importLocationInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "8359e3affe01c13722b766d766e1bb30aa5095c8a135151529fe93e565d6a5f3",
+      "placeholders": [],
+      "protectedTokens": [
+        "Location",
+        "R1",
+        "R9"
+      ]
+    },
+    {
+      "key": "spc.api.importParticleSizeInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "298ae84a0c8b5955fa264092a70bf46e07061e0fbcd577e040c72ca9ff1d4ac4",
+      "placeholders": [],
+      "protectedTokens": [
+        "Particle size",
+        "0.5"
+      ]
+    },
+    {
+      "key": "spc.api.importCountInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "cf8ced3800e349826243c1c4aeb0d91244ad795d63985e14191a694f6c904b66",
+      "placeholders": [],
+      "protectedTokens": [
+        "Count"
+      ]
+    },
+    {
+      "key": "spc.api.importCountNegative",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "7efe4f866622a57e6500d155a619a7a182fcf11c9c1cfe18c6209e2c2051f1d4",
+      "placeholders": [],
+      "protectedTokens": [
+        "Count"
+      ]
+    },
+    {
+      "key": "spc.api.importSourceInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "d93e3ed3fddc68bb402b0c35e62e9de90c173a6adffeca042dffe35fa7585cd9",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importSourceDuplicate",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "5711007aa9e64b629394c40920ca101e224a4e0f65bdf5a4cf1d420646c526e3",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importPositiveDecimal",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "dc921b8ed372d4dd43cb8f327b81cf914712e12cd3a8c717fd2e388e5ca3c529",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFixScope",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "cba1848f7b89c9041697e12625a3490ccef216fbaf79edf18bdf060ab233544c",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFixValueRequired",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "ec9839f02e85b3c09f562c32da47a1892431c016af9f193fa10e4a0b4d45aea4",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFixValueNumeric",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "d514d99aacb58ca2dabda98d3f08520fecb99f798381d75d6bf45ceeef3670b6",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFixMeasuredAt",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "c6ac94f579aecddddb4051d295899fc11129a06f3184978e6bb715301ff5a22b",
+      "placeholders": [],
+      "protectedTokens": [
+        "Excel",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyyMMdd HH:mm:ss"
+      ]
+    },
+    {
+      "key": "spc.api.importFixPart",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "efb5d69262ae0a0a7d97fed8dceff083c2889b13e77de008ba784bf1031cf3e2",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFixProcess",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "4edb7fc52eb68b8810b5a856273e5e60444ff8bddd0ad659de9f8d0c4975d900",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFixMachine",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "c6718f33af31f1f8f710ed364e87182a44b4db5980da4db547e16bade23355cf",
+      "placeholders": [],
+      "protectedTokens": [
+        "Excel",
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.importFixMachineProcess",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "ff2d4b336fad8654981fe79cd904fc2d2954932b2837d026fd1654df15356c67",
+      "placeholders": [],
+      "protectedTokens": [
+        "Excel"
+      ]
+    },
+    {
+      "key": "spc.api.importFixTankRequired",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "284269c0dc319d3fe251d2ab5d6b0d0cb4ae6237a1e17fe9dd8187e974fe6ff9",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFixTank",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "9ff554d0cd2f9e77fc1446456dff3a0c7684f81d45538d4b542e2d43f18145a4",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.importFixCharacteristic",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "b3b4f2c32de43fc1041ed4a0eb47897714ba2cb924ca9a547e96f944266cbae1",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.importFixDataCategory",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "61c7c6e4287b4524777335ac56bb06e7766c2bb33d2e578bf769d8abf2bb1021",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importFixUnit",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "336617c073459a2a86a4dac32c3f8a4118383d881c8fa1c3da5aa7139d29a54e",
+      "placeholders": [],
+      "protectedTokens": [
+        "Excel",
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.importFixMapping",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "ec6677a53e5852f54c8cb7e6d89181d4edbee70c63102ef09eefa9aaa167a2d2",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.importFixAmbiguous",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "23c88fd4a8159d6616b0aff46970c6c486656cf1cbf67eca44178fcfc50b5949",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.importFixField",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "e43b0f535dd7005fc811d772528235132fd239bd277a6acb092f914df3c0d6c8",
+      "placeholders": [
+        {
+          "name": "field",
+          "count": 1
+        }
+      ],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.importRowInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "4eaf14aafd17017591e9ea201967746e55a86adceaa277f284def58c57e9450a",
+      "placeholders": [
+        {
+          "name": "row",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.dailyBatchInvalid",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "3a7b4fe032b7092d79848ac85b4b6c5fa7d989283c35a398341b70dd081e0324",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.calibrationOutcomeSkipped",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "df8e2e3c4ac8a08355345d487e049fe2d436688faaa232fdd46f8a76454672dc",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.calibrationOutcomeAdded",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "f44504c55e7707f52902ee933ccf6f4c66991b9afaecfd4594f4470783b4222c",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importRollbackFailed",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "8cb4026ce03e1303e6e5ca48938ae0d0f933ad1c3309b5597ce4298a8faca0cb",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.chemicalImportRowFailed",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "be3e0ead36c85282fc07a1388b6ad0d65d298ebfdf20def0a913991b2f9f7ce1",
+      "placeholders": [
+        {
+          "name": "sheet",
+          "count": 1
+        },
+        {
+          "name": "tank",
+          "count": 1
+        },
+        {
+          "name": "item",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.importAlreadyProcessed",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "650103b39822fddc392e157453bc7511c111fe7337a5351ed87a3113d22cad2d",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.particleValidationErrors",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "be493a7bb96aaa766c87e813ba71ae7bd2778ed336ce4b003b9a1108237d00e8",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.particleDuplicateMeasurement",
+      "context": "逐列明示索引／既有error code三語摘要與建議；原字串／DB／機器格式保持，未知或缺歷史參數不推定",
+      "surface": "text/api",
+      "sourceHash": "1ea17188e08084f349a75a7505580aa7f6a6405acccb2fc184fa71f52389c9c1",
+      "placeholders": [],
+      "protectedTokens": []
+    }
+  ],
+  "ledger": [
+    {
+      "key": "spc.api.calibrationCodeRequired",
+      "locale": "zh-TW",
+      "sourceHash": "921da8a5b1fec845acf5668364fe909b6d9e8b06bc4aa658f39f7ba4fb87c8da",
+      "translationHash": "921da8a5b1fec845acf5668364fe909b6d9e8b06bc4aa658f39f7ba4fb87c8da",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationCodeRequired",
+      "locale": "zh-CN",
+      "sourceHash": "921da8a5b1fec845acf5668364fe909b6d9e8b06bc4aa658f39f7ba4fb87c8da",
+      "translationHash": "0b4aec6a340a41c26289e4509096d20516905664bb6c69556e32f7db1f5d444b",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationCodeRequired",
+      "locale": "en-US",
+      "sourceHash": "921da8a5b1fec845acf5668364fe909b6d9e8b06bc4aa658f39f7ba4fb87c8da",
+      "translationHash": "0bdc484de97396236f21a381ed9fce0c6dafeb045814b9b506f7998dfdedeb3f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationNameRequired",
+      "locale": "zh-TW",
+      "sourceHash": "e944f4e441f63329ed84d84550eed9c6f3f84e1b9c3dbc168da3dab7593079db",
+      "translationHash": "e944f4e441f63329ed84d84550eed9c6f3f84e1b9c3dbc168da3dab7593079db",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationNameRequired",
+      "locale": "zh-CN",
+      "sourceHash": "e944f4e441f63329ed84d84550eed9c6f3f84e1b9c3dbc168da3dab7593079db",
+      "translationHash": "611fa7ee3e2baf41b7b52e2a790ab027974bd321a2f7201f44b342dd8b9c41b9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationNameRequired",
+      "locale": "en-US",
+      "sourceHash": "e944f4e441f63329ed84d84550eed9c6f3f84e1b9c3dbc168da3dab7593079db",
+      "translationHash": "68b1d5faaa7a309fce69157b585cd5fe50fc014c056a9a3675ad70f8f077e908",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFixedValuesRequired",
+      "locale": "zh-TW",
+      "sourceHash": "a7f626af17ed8cfb985bae20b7a91872dce03014e9ec1efb9fdd2af3994c4a1d",
+      "translationHash": "a7f626af17ed8cfb985bae20b7a91872dce03014e9ec1efb9fdd2af3994c4a1d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFixedValuesRequired",
+      "locale": "zh-CN",
+      "sourceHash": "a7f626af17ed8cfb985bae20b7a91872dce03014e9ec1efb9fdd2af3994c4a1d",
+      "translationHash": "6e04cfae9c3abcf1f0f3bbe5327bf7bd3c6768549796883474f30575cdfa5ba5",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFixedValuesRequired",
+      "locale": "en-US",
+      "sourceHash": "a7f626af17ed8cfb985bae20b7a91872dce03014e9ec1efb9fdd2af3994c4a1d",
+      "translationHash": "56358887ebbc77a32a72cd3bcdd1928b5f8e6f0ac305aa9448f366fe5e3c4d28",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationMethodCacheMissing",
+      "locale": "zh-TW",
+      "sourceHash": "9dbf40fb4fba229ef9d057989652076ba61c17c8912db904278547523ee9bf5c",
+      "translationHash": "9dbf40fb4fba229ef9d057989652076ba61c17c8912db904278547523ee9bf5c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationMethodCacheMissing",
+      "locale": "zh-CN",
+      "sourceHash": "9dbf40fb4fba229ef9d057989652076ba61c17c8912db904278547523ee9bf5c",
+      "translationHash": "3c9733449959129965be59666fac10043f60c44710c4c3a375007e8897b6e795",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationMethodCacheMissing",
+      "locale": "en-US",
+      "sourceHash": "9dbf40fb4fba229ef9d057989652076ba61c17c8912db904278547523ee9bf5c",
+      "translationHash": "35ee13d33dbeee83a6e085a863cb7a080cb1b99788a963958d7ac6fa916a95c4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationMethodCacheNotice",
+      "locale": "zh-TW",
+      "sourceHash": "f24af6f5e72e7a37ed02ab4a73c833a13ed13f56b6e9b40ae5dceaca091042da",
+      "translationHash": "f24af6f5e72e7a37ed02ab4a73c833a13ed13f56b6e9b40ae5dceaca091042da",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationMethodCacheNotice",
+      "locale": "zh-CN",
+      "sourceHash": "f24af6f5e72e7a37ed02ab4a73c833a13ed13f56b6e9b40ae5dceaca091042da",
+      "translationHash": "eb20343346c04d3946e3ffb03cf25c51151c351ccb7509cf2e419442a26a7772",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationMethodCacheNotice",
+      "locale": "en-US",
+      "sourceHash": "f24af6f5e72e7a37ed02ab4a73c833a13ed13f56b6e9b40ae5dceaca091042da",
+      "translationHash": "3007b71a7d0728adf213c778253d6a128b6c896cf7bb2912b9ea2078e894d657",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationCycleDeferred",
+      "locale": "zh-TW",
+      "sourceHash": "8540176d929285065f18ccc368d9cd7e412fa932a98d45fe2ad3400a51845cce",
+      "translationHash": "8540176d929285065f18ccc368d9cd7e412fa932a98d45fe2ad3400a51845cce",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationCycleDeferred",
+      "locale": "zh-CN",
+      "sourceHash": "8540176d929285065f18ccc368d9cd7e412fa932a98d45fe2ad3400a51845cce",
+      "translationHash": "10cded71b75d62e3567b22d8c0ca975f330ec715af74431b0b09d348bce9de3d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationCycleDeferred",
+      "locale": "en-US",
+      "sourceHash": "8540176d929285065f18ccc368d9cd7e412fa932a98d45fe2ad3400a51845cce",
+      "translationHash": "ba7beb068fd64d15ed9fa045f177a902e193509cf65165b7f1373f0afe1289a1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationCycleFormatInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "20fb126e25cf36feb7cb07f2d51fa86e5c7212c2a76441608bf562b45dc01b8d",
+      "translationHash": "20fb126e25cf36feb7cb07f2d51fa86e5c7212c2a76441608bf562b45dc01b8d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationCycleFormatInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "20fb126e25cf36feb7cb07f2d51fa86e5c7212c2a76441608bf562b45dc01b8d",
+      "translationHash": "f3866daa227d0920787dc46d29228ff14a189e1edd1f2daa67226d9e3b274c29",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationCycleFormatInvalid",
+      "locale": "en-US",
+      "sourceHash": "20fb126e25cf36feb7cb07f2d51fa86e5c7212c2a76441608bf562b45dc01b8d",
+      "translationHash": "123d812ffba1a3469cca97ec6fec55fbd968af0a9a4c4a218fb141a7db339c1b",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationExplicitDueNotice",
+      "locale": "zh-TW",
+      "sourceHash": "a031218bf2287ce9dc580cacec65fb38e30e89b67de62bc2aa28c67a6376cfd8",
+      "translationHash": "a031218bf2287ce9dc580cacec65fb38e30e89b67de62bc2aa28c67a6376cfd8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationExplicitDueNotice",
+      "locale": "zh-CN",
+      "sourceHash": "a031218bf2287ce9dc580cacec65fb38e30e89b67de62bc2aa28c67a6376cfd8",
+      "translationHash": "568b67f51abc8716e28d79565a10b9f5c422bf2e12cbdc0f0f421b07cd80236d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationExplicitDueNotice",
+      "locale": "en-US",
+      "sourceHash": "a031218bf2287ce9dc580cacec65fb38e30e89b67de62bc2aa28c67a6376cfd8",
+      "translationHash": "97596ab2dbfcfbe2ab3d39ca22ee48089fbe3705b62d22be00e63554affae6f6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFileCodeDuplicate",
+      "locale": "zh-TW",
+      "sourceHash": "f41c12c6c8397c06632b517d2c71b4e611b62268d76f184289a9a682c973a969",
+      "translationHash": "f41c12c6c8397c06632b517d2c71b4e611b62268d76f184289a9a682c973a969",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFileCodeDuplicate",
+      "locale": "zh-CN",
+      "sourceHash": "f41c12c6c8397c06632b517d2c71b4e611b62268d76f184289a9a682c973a969",
+      "translationHash": "22f0658d9e6d3c490f5906f68dddfb540a8584e80ec6b4704cf252e203d318b6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFileCodeDuplicate",
+      "locale": "en-US",
+      "sourceHash": "f41c12c6c8397c06632b517d2c71b4e611b62268d76f184289a9a682c973a969",
+      "translationHash": "fcf0c073c5c1de72dc530c13485cd47337c5e34f862cb3465de2d4820a82e352",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationExistingCodeNotice",
+      "locale": "zh-TW",
+      "sourceHash": "f5e641d14622507506ddb8383ea0bdabc3339e235a5a7aaed8a8072dbbce5404",
+      "translationHash": "f5e641d14622507506ddb8383ea0bdabc3339e235a5a7aaed8a8072dbbce5404",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationExistingCodeNotice",
+      "locale": "zh-CN",
+      "sourceHash": "f5e641d14622507506ddb8383ea0bdabc3339e235a5a7aaed8a8072dbbce5404",
+      "translationHash": "8ea64466c02513485463d1e34cf999ee4d922e5ab62899ca42733aa04bef3fb7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationExistingCodeNotice",
+      "locale": "en-US",
+      "sourceHash": "f5e641d14622507506ddb8383ea0bdabc3339e235a5a7aaed8a8072dbbce5404",
+      "translationHash": "ff00d4dd6bc561c2b6a7278ec7e0fb874bb041ce3209a76b36ebaedf6e1270c7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDetailHeaderMissing",
+      "locale": "zh-TW",
+      "sourceHash": "74d97b485d87057c81976e244427ef0b2620a63c4a82da4f79d661a5947adfc2",
+      "translationHash": "74d97b485d87057c81976e244427ef0b2620a63c4a82da4f79d661a5947adfc2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDetailHeaderMissing",
+      "locale": "zh-CN",
+      "sourceHash": "74d97b485d87057c81976e244427ef0b2620a63c4a82da4f79d661a5947adfc2",
+      "translationHash": "d84b91b04c3c961f771e4fdd90cd7bcbe55fa2c724cadd818b6933992abc83d0",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDetailHeaderMissing",
+      "locale": "en-US",
+      "sourceHash": "74d97b485d87057c81976e244427ef0b2620a63c4a82da4f79d661a5947adfc2",
+      "translationHash": "b5def2ed346afd4c558edec42687ea251845718ff204139cea18021a6484e021",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldTooLong",
+      "locale": "zh-TW",
+      "sourceHash": "43172e3c0185e9fa516c973d58bf4190b90a32d474838fce83e2a17d77ac6b92",
+      "translationHash": "43172e3c0185e9fa516c973d58bf4190b90a32d474838fce83e2a17d77ac6b92",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldTooLong",
+      "locale": "zh-CN",
+      "sourceHash": "43172e3c0185e9fa516c973d58bf4190b90a32d474838fce83e2a17d77ac6b92",
+      "translationHash": "43172e3c0185e9fa516c973d58bf4190b90a32d474838fce83e2a17d77ac6b92",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldTooLong",
+      "locale": "en-US",
+      "sourceHash": "43172e3c0185e9fa516c973d58bf4190b90a32d474838fce83e2a17d77ac6b92",
+      "translationHash": "0d454940c4ca4c0cbb5000431da8ebf9d77671229f4b79a71452c61b81529ae8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldFormulaMissing",
+      "locale": "zh-TW",
+      "sourceHash": "2950d5245849fcc04a37bea47f1671146a8b7f0bdb806def754f38ae65930110",
+      "translationHash": "2950d5245849fcc04a37bea47f1671146a8b7f0bdb806def754f38ae65930110",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldFormulaMissing",
+      "locale": "zh-CN",
+      "sourceHash": "2950d5245849fcc04a37bea47f1671146a8b7f0bdb806def754f38ae65930110",
+      "translationHash": "cba6d2a0405fe42b37fa9e9d8cade790391ad67efcabd6f797f38252063872d2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldFormulaMissing",
+      "locale": "en-US",
+      "sourceHash": "2950d5245849fcc04a37bea47f1671146a8b7f0bdb806def754f38ae65930110",
+      "translationHash": "fe43bc775d82c9a1bc944ac9b2b32968aa82df4dd39b763035ac7925c413b842",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldFormulaNotice",
+      "locale": "zh-TW",
+      "sourceHash": "3b421db167bedf1c055d3cda88213db8cafcfeaab2503216c298c41196b15d71",
+      "translationHash": "3b421db167bedf1c055d3cda88213db8cafcfeaab2503216c298c41196b15d71",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldFormulaNotice",
+      "locale": "zh-CN",
+      "sourceHash": "3b421db167bedf1c055d3cda88213db8cafcfeaab2503216c298c41196b15d71",
+      "translationHash": "97157dbd7a1b012783756d3794d3aa42576ad70ba25769d848eda58579b235e3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldFormulaNotice",
+      "locale": "en-US",
+      "sourceHash": "3b421db167bedf1c055d3cda88213db8cafcfeaab2503216c298c41196b15d71",
+      "translationHash": "37dce0de34bd21215d78d9125d1f183678ea35885492f3ebafcd76d6dc2f585f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDateDeferred",
+      "locale": "zh-TW",
+      "sourceHash": "d03ac488d57f26d20dd19b6613a5345078f66901a5fd5bdcb5c6766455a3c243",
+      "translationHash": "d03ac488d57f26d20dd19b6613a5345078f66901a5fd5bdcb5c6766455a3c243",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDateDeferred",
+      "locale": "zh-CN",
+      "sourceHash": "d03ac488d57f26d20dd19b6613a5345078f66901a5fd5bdcb5c6766455a3c243",
+      "translationHash": "d573acd18271fc710db1ff7b583267774f574d40056a470aed85b27cc82d0cfa",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDateDeferred",
+      "locale": "en-US",
+      "sourceHash": "d03ac488d57f26d20dd19b6613a5345078f66901a5fd5bdcb5c6766455a3c243",
+      "translationHash": "eefa737432bd9b3010f6ab46fe8feb920ed298a6cf5e29272a72978c6da0e539",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldRequired",
+      "locale": "zh-TW",
+      "sourceHash": "1f31b0060875cf19addf5af45f522e0193bbb7aec55ec57c3aff98dc49bca866",
+      "translationHash": "1f31b0060875cf19addf5af45f522e0193bbb7aec55ec57c3aff98dc49bca866",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldRequired",
+      "locale": "zh-CN",
+      "sourceHash": "1f31b0060875cf19addf5af45f522e0193bbb7aec55ec57c3aff98dc49bca866",
+      "translationHash": "4f5d1811a790d6602196ad3bb51ba79bae3a9f99bdf3d201a90f053cbdab7483",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationFieldRequired",
+      "locale": "en-US",
+      "sourceHash": "1f31b0060875cf19addf5af45f522e0193bbb7aec55ec57c3aff98dc49bca866",
+      "translationHash": "d00e5b6dc60676f34834e27157b430e322c5041c38b25cff9f2a0d84eae5188f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDateUnrecognized",
+      "locale": "zh-TW",
+      "sourceHash": "efea20da1d6ce0040a4c31fbb382ed0ddbe90e30409284643a76042846453dff",
+      "translationHash": "efea20da1d6ce0040a4c31fbb382ed0ddbe90e30409284643a76042846453dff",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDateUnrecognized",
+      "locale": "zh-CN",
+      "sourceHash": "efea20da1d6ce0040a4c31fbb382ed0ddbe90e30409284643a76042846453dff",
+      "translationHash": "123f4bf0de6b8599b62e3fc2345a40fbf8a89d7959bb111a2576811cfb95c5da",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationDateUnrecognized",
+      "locale": "en-US",
+      "sourceHash": "efea20da1d6ce0040a4c31fbb382ed0ddbe90e30409284643a76042846453dff",
+      "translationHash": "e6ad4d850ada73a82b320af57562536c1a3ab91ab7cc438bd11b37fa0918874d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importScopeMissing",
+      "locale": "zh-TW",
+      "sourceHash": "66f46e2c3888a546268a63e5759690ca3519d2f7cb3203d28c311b7bd25c1893",
+      "translationHash": "66f46e2c3888a546268a63e5759690ca3519d2f7cb3203d28c311b7bd25c1893",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importScopeMissing",
+      "locale": "zh-CN",
+      "sourceHash": "66f46e2c3888a546268a63e5759690ca3519d2f7cb3203d28c311b7bd25c1893",
+      "translationHash": "854dfc0e8b2d2f3e20e2f5739604d214dc34afd0b512393d8139bca332b9348d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importScopeMissing",
+      "locale": "en-US",
+      "sourceHash": "66f46e2c3888a546268a63e5759690ca3519d2f7cb3203d28c311b7bd25c1893",
+      "translationHash": "bcc15e967f9f633cc32fb47d8200d614ca1bef4c9202f7a3ebbac75c1406f90c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importValueRequired",
+      "locale": "zh-TW",
+      "sourceHash": "f57fef5ba0370110fe2130e791f9db7c8f74c66411eec35a2e16d81042743604",
+      "translationHash": "f57fef5ba0370110fe2130e791f9db7c8f74c66411eec35a2e16d81042743604",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importValueRequired",
+      "locale": "zh-CN",
+      "sourceHash": "f57fef5ba0370110fe2130e791f9db7c8f74c66411eec35a2e16d81042743604",
+      "translationHash": "046375019af8496bf6444643f2eb0a9387ec7708e487afc38df016f73004b8ad",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importValueRequired",
+      "locale": "en-US",
+      "sourceHash": "f57fef5ba0370110fe2130e791f9db7c8f74c66411eec35a2e16d81042743604",
+      "translationHash": "4b866c7d0251e95d825bb6defa4d5c1945072ab0912e97a0834851cc6ca0cd46",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importValueInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "bdf93b42e64068bb22cfcf28931bfd8526b4e97ad4be0618ad26e355f78ab7ae",
+      "translationHash": "bdf93b42e64068bb22cfcf28931bfd8526b4e97ad4be0618ad26e355f78ab7ae",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importValueInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "bdf93b42e64068bb22cfcf28931bfd8526b4e97ad4be0618ad26e355f78ab7ae",
+      "translationHash": "6d1e00e8334230b1b5acc2b09533ad0acb8fb4562eb3277ac9b728c0bf7c4f4a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importValueInvalid",
+      "locale": "en-US",
+      "sourceHash": "bdf93b42e64068bb22cfcf28931bfd8526b4e97ad4be0618ad26e355f78ab7ae",
+      "translationHash": "4534ff3f606f22d98abf9c6b5145726f5da33a83113260d04202dea1f74e160a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMeasuredAtInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "cf7d2fd65b09fcac8db4c6c3d311b194ade5ff3bf0ee3210f81de14954909cf6",
+      "translationHash": "cf7d2fd65b09fcac8db4c6c3d311b194ade5ff3bf0ee3210f81de14954909cf6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMeasuredAtInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "cf7d2fd65b09fcac8db4c6c3d311b194ade5ff3bf0ee3210f81de14954909cf6",
+      "translationHash": "31762a524c904cda936191d3a9421118fa6595c613b493ba4cfe08802611cc25",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMeasuredAtInvalid",
+      "locale": "en-US",
+      "sourceHash": "cf7d2fd65b09fcac8db4c6c3d311b194ade5ff3bf0ee3210f81de14954909cf6",
+      "translationHash": "e3432019fbf79e36f4b20577ffbe73443c7f0b95ef79b9e22aae010de987ba55",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importPartMissing",
+      "locale": "zh-TW",
+      "sourceHash": "89c0ea7622d32e788cfa6e13c07838fa5bc4ac4c2fde9c60aad596a8d22a75ca",
+      "translationHash": "89c0ea7622d32e788cfa6e13c07838fa5bc4ac4c2fde9c60aad596a8d22a75ca",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importPartMissing",
+      "locale": "zh-CN",
+      "sourceHash": "89c0ea7622d32e788cfa6e13c07838fa5bc4ac4c2fde9c60aad596a8d22a75ca",
+      "translationHash": "278149aeec92f06d4ad161afded1188735a72fbcf5d1c003915ef45bba2ab3c2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importPartMissing",
+      "locale": "en-US",
+      "sourceHash": "89c0ea7622d32e788cfa6e13c07838fa5bc4ac4c2fde9c60aad596a8d22a75ca",
+      "translationHash": "060164a33a4a1ead766948414962a72dd03ba02e1c4973c3f19a51e49dbd4b18",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importProcessMissing",
+      "locale": "zh-TW",
+      "sourceHash": "b36c1cd1f719d5ac73a4411b11f2340713beb8fbe375f5fe25796055d3764b81",
+      "translationHash": "b36c1cd1f719d5ac73a4411b11f2340713beb8fbe375f5fe25796055d3764b81",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importProcessMissing",
+      "locale": "zh-CN",
+      "sourceHash": "b36c1cd1f719d5ac73a4411b11f2340713beb8fbe375f5fe25796055d3764b81",
+      "translationHash": "90a5d79cb186d339783a96bb7ed38d558265b5c2c517c734eca8ffa13a59b8c7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importProcessMissing",
+      "locale": "en-US",
+      "sourceHash": "b36c1cd1f719d5ac73a4411b11f2340713beb8fbe375f5fe25796055d3764b81",
+      "translationHash": "54192945e7b67eb813e18e840fa2a70af161c588e6b4aa285608c6032a0887d1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMachineMissing",
+      "locale": "zh-TW",
+      "sourceHash": "d650ef6c102e6fee5fda4982ad5c97be13e3c923c64540d1130a59c5daaaeb01",
+      "translationHash": "d650ef6c102e6fee5fda4982ad5c97be13e3c923c64540d1130a59c5daaaeb01",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMachineMissing",
+      "locale": "zh-CN",
+      "sourceHash": "d650ef6c102e6fee5fda4982ad5c97be13e3c923c64540d1130a59c5daaaeb01",
+      "translationHash": "0227effe9bba09f1da508d01fb203efe6680edc3570cd78462858c89935372cc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMachineMissing",
+      "locale": "en-US",
+      "sourceHash": "d650ef6c102e6fee5fda4982ad5c97be13e3c923c64540d1130a59c5daaaeb01",
+      "translationHash": "740cf69e04a264b28d467932a4790ce874963e6abf5d388f97f1301bd7f7a3dc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMachineProcessMismatch",
+      "locale": "zh-TW",
+      "sourceHash": "df0701c2c351cf103fd6c8607aac8ce6eb35d55434f1722e1811af6ba7b823dc",
+      "translationHash": "df0701c2c351cf103fd6c8607aac8ce6eb35d55434f1722e1811af6ba7b823dc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMachineProcessMismatch",
+      "locale": "zh-CN",
+      "sourceHash": "df0701c2c351cf103fd6c8607aac8ce6eb35d55434f1722e1811af6ba7b823dc",
+      "translationHash": "aaa04c30719cfdee806aac3167b189262f15fda5a580b2f09920aa3713aa0186",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMachineProcessMismatch",
+      "locale": "en-US",
+      "sourceHash": "df0701c2c351cf103fd6c8607aac8ce6eb35d55434f1722e1811af6ba7b823dc",
+      "translationHash": "69d6a40c761ac3c4165fe303a65a7de1999f94c34bf28e8936e4edaa99a95f3d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importTankRequired",
+      "locale": "zh-TW",
+      "sourceHash": "3671c35b02b8089c8487fcdbc5b33ba5c59cbf88f15131c126aecc519ecd4890",
+      "translationHash": "3671c35b02b8089c8487fcdbc5b33ba5c59cbf88f15131c126aecc519ecd4890",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importTankRequired",
+      "locale": "zh-CN",
+      "sourceHash": "3671c35b02b8089c8487fcdbc5b33ba5c59cbf88f15131c126aecc519ecd4890",
+      "translationHash": "ec12d3f9c0c49c6f8918c0f3568711c49b4842f02691d99051a76795a6c374a8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importTankRequired",
+      "locale": "en-US",
+      "sourceHash": "3671c35b02b8089c8487fcdbc5b33ba5c59cbf88f15131c126aecc519ecd4890",
+      "translationHash": "7029230b09f9cd81cb218b1a80f166ca6f206a8c9c515de859f5635ee3e580b3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importTankMissing",
+      "locale": "zh-TW",
+      "sourceHash": "37223c6023151667cb44e3aa233b6c206b3c03e8da610623935e53683fd730ad",
+      "translationHash": "37223c6023151667cb44e3aa233b6c206b3c03e8da610623935e53683fd730ad",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importTankMissing",
+      "locale": "zh-CN",
+      "sourceHash": "37223c6023151667cb44e3aa233b6c206b3c03e8da610623935e53683fd730ad",
+      "translationHash": "2f54fb78c9308a7ed3cd0b2bf08edab373cb627d02f034e76620f83c00510021",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importTankMissing",
+      "locale": "en-US",
+      "sourceHash": "37223c6023151667cb44e3aa233b6c206b3c03e8da610623935e53683fd730ad",
+      "translationHash": "647d98ab957aaf92a536341b603026b18bf00fabd83ff3d45a37e28a792d8c99",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCharacteristicMissing",
+      "locale": "zh-TW",
+      "sourceHash": "bc9ff6f57b66e0607f7368599a6d83d7ffedc8feb97e776c2073481ca5477f94",
+      "translationHash": "bc9ff6f57b66e0607f7368599a6d83d7ffedc8feb97e776c2073481ca5477f94",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCharacteristicMissing",
+      "locale": "zh-CN",
+      "sourceHash": "bc9ff6f57b66e0607f7368599a6d83d7ffedc8feb97e776c2073481ca5477f94",
+      "translationHash": "07be7ca6f60e7244e3a47bfd0a84eecbaa46c7d35d7d0012e8ed62eff41dcca1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCharacteristicMissing",
+      "locale": "en-US",
+      "sourceHash": "bc9ff6f57b66e0607f7368599a6d83d7ffedc8feb97e776c2073481ca5477f94",
+      "translationHash": "9c97d4095ced00c498b076c6f336d8043a4cb3d3bf3d42ca16eed33ee0bec10c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importDataCategoryMismatch",
+      "locale": "zh-TW",
+      "sourceHash": "60b59126edc8426e72b4fb3566186248e9608a2c96280b89ea1fb836ed57ce24",
+      "translationHash": "60b59126edc8426e72b4fb3566186248e9608a2c96280b89ea1fb836ed57ce24",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importDataCategoryMismatch",
+      "locale": "zh-CN",
+      "sourceHash": "60b59126edc8426e72b4fb3566186248e9608a2c96280b89ea1fb836ed57ce24",
+      "translationHash": "b53cad3e25426ecd5607c3e69093f9614f27feca24ffaae10f5af0ad058b8528",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importDataCategoryMismatch",
+      "locale": "en-US",
+      "sourceHash": "60b59126edc8426e72b4fb3566186248e9608a2c96280b89ea1fb836ed57ce24",
+      "translationHash": "11939ec5d97d476fb16b3a43ca9c252bcab5b73b04918f483ec6135a815b01b8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importUnitMismatch",
+      "locale": "zh-TW",
+      "sourceHash": "94f43ff9441a95cbd800bc9a898ccb4a067b3025a1a8aa77a9fba9b6105957b6",
+      "translationHash": "94f43ff9441a95cbd800bc9a898ccb4a067b3025a1a8aa77a9fba9b6105957b6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importUnitMismatch",
+      "locale": "zh-CN",
+      "sourceHash": "94f43ff9441a95cbd800bc9a898ccb4a067b3025a1a8aa77a9fba9b6105957b6",
+      "translationHash": "d3e912e5949f9f030f633734c8a32fc8b698bd09f9869d12a1ebdce317e86452",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importUnitMismatch",
+      "locale": "en-US",
+      "sourceHash": "94f43ff9441a95cbd800bc9a898ccb4a067b3025a1a8aa77a9fba9b6105957b6",
+      "translationHash": "fa9183e3d8b950034401c4757f280bb3530ddbce5c40e945c52704589dc3c64f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMappingMissing",
+      "locale": "zh-TW",
+      "sourceHash": "66343566da3b7a0865cfe9e01830f98cfffbf78984bdf1615a1c53c34cdc21e6",
+      "translationHash": "66343566da3b7a0865cfe9e01830f98cfffbf78984bdf1615a1c53c34cdc21e6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMappingMissing",
+      "locale": "zh-CN",
+      "sourceHash": "66343566da3b7a0865cfe9e01830f98cfffbf78984bdf1615a1c53c34cdc21e6",
+      "translationHash": "7ef0b5abafea9cd62cbd5371cdb29042755054f9cf250f94d174e78dbd3d4be0",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMappingMissing",
+      "locale": "en-US",
+      "sourceHash": "66343566da3b7a0865cfe9e01830f98cfffbf78984bdf1615a1c53c34cdc21e6",
+      "translationHash": "4e4f661647e77e94f60f527ae1a4a11b64a6057198576603dcd451beb8932dd9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMappingAmbiguous",
+      "locale": "zh-TW",
+      "sourceHash": "840b22a4a760a94cd5aed1d1e76b38992c4c6c1fd602110204f8c17e51a2ae10",
+      "translationHash": "840b22a4a760a94cd5aed1d1e76b38992c4c6c1fd602110204f8c17e51a2ae10",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMappingAmbiguous",
+      "locale": "zh-CN",
+      "sourceHash": "840b22a4a760a94cd5aed1d1e76b38992c4c6c1fd602110204f8c17e51a2ae10",
+      "translationHash": "3485228e25b293b48d953232f3589cf6045cd26681cc19387ddfae8a620de0e9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importMappingAmbiguous",
+      "locale": "en-US",
+      "sourceHash": "840b22a4a760a94cd5aed1d1e76b38992c4c6c1fd602110204f8c17e51a2ae10",
+      "translationHash": "da3c52db912fd0118a3fa1b5b2c44a8d3dea681d270e96463816ba2005d3f25f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importIntegerField",
+      "locale": "zh-TW",
+      "sourceHash": "843d6ce61842b1125ecbce3f3f9fb87fce3bf83540e188e59f3f2aca270abf0e",
+      "translationHash": "843d6ce61842b1125ecbce3f3f9fb87fce3bf83540e188e59f3f2aca270abf0e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importIntegerField",
+      "locale": "zh-CN",
+      "sourceHash": "843d6ce61842b1125ecbce3f3f9fb87fce3bf83540e188e59f3f2aca270abf0e",
+      "translationHash": "5c4ecb6db1e97efb5ec82fd1b99cf74084acef79a2ca190688bd9e37cd3c4f62",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importIntegerField",
+      "locale": "en-US",
+      "sourceHash": "843d6ce61842b1125ecbce3f3f9fb87fce3bf83540e188e59f3f2aca270abf0e",
+      "translationHash": "c4d9ee6941edd1120ac606cd22e00f24d84882ac1064ba55bcf74001b3543e22",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFieldInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "cba59aaa36791497075071c5e63fc1ab13abcc1ecac1a00862d8e15edb7c5e92",
+      "translationHash": "cba59aaa36791497075071c5e63fc1ab13abcc1ecac1a00862d8e15edb7c5e92",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFieldInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "cba59aaa36791497075071c5e63fc1ab13abcc1ecac1a00862d8e15edb7c5e92",
+      "translationHash": "77a2f8a1c18b13ddee0828d7b1f06d68fedbf351d1334a929c1291fbae6a285d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFieldInvalid",
+      "locale": "en-US",
+      "sourceHash": "cba59aaa36791497075071c5e63fc1ab13abcc1ecac1a00862d8e15edb7c5e92",
+      "translationHash": "150071b18f6727e264afc31aec2185b8515e3d2b2e7919de5070e6d89adab75f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importParticleTimeInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "3e8f9aa1a0b96021620d2b79a0c1cf0db7eed19361f968cd57df3a8175a6eac6",
+      "translationHash": "3e8f9aa1a0b96021620d2b79a0c1cf0db7eed19361f968cd57df3a8175a6eac6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importParticleTimeInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "3e8f9aa1a0b96021620d2b79a0c1cf0db7eed19361f968cd57df3a8175a6eac6",
+      "translationHash": "bd155db41f63ecb3b63f0d380d0b4fac5b978d2f3c39193bdf5291a564635196",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importParticleTimeInvalid",
+      "locale": "en-US",
+      "sourceHash": "3e8f9aa1a0b96021620d2b79a0c1cf0db7eed19361f968cd57df3a8175a6eac6",
+      "translationHash": "1547fbf861fea32ac6566c4ca94c9fdbdec20918dc8c33c9f95a5a1ba2c9e5f4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importLocationInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "8359e3affe01c13722b766d766e1bb30aa5095c8a135151529fe93e565d6a5f3",
+      "translationHash": "8359e3affe01c13722b766d766e1bb30aa5095c8a135151529fe93e565d6a5f3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importLocationInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "8359e3affe01c13722b766d766e1bb30aa5095c8a135151529fe93e565d6a5f3",
+      "translationHash": "b378d47e7373dc8626f8f253811b2e87e54996cce6ec7bf3de93327368d77f65",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importLocationInvalid",
+      "locale": "en-US",
+      "sourceHash": "8359e3affe01c13722b766d766e1bb30aa5095c8a135151529fe93e565d6a5f3",
+      "translationHash": "bc65c3001215de8dfe872a5bb77e9be19545c838ac4bb51b9ccad4bb9ad917c9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importParticleSizeInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "298ae84a0c8b5955fa264092a70bf46e07061e0fbcd577e040c72ca9ff1d4ac4",
+      "translationHash": "298ae84a0c8b5955fa264092a70bf46e07061e0fbcd577e040c72ca9ff1d4ac4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importParticleSizeInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "298ae84a0c8b5955fa264092a70bf46e07061e0fbcd577e040c72ca9ff1d4ac4",
+      "translationHash": "c878ff29b999be1b59e1e266e795a552e9655e197b5529a01385ab5e20a197ed",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importParticleSizeInvalid",
+      "locale": "en-US",
+      "sourceHash": "298ae84a0c8b5955fa264092a70bf46e07061e0fbcd577e040c72ca9ff1d4ac4",
+      "translationHash": "5ae4debb5733fd07ba7169f56ffbea0f3161a9073eecb8d013125acd6c480904",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCountInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "cf8ced3800e349826243c1c4aeb0d91244ad795d63985e14191a694f6c904b66",
+      "translationHash": "cf8ced3800e349826243c1c4aeb0d91244ad795d63985e14191a694f6c904b66",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCountInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "cf8ced3800e349826243c1c4aeb0d91244ad795d63985e14191a694f6c904b66",
+      "translationHash": "2763d1313262832583daee8702cc6b626f1219495efb9ef8e1e2362d4621de1d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCountInvalid",
+      "locale": "en-US",
+      "sourceHash": "cf8ced3800e349826243c1c4aeb0d91244ad795d63985e14191a694f6c904b66",
+      "translationHash": "bf39acd6f4ed6668cc8d7143642b5529c57f8e92b7ea04ecbb9dfdd887b7003f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCountNegative",
+      "locale": "zh-TW",
+      "sourceHash": "7efe4f866622a57e6500d155a619a7a182fcf11c9c1cfe18c6209e2c2051f1d4",
+      "translationHash": "7efe4f866622a57e6500d155a619a7a182fcf11c9c1cfe18c6209e2c2051f1d4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCountNegative",
+      "locale": "zh-CN",
+      "sourceHash": "7efe4f866622a57e6500d155a619a7a182fcf11c9c1cfe18c6209e2c2051f1d4",
+      "translationHash": "de205a2f64b829554c5b7bc621e520bde5d8536576eb9d0662c84d7715f18055",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importCountNegative",
+      "locale": "en-US",
+      "sourceHash": "7efe4f866622a57e6500d155a619a7a182fcf11c9c1cfe18c6209e2c2051f1d4",
+      "translationHash": "169aa566dbf145a57f2fb52931f9bdefc6a7a97a27ec210a2cee91198523c16d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importSourceInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "d93e3ed3fddc68bb402b0c35e62e9de90c173a6adffeca042dffe35fa7585cd9",
+      "translationHash": "d93e3ed3fddc68bb402b0c35e62e9de90c173a6adffeca042dffe35fa7585cd9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importSourceInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "d93e3ed3fddc68bb402b0c35e62e9de90c173a6adffeca042dffe35fa7585cd9",
+      "translationHash": "033f83137ee75633be76ade6ea5fb13f9d42efd9245096df3d5dd31b19ac050e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importSourceInvalid",
+      "locale": "en-US",
+      "sourceHash": "d93e3ed3fddc68bb402b0c35e62e9de90c173a6adffeca042dffe35fa7585cd9",
+      "translationHash": "632a3831c0917361fe9f84b0f2dd6ac396add12628ea46ee9a974c849b57a0f0",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importSourceDuplicate",
+      "locale": "zh-TW",
+      "sourceHash": "5711007aa9e64b629394c40920ca101e224a4e0f65bdf5a4cf1d420646c526e3",
+      "translationHash": "5711007aa9e64b629394c40920ca101e224a4e0f65bdf5a4cf1d420646c526e3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importSourceDuplicate",
+      "locale": "zh-CN",
+      "sourceHash": "5711007aa9e64b629394c40920ca101e224a4e0f65bdf5a4cf1d420646c526e3",
+      "translationHash": "fc8d57e8a291752dc103c04449674716094a330ce216836bdf841550beed1400",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importSourceDuplicate",
+      "locale": "en-US",
+      "sourceHash": "5711007aa9e64b629394c40920ca101e224a4e0f65bdf5a4cf1d420646c526e3",
+      "translationHash": "334ec352299d5433ed55992299bc5a40fcc6424f28bdd1a0c83516a1b465669e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importPositiveDecimal",
+      "locale": "zh-TW",
+      "sourceHash": "dc921b8ed372d4dd43cb8f327b81cf914712e12cd3a8c717fd2e388e5ca3c529",
+      "translationHash": "dc921b8ed372d4dd43cb8f327b81cf914712e12cd3a8c717fd2e388e5ca3c529",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importPositiveDecimal",
+      "locale": "zh-CN",
+      "sourceHash": "dc921b8ed372d4dd43cb8f327b81cf914712e12cd3a8c717fd2e388e5ca3c529",
+      "translationHash": "35cf7fc9be48e808e5ad7a5926c2dd26717b626157306a3de010e5b299f7362a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importPositiveDecimal",
+      "locale": "en-US",
+      "sourceHash": "dc921b8ed372d4dd43cb8f327b81cf914712e12cd3a8c717fd2e388e5ca3c529",
+      "translationHash": "3470f9c19b20e99f3ee94f4368229cf70fb6f43bda69922780eecbf8c1304eb6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixScope",
+      "locale": "zh-TW",
+      "sourceHash": "cba1848f7b89c9041697e12625a3490ccef216fbaf79edf18bdf060ab233544c",
+      "translationHash": "cba1848f7b89c9041697e12625a3490ccef216fbaf79edf18bdf060ab233544c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixScope",
+      "locale": "zh-CN",
+      "sourceHash": "cba1848f7b89c9041697e12625a3490ccef216fbaf79edf18bdf060ab233544c",
+      "translationHash": "ada69dc2e6e2c241abb51ec65d76b45829cb6bcaf1769e6e6139d61e65cf1d4e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixScope",
+      "locale": "en-US",
+      "sourceHash": "cba1848f7b89c9041697e12625a3490ccef216fbaf79edf18bdf060ab233544c",
+      "translationHash": "2857bd01aea2a02498a83ca25d71364bfd1d17c4c89ddd122d78af84d2befd32",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixValueRequired",
+      "locale": "zh-TW",
+      "sourceHash": "ec9839f02e85b3c09f562c32da47a1892431c016af9f193fa10e4a0b4d45aea4",
+      "translationHash": "ec9839f02e85b3c09f562c32da47a1892431c016af9f193fa10e4a0b4d45aea4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixValueRequired",
+      "locale": "zh-CN",
+      "sourceHash": "ec9839f02e85b3c09f562c32da47a1892431c016af9f193fa10e4a0b4d45aea4",
+      "translationHash": "31fcc4b5af88977f1abcd0f4bea212926bf7010bda0a0cf3fddbbf383e2954c8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixValueRequired",
+      "locale": "en-US",
+      "sourceHash": "ec9839f02e85b3c09f562c32da47a1892431c016af9f193fa10e4a0b4d45aea4",
+      "translationHash": "775dd89c241a54ba1712979f352c66e05d3325bd03593661855be0ab99f82b62",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixValueNumeric",
+      "locale": "zh-TW",
+      "sourceHash": "d514d99aacb58ca2dabda98d3f08520fecb99f798381d75d6bf45ceeef3670b6",
+      "translationHash": "d514d99aacb58ca2dabda98d3f08520fecb99f798381d75d6bf45ceeef3670b6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixValueNumeric",
+      "locale": "zh-CN",
+      "sourceHash": "d514d99aacb58ca2dabda98d3f08520fecb99f798381d75d6bf45ceeef3670b6",
+      "translationHash": "baeab83116f4f6a253a8702111476bdb470067350526ffb32a544d20a18b4353",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixValueNumeric",
+      "locale": "en-US",
+      "sourceHash": "d514d99aacb58ca2dabda98d3f08520fecb99f798381d75d6bf45ceeef3670b6",
+      "translationHash": "a75c686338ece0766973f5811d1502b90d37ab5076a3b3b9cd04b2742ad13f9b",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMeasuredAt",
+      "locale": "zh-TW",
+      "sourceHash": "c6ac94f579aecddddb4051d295899fc11129a06f3184978e6bb715301ff5a22b",
+      "translationHash": "c6ac94f579aecddddb4051d295899fc11129a06f3184978e6bb715301ff5a22b",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMeasuredAt",
+      "locale": "zh-CN",
+      "sourceHash": "c6ac94f579aecddddb4051d295899fc11129a06f3184978e6bb715301ff5a22b",
+      "translationHash": "7c55df9782b02e3314b3d91696046c8683fee8910c5f15d44571188671e34966",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMeasuredAt",
+      "locale": "en-US",
+      "sourceHash": "c6ac94f579aecddddb4051d295899fc11129a06f3184978e6bb715301ff5a22b",
+      "translationHash": "d85ad63340b75e9f8c9593659f93e03963b2aef9733ff808648567eab3216231",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixPart",
+      "locale": "zh-TW",
+      "sourceHash": "efb5d69262ae0a0a7d97fed8dceff083c2889b13e77de008ba784bf1031cf3e2",
+      "translationHash": "efb5d69262ae0a0a7d97fed8dceff083c2889b13e77de008ba784bf1031cf3e2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixPart",
+      "locale": "zh-CN",
+      "sourceHash": "efb5d69262ae0a0a7d97fed8dceff083c2889b13e77de008ba784bf1031cf3e2",
+      "translationHash": "5a0e1b5eab969382ef6a8fa5873953d2c60eb94de474f06abcd1a7bdd08ab499",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixPart",
+      "locale": "en-US",
+      "sourceHash": "efb5d69262ae0a0a7d97fed8dceff083c2889b13e77de008ba784bf1031cf3e2",
+      "translationHash": "9a7f7cdba22f7e3fc7c310353361ced84e5582dbdc11d4c252c678de764e8a1e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixProcess",
+      "locale": "zh-TW",
+      "sourceHash": "4edb7fc52eb68b8810b5a856273e5e60444ff8bddd0ad659de9f8d0c4975d900",
+      "translationHash": "4edb7fc52eb68b8810b5a856273e5e60444ff8bddd0ad659de9f8d0c4975d900",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixProcess",
+      "locale": "zh-CN",
+      "sourceHash": "4edb7fc52eb68b8810b5a856273e5e60444ff8bddd0ad659de9f8d0c4975d900",
+      "translationHash": "ee0d330a481418386f0bf91bd0c3f753737e2bb9fee125e3db7da43f7f9021a1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixProcess",
+      "locale": "en-US",
+      "sourceHash": "4edb7fc52eb68b8810b5a856273e5e60444ff8bddd0ad659de9f8d0c4975d900",
+      "translationHash": "cc77c42873a74e777cca30fc276cabcee53c4ae0c46fc4a29f5b22991abae6ee",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMachine",
+      "locale": "zh-TW",
+      "sourceHash": "c6718f33af31f1f8f710ed364e87182a44b4db5980da4db547e16bade23355cf",
+      "translationHash": "c6718f33af31f1f8f710ed364e87182a44b4db5980da4db547e16bade23355cf",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMachine",
+      "locale": "zh-CN",
+      "sourceHash": "c6718f33af31f1f8f710ed364e87182a44b4db5980da4db547e16bade23355cf",
+      "translationHash": "176f134d4e4f549a1efa6d64b718ea51a1642129560b2af2f07624c6078044e4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMachine",
+      "locale": "en-US",
+      "sourceHash": "c6718f33af31f1f8f710ed364e87182a44b4db5980da4db547e16bade23355cf",
+      "translationHash": "0470d7b9a42813f1ce82e36296f0f2cbdad5b9d04d62fde3ec89998bf7b75552",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMachineProcess",
+      "locale": "zh-TW",
+      "sourceHash": "ff2d4b336fad8654981fe79cd904fc2d2954932b2837d026fd1654df15356c67",
+      "translationHash": "ff2d4b336fad8654981fe79cd904fc2d2954932b2837d026fd1654df15356c67",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMachineProcess",
+      "locale": "zh-CN",
+      "sourceHash": "ff2d4b336fad8654981fe79cd904fc2d2954932b2837d026fd1654df15356c67",
+      "translationHash": "ff50fa352e654d10efb9fca71ef2f8d22d533fc68ecaba4ccaa242d285a4bdc5",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMachineProcess",
+      "locale": "en-US",
+      "sourceHash": "ff2d4b336fad8654981fe79cd904fc2d2954932b2837d026fd1654df15356c67",
+      "translationHash": "e37a2b75a008879d66fe6b595c5978f6b28fa4c3a584aad2a9751275d4046105",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixTankRequired",
+      "locale": "zh-TW",
+      "sourceHash": "284269c0dc319d3fe251d2ab5d6b0d0cb4ae6237a1e17fe9dd8187e974fe6ff9",
+      "translationHash": "284269c0dc319d3fe251d2ab5d6b0d0cb4ae6237a1e17fe9dd8187e974fe6ff9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixTankRequired",
+      "locale": "zh-CN",
+      "sourceHash": "284269c0dc319d3fe251d2ab5d6b0d0cb4ae6237a1e17fe9dd8187e974fe6ff9",
+      "translationHash": "7a1569a9ef70d5fbd18c1477510455108ac7108fcc1e7e19ba78aed1a1e7feec",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixTankRequired",
+      "locale": "en-US",
+      "sourceHash": "284269c0dc319d3fe251d2ab5d6b0d0cb4ae6237a1e17fe9dd8187e974fe6ff9",
+      "translationHash": "f3242b6975868ff257419a007d64ab344eeb0dd3c2479774c111a55eae3619a9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixTank",
+      "locale": "zh-TW",
+      "sourceHash": "9ff554d0cd2f9e77fc1446456dff3a0c7684f81d45538d4b542e2d43f18145a4",
+      "translationHash": "9ff554d0cd2f9e77fc1446456dff3a0c7684f81d45538d4b542e2d43f18145a4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixTank",
+      "locale": "zh-CN",
+      "sourceHash": "9ff554d0cd2f9e77fc1446456dff3a0c7684f81d45538d4b542e2d43f18145a4",
+      "translationHash": "841a79dfbd0b9657c850f485419432be478bfe8a980f684ed0c4b59e737e8a7a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixTank",
+      "locale": "en-US",
+      "sourceHash": "9ff554d0cd2f9e77fc1446456dff3a0c7684f81d45538d4b542e2d43f18145a4",
+      "translationHash": "7cf2a5b0459f43374063e5a2b1c4d981551bb0284a1f722b6add6f7c04a416a8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixCharacteristic",
+      "locale": "zh-TW",
+      "sourceHash": "b3b4f2c32de43fc1041ed4a0eb47897714ba2cb924ca9a547e96f944266cbae1",
+      "translationHash": "b3b4f2c32de43fc1041ed4a0eb47897714ba2cb924ca9a547e96f944266cbae1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixCharacteristic",
+      "locale": "zh-CN",
+      "sourceHash": "b3b4f2c32de43fc1041ed4a0eb47897714ba2cb924ca9a547e96f944266cbae1",
+      "translationHash": "8f0abcfd0c477667d341d05743a2f7f2e7c0bf7346e0c4d5f78d2274c8616ef2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixCharacteristic",
+      "locale": "en-US",
+      "sourceHash": "b3b4f2c32de43fc1041ed4a0eb47897714ba2cb924ca9a547e96f944266cbae1",
+      "translationHash": "ee7b691af01f422c40f624cd1bddc92741675eeb86c210a5a82792be5df2812d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixDataCategory",
+      "locale": "zh-TW",
+      "sourceHash": "61c7c6e4287b4524777335ac56bb06e7766c2bb33d2e578bf769d8abf2bb1021",
+      "translationHash": "61c7c6e4287b4524777335ac56bb06e7766c2bb33d2e578bf769d8abf2bb1021",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixDataCategory",
+      "locale": "zh-CN",
+      "sourceHash": "61c7c6e4287b4524777335ac56bb06e7766c2bb33d2e578bf769d8abf2bb1021",
+      "translationHash": "6e504dc996d6a1586cc4b9297c05cb5910d127b6019d047d3016b7fc3aa37629",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixDataCategory",
+      "locale": "en-US",
+      "sourceHash": "61c7c6e4287b4524777335ac56bb06e7766c2bb33d2e578bf769d8abf2bb1021",
+      "translationHash": "6236b64888722e20f75baac5c0bc32c3703135c012a7412d52c141d95320caaa",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixUnit",
+      "locale": "zh-TW",
+      "sourceHash": "336617c073459a2a86a4dac32c3f8a4118383d881c8fa1c3da5aa7139d29a54e",
+      "translationHash": "336617c073459a2a86a4dac32c3f8a4118383d881c8fa1c3da5aa7139d29a54e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixUnit",
+      "locale": "zh-CN",
+      "sourceHash": "336617c073459a2a86a4dac32c3f8a4118383d881c8fa1c3da5aa7139d29a54e",
+      "translationHash": "92347b920e368553ccb314822b3571c25e10584e4545cd10b12dc0005a0e2666",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixUnit",
+      "locale": "en-US",
+      "sourceHash": "336617c073459a2a86a4dac32c3f8a4118383d881c8fa1c3da5aa7139d29a54e",
+      "translationHash": "998aca7f057f289db9d05905909b66526f39d71fc414c4320fd77e1040ec5984",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMapping",
+      "locale": "zh-TW",
+      "sourceHash": "ec6677a53e5852f54c8cb7e6d89181d4edbee70c63102ef09eefa9aaa167a2d2",
+      "translationHash": "ec6677a53e5852f54c8cb7e6d89181d4edbee70c63102ef09eefa9aaa167a2d2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMapping",
+      "locale": "zh-CN",
+      "sourceHash": "ec6677a53e5852f54c8cb7e6d89181d4edbee70c63102ef09eefa9aaa167a2d2",
+      "translationHash": "8b86053aad6b8641a3d66bdbba79e97bb15ee3af16913326888ebd79c1da3177",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixMapping",
+      "locale": "en-US",
+      "sourceHash": "ec6677a53e5852f54c8cb7e6d89181d4edbee70c63102ef09eefa9aaa167a2d2",
+      "translationHash": "83d50ed40497e5d9e493cd1c44552d74a4a605f2db208f460ddffa77d9e91a94",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixAmbiguous",
+      "locale": "zh-TW",
+      "sourceHash": "23c88fd4a8159d6616b0aff46970c6c486656cf1cbf67eca44178fcfc50b5949",
+      "translationHash": "23c88fd4a8159d6616b0aff46970c6c486656cf1cbf67eca44178fcfc50b5949",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixAmbiguous",
+      "locale": "zh-CN",
+      "sourceHash": "23c88fd4a8159d6616b0aff46970c6c486656cf1cbf67eca44178fcfc50b5949",
+      "translationHash": "6bc8fb4f6448f5c9f0a928f91d38f1889e26a1a5186b18b6fe2babd5c702c3d5",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixAmbiguous",
+      "locale": "en-US",
+      "sourceHash": "23c88fd4a8159d6616b0aff46970c6c486656cf1cbf67eca44178fcfc50b5949",
+      "translationHash": "be52de90087825f410a717d92ef13123f50c4ed301cedcba730b1eb36c36ed7a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixField",
+      "locale": "zh-TW",
+      "sourceHash": "e43b0f535dd7005fc811d772528235132fd239bd277a6acb092f914df3c0d6c8",
+      "translationHash": "e43b0f535dd7005fc811d772528235132fd239bd277a6acb092f914df3c0d6c8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixField",
+      "locale": "zh-CN",
+      "sourceHash": "e43b0f535dd7005fc811d772528235132fd239bd277a6acb092f914df3c0d6c8",
+      "translationHash": "36feefedda18764d8efa37994ca10a2c584a24729f1270868ba62aca8b2655b7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importFixField",
+      "locale": "en-US",
+      "sourceHash": "e43b0f535dd7005fc811d772528235132fd239bd277a6acb092f914df3c0d6c8",
+      "translationHash": "a51116019d9cd83bc2f00575a9022f7d549994852fb59088b8b36b84e16ec842",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importRowInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "4eaf14aafd17017591e9ea201967746e55a86adceaa277f284def58c57e9450a",
+      "translationHash": "4eaf14aafd17017591e9ea201967746e55a86adceaa277f284def58c57e9450a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importRowInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "4eaf14aafd17017591e9ea201967746e55a86adceaa277f284def58c57e9450a",
+      "translationHash": "2e433c1fddaa5b47de4e32618b3457e51d144f366d5b7a6ab42f2225142cf0eb",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importRowInvalid",
+      "locale": "en-US",
+      "sourceHash": "4eaf14aafd17017591e9ea201967746e55a86adceaa277f284def58c57e9450a",
+      "translationHash": "8bb731cb5a87be84081c379f6d4b445291165b217108f63c0a894bbb7727f1c9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.dailyBatchInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "3a7b4fe032b7092d79848ac85b4b6c5fa7d989283c35a398341b70dd081e0324",
+      "translationHash": "3a7b4fe032b7092d79848ac85b4b6c5fa7d989283c35a398341b70dd081e0324",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.dailyBatchInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "3a7b4fe032b7092d79848ac85b4b6c5fa7d989283c35a398341b70dd081e0324",
+      "translationHash": "8935054c2933062c387d32215b0ec1f8078980ec0f3e65e428d4b155366e71c2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.dailyBatchInvalid",
+      "locale": "en-US",
+      "sourceHash": "3a7b4fe032b7092d79848ac85b4b6c5fa7d989283c35a398341b70dd081e0324",
+      "translationHash": "0d74ee6fb0e231facb0f6ab03cc29623884caf9fe20a6f3f3cfdc1885906632d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationOutcomeSkipped",
+      "locale": "zh-TW",
+      "sourceHash": "df8e2e3c4ac8a08355345d487e049fe2d436688faaa232fdd46f8a76454672dc",
+      "translationHash": "df8e2e3c4ac8a08355345d487e049fe2d436688faaa232fdd46f8a76454672dc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationOutcomeSkipped",
+      "locale": "zh-CN",
+      "sourceHash": "df8e2e3c4ac8a08355345d487e049fe2d436688faaa232fdd46f8a76454672dc",
+      "translationHash": "1a9a519b0768857e039fcc7592b954d22d967b8034a0b8f2d102a67928af42c3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationOutcomeSkipped",
+      "locale": "en-US",
+      "sourceHash": "df8e2e3c4ac8a08355345d487e049fe2d436688faaa232fdd46f8a76454672dc",
+      "translationHash": "0ef4efebf3e71375fc80628b4c2a488cd2638262934dbfea03f6d4afe569f78d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationOutcomeAdded",
+      "locale": "zh-TW",
+      "sourceHash": "f44504c55e7707f52902ee933ccf6f4c66991b9afaecfd4594f4470783b4222c",
+      "translationHash": "f44504c55e7707f52902ee933ccf6f4c66991b9afaecfd4594f4470783b4222c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationOutcomeAdded",
+      "locale": "zh-CN",
+      "sourceHash": "f44504c55e7707f52902ee933ccf6f4c66991b9afaecfd4594f4470783b4222c",
+      "translationHash": "d4c9f8e941cbeef89d8dbdbd8e28402be839fc58f4cc2dac1841a82f7f8a22dc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.calibrationOutcomeAdded",
+      "locale": "en-US",
+      "sourceHash": "f44504c55e7707f52902ee933ccf6f4c66991b9afaecfd4594f4470783b4222c",
+      "translationHash": "30234bd0c171b513495337fa04dc5de48b161efa7ec6420ca4bb308cb85ca5c6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importRollbackFailed",
+      "locale": "zh-TW",
+      "sourceHash": "8cb4026ce03e1303e6e5ca48938ae0d0f933ad1c3309b5597ce4298a8faca0cb",
+      "translationHash": "8cb4026ce03e1303e6e5ca48938ae0d0f933ad1c3309b5597ce4298a8faca0cb",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importRollbackFailed",
+      "locale": "zh-CN",
+      "sourceHash": "8cb4026ce03e1303e6e5ca48938ae0d0f933ad1c3309b5597ce4298a8faca0cb",
+      "translationHash": "52d43b639fd4eabe4d0d049f8d80033bbe1dc24058b7030eab744252e4d624eb",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importRollbackFailed",
+      "locale": "en-US",
+      "sourceHash": "8cb4026ce03e1303e6e5ca48938ae0d0f933ad1c3309b5597ce4298a8faca0cb",
+      "translationHash": "086adc23631737e961bd4d82b0515d20ffb44c601dc987ba0edfb08a17155473",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chemicalImportRowFailed",
+      "locale": "zh-TW",
+      "sourceHash": "be3e0ead36c85282fc07a1388b6ad0d65d298ebfdf20def0a913991b2f9f7ce1",
+      "translationHash": "be3e0ead36c85282fc07a1388b6ad0d65d298ebfdf20def0a913991b2f9f7ce1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chemicalImportRowFailed",
+      "locale": "zh-CN",
+      "sourceHash": "be3e0ead36c85282fc07a1388b6ad0d65d298ebfdf20def0a913991b2f9f7ce1",
+      "translationHash": "cc6fd82f0f7812c5edf3a6d82fafb541decd825d77515ea4e525913f577cf444",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chemicalImportRowFailed",
+      "locale": "en-US",
+      "sourceHash": "be3e0ead36c85282fc07a1388b6ad0d65d298ebfdf20def0a913991b2f9f7ce1",
+      "translationHash": "051ad012bc1dd4287a816299abeaa3f84c4db2027590e76150b63d210e035c6e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importAlreadyProcessed",
+      "locale": "zh-TW",
+      "sourceHash": "650103b39822fddc392e157453bc7511c111fe7337a5351ed87a3113d22cad2d",
+      "translationHash": "650103b39822fddc392e157453bc7511c111fe7337a5351ed87a3113d22cad2d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importAlreadyProcessed",
+      "locale": "zh-CN",
+      "sourceHash": "650103b39822fddc392e157453bc7511c111fe7337a5351ed87a3113d22cad2d",
+      "translationHash": "ed6a240c64a97256563e8ac93c913f23ebbd1941aba1bd720cd7bfa70cc7a960",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.importAlreadyProcessed",
+      "locale": "en-US",
+      "sourceHash": "650103b39822fddc392e157453bc7511c111fe7337a5351ed87a3113d22cad2d",
+      "translationHash": "6c74be2602c897ce2b9268cfd1ab03103dcc4c711c72c528cd5bbd0e5a1ad9e0",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.particleValidationErrors",
+      "locale": "zh-TW",
+      "sourceHash": "be493a7bb96aaa766c87e813ba71ae7bd2778ed336ce4b003b9a1108237d00e8",
+      "translationHash": "be493a7bb96aaa766c87e813ba71ae7bd2778ed336ce4b003b9a1108237d00e8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.particleValidationErrors",
+      "locale": "zh-CN",
+      "sourceHash": "be493a7bb96aaa766c87e813ba71ae7bd2778ed336ce4b003b9a1108237d00e8",
+      "translationHash": "7b43bf70797ba563aebdd5add16e25fe0e3909ca0a012c2f96269b7623117a69",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.particleValidationErrors",
+      "locale": "en-US",
+      "sourceHash": "be493a7bb96aaa766c87e813ba71ae7bd2778ed336ce4b003b9a1108237d00e8",
+      "translationHash": "4eaac512a12495d723add2b68fe763319ea48962af34c2259e26bfe32e116ca7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.particleDuplicateMeasurement",
+      "locale": "zh-TW",
+      "sourceHash": "1ea17188e08084f349a75a7505580aa7f6a6405acccb2fc184fa71f52389c9c1",
+      "translationHash": "1ea17188e08084f349a75a7505580aa7f6a6405acccb2fc184fa71f52389c9c1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.particleDuplicateMeasurement",
+      "locale": "zh-CN",
+      "sourceHash": "1ea17188e08084f349a75a7505580aa7f6a6405acccb2fc184fa71f52389c9c1",
+      "translationHash": "a4e4ec340df9c69b7e3c21b10f07e763301e3f15e9f1c5703b3c58a4d031c08d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.particleDuplicateMeasurement",
+      "locale": "en-US",
+      "sourceHash": "1ea17188e08084f349a75a7505580aa7f6a6405acccb2fc184fa71f52389c9c1",
+      "translationHash": "ef2b724f3adf596b8847ed8f3a1daf6e76d8f0fd0fd699e2bb8e070c5b90495f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    }
+  ]
+}

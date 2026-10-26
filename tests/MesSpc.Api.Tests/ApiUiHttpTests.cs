@@ -92,12 +92,23 @@ public sealed class ApiUiHttpTests : IAsyncLifetime
         using var json=JsonDocument.Parse(Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlDecode(encoded));
         Assert.Equal("原名 <b>@:key {field}</b>",json.RootElement.GetProperty("field").GetString());
     }
+
+    [Fact]
+    public async Task CompositeResponseRetainsPlainArgumentsAndExplicitChildMetadata()
+    {
+        using var response=await client.GetAsync("/api/i18n-probe/composite");Assert.Equal(HttpStatusCode.BadRequest,response.StatusCode);
+        using var json=JsonDocument.Parse(await response.Content.ReadAsStringAsync());var root=json.RootElement;
+        Assert.Equal("spc.api.importRowInvalid",root.GetProperty("messageKey").GetString());Assert.Equal("6",root.GetProperty("args").GetProperty("row").GetString());
+        var child=Assert.Single(root.GetProperty("details").EnumerateArray());Assert.Equal("spc.api.calibrationFieldRequired",child.GetProperty("messageKey").GetString());Assert.Equal("原名 <b>@:key {field}</b>",child.GetProperty("args").GetProperty("field").GetString());
+    }
 }
 
 [ApiController]
 [Route("api/i18n-probe")]
 public sealed class ApiUiProbeController : ControllerBase
 {
+    [HttpGet("composite")]
+    public IActionResult Composite()=>BadRequest(ApiUiError.Create("IMPORT_ROW_INVALID","spc.api.importRowInvalid",new Dictionary<string,string>{{"row","6"}}) with { Details = new[] { ApiUiError.Create("FIELD_REQUIRED","spc.api.calibrationFieldRequired",new Dictionary<string,string>{{"field","原名 <b>@:key {field}</b>"}}) } });
     [HttpGet("legacy-dynamic")]
     public IActionResult LegacyDynamic()=>ApiUiError.WithLegacyMessage(BadRequest("原body"),HttpContext,"spc.api.invalidField",new Dictionary<string,string>{{"field","原名 <b>@:key {field}</b>"}});
     [HttpGet("legacy")]

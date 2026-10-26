@@ -4,6 +4,7 @@ using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Text.Json;
 
 namespace MesSpc.Api.Tests;
 
@@ -26,6 +27,16 @@ public class ParticleUploadServiceTests
         result.ErrorRows.Should().Be(2);
         var codes = await db.UploadErrors.Select(error => error.ErrorCode).ToListAsync();
         codes.Should().Contain(["MEASUREMENT_TIME_INVALID", "LOCATION_UNSUPPORTED", "PARTICLE_SIZE_UNSUPPORTED", "COUNT_NEGATIVE", "DUPLICATE_SOURCE_CELL"]);
+        var originalErrors=await db.UploadErrors.OrderBy(x=>x.Id).Select(x=>new { x.Id,x.FieldName,x.ErrorCode,x.ErrorMessage }).ToListAsync();
+        var payloads=await db.UploadDetails.OrderBy(x=>x.Id).Select(x=>x.PayloadJson).ToListAsync();
+        var display=JsonSerializer.SerializeToElement(await new UploadService(db,null!).GetPreviewAsync(result.UploadBatchId),new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var displayed=display.GetProperty("errors").EnumerateArray().ToArray();
+        displayed.Should().NotBeEmpty();displayed.Should().OnlyContain(x=>x.GetProperty("messageKey").GetString()!.StartsWith("spc.api."));
+        displayed.Single(x=>x.GetProperty("errorCode").GetString()=="COUNT_NEGATIVE").GetProperty("messageKey").GetString().Should().Be("spc.api.importCountNegative");
+        var history=JsonSerializer.SerializeToElement(await new UploadService(db,null!).GetBatchListAsync(),new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        history.GetProperty("batches")[0].GetProperty("firstErrorDescriptor").GetProperty("messageKey").GetString().Should().StartWith("spc.api.");
+        (await db.UploadErrors.OrderBy(x=>x.Id).Select(x=>new { x.Id,x.FieldName,x.ErrorCode,x.ErrorMessage }).ToListAsync()).Should().Equal(originalErrors);
+        (await db.UploadDetails.OrderBy(x=>x.Id).Select(x=>x.PayloadJson).ToListAsync()).Should().Equal(payloads);
     }
 
     [Fact]

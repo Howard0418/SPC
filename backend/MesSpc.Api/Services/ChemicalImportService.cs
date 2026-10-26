@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services.Parsers;
@@ -119,7 +120,7 @@ public class ChemicalImportService
             catch (Exception ex)
             {
                 summary.FailedRows++;
-                summary.Errors.Add($"[{row.SheetName}] {row.Tank} / {row.AnalysisItem}: {ex.Message}");
+                summary.AddError($"[{row.SheetName}] {row.Tank} / {row.AnalysisItem}: {ex.Message}", "spc.api.chemicalImportRowFailed", new Dictionary<string,string> { ["sheet"] = row.SheetName, ["tank"] = row.Tank, ["item"] = row.AnalysisItem });
             }
         }
 
@@ -225,4 +226,9 @@ public class ChemicalImportSummary
     public int ImportedRows { get; set; }
     public int FailedRows { get; set; }
     public List<string> Errors { get; set; } = new();
+    private readonly IndexedApiUiMessages metadata = new();
+    /// <summary>Sanitized display summaries; legacy error evidence remains in Errors only.</summary>
+    public IReadOnlyList<IndexedApiUiMessage> ErrorMessages => metadata.Snapshot(Errors);
+    /// <summary>Preserves the old diagnostic while keeping internal exception text out of new display metadata.</summary>
+    public void AddError(string original, string key, IReadOnlyDictionary<string,string> args) => metadata.Add(Errors,original,ApiUiError.Create("CHEMICAL_IMPORT_FAILED",key,args));
 }

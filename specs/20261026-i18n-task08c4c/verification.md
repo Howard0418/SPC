@@ -1,0 +1,11 @@
+# 08C4C 驗證與發布
+- 2026-10-26 本批三語化DONE。67鍵／201列draft，累計2622鍵三語。校驗Errors/Warnings原字串陣列保留，新增index/descriptor；只明示建立點指定key與安全args，Snapshot比對捕捉原文／索引，後續原陣列改動時不回傳過期metadata，不由文字反查key。原欄名／表頭／raw日期等資料保留原文。
+- UploadErrors原ErrorCode/ErrorMessage/RawValue及PayloadJson完全保持，只read DTO按穩定code提供三語摘要、建議與history descriptor；unknown code不猜key，缺歷史主檔參數只給摘要，不冒稱完整歷史原訊息已翻譯。原完整儲存錯誤／suggestion仍可作證據，無追加DB欄位／寫入／payload keys。
+- 父子Details只含明示安全描述，原Exception／Message／HTTP／Code與原資料保留；前端先驗證整棵known-key/plain-args樹，再單次純文字組合，最多64節點、深度3，循環／非法／未知／超限回原訊息。getApiErrorMessage仍回字串，已儲存訊息切語言與逐頁資料接線留C5。
+- 核心先紅後綠：後端缺AddError/索引與UploadErrorUi、前端原不顯示Details紅燈後實作。24核心API與6無DB隔離HTTP測試通過（含真HTTP父子details／列號／raw參數序列化），涵蓋索引失效、未知code不依訊息猜key、legacy diagnostic與新sanitized metadata分離、實際Particle預覽／history完整read metadata，前後DB ErrorCode/ErrorMessage及PayloadJson逐項相等，既有Portal藥液批次、校驗、例外回歸。
+- 校驗完整125為123通過／2既有失敗（CAL-VERIFY-001/002），無新失敗；新生成範本逐列metadata與原Errors/Warnings/Status相容通過。原成功／重播／rollback保持，追加精確稽核JSON Result僅Added/Skipped/Failed/Rows、各row僅RowNumber/Code/Status/Message四欄檢查通過。特別在Audit前投影原形狀，顯示metadata不寫入稽核JSON。
+- 藥液日報錯誤read投影多帶既有ErrorCode，filter/order/take5與原legacy錯誤字串、throw型別保持；已知code才附安全列號子descriptor，未知仍原例外。新chemical summary metadata只放sheet/tank/item與通用失敗，內部ex.Message只留原legacy Errors，不進新args/Details。未執行真SQL業務寫入／實際匯入／寄信或Webhook。
+- 112前端單元通過，67鍵ledger hash／placeholder/protected terms完整；本機45／發布45API adapter三語情境通過，包括父子列原因／原文HTML與i18n符號、非法子key回退、原header／enum衝突／error欄位。所有業務API攔截。build:test與Release publish通過，既有chunk/table／測試host obsolete提示保持。
+- 唯讀核SQL 172.16.110.16 / PMR_SPC_TEST pending=[]、無model/migration；核IIS SpcSingleTest/與同名pool、backend D:\SPC\release\test\backend及AppEnvironment=test。完整前後端 .codex-tmp/i18n-task08c4c/backup 逐檔SHA256核對，runtime94／前端4檔、保護設定4不變，只該test pool stop/start。實際version/health HTTP200 API0.1.81/test/ok，Web0.1.100四檔SHA256等於dist，14同源API通過。正式／Portal未改。
+- 回復：核同test目錄/pool，停該pool，backup/backend和backup/frontend成對回復，保護設定／資料、資產先index最後，啟pool核version/health；無DB回復需求。
+- 剩16件接續C5，譯文draft留20真人審查；兩項校驗既有差異另待辦，原附件掃毒受阻1／Runtime與TransFiles暫緩2保持。

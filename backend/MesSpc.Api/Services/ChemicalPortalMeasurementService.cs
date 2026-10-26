@@ -98,9 +98,17 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
             var batch=await uploads.CreateVariableBatchAsync(rows,"PortalDaily",actor,Marker,ct:ct,uploadBatchId:request.RequestId);
             if(batch.ErrorRows>0)
             {
-                var errors=await db.UploadErrors.AsNoTracking().Where(x=>x.UploadBatchId==batch.UploadBatchId).OrderBy(x=>x.RowNo).Take(5)
-                    .Select(x=>x.RowNo+"："+x.FieldName+" "+x.ErrorMessage).ToListAsync(ct);
-                throw new ArgumentException("日報格式不符，未寫入："+string.Join("；",errors));
+                var sourceErrors=await db.UploadErrors.AsNoTracking().Where(x=>x.UploadBatchId==batch.UploadBatchId).OrderBy(x=>x.RowNo).Take(5)
+                    .Select(x=>new { x.RowNo,x.FieldName,x.ErrorCode,x.ErrorMessage }).ToListAsync(ct);
+                var errors=sourceErrors.Select(x=>x.RowNo+"："+x.FieldName+" "+x.ErrorMessage).ToList();
+                var failure=new ArgumentException("日報格式不符，未寫入："+string.Join("；",errors));
+                var children=sourceErrors.Select(x=>UploadErrorUi.Describe(x.ErrorCode,x.ErrorMessage,x.FieldName)).ToArray();
+                if(children.All(x=>x is not null))
+                {
+                    var details=sourceErrors.Select((x,index)=>ApiUiError.Create("IMPORT_ROW_INVALID","spc.api.importRowInvalid",new Dictionary<string,string>{{"row",x.RowNo?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? ""}}) with { Details = new[] { children[index]! } });
+                    throw ApiUiException.AttachDetails(failure,"spc.api.dailyBatchInvalid",ApiUiMessageCatalog.EmptyArguments,details);
+                }
+                throw failure;
             }
             batch.FileHash=hash;
             await uploads.ConfirmAsync(batch.UploadBatchId,ct:ct,chemicalEvidence:evidence,deferVariableNotifications:true);

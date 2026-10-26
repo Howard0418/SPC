@@ -45,7 +45,13 @@ public sealed record ParticleConfirmResult(
     int SkippedRows,
     int ErrorRows,
     bool AlreadyImported = false,
-    string? ConflictCode = null);
+    string? ConflictCode = null)
+{
+    /// <summary>Display metadata only; the original ConflictCode and write decision remain unchanged.</summary>
+    public string? MessageKey => ConflictCode switch { "VALIDATION_ERRORS" => "spc.api.particleValidationErrors", "DUPLICATE_MEASUREMENT" => "spc.api.particleDuplicateMeasurement", _ => null };
+    /// <summary>No raw inputs are required to explain a batch conflict.</summary>
+    public IReadOnlyDictionary<string,string> Args => ApiUiMessageCatalog.EmptyArguments;
+}
 
 internal sealed record ParticleStagedRow(
     DateTime MeasurementTime,

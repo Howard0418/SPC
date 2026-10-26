@@ -43,3 +43,5 @@
 - API JSON 模組為前後端共用單一來源，後端 embedded resource；`X-SPC-UI-Locale` 僅明示 canonical 顯示語言，不改全域 Culture／資料解析，舊 `message`／HTTP 與欄位保持。
 - 原 string response body 保持原樣，`X-SPC-Message-Key` 為附加已知 API key；具名參數使用 `X-SPC-Message-Args`（base64url UTF8 JSON，上限 4096 字元）。前端只接受已知 key 與 exact 純字串／有限數值參數；超長、非法編碼／JSON、未知 key 或 nested args 均回原文，不編譯外來模板。
 - 服務只在明示例外建立點附加 metadata，原 Exception 型別、Message、ParamName、Inner 與 catch 分支不變；controller 只讀本模組 marker。未知例外不從文字猜 key，全域 500 隱藏內部錯誤策略保持。不得把 token、簽章、actor、SQL 或原公式 JSON 放入 args。
+- 逐列訊息可附 `index/descriptor`，原 Errors／Warnings 陣列保留；來源文字或索引改變須丟棄過期 metadata。既有 UploadError 只按穩定 code 提供摘要／建議，原完整歷史錯誤保持原文，不推定遺失的歷史主檔參數。
+- `details` 只容納明示安全子 descriptor，不放 inner Exception。前端最多 64 節點、子層深度 3，先驗證整棵已知 key／plain args 樹，再單次純文字組合；未知／循環／超限回原始安全訊息。metadata 不寫入既有匯入 payload 或稽核 JSON，API 顯示與歷史證據分離。

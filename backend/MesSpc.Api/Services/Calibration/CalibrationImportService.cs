@@ -7,7 +7,18 @@ using Microsoft.EntityFrameworkCore;
 namespace MesSpc.Api.Services.Calibration;
 
 public record CalibrationImportOptions(string Hash, int[] SelectedRows, string Department, int CustodianOperatorId, string UsageStatus, bool IncludeCustodian);
-public record CalibrationImportOutcome(int RowNumber, string Code, string Status, string Message);
+public record CalibrationImportOutcome(int RowNumber, string Code, string Status, string Message)
+{
+    /// <summary>Explicit safe failure metadata, excluded from duplicate serialization.</summary>
+    [System.Text.Json.Serialization.JsonIgnore] public ApiUiError? DisplayDescriptor { get; init; }
+    /// <summary>Only display keys; original instrument Code and Status are unchanged.</summary>
+    public string? MessageKey => DisplayDescriptor?.MessageKey ?? (Status switch { "Added" => "spc.api.calibrationOutcomeAdded", "Skipped" => "spc.api.calibrationOutcomeSkipped", "Failed" => "spc.api.importRollbackFailed", _ => null });
+    /// <summary>Safe explicit display arguments.</summary>
+    public IReadOnlyDictionary<string,string> Args => DisplayDescriptor?.Args ?? ApiUiMessageCatalog.EmptyArguments;
+    /// <summary>Known validation children; never internal exceptions.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<ApiUiError>? Details => DisplayDescriptor?.Details;
+}
 public record CalibrationImportResult(int Added, int Skipped, int Failed, List<CalibrationImportOutcome> Rows);
 
 /// <summary>匯入預覽與僅新增交易。提交重讀來源、重新驗證，唯一編號索引是競爭寫入最後防線。</summary>
@@ -20,7 +31,7 @@ public sealed class CalibrationImportService(AppDbContext db, InstrumentCalibrat
         var existing = (await db.Set<CalibrationInstrument>().AsNoTracking().Select(x=>x.Code).ToListAsync(ct))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var row in preview.Rows.Where(x=>existing.Contains(x.Code)))
-        { row.Status = row.Errors.Count==0 ? "Existing" : "Invalid"; row.Warnings.Add("資料庫已存在相同編號，將略過、不覆寫。"); }
+        { row.Status = row.Errors.Count==0 ? "Existing" : "Invalid"; row.AddWarning("資料庫已存在相同編號，將略過、不覆寫。", "spc.api.calibrationExistingCodeNotice"); }
         return preview;
     }
 
@@ -43,13 +54,13 @@ public sealed class CalibrationImportService(AppDbContext db, InstrumentCalibrat
         {
             foreach (var row in selected)
             {
-                if (row.Errors.Count>0) throw new CalibrationException($"第 {row.RowNumber} 列：{string.Join("；",row.Errors)}");
+                if (row.Errors.Count>0) throw ApiUiException.AttachDetails(new CalibrationException($"第 {row.RowNumber} 列：{string.Join("；",row.Errors)}"), "spc.api.importRowInvalid", new Dictionary<string,string> { ["row"] = row.RowNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) }, row.ErrorMessages.Select(x=>x.Descriptor));
                 if (await db.Set<CalibrationInstrument>().AsNoTracking().AnyAsync(x=>x.Code==row.Code,ct))
                 { outcomes.Add(new(row.RowNumber,row.Code,"Skipped","編號已存在，未變更既有資料。")); continue; }
                 var input = new InstrumentInput(row.Code,row.Name,options.Department,options.CustodianOperatorId,row.CycleMonths!.Value,
                     row.LastCalibrationDate,row.NextCalibrationDate,options.UsageStatus,[],options.IncludeCustodian,null,"Excel 主檔初始化",row.Location,row.CalibrationMethod,row.MeasurementSpecification,row.Precision,row.Remarks,row.CalibrationStandard,row.AcceptanceCriteria);
                 try { await instruments.ValidateInputAsync(input,ct); }
-                catch (CalibrationException ex) { throw new CalibrationException($"第 {row.RowNumber} 列：{ex.Message}"); }
+                catch (CalibrationException ex) { throw ApiUiException.AttachDetails(new CalibrationException($"第 {row.RowNumber} 列：{ex.Message}"), "spc.api.importRowInvalid", new Dictionary<string,string> { ["row"] = row.RowNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) }, ApiUiException.Read(ex) is { } child ? new[] { child } : Array.Empty<ApiUiError>()); }
                 var entity = new CalibrationInstrument { Code=input.Code,Name=input.Name,Department=input.Department.Trim(),
                     Location=string.IsNullOrWhiteSpace(row.Location) ? null : row.Location.Trim(),
                     CalibrationMethod=string.IsNullOrWhiteSpace(row.CalibrationMethod) ? null : row.CalibrationMethod.Trim(),
@@ -69,7 +80,7 @@ public sealed class CalibrationImportService(AppDbContext db, InstrumentCalibrat
                 instruments.Audit(entity.Id,actor,"InstrumentImported",null,new { FileName=fileName,preview.Hash,source.RowNumber,Instrument=entity },"Excel 主檔初始化");
             }
             var result=Result(outcomes);
-            instruments.Audit(null,actor,"InstrumentImportCompleted",null,new { FileName=fileName,preview.Hash,Result=result },"僅新增匯入");
+            instruments.Audit(null,actor,"InstrumentImportCompleted",null,new { FileName=fileName,preview.Hash,Result=LegacyResult(result) },"僅新增匯入");
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
             logger.LogInformation("Calibration import completed: {Added} added, {Skipped} skipped",result.Added,result.Skipped);
@@ -82,14 +93,15 @@ public sealed class CalibrationImportService(AppDbContext db, InstrumentCalibrat
             db.ChangeTracker.Clear();
             logger.LogWarning(ex,"Calibration import rolled back for {Actor}, SHA256 {Hash}",actor,preview.Hash);
             var reason = ex is CalibrationException ? ex.Message : "資料庫寫入失敗，本次新增已全部回復；請重新預覽再試。";
-            var failed = Result(selected.Select(x=>new CalibrationImportOutcome(x.RowNumber,x.Code,"Failed",reason)).ToList());
+            var failed = Result(selected.Select(x=>new CalibrationImportOutcome(x.RowNumber,x.Code,"Failed",reason) { DisplayDescriptor = ApiUiException.Read(ex) }).ToList());
             // End the completed transaction before a fresh, independent failure audit write.
             await tx.DisposeAsync();
-            instruments.Audit(null,actor,"InstrumentImportFailed",null,new { FileName=fileName,preview.Hash,Result=failed },reason);
+            instruments.Audit(null,actor,"InstrumentImportFailed",null,new { FileName=fileName,preview.Hash,Result=LegacyResult(failed) },reason);
             await db.SaveChangesAsync(ct);
             return failed;
         }
     }
+    private static object LegacyResult(CalibrationImportResult value) => new { value.Added,value.Skipped,value.Failed,Rows=value.Rows.Select(row=>new { row.RowNumber,row.Code,row.Status,row.Message }).ToList() };
     private static CalibrationImportResult Result(List<CalibrationImportOutcome> rows)
         => new(rows.Count(x=>x.Status=="Added"),rows.Count(x=>x.Status=="Skipped"),rows.Count(x=>x.Status=="Failed"),rows.OrderBy(x=>x.RowNumber).ToList());
 }

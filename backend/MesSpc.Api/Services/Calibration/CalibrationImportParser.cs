@@ -29,6 +29,16 @@ public sealed class CalibrationImportRow
     public DateOnly? NextCalibrationDate { get; set; }
     public List<string> Errors { get; } = [];
     public List<string> Warnings { get; } = [];
+    private readonly IndexedApiUiMessages errorMetadata = new();
+    private readonly IndexedApiUiMessages warningMetadata = new();
+    /// <summary>Display metadata for explicitly annotated errors; original Errors remains unchanged.</summary>
+    public IReadOnlyList<IndexedApiUiMessage> ErrorMessages => errorMetadata.Snapshot(Errors);
+    /// <summary>Display metadata for explicitly annotated warnings; original Warnings remains unchanged.</summary>
+    public IReadOnlyList<IndexedApiUiMessage> WarningMessages => warningMetadata.Snapshot(Warnings);
+    /// <summary>Adds an original error and explicit safe display metadata without changing validation counts.</summary>
+    public void AddError(string message, string key, IReadOnlyDictionary<string,string>? args = null) => errorMetadata.Add(Errors, message, key, args);
+    /// <summary>Adds an original warning and explicit safe display metadata without changing validation counts.</summary>
+    public void AddWarning(string message, string key, IReadOnlyDictionary<string,string>? args = null) => warningMetadata.Add(Warnings, message, key, args);
     public string Status { get; set; } = "Ready";
 }
 public record CalibrationImportPreview(string Hash, string SheetName, List<CalibrationImportRow> Rows);
@@ -117,23 +127,23 @@ public static class CalibrationImportParser
                 Location=location.Text, CalibrationMethod=method.Text,
                 MeasurementSpecification=Get($"F{number}").Text, Precision=Get($"G{number}").Text, Remarks=Get($"AB{number}").Text, CalibrationStandard=Get($"AC{number}").Text, AcceptanceCriteria=Get($"AD{number}").Text, RawCycle=cycle.Text, RawLastDate=last.Text, RawNextDate=next.Text };
             rows.Add(row);
-            if (row.Code.Length is <1 or >80) row.Errors.Add("儀器編號必填，最多 80 字。");
-            if (row.Name.Length is <1 or >200) row.Errors.Add("儀器名稱必填，最多 200 字。");
-            if (row.Location.Length > 100) row.Errors.Add("放置地點最多 100 字。");
-            if (row.CalibrationMethod.Length > 100) row.Errors.Add("校驗方式最多 100 字。");
-            if (code.Formula || name.Formula || cycle.Formula || location.Formula) row.Errors.Add("編號、名稱、放置地點、週期需為固定值，請先將公式轉成值。");
+            if (row.Code.Length is <1 or >80) row.AddError("儀器編號必填，最多 80 字。", "spc.api.calibrationCodeRequired");
+            if (row.Name.Length is <1 or >200) row.AddError("儀器名稱必填，最多 200 字。", "spc.api.calibrationNameRequired");
+            if (row.Location.Length > 100) row.AddError("放置地點最多 100 字。", "spc.api.calibrationLocationTooLong");
+            if (row.CalibrationMethod.Length > 100) row.AddError("校驗方式最多 100 字。", "spc.api.calibrationMethodTooLong");
+            if (code.Formula || name.Formula || cycle.Formula || location.Formula) row.AddError("編號、名稱、放置地點、週期需為固定值，請先將公式轉成值。", "spc.api.calibrationFixedValuesRequired");
             if (method.Formula)
             {
-                if (method.Text.Length==0) row.Errors.Add("校驗方式公式沒有儲存值，請在 Excel 重算儲存。");
-                else row.Warnings.Add("校驗方式使用公式儲存值，請確認 Excel 已重算儲存。");
+                if (method.Text.Length==0) row.AddError("校驗方式公式沒有儲存值，請在 Excel 重算儲存。", "spc.api.calibrationMethodCacheMissing");
+                else row.AddWarning("校驗方式使用公式儲存值，請確認 Excel 已重算儲存。", "spc.api.calibrationMethodCacheNotice");
             }
             foreach (var (column,label) in detailColumns)
             {
                 var cell=Get($"{column}{number}");
-                if (cell.Text.Length>0 && Compact(Get(column+"5").Text)!=label) row.Errors.Add($"{column}5 缺少「{label}」表頭，無法安全讀取資料。");
-                if (cell.Text.Length>2000) row.Errors.Add($"{label}最多 2000 字。");
-                if (cell.Type=="e" || (cell.Formula && !cell.HasValue)) row.Errors.Add($"{label}公式無有效儲存值，請在 Excel 重算儲存。");
-                else if (cell.Formula) row.Warnings.Add($"{label}使用公式儲存值，請確認 Excel 已重算儲存。");
+                if (cell.Text.Length>0 && Compact(Get(column+"5").Text)!=label) row.AddError($"{column}5 缺少「{label}」表頭，無法安全讀取資料。", "spc.api.calibrationDetailHeaderMissing", new Dictionary<string,string> { ["cell"] = column+"5", ["expected"] = label });
+                if (cell.Text.Length>2000) row.AddError($"{label}最多 2000 字。", "spc.api.calibrationFieldTooLong", new Dictionary<string,string> { ["field"] = label });
+                if (cell.Type=="e" || (cell.Formula && !cell.HasValue)) row.AddError($"{label}公式無有效儲存值，請在 Excel 重算儲存。", "spc.api.calibrationFieldFormulaMissing", new Dictionary<string,string> { ["field"] = label });
+                else if (cell.Formula) row.AddWarning($"{label}使用公式儲存值，請確認 Excel 已重算儲存。", "spc.api.calibrationFieldFormulaNotice", new Dictionary<string,string> { ["field"] = label });
             }
             var match = Regex.Match(Compact(cycle.Text), @"^1次/(?<n>\d*)(?<unit>年|月)$", RegexOptions.CultureInvariant);
             if (match.Success && int.TryParse(match.Groups["n"].Value.Length==0 ? "1" : match.Groups["n"].Value,out var count) && count>0 && count<=120)
@@ -147,24 +157,24 @@ public static class CalibrationImportParser
                 if (raw is "--" or "免校" or "")
                 {
                     row.CycleMonths = 12;
-                    row.Warnings.Add("校驗週期無法辨識或為免校/--，先以 12 月建檔，請自行修正。");
+                    row.AddWarning("校驗週期無法辨識或為免校/--，先以 12 月建檔，請自行修正。", "spc.api.calibrationCycleDeferred");
                 }
-                else row.Errors.Add("校驗週期無法辨識或超過 1～120 月；請改為 1次/N年或1次/N月。");
+                else row.AddError("校驗週期無法辨識或超過 1～120 月；請改為 1次/N年或1次/N月。", "spc.api.calibrationCycleFormatInvalid");
             }
             row.LastCalibrationDate=Date(last,"上次校正日",false,date1904,row);
             row.NextCalibrationDate=Date(next,"下次到期日",false,date1904,row);
-            if (row.LastCalibrationDate>CalibrationRules.Today(clock.GetUtcNow())) row.Errors.Add("上次校正不可為未來日期。");
-            if (row.LastCalibrationDate.HasValue && row.NextCalibrationDate<=row.LastCalibrationDate) row.Errors.Add("下次日期必須晚於上次日期。");
+            if (row.LastCalibrationDate>CalibrationRules.Today(clock.GetUtcNow())) row.AddError("上次校正不可為未來日期。", "spc.api.calibrationPreviousDateFuture");
+            if (row.LastCalibrationDate.HasValue && row.NextCalibrationDate<=row.LastCalibrationDate) row.AddError("下次日期必須晚於上次日期。", "spc.api.calibrationDateOrderInvalid");
             if (row.CycleMonths.HasValue && row.LastCalibrationDate.HasValue && row.NextCalibrationDate.HasValue)
             {
                 var lastDate = row.LastCalibrationDate.Value;
                 if (lastDate.Year + (lastDate.Month - 1 + row.CycleMonths.Value)/12 <= 9999 &&
                     CalibrationRules.NextDue(lastDate,row.CycleMonths.Value)!=row.NextCalibrationDate)
-                    row.Warnings.Add("下次日期與月週期推算不同；保留 Excel 的明確到期日。");
+                    row.AddWarning("下次日期與月週期推算不同；保留 Excel 的明確到期日。", "spc.api.calibrationExplicitDueNotice");
             }
         }
         foreach (var group in rows.Where(x=>x.Code.Length>0).GroupBy(x=>x.Code).Where(x=>x.Count()>1))
-            foreach (var row in group) row.Errors.Add("同檔儀器編號重複，請先排除重複資料。");
+            foreach (var row in group) row.AddError("同檔儀器編號重複，請先排除重複資料。", "spc.api.calibrationFileCodeDuplicate");
         foreach (var row in rows) row.Status = row.Errors.Count>0 ? "Invalid" : "Ready";
         if (rows.Count==0) throw ApiUiException.Attach(new CalibrationException("第一個工作表沒有儀器資料。"), "spc.api.calibrationInstrumentRowsMissing");
         return new(Convert.ToHexString(SHA256.HashData(bytes)), (string?)first.Attribute("name") ?? "", rows);
@@ -175,13 +185,13 @@ public static class CalibrationImportParser
     {
         if (cell.Formula)
         {
-            if (!cell.HasValue || cell.Text.Length==0) { row.Errors.Add($"{label}公式沒有儲存值，請在 Excel 重算儲存。"); return null; }
-            row.Warnings.Add($"{label}使用公式儲存值，請確認 Excel 已重算儲存。");
+            if (!cell.HasValue || cell.Text.Length==0) { row.AddError($"{label}公式沒有儲存值，請在 Excel 重算儲存。", "spc.api.calibrationFieldFormulaMissing", new Dictionary<string,string> { ["field"] = label }); return null; }
+            row.AddWarning($"{label}使用公式儲存值，請確認 Excel 已重算儲存。", "spc.api.calibrationFieldFormulaNotice", new Dictionary<string,string> { ["field"] = label });
         }
         if (cell.Text.Length==0 || IsDeferredDate(cell.Text))
         {
-            if (cell.Text.Length>0) row.Warnings.Add($"{label}「{cell.Text}」先留空，請匯入後自行建立日期。");
-            if (required) row.Errors.Add($"{label}必填。");
+            if (cell.Text.Length>0) row.AddWarning($"{label}「{cell.Text}」先留空，請匯入後自行建立日期。", "spc.api.calibrationDateDeferred", new Dictionary<string,string> { ["field"] = label, ["value"] = cell.Text });
+            if (required) row.AddError($"{label}必填。", "spc.api.calibrationFieldRequired", new Dictionary<string,string> { ["field"] = label });
             return null;
         }
         if (cell.Type is "n" && double.TryParse(cell.Text,NumberStyles.Float,CultureInfo.InvariantCulture,out var serial))
@@ -199,7 +209,7 @@ public static class CalibrationImportParser
         else if (cell.Type is "s" or "inlineStr" or "str" or "d" &&
                  DateOnly.TryParseExact(cell.Text,DateFormats,CultureInfo.InvariantCulture,DateTimeStyles.None,out var date) && date!=default)
             return date;
-        row.Errors.Add($"{label}「{cell.Text}」無法辨識，請填明確西元年月日。");
+        row.AddError($"{label}「{cell.Text}」無法辨識，請填明確西元年月日。", "spc.api.calibrationDateUnrecognized", new Dictionary<string,string> { ["field"] = label, ["value"] = cell.Text });
         return null;
     }
     private static bool IsDeferredDate(string text)
