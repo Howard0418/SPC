@@ -152,7 +152,7 @@ public class InstrumentCalibrationsController(
         }
         catch (CalibrationException ex)
         {
-            return StatusCode(ex.Status, new { success = false, code = ex.Code, message = ex.Message });
+            return StatusCode(ex.Status, new { success = false, code = ex.Code, message = ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments });
         }
     }
 
@@ -169,7 +169,7 @@ public class InstrumentCalibrationsController(
         }
         catch (CalibrationException ex)
         {
-            return StatusCode(ex.Status, new { success = false, code = ex.Code, message = ex.Message });
+            return StatusCode(ex.Status, new { success = false, code = ex.Code, message = ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments });
         }
     }
 
@@ -230,7 +230,7 @@ public class InstrumentCalibrationsController(
         }
         catch (CalibrationException ex)
         {
-            return StatusCode(ex.Status, new { success = false, code = ex.Code, message = ex.Message });
+            return StatusCode(ex.Status, new { success = false, code = ex.Code, message = ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments });
         }
     }
 
@@ -247,7 +247,7 @@ public class InstrumentCalibrationsController(
         }
         catch (CalibrationException ex)
         {
-            return StatusCode(ex.Status, new { success = false, code = ex.Code, message = ex.Message });
+            return StatusCode(ex.Status, new { success = false, code = ex.Code, message = ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments });
         }
     }
 
@@ -339,7 +339,7 @@ public class InstrumentCalibrationsController(
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { success = false, message = ex.Message });
+            return BadRequest(new { success = false, message = ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments });
         }
 
         var setting = await db.Set<CalibrationNotificationSetting>().FirstOrDefaultAsync(x => x.Id == 1, ct);
@@ -351,7 +351,7 @@ public class InstrumentCalibrationsController(
         {
             if (!string.IsNullOrWhiteSpace(req.ChatWebhookUrl)) protectedUrl = chatSecrets.Protect(req.ChatWebhookUrl);
         }
-        catch (ArgumentException ex) { return BadRequest(new { success = false, message = ex.Message }); }
+        catch (ArgumentException ex) { return BadRequest(new { success = false, message = ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments }); }
         if (channel == "SynologyChat" && string.IsNullOrWhiteSpace(protectedUrl))
             return BadRequest(new { success = false, message = "請先設定 Synology Chat Webhook 網址。", code="CHAT_WEBHOOK_REQUIRED", messageKey="spc.api.chatWebhookRequired", args=ApiUiMessageCatalog.EmptyArguments });
         var before = JsonSerializer.Serialize(new { setting?.NotificationChannel, setting?.IsEnabled, setting?.ReminderDaysJson });
@@ -390,7 +390,7 @@ public class InstrumentCalibrationsController(
             { return BadRequest(new { success = false, message = "Webhook 無法解密，請重新貼上並儲存。", code="CHAT_WEBHOOK_DECRYPT_FAILED", messageKey="spc.api.chatWebhookDecryptFailed", args=ApiUiMessageCatalog.EmptyArguments }); }
         }
         try { CalibrationChatSecrets.ValidateUrl(url); }
-        catch (ArgumentException ex) { return BadRequest(new { success = false, message = ex.Message }); }
+        catch (ArgumentException ex) { return BadRequest(new { success = false, message = ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments }); }
         var sample = await db.Set<CalibrationInstrument>().AsNoTracking()
             .Where(x => (x.UsageStatus == "Active" || x.UsageStatus == "InCalibration") && x.NextCalibrationDate != null)
             .OrderBy(x => x.NextCalibrationDate).ThenBy(x => x.Code).FirstOrDefaultAsync(ct);

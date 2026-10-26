@@ -1,0 +1,11 @@
+# I18N-TASK-08C4B 校驗與匯入服務驗證／設備狀態三語
+- 2026-10-26 DONE，必要驗證與測試發布完成，依[連續授權](../20261026-i18n-continuation/spec.md)，接續[C4A](../20261026-i18n-task08c4a/spec.md)。主系統SPC，無相依系統／schema／ACL／SSO變更。
+- R1 校驗服務／證書／匯入檔案結構／提醒天數與Webhook驗證、粒子匯入輸入驗證沿C3B明示Attach，保持原Exception實例／型別／Message／Status／Code／ParamName／Inner及所有分支；controller原catch只附key/args，既有code不被generic descriptor code覆寫。
+- R2 原範本header／cell作具名原文參數（機器格式不翻譯）；原row errors/warnings與彙整例外留C4C。不得將Webhook URL/token／憑證／SQL或原檔內容放args。
+- R3 Chameleon未設定／來源不可用／無時間／最新資料失敗的原Message與Status保留，在原結果record加明示MessageKey/空Args，不改cache key、TTL、HTTP呼叫或全域Culture；不快取翻譯文字，C5再接畫面。
+- BDD Happy：Given既有合法校驗／匯入與設備讀取，Then原資料／結果／呼叫次數保持；拒絕或不可用時可三語解譯原訊息。
+- BDD Boundary：Given10MB、欄位長度、1～120月、0～365日／12提醒、版本衝突、檔案結構與header，Then原status/code及拒絕不寫入保持；原欄名含i18n符號／HTML純文字插值。
+- BDD Invalid：Given非法Webhook／附件／空檔／未知例外，Then原安全fallback與secret隱藏保持，未知不猜key，檔案格式與signature規則不變。
+- BDD Regression：核心先測，校驗隔離／設備來源與粒子匯入必要回歸，禁止真郵件／Chat／Chameleon／SQL業務寫入。C4A的缺範本與unknown Editor權限既有差異保留原斷言，另CAL-VERIFY-001/002，不宣稱完整校驗124全綠、不在本批改權限。
+- 測試Web0.1.99/API0.1.80；build/test後核IIS/PMR_SPC_TEST與pending migrations，前後端成對備份，只該test pool發布。回復同前批、保護設定／資料，無DB回復需求。正式另授權，譯文draft待20。
+- [計畫](plan.md)／[任務](tasks.md)／[驗證](verification.md)。

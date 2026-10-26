@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Globalization;
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -44,11 +45,11 @@ public static class CalibrationImportParser
     /// <summary>讀取檔案、驗證範本、日期及同檔重複，回傳每列錯誤與警示。</summary>
     public static CalibrationImportPreview Parse(byte[] bytes, TimeProvider clock)
     {
-        if (bytes.Length is 0 or > MaxFileBytes) throw new CalibrationException("請上傳 10 MB 以內的 .xlsx 檔案。");
+        if (bytes.Length is 0 or > MaxFileBytes) throw ApiUiException.Attach(new CalibrationException("請上傳 10 MB 以內的 .xlsx 檔案。"), "spc.api.calibrationUploadSizeInvalid");
         try { return Read(bytes, clock); }
         catch (CalibrationException) { throw; }
         catch (Exception ex) when (ex is InvalidDataException or XmlException or ArgumentException or InvalidOperationException or OverflowException)
-        { throw new CalibrationException("無法讀取 Excel 結構，請使用有效、未加密的 .xlsx 範本。"); }
+        { throw ApiUiException.Attach(new CalibrationException("無法讀取 Excel 結構，請使用有效、未加密的 .xlsx 範本。"), "spc.api.calibrationWorkbookInvalid"); }
     }
 
     private static CalibrationImportPreview Read(byte[] bytes, TimeProvider clock)
@@ -56,58 +57,58 @@ public static class CalibrationImportParser
         using var stream = new MemoryStream(bytes, false);
         using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
         if (zip.Entries.Count > 2000 || zip.Entries.Sum(x => x.Length) > 50L * 1024 * 1024)
-            throw new CalibrationException("Excel 解壓大小或檔案項目過多，請縮小檔案。");
+            throw ApiUiException.Attach(new CalibrationException("Excel 解壓大小或檔案項目過多，請縮小檔案。"), "spc.api.calibrationWorkbookTooLarge");
         XDocument Xml(string name)
         {
-            var entry = zip.GetEntry(name) ?? throw new CalibrationException("Excel 缺少必要的工作表結構。");
+            var entry = zip.GetEntry(name) ?? throw ApiUiException.Attach(new CalibrationException("Excel 缺少必要的工作表結構。"), "spc.api.calibrationWorksheetStructureMissing");
             using var input = entry.Open();
             using var reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing=DtdProcessing.Prohibit, XmlResolver=null, MaxCharactersInDocument=50L*1024*1024 });
             return XDocument.Load(reader);
         }
         var workbook = Xml("xl/workbook.xml");
         var first = workbook.Root?.Element(S+"sheets")?.Elements(S+"sheet").FirstOrDefault()
-            ?? throw new CalibrationException("Excel 沒有工作表。");
+            ?? throw ApiUiException.Attach(new CalibrationException("Excel 沒有工作表。"), "spc.api.calibrationWorksheetMissing");
         var relation = Xml("xl/_rels/workbook.xml.rels").Root?.Elements().SingleOrDefault(x => (string?)x.Attribute("Id") == (string?)first.Attribute(R+"id"));
         var target = (string?)relation?.Attribute("Target");
         if (string.IsNullOrWhiteSpace(target) || (string?)relation?.Attribute("TargetMode") == "External")
-            throw new CalibrationException("第一個工作表必須為檔案內的工作表。");
+            throw ApiUiException.Attach(new CalibrationException("第一個工作表必須為檔案內的工作表。"), "spc.api.calibrationWorksheetExternal");
         var path = new Uri(new Uri("https://xlsx.invalid/xl/workbook.xml"), target);
         if (path.Host != "xlsx.invalid" || !path.AbsolutePath.StartsWith("/xl/", StringComparison.Ordinal))
-            throw new CalibrationException("工作表路徑無效。");
+            throw ApiUiException.Attach(new CalibrationException("工作表路徑無效。"), "spc.api.calibrationWorksheetPathInvalid");
         var sheet = Xml(Uri.UnescapeDataString(path.AbsolutePath.TrimStart('/')));
         var shared = zip.GetEntry("xl/sharedStrings.xml") is null ? [] : Xml("xl/sharedStrings.xml").Root!.Elements(S+"si")
             .Select(x => string.Concat(x.Descendants(S+"t").Select(t => t.Value))).ToArray();
         var date1904 = (string?)workbook.Root?.Element(S+"workbookPr")?.Attribute("date1904") is "1" or "true";
         var xmlRows = sheet.Root?.Element(S+"sheetData")?.Elements(S+"row").ToList() ?? [];
-        if (xmlRows.Count > 10005) throw new CalibrationException("工作表超過 10,000 筆資料列限制。");
+        if (xmlRows.Count > 10005) throw ApiUiException.Attach(new CalibrationException("工作表超過 10,000 筆資料列限制。"), "spc.api.calibrationWorksheetRowLimit");
         var cells = new Dictionary<string, Cell>(StringComparer.Ordinal);
         foreach (var c in xmlRows.SelectMany(x=>x.Elements(S+"c")))
         {
-            var address = (string?)c.Attribute("r") ?? throw new CalibrationException("儲存格缺少位置。");
+            var address = (string?)c.Attribute("r") ?? throw ApiUiException.Attach(new CalibrationException("儲存格缺少位置。"), "spc.api.calibrationCellAddressMissing");
             var type = (string?)c.Attribute("t") ?? "n";
             var text = c.Element(S+"v")?.Value ?? "";
             if (type == "s")
             {
-                if (!int.TryParse(text, out var index) || index<0 || index>=shared.Length) throw new CalibrationException("共用字串索引無效。");
+                if (!int.TryParse(text, out var index) || index<0 || index>=shared.Length) throw ApiUiException.Attach(new CalibrationException("共用字串索引無效。"), "spc.api.calibrationSharedStringInvalid");
                 text = shared[index];
             }
             if (type == "inlineStr") text = string.Concat(c.Element(S+"is")?.Descendants(S+"t").Select(t=>t.Value) ?? []);
             if (!cells.TryAdd(address, new(text.Trim(),type,c.Element(S+"f") is not null,c.Element(S+"v") is not null || type=="inlineStr")))
-                throw new CalibrationException("工作表含重複儲存格位置。");
+                throw ApiUiException.Attach(new CalibrationException("工作表含重複儲存格位置。"), "spc.api.calibrationDuplicateCell");
         }
         Cell Get(string address) => cells.GetValueOrDefault(address) ?? new("","n",false,false);
         foreach (var (address, label) in new[] { ("A5","儀器設備編號"), ("B5","儀器設備名稱"), ("H5","放置地點"), ("I5","校驗週期"), ("J5","校驗方式"), ("Z4","校驗日期"), ("AA4","下次校驗日期") })
-            if (Compact(Get(address).Text)!=label) throw new CalibrationException($"範本表頭不符：{address} 應為「{label}」。");
+            if (Compact(Get(address).Text)!=label) throw ApiUiException.Attach(new CalibrationException($"範本表頭不符：{address} 應為「{label}」。"), "spc.api.calibrationHeaderMismatch", new Dictionary<string,string> { ["cell"] = address, ["expected"] = label });
         var detailColumns = new[] { ("F","量測規格"), ("G","精度"), ("AB","備註"), ("AC","校驗規範"), ("AD","允收標準") };
         foreach (var (column, label) in detailColumns)
         {
             var header = Compact(Get(column+"5").Text);
-            if (header.Length > 0 && header != label) throw new CalibrationException($"範本表頭不符：{column}5 應為「{label}」。");
+            if (header.Length > 0 && header != label) throw ApiUiException.Attach(new CalibrationException($"範本表頭不符：{column}5 應為「{label}」。"), "spc.api.calibrationHeaderMismatch", new Dictionary<string,string> { ["cell"] = column+"5", ["expected"] = label });
         }
         var rows = new List<CalibrationImportRow>();
         foreach (var xmlRow in xmlRows)
         {
-            if (!int.TryParse((string?)xmlRow.Attribute("r"),out var number) || number<1) throw new CalibrationException("工作表列號無效。");
+            if (!int.TryParse((string?)xmlRow.Attribute("r"),out var number) || number<1) throw ApiUiException.Attach(new CalibrationException("工作表列號無效。"), "spc.api.calibrationRowNumberInvalid");
             if (number<=5) continue;
             var code=Get($"A{number}"); var name=Get($"B{number}"); var location=Get($"H{number}"); var cycle=Get($"I{number}"); var method=Get($"J{number}"); var last=Get($"Z{number}"); var next=Get($"AA{number}");
             if (Compact(code.Text) is "制定日期:" or "制定日期：") break;
@@ -165,7 +166,7 @@ public static class CalibrationImportParser
         foreach (var group in rows.Where(x=>x.Code.Length>0).GroupBy(x=>x.Code).Where(x=>x.Count()>1))
             foreach (var row in group) row.Errors.Add("同檔儀器編號重複，請先排除重複資料。");
         foreach (var row in rows) row.Status = row.Errors.Count>0 ? "Invalid" : "Ready";
-        if (rows.Count==0) throw new CalibrationException("第一個工作表沒有儀器資料。");
+        if (rows.Count==0) throw ApiUiException.Attach(new CalibrationException("第一個工作表沒有儀器資料。"), "spc.api.calibrationInstrumentRowsMissing");
         return new(Convert.ToHexString(SHA256.HashData(bytes)), (string?)first.Attribute("name") ?? "", rows);
     }
 

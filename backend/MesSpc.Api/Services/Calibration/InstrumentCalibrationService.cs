@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -28,29 +29,29 @@ public sealed class InstrumentCalibrationService(AppDbContext db, TimeProvider c
     {
         var code = req.Code?.Trim().ToUpperInvariant() ?? "";
         if (code.Length is < 1 or > 80 || string.IsNullOrWhiteSpace(req.Name) || req.Name.Length > 200 || string.IsNullOrWhiteSpace(req.Department) || req.Department.Length > 100)
-            throw new CalibrationException("請填寫儀器編號、名稱與部門，且勿超過欄位長度。");
+            throw ApiUiException.Attach(new CalibrationException("請填寫儀器編號、名稱與部門，且勿超過欄位長度。"), "spc.api.calibrationInstrumentFieldsInvalid");
         if (!string.IsNullOrWhiteSpace(req.Location) && req.Location.Trim().Length > 100)
-            throw new CalibrationException("放置地點最多 100 字。");
+            throw ApiUiException.Attach(new CalibrationException("放置地點最多 100 字。"), "spc.api.calibrationLocationTooLong");
         if (!string.IsNullOrWhiteSpace(req.CalibrationMethod) && req.CalibrationMethod.Trim().Length > 100)
-            throw new CalibrationException("校驗方式最多 100 字。");
-        if (req.MeasurementSpecification?.Trim().Length > 2000) throw new CalibrationException("量測規格最多 2000 字。");
-        if (req.Precision?.Trim().Length > 2000) throw new CalibrationException("精度最多 2000 字。");
-        if (req.Remarks?.Trim().Length > 2000) throw new CalibrationException("備註最多 2000 字。");
-        if (req.CalibrationStandard?.Trim().Length > 2000) throw new CalibrationException("校驗規範最多 2000 字。");
-        if (req.AcceptanceCriteria?.Trim().Length > 2000) throw new CalibrationException("允收標準最多 2000 字。");
+            throw ApiUiException.Attach(new CalibrationException("校驗方式最多 100 字。"), "spc.api.calibrationMethodTooLong");
+        if (req.MeasurementSpecification?.Trim().Length > 2000) throw ApiUiException.Attach(new CalibrationException("量測規格最多 2000 字。"), "spc.api.calibrationSpecificationTooLong");
+        if (req.Precision?.Trim().Length > 2000) throw ApiUiException.Attach(new CalibrationException("精度最多 2000 字。"), "spc.api.calibrationPrecisionTooLong");
+        if (req.Remarks?.Trim().Length > 2000) throw ApiUiException.Attach(new CalibrationException("備註最多 2000 字。"), "spc.api.calibrationRemarksTooLong");
+        if (req.CalibrationStandard?.Trim().Length > 2000) throw ApiUiException.Attach(new CalibrationException("校驗規範最多 2000 字。"), "spc.api.calibrationStandardTooLong");
+        if (req.AcceptanceCriteria?.Trim().Length > 2000) throw ApiUiException.Attach(new CalibrationException("允收標準最多 2000 字。"), "spc.api.calibrationAcceptanceTooLong");
         if (!Statuses.Contains(req.UsageStatus) || req.CycleMonths is < 1 or > 120)
-            throw new CalibrationException("使用狀態或校正週期無效。");
+            throw ApiUiException.Attach(new CalibrationException("使用狀態或校正週期無效。"), "spc.api.calibrationStatusCycleInvalid");
         if (req.NextCalibrationDate == default(DateOnly))
-            throw new CalibrationException("下次日期無效。");
+            throw ApiUiException.Attach(new CalibrationException("下次日期無效。"), "spc.api.calibrationNextDateInvalid");
         if (req.LastCalibrationDate > CalibrationRules.Today(clock.GetUtcNow()))
-            throw new CalibrationException("上次校正不可為未來日期。");
+            throw ApiUiException.Attach(new CalibrationException("上次校正不可為未來日期。"), "spc.api.calibrationPreviousDateFuture");
         if (req.LastCalibrationDate.HasValue && req.NextCalibrationDate.HasValue && req.LastCalibrationDate >= req.NextCalibrationDate)
-            throw new CalibrationException("下次日期必須晚於上次日期。");
+            throw ApiUiException.Attach(new CalibrationException("下次日期必須晚於上次日期。"), "spc.api.calibrationDateOrderInvalid");
         if (!await db.Operators.AnyAsync(x => x.Id==req.CustodianOperatorId && x.IsActive, ct))
-            throw new CalibrationException("保管人必須為啟用中的 SPC 人員。");
+            throw ApiUiException.Attach(new CalibrationException("保管人必須為啟用中的 SPC 人員。"), "spc.api.calibrationCustodianInvalid");
         var ids = (req.RecipientOperatorIds ?? []).Distinct().ToArray();
         var recipients = await db.Operators.Where(x => ids.Contains(x.Id) && x.IsActive).ToListAsync(ct);
-        if (recipients.Count != ids.Length || recipients.Any(x => !ValidEmail(x.Email))) throw new CalibrationException("收件人須啟用且有有效 Email。");
+        if (recipients.Count != ids.Length || recipients.Any(x => !ValidEmail(x.Email))) throw ApiUiException.Attach(new CalibrationException("收件人須啟用且有有效 Email。"), "spc.api.calibrationRecipientInvalid");
     }
 
     public async Task<CalibrationInstrument> SaveInstrumentAsync(int? id, InstrumentInput req, string actor, CancellationToken ct)
@@ -58,15 +59,15 @@ public sealed class InstrumentCalibrationService(AppDbContext db, TimeProvider c
         await ValidateInputAsync(req, ct);
         var code = req.Code.Trim().ToUpperInvariant();
         var ids = (req.RecipientOperatorIds ?? []).Distinct().ToArray();
-        if (await db.Set<CalibrationInstrument>().AnyAsync(x => x.Code==code && x.Id != id, ct)) throw new CalibrationException("儀器編號已存在。",409,"DUPLICATE_CODE");
+        if (await db.Set<CalibrationInstrument>().AnyAsync(x => x.Code==code && x.Id != id, ct)) throw ApiUiException.Attach(new CalibrationException("儀器編號已存在。",409,"DUPLICATE_CODE"), "spc.api.calibrationCodeDuplicate");
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var row = id.HasValue ? await db.Set<CalibrationInstrument>().SingleOrDefaultAsync(x => x.Id==id, ct) : new CalibrationInstrument();
-        if (row is null) throw new CalibrationException("儀器不存在。",404,"NOT_FOUND");
-        if (id.HasValue && req.Version != row.Version) throw new CalibrationException("資料已更新，請重新載入。",409,"VERSION_CONFLICT");
+        if (row is null) throw ApiUiException.Attach(new CalibrationException("儀器不存在。",404,"NOT_FOUND"), "spc.api.calibrationInstrumentMissing");
+        if (id.HasValue && req.Version != row.Version) throw ApiUiException.Attach(new CalibrationException("資料已更新，請重新載入。",409,"VERSION_CONFLICT"), "spc.api.calibrationVersionConflict");
         var before = id.HasValue ? JsonSerializer.SerializeToElement(row) : (JsonElement?)null;
         // Master dates may be corrected directly; the existing audit captures both values.
         // This does not register a calibration result, rewrite history, or start a new cycle.
-        if (id.HasValue && row.NextCalibrationDate.HasValue && req.NextCalibrationDate != row.NextCalibrationDate && string.IsNullOrWhiteSpace(req.Reason)) throw new CalibrationException("人工調整下次日期需填理由。");
+        if (id.HasValue && row.NextCalibrationDate.HasValue && req.NextCalibrationDate != row.NextCalibrationDate && string.IsNullOrWhiteSpace(req.Reason)) throw ApiUiException.Attach(new CalibrationException("人工調整下次日期需填理由。"), "spc.api.calibrationNextDateReasonRequired");
         if (id.HasValue && (row.NextCalibrationDate != req.NextCalibrationDate || row.UsageStatus != req.UsageStatus || row.RecipientOperatorIdsJson != JsonSerializer.Serialize(ids) || row.IncludeCustodian != req.IncludeCustodian || row.CustodianOperatorId != req.CustodianOperatorId))
             await CancelPendingAsync(row.Id, "InstrumentChanged", ct);
         row.Code=code; row.Name=req.Name.Trim(); row.Department=req.Department.Trim();
@@ -91,25 +92,25 @@ public sealed class InstrumentCalibrationService(AppDbContext db, TimeProvider c
     public async Task<InstrumentCalibrationRecord> RecordAsync(int id, CalibrationInput req, string actor, CancellationToken ct)
     {
         if (req.RequestId==Guid.Empty || req.CalibrationDate==default || req.CalibrationDate>CalibrationRules.Today(clock.GetUtcNow()) || req.Result is not ("Passed" or "Failed"))
-            throw new CalibrationException("校正日期、結果或請求識別碼無效。");
+            throw ApiUiException.Attach(new CalibrationException("校正日期、結果或請求識別碼無效。"), "spc.api.calibrationRecordFieldsInvalid");
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(req))));
         var existing = await db.Set<InstrumentCalibrationRecord>().AsNoTracking().SingleOrDefaultAsync(x=>x.InstrumentId==id && x.RequestId==req.RequestId, ct);
         if (existing is not null)
         {
-            if (existing.RequestHash!=hash) throw new CalibrationException("相同請求識別碼的內容不同。",409,"IDEMPOTENCY_CONFLICT");
+            if (existing.RequestHash!=hash) throw ApiUiException.Attach(new CalibrationException("相同請求識別碼的內容不同。",409,"IDEMPOTENCY_CONFLICT"), "spc.api.calibrationIdempotencyConflict");
             return existing;
         }
         await using var tx = await db.Database.BeginTransactionAsync(ct);
-        var row = await db.Set<CalibrationInstrument>().SingleOrDefaultAsync(x=>x.Id==id,ct) ?? throw new CalibrationException("儀器不存在。",404,"NOT_FOUND");
-        if (row.Version!=req.Version) throw new CalibrationException("資料已更新，請重新載入。",409,"VERSION_CONFLICT");
+        var row = await db.Set<CalibrationInstrument>().SingleOrDefaultAsync(x=>x.Id==id,ct) ?? throw ApiUiException.Attach(new CalibrationException("儀器不存在。",404,"NOT_FOUND"), "spc.api.calibrationInstrumentMissing");
+        if (row.Version!=req.Version) throw ApiUiException.Attach(new CalibrationException("資料已更新，請重新載入。",409,"VERSION_CONFLICT"), "spc.api.calibrationVersionConflict");
         if (req.CorrectsRecordId.HasValue && (!await db.Set<InstrumentCalibrationRecord>().AnyAsync(x=>x.Id==req.CorrectsRecordId && x.InstrumentId==id,ct) || string.IsNullOrWhiteSpace(req.Reason)))
-            throw new CalibrationException("更正需指定同儀器的原紀錄並填寫理由。");
+            throw ApiUiException.Attach(new CalibrationException("更正需指定同儀器的原紀錄並填寫理由。"), "spc.api.calibrationCorrectionInvalid");
         var before = JsonSerializer.SerializeToElement(row);
         var due = req.Result=="Passed"
             ? req.NextDueDate ?? CalibrationRules.NextDue(req.CalibrationDate,row.CycleMonths)
             : row.NextCalibrationDate ?? req.CalibrationDate;
-        if (req.Result=="Passed" && due<=req.CalibrationDate) throw new CalibrationException("下次日期須晚於校正日期。");
-        if (req.Result=="Passed" && due!=CalibrationRules.NextDue(req.CalibrationDate,row.CycleMonths) && string.IsNullOrWhiteSpace(req.Reason)) throw new CalibrationException("人工調整日期需填理由。");
+        if (req.Result=="Passed" && due<=req.CalibrationDate) throw ApiUiException.Attach(new CalibrationException("下次日期須晚於校正日期。"), "spc.api.calibrationRecordDateOrder");
+        if (req.Result=="Passed" && due!=CalibrationRules.NextDue(req.CalibrationDate,row.CycleMonths) && string.IsNullOrWhiteSpace(req.Reason)) throw ApiUiException.Attach(new CalibrationException("人工調整日期需填理由。"), "spc.api.calibrationDateReasonRequired");
         var record = new InstrumentCalibrationRecord { InstrumentId=id, CalibrationDate=req.CalibrationDate, Result=req.Result,
             PreviousDueDate=row.NextCalibrationDate ?? req.CalibrationDate, NextDueDate=due, Reason=req.Reason ?? "", CorrectsRecordId=req.CorrectsRecordId,
             RequestId=req.RequestId, RequestHash=hash, CreatedBy=actor, CreatedAt=clock.GetUtcNow().UtcDateTime };

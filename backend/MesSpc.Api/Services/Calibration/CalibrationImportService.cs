@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Text.Json;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
@@ -27,11 +28,11 @@ public sealed class CalibrationImportService(AppDbContext db, InstrumentCalibrat
     public async Task<CalibrationImportResult> CommitAsync(byte[] bytes, string fileName, CalibrationImportOptions options, string actor, CancellationToken ct)
     {
         var preview = CalibrationImportParser.Parse(bytes,clock);
-        if (!string.Equals(preview.Hash,options.Hash,StringComparison.Ordinal)) throw new CalibrationException("檔案與預覽不同，請重新預覽。");
+        if (!string.Equals(preview.Hash,options.Hash,StringComparison.Ordinal)) throw ApiUiException.Attach(new CalibrationException("檔案與預覽不同，請重新預覽。"), "spc.api.calibrationPreviewChanged");
         if (options.SelectedRows is null || options.SelectedRows.Length==0 || options.SelectedRows.Distinct().Count()!=options.SelectedRows.Length)
-            throw new CalibrationException("請選擇不重複的有效資料列。");
+            throw ApiUiException.Attach(new CalibrationException("請選擇不重複的有效資料列。"), "spc.api.calibrationSelectedRowsInvalid");
         var selected = preview.Rows.Where(x=>options.SelectedRows.Contains(x.RowNumber)).ToList();
-        if (selected.Count!=options.SelectedRows.Length) throw new CalibrationException("所選列號不在預覽中，請重新預覽。");
+        if (selected.Count!=options.SelectedRows.Length) throw ApiUiException.Attach(new CalibrationException("所選列號不在預覽中，請重新預覽。"), "spc.api.calibrationSelectedRowsMissing");
         fileName = Path.GetFileName(fileName.Replace('\\','/'));
         if (fileName.Length>255) fileName=fileName[..255];
         logger.LogInformation("Calibration import requested by {Actor}: {File}, {Count} rows, SHA256 {Hash}",actor,fileName,selected.Count,preview.Hash);

@@ -39,7 +39,7 @@ public sealed class InstrumentImportController(CalibrationImportService import, 
     {
         var denied=await DeniedAsync(ct); if (denied is not null) return denied;
         try { return Ok(new { success=true,data=await import.PreviewAsync(await ReadAsync(file,ct),ct),message="請核對警示並勾選有效資料。", code="IMPORT_SELECTION_NOTICE", messageKey="spc.api.importSelectionNotice", args=ApiUiMessageCatalog.EmptyArguments }); }
-        catch (CalibrationException ex) { return StatusCode(ex.Status,new { success=false,message=ex.Message,code=ex.Code }); }
+        catch (CalibrationException ex) { return StatusCode(ex.Status,new { success=false,message=ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments,code=ex.Code }); }
     }
 
     /// <summary>重傳預覽同檔及選取列號，重新驗證後交易新增；資料庫重複略過，不覆寫、不產生校正結果。</summary>
@@ -66,7 +66,7 @@ public sealed class InstrumentImportController(CalibrationImportService import, 
             var result=await import.CommitAsync(await ReadAsync(file,ct),file.FileName,request,User.Identity!.Name!,ct);
             return StatusCode(result.Failed>0 ? 409 : 200,new { success=result.Failed==0,data=result,messageKey=result.Failed>0 ? "spc.api.instrumentImportRejected" : "spc.api.instrumentImportCompleted",args=ApiUiMessageCatalog.EmptyArguments,message=result.Failed>0 ? "本次未新增資料，請查看逐列原因。" : "匯入完成。" });
         }
-        catch (CalibrationException ex) { return StatusCode(ex.Status,new { success=false,message=ex.Message,code=ex.Code }); }
+        catch (CalibrationException ex) { return StatusCode(ex.Status,new { success=false,message=ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments,code=ex.Code }); }
     }
 
     private async Task<bool> CanManageAsync(CancellationToken ct)
@@ -81,7 +81,7 @@ public sealed class InstrumentImportController(CalibrationImportService import, 
     private static async Task<byte[]> ReadAsync(IFormFile file,CancellationToken ct)
     {
         if (file is null || !string.Equals(Path.GetExtension(file.FileName),".xlsx",StringComparison.OrdinalIgnoreCase) || file.Length is <=0 or >CalibrationImportParser.MaxFileBytes)
-            throw new CalibrationException("請上傳 10 MB 以內的 .xlsx 檔案。");
+            throw ApiUiException.Attach(new CalibrationException("請上傳 10 MB 以內的 .xlsx 檔案。"), "spc.api.calibrationUploadSizeInvalid");
         using var output = new MemoryStream();
         await file.CopyToAsync(output,ct);
         return output.ToArray();

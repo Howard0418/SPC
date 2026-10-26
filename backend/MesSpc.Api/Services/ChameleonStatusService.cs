@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Text.Json;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.Extensions.Caching.Memory;
@@ -156,7 +157,7 @@ public class ChameleonStatusService(
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             logger.LogWarning(ex, "Unable to obtain Chameleon source status from {BaseUrl}", source.BaseUrl);
-            return new ChameleonSourceStatus(source.SourceId, source.DisplayName, "unavailable", [], "無法連線至此 Chameleon 資料來源。");
+            return new ChameleonSourceStatus(source.SourceId, source.DisplayName, "unavailable", [], "無法連線至此 Chameleon 資料來源。") { MessageKey = "spc.api.chameleonSourceUnavailable" };
         }
     }
 
@@ -181,7 +182,7 @@ public class ChameleonStatusService(
 
             var root = document.RootElement;
             if (!root.TryGetProperty("at", out var atElement) || !atElement.TryGetInt64(out var atMilliseconds))
-                return ChameleonDeviceStatus.Unavailable(source.SourceId, source.DisplayName, equipmentId, "Chameleon 未回傳資料時間。");
+                return ChameleonDeviceStatus.Unavailable(source.SourceId, source.DisplayName, equipmentId, "Chameleon 未回傳資料時間。") with { MessageKey = "spc.api.chameleonTimestampMissing" };
 
             var lastUpdatedAt = DateTimeOffset.FromUnixTimeMilliseconds(atMilliseconds);
             var ageSeconds = Math.Max(0, (DateTimeOffset.UtcNow - lastUpdatedAt).TotalSeconds);
@@ -202,7 +203,7 @@ public class ChameleonStatusService(
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or ArgumentOutOfRangeException)
         {
             logger.LogWarning(ex, "Unable to obtain Chameleon latest data for equipment {EquipmentId}", equipmentId);
-            return ChameleonDeviceStatus.Unavailable(source.SourceId, source.DisplayName, equipmentId, "無法取得最新資料。");
+            return ChameleonDeviceStatus.Unavailable(source.SourceId, source.DisplayName, equipmentId, "無法取得最新資料。") with { MessageKey = "spc.api.chameleonLatestUnavailable" };
         }
     }
 }
@@ -222,9 +223,14 @@ public record ChameleonStatusResult(
     IReadOnlyList<ChameleonSourceStatus> Sources,
     string? Message = null)
 {
+    /// <summary>Packaged display key; cached records retain original status/message and are not translated here.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? MessageKey { get; init; }
+    /// <summary>Only safe explicit display arguments; current equipment status messages use none.</summary>
+    public IReadOnlyDictionary<string,string> Args { get; init; } = ApiUiMessageCatalog.EmptyArguments;
     public static ChameleonStatusResult NotConfigured() => new(
         false, 90, DateTimeOffset.UtcNow, [],
-        "尚未設定 Chameleon API 位址。");
+        "尚未設定 Chameleon API 位址。") { MessageKey = "spc.api.chameleonNotConfigured" };
 }
 
 public record ChameleonSourceStatus(
@@ -232,7 +238,14 @@ public record ChameleonSourceStatus(
     string DisplayName,
     string Status,
     IReadOnlyList<ChameleonDeviceStatus> Devices,
-    string? Message);
+    string? Message)
+{
+    /// <summary>Packaged display key; cached records retain original status/message and are not translated here.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? MessageKey { get; init; }
+    /// <summary>Only safe explicit display arguments; current equipment status messages use none.</summary>
+    public IReadOnlyDictionary<string,string> Args { get; init; } = ApiUiMessageCatalog.EmptyArguments;
+}
 
 public record ChameleonDeviceStatus(
     string SourceId,
@@ -244,6 +257,11 @@ public record ChameleonDeviceStatus(
     int ChannelCount,
     string? Message)
 {
+    /// <summary>Packaged display key; cached records retain original status/message and are not translated here.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? MessageKey { get; init; }
+    /// <summary>Only safe explicit display arguments; current equipment status messages use none.</summary>
+    public IReadOnlyDictionary<string,string> Args { get; init; } = ApiUiMessageCatalog.EmptyArguments;
     public static ChameleonDeviceStatus Unavailable(string sourceId, string sourceName, string equipmentId, string message) =>
         new(sourceId, sourceName, equipmentId, "unavailable", null, null, 0, message);
 }

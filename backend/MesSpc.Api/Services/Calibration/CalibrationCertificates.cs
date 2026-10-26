@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Security.Cryptography;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
@@ -18,19 +19,19 @@ public sealed class CalibrationCertificates(AppDbContext db, IWebHostEnvironment
     public string Root => Path.GetFullPath(config["Calibration:CertificateRoot"] ?? Path.Combine(env.ContentRootPath,"private-data","calibration-certificates"));
     public string Resolve(string key)
     {
-        if (Path.GetFileName(key)!=key || key.Contains('/') || key.Contains('\\')) throw new CalibrationException("無效附件路徑。");
+        if (Path.GetFileName(key)!=key || key.Contains('/') || key.Contains('\\')) throw ApiUiException.Attach(new CalibrationException("無效附件路徑。"), "spc.api.certificatePathInvalid");
         return Path.Combine(Root,key);
     }
     public async Task<CalibrationCertificate> UploadAsync(int recordId,IFormFile file,string actor,CancellationToken ct)
     {
-        var record = await db.Set<InstrumentCalibrationRecord>().AsNoTracking().SingleOrDefaultAsync(x=>x.Id==recordId,ct) ?? throw new CalibrationException("校正紀錄不存在。",404,"NOT_FOUND");
-        if (file.Length<=0 || file.Length>MaxBytes) throw new CalibrationException("附件需為非空檔案且不超過 10 MB。",413,"FILE_SIZE");
+        var record = await db.Set<InstrumentCalibrationRecord>().AsNoTracking().SingleOrDefaultAsync(x=>x.Id==recordId,ct) ?? throw ApiUiException.Attach(new CalibrationException("校正紀錄不存在。",404,"NOT_FOUND"), "spc.api.calibrationRecordMissing");
+        if (file.Length<=0 || file.Length>MaxBytes) throw ApiUiException.Attach(new CalibrationException("附件需為非空檔案且不超過 10 MB。",413,"FILE_SIZE"), "spc.api.certificateFileSizeInvalid");
         var ext=Path.GetExtension(file.FileName).ToLowerInvariant();
         await using var source=file.OpenReadStream(); using var memory=new MemoryStream();
         var buffer=new byte[81920]; int read;
-        while((read=await source.ReadAsync(buffer,ct))>0) { if(memory.Length+read>MaxBytes) throw new CalibrationException("附件超過 10 MB。",413,"FILE_SIZE"); await memory.WriteAsync(buffer.AsMemory(0,read),ct); }
+        while((read=await source.ReadAsync(buffer,ct))>0) { if(memory.Length+read>MaxBytes) throw ApiUiException.Attach(new CalibrationException("附件超過 10 MB。",413,"FILE_SIZE"), "spc.api.certificateFileTooLarge"); await memory.WriteAsync(buffer.AsMemory(0,read),ct); }
         var bytes=memory.ToArray();
-        if(!ValidContent(ext,bytes)) throw new CalibrationException("僅接受有效 PDF／JPEG／PNG。",415,"FILE_TYPE");
+        if(!ValidContent(ext,bytes)) throw ApiUiException.Attach(new CalibrationException("僅接受有效 PDF／JPEG／PNG。",415,"FILE_TYPE"), "spc.api.certificateFileTypeInvalid");
         var key=$"{Guid.NewGuid():N}{ext}"; Directory.CreateDirectory(Root); var path=Resolve(key);
         await File.WriteAllBytesAsync(path,bytes,ct);
         var row=new CalibrationCertificate { CalibrationRecordId=recordId, StorageKey=key, OriginalName=Path.GetFileName(file.FileName),

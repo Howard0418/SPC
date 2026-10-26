@@ -66,7 +66,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { code = "INVALID_REQUEST", message = ex.Message });
+            return BadRequest(new { code = "INVALID_REQUEST", message = ex.Message, messageKey=ApiUiException.Read(ex)?.MessageKey, args=ApiUiException.Read(ex)?.Args ?? ApiUiMessageCatalog.EmptyArguments });
         }
     }
 

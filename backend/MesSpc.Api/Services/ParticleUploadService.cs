@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Data;
 using System.Globalization;
 using System.Text.Json;
@@ -73,7 +74,7 @@ public sealed class ParticleUploadService(AppDbContext db, ILogger<ParticleUploa
     public async Task<ParticlePreviewResult> CreatePreviewAsync(ParticlePreviewRequest request, string? createdBy, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.FileHashSha256))
-            throw new ArgumentException("fileHashSha256 is required.", nameof(request));
+            throw ApiUiException.Attach(new ArgumentException("fileHashSha256 is required.", nameof(request)), "spc.api.particleFileHashRequired");
 
         var priorBatches = await db.UploadBatches
             .Where(batch => batch.UploadType == "Particle" && batch.FileHash == request.FileHashSha256)
@@ -147,7 +148,7 @@ public sealed class ParticleUploadService(AppDbContext db, ILogger<ParticleUploa
 
     public async Task<ParticleConfirmResult?> ConfirmAsync(Guid uploadBatchId, string duplicateMode, CancellationToken ct = default)
     {
-        if (duplicateMode is not ("reject" or "skip")) throw new ArgumentException("duplicateMode must be reject or skip.");
+        if (duplicateMode is not ("reject" or "skip")) throw ApiUiException.Attach(new ArgumentException("duplicateMode must be reject or skip."), "spc.api.particleDuplicateModeInvalid");
         var batch = await db.UploadBatches.FirstOrDefaultAsync(item => item.UploadBatchId == uploadBatchId && item.UploadType == "Particle", ct);
         if (batch is null) return null;
         if (batch.ImportStatus == "Imported")

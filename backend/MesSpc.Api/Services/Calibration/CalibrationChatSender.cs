@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -21,11 +22,11 @@ public sealed class CalibrationChatSecrets(IDataProtectionProvider provider)
             (uri.Scheme != "https" && uri.Scheme != "http") ||
             !string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Fragment) ||
             uri.AbsolutePath != "/webapi/entry.cgi")
-            throw new ArgumentException("請貼上 Synology Chat 的完整傳入 Webhook 網址。");
+            throw ApiUiException.Attach(new ArgumentException("請貼上 Synology Chat 的完整傳入 Webhook 網址。"), "spc.api.chatWebhookFullUrlRequired");
         var query = QueryHelpers.ParseQuery(uri.Query);
         if (query["api"] != "SYNO.Chat.External" || query["method"] != "incoming" ||
             string.IsNullOrWhiteSpace(query["token"]) || string.IsNullOrWhiteSpace(query["version"]))
-            throw new ArgumentException("網址須為 Synology Chat 傳入 Webhook，並包含 token。");
+            throw ApiUiException.Attach(new ArgumentException("網址須為 Synology Chat 傳入 Webhook，並包含 token。"), "spc.api.chatWebhookTokenRequired");
         return uri;
     }
 }

@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Text.Json;
 using MesSpc.Api.Services.Security;
 
@@ -9,7 +10,7 @@ public static class CalibrationRules
     public static DateOnly Today(DateTimeOffset utc) => DateOnly.FromDateTime(utc.ToOffset(TimeSpan.FromHours(8)).DateTime);
     public static DateOnly NextDue(DateOnly date, int months)
     {
-        if (months is < 1 or > 120) throw new ArgumentException("校正週期必須為 1～120 個月。");
+        if (months is < 1 or > 120) throw ApiUiException.Attach(new ArgumentException("校正週期必須為 1～120 個月。"), "spc.api.calibrationCycleInvalid");
         return date.AddMonths(months);
     }
     public static bool CanNotify(string status) => status == "Active";
@@ -47,7 +48,7 @@ public static class CalibrationRules
     public static int[] ValidateReminderDays(int[] days)
     {
         if (days.Length == 0 || days.Length > 12 || days.Any(x => x < 0 || x > 365) || days.Distinct().Count() != days.Length)
-            throw new ArgumentException("提醒天數需為 0～365、不重複，最多 12 個。");
+            throw ApiUiException.Attach(new ArgumentException("提醒天數需為 0～365、不重複，最多 12 個。"), "spc.api.calibrationReminderDaysInvalid");
         return days.OrderDescending().ToArray();
     }
     public static string? Stage(DateOnly due, DateOnly today, int[] days)

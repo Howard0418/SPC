@@ -128,7 +128,12 @@ public class CalibrationImportHttpTests
     {
         using var factory=new CalibrationImportFactory(); using var client=factory.Client();
         using var wrong=Upload([1,2,3],fileName:"x.csv");
-        Assert.Equal(HttpStatusCode.BadRequest,(await client.PostAsync(Endpoint+"preview",wrong)).StatusCode);
+        using var response=await client.PostAsync(Endpoint+"preview",wrong);
+        Assert.Equal(HttpStatusCode.BadRequest,response.StatusCode);
+        using var body=JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("VALIDATION",body.RootElement.GetProperty("code").GetString());
+        Assert.Equal("spc.api.calibrationUploadSizeInvalid",body.RootElement.GetProperty("messageKey").GetString());
+        Assert.Equal("請上傳 10 MB 以內的 .xlsx 檔案。",body.RootElement.GetProperty("message").GetString());
         using var form=Upload(CalibrationImportTests.Workbook(CalibrationImportTests.Row(6)));
         form.Add(new StringContent("not json"),"options");
         Assert.Equal(HttpStatusCode.BadRequest,(await client.PostAsync(Endpoint+"commit",form)).StatusCode);
