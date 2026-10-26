@@ -1,10 +1,11 @@
 <script setup>
+const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import {useI18n} from "vue-i18n";
 import {displayUiMessage} from "../i18n/uiMessage";
 import LocalePicker from "../components/LocalePicker.vue";
 const {t}=useI18n({useScope:"global"});
 import { computed, onMounted, ref } from 'vue';
-import { api, getApiErrorMessage } from '../api/client';
+import { api, getIndexedApiMessageDisplay, getApiMessageDisplay, getApiErrorDisplay } from '../api/client';
 
 defineProps({ operators: { type: Array, default: () => [] } });
 const emit = defineEmits(['imported']);
@@ -28,7 +29,7 @@ const inputClass = 'w-full rounded border border-slate-300 bg-white px-3 py-2 te
 
 onMounted(async () => {
   try { canManage.value = !!(await api.get('/v1/instruments/import/access')).data?.data?.canManage; }
-  catch (e) { accessError.value = {key:"spc.calibration.accessFailed",args:{error:getApiErrorMessage(e)}}; }
+  catch (e) { accessError.value = {key:"spc.calibration.accessFailed",args:{error:getApiErrorDisplay(e)}}; }
 });
 function changeFile(event) {
   file.value = event.target.files?.[0] || null;
@@ -42,7 +43,7 @@ async function readPreview() {
   try {
     const data = new FormData(); data.append('file', file.value);
     preview.value = (await api.post('/v1/instruments/import/preview', data)).data.data;
-  } catch (e) { error.value = getApiErrorMessage(e); }
+  } catch (e) { error.value = getApiErrorDisplay(e); }
   finally { busy.value = false; }
 }
 function toggleAll(event) { selected.value = event.target.checked ? ready.value.map(row => row.rowNumber) : []; }
@@ -58,7 +59,7 @@ async function commit() {
     emit('imported');
   } catch (e) {
     result.value = e.response?.data?.data || null;
-    error.value = getApiErrorMessage(e);
+    error.value = getApiErrorDisplay(e);
   } finally { busy.value = false; }
 }
 const statusLabel = value => ({ Ready: t('spc.calibration.ready'), Invalid: t('spc.calibration.invalid'), Existing: t('spc.calibration.existing'), Added: t('spc.calibration.added'), Skipped: t('spc.calibration.skipped'), Failed: t('spc.calibration.importFailed') })[value] || value;
@@ -116,7 +117,7 @@ const statusLabel = value => ({ Ready: t('spc.calibration.ready'), Invalid: t('s
 
                     <td class="whitespace-nowrap p-2">{{ row.lastCalibrationDate || '—' }}<small class="block text-slate-500 dark:text-slate-400">{{ t('spc.calibration.rawValue') }}{{ row.rawLastDate || t('spc.calibration.blank') }}</small></td>
                     <td class="whitespace-nowrap p-2">{{ row.nextCalibrationDate || '—' }}<small class="block text-slate-500 dark:text-slate-400">{{ t('spc.calibration.rawValue') }}{{ row.rawNextDate || t('spc.calibration.blank') }}</small></td>
-                    <td class="min-w-60 p-2"><strong>{{ statusLabel(row.status) }}</strong><p v-for="message in row.errors" :key="message" class="text-rose-700 dark:text-rose-300">{{ message }}</p><p v-for="message in row.warnings" :key="message" class="text-amber-700 dark:text-amber-300">{{ message }}</p></td>
+                    <td class="min-w-60 p-2"><strong>{{ statusLabel(row.status) }}</strong><p v-for="(message, index) in row.errors" :key="index" class="text-rose-700 dark:text-rose-300">{{ displayUiMessage(t, getIndexedApiMessageDisplay(row.errors, row.errorMessages, index)) }}</p><p v-for="(message, index) in row.warnings" :key="index" class="text-amber-700 dark:text-amber-300">{{ displayUiMessage(t, getIndexedApiMessageDisplay(row.warnings, row.warningMessages, index)) }}</p></td>
                   </tr></tbody>
                 </table>
               </div>
@@ -125,7 +126,7 @@ const statusLabel = value => ({ Ready: t('spc.calibration.ready'), Invalid: t('s
           </template>
           <div v-if="result" role="status" class="space-y-2 rounded border border-slate-300 p-3 dark:border-slate-600">
             <p class="font-bold">{{ t('spc.calibration.addedPrefix') }} {{ result.added }} {{ t('spc.calibration.skippedPrefix') }} {{ result.skipped }} {{ t('spc.calibration.failedPrefix') }} {{ result.failed }} {{ t('spc.calibration.recordUnit') }}</p>
-            <ul class="max-h-40 overflow-y-auto text-sm"><li v-for="row in result.rows" :key="row.rowNumber">{{ t('spc.calibration.rowPrefix') }} {{ row.rowNumber }} {{ t('spc.calibration.rowSuffix') }} {{ row.code }} · {{ statusLabel(row.status) }}：{{ row.message }}</li></ul>
+            <ul class="max-h-40 overflow-y-auto text-sm"><li v-for="row in result.rows" :key="row.rowNumber">{{ t('spc.calibration.rowPrefix') }} {{ row.rowNumber }} {{ t('spc.calibration.rowSuffix') }} {{ row.code }} · {{ statusLabel(row.status) }}：{{ dtoText(row, row.message) }}</li></ul>
             <p class="text-sm">{{ t('spc.calibration.importAgainHelp') }}</p>
           </div>
         </div>

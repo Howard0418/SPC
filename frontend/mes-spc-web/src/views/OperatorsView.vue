@@ -5,7 +5,7 @@ const {t}=useI18n({useScope:"global"});
 import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import {
   Users,
   Plus,
@@ -59,7 +59,7 @@ async function load() {
     rows.value = res.data || [];
     permissionCatalog.value = catalog.data || [];
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -73,7 +73,7 @@ async function comparePortalUsers() {
     comparison.value = data;
     selectedPortalIds.value = [];
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     comparing.value = false;
   }
@@ -92,7 +92,7 @@ async function syncSelected() {
     await load();
     await comparePortalUsers();
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     comparing.value = false;
   }
@@ -176,7 +176,7 @@ async function save() {
     }
     showModal.value = false;
   } catch (e) {
-    formErr.value = getApiErrorMessage(e);
+    formErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -190,7 +190,7 @@ async function confirmDelete(item) {
     rows.value = rows.value.filter(x => x.id !== item.id);
     successAlert({key:"spc.settings.operatorDeleted",args:{name:item.operatorName}});
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }

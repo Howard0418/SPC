@@ -6,7 +6,7 @@ const { t } = useI18n({ useScope: "global" });
 const messageText = value => displayUiMessage(t, value);
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, onMounted } from 'vue';
-import { api, getApiErrorMessage } from '../api/client.js';
+import { api, getApiErrorDisplay } from '../api/client.js';
 import { Plus, Edit2, Trash2, Save, X, Server, Layers, Info } from 'lucide-vue-next';
 
 const lines = ref([]);
@@ -25,7 +25,7 @@ const fetchLines = async () => {
     selectedLine.value = null;
     tanks.value = [];
   } catch (err) {
-    errorMsg.value = getApiErrorMessage(err);
+    errorMsg.value = getApiErrorDisplay(err);
   }
 };
 
@@ -35,7 +35,7 @@ const fetchTanks = async (lineId) => {
     const res = await api.get(`/v1/traceability-master/tanks?lineId=${lineId}`);
     tanks.value = res.data.map(x => ({ ...x, _isEditing: false }));
   } catch (err) {
-    errorMsg.value = getApiErrorMessage(err);
+    errorMsg.value = getApiErrorDisplay(err);
   }
 };
 
@@ -71,7 +71,7 @@ const saveItem = async (type, item) => {
     Object.assign(item, res.data);
     item._isEditing = false;
   } catch (err) {
-    errorMsg.value = getApiErrorMessage(err);
+    errorMsg.value = getApiErrorDisplay(err);
   }
 };
 
@@ -89,7 +89,7 @@ const deleteItem = async (type, list, index, id) => {
       selectedLine.value = null; tanks.value = [];
     }
   } catch (err) {
-    errorMsg.value = getApiErrorMessage(err);
+    errorMsg.value = getApiErrorDisplay(err);
   }
 };
 

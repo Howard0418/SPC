@@ -4,7 +4,7 @@ import { displayUiMessage } from "../i18n/uiMessage";
 import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import {
   AlertTriangle,
   RefreshCw,
@@ -84,7 +84,7 @@ async function load() {
     const res = await api.get("/alerts");
     rows.value = res.data || [];
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -97,7 +97,7 @@ async function ack(id) {
     successMsg.value = {key:'spc.alerts.ackSuccess',args:{id:String(id).padStart(5,'0')}};
     await load();
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   }
 }
 
@@ -112,7 +112,7 @@ async function sendTestEmail() {
     outboxPath.value = res.data?.outboxFolder || "";
     successMsg.value = {key:"spc.alerts.emailSuccess",args:{recipient:res.data?.recipient,path:outboxPath.value}};
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     isSendingEmail.value = false;
   }
@@ -128,7 +128,7 @@ async function triggerSimulateAlert() {
     showSimulateModal.value = false;
     await load();
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   }
 }
 
@@ -199,7 +199,7 @@ onMounted(load);
     <!-- Alert Messages Box -->
     <div v-if="err" class="p-4 rounded-xl bg-red-500/10 dark:bg-red-950/50 border border-red-500/30 text-red-600 dark:text-red-300 text-sm flex items-center gap-3 animate-fade-in shadow-sm">
       <ShieldAlert class="w-5 h-5 flex-shrink-0 text-red-500" />
-      <div>{{ err }}</div>
+      <div>{{ displayUiMessage(t, err) }}</div>
     </div>
 
     <div v-if="successMsg" class="p-4 rounded-xl bg-emerald-500/10 dark:bg-emerald-950/50 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-sm flex items-start gap-3 animate-fade-in shadow-sm">

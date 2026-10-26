@@ -1,9 +1,10 @@
 <script setup>
+import { displayUiMessage } from "../i18n/uiMessage";
 import {useI18n} from "vue-i18n";
 const {t}=useI18n({useScope:"global"});
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api, getApiErrorMessage } from '../api/client'
+import { api, getApiErrorDisplay } from '../api/client'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,7 +50,7 @@ async function load() {
   try {
     result.value = (await api.get('/equipment-points', { params: { sourceId: sourceId.value, equipmentId: equipmentId.value } })).data
   } catch (exception) {
-    error.value = getApiErrorMessage(exception)
+    error.value = getApiErrorDisplay(exception)
   }
 }
 
@@ -63,7 +64,7 @@ async function init() {
     equipmentId.value = equipments.value.includes(requestedEquipment) ? requestedEquipment : (equipments.value[0] || '')
     await load()
   } catch (exception) {
-    error.value = getApiErrorMessage(exception)
+    error.value = getApiErrorDisplay(exception)
   }
 }
 
@@ -86,7 +87,7 @@ async function save(point) {
     })
     await load()
   } catch (exception) {
-    error.value = getApiErrorMessage(exception)
+    error.value = getApiErrorDisplay(exception)
   }
 }
 
@@ -102,7 +103,7 @@ onMounted(init)
   <section class="space-y-4">
     <h1 class="text-2xl font-black">{{ t('spc.equipment.pointsTitle') }}</h1>
     <p class="text-sm text-slate-500">{{ t('spc.equipment.pointsHelp') }}</p>
-    <p v-if="error" class="text-red-600">{{ error }}</p>
+    <p v-if="error" class="text-red-600">{{ displayUiMessage(t, error) }}</p>
     <div class="flex flex-wrap gap-2">
       <select data-testid="equipment-sourceId" v-model="sourceId" @change="switchSource"><option v-for="source in sources" :key="source.sourceId" :value="source.sourceId">{{ source.displayName }}</option></select>
       <select data-testid="equipment-equipmentId" v-model="equipmentId" @change="load"><option v-for="equipment in equipments" :key="equipment">{{ equipment }}</option></select>

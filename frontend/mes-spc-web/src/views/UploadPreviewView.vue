@@ -1,9 +1,10 @@
 <script setup>
+const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
 import { useRoute, useRouter } from "vue-router";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiMessageDisplay, getApiErrorDisplay } from "../api/client";
 import {
   CheckCircle2,
   ShieldAlert,
@@ -111,7 +112,7 @@ async function load() {
     });
     chartPpcId.value = await resolveChartPpcId();
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   }
 }
 
@@ -203,7 +204,7 @@ async function createMissingMappings() {
       t('spc.uploads.revalidated')
     ].join("\n"));
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     window.clearInterval(progressTimer);
     revalidateProgress.value = null;
@@ -218,7 +219,7 @@ function hasCellError(detailItem, fieldName) {
 
 function getCellErrorMessage(detailItem, fieldName) {
   const matched = detailItem.errorsList.find(e => e.fieldName?.toLowerCase() === fieldName.toLowerCase());
-  return matched ? matched.errorMessage : "";
+  return matched ? dtoText(matched, matched.errorMessage) : "";
 }
 
 function hasAnyCellError(detailItem, fieldNames) {
@@ -537,10 +538,10 @@ onMounted(load);
                     <div class="flex items-center gap-1">
                       <AlertTriangle class="w-3 h-3 flex-shrink-0" />
                       <span class="font-black">{{ errItem.errorCode }}</span>
-                      <span>{{ errItem.errorMessage }}</span>
+                      <span>{{ dtoText(errItem, errItem.errorMessage) }}</span>
                     </div>
                     <div v-if="errItem.suggestion" class="ml-4 text-amber-700 dark:text-amber-300">
-                      {{ t('spc.uploads.suggestion', { text: errItem.suggestion }) }}
+                      {{ t('spc.uploads.suggestion', { text: dtoText(errItem.suggestionMessage, errItem.suggestion) }) }}
                     </div>
                   </div>
                 </div>

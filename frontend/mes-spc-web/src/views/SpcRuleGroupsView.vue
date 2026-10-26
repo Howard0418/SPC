@@ -5,7 +5,7 @@ import { displayUiMessage } from "../i18n/uiMessage";
 const { t } = useI18n({ useScope: "global" });
 const messageText = value => displayUiMessage(t, value);
 import { onMounted, ref, computed } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import {
   Activity,
   AlertTriangle,
@@ -61,7 +61,7 @@ async function loadAll() {
     const visibleGroupIds = new Set(rules.value.map(rule => Number(rule.ruleGroupId)));
     ruleGroups.value = (groupsRes.data || []).filter(group => visibleGroupIds.has(Number(group.id)));
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -165,7 +165,7 @@ async function saveRule() {
     showModal.value = false;
     await loadAll();
   } catch (e) {
-    formErr.value = getApiErrorMessage(e);
+    formErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -179,7 +179,7 @@ async function confirmDelete(rule) {
     rules.value = rules.value.filter(x => x.id !== rule.id);
     successAlert({ key: "spc.rules.deleted" });
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }

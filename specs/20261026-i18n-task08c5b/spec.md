@@ -1,0 +1,11 @@
+# I18N-TASK-08C5B 其餘頁面與巢狀DTO接線
+- 2026-10-26 DONE，必要驗證與測試發布完成，依[連續授權](../20261026-i18n-continuation/spec.md)接續[共用轉接](../20261026-i18n-task08c5a/spec.md)。主系統SPC，Portal/TransFiles與DB/schema/API均不變。
+- R1 公開路由與其元件中儲存的API錯誤改用getApiErrorDisplay，顯示走displayUiMessage；原生alert即時字串介面保持。未接公開路由的舊Variable/Attribute上傳頁及Dashboard不擴張入口、不重構。
+- R2 設備root/source/device、校驗匯入errors/warnings逐列索引與outcome、上傳preview/error suggestion/history firstError，優先使用已包裝API namespace的明示描述；未知／非法仍原文字。原資料陣列、raw欄名、ErrorCode、Status、資料筆數與顏色判斷不由譯文控制。
+- R3 子DTO／索引轉接集中共用；索引必須為範圍內整數，重複索引不猜；只讀原陣列，不就地修改／寫入。欄位tooltip應顯示同一譯文，必要字串插值前先轉純文字。
+- BDD Happy：Given已顯示API錯誤或逐列警示，When切繁中／簡中／英文，Then畫面即時更新且不新增API請求／卸載DOM／清草稿／更動選取及query。
+- BDD Boundary：Given0、原名HTML/i18n符號、多列／不同來源，Then只翻UI描述，原資料和精度／日期／排序／原DTO不變。
+- BDD Invalid：Given未知key／缺args／超限／非法索引，Then退原文，不編譯外部key、不傳object給t、不改錯誤判斷。
+- BDD Regression：保留原getApiErrorMessage與原生alert；Node、各公開頁錯誤切換與匯入／設備／校驗回歸、build，完整API mock不真寫入／匯入／寄信。
+- 僅測試Web0.1.102/API0.1.81；核PMR_SPC_TEST/IIS，前端hash備份、assets先index後。回復同test前端備份，不動設定／資料。正式另授權，譯文draft。
+- [計畫](plan.md)／[任務](tasks.md)／[驗證](verification.md)。

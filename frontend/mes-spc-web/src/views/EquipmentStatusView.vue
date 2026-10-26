@@ -1,10 +1,11 @@
 <script setup>
+const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import {useI18n} from "vue-i18n";
 import {displayUiMessage} from "../i18n/uiMessage";
 const {t}=useI18n({useScope:"global"});
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { Activity, AlertCircle, CircleCheck, Clock3, RefreshCw, Search, ServerCrash, Wifi } from "lucide-vue-next";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiMessageDisplay, getApiErrorDisplay } from "../api/client";
 
 const loading = ref(false);
 const error = ref("");
@@ -78,9 +79,9 @@ async function load() {
   try {
     const { data } = await api.get("/equipment-status", { timeout: 15000 });
     result.value = data;
-    if (!data?.isConfigured) error.value = data?.message || {key:"spc.equipment.notConfigured"};
+    if (!data?.isConfigured) error.value = getApiMessageDisplay(data, data?.message) || {key:"spc.equipment.notConfigured"};
   } catch (e) {
-    error.value = getApiErrorMessage(e);
+    error.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -121,12 +122,12 @@ onBeforeUnmount(() => window.clearInterval(refreshTimer));
     <div v-if="result?.isConfigured" class="space-y-6">
       <section v-for="source in filteredSources" :key="source.sourceId" class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2"><div><h2 class="font-black text-slate-800 dark:text-white">{{ source.displayName }}</h2><p class="text-xs text-slate-500">{{ t('spc.equipment.sourceCode') }}{{ source.sourceId }}</p></div><span :class="sourceMeta(source).className">{{ sourceMeta(source).text }}</span></div>
-        <p v-if="source.message" class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">{{ source.message }}</p>
+        <p v-if="source.message" class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">{{ dtoText(source, source.message) }}</p>
         <div v-if="source.devices.length" class="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <article v-for="device in source.devices" :key="`${device.sourceId}-${device.equipmentId}`" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div class="flex items-start justify-between gap-3"><div><h2 class="text-lg font-black text-slate-800 dark:text-white">{{ device.equipmentId }}</h2><p class="mt-1 text-xs text-slate-500">{{ t('spc.equipment.sourceDescription') }}</p></div><span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold" :class="statusMeta(device.status).className"><component :is="statusMeta(device.status).icon" class="h-3.5 w-3.5" />{{ statusMeta(device.status).text }}</span></div>
         <dl class="mt-5 space-y-3 text-sm"><div class="flex justify-between gap-4"><dt class="text-slate-500">{{ t('spc.equipment.lastData') }}</dt><dd class="font-semibold text-right">{{ formatDate(device.lastUpdatedAt) }}</dd></div><div class="flex justify-between gap-4"><dt class="text-slate-500">{{ t('spc.equipment.age') }}</dt><dd class="font-semibold">{{ formatAge(device.ageSeconds) }}</dd></div><div class="flex justify-between gap-4"><dt class="text-slate-500">{{ t('spc.equipment.channels') }}</dt><dd class="font-semibold">{{ device.channelCount }} {{ t('spc.equipment.items') }}</dd></div></dl>
-        <p v-if="device.message" class="mt-4 rounded-lg bg-red-50 p-2 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">{{ device.message }}</p>
+        <p v-if="device.message" class="mt-4 rounded-lg bg-red-50 p-2 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">{{ dtoText(device, device.message) }}</p>
         <div v-else class="mt-4 grid grid-cols-2 gap-2 text-xs font-bold">
           <div class="rounded-lg p-2" :class="operatingMeta(device.operatingState).className">{{ operatingMeta(device.operatingState).text }}</div>
           <div class="rounded-lg p-2" :class="!device.configuredAlarmCount ? 'bg-slate-50 text-slate-500 dark:bg-slate-900' : device.activeAlarmCount > 0 ? 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'">{{ device.configuredAlarmCount ? t('spc.equipment.alarmingCount',{count:device.activeAlarmCount}) : t('spc.equipment.noAlarmMapping') }}</div>

@@ -1,8 +1,10 @@
 <script setup>
+const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
+import { displayUiMessage } from "../i18n/uiMessage";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiMessageDisplay, getApiErrorDisplay } from "../api/client";
 import {
   AlertTriangle,
   ArrowRight,
@@ -31,7 +33,7 @@ async function load() {
     const { data } = await api.get("/uploads", { params: { take: 80, _: Date.now() } });
     batches.value = data.batches || [];
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -96,7 +98,7 @@ onMounted(load);
     </section>
 
     <div v-if="err" class="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm flex items-center gap-3">
-      <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ err }}
+      <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ displayUiMessage(t, err) }}
     </div>
 
     <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -139,7 +141,7 @@ onMounted(load);
               <td class="px-4 py-3 text-right font-mono" :class="Number(b.errorRows || 0) > 0 ? 'text-amber-600 font-black' : 'text-slate-400'">{{ b.errorRows || 0 }}</td>
               <td class="px-4 py-3 text-xs">
                 <div v-if="b.firstErrorCode" class="font-bold text-amber-700 dark:text-amber-300">{{ b.firstErrorCode }}</div>
-                <div class="text-slate-500 dark:text-slate-400 truncate max-w-xs">{{ b.firstErrorMessage || "-" }}</div>
+                <div class="text-slate-500 dark:text-slate-400 truncate max-w-xs">{{ dtoText(b.firstErrorDescriptor, b.firstErrorMessage || "-") }}</div>
               </td>
               <td class="px-4 py-3 text-right">
                 <button

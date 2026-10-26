@@ -3,7 +3,7 @@ import {useI18n} from "vue-i18n";
 import {displayUiMessage} from "../i18n/uiMessage";
 const {t}=useI18n({useScope:"global"});
 import { computed, onMounted, ref } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import {
   CalendarClock,
   CheckCircle2,
@@ -80,7 +80,7 @@ async function load() {
     };
     pruneRecipients();
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -124,7 +124,7 @@ async function save() {
     successMsg.value = {key:'spc.settings.reportSaved'};
     await load();
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     saving.value = false;
   }
@@ -147,7 +147,7 @@ async function sendNow(reportType) {
     sendNowResult.value = data;
     successMsg.value = {key:data.displayType?"spc.settings.sendNowComplete":"spc.settings.sendNowFallback",args:{type:data.displayType,success:data.success,failed:data.failed}};
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     sendingNow.value = "";
   }
@@ -171,7 +171,7 @@ async function exportExcel() {
     a.click();
     URL.revokeObjectURL(url);
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     exporting.value = false;
   }

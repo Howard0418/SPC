@@ -1,9 +1,10 @@
 <script setup>
+import { displayUiMessage } from "../i18n/uiMessage";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n({ useScope: "global" });
 import { computed, ref, watch } from "vue";
 import ChemicalCalculationDetails from "./ChemicalCalculationDetails.vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 
 const props = defineProps({ ppcId: { type: [Number, String], required: true }, chartLineEntry: Boolean });
 const segments = ref([]);
@@ -46,7 +47,7 @@ async function loadSegments() {
     if (request !== listRequest) return;
     segments.value = Array.isArray(response.data) ? response.data : [];
   } catch (e) {
-    if (request === listRequest) listError.value = getApiErrorMessage(e);
+    if (request === listRequest) listError.value = getApiErrorDisplay(e);
   }
 }
 async function loadDetail() {
@@ -58,7 +59,7 @@ async function loadDetail() {
     });
     if (request === detailRequest) detail.value = response.data.data;
   } catch (e) {
-    if (request === detailRequest) error.value = getApiErrorMessage(e);
+    if (request === detailRequest) error.value = getApiErrorDisplay(e);
   } finally {
     if (request === detailRequest) loading.value = false;
   }
@@ -83,7 +84,7 @@ defineExpose({ openSegment });
     <h3 class="font-bold">{{ t('spc.segmentDetails.title') }}</h3>
     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ chartLineEntry ? t('spc.segmentDetails.lineEntry') : t('spc.segmentDetails.dateEntry') }}{{ t('spc.segmentDetails.intro') }}</p>
     <div v-if="listError" role="alert" class="mt-2 text-red-600 dark:text-red-400">
-      {{ listError }} <button type="button" class="underline" @click="loadSegments">{{ t('spc.segmentDetails.retryList') }}</button>
+      {{ displayUiMessage(t, listError) }} <button type="button" class="underline" @click="loadSegments">{{ t('spc.segmentDetails.retryList') }}</button>
     </div>
     <div v-else class="mt-2 flex flex-wrap gap-2">
       <button type="button" class="rounded border border-slate-300 dark:border-slate-600 px-3 py-2 hover:bg-blue-50 dark:hover:bg-slate-800" :aria-pressed="opened && selectedId === null" @click="openSegment()">{{ t('spc.segmentDetails.base') }}</button>
@@ -97,7 +98,7 @@ defineExpose({ openSegment });
     <div v-if="opened" class="mt-3 border-t border-slate-200 dark:border-slate-700 pt-3" aria-live="polite">
       <div class="flex justify-between gap-2"><h4 class="font-bold">{{ t('spc.segmentDetails.details') }}</h4><button type="button" class="underline" @click="close">{{ t('spc.segmentDetails.close') }}</button></div>
       <p v-if="loading" role="status" class="mt-2">{{ t('spc.segmentDetails.loading') }}</p>
-      <div v-else-if="error" role="alert" class="mt-2 text-red-600 dark:text-red-400">{{ error }} <button type="button" class="underline" @click="loadDetail">{{ t('spc.segmentDetails.retryDetail') }}</button></div>
+      <div v-else-if="error" role="alert" class="mt-2 text-red-600 dark:text-red-400">{{ displayUiMessage(t, error) }} <button type="button" class="underline" @click="loadDetail">{{ t('spc.segmentDetails.retryDetail') }}</button></div>
       <div v-else-if="detail" class="mt-2 space-y-4">
         <p data-testid="segment-range">{{ detail.segmentId ? t('spc.segmentDetails.range', { id: detail.segmentId, start: formatRangeDate(detail.startDate), end: detail.endDate ? formatRangeDate(detail.endDate) : t('spc.segmentDetails.noEnd') }) : t('spc.segmentDetails.baseRange') }}</p>
         <p v-if="detail.note" class="whitespace-pre-wrap break-words">{{ t('spc.segmentDetails.note', { note: detail.note }) }}</p>

@@ -10,6 +10,14 @@ export function captureApiErrorDisplay(data,source){
  return typeof data.message==='string'&&data.message?data.message:snapshotApiDisplay(descriptor);
 }
 
+export function captureIndexedApiDisplay(items,metadata,index,source){
+ if(!Array.isArray(items)||!Number.isInteger(index)||index<0||index>=items.length)return '';
+ const fallback=typeof items[index]==='string'?items[index]:'';
+ if(!Array.isArray(metadata))return fallback;
+ const matches=metadata.filter(item=>Number.isInteger(item?.index)&&item.index===index);
+ return matches.length===1?(captureApiErrorDisplay(matches[0].descriptor,source)??fallback):fallback;
+}
+
 // Server keys are accepted only from the packaged API namespace; parameters are data.
 export function resolveApiErrorDescriptor(data,source){
  if(!plain(data)||typeof data.messageKey!=='string'||!/^spc\.api\.[a-z][a-zA-Z0-9]*$/.test(data.messageKey))return null;

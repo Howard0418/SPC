@@ -4,7 +4,7 @@ import { displayUiMessage } from "../i18n/uiMessage";
 import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import { 
   ShieldAlert, 
   Wrench, 
@@ -55,7 +55,7 @@ async function load() {
     const { data } = await api.get("/v1/alerts");
     rows.value = data || [];
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -126,7 +126,7 @@ async function submitWorkflow() {
     showModal.value = false;
     await load();
   } catch (e) {
-    formErr.value = getApiErrorMessage(e);
+    formErr.value = getApiErrorDisplay(e);
   } finally {
     saving.value = false;
   }
@@ -188,7 +188,7 @@ onMounted(load);
     <!-- Alert Messages Box -->
     <div v-if="err" class="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 text-sm flex items-center gap-3 animate-fade-in shadow-sm">
       <ShieldAlert class="w-5 h-5 flex-shrink-0 text-red-500" />
-      <div>{{ err }}</div>
+      <div>{{ displayUiMessage(t, err) }}</div>
     </div>
     <div v-if="successMsg" class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-sm flex items-center gap-3 animate-fade-in shadow-sm">
       <CheckCircle2 class="w-5 h-5 flex-shrink-0 text-emerald-500" />
@@ -387,7 +387,7 @@ onMounted(load);
         <div class="overflow-y-auto p-6">
 <LocalePicker />
           <div v-if="formErr" class="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm border border-red-200 font-bold flex items-center gap-2">
-            <ShieldAlert class="w-4 h-4" /> {{ formErr }}
+            <ShieldAlert class="w-4 h-4" /> {{ displayUiMessage(t, formErr) }}
           </div>
 
           <!-- Problem Description -->

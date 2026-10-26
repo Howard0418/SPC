@@ -6,7 +6,7 @@ const { t } = useI18n({ useScope: 'global' });
 const messageText = value => displayUiMessage(t, value);
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, computed, onMounted, watch } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { normalizeControlScope as normalizeScope } from "../utils/controlScope";
 import {
   Activity,
@@ -116,7 +116,7 @@ async function loadMetadata() {
       (a.processName || "").localeCompare(b.processName || "", "zh-Hant")
     );
   } catch (e) {
-    error.value = { key: "spc.entry.loadFailed", args: { error: getApiErrorMessage(e) } };
+    error.value = { key: "spc.entry.loadFailed", args: { error: getApiErrorDisplay(e) } };
   } finally {
     loading.value = false;
   }
@@ -261,7 +261,7 @@ async function loadExistingBatch() {
     payload.value.values = (data.values || []).map(v => ({ sampleNo: v.sampleNo, valueNumeric: v.valueNumeric }));
   } catch (e) {
     editBatchId.value = null;
-    error.value = getApiErrorMessage(e);
+    error.value = getApiErrorDisplay(e);
   } finally {
     loadingExisting.value = false;
   }
@@ -346,7 +346,7 @@ const submitBatch = async () => {
     }
     
   } catch (e) {
-    error.value = { key: "spc.entry.saveFailed", args: { error: getApiErrorMessage(e) } };
+    error.value = { key: "spc.entry.saveFailed", args: { error: getApiErrorDisplay(e) } };
   } finally {
     submitting.value = false;
   }

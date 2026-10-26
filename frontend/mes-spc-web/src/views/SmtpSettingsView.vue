@@ -3,7 +3,7 @@ import {useI18n} from "vue-i18n";
 import {displayUiMessage} from "../i18n/uiMessage";
 const {t}=useI18n({useScope:"global"});
 import { computed, ref, onMounted } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiMessageDisplay, getApiErrorDisplay } from "../api/client";
 import { Sliders, Mail, Save, CheckCircle2, ShieldAlert, RefreshCw, Send, HardDrive, Server, Key, User, AlertTriangle } from "lucide-vue-next";
 
 const form = ref({
@@ -73,7 +73,7 @@ async function loadSettings() {
       testEmail.value = form.value.defaultRecipientEmail;
     }
   } catch (e) {
-    errorMsg.value = {key:"spc.settings.smtpLoadFailed",args:{error:getApiErrorMessage(e)}};
+    errorMsg.value = {key:"spc.settings.smtpLoadFailed",args:{error:getApiErrorDisplay(e)}};
   } finally {
     loading.value = false;
   }
@@ -106,10 +106,10 @@ async function saveSettings() {
       recipientOperatorIds: form.value.recipientOperatorIds
     };
     const res = await api.post("/settings/smtp", payload);
-    successMsg.value = res.data?.message || {key:'spc.settings.smtpSaved'};
+    successMsg.value = getApiMessageDisplay(res.data, res.data?.message) || {key:'spc.settings.smtpSaved'};
     setTimeout(() => { successMsg.value = ""; }, 5000);
   } catch (e) {
-    errorMsg.value = {key:"spc.settings.smtpSaveFailed",args:{error:getApiErrorMessage(e)}};
+    errorMsg.value = {key:"spc.settings.smtpSaveFailed",args:{error:getApiErrorDisplay(e)}};
   } finally {
     saving.value = false;
   }
@@ -135,7 +135,7 @@ async function sendTestEmail() {
       outboxFolder: res.data.outboxFolder
     };
   } catch (e) {
-    errorMsg.value = {key:"spc.settings.smtpTestFailed",args:{error:getApiErrorMessage(e)}};
+    errorMsg.value = {key:"spc.settings.smtpTestFailed",args:{error:getApiErrorDisplay(e)}};
   } finally {
     testLoading.value = false;
   }
@@ -161,7 +161,7 @@ async function sendTestAlertEmail() {
       outboxFolder: res.data.outboxFolder
     };
   } catch (e) {
-    errorMsg.value = {key:"spc.settings.smtpAlertFailed",args:{error:getApiErrorMessage(e)}};
+    errorMsg.value = {key:"spc.settings.smtpAlertFailed",args:{error:getApiErrorDisplay(e)}};
   } finally {
     testLoading.value = false;
   }

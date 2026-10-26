@@ -10,7 +10,7 @@ import SpecificationLimitHistory from "../components/SpecificationLimitHistory.v
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onBeforeUnmount, onMounted, ref, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { isEditor } from "../utils/auth";
 import { CONTROL_SCOPE, normalizeControlScope } from "../utils/controlScope";
 import {
@@ -215,7 +215,7 @@ async function loadChemicalFormulaVersions(next) {
     chemicalHistoryMore.value = (data?.data || []).length > 20;
     chemicalFormulaVersions.value = (data?.data || []).slice(0, 20);
   } catch (e) {
-    if (request === chemicalHistoryRequest && ppcId === currentId.value) chemicalFormulaVersionsErr.value = getApiErrorMessage(e);
+    if (request === chemicalHistoryRequest && ppcId === currentId.value) chemicalFormulaVersionsErr.value = getApiErrorDisplay(e);
   } finally {
     if (request === chemicalHistoryRequest && ppcId === currentId.value) chemicalFormulaVersionsLoading.value = false;
   }
@@ -242,7 +242,7 @@ async function restoreChemicalFormulaVersion(version) {
     await loadChemicalFormulaVersions();
     successAlert({ key: "spc.ppc.restored", args: { version: version.versionNo } });
   } catch (e) {
-    chemicalFormulaVersionsErr.value = getApiErrorMessage(e);
+    chemicalFormulaVersionsErr.value = getApiErrorDisplay(e);
   } finally {
     restoringChemicalFormulaVersionId.value = null;
   }
@@ -443,7 +443,7 @@ async function load() {
     await nextTick();
     updateTableScrollMax();
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -899,7 +899,7 @@ async function openEditModal(item) {
       .filter(rule => rule.isSelected)
       .map(rule => rule.ruleCode) : [];
   } catch (e) {
-    formErr.value = { key: "spc.ppc.ruleLoadFailed", args: { error: getApiErrorMessage(e) } };
+    formErr.value = { key: "spc.ppc.ruleLoadFailed", args: { error: getApiErrorDisplay(e) } };
   }
   showModal.value = true;
 }
@@ -1007,7 +1007,7 @@ async function save() {
     showModal.value = false;
     await load();
   } catch (e) {
-    formErr.value = getApiErrorMessage(e);
+    formErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -1023,7 +1023,7 @@ async function confirmDelete(item) {
     rows.value = rows.value.filter(x => x.id !== item.id);
     successAlert({ key: "spc.ppc.controlItemDeleted" });
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -1058,7 +1058,7 @@ async function confirmPurge(item) {
     rows.value = rows.value.filter(x => x.id !== item.id);
     successAlert({ key: "spc.ppc.theControlItemAndItsRelatedMeasurementsWerePermanentlyRemoved" });
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -1177,7 +1177,7 @@ async function saveSegment() {
   specHistoryRevision.value++;
     await load();
   } catch (e) {
-    segmentFormErr.value = getApiErrorMessage(e);
+    segmentFormErr.value = getApiErrorDisplay(e);
   }
 }
 
@@ -1223,7 +1223,7 @@ async function runTrialCalculate() {
     });
     trialResult.value = res.data;
   } catch (e) {
-    trialErr.value = getApiErrorMessage(e);
+    trialErr.value = getApiErrorDisplay(e);
   } finally {
     trialLoading.value = false;
   }
@@ -2050,7 +2050,7 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                     <VersionHistoryRange :reset-key="currentId" :loading="chemicalFormulaVersionsLoading" :has-more="chemicalHistoryMore" @change="loadChemicalFormulaVersions" />
                     <div v-if="chemicalFormulaVersionsLoading" class="py-3 text-xs font-semibold text-slate-500">{{ t('spc.ppc.loadingFormulaVersions') }}</div>
                     <div v-else-if="chemicalFormulaVersionsErr" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-                      {{ chemicalFormulaVersionsErr }}
+                      {{ displayUiMessage(t, chemicalFormulaVersionsErr) }}
                     </div>
                     <div v-else-if="chemicalFormulaVersions.length === 0" class="py-3 text-xs font-semibold text-slate-500">
                       {{ t('spc.ppc.noFormulaVersionsInThisModificationDateRangeHistoryBeginsWithTheFirstSavedChange') }}
@@ -2290,7 +2290,7 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
 
               <!-- Trial Result Display -->
               <div v-if="trialErr" class="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-2xl text-xs text-red-600 dark:text-red-400">
-                {{ t('spc.ppc.calculationError') }}{{ trialErr }}
+                {{ t('spc.ppc.calculationError') }}{{ displayUiMessage(t, trialErr) }}
               </div>
 
               <div v-if="trialResult" class="p-5 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl space-y-4 shadow-sm">
@@ -2344,7 +2344,7 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
               <!-- Segment Add/Edit Form -->
               <form @submit.prevent="saveSegment" class="p-4 bg-purple-50/20 dark:bg-purple-950/10 border border-purple-100 dark:border-purple-900/50 rounded-2xl space-y-4">
                 <div v-if="segmentFormErr" class="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl text-xs text-red-600 dark:text-red-400">
-                  {{ t('spc.ppc.saveFailed') }}{{ segmentFormErr }}
+                  {{ t('spc.ppc.saveFailed') }}{{ displayUiMessage(t, segmentFormErr) }}
                 </div>
 
                 <!-- Date range -->

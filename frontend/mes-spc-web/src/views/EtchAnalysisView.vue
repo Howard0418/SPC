@@ -4,7 +4,7 @@ import {displayUiMessage} from "../i18n/uiMessage";
 const {t}=useI18n({useScope:"global"});
 import { computed, onMounted, ref } from 'vue'
 import { Activity, ExternalLink, RefreshCw } from 'lucide-vue-next'
-import { api, getApiErrorMessage } from '../api/client'
+import { api, getApiErrorDisplay } from '../api/client'
 
 const portalUrl = (import.meta.env.VITE_PORTAL_URL || 'http://172.16.110.27/').replace(/\/$/, '')
 const lineCodes = ['PT1', 'PT2', 'QE1', 'QE2']
@@ -44,7 +44,7 @@ async function load() {
   try {
     mappings.value = (await api.get('/part-process-characteristics')).data || []
   } catch (exception) {
-    error.value = getApiErrorMessage(exception)
+    error.value = getApiErrorDisplay(exception)
   } finally {
     loading.value = false
   }
@@ -63,7 +63,7 @@ onMounted(load)
       <a :href="`${portalUrl}/QualityAssurance/EtchAmountEntry`" class="action primary" target="_blank" rel="noopener">{{ t('spc.trace.etchEntry') }}<ExternalLink class="h-4 w-4" /></a>
     </header>
 
-    <p v-if="error" class="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{{ error }}</p>
+    <p v-if="error" class="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{{ displayUiMessage(t, error) }}</p>
 
     <div class="flex flex-wrap gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
       <label><span>{{ t('spc.trace.line') }}</span><select data-testid="trace-selectedLine" v-model="selectedLine"><option v-for="line in lineCodes" :key="line">{{ line }}</option></select></label>

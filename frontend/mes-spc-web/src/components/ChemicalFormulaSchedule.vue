@@ -4,7 +4,7 @@ import { displayUiMessage } from '../i18n/uiMessage';
 const { t } = useI18n({ useScope: 'global' });
 const messageText = value => displayUiMessage(t, value);
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
-import { api, getApiErrorMessage } from '../api/client';
+import { api, getApiMessageDisplay, getApiErrorDisplay } from '../api/client';
 import { getCurrentUser } from '../utils/auth';
 const props = defineProps({ ppcId: { type: Number, required: true } });
 const revision = ref(null), periods = ref([]), versions = ref([]), fVersions = ref([]), reason = ref('');
@@ -27,10 +27,10 @@ async function load() {
     const failed = responses.find(r => r.status === 'rejected'); if (failed) throw failed.reason;
     const [schedule, formulas, f] = responses.map(r => r.value.data);
     const data = schedule.data;
-    revision.value = data.revisionId; message.value = data.message; gaps.value = data.gaps || [];
+    revision.value = data.revisionId; message.value = getApiMessageDisplay(data, data.message); gaps.value = data.gaps || [];
     periods.value = (data.periods || []).map(p => ({ formulaVersionId: p.formulaVersionId, fTableHistoryId: p.fTableHistoryId, fromDate: taipeiDay(p.effectiveFromUtc), toDate: taipeiDay(p.effectiveUntilUtcExclusive, true) }));
     versions.value = formulas.data || []; fVersions.value = f || []; reason.value = ''; loaded.value = true;
-  } catch (e) { if (request === generation) error.value = getApiErrorMessage(e); }
+  } catch (e) { if (request === generation) error.value = getApiErrorDisplay(e); }
   finally { if (request === generation) busy.value = false; }
 }
 watch(() => props.ppcId, load, { immediate: true });
@@ -43,7 +43,7 @@ async function publish() {
   try {
     await api.post(url(), { baseRevisionId: revision.value, reason: reason.value, periods: periods.value.map(p => ({ ...p, toDate: p.toDate || null })) });
     if (request === generation) { await load(); message.value = { key: "spc.schedule.schedulePublishedExistingMeasurementWritesHaveNotBeenSwitched" }; }
-  } catch (e) { if (request === generation) error.value = getApiErrorMessage(e); }
+  } catch (e) { if (request === generation) error.value = getApiErrorDisplay(e); }
   finally { if (request === generation) busy.value = false; }
 }
 async function preview() {
@@ -51,7 +51,7 @@ async function preview() {
   try {
     const { data } = await api.post(`${url()}/preview`, { measuredAt: measuredAt.value, primary: primary.value, secondary: secondary.value || null, sourceKey: `settings-preview-${props.ppcId}` });
     if (request === generation) result.value = data.data;
-  } catch (e) { if (request === generation) error.value = getApiErrorMessage(e); }
+  } catch (e) { if (request === generation) error.value = getApiErrorDisplay(e); }
   finally { if (request === generation) busy.value = false; }
 }
 </script>

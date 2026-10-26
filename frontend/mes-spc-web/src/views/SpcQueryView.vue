@@ -5,7 +5,7 @@ const {t}=useI18n({useScope:"global"});
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import { 
   Search, 
   Filter, 
@@ -70,7 +70,7 @@ async function executeQuery() {
     }
 
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }

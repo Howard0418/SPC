@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
 const { t } = useI18n({ useScope: "global" });
 import { ref, computed, watch, onBeforeUnmount } from 'vue';
-import { api, getApiErrorMessage } from '../api/client';
+import { api, getApiErrorDisplay } from '../api/client';
 const invalidResponseError = new Error('Invalid calculation evidence response');
 const props=defineProps({ppcId:{type:[Number,String],required:true},segmentId:{type:Number,default:null},measurementId:{type:Number,default:null},pointMode:Boolean,aggregate:Boolean});
 const data=ref(null),busy=ref(false),error=ref(''),skip=ref(0),traceSkip=ref(0),selected=ref(null);
@@ -21,7 +21,7 @@ async function load(){
   const payload=response.data.data;
   if(!payload||typeof payload.applicable!=="boolean"||!Array.isArray(payload.rows))throw invalidResponseError;
   if(request===generation)data.value=payload;
- }catch(e){if(request===generation)error.value=e === invalidResponseError ? { key: 'spc.calculationEvidence.invalidResponse' } : getApiErrorMessage(e);}
+ }catch(e){if(request===generation)error.value=e === invalidResponseError ? { key: 'spc.calculationEvidence.invalidResponse' } : getApiErrorDisplay(e);}
  finally{if(request===generation)busy.value=false;}
 }
 function history(measurementId){selected.value=measurementId;traceSkip.value=0;load();}

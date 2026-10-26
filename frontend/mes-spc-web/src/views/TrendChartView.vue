@@ -7,7 +7,7 @@ import { createChartLabelTranslator } from "../i18n/chartLabels";
 import { captureChartPresentation, translateChartPresentation, escapeChartText } from "../i18n/chartPresentation";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { buildHistogramBins, findHistogramBinIndex } from "../utils/histogram";
 import {
   TrendingUp,
@@ -303,7 +303,7 @@ async function loadMappings() {
       }
     }
   } catch (e) {
-    error.value = { key: 'spc.trend.loadMappingsFailed', args: { error: getApiErrorMessage(e) } };
+    error.value = { key: 'spc.trend.loadMappingsFailed', args: { error: getApiErrorDisplay(e) } };
   }
 }
 
@@ -337,7 +337,7 @@ async function loadChart() {
       tableSummaryData.value = res.data;
       cachedSummaryData.value = res.data;
     } catch (e) {
-      error.value = { key: 'spc.trend.loadSummaryFailed', args: { error: getApiErrorMessage(e) } };
+      error.value = { key: 'spc.trend.loadSummaryFailed', args: { error: getApiErrorDisplay(e) } };
       tableSummaryData.value = null;
     } finally {
       loading.value = false;
@@ -388,7 +388,7 @@ async function loadChart() {
     if (e?.response?.status === 404) {
       error.value = { key: 'spc.trend.chartNotFound' };
     } else {
-      error.value = getApiErrorMessage(e);
+      error.value = getApiErrorDisplay(e);
     }
   } finally {
     loading.value = false;
@@ -538,7 +538,7 @@ async function loadExcludedPoints(activePpcId = activePpcIdValue.value) {
     });
     excludedPoints.value = res.data?.data || [];
   } catch (e) {
-    error.value = { key: 'spc.chartQuery.loadExcludedFailed', args: { error: getApiErrorMessage(e) } };
+    error.value = { key: 'spc.chartQuery.loadExcludedFailed', args: { error: getApiErrorDisplay(e) } };
     excludedPoints.value = [];
   } finally {
     excludedPointsLoading.value = false;
@@ -557,7 +557,7 @@ async function loadPointRemarks(activePpcId = activePpcIdValue.value) {
     pointRemarks.value = res.data?.data || [];
     applyPointRemarksToChart();
   } catch (e) {
-    error.value = { key: 'spc.chartQuery.loadRemarksFailed', args: { error: getApiErrorMessage(e) } };
+    error.value = { key: 'spc.chartQuery.loadRemarksFailed', args: { error: getApiErrorDisplay(e) } };
     pointRemarks.value = [];
   }
 }

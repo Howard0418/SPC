@@ -4,7 +4,7 @@ import { displayUiMessage } from "../i18n/uiMessage";
 const { t } = useI18n({ useScope: "global" });
 const messageText = value => displayUiMessage(t, value);
 import { computed, onMounted, ref } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import { History, RefreshCw, RotateCcw, Save, Search, TestTube2 } from "lucide-vue-next";
 
 import VersionHistoryRange from "../components/VersionHistoryRange.vue";
@@ -64,7 +64,7 @@ async function load() {
       loadIntoForm(null);
       message.value = { key: "spc.fTable.firstVersion" };
     } else {
-      error.value = getApiErrorMessage(err);
+      error.value = getApiErrorDisplay(err);
     }
   } finally {
     loading.value = false;
@@ -91,7 +91,7 @@ async function loadHistory(next) {
     historyMore.value = result.length > 20;
     historyRows.value = result.slice(0, 20);
   } catch (err) {
-    error.value = getApiErrorMessage(err);
+    error.value = getApiErrorDisplay(err);
   } finally {
     historyLoading.value = false;
   }
@@ -111,7 +111,7 @@ async function restoreHistory(row) {
     await loadHistory();
     await loadImpact();
   } catch (err) {
-    error.value = getApiErrorMessage(err);
+    error.value = getApiErrorDisplay(err);
   } finally {
     restoringHistoryId.value = null;
   }
@@ -141,7 +141,7 @@ async function apply(applyChanges) {
       await loadHistory();
     }
   } catch (err) {
-    error.value = getApiErrorMessage(err);
+    error.value = getApiErrorDisplay(err);
   } finally {
     saving.value = false;
   }
@@ -154,7 +154,7 @@ async function loadImpact() {
     const { data } = await api.get("/v1/chemical-f-table/impact", { params: { cellAddress: selectedCell.value } });
     impactRows.value = Array.isArray(data) ? data : [];
   } catch (err) {
-    error.value = getApiErrorMessage(err);
+    error.value = getApiErrorDisplay(err);
   } finally {
     impactLoading.value = false;
   }
@@ -170,7 +170,7 @@ async function evaluateFormula() {
     });
     formulaResult.value = data;
   } catch (err) {
-    error.value = getApiErrorMessage(err);
+    error.value = getApiErrorDisplay(err);
   }
 }
 

@@ -3,14 +3,28 @@ import assert from 'node:assert/strict';
 import {computed,ref} from 'vue';
 import {createSpcI18n} from '../src/i18n/create.js';
 import {readRuntimeCatalogs} from '../scripts/check-i18n.mjs';
-import {captureApiErrorDisplay} from '../src/i18n/apiMessages.js';
-import {displayUiMessage} from '../src/i18n/uiMessage.js';
+import {captureApiErrorDisplay,captureIndexedApiDisplay} from '../src/i18n/apiMessages.js';
+import {displayUiMessage,joinUiMessages} from '../src/i18n/uiMessage.js';
 const catalogs=readRuntimeCatalogs(),source=catalogs['zh-TW'];
+test('Local line composition translates validated children while retaining literal prefixes and legacy lines',()=>{
+ const item=captureApiErrorDisplay({messageKey:'spc.api.invalidField',args:{field:'RAW'}},source);
+ const parts=['original <b>@:key</b>',joinUiMessages(['  1. ',item],'')];
+ const display=joinUiMessages(parts);parts[0]='mutated';
+ assert.equal(displayUiMessage((key,args)=>args.field,display),'original <b>@:key</b>\n  1. RAW');
+});
 test('Stored API error updates with locale without a new response and snapshots external arguments',()=>{
  const data={messageKey:'spc.api.invalidField',args:{field:'<b>@:key {field}|raw</b>'}};
  const stored=ref(captureApiErrorDisplay(data,source)),i18n=createSpcI18n(catalogs),text=computed(()=>displayUiMessage(i18n.global.t,stored.value));
  const original=stored.value;data.args.field='mutated';
  for(const locale of ['zh-TW','zh-CN','en-US']){i18n.global.locale.value=locale;assert.equal(text.value,i18n.global.t('spc.api.invalidField',{field:'<b>@:key {field}|raw</b>'}));assert.equal(stored.value,original)}
+});
+test('Indexed row metadata never mutates raw arrays and rejects duplicate, out-of-range or malformed indices',()=>{
+ const rows=['原始警示 <b>@:key</b>','unknown raw'],before=JSON.stringify(rows),descriptor={messageKey:'spc.api.invalidField',args:{field:'RawColumn'}};
+ const metadata=[{index:0,descriptor}];
+ const display=captureIndexedApiDisplay(rows,metadata,0,source);
+ assert.equal(displayUiMessage((key,args)=>`${key} ${args.field}`,display),'spc.api.invalidField RawColumn');
+ for(const entries of [[...metadata,...metadata],[{index:'0',descriptor}],[{index:-1,descriptor}],[{index:0,descriptor:{messageKey:'common.actions.refresh'}}],null])assert.equal(captureIndexedApiDisplay(rows,entries,0,source),rows[0]);
+ assert.equal(captureIndexedApiDisplay(rows,metadata,1,source),rows[1]);assert.equal(captureIndexedApiDisplay(rows,metadata,2,source),'');assert.equal(JSON.stringify(rows),before);
 });
 test('Nested local error interpolation receives translated plain text, composite children preserve zero',()=>{
  const raw='<b>@:key {field}</b>',tree=captureApiErrorDisplay({messageKey:'spc.api.importRowInvalid',args:{row:0},details:[{messageKey:'spc.api.invalidField',args:{field:raw}}]},source),i18n=createSpcI18n(catalogs);

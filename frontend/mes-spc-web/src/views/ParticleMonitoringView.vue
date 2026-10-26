@@ -6,7 +6,7 @@ const {t,locale}=useI18n({useScope:"global"});
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import * as echarts from 'echarts';
 import { Search, RefreshCw, AlertTriangle, Database } from 'lucide-vue-next';
-import { api, getApiErrorMessage } from '../api/client';
+import { api, getApiErrorDisplay } from '../api/client';
 
 const locations = Array.from({ length: 9 }, (_, index) => `R${index + 1}`);
 const sizes = ['0.5', '1', '5', '10'];
@@ -92,7 +92,7 @@ async function load() {
     comparison.value = event ? (await api.get('/v1/particles/location-comparison', { params: { measurementTime: event.time, particleSize: filters.value.particleSize, ...(common.deviceCode ? { deviceCode: common.deviceCode } : {}) } })).data : { items: [] };
     await nextTick(); renderCharts();
   } catch (reason) {
-    error.value = getApiErrorMessage(reason);
+    error.value = getApiErrorDisplay(reason);
     chartResult.value = null; comparison.value = null;
   } finally { loading.value = false; }
 }

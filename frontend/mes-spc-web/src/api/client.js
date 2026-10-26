@@ -4,7 +4,7 @@ import { resolveApiBase } from "../utils/apiBase";
 import { i18n, apiMessageSource } from "../i18n";
 import { displayUiMessage, snapshotApiDisplay } from "../i18n/uiMessage";
 import { normalizeLocale } from "../i18n/preferences";
-import { captureApiErrorDisplay, resolveLegacyApiDescriptor } from "../i18n/apiMessages";
+import { captureApiErrorDisplay, captureIndexedApiDisplay, resolveLegacyApiDescriptor } from "../i18n/apiMessages";
 
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 const baseURL = resolveApiBase(webEnvironment, import.meta.env.VITE_PRODUCTION_API_BASE);
@@ -88,6 +88,15 @@ export function getApiErrorMessage(err) {
   return displayUiMessage((key,args) => i18n.global.t(key,args), getApiErrorDisplay(err));
 }
 
+/** Read-only DTO display adapter; raw fallback text never becomes an i18n key. */
+export function getApiMessageDisplay(data, fallback = '') {
+  return captureApiErrorDisplay(data, apiMessageSource) ?? (typeof fallback === 'string' ? fallback : '');
+}
+
+export function getIndexedApiMessageDisplay(items, metadata, index) {
+  return captureIndexedApiDisplay(items, metadata, index, apiMessageSource);
+}
+
 /** Store this display value in reactive page state; render with displayUiMessage. */
 export function getApiErrorDisplay(err) {
   const msg = err?.message || "";
@@ -105,11 +114,12 @@ export function getApiErrorDisplay(err) {
     return translate('spc.api.unauthorized');
   }
   if (err?.response?.status === 409) {
-    return err?.response?.data?.message || translate('spc.api.conflict');
+    return getApiMessageDisplay(null,err?.response?.data?.message) || translate('spc.api.conflict');
   }
   if (err?.response?.status === 403) {
-    return err?.response?.data?.message || translate('spc.api.forbidden');
+    return getApiMessageDisplay(null,err?.response?.data?.message) || translate('spc.api.forbidden');
   }
   const responseData = err?.response?.data;
-  return (typeof responseData === "string" && responseData.trim()) || responseData?.title || responseData?.message || msg || translate('spc.api.requestFailed');
+  return [typeof responseData === 'string' ? responseData.trim() : '', responseData?.title, responseData?.message, msg]
+    .find(value => typeof value === 'string' && value) || translate('spc.api.requestFailed');
 }

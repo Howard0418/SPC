@@ -7,7 +7,7 @@ import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, onMounted, nextTick } from "vue";
 import * as echarts from "echarts";
-import { api } from "../api/client.js";
+import { api, getApiErrorDisplay } from "../api/client.js";
 import { Search, Info, MapPin, AlertTriangle, Layers, X, FolderTree } from "lucide-vue-next";
 
 const searchType = ref("lot"); // 'lot' or 'workorder'
@@ -90,7 +90,7 @@ async function performSearch(queryStr = null) {
     renderChart(treeData);
   } catch (err) {
     console.error(err);
-    errorMsg.value = err.response?.data || {key:'spc.trace.searchFailed'};
+    errorMsg.value = err.response ? getApiErrorDisplay(err) : {key:'spc.trace.searchFailed'};
     if (myChart) myChart.clear();
   } finally {
     isLoading.value = false;

@@ -1,11 +1,11 @@
 <script setup>
 import { useI18n } from "vue-i18n";
 import LocalePicker from "../components/LocalePicker.vue";
-import { displayUiMessage } from "../i18n/uiMessage";
+import { displayUiMessage, joinUiMessages } from "../i18n/uiMessage";
 const { t } = useI18n({ useScope: "global" });
 const messageText = value => displayUiMessage(t, value);
 import { onMounted, ref, computed } from "vue";
-import { api, getApiErrorDisplay } from "../api/client";
+import { api, getApiErrorDisplay, getApiMessageDisplay } from "../api/client";
 import {
   Layers,
   Plus,
@@ -179,7 +179,12 @@ async function confirmDelete(item) {
     const status = e?.response?.status;
     const data = e?.response?.data;
     if (status === 409 && data?.relatedItems?.length > 0) {
-      err.value = `${data.message}\n${data.relatedItems.map((r, i) => `  ${i + 1}. ${r}`).join('\n')}`;
+      err.value = joinUiMessages([
+        getApiMessageDisplay(data, data.message),
+        ...data.relatedItems.map((item, index) => joinUiMessages([
+          `  ${index + 1}. `, getApiMessageDisplay(data.relatedItemMessages?.[index], item)
+        ], ''))
+      ]);
     } else {
       err.value = getApiErrorDisplay(e);
     }

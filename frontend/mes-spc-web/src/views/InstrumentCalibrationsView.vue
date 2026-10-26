@@ -3,8 +3,9 @@ import {useI18n} from "vue-i18n";
 import {displayUiMessage} from "../i18n/uiMessage";
 import LocalePicker from "../components/LocalePicker.vue";
 const {t}=useI18n({useScope:"global"});
+const calibrationError = error => getApiMessageDisplay(error?.response?.data, error?.response?.data?.message) || getApiErrorDisplay(error);
 import { ref, onMounted, computed, watch } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import InstrumentImportPanel from "../components/InstrumentImportPanel.vue";
 import {
   Clock,
@@ -185,7 +186,7 @@ async function loadInstruments() {
       total.value = res.data.total || 0;
     }
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -302,7 +303,7 @@ async function saveInstrument() {
     showInstrumentModal.value = false;
     await Promise.all([loadInstruments(), loadSummary()]);
   } catch (e) {
-    instrumentFormErr.value = e.response?.data?.message || getApiErrorMessage(e);
+    instrumentFormErr.value = calibrationError(e);
   }
 }
 
@@ -389,7 +390,7 @@ async function saveCalibrationRecord() {
     showRecordModal.value = false;
     await Promise.all([loadInstruments(), loadSummary()]);
   } catch (e) {
-    recordFormErr.value = e.response?.data?.message || getApiErrorMessage(e);
+    recordFormErr.value = calibrationError(e);
   }
 }
 
@@ -470,7 +471,7 @@ async function saveSettings() {
     chatWebhookUrl.value = "";
     showSettingsModal.value = false;
   } catch (e) {
-    alert(t('spc.calibration.settingsSaveFailed',{error:e.response?.data?.message || getApiErrorMessage(e)}));
+    alert(t('spc.calibration.settingsSaveFailed',{error:displayUiMessage(t, calibrationError(e))}));
   }
 }
 
@@ -494,8 +495,8 @@ async function sendTestNotification() {
       ? await api.post("/v1/instrument-calibrations/test-chat", { chatWebhookUrl: chatWebhookUrl.value.trim() || undefined })
       : await api.post("/v1/instrument-calibrations/test-email", { email });
     if (isChat) {
-      if (res.data?.success) testResult.value = res.data.message;
-      else testError.value = res.data?.message || {key:'spc.calibration.chatFailed'};
+      if (res.data?.success) testResult.value = getApiMessageDisplay(res.data, res.data.message);
+      else testError.value = getApiMessageDisplay(res.data, res.data?.message) || {key:'spc.calibration.chatFailed'};
       return;
     }
     if (res.data?.success) {
@@ -503,10 +504,10 @@ async function sendTestNotification() {
       testResult.value = {key:"spc.calibration.testSent",args:{recipient:data.recipient||email,code:data.instrumentCode||"-"}};
     } else {
       const folder = res.data?.data?.outboxFolder;
-      testError.value = folder ? {key:res.data?.message?"spc.calibration.backupError":"spc.calibration.smtpBackupFailed",args:{error:res.data?.message,folder}} : (res.data?.message || {key:"spc.calibration.smtpFailed"});
+      testError.value = folder ? {key:res.data?.message?"spc.calibration.backupError":"spc.calibration.smtpBackupFailed",args:{error:getApiMessageDisplay(res.data, res.data?.message),folder}} : (getApiMessageDisplay(res.data, res.data?.message) || {key:"spc.calibration.smtpFailed"});
     }
   } catch (e) {
-    testError.value = e.response?.data?.message || getApiErrorMessage(e);
+    testError.value = calibrationError(e);
   } finally {
     testLoading.value = false;
   }
@@ -626,7 +627,7 @@ onMounted(async () => {
     <div v-if="err" class="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <AlertTriangle class="w-5 h-5 flex-shrink-0" />
-        <span>{{ err }}</span>
+        <span>{{ displayUiMessage(t, err) }}</span>
       </div>
       <button @click="err = ''" class="text-slate-400 hover:text-slate-700"><X class="w-4 h-4" /></button>
     </div>

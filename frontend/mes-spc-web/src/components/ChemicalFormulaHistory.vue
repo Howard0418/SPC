@@ -4,7 +4,7 @@ import { displayUiMessage } from "../i18n/uiMessage";
 const { t } = useI18n({ useScope: "global" });
 const messageText = value => displayUiMessage(t, value);
 import { watch, ref } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import VersionHistoryRange from "./VersionHistoryRange.vue";
 const hasMore = ref(false);
 let query = { skip: 0, take: 21 };
@@ -25,7 +25,7 @@ async function load(next) {
     const { data } = await api.get(`/part-process-characteristics/${id}/chemical-analysis-formula-versions`, { params: query });
     if (current === request) { const result = data?.data || []; hasMore.value = result.length > 20; versions.value = result.slice(0, 20); }
   } catch (e) {
-    if (current === request) error.value = getApiErrorMessage(e);
+    if (current === request) error.value = getApiErrorDisplay(e);
   } finally {
     if (current === request) loading.value = false;
   }
