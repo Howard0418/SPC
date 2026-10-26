@@ -1,4 +1,9 @@
 <script setup>
+import {useI18n} from "vue-i18n";
+import {displayUiMessage} from "../i18n/uiMessage";
+const {t}=useI18n({useScope:"global"});
+import {escapeChartText} from "../i18n/chartPresentation";
+import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, onMounted, nextTick } from "vue";
 import * as echarts from "echarts";
@@ -85,7 +90,7 @@ async function performSearch(queryStr = null) {
     renderChart(treeData);
   } catch (err) {
     console.error(err);
-    errorMsg.value = err.response?.data || "查無資料或發生錯誤";
+    errorMsg.value = err.response?.data || {key:'spc.trace.searchFailed'};
     if (myChart) myChart.clear();
   } finally {
     isLoading.value = false;
@@ -112,12 +117,12 @@ function renderChart(treeData) {
       triggerOn: "mousemove",
       formatter: (info) => {
         const { name, value, data } = info;
-        if (!data.meta) return `<b>${name}</b>`;
+        if (!data.meta) return `<b>${escapeChartText(name)}</b>`;
         return `
-          <div style="font-weight:bold">${name}</div>
-          <div>SubLot: ${value || '-'}</div>
-          <div>Status: ${data.meta.status || '-'}</div>
-          <div>Qty: ${data.meta.currentQty || '-'}</div>
+          <div style="font-weight:bold">${escapeChartText(name)}</div>
+          <div>${escapeChartText(t('spc.trace.subLot'))}: ${escapeChartText(value || '-')}</div>
+          <div>${escapeChartText(t('spc.trace.status'))}: ${escapeChartText(data.meta.status || '-')}</div>
+          <div>${escapeChartText(t('spc.trace.quantity'))}: ${escapeChartText(data.meta.currentQty || '-')}</div>
         `;
       }
     },
@@ -179,30 +184,30 @@ onMounted(() => {
   <div class="h-[calc(100vh-120px)] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden">
     
     <!-- Top Search Bar -->
-    <div class="flex items-center gap-4 p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+    <div class="flex flex-wrap items-center gap-4 p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
       <div class="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg p-1 shadow-sm border border-slate-200 dark:border-slate-700">
         <button 
           @click="searchType = 'lot'" 
           :class="['px-4 py-1.5 rounded-md text-sm font-semibold transition-all', searchType === 'lot' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700']"
-        >批號查詢</button>
+        >{{ t('spc.trace.lotSearch') }}</button>
         <button 
           @click="searchType = 'workorder'" 
           :class="['px-4 py-1.5 rounded-md text-sm font-semibold transition-all', searchType === 'workorder' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700']"
-        >工單查詢</button>
+        >{{ t('spc.trace.workOrderSearch') }}</button>
       </div>
       
-      <div class="flex-1 max-w-md relative">
+      <div class="flex-1 min-w-48 max-w-md relative">
         <Search class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input 
-          v-model="searchQuery" 
+          data-testid="trace-searchQuery" v-model="searchQuery"
           @keyup.enter="performSearch()"
           type="text" 
-          :placeholder="searchType === 'lot' ? '輸入 LotNo...' : '輸入 WorkOrderNo...'" 
+          :placeholder="searchType === 'lot' ? t('spc.trace.lotPlaceholder') : t('spc.trace.workOrderPlaceholder')"
           class="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-slate-100"
         />
       </div>
-      <button @click="performSearch()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md shadow-blue-500/20 transition-all flex items-center gap-2">
-        查詢樹狀圖
+      <button data-testid="trace-performSearch" @click="performSearch()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md shadow-blue-500/20 transition-all flex items-center gap-2">
+        {{ t('spc.trace.queryTree') }}
       </button>
 
       <div v-if="isLoading" class="flex items-center gap-2 text-sm text-blue-600 font-semibold ml-4">
@@ -210,73 +215,74 @@ onMounted(() => {
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        載入中...
+        {{ t('spc.trace.loading') }}
       </div>
-      <div v-if="errorMsg" class="text-sm text-red-500 font-semibold ml-4 bg-red-50 px-3 py-1 rounded-md">{{ errorMsg }}</div>
+      <div v-if="errorMsg" class="text-sm text-red-500 font-semibold ml-4 bg-red-50 px-3 py-1 rounded-md">{{ displayUiMessage(t,errorMsg) }}</div>
     </div>
 
     <!-- Guide / Operation Tip -->
-    <ModuleGuide title="模組指南：產品系譜圖 (Genealogy)">
-      <p>此頁面用於依批號或工單查詢上下游生產關係，並以樹狀圖呈現父批、目標批與子批的追溯脈絡。</p>
+    <ModuleGuide :title="t('spc.trace.genealogyGuide')">
+      <p>{{ t('spc.trace.genealogyGuideDescription') }}</p>
           <div class="space-y-1">
-            <div class="font-black text-blue-900 dark:text-blue-200">產品系譜圖頁面操作說明</div>
-            <p><strong>選擇查詢方式：</strong>可切換「批號查詢」或「工單查詢」。</p>
-            <p><strong>執行查詢：</strong>輸入 LotNo 或 WorkOrderNo 後按「查詢樹狀圖」。</p>
-            <p><strong>查看節點：</strong>點選圖上的批號節點，右側會顯示生產軌跡與品質事件。</p>
-            <p><strong>追溯上下游：</strong>點選不同節點可重新置中查看父批、子批與相關批次關係。</p>
+            <div class="font-black text-blue-900 dark:text-blue-200">{{ t('spc.trace.genealogyInstructions') }}</div>
+            <p><strong>{{ t('spc.trace.chooseSearch') }}</strong>{{ t('spc.trace.chooseSearchHelp') }}</p>
+            <p><strong>{{ t('spc.trace.execute') }}</strong>{{ t('spc.trace.treeQueryHelp') }}</p>
+            <p><strong>{{ t('spc.trace.viewNodes') }}</strong>{{ t('spc.trace.viewNodesHelp') }}</p>
+            <p><strong>{{ t('spc.trace.traceRelations') }}</strong>{{ t('spc.trace.traceRelationsHelp') }}</p>
           </div>
         </ModuleGuide>
 
     <!-- Canvas Area -->
     <div class="flex-1 relative bg-slate-50/50 dark:bg-slate-900/20">
-      <div ref="chartRef" class="w-full h-full"></div>
+      <div ref="chartRef" data-testid="trace-tree" class="w-full h-full"></div>
 
       <!-- Placeholder -->
       <div v-if="!activeNode && !isLoading && !myChart" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
         <FolderTree class="w-20 h-20 mb-4 opacity-20" />
-        <p class="text-lg font-medium">請輸入批號或工單號以繪製系譜圖</p>
+        <p class="text-lg font-medium">{{ t('spc.trace.treeEmpty') }}</p>
       </div>
     </div>
 
     <!-- Side Panel (Drawer) for Traceability Details -->
     <div 
-      class="absolute top-0 right-0 h-full w-96 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl transition-transform duration-300 transform flex flex-col"
+      data-testid="trace-details" role="dialog" :aria-label="t('spc.trace.lotDetails')" class="absolute top-0 right-0 h-full w-96 max-w-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl transition-transform duration-300 transform flex flex-col"
       :class="showPanel ? 'translate-x-0' : 'translate-x-full'"
     >
       <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
         <div>
           <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <Info class="w-5 h-5 text-blue-500" />
-            批號歷程詳情
+            {{ t('spc.trace.lotDetails') }}
           </h3>
           <p v-if="activeNode" class="text-xs text-slate-500 mt-1 font-mono">{{ activeNode.lotNo }}</p>
         </div>
-        <button @click="showPanel = false" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
+        <button data-testid="trace-closeDetails" :aria-label="t('spc.trace.close')" @click="showPanel = false" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
           <X class="w-5 h-5 text-slate-500" />
         </button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-4 space-y-6">
+<LocalePicker />
         
         <!-- Physical Routing -->
         <section>
           <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-1.5">
-            <MapPin class="w-4 h-4 text-emerald-500" /> 物理流轉軌跡
+            <MapPin class="w-4 h-4 text-emerald-500" /> {{ t('spc.trace.routing') }}
           </h4>
-          <div v-if="activeDetails.routingHistory.length === 0" class="text-xs text-slate-400 italic">無軌跡紀錄</div>
+          <div v-if="activeDetails.routingHistory.length === 0" class="text-xs text-slate-400 italic">{{ t('spc.trace.noRouting') }}</div>
           <div v-else class="relative border-l-2 border-emerald-200 dark:border-emerald-900/50 ml-2 space-y-4">
             <div v-for="(route, i) in activeDetails.routingHistory" :key="i" class="relative pl-4">
               <div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-slate-900"></div>
               <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2.5 border border-slate-100 dark:border-slate-800">
                 <div class="text-xs font-bold text-slate-700 dark:text-slate-300 flex justify-between">
                   <span>{{ route.lineCode }} ➔ {{ route.tankCode }}</span>
-                  <span class="text-emerald-600 dark:text-emerald-400">槽位: {{ route.slotCode }}</span>
+                  <span class="text-emerald-600 dark:text-emerald-400">{{ t('spc.trace.slot') }} {{ route.slotCode }}</span>
                 </div>
                 <div class="text-[10px] text-slate-500 mt-1 flex justify-between">
-                  <span>In: {{ new Date(route.entryTime).toLocaleString() }}</span>
-                  <span v-if="route.exitTime">Out: {{ new Date(route.exitTime).toLocaleString() }}</span>
+                  <span>{{ t('spc.trace.entry') }} {{ new Date(route.entryTime).toLocaleString() }}</span>
+                  <span v-if="route.exitTime">{{ t('spc.trace.exit') }} {{ new Date(route.exitTime).toLocaleString() }}</span>
                 </div>
-                <div class="text-[10px] text-slate-400 mt-1">OP: {{ route.operator || 'System' }}</div>
+                <div class="text-[10px] text-slate-400 mt-1">{{ t('spc.trace.operator') }} {{ route.operator || t('spc.trace.system') }}</div>
               </div>
             </div>
           </div>
@@ -285,9 +291,9 @@ onMounted(() => {
         <!-- Quality Events -->
         <section>
           <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-1.5">
-            <AlertTriangle class="w-4 h-4 text-amber-500" /> 品質與檢驗事件
+            <AlertTriangle class="w-4 h-4 text-amber-500" /> {{ t('spc.trace.qualityEvents') }}
           </h4>
-          <div v-if="activeDetails.qualityEvents.length === 0" class="text-xs text-slate-400 italic">無檢驗紀錄</div>
+          <div v-if="activeDetails.qualityEvents.length === 0" class="text-xs text-slate-400 italic">{{ t('spc.trace.noQuality') }}</div>
           <div v-else class="space-y-2.5">
             <div v-for="(evt, i) in activeDetails.qualityEvents" :key="i" class="bg-amber-50/50 dark:bg-amber-900/10 rounded-lg p-2.5 border border-amber-100 dark:border-amber-900/30 text-sm">
               <div class="flex justify-between items-start mb-1">
@@ -295,10 +301,10 @@ onMounted(() => {
                 <span class="text-[10px] text-slate-400">{{ new Date(evt.eventTime).toLocaleString() }}</span>
               </div>
               <div class="text-xs text-slate-600 dark:text-slate-300">
-                數值: <span class="font-mono font-bold">{{ evt.measuredValue ?? evt.defectQty ?? evt.defectCount ?? 'N/A' }}</span>
+                {{ t('spc.trace.value') }} <span class="font-mono font-bold">{{ evt.measuredValue ?? evt.defectQty ?? evt.defectCount ?? 'N/A' }}</span>
               </div>
               <div v-if="evt.chemicalName" class="text-[10px] text-slate-500 mt-1">
-                藥水: {{ evt.chemicalName }}
+                {{ t('spc.trace.chemical') }} {{ evt.chemicalName }}
               </div>
             </div>
           </div>

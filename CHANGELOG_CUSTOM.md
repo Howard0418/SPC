@@ -2013,3 +2013,8 @@
 - 173新鍵／519列draft、累計1979鍵，SMTP／報表／使用者固定UI、星期、角色與比對狀態及提示三語；原權限／DTO／收件ID／排程／密碼保留機制與raw保持。
 - 91單元、本機51／發布51、build/hash/health/同源通過，只測試Web0.1.89/API0.1.72、備份76檔／保護設定4；所有業務寫入與通知全攔截，無DB／後端／Portal／正式異動。[驗證與回復](specs/20261026-i18n-task07d/verification.md)。
 - 剩15件接續07E；譯文draft真人審查待20。
+
+## 2026-10-26 I18N-TASK-07E1 查詢／系譜／咬蝕入口三語
+- 07E依公開路由拆E1/E2，本批94新鍵／282列draft、累計2073鍵；固定UI、提示及tree tooltip三語，raw參數HTML編碼、保留圖表series／識別／query與連結。
+- 95單元、本機40／發布40、build/hash/health/同源通過，只測試Web0.1.90/API0.1.72，備份78檔／保護設定4；無DB／後端／Portal／正式變更。[驗證與回復](specs/20261026-i18n-task07e1/verification.md)。
+- 首頁原導向/spc已三語，未接路由舊檔不新增入口；剩15件接續E2，draft真人審稿留20。
