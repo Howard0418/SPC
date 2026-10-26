@@ -1644,6 +1644,36 @@
       "unavailableSummary": " / {count} unavailable",
       "alarmingCount": "{count} active alarms",
       "refreshHelp": "Updated every 30 seconds; data older than {seconds} seconds is stale. Monitoring only; no writes to equipment."
+    },
+    "particles": {
+      "description": "Particle counts, location comparison and statistical control",
+      "from": "Start date",
+      "to": "End date",
+      "location": "Location",
+      "sizeUnit": "Particle size (µm)",
+      "device": "Instrument code",
+      "all": "All",
+      "chartType": "Chart type",
+      "query": "Query",
+      "ready": "Control limits established",
+      "insufficient": "Fewer than 20 data points",
+      "trend": "Control trend",
+      "comparison": "Latest event R1-R9 comparison",
+      "measurements": "Raw measurements",
+      "recent": "Latest 50 records",
+      "time": "Time",
+      "size": "Particle size",
+      "samplingVolume": "Sampling volume",
+      "instrument": "Instrument",
+      "source": "Source",
+      "empty": "No data",
+      "title": "Particle Monitoring",
+      "invalidDates": "Set a valid query date range.",
+      "count": "Count",
+      "uValue": "U value",
+      "countPer": "Count/{unit}",
+      "matchingCount": "{count} matching records",
+      "pointCount": "{count} points"
     }
   }
 }

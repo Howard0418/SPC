@@ -1644,6 +1644,36 @@
       "unavailableSummary": "／{count} 無法取得",
       "alarmingCount": "{count} 個告警中",
       "refreshHelp": "每 30 秒更新；資料超過 {seconds} 秒即判定逾時。此頁僅供監看，不會寫入設備。"
+    },
+    "particles": {
+      "description": "落塵粒子計數、位置比較與統計管制",
+      "from": "開始日期",
+      "to": "結束日期",
+      "location": "位置",
+      "sizeUnit": "粒徑 (µm)",
+      "device": "儀器代碼",
+      "all": "全部",
+      "chartType": "圖型",
+      "query": "查詢",
+      "ready": "管制界線已建立",
+      "insufficient": "資料不足 20 點",
+      "trend": "管制趨勢",
+      "comparison": "最新事件 R1-R9 比較",
+      "measurements": "原始量測",
+      "recent": "最近 50 筆",
+      "time": "時間",
+      "size": "粒徑",
+      "samplingVolume": "抽樣體積",
+      "instrument": "儀器",
+      "source": "來源",
+      "empty": "查無資料",
+      "title": "粒子監控",
+      "invalidDates": "請設定有效的查詢日期範圍。",
+      "count": "計數",
+      "uValue": "U 值",
+      "countPer": "計數/{unit}",
+      "matchingCount": "{count} 筆符合資料",
+      "pointCount": "{count} 點"
     }
   }
 }

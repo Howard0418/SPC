@@ -1998,3 +1998,8 @@
 - 07依模組拆A～E，本批73新鍵／219列draft、累計1579鍵，設備狀態／點位／監控固定顯示與相對時間三語、手機表格橫捲及導覽堆疊。保留原timer／狀態判定／query／DTO／raw資料。
 - 78單元、本機41／發布41、build/hash/health/同源通過，只測試Web0.1.86/API0.1.72，備份69檔／保護設定4，不改DB／Chameleon／正式。[驗證與回復](specs/20261026-i18n-task07a/verification.md)。
 - 剩18件接續07B，譯文draft真人審查待20。
+
+## 2026-10-26 I18N-TASK-07B 粒子監控三語
+- 28新鍵／84列draft、累計1607鍵；固定UI／日期錯誤／圖軸／legend／tooltip三語，原query／C/U／series／raw資料／時間與數值格式保持。
+- 81單元、本機25／發布25、build/hash/health/同源通過，只測試Web0.1.87/API0.1.72，備份72檔／保護設定4；無DB／後端／正式變更。[驗證與回復](specs/20261026-i18n-task07b/verification.md)。
+- 剩17件接續07C，譯文draft真人審核待20。
