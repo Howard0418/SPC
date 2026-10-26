@@ -62,7 +62,7 @@ const stackedMobileNav = computed(() => [
   '/calibration-instruments', '/processes', '/traceability-master',
   '/control-chart-groups', '/spc-rule-groups',
   '/chemical-analysis-overview', '/chemical-f-table', '/part-process-characteristics', '/measurements',
-  '/spc', '/trend-chart',
+  '/spc', '/trend-chart', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow',
   '/monthly-control-chart', '/process-analysis/capability', '/process-analysis/violations',
 ].includes(route.path) || route.path === '/uploads' || /^\/uploads\/[^/]+\/preview$/.test(route.path));
 const showNav = computed(() => !authOn || route.path !== "/login");

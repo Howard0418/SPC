@@ -1,4 +1,7 @@
 <script setup>
+import { useI18n } from "vue-i18n";
+import { displayUiMessage } from "../i18n/uiMessage";
+import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
@@ -18,6 +21,7 @@ import {
   FileText
 } from "lucide-vue-next";
 
+const { t } = useI18n({ useScope: "global" });
 const rows = ref([]);
 const loading = ref(false);
 const err = ref("");
@@ -90,7 +94,7 @@ async function ack(id) {
   err.value = "";
   try {
     await api.post(`/alerts/${id}/ack`);
-    successMsg.value = `警報單 #ALT-${String(id).padStart(5, '0')} 已成功簽收！`;
+    successMsg.value = {key:'spc.alerts.ackSuccess',args:{id:String(id).padStart(5,'0')}};
     await load();
   } catch (e) {
     err.value = getApiErrorMessage(e);
@@ -106,7 +110,7 @@ async function sendTestEmail() {
       params: { email: testEmailInput.value }
     });
     outboxPath.value = res.data?.outboxFolder || "";
-    successMsg.value = `測試通報信件已成功派發至 ${res.data?.recipient}！(郵件副本已同步儲存於 ${outboxPath.value})`;
+    successMsg.value = {key:"spc.alerts.emailSuccess",args:{recipient:res.data?.recipient,path:outboxPath.value}};
   } catch (e) {
     err.value = getApiErrorMessage(e);
   } finally {
@@ -120,7 +124,7 @@ async function triggerSimulateAlert() {
   try {
     const res = await api.post("/alerts/simulate", simulateForm.value);
     outboxPath.value = res.data?.outboxFolder || "";
-    successMsg.value = `成功觸發即時警報 #ALT-${String(res.data?.alert?.id).padStart(5, '0')}，且已自動寄出警報通知 Email 至 ${res.data?.recipient}！`;
+    successMsg.value = {key:"spc.alerts.simulateSuccess",args:{id:String(res.data?.alert?.id).padStart(5,"0"),recipient:res.data?.recipient}};
     showSimulateModal.value = false;
     await load();
   } catch (e) {
@@ -144,14 +148,14 @@ onMounted(load);
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">IATF 16949 / ISO 9001 規範</span>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">{{ t('spc.alerts.standards') }}</span>
             <span class="text-xs text-slate-400 font-mono">Real-time Alert Dispatcher</span>
           </div>
           <h1 class="text-2xl font-black mt-1 bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-            工業品質異常通報總覽與 SMTP 自動化警報中心
+            {{ t('spc.alerts.title') }}
           </h1>
           <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            當產線進料或製程檢驗觸發規格超標 (OOS) 或 3-Sigma 管制界限失控 (OOC) 時，系統即時產生警報單並透過 SMTP 發送通知至品管負責人。
+            {{ t('spc.alerts.description') }}
           </p>
         </div>
       </div>
@@ -163,32 +167,32 @@ onMounted(load);
           @click="showSimulateModal = true"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/20 border border-orange-400/30 transition-all hover:scale-105"
         >
-          <Zap class="w-4 h-4 fill-current" /> ⚡ 模擬觸發異常警報 (OOS/OOC)
+          <Zap class="w-4 h-4 fill-current" /> {{ t('spc.alerts.simulate') }}
         </button>
 
         <button
           type="button"
-          @click="load"
+          data-testid="alerts-load" @click="load"
           :disabled="loading"
           class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all shadow-sm"
         >
-          <RefreshCw :class="{ 'animate-spin': loading }" class="w-4 h-4 text-blue-400" /> {{ loading ? '同步中...' : '重新整理' }}
+          <RefreshCw :class="{ 'animate-spin': loading }" class="w-4 h-4 text-blue-400" /> {{ loading ? t('spc.alerts.syncing') : t('spc.alerts.refresh') }}
         </button>
       </div>
     </div>
 
     <!-- Guide / Operation Tip -->
-    <ModuleGuide title="模組指南：異常通報總覽 (Alerts)">
+    <ModuleGuide :title="t('spc.alerts.guide')">
       <p class="text-xs text-red-700 dark:text-red-400/80 mt-1.5 leading-relaxed">
-          此頁面集中顯示由 SPC 判定產生的 OOS、OOC 異常通報，協助品管人員快速掌握待處理警報、已簽收案件與通知狀態。
+          {{ t('spc.alerts.guideDescription') }}
         </p>
         <div class="mt-3 space-y-1.5 text-xs text-red-700 dark:text-red-400/80 leading-relaxed">
-          <div class="font-black text-red-900 dark:text-red-300">異常通報總覽頁面操作說明</div>
-          <p><strong>查看統計：</strong>上方卡片可快速查看總警報、待簽收、已簽收、OOS 與 OOC 數量。</p>
-          <p><strong>篩選異常：</strong>使用搜尋框與類型篩選，依異常單號、訊息、OOS/OOC 或簽收狀態查詢。</p>
-          <p><strong>簽收處理：</strong>確認異常後可執行簽收，表示該異常已被人員接手確認。</p>
-          <p><strong>前往處置：</strong>需要填寫真因與對策時，點選處置入口前往「異常單簽核處置」。</p>
-          <p><strong>測試通知：</strong>可使用模擬警報或 SMTP 測試區確認異常通知與郵件流程。</p>
+          <div class="font-black text-red-900 dark:text-red-300">{{ t('spc.alerts.instructions') }}</div>
+          <p><strong>{{ t('spc.alerts.viewStats') }}</strong>{{ t('spc.alerts.viewStatsHelp') }}</p>
+          <p><strong>{{ t('spc.alerts.filterAlerts') }}</strong>{{ t('spc.alerts.filterHelp') }}</p>
+          <p><strong>{{ t('spc.alerts.acknowledge') }}</strong>{{ t('spc.alerts.ackHelp') }}</p>
+          <p><strong>{{ t('spc.alerts.resolve') }}</strong>{{ t('spc.alerts.resolveHelp') }}</p>
+          <p><strong>{{ t('spc.alerts.testNotifications') }}</strong>{{ t('spc.alerts.testHelp') }}</p>
         </div>
     </ModuleGuide>
 
@@ -201,10 +205,10 @@ onMounted(load);
     <div v-if="successMsg" class="p-4 rounded-xl bg-emerald-500/10 dark:bg-emerald-950/50 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-sm flex items-start gap-3 animate-fade-in shadow-sm">
       <CheckCircle2 class="w-5 h-5 flex-shrink-0 text-emerald-500 mt-0.5" />
       <div class="space-y-1">
-        <div class="font-bold">{{ successMsg }}</div>
+        <div class="font-bold">{{ displayUiMessage(t, successMsg) }}</div>
         <div v-if="outboxPath" class="text-xs text-slate-500 dark:text-slate-400 font-mono bg-emerald-500/5 dark:bg-slate-900/50 p-2 rounded border border-emerald-500/20 flex items-center gap-2 mt-1">
           <FileText class="w-4 h-4 text-emerald-500 flex-shrink-0" />
-          <span>本地郵件副本已生成於 Windows 檔案總管：<strong>{{ outboxPath }}</strong></span>
+          <span>{{ t('spc.alerts.localCopy') }}<strong>{{ outboxPath }}</strong></span>
         </div>
       </div>
     </div>
@@ -217,12 +221,12 @@ onMounted(load);
             <Mail class="w-4 h-4" />
           </div>
           <div>
-            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">📧 SMTP 自動化警報發信測試沙盒</h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">測試系統能否成功建置 HTML 通報郵件並進行寄發或存檔</p>
+            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ t('spc.alerts.smtpSandbox') }}</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ t('spc.alerts.smtpDescription') }}</p>
           </div>
         </div>
         <span class="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> 系統通報伺服器就緒
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> {{ t('spc.alerts.serverReady') }}
         </span>
       </div>
 
@@ -232,25 +236,25 @@ onMounted(load);
             <Mail class="w-4 h-4" />
           </span>
           <input
-            v-model="testEmailInput"
+            data-testid="alerts-testEmailInput" v-model="testEmailInput"
             type="email"
             class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 focus:ring-2 focus:ring-blue-500 font-mono text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
-            placeholder="請輸入接收測試通報的 Email 信箱..."
+            :placeholder="t('spc.alerts.emailPlaceholder')"
           />
         </div>
         <button
           type="button"
-          @click="sendTestEmail"
+          data-testid="alerts-sendTestEmail" @click="sendTestEmail"
           :disabled="isSendingEmail || !testEmailInput"
           class="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <RefreshCw v-if="isSendingEmail" class="w-4 h-4 animate-spin" />
           <Mail v-else class="w-4 h-4" />
-          {{ isSendingEmail ? '正在連線發送...' : '發送測試通報郵件' }}
+          {{ isSendingEmail ? t('spc.alerts.sending') : t('spc.alerts.sendTest') }}
         </button>
       </div>
       <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-2 italic">
-        💡 提示：系統不僅會嘗試透過 SMTP 寄出信件，同時會在您的主機 <code>C:\Users\ihao_ting.PMR.000\Desktop\MES\EmailOutbox</code> 產生精美的 HTML 檔案副本供您隨時點開預覽！
+        {{ t('spc.alerts.copyTip') }} <code>C:\Users\ihao_ting.PMR.000\Desktop\MES\EmailOutbox</code> {{ t('spc.alerts.copyTipEnd') }}
       </p>
     </div>
 
@@ -259,35 +263,35 @@ onMounted(load);
       <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
         <div class="p-3 bg-blue-500/10 text-blue-500 rounded-xl"><AlertTriangle class="w-6 h-6" /></div>
         <div>
-          <div class="text-[11px] text-slate-400 font-bold uppercase">總警報次數</div>
+          <div class="text-[11px] text-slate-400 font-bold uppercase">{{ t('spc.alerts.total') }}</div>
           <div class="text-2xl font-black text-slate-800 dark:text-white mt-0.5">{{ stats.total }}</div>
         </div>
       </div>
       <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
         <div class="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><Clock class="w-6 h-6" /></div>
         <div>
-          <div class="text-[11px] text-slate-400 font-bold uppercase">待簽收處置 (Open)</div>
+          <div class="text-[11px] text-slate-400 font-bold uppercase">{{ t('spc.alerts.pending') }}</div>
           <div class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-0.5">{{ stats.pending }}</div>
         </div>
       </div>
       <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
         <div class="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><CheckCircle2 class="w-6 h-6" /></div>
         <div>
-          <div class="text-[11px] text-slate-400 font-bold uppercase">已完成簽收 (Ack)</div>
+          <div class="text-[11px] text-slate-400 font-bold uppercase">{{ t('spc.alerts.acked') }}</div>
           <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{{ stats.acked }}</div>
         </div>
       </div>
       <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
         <div class="p-3 bg-red-500/10 text-red-500 rounded-xl"><ShieldAlert class="w-6 h-6" /></div>
         <div>
-          <div class="text-[11px] text-slate-400 font-bold uppercase">規格違規 (OOS)</div>
+          <div class="text-[11px] text-slate-400 font-bold uppercase">{{ t('spc.alerts.oos') }}</div>
           <div class="text-2xl font-black text-red-600 dark:text-red-400 mt-0.5">{{ stats.oosCount }}</div>
         </div>
       </div>
       <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 col-span-2 md:col-span-1">
         <div class="p-3 bg-orange-500/10 text-orange-500 rounded-xl"><Zap class="w-6 h-6" /></div>
         <div>
-          <div class="text-[11px] text-slate-400 font-bold uppercase">管制失控 (OOC)</div>
+          <div class="text-[11px] text-slate-400 font-bold uppercase">{{ t('spc.alerts.ooc') }}</div>
           <div class="text-2xl font-black text-orange-600 dark:text-orange-400 mt-0.5">{{ stats.oocCount }}</div>
         </div>
       </div>
@@ -303,7 +307,7 @@ onMounted(load);
           :class="filterType === 'all' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'"
           class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap"
         >
-          全部警報
+          {{ t('spc.alerts.all') }}
         </button>
         <button
           type="button"
@@ -311,7 +315,7 @@ onMounted(load);
           :class="filterType === 'oos' ? 'bg-red-600 text-white shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-red-500'"
           class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap"
         >
-          🚨 規格違規 (OOS)
+          {{ t('spc.alerts.filterOos') }}
         </button>
         <button
           type="button"
@@ -319,7 +323,7 @@ onMounted(load);
           :class="filterType === 'ooc' ? 'bg-orange-600 text-white shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-orange-500'"
           class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap"
         >
-          ⚠️ 管制失控 (OOC)
+          {{ t('spc.alerts.filterOoc') }}
         </button>
         <button
           type="button"
@@ -327,7 +331,7 @@ onMounted(load);
           :class="filterType === 'pending' ? 'bg-amber-600 text-white shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-amber-500'"
           class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap"
         >
-          ⏳ 待簽收 (Open)
+          {{ t('spc.alerts.filterPending') }}
         </button>
         <button
           type="button"
@@ -335,7 +339,7 @@ onMounted(load);
           :class="filterType === 'acked' ? 'bg-emerald-600 text-white shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-emerald-500'"
           class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap"
         >
-          ✅ 已簽收 (Acked)
+          {{ t('spc.alerts.filterAcked') }}
         </button>
       </div>
 
@@ -345,10 +349,10 @@ onMounted(load);
           <Search class="w-4 h-4" />
         </span>
         <input
-          v-model="searchQuery"
+          data-testid="alerts-searchQuery" v-model="searchQuery"
           type="text"
           class="w-full pl-9 pr-4 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
-          placeholder="搜尋警報訊息、料號或單號..."
+          :placeholder="t('spc.alerts.search')"
         />
       </div>
     </div>
@@ -359,21 +363,21 @@ onMounted(load);
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              <th class="py-3.5 px-4">單號 / 類型</th>
-              <th class="py-3.5 px-4">發生時間</th>
-              <th class="py-3.5 px-4">料號 / 站別</th>
-              <th class="py-3.5 px-4">量測數據</th>
-              <th class="py-3.5 px-6">違規判定說明</th>
-              <th class="py-3.5 px-4 text-center">簽收狀態</th>
-              <th class="py-3.5 px-4 text-right">操作</th>
+              <th class="py-3.5 px-4">{{ t('spc.alerts.idType') }}</th>
+              <th class="py-3.5 px-4">{{ t('spc.alerts.occurredAt') }}</th>
+              <th class="py-3.5 px-4">{{ t('spc.alerts.partProcess') }}</th>
+              <th class="py-3.5 px-4">{{ t('spc.alerts.value') }}</th>
+              <th class="py-3.5 px-6">{{ t('spc.alerts.violation') }}</th>
+              <th class="py-3.5 px-4 text-center">{{ t('spc.alerts.ackStatus') }}</th>
+              <th class="py-3.5 px-4 text-right">{{ t('spc.alerts.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400">正在同步雲端警報資料庫...</td>
+              <td colspan="7" class="py-12 text-center text-slate-400">{{ t('spc.alerts.loading') }}</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400 font-medium">沒有符合條件的異常通報單。</td>
+              <td colspan="7" class="py-12 text-center text-slate-400 font-medium">{{ t('spc.alerts.empty') }}</td>
             </tr>
             <tr
               v-for="r in filteredRows"
@@ -388,13 +392,13 @@ onMounted(load);
                     v-if="r.alertType === 'OutOfSpec' || r.alertType === 0"
                     class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 inline-flex items-center gap-1"
                   >
-                    <ShieldAlert class="w-3 h-3 text-red-500" /> 規格違規 (OOS)
+                    <ShieldAlert class="w-3 h-3 text-red-500" /> {{ t('spc.alerts.oos') }}
                   </span>
                   <span
                     v-else
                     class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 inline-flex items-center gap-1"
                   >
-                    <Zap class="w-3 h-3 text-orange-500" /> 管制失控 (OOC)
+                    <Zap class="w-3 h-3 text-orange-500" /> {{ t('spc.alerts.ooc') }}
                   </span>
                 </div>
               </td>
@@ -428,7 +432,7 @@ onMounted(load);
                   {{ r.message }}
                 </div>
                 <div v-if="r.rootCause" class="mt-1 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded border border-slate-200 dark:border-slate-700">
-                  <span class="font-bold text-blue-500">真因分析：</span>{{ r.rootCause }}
+                  <span class="font-bold text-blue-500">{{ t('spc.alerts.rootCausePrefix') }}</span>{{ r.rootCause }}
                 </div>
               </td>
 
@@ -438,13 +442,13 @@ onMounted(load);
                   v-if="r.isAcknowledged"
                   class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1.5"
                 >
-                  <CheckCircle2 class="w-3.5 h-3.5" /> 已完成簽收
+                  <CheckCircle2 class="w-3.5 h-3.5" /> {{ t('spc.alerts.ackComplete') }}
                 </span>
                 <span
                   v-else
                   class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 inline-flex items-center gap-1.5 animate-pulse"
                 >
-                  <Clock class="w-3.5 h-3.5" /> 待處置 (Open)
+                  <Clock class="w-3.5 h-3.5" /> {{ t('spc.alerts.pendingAction') }}
                 </span>
               </td>
 
@@ -454,23 +458,23 @@ onMounted(load);
                   <button
                     v-if="!r.isAcknowledged"
                     type="button"
-                    @click="ack(r.id)"
+                    data-testid="alerts-ack" @click="ack(r.id)"
                     class="px-3 py-1.5 rounded-lg font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5"
                   >
-                    <Check class="w-3.5 h-3.5" /> 立即簽收
+                    <Check class="w-3.5 h-3.5" /> {{ t('spc.alerts.ackNow') }}
                   </button>
                   <router-link
                     v-if="r.ppcId"
                     :to="`/spc?ppcId=${r.ppcId}`"
                     class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition-colors"
-                    title="查看 V1 SPC 管制圖"
+                    :title="t('spc.alerts.viewV1')"
                   >
                     <ExternalLink class="w-4 h-4" />
                   </router-link>
                   <router-link
                     to="/alerts-workflow"
                     class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                    title="前往異常單簽核處置"
+                    :title="t('spc.alerts.goWorkflow')"
                   >
                     <ArrowUpRight class="w-4 h-4" />
                   </router-link>
@@ -484,61 +488,62 @@ onMounted(load);
 
     <!-- 模擬觸發異常警報 Modal -->
     <div v-if="showSimulateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-      <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full overflow-hidden">
+      <div data-testid="alerts-simulate-dialog" role="dialog" :aria-label="t('spc.alerts.simulateTitle')" class="max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full">
         <div class="p-6 bg-gradient-to-r from-amber-500 to-orange-600 text-white flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-white/20 rounded-2xl backdrop-blur"><Zap class="w-6 h-6 fill-current" /></div>
             <div>
-              <h3 class="text-lg font-bold tracking-wide">⚡ 模擬觸發即時 SPC 異常警報</h3>
-              <p class="text-xs text-orange-100 opacity-90">驗證 Web 即時建檔與 SMTP 自動化郵件派發</p>
+              <h3 class="text-lg font-bold tracking-wide">{{ t('spc.alerts.simulateTitle') }}</h3>
+              <p class="text-xs text-orange-100 opacity-90">{{ t('spc.alerts.simulateDescription') }}</p>
             </div>
           </div>
           <button type="button" @click="showSimulateModal = false" class="p-2 rounded-xl bg-black/10 hover:bg-black/20 text-white transition-colors">✕</button>
         </div>
 
         <div class="p-6 space-y-4">
+<LocalePicker />
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">產品料號 ID (PartId)</label>
-              <input v-model="simulateForm.partId" type="number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">{{ t('spc.alerts.partId') }}</label>
+              <input data-testid="alerts-simulateForm.partId" v-model="simulateForm.partId" type="number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">量測工站 ID (ProcessId)</label>
-              <input v-model="simulateForm.processId" type="number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">{{ t('spc.alerts.processId') }}</label>
+              <input data-testid="alerts-simulateForm.processId" v-model="simulateForm.processId" type="number" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">警報類型</label>
-              <select v-model="simulateForm.alertType" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold">
-                <option value="OOS">🚨 規格違規 (OutOfSpec)</option>
-                <option value="OOC">⚠️ 管制失控 (OutOfControl)</option>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">{{ t('spc.alerts.type') }}</label>
+              <select data-testid="alerts-simulateForm.alertType" v-model="simulateForm.alertType" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold">
+                <option value="OOS">{{ t('spc.alerts.typeOos') }}</option>
+                <option value="OOC">{{ t('spc.alerts.typeOoc') }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">量測數據 (異常數值)</label>
-              <input v-model="simulateForm.actualValue" type="number" step="0.01" class="w-full px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-mono font-bold border border-red-300 dark:border-red-900 text-sm" />
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-1">{{ t('spc.alerts.abnormalValue') }}</label>
+              <input data-testid="alerts-simulateForm.actualValue" v-model="simulateForm.actualValue" type="number" step="0.01" class="w-full px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-mono font-bold border border-red-300 dark:border-red-900 text-sm" />
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">違規判定說明 (Email 顯示主旨內容)</label>
-            <input v-model="simulateForm.message" type="text" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium" />
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">{{ t('spc.alerts.emailSubject') }}</label>
+            <input data-testid="alerts-simulateForm.message" v-model="simulateForm.message" type="text" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium" />
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">警報收件工程師 Email</label>
-            <input v-model="simulateForm.targetEmail" type="email" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">{{ t('spc.alerts.recipient') }}</label>
+            <input data-testid="alerts-simulateForm.targetEmail" v-model="simulateForm.targetEmail" type="email" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-sm" />
           </div>
         </div>
 
         <div class="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
           <button type="button" @click="showSimulateModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-            取消
+            {{ t('spc.alerts.cancel') }}
           </button>
-          <button type="button" @click="triggerSimulateAlert" class="px-6 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white shadow-lg shadow-orange-500/20 transition-all">
-            ⚡ 立即送出警報通報
+          <button type="button" data-testid="alerts-triggerSimulateAlert" @click="triggerSimulateAlert" class="px-6 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white shadow-lg shadow-orange-500/20 transition-all">
+            {{ t('spc.alerts.sendAlert') }}
           </button>
         </div>
       </div>
