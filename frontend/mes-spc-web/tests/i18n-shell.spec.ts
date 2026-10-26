@@ -44,7 +44,7 @@ for (const width of [1920,1366,1280,390]) for (const locale of ['zh-TW','zh-CN',
 
 test('unsaved form, query, instance and machine roles survive switching',async({page})=>{
   await prepare(page); await page.goto('/settings/smtp?keep=42');
-  const host=page.getByPlaceholder('例如: smtp.company.com 或 localhost');
+  const host=page.getByTestId('settings-form.host');
   await expect(host).toHaveValue('fixture.invalid'); await host.fill('unsaved.invalid');
   await host.evaluate(el=>{(window as any).__originalInput=el});
   const requests:string[]=[];page.on('request',r=>{if(r.url().includes('/api/'))requests.push(r.url())});
@@ -57,7 +57,7 @@ test('unsaved form, query, instance and machine roles survive switching',async({
   expect(requests).toEqual([]);
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('mes_spc_user')!).role)).toBe('Editor');
   await page.goto('/spc/query?keep=42');
-  const query=page.getByPlaceholder('例如：WO-2026...');await query.fill('WO-UNCHANGED');
+  const query=page.getByTestId('trace-queryParams.workOrderNo');await query.fill('WO-UNCHANGED');
   await page.getByTestId('locale-select').selectOption('en-US');await expect(query).toHaveValue('WO-UNCHANGED');
   await expect(page).toHaveURL(/\/spc\/query\?keep=42$/);
 });
@@ -87,7 +87,7 @@ test('Viewer retains menu and protected route rules',async({page})=>{
 
 test('local storage write failure preserves active language and draft',async({page})=>{
  await prepare(page);await page.goto('/settings/smtp');
- const host=page.getByPlaceholder('例如: smtp.company.com 或 localhost');await expect(host).toHaveValue('fixture.invalid');await host.fill('unsaved.invalid');
+ const host=page.getByTestId('settings-form.host');await expect(host).toHaveValue('fixture.invalid');await host.fill('unsaved.invalid');
  await page.evaluate(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key.startsWith('spc:locale:'))throw new DOMException('blocked','QuotaExceededError');return original.call(this,key,value)}});
  await page.getByTestId('locale-select').selectOption('en-US');
  await expect(page.getByRole('status')).toContainText('could not be saved');await expect(host).toHaveValue('unsaved.invalid');

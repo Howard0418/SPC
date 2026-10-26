@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createSpcI18n } from '../src/i18n/create.js';
-import { flattenCatalog } from '../scripts/check-i18n.mjs';
+import { readRuntimeCatalogs, flattenCatalog } from '../scripts/check-i18n.mjs';
 import { parse as parseSfc } from '@vue/compiler-sfc';
 import { baseParse } from '@vue/compiler-dom';
 const locales=['zh-TW','zh-CN','en-US'];
-const catalogs=Object.fromEntries(locales.map(locale=>[locale,JSON.parse(readFileSync(new URL(`../src/i18n/locales/${locale}.json`,import.meta.url),'utf8'))]));
+const catalogs=readRuntimeCatalogs();
 const flat=Object.fromEntries(locales.map(locale=>[locale,flattenCatalog(catalogs[locale])]));
 const review=JSON.parse(readFileSync(new URL('../../../specs/20261024-i18n-task05a/translation-review.json',import.meta.url),'utf8'));
 
@@ -33,7 +33,8 @@ test('master draft review metadata, parameters and complete runtime coverage',()
  const settings=JSON.parse(readFileSync(new URL('../../../specs/20261026-i18n-task07d/translation-review.json',import.meta.url),'utf8'));
  const trace=JSON.parse(readFileSync(new URL('../../../specs/20261026-i18n-task07e1/translation-review.json',import.meta.url),'utf8'));
  const help=JSON.parse(readFileSync(new URL('../../../specs/20261026-i18n-task07e2/translation-review.json',import.meta.url),'utf8'));
- assert.deepEqual([...help.metadata.map(row=>row.key),...trace.metadata.map(row=>row.key),...settings.metadata.map(row=>row.key),...calibration.metadata.map(row=>row.key),...particles.metadata.map(row=>row.key),...equipment.metadata.map(row=>row.key),...alerts.metadata.map(row=>row.key),...trend.metadata.map(row=>row.key),...actions.metadata.map(row=>row.key),...plots.metadata.map(row=>row.key),...query.metadata.map(row=>row.key),...segments.metadata.map(row=>row.key),...uploads.metadata.map(row=>row.key),...entry.metadata.map(row=>row.key),...ppc.metadata.map(row=>row.key),...chemical.metadata.map(row=>row.key),...types.metadata.map(row=>row.key),...pilot.metadata.map(row=>row.key),...keys,...next.metadata.map(row=>row.key)].sort(),Object.keys(flat['zh-TW']).sort());
+ const api=JSON.parse(readFileSync(new URL('../../../specs/20261026-i18n-task08a/translation-review.json',import.meta.url),'utf8'));
+ assert.deepEqual([...api.metadata.map(row=>row.key),...help.metadata.map(row=>row.key),...trace.metadata.map(row=>row.key),...settings.metadata.map(row=>row.key),...calibration.metadata.map(row=>row.key),...particles.metadata.map(row=>row.key),...equipment.metadata.map(row=>row.key),...alerts.metadata.map(row=>row.key),...trend.metadata.map(row=>row.key),...actions.metadata.map(row=>row.key),...plots.metadata.map(row=>row.key),...query.metadata.map(row=>row.key),...segments.metadata.map(row=>row.key),...uploads.metadata.map(row=>row.key),...entry.metadata.map(row=>row.key),...ppc.metadata.map(row=>row.key),...chemical.metadata.map(row=>row.key),...types.metadata.map(row=>row.key),...pilot.metadata.map(row=>row.key),...keys,...next.metadata.map(row=>row.key)].sort(),Object.keys(flat['zh-TW']).sort());
  const sha=value=>createHash('sha256').update(value,'utf8').digest('hex');
  for(const row of review.ledger){
   assert.equal(row.sourceHash,sha(flat['zh-TW'][row.key]));assert.equal(row.translationHash,sha(flat[row.locale][row.key]));

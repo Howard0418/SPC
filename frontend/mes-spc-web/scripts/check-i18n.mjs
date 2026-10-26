@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { composeCatalogs } from '../src/i18n/catalogModules.js';
 
 export function parseCatalog(source) {
   const result = JSON.parse(source);
@@ -48,8 +49,13 @@ export function checkCatalogs(catalogs) {
   return keys.length;
 }
 
+export function readRuntimeCatalogs() {
+  return Object.fromEntries(['zh-TW','zh-CN','en-US'].map(locale=>[locale,composeCatalogs(
+    parseCatalog(readFileSync(new URL(`../src/i18n/locales/${locale}.json`,import.meta.url),'utf8')),
+    parseCatalog(readFileSync(new URL(`../src/i18n/api/${locale}.json`,import.meta.url),'utf8')))]));
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const catalogs = Object.fromEntries(['zh-TW','zh-CN','en-US'].map(locale => [locale,
-    parseCatalog(readFileSync(new URL(`../src/i18n/locales/${locale}.json`, import.meta.url), 'utf8'))]));
+  const catalogs = readRuntimeCatalogs();
   console.log(`I18n catalogs: ${checkCatalogs(catalogs)} keys × 3 locales passed (draft translations).`);
 }

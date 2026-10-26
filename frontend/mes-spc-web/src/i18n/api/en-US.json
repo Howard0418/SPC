@@ -1,0 +1,14 @@
+{"spc":{"api":{
+"unexpected":"An unexpected server error occurred. Contact the system administrator.",
+"concurrentUpdate":"Another user has updated this record. Reload it before saving.",
+"databaseUpdateFailed":"The database update failed. Contact the system administrator.",
+"foreignKey":"Other records reference this data. Remove those records or their links before continuing.",
+"validationFailed":"The input is invalid. Check the field values.",
+"invalidField":"The value for {field} is invalid.",
+"network":"Cannot connect to the backend API. Check that the service is running at {baseUrl}, then refresh this page.",
+"unauthorized":"Unauthorized (401). If sign-in is enabled, sign in to obtain a Token.",
+"conflict":"Other records reference this data. Remove the related child records or their links before continuing.",
+"forbidden":"Permission denied (403). Viewers can only view and query data.",
+"requestFailed":"Request failed",
+"environmentMismatch":"Safety check blocked the request: WEB is {webEnvironment} and API is {apiEnvironment}. Writes are prohibited because the environments differ."
+}}}

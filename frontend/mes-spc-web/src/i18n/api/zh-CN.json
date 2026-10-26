@@ -1,0 +1,14 @@
+{"spc":{"api":{
+"unexpected":"服务器发生未预期的错误，请联系系统管理员。",
+"concurrentUpdate":"资料已被其他使用者更新，请重新载入后再保存。",
+"databaseUpdateFailed":"数据库更新失败，请联系系统管理员。",
+"foreignKey":"此资料已被其他记录关联，请先删除或解除相关联的资料后再操作。",
+"validationFailed":"输入资料不符合要求，请检查字段内容。",
+"invalidField":"{field} 输入不正确。",
+"network":"无法连接到后端 API。请确认后端服务已在 {baseUrl} 启动，再重新整理此页。",
+"unauthorized":"未授权（401）。若已启用登入，请先至登入页取得 Token。",
+"conflict":"此资料已被其他记录关联，请先删除或解除相关联的子资料后再操作。",
+"forbidden":"权限不足（403）。检视者只能查看与查询资料。",
+"requestFailed":"请求失败",
+"environmentMismatch":"安全性阻挡：WEB 为 {webEnvironment}，API 为 {apiEnvironment}，环境不一致，禁止写入。"
+}}}

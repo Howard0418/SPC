@@ -971,3 +971,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 
 ### 2026-10-26 I18N-TASK-07E2 完成
 手冊／SSO固定顯示127鍵三語，原token／claims／hash／redirect保持；97單元、本機41／最終發布41及build/hash/health/同源通過，只測試Web0.1.91/API0.1.72。剩14件接續08。
+
+### 2026-10-26 I18N-TASK-08A 目的
+先建核心測試，再新增API共用三語資源與相容messageKey/args、標準model validation附加契約與前端介接；保留HTTP／舊message／數字日期文化／授權與DB，僅測試前後端發布。
+
+### 2026-10-26 I18N-TASK-08A 完成
+12鍵單一來源API三語模組、相容metadata與顯示adapter；101前端／25後端、本機12／shell17／發布12與build/hash/health/同源通過。只測試Web0.1.92/API0.1.73，無schema修改，剩17件接續08B。

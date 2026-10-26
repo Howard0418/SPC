@@ -1,0 +1,14 @@
+{"spc":{"api":{
+"unexpected":"伺服器發生未預期的錯誤，請聯絡系統管理員。",
+"concurrentUpdate":"資料已被其他使用者更新，請重新載入後再儲存。",
+"databaseUpdateFailed":"資料庫更新失敗，請聯絡系統管理員。",
+"foreignKey":"此資料已被其他記錄關聯，請先刪除或解除相關聯的資料後再操作。",
+"validationFailed":"輸入資料不符合要求，請檢查欄位內容。",
+"invalidField":"{field} 輸入不正確。",
+"network":"無法連線到後端 API。請確認後端服務已在 {baseUrl} 啟動，再重新整理此頁。",
+"unauthorized":"未授權（401）。若已啟用登入，請先至登入頁取得 Token。",
+"conflict":"此資料已被其他記錄關聯，請先刪除或解除相關聯的子資料後再操作。",
+"forbidden":"權限不足（403）。檢視者只能查看與查詢資料。",
+"requestFailed":"請求失敗",
+"environmentMismatch":"安全性阻擋：WEB 為 {webEnvironment}，API 為 {apiEnvironment}，環境不一致，禁止寫入。"
+}}}

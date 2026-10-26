@@ -51,4 +51,17 @@ public static class ApiErrorResponseFactory
     }
 }
 
-public sealed record ApiErrorResponse(bool Success, string Code, string Message, string? Detail);
+public sealed record ApiErrorResponse(bool Success, string Code, string Message, string? Detail)
+{
+    /// <summary>Optional display metadata; the existing code and message remain unchanged.</summary>
+    public string? MessageKey => Code switch
+    {
+        "CONCURRENT_UPDATE" => "spc.api.concurrentUpdate",
+        ApiErrorResponseFactory.ForeignKeyConstraintCode => "spc.api.foreignKey",
+        ApiErrorResponseFactory.DatabaseUpdateErrorCode => "spc.api.databaseUpdateFailed",
+        ApiErrorResponseFactory.UnexpectedErrorCode => "spc.api.unexpected",
+        _ => null
+    };
+    /// <summary>Exceptions never place diagnostics or attempted values in translation arguments.</summary>
+    public IReadOnlyDictionary<string, string> Args => Localization.ApiUiMessageCatalog.EmptyArguments;
+}

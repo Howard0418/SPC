@@ -3,10 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createSpcI18n } from '../src/i18n/create.js';
-import { parseCatalog, checkCatalogs } from '../scripts/check-i18n.mjs';
+import { readRuntimeCatalogs, parseCatalog, checkCatalogs } from '../scripts/check-i18n.mjs';
 import { flattenCatalog } from '../scripts/check-i18n.mjs';
-const catalogs = Object.fromEntries(['zh-TW','zh-CN','en-US'].map(locale => [locale,
-  parseCatalog(readFileSync(new URL(`../src/i18n/locales/${locale}.json`, import.meta.url), 'utf8'))]));
+const catalogs = readRuntimeCatalogs();
 test('runtime catalogs have matching portable keys',()=>assert.ok(checkCatalogs(catalogs) > 40));
 test('pilot review ledger accurately records all draft translation hashes',()=>{
  const review=JSON.parse(readFileSync(new URL('../../../specs/20261024-i18n-task04/translation-review.json',import.meta.url),'utf8'));

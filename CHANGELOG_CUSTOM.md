@@ -2023,3 +2023,7 @@
 - 127新鍵／381列draft、累計2200鍵，保留原手冊術語／路徑與登入協定；SSO錯誤復用原語言handler，手機堆疊導覽及卡片寬度驗證。
 - 97單元、本機41與最終發布41、build/hash/health/同源通過，只測試Web0.1.91/API0.1.72；原備份81檔保留，手機版前另備份83檔，保護設定4，無DB／後端／Portal／AD／正式變更。[驗證與回復](specs/20261026-i18n-task07e2/verification.md)。
 - 剩14件接續08，draft真人審查待20。
+
+## 2026-10-26 I18N-TASK-08A API三語資源與相容錯誤契約
+- 單一來源12鍵，API embedded與前端共用；增量messageKey/args、validation安全metadata與明示locale標頭，原message/status/field keys保持。
+- 101前端／25後端、本機12／shell17／發布12及build/hash/health/同源通過。唯讀核PMR_SPC_TEST無待migration，完整備份、設定保護，只測試Web0.1.92/API0.1.73。[驗證與回復](specs/20261026-i18n-task08a/verification.md)。剩17件接續08B；真人譯文審查留20。

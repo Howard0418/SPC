@@ -1,6 +1,9 @@
 import axios from "axios";
 import { clearAuthSession } from "../utils/auth";
 import { resolveApiBase } from "../utils/apiBase";
+import { i18n, apiMessageSource } from "../i18n";
+import { normalizeLocale } from "../i18n/preferences";
+import { formatApiErrorDescriptor } from "../i18n/apiMessages";
 
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 const baseURL = resolveApiBase(webEnvironment, import.meta.env.VITE_PRODUCTION_API_BASE);
@@ -28,6 +31,7 @@ function isWithinSessionWindow(key) {
 }
 
 api.interceptors.request.use((config) => {
+  config.headers['X-SPC-UI-Locale'] = normalizeLocale(i18n.global.locale.value);
   const method = (config.method || "get").toLowerCase();
   const isWrite = !["get", "head", "options"].includes(method);
   if (isWrite && apiEnvironment !== "unknown" && apiEnvironment !== webEnvironment) {
@@ -82,19 +86,22 @@ export function markSsoGracePeriod() {
 export function getApiErrorMessage(err) {
   const msg = err?.message || "";
   const code = err?.code || "";
-  if (code === "ENVIRONMENT_MISMATCH") return msg;
+  const translate = (key,args) => i18n.global.t(key,args);
+  if (code === "ENVIRONMENT_MISMATCH") return translate('spc.api.environmentMismatch',{webEnvironment,apiEnvironment});
+  const knownMessage = formatApiErrorDescriptor(err?.response?.data,apiMessageSource,translate);
+  if (knownMessage !== null) return knownMessage;
   if (!err?.response && (code === "ERR_NETWORK" || code === "ECONNREFUSED" || /Network Error/i.test(msg))) {
-    return `無法連線到後端 API。請確認後端服務已在 ${baseURL} 啟動，再重新整理此頁。`;
+    return translate('spc.api.network',{baseUrl:baseURL});
   }
   if (err?.response?.status === 401) {
-    return "未授權（401）。若已啟用登入，請先至登入頁取得 Token。";
+    return translate('spc.api.unauthorized');
   }
   if (err?.response?.status === 409) {
-    return err?.response?.data?.message || "此資料已被其他記錄關聯，請先刪除或解除相關聯的子資料後再操作。";
+    return err?.response?.data?.message || translate('spc.api.conflict');
   }
   if (err?.response?.status === 403) {
-    return err?.response?.data?.message || "權限不足（403）。檢視者只能查看與查詢資料。";
+    return err?.response?.data?.message || translate('spc.api.forbidden');
   }
   const responseData = err?.response?.data;
-  return (typeof responseData === "string" && responseData.trim()) || responseData?.title || responseData?.message || msg || "請求失敗";
+  return (typeof responseData === "string" && responseData.trim()) || responseData?.title || responseData?.message || msg || translate('spc.api.requestFailed');
 }

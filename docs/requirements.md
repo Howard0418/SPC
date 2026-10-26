@@ -315,3 +315,5 @@
 - 2026-10-26 I18N-TASK-07E1完成：[規格](../specs/20261026-i18n-task07e1/spec.md)／[驗證](../specs/20261026-i18n-task07e1/verification.md)。公開查詢／系譜／咬蝕入口94鍵三語，原query／code／series／raw與Portal href保持；95單元、本機40／發布40及build/hash/health/同源通過，只測試Web0.1.90/API0.1.72。
 
 - 2026-10-26 I18N-TASK-07E2完成：[規格](../specs/20261026-i18n-task07e2/spec.md)／[驗證](../specs/20261026-i18n-task07e2/verification.md)。手冊／SSO固定顯示127鍵三語，原token／claims／hash／安全轉址保持，手機錯誤卡片恢復寬度；97單元、本機41／發布41及build/hash/health/同源通過，只測試Web0.1.91/API0.1.72。
+
+- 2026-10-26 I18N-TASK-08A完成：[規格](../specs/20261026-i18n-task08a/spec.md)／[驗證](../specs/20261026-i18n-task08a/verification.md)。API共用12鍵、相容錯誤／validation附加metadata、明示locale與安全前端fallback；保留HTTP／授權／舊message與原數值格式。測試Web0.1.92/API0.1.73。
