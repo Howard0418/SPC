@@ -449,7 +449,19 @@
       "mailTestRecipient": "Quality test recipient",
       "mailTestEngineer": "Quality engineer (test)",
       "mailDefaultRecipient": "Quality recipient",
-      "mailSmtpFailed": "The email service reported a delivery failure."
+      "mailSmtpFailed": "The email service reported a delivery failure.",
+      "calibrationMailSubject": "[Instrument calibration reminder] {code} {name}",
+      "calibrationMailTestSubject": "[TEST] Instrument calibration reminder {code} {name}",
+      "calibrationMailTestChatHeading": "[TEST] Instrument calibration reminder",
+      "calibrationMailInstrumentLine": "Instrument: {code} / {name}",
+      "calibrationMailDueLine": "Calibration due date: {date}",
+      "calibrationMailStageLine": "Reminder stage: {stage}",
+      "calibrationMailOpen": "Open SPC instrument calibration management for details.",
+      "calibrationMailTestIntro": "This is a manual test email, not a scheduled due-date notification. It does not create a daily reminder record.",
+      "calibrationMailChatTestIntro": "This is a manual test, not a scheduled due-date notification. Open SPC instrument calibration management for details.",
+      "calibrationMailRecipient": "Calibration test recipient",
+      "calibrationMailSampleNameEmail": "Test sample (not a registered instrument)",
+      "calibrationMailSampleNameChat": "Test sample"
     }
   }
 }

@@ -120,7 +120,7 @@ public sealed class CalibrationNotificationProcessor(AppDbContext db,TimeProvide
         CalibrationMailResult result;
         try
         {
-            var subject = $"【儀器校正提醒】{instrument.Code} {instrument.Name}";
+            var content = CalibrationNoticeContent.Scheduled(instrument.Code, instrument.Name, n.DueDate, n.Stage);
             if (n.Channel == "SynologyChat")
             {
                 var current = await db.Set<CalibrationNotificationSetting>().AsNoTracking().SingleAsync(x => x.Id == 1, ct);
@@ -134,11 +134,10 @@ public sealed class CalibrationNotificationProcessor(AppDbContext db,TimeProvide
                     if (!current.IsEnabled || current.NotificationChannel != n.Channel || CalibrationChatSecrets.RecipientKey(url) != n.RecipientKey)
                         result = new("Cancelled", "NoLongerEligible");
                     else
-                        result = await chat.SendAsync(url, $"{subject}\n儀器：{instrument.Code}／{instrument.Name}\n校正期限：{n.DueDate:yyyy-MM-dd}\n提醒階段：{n.Stage}\n請登入 SPC 儀器校正管理查閱。", ct);
+                        result = await chat.SendAsync(url, content.Text, ct);
                 }
             }
-            else result=await mail.SendAsync(n.RecipientEmail,subject,
-                $"<p>儀器：{WebUtility.HtmlEncode(instrument.Code)}／{WebUtility.HtmlEncode(instrument.Name)}</p><p>校正期限：{n.DueDate:yyyy-MM-dd}</p><p>提醒階段：{WebUtility.HtmlEncode(n.Stage)}</p><p>請登入 SPC 儀器校正管理查閱。</p>",ct);
+            else result=await mail.SendAsync(n.RecipientEmail,content.Subject,content.HtmlBody,ct);
         }
         catch(Exception ex) { logger.LogError("校正寄送結果不確定，工作 {Id}，類型 {ErrorType}",n.Id,ex.GetType().Name); result=new("Unknown","UnhandledTransportError"); }
         n.State=result.State; n.ErrorCode=result.ErrorCode; n.LeaseUntil=null; n.Version=Guid.NewGuid();

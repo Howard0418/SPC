@@ -1,0 +1,11 @@
+# I18N-TASK-08DB 校驗Email／Chat與背景通知三語
+- 2026-10-26 DONE，必要驗證與測試發布完成；接續[SMTP](../20261026-i18n-task08da/spec.md)，依[連續授權](../20261026-i18n-continuation/spec.md)。主系統SPC，Portal/TransFiles及DB/schema/角色無修改。
+- R1 校驗手動測試Email／Chat由明示X-SPC-UI-Locale選三語固定內容；缺／非法回繁中。儀器code／name原文、due yyyy-MM-dd、stage machine值與API原data欄位不變；無樣本時只翻顯示樣本名，原data.instrumentName保持。Email外部參數HTML編碼，Chat為原text payload，不放Webhook／token於內容或args。
+- R2 背景排程仍明示預設繁中，抽純內容builder供三語驗證，不新增偏好schema。不得改enqueue、狀態、去重鍵、資格判斷、Stage、租約、NextAttemptAt、retry、Unknown／Cancelled／Skipped或發送次數／SMTP/Chat transport。
+- R3 IEmail Html方法新增末尾optional顯示語言與原檔名主旨，原caller相容；校驗手動Email原繁中outbox檔名保持。只接純顯示內容，成功／失敗／權限與原DTO保持；沿用C4已加的安全回應metadata。
+- BDD Happy：Given已授權Editor及當次語言，When手動測試，Then僅fake sender收到對應主旨與內容，收件人／Webhook及原data相同，無CalibrationNotification新增。
+- BDD Boundary：Given0／跨年日期、原名HTML及i18n符號、無樣本、平行語言，Then原名不重編譯／數據不變、HTML安全、背景不受request或Thread Culture污染。
+- BDD Invalid：Given非法locale／未授權／SMTP false／Chat Unknown，Then原fallback／拒絕／Unknown與不重寄保持，不洩露Webhook。
+- BDD Regression：先測純builder與隔離Email/Chat HTTP，再驗Notification排程／幂等／狀態與其他fake sender；不真寄信／Webhook／寫業務SQL。既有CAL-VERIFY-001/002保留。
+- 測試Web0.1.104/API0.1.83，核PMR_SPC_TEST與IIS、成對備份發布；回復同test runtime/frontend，保護設定資料，無DB回復。正式另授權，譯文draft。
+- [計畫](plan.md)／[任務](tasks.md)／[驗證](verification.md)。

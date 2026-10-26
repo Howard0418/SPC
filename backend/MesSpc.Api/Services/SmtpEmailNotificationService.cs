@@ -21,8 +21,8 @@ public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEma
         return await SendEmailInternalAsync(recipientEmail, SpcMailContent.TestRecipient(uiLocale), content.Subject, content.HtmlBody, overrideSettings, uiLocale, content.LegacyFileSubject);
     }
 
-    public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null)
-        => SendEmailInternalAsync(recipientEmail, recipientName, subject, htmlBody, overrideSettings);
+    public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null, string? fileSubject = null)
+        => SendEmailInternalAsync(recipientEmail, recipientName, subject, htmlBody, overrideSettings, uiLocale, fileSubject);
 
     public async Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName)
     {

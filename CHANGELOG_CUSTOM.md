@@ -2060,3 +2060,6 @@
 
 ## 2026-10-26 I18N-TASK-08DA SMTP測試與品質警報郵件三語
 - 2026-10-26 08DA完成：27鍵／118前端、31必要API加nullable郵件補驗10、藥液59及校驗郵件5、12郵件版面、SMTP3／發布32與build/hash/health/同源通過；只測試Web0.1.103/API0.1.82，剩15件，接續08DB 校驗Email／Chat與背景通知。[驗證與回復](specs/20261026-i18n-task08da/verification.md)。
+
+## 2026-10-26 I18N-TASK-08DB 校驗Email／Chat與背景通知三語
+- 2026-10-26 08DB完成：12鍵／119前端、51校驗通知與16共用API、12郵件版面、發布32與build/hash/health/同源通過；背景狀態／重試／原DTO保持；只測試Web0.1.104/API0.1.83，剩14件，接續08E 人讀報表與匯出。[驗證與回復](specs/20261026-i18n-task08db/verification.md)。

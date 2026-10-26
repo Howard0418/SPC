@@ -449,7 +449,19 @@
       "mailTestRecipient": "质量测试员",
       "mailTestEngineer": "质量工程师（测试）",
       "mailDefaultRecipient": "质量收件人",
-      "mailSmtpFailed": "邮件服务返回失败。"
+      "mailSmtpFailed": "邮件服务返回失败。",
+      "calibrationMailSubject": "【仪器校正提醒】{code} {name}",
+      "calibrationMailTestSubject": "【测试】仪器校正提醒 {code} {name}",
+      "calibrationMailTestChatHeading": "【测试】仪器校正提醒",
+      "calibrationMailInstrumentLine": "仪器：{code}／{name}",
+      "calibrationMailDueLine": "校正期限：{date}",
+      "calibrationMailStageLine": "提醒阶段：{stage}",
+      "calibrationMailOpen": "请登录 SPC 仪器校正管理查看。",
+      "calibrationMailTestIntro": "此为手动测试邮件，并非正式到期通知，也不会写入每日提醒记录。",
+      "calibrationMailChatTestIntro": "此为手动测试，并非正式到期通知。请登录 SPC 仪器校正管理查看。",
+      "calibrationMailRecipient": "校正测试收件人",
+      "calibrationMailSampleNameEmail": "测试样本（非正式仪器）",
+      "calibrationMailSampleNameChat": "测试样本"
     }
   }
 }

@@ -1,0 +1,11 @@
+# 08DB 驗證與發布
+- 2026-10-26 DONE。12鍵／36列draft，累計2661鍵三語；核心先建內容與HTTP測試，缺CalibrationNoticeContent／捕捉locale紅燈後實作。純builder將固定內容按明示locale翻譯，原code/name/date/stage保留；Email參數HtmlEncode、Chat仍原text payload，不傳Webhook／token給內容builder。
+- 手動Email/Chat caller讀X-SPC-UI-Locale，不採Accept-Language或全域Culture。原儀器選取／排序／today／stage／權限與原data不變；無樣本時只翻顯示樣本名，原data.instrumentName仍舊繁中字串，TEST-CAL／TEST與原繁中outbox檔名主旨保持。
+- IEmail Html方法只在末尾加入optional uiLocale/fileSubject，原caller相容；共用SMTP私有傳遞沿用DA已驗證的內容與檔名分離，其他送信邏輯無變。必要test fake僅簽名與捕捉欄位同步，原斷言保持。
+- 背景processor只將try內subject/body/text建立換成純Scheduled builder，未傳request語言，預設繁中；未改SQL／資格／enqueue／stage／cycle／recipient key／租約／冪等／retry／Unknown／Cancelled／Skipped／送達狀態／attempt與通知寫入。原Mail/Chat transport及Webhook保護未改。
+- 51項必要校驗通知驗收通過：三語純Email/Chat、跨年due／BEFORE-0、HTML/i18n原名、原enum、背景fr-FR下仍繁中、既有重複掃描／失敗重試／Unknown不重寄／停用退休不寄／收件與週期變更取消、隔離Email/Chat HTTP／權限與原DTO、不新增通知列、無樣本保留legacy data／fileSubject、SMTP false／Chat Unknown保持結果且不排程。全部fake sender及SQLite隔離，不真SQL／SMTP／Webhook；CAL-VERIFY-001/002原兩差異另待辦，未宣稱完整後端全綠。
+- 共用郵件10與隔離HTTP6共16通過，其他藥液fake sender專案編譯0錯誤／0警告。119前端單元與12鍵draft hash／placeholder／protected terms通過。虛構scheduled/test Email三語×390/800共12渲染無溢出／JS錯誤，檢視英文手機版保留原段落版面、原名以文字顯示；非真人翻譯審查。發布32公開頁／DTO回歸通過，所有業務API攔截。
+- test build／Release publish通過，既有chunk/table／obsolete測試host提示保留。唯讀172.16.110.16 / PMR_SPC_TEST pending=[]；核IIS SpcSingleTest/與同名pool、backend D:\SPC\release\test\backend及AppEnvironment=test。完整成對 .codex-tmp/i18n-task08db/backup逐檔hash核對，runtime94／前端4，保護設定4不變，只該test pool stop/start。
+- 實際API version/health200/0.1.83/test/ok，Web0.1.104四檔SHA256等於dist，14同源API通過；正式／Portal未改，無schema／migration／資料修補。
+- 回復核同test路徑/pool，停該pool，backup/backend與frontend成對回復、保護設定資料、assets先index後，啟pool核原版本與health；無DB回復需求。
+- 剩14件接E；真人審稿留20，原掃毒阻擋1／Runtime與TransFiles暫緩2及校驗基準差異2各自保留。

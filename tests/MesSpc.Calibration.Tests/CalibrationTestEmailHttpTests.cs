@@ -26,12 +26,16 @@ namespace MesSpc.Calibration.Tests;
 public sealed class CapturingEmailService : IEmailNotificationService
 {
     public readonly List<(string Email, string Subject, string Body)> Sent = [];
+    public readonly List<string?> Locales = [];
+    public readonly List<string?> FileSubjects = [];
     public bool Result { get; set; } = true;
     public Task<bool> SendAlertEmailAsync(AlertEvent alertEvent, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null) => Task.FromResult(Result);
     public Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null) => Task.FromResult(Result);
-    public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null)
+    public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null, string? fileSubject = null)
     {
         Sent.Add((recipientEmail, subject, htmlBody));
+        Locales.Add(uiLocale);
+        FileSubjects.Add(fileSubject);
         return Task.FromResult(Result);
     }
     public Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName) => Task.FromResult(Result);
@@ -153,6 +157,7 @@ public class CalibrationTestEmailHttpTests
 public sealed class CapturingChat : ICalibrationChatSender
 {
     public List<string> Sent { get; } = [];
+    public string State {get;set;}="Sent";
     public Task<CalibrationMailResult> SendAsync(string url, string text, CancellationToken ct)
-    { Sent.Add(text); return Task.FromResult(new CalibrationMailResult("Sent", null)); }
+    { Sent.Add(text); return Task.FromResult(new CalibrationMailResult(State, State=="Sent"?null:"FakeTransportResult")); }
 }

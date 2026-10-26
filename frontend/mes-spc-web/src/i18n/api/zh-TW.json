@@ -449,7 +449,19 @@
       "mailTestRecipient": "品管測試員",
       "mailTestEngineer": "品管工程師 (測試)",
       "mailDefaultRecipient": "品管收件人",
-      "mailSmtpFailed": "寄信服務回傳失敗。"
+      "mailSmtpFailed": "寄信服務回傳失敗。",
+      "calibrationMailSubject": "【儀器校正提醒】{code} {name}",
+      "calibrationMailTestSubject": "【測試】儀器校正提醒 {code} {name}",
+      "calibrationMailTestChatHeading": "【測試】儀器校正提醒",
+      "calibrationMailInstrumentLine": "儀器：{code}／{name}",
+      "calibrationMailDueLine": "校正期限：{date}",
+      "calibrationMailStageLine": "提醒階段：{stage}",
+      "calibrationMailOpen": "請登入 SPC 儀器校正管理查閱。",
+      "calibrationMailTestIntro": "此為手動測試信，非正式到期通知，也不會寫入每日提醒紀錄。",
+      "calibrationMailChatTestIntro": "此為手動測試，非正式到期通知。請登入 SPC 儀器校正管理查閱。",
+      "calibrationMailRecipient": "校正測試收件人",
+      "calibrationMailSampleNameEmail": "測試樣本（非正式儀器）",
+      "calibrationMailSampleNameChat": "測試樣本"
     }
   }
 }

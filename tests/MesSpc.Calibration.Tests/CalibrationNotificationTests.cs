@@ -10,6 +10,19 @@ namespace MesSpc.Calibration.Tests;
 
 public class CalibrationNotificationTests : IDisposable
 {
+    [Fact]
+    public async Task BackgroundContentKeepsTraditionalChineseUnderAnotherCulture()
+    {
+        var original=System.Globalization.CultureInfo.CurrentCulture;
+        try {
+            System.Globalization.CultureInfo.CurrentCulture=System.Globalization.CultureInfo.GetCultureInfo("fr-FR");
+            await processor.ProcessAsync(default);
+            Assert.Equal("【儀器校正提醒】I1 量規",mail.Subject);
+            Assert.Contains("校正期限：2026-09-18",System.Net.WebUtility.HtmlDecode(mail.Body));
+            Assert.Contains("提醒階段：BEFORE-7",System.Net.WebUtility.HtmlDecode(mail.Body));
+            Assert.Equal(1,mail.Count);
+        } finally {System.Globalization.CultureInfo.CurrentCulture=original;}
+    }
     private readonly SqliteConnection connection = new("Data Source=:memory:");
     private readonly AppDbContext db;
     private readonly FakeClock clock = new();
@@ -150,7 +163,8 @@ public class CalibrationNotificationTests : IDisposable
     private sealed class FakeMail : ICalibrationMailSender
     {
         public int Count; public string State="Sent";
+        public string Subject="",Body="";
         public Task<CalibrationMailResult> SendAsync(string email,string subject,string body,CancellationToken ct)
-        { Count++; return Task.FromResult(new CalibrationMailResult(State,State=="Sent"?null:"TestFailure")); }
+        { Count++; Subject=subject;Body=body;return Task.FromResult(new CalibrationMailResult(State,State=="Sent"?null:"TestFailure")); }
     }
 }

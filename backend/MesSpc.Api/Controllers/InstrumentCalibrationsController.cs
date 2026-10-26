@@ -394,7 +394,9 @@ public class InstrumentCalibrationsController(
         var sample = await db.Set<CalibrationInstrument>().AsNoTracking()
             .Where(x => (x.UsageStatus == "Active" || x.UsageStatus == "InCalibration") && x.NextCalibrationDate != null)
             .OrderBy(x => x.NextCalibrationDate).ThenBy(x => x.Code).FirstOrDefaultAsync(ct);
-        var text = $"【測試】儀器校正提醒\n儀器：{sample?.Code ?? "TEST-CAL"}／{sample?.Name ?? "測試樣本"}\n校正期限：{sample?.NextCalibrationDate?.ToString("yyyy-MM-dd") ?? CalibrationRules.Today(clock.GetUtcNow()).ToString("yyyy-MM-dd")}\n此為手動測試，非正式到期通知。請登入 SPC 儀器校正管理查閱。";
+        var locale = ApiUiMessageCatalog.RequestLocale(Request);
+        var text = CalibrationNoticeContent.TestChat(sample?.Code ?? "TEST-CAL", sample?.Name ?? "測試樣本",
+            sample?.NextCalibrationDate ?? CalibrationRules.Today(clock.GetUtcNow()), locale, isFallback: sample is null);
         var result = await chat.SendAsync(url!, text, ct);
         return Ok(new
         {
@@ -432,15 +434,10 @@ public class InstrumentCalibrationsController(
         var name = sample?.Name ?? "測試樣本（非正式儀器）";
         var due = sample?.NextCalibrationDate ?? today;
         var stage = sample is null ? "TEST" : CalibrationRules.Stage(due, today, days) ?? "TEST";
-        var subject = $"【測試】儀器校正提醒 {code} {name}";
-        var body =
-            $"<p>此為手動測試信，非正式到期通知，也不會寫入每日提醒紀錄。</p>" +
-            $"<p>儀器：{System.Net.WebUtility.HtmlEncode(code)}／{System.Net.WebUtility.HtmlEncode(name)}</p>" +
-            $"<p>校正期限：{due:yyyy-MM-dd}</p>" +
-            $"<p>提醒階段：{System.Net.WebUtility.HtmlEncode(stage)}</p>" +
-            "<p>請登入 SPC 儀器校正管理查閱。</p>";
-
-        var sent = await emailService.SendHtmlEmailAsync(recipient, "校正測試收件人", subject, body);
+        var locale = ApiUiMessageCatalog.RequestLocale(Request);
+        var content = CalibrationNoticeContent.TestEmail(code, name, due, stage, locale, isFallback: sample is null);
+        var sent = await emailService.SendHtmlEmailAsync(recipient, CalibrationNoticeContent.TestRecipient(locale), content.Subject, content.HtmlBody,
+            uiLocale: locale, fileSubject: content.LegacyFileSubject);
         return Ok(new
         {
             success = sent,
