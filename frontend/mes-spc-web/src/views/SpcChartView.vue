@@ -1,4 +1,5 @@
 <script setup>
+const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import { formatNormalityPValue, normalityConclusion, normalityUnavailableReason } from "../utils/normalityPresentation";
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
@@ -7,7 +8,7 @@ import { captureChartPresentation, translateChartPresentation, escapeChartText }
 import { createChartLabelTranslator } from "../i18n/chartLabels";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
-import { api, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
+import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { normalizeControlScope } from "../utils/controlScope";
 import { resolveActiveRawDataPpcId } from "../utils/spcRawDataDownload";
 import { buildHistogramBins, findHistogramBinIndex } from "../utils/histogram";
@@ -1995,6 +1996,8 @@ function renderHistogramChart() {
     backgroundColor: "transparent",
     tooltip: {
       trigger: "axis",
+      confine: true,
+      extraCssText: "max-width:min(320px,calc(100vw - 100px));white-space:normal;overflow-wrap:anywhere;",
       axisPointer: { type: "shadow" },
       backgroundColor: "rgba(15, 23, 42, 0.95)",
       borderColor: "#334155",
@@ -2010,9 +2013,9 @@ function renderHistogramChart() {
           const pValStr = data.normality.pValue !== null ? formatNormalityPValue(data.normality.pValue) : "N/A";
           const normalStatus = chartLabel(normalityConclusion(data.normality));
           const methodNote = data.normality.methodNote
-            ? `<div style="margin-top:4px;color:#cbd5e1">${escapeChartText(data.normality.methodNote)}</div>`
+            ? `<div data-testid="normality-method-tooltip" style="margin-top:4px;color:#cbd5e1">${escapeChartText(dtoText(data.normality.methodNoteMessage, data.normality.methodNote))}</div>`
             : "";
-          normalityInfo = `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">${htmlChartLabel("常態性檢定")} ${escapeChartText(data.normality.testName || "")} (P-val): <strong style="color:#fbbf24">${pValStr}</strong> (${normalStatus})${methodNote}</div>`;
+          normalityInfo = `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px;max-width:260px;white-space:normal;overflow-wrap:anywhere">${htmlChartLabel("常態性檢定")} ${escapeChartText(data.normality.testName || "")} (P-val): <strong style="color:#fbbf24">${pValStr}</strong> (${normalStatus})${methodNote}</div>`;
         }
 
         return [
@@ -2442,7 +2445,7 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
         </div>
 
         <div v-if="chartResult.subgroupSizeNote" class="mb-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2">
-          <AlertTriangle class="w-4 h-4 flex-shrink-0" /> {{ chartResult.subgroupSizeNote }}
+          <AlertTriangle class="w-4 h-4 flex-shrink-0" /> {{ dtoText(chartResult.subgroupSizeNoteMessage, chartResult.subgroupSizeNote) }}
         </div>
 
         <ChartSegmentDetails v-if="activePpcIdValue" ref="segmentDetails" :ppc-id="activePpcIdValue" chart-line-entry />
@@ -2658,12 +2661,12 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
             </div>
           </div>
           <p v-if="normalityUnavailableReason(chartResult.normality)" data-testid="normality-unavailable" class="text-xs text-amber-700 dark:text-amber-300">
-            {{ chartResult.normality?.note || chartLabel(normalityUnavailableReason(chartResult.normality)) }}
+            {{ dtoText(chartResult.normality?.noteMessage, chartResult.normality?.note) || chartLabel(normalityUnavailableReason(chartResult.normality)) }}
           </p>
           <p v-if="chartResult.normality?.methodNote" class="text-xs text-slate-500 dark:text-slate-400">
-            {{ chartResult.normality.methodNote }}
+            {{ dtoText(chartResult.normality.methodNoteMessage, chartResult.normality.methodNote) }}
           </p>
-          <div ref="histogramChartEl" class="h-[300px] w-full min-h-[240px]"></div>
+          <div ref="histogramChartEl" data-testid="normality-histogram" class="h-[300px] w-full min-h-[240px]"></div>
         </div>
 
         <!-- Point Detail Drilldown Card -->

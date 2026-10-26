@@ -461,7 +461,17 @@
       "calibrationMailChatTestIntro": "此為手動測試，非正式到期通知。請登入 SPC 儀器校正管理查閱。",
       "calibrationMailRecipient": "校正測試收件人",
       "calibrationMailSampleNameEmail": "測試樣本（非正式儀器）",
-      "calibrationMailSampleNameChat": "測試樣本"
+      "calibrationMailSampleNameChat": "測試樣本",
+      "chartAllSubgroupsExcluded": "全部子組皆已標記為不列入計算，管制線未重新估算。",
+      "chartSubgroupIncomplete": "子組樣本數不完整或不一致，未估算管制線；請核對原始點位。",
+      "chartXbarSFactorsUnavailable": "子組大小無法解析 Xbar-S 常數，管制線未重新估算。",
+      "chartSubgroupMixed": "部分批次子組大小與基準 n 不一致，已改用可解析之 n 或納入全部子組；建議每批同子組數。",
+      "normalityNoVariation": "數據無變異 (標準差為 0)，無法進行常態性檢定。",
+      "normalityAndersonDarlingNote": "本系統採 Anderson-Darling 常態檢定；可用於與 Minitab 常態檢定進行方法層級比對。",
+      "normalityJarqueBeraNote": "本系統採 Adjusted Jarque-Bera 偏態/峰態檢定；Minitab 常用 Anderson-Darling 常態檢定，兩者 p-value 與判定不可直接等同。",
+      "trialCalculated": "試算成功。採用圖表類型: {type}，基準子組數/樣本數: {count}。",
+      "chemicalSchedulePreviewOnly": "目前僅排程與試算；既有寫入尚未切換日期選版。首段之前、末段之後及空缺日期皆拒絕試算。",
+      "trialNoData": "在此區間內無量測數據。"
     }
   }
 }

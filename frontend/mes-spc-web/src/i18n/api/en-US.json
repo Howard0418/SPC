@@ -461,7 +461,17 @@
       "calibrationMailChatTestIntro": "This is a manual test, not a scheduled due-date notification. Open SPC instrument calibration management for details.",
       "calibrationMailRecipient": "Calibration test recipient",
       "calibrationMailSampleNameEmail": "Test sample (not a registered instrument)",
-      "calibrationMailSampleNameChat": "Test sample"
+      "calibrationMailSampleNameChat": "Test sample",
+      "chartAllSubgroupsExcluded": "All subgroups are excluded from calculation. Control limits were not re-estimated.",
+      "chartSubgroupIncomplete": "Subgroup sample counts are incomplete or inconsistent. Control limits were not estimated. Check the original points.",
+      "chartXbarSFactorsUnavailable": "Xbar-S constants are unavailable for this subgroup size. Control limits were not re-estimated.",
+      "chartSubgroupMixed": "Some batch subgroup sizes differ from the reference n. A resolvable n or all subgroups were used. Use a consistent subgroup size across batches.",
+      "normalityNoVariation": "The data have no variation (standard deviation is 0). A normality test cannot be performed.",
+      "normalityAndersonDarlingNote": "This system uses the Anderson-Darling normality test. It can be compared with the Minitab normality test at the method level.",
+      "normalityJarqueBeraNote": "This system uses the Adjusted Jarque-Bera skewness/kurtosis test. Minitab commonly uses Anderson-Darling. Their p-value results and conclusions are not directly equivalent.",
+      "trialCalculated": "Trial calculation succeeded. Chart type: {type}; reference subgroup/sample count: {count}.",
+      "chemicalSchedulePreviewOnly": "Only scheduling and trial calculations are available. Existing writes do not yet select versions by date. Trials are rejected before the first period, after the last period and in date gaps.",
+      "trialNoData": "No measurements are available in this period."
     }
   }
 }

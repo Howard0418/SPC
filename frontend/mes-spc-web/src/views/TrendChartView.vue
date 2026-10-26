@@ -1,4 +1,5 @@
 <script setup>
+const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import { formatNormalityPValue, normalityConclusion, normalityUnavailableReason } from "../utils/normalityPresentation";
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
@@ -7,7 +8,7 @@ import { createChartLabelTranslator } from "../i18n/chartLabels";
 import { captureChartPresentation, translateChartPresentation, escapeChartText } from "../i18n/chartPresentation";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
-import { api, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
+import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { buildHistogramBins, findHistogramBinIndex } from "../utils/histogram";
 import {
   TrendingUp,
@@ -1064,6 +1065,8 @@ function renderHistogramChart() {
     backgroundColor: "transparent",
     tooltip: {
       trigger: "axis",
+      confine: true,
+      extraCssText: "max-width:min(320px,calc(100vw - 100px));white-space:normal;overflow-wrap:anywhere;",
       axisPointer: { type: "shadow" },
       backgroundColor: "rgba(15, 23, 42, 0.95)",
       borderColor: "#334155",
@@ -1081,7 +1084,7 @@ function renderHistogramChart() {
           `<div>${formatNumber(bin.min, 4)} &lt;= X ${point.dataIndex === bins.length - 1 ? "&lt;=" : "&lt;"} ${formatNumber(bin.max, 4)}</div>`,
           `<div style="margin-top:4px">${htmlChartLabel("區間筆數")}: <strong style="color:#a5b4fc">${bin.count}</strong></div>`,
           `<div style="margin-top:4px;color:#94a3b8;font-size:11px">${htmlChartLabel("總樣本數 N")}=${values.length}, ${htmlChartLabel("平均值")}=${formatNumber(mean, 4)}, ${htmlChartLabel("標準差")}=${formatNumber(std, 4)}</div>`,
-          data.normality ? `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">${htmlChartLabel("常態性檢定")} ${escapeChartText(data.normality.testName || "")} P-value: <strong style="color:#fbbf24">${pValue}</strong>${data.normality.methodNote ? `<div style="margin-top:4px;color:#cbd5e1">${escapeChartText(data.normality.methodNote)}</div>` : ""}</div>` : ""
+          data.normality ? `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px;max-width:260px;white-space:normal;overflow-wrap:anywhere">${htmlChartLabel("常態性檢定")} ${escapeChartText(data.normality.testName || "")} P-value: <strong style="color:#fbbf24">${pValue}</strong>${data.normality.methodNote ? `<div data-testid="normality-method-tooltip" style="margin-top:4px;color:#cbd5e1">${escapeChartText(dtoText(data.normality.methodNoteMessage, data.normality.methodNote))}</div>` : ""}</div>` : ""
         ].join("");
       }
     },
@@ -1582,13 +1585,13 @@ const trendStats = computed(() => {
           </div>
 
           <p v-if="normalityUnavailableReason(chartResult.normality)" data-testid="normality-unavailable" class="text-xs text-amber-700 dark:text-amber-300">
-            {{ chartResult.normality?.note || chartLabel(normalityUnavailableReason(chartResult.normality)) }}
+            {{ dtoText(chartResult.normality?.noteMessage, chartResult.normality?.note) || chartLabel(normalityUnavailableReason(chartResult.normality)) }}
           </p>
           <p v-if="chartResult.normality?.methodNote" class="text-xs text-slate-500 dark:text-slate-400">
-            {{ chartResult.normality.methodNote }}
+            {{ dtoText(chartResult.normality.methodNoteMessage, chartResult.normality.methodNote) }}
           </p>
 
-          <div ref="histogramChartEl" class="h-[300px] w-full min-h-[240px]"></div>
+          <div ref="histogramChartEl" data-testid="normality-histogram" class="h-[300px] w-full min-h-[240px]"></div>
         </div>
 
         <div

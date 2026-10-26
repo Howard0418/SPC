@@ -1,4 +1,5 @@
 <script setup>
+const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import { useI18n } from 'vue-i18n';
 import { displayUiMessage } from '../i18n/uiMessage';
 const { t } = useI18n({ useScope: 'global' });
@@ -10,7 +11,7 @@ import SpecificationLimitHistory from "../components/SpecificationLimitHistory.v
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onBeforeUnmount, onMounted, ref, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { api, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
+import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { isEditor } from "../utils/auth";
 import { CONTROL_SCOPE, normalizeControlScope } from "../utils/controlScope";
 import {
@@ -2315,7 +2316,7 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                 </div>
 
                 <p class="text-[11px] text-slate-400 leading-relaxed italic">
-                  {{ trialResult.note }}
+                  {{ dtoText(trialResult.noteMessage, trialResult.note) }}
                 </p>
 
                 <div class="flex gap-2">

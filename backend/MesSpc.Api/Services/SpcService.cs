@@ -908,6 +908,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         double pValue = 1.0;
         bool isNormal = true;
         string? note = null;
+        UiDisplayMessage? noteMessage = null;
         var method = NormalizeNormalityMethod(normalityMethod);
         var testName = method == NormalityMethod.AndersonDarling ? "Anderson-Darling" : "Adjusted Jarque-Bera";
         var methodNote = method == NormalityMethod.AndersonDarling
@@ -917,6 +918,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         if (m2 < 1e-15 || stdDev < 1e-15)
         {
             note = "數據無變異 (標準差為 0)，無法進行常態性檢定。";
+            noteMessage = new UiDisplayMessage("spc.api.normalityNoVariation");
         }
         else
         {
@@ -940,12 +942,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         {
             TestName = testName,
             MethodNote = methodNote,
+            MethodNoteMessage = new UiDisplayMessage(method == NormalityMethod.AndersonDarling ? "spc.api.normalityAndersonDarlingNote" : "spc.api.normalityJarqueBeraNote"),
             Statistic = statistic,
             PValue = m2 < 1e-15 || stdDev < 1e-15 ? null : pValue,
             Skewness = skewness,
             Kurtosis = kurtosis,
             IsNormal = isNormal,
-            Note = note
+            Note = note,
+            NoteMessage = noteMessage
         };
 
         // 2. Generate Normal Curve Points
@@ -1490,7 +1494,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 ? await query.Where(x => x.SourceReference != null && x.SourceReference.StartsWith("ETCH:"))
                     .OrderBy(x => x.MeasuredAt).ThenBy(x => x.SampleNo).ToListAsync(ct)
                 : await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
-            if (measurements.Count == 0) return new TrialCalculateResult(null, null, null, 0, "在此區間內無量測數據。");
+            if (measurements.Count == 0) return new TrialCalculateResult(null, null, null, 0, "在此區間內無量測數據。") { NoteMessage = new UiDisplayMessage("spc.api.trialNoData") };
             if (mapping.ControlScope == "CHEM" && mapping.Machine?.MachineCode is "N1" or "N2")
                 measurements = ChemicalStageChart.Order(measurements);
 
@@ -1537,7 +1541,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                          && x.MeasuredAt < endDate.Date.AddDays(1));
 
             var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
-            if (measurements.Count == 0) return new TrialCalculateResult(null, null, null, 0, "在此區間內無量測數據。");
+            if (measurements.Count == 0) return new TrialCalculateResult(null, null, null, 0, "在此區間內無量測數據。") { NoteMessage = new UiDisplayMessage("spc.api.trialNoData") };
 
             var points = measurements.Select(x => new AttributeDataPoint
             {
@@ -1568,8 +1572,13 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         }
 
         var note = $"試算成功。採用圖表類型: {chartType.ChartTypeName}，基準子組數/樣本數: {sampleCount}。";
-        return new TrialCalculateResult(limitsExtracted.Ucl, cl, limitsExtracted.Lcl, sampleCount, note);
+        return new TrialCalculateResult(limitsExtracted.Ucl, cl, limitsExtracted.Lcl, sampleCount, note)
+        { NoteMessage = new UiDisplayMessage("spc.api.trialCalculated", new Dictionary<string,string> { ["type"] = chartType.ChartTypeName, ["count"] = sampleCount.ToString(System.Globalization.CultureInfo.InvariantCulture) }) };
     }
 }
 
-public record TrialCalculateResult(double? Ucl, double? Cl, double? Lcl, int SampleCount, string Note);
+public record TrialCalculateResult(double? Ucl, double? Cl, double? Lcl, int SampleCount, string Note)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public UiDisplayMessage? NoteMessage { get; init; }
+}

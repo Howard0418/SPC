@@ -3,7 +3,7 @@ export const raw='原名 <b>@:key {name}|data</b>';
 export const csv='量測值,日期\r\n0,2026-10-26\r\n';
 export async function prepare(page:Page,path='/spc',deep=false){
  await page.clock.install({time:new Date('2026-10-26T04:00:00Z')});await page.addInitScript(()=>{localStorage.setItem('mes_spc_token','mock-ui-only-token');localStorage.setItem('mes_spc_user',JSON.stringify({id:101,role:'Editor',username:'chart-query-fixture'}))});
- const reads:URL[]=[],writes:any[]=[];const state={failSummary:false,failChart:0,failExcluded:false,failDownload:false,empty:false,restored:false,failMappings:false,chartType:'I_MR',pValue:0.05,multi:false,violations:false,rejectWrites:false,pointIds:true,remarkExists:false,remarkText:''};
+ const reads:URL[]=[],writes:any[]=[];const state={failSummary:false,failChart:0,failExcluded:false,failDownload:false,empty:false,restored:false,failMappings:false,chartType:'I_MR',pValue:0.05,multi:false,violations:false,rejectWrites:false,pointIds:true,remarkExists:false,remarkText:'',notes:''};
  const scopes=['PROCESS','CHEM','PRODUCT'];
  const mappings=scopes.map((scope,i)=>({id:i+1,controlScope:scope,partId:scope==='PRODUCT'?31:null,processId:21,characteristicId:i+51,chartTypeId:i+1,isEnabled:true,displayMode:'CONTROL_CHART',process:{id:21,processCode:'P-RAW',processName:raw,isEnabled:true},part:scope==='PRODUCT'?{id:31,partNo:'PART-RAW',partName:raw,isEnabled:true}:null,characteristic:{id:i+51,characteristicCode:'CHAR-RAW',characteristicName:raw,dataCategory:'Variable'},lsl:0,usl:10,targetValue:0}));
  await page.route('**/*',async route=>{
@@ -32,6 +32,12 @@ export async function prepare(page:Page,path='/spc',deep=false){
   else if(u.pathname==='/api/v1/spc/chart/raw-data'){
    if(state.failDownload)return route.fulfill({status:500,json:{message:raw}});
    return route.fulfill({body:csv,headers:{'content-type':'text/csv;charset=utf-8','content-disposition':"attachment; filename*=UTF-8''%E5%8E%9F%E6%AA%94.csv"}});
+  }
+  if(state.notes && u.pathname==='/api/v1/spc/chart'){
+   const known=state.notes==='known';data.normality.pValue=null;data.normality.methodNote='原方法 <b>@:key {field}</b>';data.normality.note='原零變異 <b>@:key {field}</b>';
+   data.normality.methodNoteMessage={messageKey:known?'spc.api.normalityAndersonDarlingNote':'common.actions.refresh',args:{}};
+   data.normality.noteMessage={messageKey:known?'spc.api.normalityNoVariation':'common.actions.refresh',args:{}};
+   data.subgroupSizeNote='原子組備註';data.subgroupSizeNoteMessage={messageKey:known?'spc.api.chartAllSubgroupsExcluded':'common.actions.refresh',args:{}};
   }
   if(state.multi && u.pathname.endsWith('/spc/summary') && Array.isArray(data) && data.length)data=[3,1,2].map(n=>({...data[0],partProcessCharacteristicId:n,chartName:'Chart '+n,totalCount:n,oosCount:n,ppk:n/2}));
   return route.fulfill({json:data});

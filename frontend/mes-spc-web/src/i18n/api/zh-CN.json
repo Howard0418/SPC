@@ -461,7 +461,17 @@
       "calibrationMailChatTestIntro": "此为手动测试，并非正式到期通知。请登录 SPC 仪器校正管理查看。",
       "calibrationMailRecipient": "校正测试收件人",
       "calibrationMailSampleNameEmail": "测试样本（非正式仪器）",
-      "calibrationMailSampleNameChat": "测试样本"
+      "calibrationMailSampleNameChat": "测试样本",
+      "chartAllSubgroupsExcluded": "所有子组均已标记为不参与计算，控制限未重新估算。",
+      "chartSubgroupIncomplete": "子组样本数不完整或不一致，未估算控制限；请核对原始点。",
+      "chartXbarSFactorsUnavailable": "无法按子组大小确定 Xbar-S 常数，控制限未重新估算。",
+      "chartSubgroupMixed": "部分批次的子组大小与基准 n 不一致，已使用可解析的 n 或纳入全部子组；建议各批次使用相同子组大小。",
+      "normalityNoVariation": "数据无变异（标准差为 0），无法进行正态性检验。",
+      "normalityAndersonDarlingNote": "本系统采用 Anderson-Darling 正态性检验，可与 Minitab 正态性检验进行方法层面的比较。",
+      "normalityJarqueBeraNote": "本系统采用 Adjusted Jarque-Bera 偏度/峰度检验；Minitab 通常采用 Anderson-Darling 正态性检验，两者的 p-value 与判定不能直接等同。",
+      "trialCalculated": "试算成功。采用图表类型：{type}，基准子组数/样本数：{count}。",
+      "chemicalSchedulePreviewOnly": "目前仅支持排程与试算；现有写入尚未切换为按日期选择版本。首段之前、末段之后及空缺日期均拒绝试算。",
+      "trialNoData": "此区间内没有测量数据。"
     }
   }
 }

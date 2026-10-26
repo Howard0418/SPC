@@ -1,0 +1,12 @@
+# I18N-TASK-08C6 已知成功／統計說明與子組備註三語
+- 2026-10-26 DONE，必要驗證與測試發布完成；報表盤點發現公開頁仍有已知API顯示原文，加入工作池並依高頻操作優先於E，範圍仍原三語化。[連續授權](../20261026-i18n-continuation/spec.md)／[前案接線](../20261026-i18n-task08c5b/spec.md)。
+- 主系統SPC；Portal/TransFiles、DB/schema與公式結果不變。保留舊Note／MethodNote／SubgroupSizeNote與Trial.Note、schedule.message；建立點加純key/args descriptor，不用原文字反查key。
+- R1 試算成功（原chartTypeName／sampleCount）、公式排程固定說明、常態方法／零變異、XbarR/S子組提示提供明示三語metadata；原名為資料，0／原enum／日期／統計精度及AD預設不變。
+- R2 引擎僅增純顯示descriptor，不載入資源／讀Culture／HttpContext／格式化或改條件；子組／排除／nRef／因子／常數／數列／管制線／capability／normality／p-value保持。新null顯示屬性不序列化，非null只供既有read API輸出；不寫入計算證據／DB。
+- R3 前端按已包裝API namespace驗證後翻譯，未知／非法仍原文；文字與tooltip HTML邊界編碼，長說明tooltip須在390px手機與桌面視窗內換行可讀；切語言不重新計算／請求／重建圖表／清草稿／改zoom。父層wrapper不改業務狀態判定。
+- BDD Happy：Given已知試算／排程或圖表提示，When切三語，Then固定說明與已知參數翻譯，原資料與圖表狀態不變。
+- BDD Boundary：Given零變異、全部排除、子組不一致／無法解析常數、0與原名HTML/i18n符號，Then原退回／判定／數值與標記保持，只有說明三語化。
+- BDD Invalid：Given未知note或非法metadata，Then只顯示原文字，不猜key、不影響計算分支；不恢復偏態／峰態欄或AD選單。
+- BDD Regression：修改核心前先建測試，既有XbarR/S／normality／試算與公式跨專案基準、前端無刷新及數列／zoom驗收；必要build/test後測試發布。
+- 僅測試Web0.1.106/API0.1.84（.105為完成前測試發布，手機長提示修正後前端升.106），核PMR_SPC_TEST/IIS、成對備份；回復同test runtime/frontend且保護設定／資料，無DB回復。正式另授權、譯文draft。
+- [計畫](plan.md)／[任務](tasks.md)／[驗證](verification.md)。

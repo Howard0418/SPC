@@ -77,6 +77,7 @@ public static class XbarRChartCalculator
                 StatControlLimits = new { xbarControl = (object?)null, rControl = (object?)null },
                 SubgroupSize = nRef,
                 SubgroupSizeNote = "全部子組皆已標記為不列入計算，管制線未重新估算。",
+                SubgroupSizeNoteMessage = new UiDisplayMessage("spc.api.chartAllSubgroupsExcluded"),
                 ChartData = new { points = xbarPointsEmpty },
                 SecondaryChartData = new { points = rPointsEmpty },
                 Capability = null
@@ -260,6 +261,8 @@ public static class XbarRChartCalculator
             SubgroupSizeNote = subgroups.Any(x => x.N != nRef)
                 ? "部分批次子組大小與基準 n 不一致，已改用可解析之 n 或納入全部子組；建議每批同子組數。"
                 : null,
+            SubgroupSizeNoteMessage = subgroups.Any(x => x.N != nRef)
+                ? new UiDisplayMessage("spc.api.chartSubgroupMixed") : null,
             ChartData = new { points = xbarPoints },
             SecondaryChartData = new { points = rPoints },
             Capability = capability

@@ -1,0 +1,462 @@
+{
+  "task": "I18N-TASK-08C6",
+  "contractVersion": "1.0.0",
+  "status": "draft",
+  "metadata": [
+    {
+      "key": "spc.api.chartAllSubgroupsExcluded",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "8b2ff81f09903b49a13871307540d401f647ab619321f6a678ee988302f4be33",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.chartSubgroupIncomplete",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "c8dfb91eefcb18e4149688afe2f403c5b47ed2a0f8eb32eab9a53650ef12dab3",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.chartXbarSFactorsUnavailable",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "c893e23cbbda827fcbd604747a6fade38a5ab3455497669735d522c38e87ab99",
+      "placeholders": [],
+      "protectedTokens": [
+        "Xbar-S"
+      ]
+    },
+    {
+      "key": "spc.api.chartSubgroupMixed",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "bb9b695b449cf93caa5aaadff8a807bb3a7154f1ae585477747d13b78731d2a6",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.normalityNoVariation",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "faee3adccdb6c84114fb73fa36e3cbec554f2ffd1f4b360426f63fb5e4c1235e",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.normalityAndersonDarlingNote",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "fb1b33567fc41fe42856bc59642ad8149dac935eae3a0df0059aa6e3d44773e4",
+      "placeholders": [],
+      "protectedTokens": [
+        "Anderson-Darling",
+        "Minitab"
+      ]
+    },
+    {
+      "key": "spc.api.normalityJarqueBeraNote",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "6c8281adf18dfc04bbe03aa7344fadb29d185c67387fe9b7e68dfdf3da21ad63",
+      "placeholders": [],
+      "protectedTokens": [
+        "Anderson-Darling",
+        "Adjusted Jarque-Bera",
+        "Minitab",
+        "p-value"
+      ]
+    },
+    {
+      "key": "spc.api.trialCalculated",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "7c59e0758106c943cf6186c58bb8fb42b0ed619b730f2273f7c5cc993430b3d6",
+      "placeholders": [
+        "type",
+        "count"
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.chemicalSchedulePreviewOnly",
+      "context": "固定成功／統計說明；原算法／AD預設／數據與原文保持，metadata不參與運算",
+      "surface": "text/chart/api",
+      "sourceHash": "554d4aa981132e02ec9feedf03c01b69b3b9ad82f4ef7718ff9abb3aef4fd537",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.trialNoData",
+      "context": "試算無資料，原空limit與sampleCount=0保持",
+      "surface": "text/api",
+      "sourceHash": "5fd32c840715415b135f0c0a32e02e041d6c2ef836d35183a739361033cdcea4",
+      "placeholders": [],
+      "protectedTokens": []
+    }
+  ],
+  "ledger": [
+    {
+      "key": "spc.api.chartAllSubgroupsExcluded",
+      "locale": "zh-TW",
+      "sourceHash": "8b2ff81f09903b49a13871307540d401f647ab619321f6a678ee988302f4be33",
+      "translationHash": "8b2ff81f09903b49a13871307540d401f647ab619321f6a678ee988302f4be33",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartAllSubgroupsExcluded",
+      "locale": "zh-CN",
+      "sourceHash": "8b2ff81f09903b49a13871307540d401f647ab619321f6a678ee988302f4be33",
+      "translationHash": "46fd7459be4c8c6e990e6a6bdd77db23e9a389f0ffc44ae0a8ce40f76ade84c3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartAllSubgroupsExcluded",
+      "locale": "en-US",
+      "sourceHash": "8b2ff81f09903b49a13871307540d401f647ab619321f6a678ee988302f4be33",
+      "translationHash": "e73247e47ed6bab8c5fafd330d0888370468ee298e614fc5c0bf305b3c063c52",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartSubgroupIncomplete",
+      "locale": "zh-TW",
+      "sourceHash": "c8dfb91eefcb18e4149688afe2f403c5b47ed2a0f8eb32eab9a53650ef12dab3",
+      "translationHash": "c8dfb91eefcb18e4149688afe2f403c5b47ed2a0f8eb32eab9a53650ef12dab3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartSubgroupIncomplete",
+      "locale": "zh-CN",
+      "sourceHash": "c8dfb91eefcb18e4149688afe2f403c5b47ed2a0f8eb32eab9a53650ef12dab3",
+      "translationHash": "6178d29becc6908bf399c0d220c927f161082e98a5adce92607c774cb3897377",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartSubgroupIncomplete",
+      "locale": "en-US",
+      "sourceHash": "c8dfb91eefcb18e4149688afe2f403c5b47ed2a0f8eb32eab9a53650ef12dab3",
+      "translationHash": "b57d93ac154be3eaa52e489abd9206c7b5f4f77fdd1fb2c80838d0f9c155374e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartXbarSFactorsUnavailable",
+      "locale": "zh-TW",
+      "sourceHash": "c893e23cbbda827fcbd604747a6fade38a5ab3455497669735d522c38e87ab99",
+      "translationHash": "c893e23cbbda827fcbd604747a6fade38a5ab3455497669735d522c38e87ab99",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartXbarSFactorsUnavailable",
+      "locale": "zh-CN",
+      "sourceHash": "c893e23cbbda827fcbd604747a6fade38a5ab3455497669735d522c38e87ab99",
+      "translationHash": "844ae4191ffa37c76b45090fac8c704ce2f5d9019894fab465afc1ed1c846c99",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartXbarSFactorsUnavailable",
+      "locale": "en-US",
+      "sourceHash": "c893e23cbbda827fcbd604747a6fade38a5ab3455497669735d522c38e87ab99",
+      "translationHash": "16236016f2e103f404fcb135e635e024f8edd093cd5f951fae06ec3f36027a03",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartSubgroupMixed",
+      "locale": "zh-TW",
+      "sourceHash": "bb9b695b449cf93caa5aaadff8a807bb3a7154f1ae585477747d13b78731d2a6",
+      "translationHash": "bb9b695b449cf93caa5aaadff8a807bb3a7154f1ae585477747d13b78731d2a6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartSubgroupMixed",
+      "locale": "zh-CN",
+      "sourceHash": "bb9b695b449cf93caa5aaadff8a807bb3a7154f1ae585477747d13b78731d2a6",
+      "translationHash": "80cd6e8dc77818cbf83c3d36ac1d89a0340898415ab82b1f405f103f54282bcb",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chartSubgroupMixed",
+      "locale": "en-US",
+      "sourceHash": "bb9b695b449cf93caa5aaadff8a807bb3a7154f1ae585477747d13b78731d2a6",
+      "translationHash": "7d9b5458a02bef2836796fd95ff6cd271510bdf9179ec84c05c94fdc03739732",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityNoVariation",
+      "locale": "zh-TW",
+      "sourceHash": "faee3adccdb6c84114fb73fa36e3cbec554f2ffd1f4b360426f63fb5e4c1235e",
+      "translationHash": "faee3adccdb6c84114fb73fa36e3cbec554f2ffd1f4b360426f63fb5e4c1235e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityNoVariation",
+      "locale": "zh-CN",
+      "sourceHash": "faee3adccdb6c84114fb73fa36e3cbec554f2ffd1f4b360426f63fb5e4c1235e",
+      "translationHash": "cfde0c2192f51f80d3510ebbc9721f59302cfc10338797be919dc545f0dc1771",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityNoVariation",
+      "locale": "en-US",
+      "sourceHash": "faee3adccdb6c84114fb73fa36e3cbec554f2ffd1f4b360426f63fb5e4c1235e",
+      "translationHash": "6529b6dbf1b1a77fadc3dd6e1da60bb27c09144027352e7b4f968a784734304d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityAndersonDarlingNote",
+      "locale": "zh-TW",
+      "sourceHash": "fb1b33567fc41fe42856bc59642ad8149dac935eae3a0df0059aa6e3d44773e4",
+      "translationHash": "fb1b33567fc41fe42856bc59642ad8149dac935eae3a0df0059aa6e3d44773e4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityAndersonDarlingNote",
+      "locale": "zh-CN",
+      "sourceHash": "fb1b33567fc41fe42856bc59642ad8149dac935eae3a0df0059aa6e3d44773e4",
+      "translationHash": "850e3321cb356563f13add4094aa1b37b97ae8b929238c74b43c72deed887930",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityAndersonDarlingNote",
+      "locale": "en-US",
+      "sourceHash": "fb1b33567fc41fe42856bc59642ad8149dac935eae3a0df0059aa6e3d44773e4",
+      "translationHash": "b137bb4935cfe8eea694d1e9a047e6686c9dc539ebd3d7a73809cd310da341ee",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityJarqueBeraNote",
+      "locale": "zh-TW",
+      "sourceHash": "6c8281adf18dfc04bbe03aa7344fadb29d185c67387fe9b7e68dfdf3da21ad63",
+      "translationHash": "6c8281adf18dfc04bbe03aa7344fadb29d185c67387fe9b7e68dfdf3da21ad63",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityJarqueBeraNote",
+      "locale": "zh-CN",
+      "sourceHash": "6c8281adf18dfc04bbe03aa7344fadb29d185c67387fe9b7e68dfdf3da21ad63",
+      "translationHash": "cc3fdfe3577a66b80d6dadfd3b779a617669b09dd9d1e62f92397b069ba0ca69",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.normalityJarqueBeraNote",
+      "locale": "en-US",
+      "sourceHash": "6c8281adf18dfc04bbe03aa7344fadb29d185c67387fe9b7e68dfdf3da21ad63",
+      "translationHash": "3b48b0b37c59260332948ed1391cede561a07665c73f8ba30301d7e6b2b14af4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.trialCalculated",
+      "locale": "zh-TW",
+      "sourceHash": "7c59e0758106c943cf6186c58bb8fb42b0ed619b730f2273f7c5cc993430b3d6",
+      "translationHash": "7c59e0758106c943cf6186c58bb8fb42b0ed619b730f2273f7c5cc993430b3d6",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.trialCalculated",
+      "locale": "zh-CN",
+      "sourceHash": "7c59e0758106c943cf6186c58bb8fb42b0ed619b730f2273f7c5cc993430b3d6",
+      "translationHash": "6055ec4413e943c86f73ec2f7618f1e00073c228285ce9e29346988d738a8dd9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.trialCalculated",
+      "locale": "en-US",
+      "sourceHash": "7c59e0758106c943cf6186c58bb8fb42b0ed619b730f2273f7c5cc993430b3d6",
+      "translationHash": "3f8d5389ad7e92161846923f21477d7c59b701623e961f6a30993cc530923abb",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chemicalSchedulePreviewOnly",
+      "locale": "zh-TW",
+      "sourceHash": "554d4aa981132e02ec9feedf03c01b69b3b9ad82f4ef7718ff9abb3aef4fd537",
+      "translationHash": "554d4aa981132e02ec9feedf03c01b69b3b9ad82f4ef7718ff9abb3aef4fd537",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chemicalSchedulePreviewOnly",
+      "locale": "zh-CN",
+      "sourceHash": "554d4aa981132e02ec9feedf03c01b69b3b9ad82f4ef7718ff9abb3aef4fd537",
+      "translationHash": "e076650113074263e968cf76e554eb3da9924c778616ebbb2d5f95445f46e24a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.chemicalSchedulePreviewOnly",
+      "locale": "en-US",
+      "sourceHash": "554d4aa981132e02ec9feedf03c01b69b3b9ad82f4ef7718ff9abb3aef4fd537",
+      "translationHash": "e7dcf60a64889f6308677fc2e8c8cd0ac21133815a723a90217220bdcc245311",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.trialNoData",
+      "locale": "zh-TW",
+      "sourceHash": "5fd32c840715415b135f0c0a32e02e041d6c2ef836d35183a739361033cdcea4",
+      "translationHash": "5fd32c840715415b135f0c0a32e02e041d6c2ef836d35183a739361033cdcea4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.trialNoData",
+      "locale": "zh-CN",
+      "sourceHash": "5fd32c840715415b135f0c0a32e02e041d6c2ef836d35183a739361033cdcea4",
+      "translationHash": "0a9d4eea48558001fcd52a79280c2866277d313ceb9a10b4b1b8ea46b00bf862",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.trialNoData",
+      "locale": "en-US",
+      "sourceHash": "5fd32c840715415b135f0c0a32e02e041d6c2ef836d35183a739361033cdcea4",
+      "translationHash": "26a96abb6309037351e3d2d5b9192be28eaeca47fd181d66d1a0e419c18ffc77",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    }
+  ]
+}

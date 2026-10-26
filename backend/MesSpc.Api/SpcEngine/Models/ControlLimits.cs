@@ -28,12 +28,16 @@ public record NormalityTestResult
 {
     public string TestName { get; init; } = "Jarque-Bera";
     public string? MethodNote { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public UiDisplayMessage? MethodNoteMessage { get; init; }
     public double Statistic { get; init; }
     public double? PValue { get; init; }
     public double Skewness { get; init; }
     public double Kurtosis { get; init; }
     public bool IsNormal { get; init; }
     public string? Note { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public UiDisplayMessage? NoteMessage { get; init; }
 }
 
 public record NormalCurvePoint
@@ -52,6 +56,8 @@ public record ControlChartResult
     public object? SecondaryChartData { get; init; }
     public int SubgroupSize { get; init; }
     public string? SubgroupSizeNote { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public UiDisplayMessage? SubgroupSizeNoteMessage { get; init; }
     public CapabilityResult? Capability { get; init; }
     public object? RawDataPoints { get; init; }
     public object? SpecLimitSegments { get; init; }

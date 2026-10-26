@@ -341,3 +341,5 @@
 - 2026-10-26 08DA完成：27鍵／118前端、31必要API加nullable郵件補驗10、藥液59及校驗郵件5、12郵件版面、SMTP3／發布32與build/hash/health/同源通過；只測試Web0.1.103/API0.1.82，剩15件，接續08DB 校驗Email／Chat與背景通知。[規格](../specs/20261026-i18n-task08da/spec.md)／[驗證](../specs/20261026-i18n-task08da/verification.md)。
 
 - 2026-10-26 08DB完成：12鍵／119前端、51校驗通知與16共用API、12郵件版面、發布32與build/hash/health/同源通過；背景狀態／重試／原DTO保持；只測試Web0.1.104/API0.1.83，剩14件，接續08E 人讀報表與匯出。[規格](../specs/20261026-i18n-task08db/spec.md)／[驗證](../specs/20261026-i18n-task08db/verification.md)。
+
+- 2026-10-26 08C6完成：10鍵／120前端、47不同必要API分批、藥液59與跨專案公式25、本機8圖表／42PPC／6邊界及發布8圖表／2PPC通過；5檔原公式SQL逐字保持；只測試Web0.1.106/API0.1.84，剩14件，接續08E 人讀報表與匯出。[規格](../specs/20261026-i18n-task08c6/spec.md)／[驗證](../specs/20261026-i18n-task08c6/verification.md)。

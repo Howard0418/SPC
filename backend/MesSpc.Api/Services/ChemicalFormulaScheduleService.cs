@@ -69,7 +69,8 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
             periods=periods.Select(p => new { p.Id,p.FormulaVersionId,p.FTableHistoryId, effectiveFromUtc=DateTime.SpecifyKind(p.EffectiveFromUtc,DateTimeKind.Utc),
                 effectiveUntilUtcExclusive=p.EffectiveUntilUtcExclusive.HasValue ? (DateTime?)DateTime.SpecifyKind(p.EffectiveUntilUtcExclusive.Value,DateTimeKind.Utc) : null }),
             gaps=gaps.Select(g => new { fromUtc=g.FromUtc.HasValue ? (DateTime?)DateTime.SpecifyKind(g.FromUtc.Value,DateTimeKind.Utc) : null, untilUtc=DateTime.SpecifyKind(g.UntilUtc,DateTimeKind.Utc) }),
-            message="目前僅排程與試算；既有寫入尚未切換日期選版。首段之前、末段之後及空缺日期皆拒絕試算。" };
+            message="目前僅排程與試算；既有寫入尚未切換日期選版。首段之前、末段之後及空缺日期皆拒絕試算。",
+            messageKey="spc.api.chemicalSchedulePreviewOnly", args=ApiUiMessageCatalog.EmptyArguments };
     }
 
     /// <summary>Publishes a complete replacement schedule using optimistic revision matching and a serialized PPC transaction.</summary>

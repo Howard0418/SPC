@@ -28,7 +28,7 @@ public static class XbarSChartCalculator
         var includedSubgroups = subgroups.Where(x => !x.IsExcluded).ToList();
         var validSubgroups = includedSubgroups.Where(x => x.N == nRef).ToList();
         if (includedSubgroups.Any(x => x.N != nRef))
-            return EmptyExcludedResult(subgroups, configuredLimits, nRef, "子組樣本數不完整或不一致，未估算管制線；請核對原始點位。");
+            return EmptyExcludedResult(subgroups, configuredLimits, nRef, "子組樣本數不完整或不一致，未估算管制線；請核對原始點位。", new UiDisplayMessage("spc.api.chartSubgroupIncomplete"));
 
         if (validSubgroups.Count == 0)
         {
@@ -37,7 +37,7 @@ public static class XbarSChartCalculator
 
         if (nRef < 2 || !SpcConstants.TryGetXbarSFactors(nRef, out var a3, out var b3, out var b4))
         {
-            return EmptyExcludedResult(subgroups, configuredLimits, nRef, "子組大小無法解析 Xbar-S 常數，管制線未重新估算。");
+            return EmptyExcludedResult(subgroups, configuredLimits, nRef, "子組大小無法解析 Xbar-S 常數，管制線未重新估算。", new UiDisplayMessage("spc.api.chartXbarSFactorsUnavailable"));
         }
 
         var xDoubleBar = validSubgroups.Average(x => x.Mean);
@@ -134,13 +134,15 @@ public static class XbarSChartCalculator
             SubgroupSizeNote = subgroups.Any(x => x.N != nRef)
                 ? "部分批次子組大小與基準 n 不一致，已改用可解析之 n 或納入全部子組；建議每批同子組數。"
                 : null,
+            SubgroupSizeNoteMessage = subgroups.Any(x => x.N != nRef)
+                ? new UiDisplayMessage("spc.api.chartSubgroupMixed") : null,
             ChartData = new { points = xbarPoints },
             SecondaryChartData = new { points = sPoints },
             Capability = capability
         };
     }
 
-    private static ControlChartResult EmptyExcludedResult(List<Subgroup> subgroups, ControlLimits configuredLimits, int nRef, string? note = null)
+    private static ControlChartResult EmptyExcludedResult(List<Subgroup> subgroups, ControlLimits configuredLimits, int nRef, string? note = null, UiDisplayMessage? noteMessage = null)
     {
         var xbarPoints = subgroups.Select(x => new
         {
@@ -184,6 +186,7 @@ public static class XbarSChartCalculator
             StatControlLimits = new { xbarControl = (object?)null, sControl = (object?)null },
             SubgroupSize = nRef,
             SubgroupSizeNote = note ?? "全部子組皆已標記為不列入計算，管制線未重新估算。",
+            SubgroupSizeNoteMessage = noteMessage ?? (note is null ? new UiDisplayMessage("spc.api.chartAllSubgroupsExcluded") : null),
             ChartData = new { points = xbarPoints },
             SecondaryChartData = new { points = sPoints },
             Capability = null

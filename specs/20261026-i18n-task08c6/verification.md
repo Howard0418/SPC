@@ -1,0 +1,12 @@
+# 08C6 驗證與發布
+- 2026-10-26 DONE。10鍵／30列draft，累計2671鍵三語。先建ChartNoteUiTests，缺純UiDisplayMessage／metadata屬性紅燈後實作；descriptor只copy readonly key/args，不載資源、不讀Culture／HttpContext、不格式化數值／原文。新null欄位JsonIgnore，原Note／MethodNote／SubgroupSizeNote／trial.Note與schedule.message均保留，未知note不猜key。
+- 建立點明示附Anderson-Darling／既有Adjusted Jarque-Bera方法說明、零變異、R/S全排除／子組差異／S常數不可用、試算成功／無資料、公式排程preview-only descriptor。參數type原圖表名稱與count原筆數，literal HTML/i18n符號與0不重編譯；試算原ucl/cl/lcl與sampleCount保留，無額外寫入。
+- 引擎／normality／trial／schedule等5個完整原始檔，僅剔除明示顯示新增後與HEAD f282aeab逐字一致，含全部公式、SQL、分支、因子、N、排除／排序與原備註。新純descriptor／新metadata不寫資料庫或計算證據；SpcService原storage語句完整保持。未恢復偏態／峰態欄與AD下拉選單。
+- 47個不同必要API情境分批通過（46核心／排程／隔離HTTP批次＋新增試算1；ChartNoteUi最終7項全過）。涵蓋全排除原points/flag與不估管制線、N不一致／N=1、zero variance原pValue=null／statistic及其他統計不變、true試算與無資料count=0／limit=null／原note、原名／count、原state及readonly。藥液／Xbar-S／咬蝕59通過；唯讀跨repo基準TransFiles來源10＋Portal公式15通過，未改Portal/TransFiles、不啟動GUI／網路／業務DB。既有CAL-VERIFY-001/002另待辦。
+- 120前端單元及10鍵ledger hash／placeholder／protected terms通過。本機4圖表桌面初驗後補390/1280，共8情境分批通過：已知與非法metadata、常態方法／零變異／子組提示、實際直方圖tooltip的純文字與視窗幾何、同一canvas／instance／series／zoom、無新增請求。PPC原40項及新trial/schedule2分批通過，草稿／日期／LSL0.2／DTO與0.3800限制保持；另6個AD p-value與93/94天邊界通過。所有API mock、不實際寫入。
+- .105/API84成對發布後4圖表＋2PPC通過；完成前手機補驗發現英文tooltip越界，先限制說明區仍不足，再限制直方圖tooltip外框／confine／換行，原數列與數值保持。Web最終升.106，API84不變；最終發布8圖表（1280/390×2頁×known/invalid）全過，無放寬原幾何斷言，檢視英文手機截圖確認內容完整可讀。PPC2在.105已通過，.106只變2圖表樣式、PPC與資源未變。
+- test build／Release publish通過，既有chunk/table提示保持。首次用Windows PowerShell5.1跑UTF8基準腳本有編碼解析錯誤，改PowerShell7原腳本後25基準通過，未改腳本或原斷言。PPC兩新增情境起初讀到前版dist，重建.105後2通過，原40不重跑。
+- 唯讀核172.16.110.16 / PMR_SPC_TEST pending=[]；IIS SpcSingleTest/及同名pool、backend D:\SPC\release\test\backend、AppEnvironment=test。成對完整 .codex-tmp/i18n-task08c6/backup逐檔hash核對，runtime94／前端4、保護設定4不變，只該test pool stop/start。手機補發前另備份 .codex-tmp/i18n-task08c6-mobile/backup-frontend 116檔hash核對，僅前端4檔、不重啟pool／API。
+- 最終實際API version/health200/0.1.84/test/ok，Web0.1.106四檔SHA256等於dist，14同源API通過。正式／Portal未發布，無schema／migration／資料修補。
+- 完整Task回復：核同test目錄/pool，停該pool，以首次backup/backend與frontend成對回復原.104/API83，保護設定資料，assets先index後，啟pool核版本health；手機樣式單獨回復可用第二份frontend備份回.105/API84。無DB回復需求。
+- 剩14件接E。盤點另記REPORT-DATA-VERIFY-001：既有CPK month僅標題未篩資料，待另定業務規格，三語化不改現行算法；非本Task完成項。真人審稿留20，其他掃毒阻擋1／Runtime與TransFiles暫緩2／校驗基準差異2保持。

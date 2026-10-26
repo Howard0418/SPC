@@ -1,4 +1,5 @@
 import {test,expect,Page} from '@playwright/test';
+import fs from 'node:fs';
 const raw='原名 <b>@:key {name}</b>';
 const chemicalJson='{ "enabled": true, "version": "1", "primaryInputLabel": "滴定值", "secondaryInputLabel": "原第二值", "concentrationFormula": "Primary * F!B3", "adjustmentFormula": "", "adjustmentAmountFormula": "", "decimalPlaces": 2, "custom": "原值" }';
 const formulaJson='{ "XbarCalculationMethod": "MR_METHOD", "UclFormula": "Xbar + A2 * Rbar", "原值": "@:key {name}" }';
@@ -10,17 +11,18 @@ const rules=Array.from({length:8},(_,i)=>({id:i+1,ruleCode:`Rule${i+1}`,ruleName
 const version={id:71,versionNo:7,reason:raw,configJson:chemicalJson,changeType:'Update',changedBy:raw,changedAt:'2026-10-24T04:05:00Z'};
 const segment={id:81,partProcessCharacteristicId:1,startDate:'2026-10-01T00:00:00',endDate:null,ucl:0.38,cl:0.3,lcl:0.22,usl:0.4,lsl:0.2,targetValue:0.3,note:raw};
 const errors=new WeakMap<Page,string[]>();
+const noteCatalog=(locale:string)=>JSON.parse(fs.readFileSync(new URL(`../src/i18n/api/${locale}.json`,import.meta.url),'utf8')).spc.api;
 test.beforeEach(({page})=>{const list:string[]=[];errors.set(page,list);page.on('pageerror',e=>list.push(e.message))});
 test.afterEach(({page})=>expect(errors.get(page)).toEqual([]));
 async function prepare(page:Page,id?:number,role='Editor'){
  await page.addInitScript(role=>{localStorage.setItem('mes_spc_token','mock-ui-only-token');localStorage.setItem('mes_spc_user',JSON.stringify({id:101,role,username:'ppc-fixture'}))},role);
- const reads:string[]=[];const writes:any[]=[];const state={reject:false,empty:false,closed:0,failSchedule:false,records:structuredClone(records),segments:[structuredClone(segment)]};
+ const reads:string[]=[];const writes:any[]=[];const state={reject:false,empty:false,closed:0,failSchedule:false,noteMetadata:false,records:structuredClone(records),segments:[structuredClone(segment)]};
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());if(u.origin!==new URL(test.info().project.use.baseURL as string).origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();const path=u.pathname,method=route.request().method();
   if(method!=='GET'){
    expect(path).toMatch(/^\/api\/(part-process-characteristics(\/\d+)?(\/chemical-formula-schedule(\/preview)?|\/chemical-analysis-formula-versions\/\d+\/restore)?|control-limit-segments(\/\d+)?|v1\/spc\/trial-calculate)$/);
    const body=method==='DELETE'?null:route.request().postDataJSON();writes.push({method,path,search:u.search,body});if(state.reject)return route.fulfill({status:409,json:{message:'原 API 衝突訊息 <b>@:key {name}</b>'}});
-   if(path.endsWith('/trial-calculate'))return route.fulfill({json:{ucl:0.38,cl:0.3,lcl:0.22,sampleCount:600,note:raw}});
+   if(path.endsWith('/trial-calculate'))return route.fulfill({json:{ucl:0.38,cl:0.3,lcl:0.22,sampleCount:600,note:raw,...(state.noteMetadata?{noteMessage:{messageKey:'spc.api.trialCalculated',args:{type:raw,count:600}}}:{})}});
    if(path.endsWith('/chemical-formula-schedule/preview'))return route.fulfill({json:{data:{revisionId:9,formulaVersionId:71,formulaVersionNo:7,fTableHistoryId:null,result:{raw:'0.2469',stored:'0.25',judgment:'Pass'},engineVersion:'engine-raw'}}});
    if(path.endsWith('/chemical-formula-schedule'))return route.fulfill({json:{data:{revisionId:10}}});
    if(path.includes('/chemical-analysis-formula-versions/'))return route.fulfill({json:{data:{}}});
@@ -30,7 +32,7 @@ async function prepare(page:Page,id?:number,role='Editor'){
   reads.push(path+u.search);let data:any=[];
   if(path.endsWith('/version'))data={version:'0.1.72',environment:'test'};
   else if(path.endsWith('/delete-impact'))data={variableMeasurements:600,attributeMeasurements:0,calculationResults:3,alerts:2,controlLimitSegments:1,closedAlerts:state.closed};
-  else if(path.endsWith('/chemical-formula-schedule')){if(state.failSchedule)return route.fulfill({status:500,json:{message:'原 API 排程錯誤'}});data={data:{revisionId:9,periods:[{formulaVersionId:71,fTableHistoryId:null,effectiveFromUtc:'2026-10-01T16:00:00Z',effectiveUntilUtcExclusive:'2026-10-31T16:00:00Z'}],gaps:[{fromUtc:'2026-09-01T16:00:00Z',untilUtc:'2026-10-01T16:00:00Z'}],message:'原 API 排程訊息'}}}
+  else if(path.endsWith('/chemical-formula-schedule')){if(state.failSchedule)return route.fulfill({status:500,json:{message:'原 API 排程錯誤'}});data={data:{revisionId:9,periods:[{formulaVersionId:71,fTableHistoryId:null,effectiveFromUtc:'2026-10-01T16:00:00Z',effectiveUntilUtcExclusive:'2026-10-31T16:00:00Z'}],gaps:[{fromUtc:'2026-09-01T16:00:00Z',untilUtc:'2026-10-01T16:00:00Z'}],message:'原 API 排程訊息',...(state.noteMetadata?{messageKey:'spc.api.chemicalSchedulePreviewOnly',args:{}}:{})}}}
   else if(path.endsWith('/chemical-analysis-formula-versions'))data={data:state.empty?[]:[version]};
   else if(path.endsWith('/specification-limit-versions'))data={data:state.empty?[]:[{id:91,versionNo:2,sourceKind:'Segment',changeType:'Updated',changedBy:raw,changedAt:'2026-10-24T04:05:00Z',previousSnapshotJson:null,snapshotJson:'{"lsl":0.2,"原值":"原文"}'}]};
   else if(path.endsWith('/chemical-f-table/versions'))data=[{id:72,versionNo:2,versionCode:'F-RAW',displayName:raw}];
@@ -102,4 +104,21 @@ for(const locale of ['zh-TW','zh-CN','en-US'])test(`mobile schedule and segments
 });
 for(const locale of ['zh-TW','zh-CN','en-US'])test(`normal delete ${locale}: cancel and original ID`,async({page})=>{
  const {writes}=await prepare(page);await page.getByTestId('locale-select').selectOption(locale);let prompt='';page.once('dialog',async d=>{prompt=d.message();await d.dismiss()});await page.getByTestId('ppc-delete').first().click();expect(prompt).toContain('RAW-001 - '+raw);expect(writes).toEqual([]);page.once('dialog',d=>d.accept());await page.getByTestId('ppc-delete').first().click();await expect.poll(()=>writes.length).toBe(1);expect(writes[0]).toEqual({method:'DELETE',path:'/api/part-process-characteristics/1',search:'',body:null});
+});
+
+test('trial note metadata: language changes keep limits and original note draft without recalculation',async({page})=>{
+ const {state,reads,writes}=await prepare(page);state.noteMetadata=true;
+ await page.getByTestId('ppc-segments').first().click();const d=page.getByTestId('segment-dialog');
+ await d.getByTestId('ppc-trialForm.startDate').fill('2026-10-01');await d.getByTestId('ppc-trialForm.endDate').fill('2026-10-24');await d.getByTestId('ppc-trial').click();
+ await expect(d).toContainText('0.3800');await d.getByTestId('ppc-copy-trial').click();await d.getByTestId('ppc-segmentForm.note').fill('原草稿 '+raw);
+ const handle=await d.getByTestId('ppc-segmentForm.ucl').elementHandle(),count=reads.length;
+ for(const locale of ['en-US','zh-CN','zh-TW']){await d.getByTestId('locale-select').selectOption(locale);await expect(d).toContainText(noteCatalog(locale).trialCalculated.replace('{type}',raw).replace('{count}','600'));await expect(d.getByTestId('ppc-segmentForm.ucl')).toHaveValue('0.38');await expect(d.getByTestId('ppc-segmentForm.note')).toHaveValue('原草稿 '+raw);expect(await handle!.evaluate(el=>el.isConnected)).toBe(true);expect(reads.length).toBe(count);expect(writes).toHaveLength(1)}
+ await expect(d.locator('b')).toHaveCount(0);
+});
+
+test('schedule note metadata: fixed explanation switches while publication draft remains',async({page})=>{
+ const {state,reads,writes}=await prepare(page,3);state.noteMetadata=true;await tab(page,4).click();
+ const s=dialog(page).locator('section').filter({has:page.getByTestId('schedule-add')});await expect(s.getByTestId('schedule-p.fromDate')).toHaveValue('2026-10-02');
+ await s.getByTestId('schedule-reason').fill('原排程草稿');const count=reads.length,handle=await s.getByTestId('schedule-reason').elementHandle();
+ for(const locale of ['en-US','zh-CN','zh-TW']){await dialog(page).getByTestId('locale-select').selectOption(locale);await expect(s).toContainText(noteCatalog(locale).chemicalSchedulePreviewOnly);await expect(s.getByTestId('schedule-reason')).toHaveValue('原排程草稿');expect(await handle!.evaluate(el=>el.isConnected)).toBe(true);expect(reads.length).toBe(count);expect(writes).toEqual([])}
 });
