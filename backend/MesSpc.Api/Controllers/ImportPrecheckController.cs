@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ public class ImportPrecheckController(AppDbContext db) : ControllerBase
     {
         var normalizedScope = scope.Trim().ToUpperInvariant();
         if (normalizedScope != "CHEM")
-            return BadRequest(new { message = "目前主檔預檢只支援 CHEM。" });
+            return BadRequest(new { message = "目前主檔預檢只支援 CHEM。", code="PRECHECK_CHEMICAL_ONLY", messageKey="spc.api.precheckChemicalOnly", args=ApiUiMessageCatalog.EmptyArguments });
 
         var lines = await db.ProductionLines.AsNoTracking()
             .Where(x => x.IsActive)

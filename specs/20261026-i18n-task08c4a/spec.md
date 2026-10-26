@@ -1,0 +1,11 @@
+# I18N-TASK-08C4A 匯入／設備／校驗／設定固定API訊息三語
+- 2026-10-26 DONE，必要驗證與測試發布完成，依[連續授權](../20261026-i18n-continuation/spec.md)。C4依現有範圍分A控制器固定回應、B服務與欄位驗證、C匯入逐列錯誤與警示，逐批完成，不增加功能。
+- 主系統SPC；相依Portal人員目錄僅既有client回應，無外部服務呼叫／寫入／Portal修改，無schema／ACL／IIS binding變更。僅尚未涵蓋控制器可見固定訊息與選定動態狀態提示附加metadata，原code/message/error/success/data/HTTP、enum／日期／數值與原分支保持。
+- R1 原純字串body沿已驗證header契約；物件只附descriptor，不覆蓋現有code。英文舊訊息仍原樣、三語顯示另以key；原error欄位保持。原空message保持空，不為機器欄位加翻譯。
+- R2 原SMTP/Webhook／目錄失敗與本機路徑提示保留原message/body，metadata不得帶inner例外／Webhook／憑證／SQL／路徑；公開HTTP status可當參數。通知郵件本文與附檔留D/E，服務例外／逐列警示留C4B/C，逐頁即時顯示留C5。
+- BDD Happy：Given成功既有操作，Then原資料／response保持、提示可三語解譯，不產生額外呼叫。
+- BDD Boundary：Given設備狀態RUNNING/ALARM與NONZERO/ZERO、空檔／錯副檔名、寄送時間／1～28日、權限不足或目錄回應狀態，Then原驗證與HTTP／code不變、拒絕時不寫入。
+- BDD Invalid：Given缺必要欄位或未知descriptor，Then原拒絕／安全fallback；原自由輸入／機敏設定不進args。
+- BDD Regression：核心先測、必要設備／匯入／校驗／手動量測／設定與報表回歸，禁止為驗證實際寄信／Webhook／呼叫真目錄或清除資料；只mock／InMemory。build/test後唯讀核PMR_SPC_TEST/pending migrations、成對備份與核IIS，只發布測試Web0.1.98/API0.1.79。
+- 回復前後端成對、保護設定與資料，只重啟test pool；無DB回復需求。正式另授權，譯文draft待20。[任務](tasks.md)／[驗證](verification.md)。
+- 驗證補充：完整校驗124項有兩項在本批前HEAD同樣失敗（缺原始範本、unknown Editor JWT授權預期與既有共用服務不同），另列CAL-VERIFY-001/002。保留原驗收斷言與現行權限，本批metadata必要測試／build及不改業務全文比對須通過，不能把完整124項宣稱全綠。

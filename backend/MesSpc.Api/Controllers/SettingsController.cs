@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -52,7 +53,7 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
         var filePath = Path.Combine(env.ContentRootPath, "appsettings.json");
         if (!System.IO.File.Exists(filePath))
         {
-            return NotFound(new { success = false, message = "找不到 appsettings.json 檔案。" });
+            return NotFound(new { success = false, message = "找不到 appsettings.json 檔案。", code="SETTINGS_FILE_MISSING", messageKey="spc.api.settingsFileMissing", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         try
@@ -80,7 +81,7 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
             var ids = dto.RecipientOperatorIds.Distinct().ToList();
             var validCount = await db.Operators.CountAsync(x => ids.Contains(x.Id) && x.IsActive && x.Email != null && x.Email != "");
             if (validCount != ids.Count)
-                return BadRequest(new { success = false, message = "收件人包含停用或未設定 Email 的使用者。" });
+                return BadRequest(new { success = false, message = "收件人包含停用或未設定 Email 的使用者。", code="REPORT_RECIPIENT_INVALID", messageKey="spc.api.reportRecipientInvalid", args=ApiUiMessageCatalog.EmptyArguments });
             var setting = await db.SpcAlertNotificationSettings.FirstOrDefaultAsync() ?? new SpcAlertNotificationSetting();
             if (setting.Id == 0) db.SpcAlertNotificationSettings.Add(setting);
             setting.RecipientOperatorIdsJson = JsonSerializer.Serialize(ids);
@@ -91,12 +92,12 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
             await db.SaveChangesAsync();
 
             logger.LogInformation("SMTP 設定已更新至 appsettings.json");
-            return Ok(new { success = true, message = "SMTP 設定已成功更新並生效。" });
+            return Ok(new { success = true, message = "SMTP 設定已成功更新並生效。", code="SMTP_SETTINGS_UPDATED", messageKey="spc.api.smtpSettingsUpdated", args=ApiUiMessageCatalog.EmptyArguments });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "更新 appsettings.json 時發生錯誤");
-            return StatusCode(500, new { success = false, message = $"更新設定失敗: {ex.Message}" });
+            return StatusCode(500, new { success = false, messageKey = "spc.api.settingsUpdateFailed", args = ApiUiMessageCatalog.EmptyArguments, message = $"更新設定失敗: {ex.Message}" });
         }
     }
 
@@ -202,7 +203,7 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
     [HttpGet("inspect-excel")]
     public IActionResult InspectExcel([FromQuery] string path = @"C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\SPC管制項目.xlsx")
     {
-        if (!System.IO.File.Exists(path)) return NotFound($"File not found at {path}");
+        if (!System.IO.File.Exists(path)) return ApiUiError.WithLegacyMessage(NotFound($"File not found at {path}"), HttpContext, "spc.api.settingsDownloadMissing");
         using var stream = System.IO.File.OpenRead(path);
         using var wb = new ClosedXML.Excel.XLWorkbook(stream);
         var sheets = new List<object>();

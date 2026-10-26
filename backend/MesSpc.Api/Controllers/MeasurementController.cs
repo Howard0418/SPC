@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using CsvHelper;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
@@ -65,7 +66,7 @@ public class MeasurementImportController(AppDbContext db, SpcService spcService)
     [HttpPost("import-csv")]
     public async Task<IActionResult> ImportCsv(IFormFile file, [FromQuery] int productId, [FromQuery] int stationId, [FromQuery] DateTime? measuredAt)
     {
-        if (file.Length == 0) return BadRequest("CSV is empty.");
+        if (file.Length == 0) return ApiUiError.WithLegacyMessage(BadRequest("CSV is empty."), HttpContext, "spc.api.migrationCsvEmpty");
         using var reader = new StreamReader(file.OpenReadStream());
         using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
         var rows = csv.GetRecords<CsvRow>().ToList();

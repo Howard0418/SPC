@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Text.Json;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
@@ -29,11 +30,11 @@ public class SpcReportSchedulesController(
     [HttpPut]
     public async Task<IActionResult> Put(UpdateScheduleRequest req)
     {
-        if (!TimeSpan.TryParse(req.SendTime, out var sendTime)) return BadRequest("寄送時間格式不正確。");
-        if (req.MonthlyDay is < 1 or > 28) return BadRequest("月報日期必須介於 1 到 28 日。");
+        if (!TimeSpan.TryParse(req.SendTime, out var sendTime)) return ApiUiError.WithLegacyMessage(BadRequest("寄送時間格式不正確。"), HttpContext, "spc.api.reportSendTimeInvalid");
+        if (req.MonthlyDay is < 1 or > 28) return ApiUiError.WithLegacyMessage(BadRequest("月報日期必須介於 1 到 28 日。"), HttpContext, "spc.api.reportMonthlyDayInvalid");
         var ids = req.RecipientOperatorIds.Distinct().ToList();
         var validCount = await db.Operators.CountAsync(x => ids.Contains(x.Id) && x.IsActive && x.Email != null && x.Email != "");
-        if (validCount != ids.Count) return BadRequest("收件人包含停用或未設定 Email 的使用者。");
+        if (validCount != ids.Count) return ApiUiError.WithLegacyMessage(BadRequest("收件人包含停用或未設定 Email 的使用者。"), HttpContext, "spc.api.reportRecipientInvalid");
         var schedule = await db.SpcReportSchedules.FirstOrDefaultAsync() ?? new SpcReportSchedule();
         if (schedule.Id == 0) db.SpcReportSchedules.Add(schedule);
         schedule.Department = string.IsNullOrWhiteSpace(req.Department) ? null : req.Department.Trim();
@@ -62,17 +63,17 @@ public class SpcReportSchedulesController(
     public async Task<IActionResult> SendNow(SendNowRequest req, CancellationToken ct)
     {
         var reportType = NormalizeReportType(req.ReportType);
-        if (reportType is null) return BadRequest(new { message = "報表類型必須為 weekly 或 monthly。" });
+        if (reportType is null) return BadRequest(new { message = "報表類型必須為 weekly 或 monthly。", code="REPORT_TYPE_INVALID", messageKey="spc.api.reportTypeInvalid", args=ApiUiMessageCatalog.EmptyArguments });
 
         var ids = req.RecipientOperatorIds.Distinct().ToList();
-        if (ids.Count == 0) return BadRequest(new { message = "請至少勾選一位有 Email 的收件人。" });
+        if (ids.Count == 0) return BadRequest(new { message = "請至少勾選一位有 Email 的收件人。", code="REPORT_RECIPIENT_REQUIRED", messageKey="spc.api.reportRecipientRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         var recipients = await db.Operators.AsNoTracking()
             .Where(x => ids.Contains(x.Id) && x.IsActive && x.Email != null && x.Email != "")
             .OrderBy(x => x.Department)
             .ThenBy(x => x.OperatorName)
             .ToListAsync(ct);
-        if (recipients.Count != ids.Count) return BadRequest(new { message = "收件人包含停用或未設定 Email 的使用者。" });
+        if (recipients.Count != ids.Count) return BadRequest(new { message = "收件人包含停用或未設定 Email 的使用者。", code="REPORT_RECIPIENT_INVALID", messageKey="spc.api.reportRecipientInvalid", args=ApiUiMessageCatalog.EmptyArguments });
 
         var tz = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
         var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);

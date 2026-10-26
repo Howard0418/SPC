@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
@@ -13,7 +14,7 @@ public class EquipmentPointsController(AppDbContext db, ChameleonStatusService c
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] string sourceId, [FromQuery] string equipmentId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(sourceId) || string.IsNullOrWhiteSpace(equipmentId)) return BadRequest(new { message = "sourceId 與 equipmentId 為必填。" });
+        if (string.IsNullOrWhiteSpace(sourceId) || string.IsNullOrWhiteSpace(equipmentId)) return BadRequest(new { message = "sourceId 與 equipmentId 為必填。", code="EQUIPMENT_IDENTITY_REQUIRED", messageKey="spc.api.equipmentIdentityRequired", args=ApiUiMessageCatalog.EmptyArguments });
         var read = await chameleon.GetLatestPointsAsync(sourceId, equipmentId, cancellationToken);
         var mappings = await db.EquipmentPointMappings.AsNoTracking().Where(x => x.SourceId == read.SourceId && x.EquipmentId == read.EquipmentId).ToDictionaryAsync(x => x.ChannelId, cancellationToken);
         return Ok(new { read.SourceId, read.SourceName, read.EquipmentId, read.LastUpdatedAt, points = read.Points.Select(x => new { x.ChannelId, x.ValueType, x.Value, x.ChannelName, x.Category, displayName = mappings.GetValueOrDefault(x.ChannelId)?.DisplayName ?? x.ChannelName, unit = mappings.GetValueOrDefault(x.ChannelId)?.Unit, isEnabled = mappings.GetValueOrDefault(x.ChannelId)?.IsEnabled ?? true, isPinned = mappings.GetValueOrDefault(x.ChannelId)?.IsPinned ?? false, warningLow = mappings.GetValueOrDefault(x.ChannelId)?.WarningLow, warningHigh = mappings.GetValueOrDefault(x.ChannelId)?.WarningHigh, sortOrder = mappings.GetValueOrDefault(x.ChannelId)?.SortOrder ?? 0, statusRole = mappings.GetValueOrDefault(x.ChannelId)?.StatusRole, activeWhen = mappings.GetValueOrDefault(x.ChannelId)?.ActiveWhen ?? "NONZERO" }) });
@@ -22,13 +23,13 @@ public class EquipmentPointsController(AppDbContext db, ChameleonStatusService c
     [HttpPut("mapping")]
     public async Task<IActionResult> UpsertMapping(EquipmentPointMapping request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.SourceId) || string.IsNullOrWhiteSpace(request.EquipmentId) || string.IsNullOrWhiteSpace(request.ChannelId)) return BadRequest(new { message = "來源、設備與點位 ID 為必填。" });
+        if (string.IsNullOrWhiteSpace(request.SourceId) || string.IsNullOrWhiteSpace(request.EquipmentId) || string.IsNullOrWhiteSpace(request.ChannelId)) return BadRequest(new { message = "來源、設備與點位 ID 為必填。", code="EQUIPMENT_POINT_IDENTITY_REQUIRED", messageKey="spc.api.equipmentPointIdentityRequired", args=ApiUiMessageCatalog.EmptyArguments });
         var entity = await db.EquipmentPointMappings.FirstOrDefaultAsync(x => x.SourceId == request.SourceId && x.EquipmentId == request.EquipmentId && x.ChannelId == request.ChannelId, cancellationToken);
         if (entity is null) { entity = new EquipmentPointMapping { SourceId = request.SourceId.Trim(), EquipmentId = request.EquipmentId.Trim(), ChannelId = request.ChannelId.Trim() }; db.EquipmentPointMappings.Add(entity); }
         var statusRole = request.StatusRole?.Trim().ToUpperInvariant();
-        if (statusRole is not null and not "RUNNING" and not "ALARM") return BadRequest(new { message = "狀態用途只允許 RUNNING 或 ALARM。" });
+        if (statusRole is not null and not "RUNNING" and not "ALARM") return BadRequest(new { message = "狀態用途只允許 RUNNING 或 ALARM。", code="EQUIPMENT_STATUS_ROLE_INVALID", messageKey="spc.api.equipmentStatusRoleInvalid", args=ApiUiMessageCatalog.EmptyArguments });
         var activeWhen = request.ActiveWhen?.Trim().ToUpperInvariant() ?? "NONZERO";
-        if (activeWhen is not "NONZERO" and not "ZERO") return BadRequest(new { message = "訊號成立條件只允許 NONZERO 或 ZERO。" });
+        if (activeWhen is not "NONZERO" and not "ZERO") return BadRequest(new { message = "訊號成立條件只允許 NONZERO 或 ZERO。", code="EQUIPMENT_ACTIVE_WHEN_INVALID", messageKey="spc.api.equipmentActiveWhenInvalid", args=ApiUiMessageCatalog.EmptyArguments });
         if (statusRole == "RUNNING")
         {
             var previous = await db.EquipmentPointMappings.Where(x => x.SourceId == request.SourceId && x.EquipmentId == request.EquipmentId && x.StatusRole == "RUNNING" && x.ChannelId != request.ChannelId).ToListAsync(cancellationToken);

@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using ClosedXML.Excel;
 using CsvHelper;
 using MesSpc.Api.Infrastructure.Data;
@@ -28,7 +29,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
         {
-            return Conflict(new { message = "檔案已重複上傳" });
+            return Conflict(new { message = "檔案已重複上傳", code="UPLOAD_DUPLICATE", messageKey="spc.api.uploadDuplicate", args=ApiUiMessageCatalog.EmptyArguments });
         }
     }
 
@@ -46,7 +47,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
         {
-            return Conflict(new { message = "檔案已重複上傳" });
+            return Conflict(new { message = "檔案已重複上傳", code="UPLOAD_DUPLICATE", messageKey="spc.api.uploadDuplicate", args=ApiUiMessageCatalog.EmptyArguments });
         }
     }
 
@@ -61,7 +62,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
         {
-            return Conflict(new { code = "DUPLICATE_FILE", message = "檔案已完成匯入，不可重複上傳。" });
+            return Conflict(new { code = "DUPLICATE_FILE", message = "檔案已完成匯入，不可重複上傳。", messageKey="spc.api.uploadAlreadyImported", args=ApiUiMessageCatalog.EmptyArguments });
         }
         catch (ArgumentException ex)
         {
@@ -120,14 +121,14 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         if (await particleUploadService.IsParticleBatchAsync(uploadBatchId))
         {
             if (duplicateMode is not ("reject" or "skip"))
-                return BadRequest(new { message = "duplicateMode 僅支援 reject 或 skip。" });
+                return BadRequest(new { message = "duplicateMode 僅支援 reject 或 skip。", code="UPLOAD_DUPLICATE_MODE_INVALID", messageKey="spc.api.uploadDuplicateModeInvalid", args=ApiUiMessageCatalog.EmptyArguments });
             var particleResult = await particleUploadService.ConfirmAsync(uploadBatchId, duplicateMode);
             if (particleResult is null) return NotFound();
             if (particleResult.ConflictCode is not null) return Conflict(particleResult);
             return Ok(particleResult);
         }
         if (mode is not ("upsert" or "insertOnly"))
-            return BadRequest(new { message = "不支援的匯入模式。" });
+            return BadRequest(new { message = "不支援的匯入模式。", code="UPLOAD_MODE_UNSUPPORTED", messageKey="spc.api.uploadModeUnsupported", args=ApiUiMessageCatalog.EmptyArguments });
         var result = await uploadService.ConfirmAsync(uploadBatchId, mode);
         return result is null ? NotFound() : Ok(result);
     }
@@ -148,7 +149,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
 
     private async Task<IActionResult> UploadExcelFileAsync(IFormFile file, bool isVariable, bool portalDaily)
     {
-        if (file.Length == 0) return BadRequest("File is empty.");
+        if (file.Length == 0) return ApiUiError.WithLegacyMessage(BadRequest("File is empty."), HttpContext, "spc.api.uploadEmpty");
         
         string fileHash;
         using (var hashStream = file.OpenReadStream())
@@ -278,7 +279,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
             }
         }
 
-        if (rows.Count == 0) return BadRequest("No data rows found in Excel.");
+        if (rows.Count == 0) return ApiUiError.WithLegacyMessage(BadRequest("No data rows found in Excel."), HttpContext, "spc.api.uploadExcelRowsMissing");
 
         try
         {
@@ -289,13 +290,13 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
         {
-            return Conflict(new { message = "檔案已重複上傳" });
+            return Conflict(new { message = "檔案已重複上傳", code="UPLOAD_DUPLICATE", messageKey="spc.api.uploadDuplicate", args=ApiUiMessageCatalog.EmptyArguments });
         }
     }
 
     private async Task<IActionResult> UploadCsvLike(IFormFile file, bool isVariable)
     {
-        if (file.Length == 0) return BadRequest("File is empty.");
+        if (file.Length == 0) return ApiUiError.WithLegacyMessage(BadRequest("File is empty."), HttpContext, "spc.api.uploadEmpty");
         
         string fileHash;
         using (var hashStream = file.OpenReadStream())
@@ -307,7 +308,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         using var reader = new StreamReader(file.OpenReadStream());
         using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
         var rows = ReadDictionaryRows(csv);
-        if (rows.Count == 0) return BadRequest("No data rows found.");
+        if (rows.Count == 0) return ApiUiError.WithLegacyMessage(BadRequest("No data rows found."), HttpContext, "spc.api.uploadRowsMissing");
 
         try
         {
@@ -318,7 +319,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_FILE")
         {
-            return Conflict(new { message = "檔案已重複上傳" });
+            return Conflict(new { message = "檔案已重複上傳", code="UPLOAD_DUPLICATE", messageKey="spc.api.uploadDuplicate", args=ApiUiMessageCatalog.EmptyArguments });
         }
     }
 

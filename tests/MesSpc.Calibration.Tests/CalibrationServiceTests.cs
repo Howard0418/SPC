@@ -95,7 +95,7 @@ public class CalibrationServiceTests : IDisposable
     {
         await service.SaveInstrumentAsync(null, Input() with { Code = "Z-99", NextCalibrationDate = new(2026, 10, 1) }, "qa", default);
         await service.SaveInstrumentAsync(null, Input() with { Code = "A-01", NextCalibrationDate = new(2026, 12, 1) }, "qa", default);
-        var controller = new InstrumentCalibrationsController(db, service, null!, TimeProvider.System, null!, null!);
+        var controller = new InstrumentCalibrationsController(db, service, null!, TimeProvider.System, null!, null!, new MesSpc.Api.Services.Security.AuthorizationAccess(db));
         var ok = Assert.IsType<OkObjectResult>(await controller.GetInstruments(null, null, null, 1, 20, default));
         var json = JsonSerializer.Serialize(ok.Value);
         var codes = JsonDocument.Parse(json).RootElement.GetProperty("data").EnumerateArray().Select(x => x.GetProperty("Code").GetString()).ToArray();

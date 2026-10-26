@@ -39,6 +39,7 @@ public sealed class CalibrationImportFactory : WebApplicationFactory<InstrumentI
             services.AddDataProtection().UseEphemeralDataProtectionProvider();
             services.AddDbContext<AppDbContext>(o=>o.UseSqlite(connection));
             services.AddScoped<InstrumentCalibrationService>(); services.AddScoped<CalibrationImportService>();
+            services.AddScoped<MesSpc.Api.Services.Security.AuthorizationAccess>();
             services.AddControllers().AddApplicationPart(typeof(InstrumentImportController).Assembly);
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o=>o.TokenValidationParameters=new()
             { ValidateIssuer=false,ValidateAudience=false,ValidateIssuerSigningKey=true,IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestKey)) });

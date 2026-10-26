@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Services;
 using MesSpc.Api.Services.Parsers;
 using Microsoft.AspNetCore.Mvc;
@@ -26,9 +27,9 @@ public class ChemicalDailyReportController : ControllerBase
     public async Task<IActionResult> Preview(IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest(new { error = "請上傳 .xlsx 檔案" });
+            return BadRequest(new { error = "請上傳 .xlsx 檔案", code="UPLOAD_XLSX_REQUIRED", messageKey="spc.api.uploadXlsxRequired", args=ApiUiMessageCatalog.EmptyArguments });
         if (!file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { error = "只接受 .xlsx 格式" });
+            return BadRequest(new { error = "只接受 .xlsx 格式", code="UPLOAD_XLSX_ONLY", messageKey="spc.api.uploadXlsxOnly", args=ApiUiMessageCatalog.EmptyArguments });
 
         await using var stream = file.OpenReadStream();
         var result = _parser.Parse(stream);
@@ -73,21 +74,22 @@ public class ChemicalDailyReportController : ControllerBase
     public async Task<IActionResult> Import(IFormFile file, CancellationToken ct)
     {
         if (file == null || file.Length == 0)
-            return BadRequest(new { error = "請上傳 .xlsx 檔案" });
+            return BadRequest(new { error = "請上傳 .xlsx 檔案", code="UPLOAD_XLSX_REQUIRED", messageKey="spc.api.uploadXlsxRequired", args=ApiUiMessageCatalog.EmptyArguments });
         if (!file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { error = "只接受 .xlsx 格式" });
+            return BadRequest(new { error = "只接受 .xlsx 格式", code="UPLOAD_XLSX_ONLY", messageKey="spc.api.uploadXlsxOnly", args=ApiUiMessageCatalog.EmptyArguments });
 
         await using var stream = file.OpenReadStream();
         var parseResult = _parser.Parse(stream);
 
         if (parseResult.ParsedRows == 0)
-            return BadRequest(new { error = "檔案中沒有有效的資料列可匯入" });
+            return BadRequest(new { error = "檔案中沒有有效的資料列可匯入", code="UPLOAD_NO_VALID_ROWS", messageKey="spc.api.uploadNoValidRows", args=ApiUiMessageCatalog.EmptyArguments });
 
         var importedBy = User.Identity?.Name ?? "system";
         var summary = await _importService.ImportAsync(parseResult, importedBy, ct);
 
         return Ok(new
         {
+            messageKey = summary.FailedRows == 0 ? "spc.api.uploadCompleted" : "spc.api.uploadPartial", args = ApiUiMessageCatalog.EmptyArguments,
             message = summary.FailedRows == 0 ? "匯入成功" : "匯入完成（含部分失敗）",
             importedRows = summary.ImportedRows,
             failedRows = summary.FailedRows,

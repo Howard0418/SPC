@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
 
         return env.IsDevelopment()
             ? null
-            : StatusCode(StatusCodes.Status403Forbidden, new { message = "Migration endpoints only allowed in Development." });
+            : StatusCode(StatusCodes.Status403Forbidden, new { message = "Migration endpoints only allowed in Development.", code="MIGRATION_DEVELOPMENT_ONLY", messageKey="spc.api.migrationDevelopmentOnly", args=ApiUiMessageCatalog.EmptyArguments });
     }
 
     /// <summary>
@@ -88,7 +89,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
         return Ok(new
         {
             success = true,
-            message = "已成功清除所有大中小分類結構及相關資料，請重新呼叫 import-custom-spc 進行匯入。",
+            message = "已成功清除所有大中小分類結構及相關資料，請重新呼叫 import-custom-spc 進行匯入。", code="MIGRATION_CLEAR_COMPLETED", messageKey="spc.api.migrationClearCompleted", args=ApiUiMessageCatalog.EmptyArguments,
             deletedGroups = groups.Count,
             deletedCategories = 0,
             deletedChartTypes = chartTypes.Count,
@@ -202,7 +203,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
         if (devOnly is not null) return devOnly;
 
         if (!Guid.TryParse(batchId, out var batchGuid))
-            return BadRequest(new { success = false, message = "batchId 格式不正確，應為 GUID" });
+            return BadRequest(new { success = false, message = "batchId 格式不正確，應為 GUID", code="MIGRATION_BATCH_ID_INVALID", messageKey="spc.api.migrationBatchIdInvalid", args=ApiUiMessageCatalog.EmptyArguments });
 
         var measurements = await dbContext.VariableMeasurements
             .Where(x => x.UploadBatchId == batchGuid)
@@ -232,7 +233,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
 
         if (ppcList.Count == 0)
         {
-            return BadRequest(new { success = false, message = "請先建置產品與檢驗基準主檔 (PartProcessCharacteristics) 以供舊資料映射。" });
+            return BadRequest(new { success = false, message = "請先建置產品與檢驗基準主檔 (PartProcessCharacteristics) 以供舊資料映射。", code="MIGRATION_MAPPING_REQUIRED", messageKey="spc.api.migrationMappingRequired", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         int migratedMeasurements = 0;
@@ -329,7 +330,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
 
         if (file == null || file.Length == 0)
         {
-            return BadRequest(new { success = false, message = "請提供上傳的 Excel 檔案" });
+            return BadRequest(new { success = false, message = "請提供上傳的 Excel 檔案", code="MIGRATION_EXCEL_REQUIRED", messageKey="spc.api.migrationExcelRequired", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         using var stream = file.OpenReadStream();
@@ -544,7 +545,7 @@ public class MigrationController(AppDbContext dbContext, IWebHostEnvironment env
             importedChemicalItems,
             importedProductItems,
             totalImported = importedProcessItems + importedChemicalItems + importedProductItems,
-            message = "Excel 管制項目成功載入並建立大中小分類基準！"
+            message = "Excel 管制項目成功載入並建立大中小分類基準！", code="MIGRATION_EXCEL_COMPLETED", messageKey="spc.api.migrationExcelCompleted", args=ApiUiMessageCatalog.EmptyArguments
         });
     }
 }

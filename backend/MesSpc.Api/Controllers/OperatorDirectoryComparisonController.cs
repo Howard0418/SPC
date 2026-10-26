@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -18,14 +19,14 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
         var baseUrl = configuration["PortalDirectory:ApiBaseUrl"]?.TrimEnd('/');
         var key = configuration["Auth:PortalSsoKey"];
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(key))
-            return StatusCode(503, new { message = "Portal 人員比對服務尚未設定。" });
+            return StatusCode(503, new { message = "Portal 人員比對服務尚未設定。", code="DIRECTORY_NOT_CONFIGURED", messageKey="spc.api.directoryNotConfigured", args=ApiUiMessageCatalog.EmptyArguments });
 
         var client = clients.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/spc-directory/quality-users");
         request.Headers.TryAddWithoutValidation("X-SPC-Sync-Key", key);
         using var response = await client.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
-            return StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。" });
+            return StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。", messageKey = "spc.api.directoryRequestFailed", args = new Dictionary<string,string> { ["status"] = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture) } });
         var portalUsers = await response.Content.ReadFromJsonAsync<List<PortalUser>>(cancellationToken: cancellationToken) ?? [];
         var operators = await db.Operators.AsNoTracking().OrderBy(x => x.Id).ToListAsync(cancellationToken);
         var used = new HashSet<int>();
@@ -63,7 +64,7 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
     public async Task<IActionResult> Sync(SyncRequest request, CancellationToken cancellationToken)
     {
         if (request.Items is null || request.Items.Count == 0 || request.Items.Count > 100)
-            return BadRequest(new { message = "請選擇 1 至 100 位人員。" });
+            return BadRequest(new { message = "請選擇 1 至 100 位人員。", code="DIRECTORY_SELECTION_REQUIRED", messageKey="spc.api.directorySelectionRequired", args=ApiUiMessageCatalog.EmptyArguments });
         var portalResult = await LoadPortalUsers(cancellationToken);
         if (portalResult.Error is not null) return portalResult.Error;
         var portalUsers = portalResult.Users!;
@@ -73,7 +74,7 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
         foreach (var item in request.Items.DistinctBy(x => x.PortalUserId))
         {
             var portal = portalUsers.FirstOrDefault(x => x.PortalUserId == item.PortalUserId);
-            if (portal is null) { results.Add(new { item.PortalUserId, success = false, message = "Portal 品保人員不存在。" }); continue; }
+            if (portal is null) { results.Add(new { item.PortalUserId, success = false, message = "Portal 品保人員不存在。", code="DIRECTORY_USER_MISSING", messageKey="spc.api.directoryUserMissing", args=ApiUiMessageCatalog.EmptyArguments }); continue; }
             var candidates = await db.Operators.Where(x =>
                 x.Username == portal.AdAccount || (!string.IsNullOrWhiteSpace(portal.EmployeeNo) && x.OperatorCode == portal.EmployeeNo)).ToListAsync(cancellationToken);
             Domain.Entities.Operator? op = null;
@@ -82,13 +83,13 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
             else if (candidates.Count == 1)
                 op = candidates[0];
             else if (candidates.Count > 1)
-            { results.Add(new { item.PortalUserId, success = false, message = "資料衝突，請先指定正確的 SPC 人員。" }); continue; }
+            { results.Add(new { item.PortalUserId, success = false, message = "資料衝突，請先指定正確的 SPC 人員。", code="DIRECTORY_IDENTITY_CONFLICT", messageKey="spc.api.directoryIdentityConflict", args=ApiUiMessageCatalog.EmptyArguments }); continue; }
 
             var code = string.IsNullOrWhiteSpace(portal.EmployeeNo) ? portal.AdAccount.ToUpperInvariant() : portal.EmployeeNo.Trim();
             var account = portal.AdAccount.Trim().ToLowerInvariant();
             var collision = await db.Operators.AsNoTracking().AnyAsync(x =>
                 (x.OperatorCode == code || x.Username == account) && (op == null || x.Id != op.Id), cancellationToken);
-            if (collision) { results.Add(new { item.PortalUserId, success = false, message = "AD 帳號或工號已被其他 SPC 人員使用。" }); continue; }
+            if (collision) { results.Add(new { item.PortalUserId, success = false, message = "AD 帳號或工號已被其他 SPC 人員使用。", code="DIRECTORY_ACCOUNT_USED", messageKey="spc.api.directoryAccountUsed", args=ApiUiMessageCatalog.EmptyArguments }); continue; }
 
             var before = op is null ? null : JsonSerializer.Serialize(new { op.Id, op.OperatorCode, op.OperatorName, op.Department, op.Email, op.Username, op.Role, op.IsActive });
             var action = op is null ? "Created" : "Updated";
@@ -120,13 +121,13 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
         var baseUrl = configuration["PortalDirectory:ApiBaseUrl"]?.TrimEnd('/');
         var key = configuration["Auth:PortalSsoKey"];
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(key))
-            return (null, StatusCode(503, new { message = "Portal 人員比對服務尚未設定。" }));
+            return (null, StatusCode(503, new { message = "Portal 人員比對服務尚未設定。", code="DIRECTORY_NOT_CONFIGURED", messageKey="spc.api.directoryNotConfigured", args=ApiUiMessageCatalog.EmptyArguments }));
         var client = clients.CreateClient();
         using var message = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/spc-directory/quality-users");
         message.Headers.TryAddWithoutValidation("X-SPC-Sync-Key", key);
         using var response = await client.SendAsync(message, cancellationToken);
         if (!response.IsSuccessStatusCode)
-            return (null, StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。" }));
+            return (null, StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。", messageKey = "spc.api.directoryRequestFailed", args = new Dictionary<string,string> { ["status"] = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture) } }));
         return (await response.Content.ReadFromJsonAsync<List<PortalUser>>(cancellationToken: cancellationToken) ?? [], null);
     }
 

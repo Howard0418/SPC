@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Text.Json;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
@@ -101,7 +102,7 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> GetInstrument(int id, CancellationToken ct = default)
     {
         var item = await db.Set<CalibrationInstrument>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-        if (item == null) return NotFound(new { success = false, message = "找不到該儀器。" });
+        if (item == null) return NotFound(new { success = false, message = "找不到該儀器。", code="INSTRUMENT_MISSING", messageKey="spc.api.instrumentMissing", args=ApiUiMessageCatalog.EmptyArguments });
 
         var custodian = await db.Operators.AsNoTracking().FirstOrDefaultAsync(x => x.Id == item.CustodianOperatorId, ct);
 
@@ -142,7 +143,7 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> CreateInstrument([FromBody] InstrumentInput req, CancellationToken ct = default)
     {
         if (!await CheckManagePermissionAsync(ct))
-            return StatusCode(403, new { success = false, message = "無維護儀器權限，需具備校正管理權限。" });
+            return StatusCode(403, new { success = false, message = "無維護儀器權限，需具備校正管理權限。", code="INSTRUMENT_PERMISSION_REQUIRED", messageKey="spc.api.instrumentPermissionRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         try
         {
@@ -159,7 +160,7 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> UpdateInstrument(int id, [FromBody] InstrumentInput req, CancellationToken ct = default)
     {
         if (!await CheckManagePermissionAsync(ct))
-            return StatusCode(403, new { success = false, message = "無維護儀器權限，需具備校正管理權限。" });
+            return StatusCode(403, new { success = false, message = "無維護儀器權限，需具備校正管理權限。", code="INSTRUMENT_PERMISSION_REQUIRED", messageKey="spc.api.instrumentPermissionRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         try
         {
@@ -176,7 +177,7 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> GetCalibrationHistory(int id, CancellationToken ct = default)
     {
         var instrument = await db.Set<CalibrationInstrument>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-        if (instrument == null) return NotFound(new { success = false, message = "找不到該儀器。" });
+        if (instrument == null) return NotFound(new { success = false, message = "找不到該儀器。", code="INSTRUMENT_MISSING", messageKey="spc.api.instrumentMissing", args=ApiUiMessageCatalog.EmptyArguments });
 
         var records = await db.Set<InstrumentCalibrationRecord>().AsNoTracking()
             .Where(x => x.InstrumentId == id)
@@ -220,7 +221,7 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> RecordCalibration(int id, [FromBody] CalibrationInput req, CancellationToken ct = default)
     {
         if (!await CheckManagePermissionAsync(ct))
-            return StatusCode(403, new { success = false, message = "無登錄校正權限，需具備校正管理權限。" });
+            return StatusCode(403, new { success = false, message = "無登錄校正權限，需具備校正管理權限。", code="CALIBRATION_RECORD_PERMISSION_REQUIRED", messageKey="spc.api.calibrationRecordPermissionRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         try
         {
@@ -237,7 +238,7 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> UploadCertificate(int recordId, IFormFile file, CancellationToken ct = default)
     {
         if (!await CheckManagePermissionAsync(ct))
-            return StatusCode(403, new { success = false, message = "無上傳證書權限，需具備校正管理權限。" });
+            return StatusCode(403, new { success = false, message = "無上傳證書權限，需具備校正管理權限。", code="CERTIFICATE_PERMISSION_REQUIRED", messageKey="spc.api.certificatePermissionRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         try
         {
@@ -254,11 +255,11 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> DownloadCertificate(int id, CancellationToken ct = default)
     {
         var cert = await db.Set<CalibrationCertificate>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-        if (cert == null) return NotFound(new { success = false, message = "找不到該證書附件。" });
+        if (cert == null) return NotFound(new { success = false, message = "找不到該證書附件。", code="CERTIFICATE_MISSING", messageKey="spc.api.certificateMissing", args=ApiUiMessageCatalog.EmptyArguments });
 
         var path = certificates.Resolve(cert.StorageKey);
         if (!System.IO.File.Exists(path))
-            return NotFound(new { success = false, message = "實體檔案不存在。" });
+            return NotFound(new { success = false, message = "實體檔案不存在。", code="PHYSICAL_FILE_MISSING", messageKey="spc.api.physicalFileMissing", args=ApiUiMessageCatalog.EmptyArguments });
 
         var stream = System.IO.File.OpenRead(path);
         return File(stream, cert.ContentType, cert.OriginalName);
@@ -329,7 +330,7 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> UpdateSettings([FromBody] CalibrationSettingInput req, [FromServices] CalibrationChatSecrets chatSecrets, CancellationToken ct = default)
     {
         if (!await CheckManagePermissionAsync(ct))
-            return StatusCode(403, new { success = false, message = "無修改提醒設定權限。" });
+            return StatusCode(403, new { success = false, message = "無修改提醒設定權限。", code="REMINDER_PERMISSION_REQUIRED", messageKey="spc.api.reminderPermissionRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         int[] validatedDays;
         try
@@ -344,7 +345,7 @@ public class InstrumentCalibrationsController(
         var setting = await db.Set<CalibrationNotificationSetting>().FirstOrDefaultAsync(x => x.Id == 1, ct);
         var channel = req.NotificationChannel ?? setting?.NotificationChannel ?? "Email";
         if (channel is not ("Email" or "SynologyChat"))
-            return BadRequest(new { success = false, message = "請選擇 Email 或 Synology Chat。" });
+            return BadRequest(new { success = false, message = "請選擇 Email 或 Synology Chat。", code="NOTIFICATION_CHANNEL_REQUIRED", messageKey="spc.api.notificationChannelRequired", args=ApiUiMessageCatalog.EmptyArguments });
         var protectedUrl = setting?.ChatWebhookProtected;
         try
         {
@@ -352,7 +353,7 @@ public class InstrumentCalibrationsController(
         }
         catch (ArgumentException ex) { return BadRequest(new { success = false, message = ex.Message }); }
         if (channel == "SynologyChat" && string.IsNullOrWhiteSpace(protectedUrl))
-            return BadRequest(new { success = false, message = "請先設定 Synology Chat Webhook 網址。" });
+            return BadRequest(new { success = false, message = "請先設定 Synology Chat Webhook 網址。", code="CHAT_WEBHOOK_REQUIRED", messageKey="spc.api.chatWebhookRequired", args=ApiUiMessageCatalog.EmptyArguments });
         var before = JsonSerializer.Serialize(new { setting?.NotificationChannel, setting?.IsEnabled, setting?.ReminderDaysJson });
         if (setting is null) { setting = new CalibrationNotificationSetting(); db.Add(setting); }
         setting.ReminderDaysJson = JsonSerializer.Serialize(validatedDays);
@@ -377,16 +378,16 @@ public class InstrumentCalibrationsController(
         [FromServices] CalibrationChatSecrets chatSecrets, [FromServices] ICalibrationChatSender chat, CancellationToken ct = default)
     {
         if (!await CheckManagePermissionAsync(ct))
-            return StatusCode(403, new { success = false, message = "無發送測試通知權限。" });
+            return StatusCode(403, new { success = false, message = "無發送測試通知權限。", code="TEST_NOTIFICATION_PERMISSION_REQUIRED", messageKey="spc.api.testNotificationPermissionRequired", args=ApiUiMessageCatalog.EmptyArguments });
         var url = req.ChatWebhookUrl;
         if (string.IsNullOrWhiteSpace(url))
         {
             var setting = await db.Set<CalibrationNotificationSetting>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == 1, ct);
             if (string.IsNullOrWhiteSpace(setting?.ChatWebhookProtected))
-                return BadRequest(new { success = false, message = "請先貼上或儲存 Synology Chat Webhook 網址。" });
+                return BadRequest(new { success = false, message = "請先貼上或儲存 Synology Chat Webhook 網址。", code="CHAT_WEBHOOK_SAVE_REQUIRED", messageKey="spc.api.chatWebhookSaveRequired", args=ApiUiMessageCatalog.EmptyArguments });
             try { url = chatSecrets.Unprotect(setting.ChatWebhookProtected); }
             catch (System.Security.Cryptography.CryptographicException)
-            { return BadRequest(new { success = false, message = "Webhook 無法解密，請重新貼上並儲存。" }); }
+            { return BadRequest(new { success = false, message = "Webhook 無法解密，請重新貼上並儲存。", code="CHAT_WEBHOOK_DECRYPT_FAILED", messageKey="spc.api.chatWebhookDecryptFailed", args=ApiUiMessageCatalog.EmptyArguments }); }
         }
         try { CalibrationChatSecrets.ValidateUrl(url); }
         catch (ArgumentException ex) { return BadRequest(new { success = false, message = ex.Message }); }
@@ -399,6 +400,7 @@ public class InstrumentCalibrationsController(
         {
             success = result.State == "Sent",
             data = new { channel = "SynologyChat", state = result.State, result.ErrorCode },
+            messageKey = result.State == "Sent" ? "spc.api.chatTestSent" : result.State == "Unknown" ? "spc.api.chatTestUnknown" : "spc.api.chatTestRejected", args = ApiUiMessageCatalog.EmptyArguments,
             message = result.State == "Sent" ? "測試通知已送至 Synology Chat 群組。" :
                 result.State == "Unknown" ? "傳送結果不確定，請先查看 Chat 群組，確認後再決定是否重試。" :
                 "Synology Chat 拒絕通知，請檢查 Webhook 網址及群組設定。"
@@ -411,11 +413,11 @@ public class InstrumentCalibrationsController(
     public async Task<IActionResult> SendTestEmail([FromBody] CalibrationTestEmailInput? req, CancellationToken ct = default)
     {
         if (!await CheckManagePermissionAsync(ct))
-            return StatusCode(403, new { success = false, message = "無發送測試通知權限。" });
+            return StatusCode(403, new { success = false, message = "無發送測試通知權限。", code="TEST_NOTIFICATION_PERMISSION_REQUIRED", messageKey="spc.api.testNotificationPermissionRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         var email = string.IsNullOrWhiteSpace(req?.Email) ? config["SmtpSettings:DefaultRecipientEmail"] : req!.Email.Trim();
         if (!InstrumentCalibrationService.ValidEmail(email))
-            return BadRequest(new { success = false, message = "請指定有效的測試收件人 Email。" });
+            return BadRequest(new { success = false, message = "請指定有效的測試收件人 Email。", code="TEST_RECIPIENT_INVALID", messageKey="spc.api.testRecipientInvalid", args=ApiUiMessageCatalog.EmptyArguments });
         var recipient = email!;
 
         var sample = await db.Set<CalibrationInstrument>().AsNoTracking()
@@ -452,6 +454,7 @@ public class InstrumentCalibrationsController(
                 smtpSent = sent,
                 outboxFolder = config["SmtpSettings:LocalDiskFolder"]
             },
+            messageKey = sent ? "spc.api.emailTestSent" : "spc.api.emailTestFailed", args = ApiUiMessageCatalog.EmptyArguments,
             message = sent ? "測試通知已寄出。" : "SMTP 未成功，請改查本機郵件備份資料夾。"
         });
     }

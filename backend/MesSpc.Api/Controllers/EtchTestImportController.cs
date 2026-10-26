@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Data.Common;
 using MesSpc.Api.Services;
 using MesSpc.Api.Infrastructure.Data;
@@ -25,7 +26,7 @@ public sealed class EtchTestImportController(EtchReportSyncService service,AppDb
     public Task<IActionResult> Confirm(EtchReportRequest report,CancellationToken ct)=>Run(report,true,ct);
     private async Task<IActionResult> Run(EtchReportRequest report,bool apply,CancellationToken ct)
     {
-        if(!db.Database.IsSqlServer()||!IsTest(config["AppEnvironment"],db.Database.GetConnectionString()))return StatusCode(403,new{success=false,data=(object?)null,message="只允許SPC測試庫。"});
+        if(!db.Database.IsSqlServer()||!IsTest(config["AppEnvironment"],db.Database.GetConnectionString()))return StatusCode(403,new{success=false,data=(object?)null,message="只允許SPC測試庫。", code="ETCH_TEST_DATABASE_ONLY", messageKey="spc.api.etchTestDatabaseOnly", args=ApiUiMessageCatalog.EmptyArguments});
         try{
             var result=apply?await service.SyncAsync(report,User.Identity?.Name??"authenticated-user",false,ct):await service.PreviewAsync(report,ct);
             if(apply)logger.LogInformation("Strict etch import {Date} {Line} by {Actor}, unchanged={Unchanged}",report.ReportDate,report.LineCode,User.Identity?.Name,result.Unchanged);

@@ -327,3 +327,5 @@
 - 2026-10-26 08C3A完成：60鍵／106前端、34後端、本機27／發布27及build/hash/health/同源通過，11控制器除顯示metadata外與原文完全相同；只測試Web0.1.96/API0.1.77，剩18件，接續08C3B 服務例外與動態驗證。[規格](../specs/20261026-i18n-task08c3a/spec.md)／[驗證](../specs/20261026-i18n-task08c3a/verification.md)。
 
 - 2026-10-26 08C3B完成：79鍵／108前端、64必要後端、公式基準15與TransFiles來源特徵10、本機33／發布33及build/hash/health/同源通過，9服務除例外metadata外全文不變；只測試Web0.1.97/API0.1.78，剩17件，接續08C4 匯入／設備／校驗／設定驗證。[規格](../specs/20261026-i18n-task08c3b/spec.md)／[驗證](../specs/20261026-i18n-task08c3b/verification.md)。
+
+- 2026-10-26 08C4A完成：86鍵／109前端、14本批API測試、本機36／發布36與build/hash/health/同源通過；校驗完整124項為122通過、2項本批前基準同樣失敗，未宣稱全綠；只測試Web0.1.98/API0.1.79，剩18件，接續08C4B 服務與欄位驗證。[規格](../specs/20261026-i18n-task08c4a/spec.md)／[驗證](../specs/20261026-i18n-task08c4a/verification.md)。

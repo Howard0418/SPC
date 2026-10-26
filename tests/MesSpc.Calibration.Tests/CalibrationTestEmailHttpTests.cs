@@ -57,6 +57,7 @@ public sealed class CalibrationTestEmailFactory : WebApplicationFactory<Instrume
             services.AddDataProtection().UseEphemeralDataProtectionProvider();
             services.AddDbContext<AppDbContext>(o => o.UseSqlite(connection));
             services.AddScoped<InstrumentCalibrationService>();
+            services.AddScoped<MesSpc.Api.Services.Security.AuthorizationAccess>();
             services.AddScoped<CalibrationCertificates>();
             services.AddControllers().AddApplicationPart(typeof(InstrumentCalibrationsController).Assembly);
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o => o.TokenValidationParameters = new()

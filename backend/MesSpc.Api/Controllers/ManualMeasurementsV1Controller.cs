@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 ﻿using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
 using MesSpc.Api.Infrastructure.Data;
@@ -39,7 +40,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
     {
         samplingPhase = samplingPhase.Trim().ToUpperInvariant();
         if (machineId <= 0 || year < 1900 || year > 9998 || month < 1 || month > 12 || samplingPhase is not ("OPEN" or "MIDDLE"))
-            return BadRequest("線別、月份或班別無效。");
+            return ApiUiError.WithLegacyMessage(BadRequest("線別、月份或班別無效。"), HttpContext, "spc.api.etchPeriodInvalid");
         var code = await db.Machines.Where(x => x.Id == machineId).Select(x => x.MachineCode).FirstOrDefaultAsync(ct);
         if (code is null) return NotFound();
         if (!ChemicalSamplingStage.TryNormalize(code, samplingStage, out samplingStage))
@@ -67,7 +68,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         [FromQuery] string samplingPhase = "GENERAL", CancellationToken ct = default,
         [FromQuery] string samplingStage = "GENERAL")
     {
-        if (machineId <= 0) return BadRequest("machineId is required.");
+        if (machineId <= 0) return ApiUiError.WithLegacyMessage(BadRequest("machineId is required."), HttpContext, "spc.api.measurementMachineRequired");
         var machineCode = await db.Machines.Where(x => x.Id == machineId).Select(x => x.MachineCode).FirstOrDefaultAsync(ct);
         if(!ChemicalSamplingStage.TryNormalize(machineCode,samplingStage,out samplingStage))
             return BadRequest(new { message=ChemicalSamplingStage.Error });
@@ -81,7 +82,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         if (rows.Count == 0) return Ok(new { date, machineId, exists = false, rows = Array.Empty<object>() });
 
         if (rows.GroupBy(x => x.PartProcessCharacteristicId).Any(g => g.Count() > 1))
-            return Conflict(new { message = "同一項目有多筆早班或舊班別資料，請先確認重複紀錄。" });
+            return Conflict(new { message = "同一項目有多筆早班或舊班別資料，請先確認重複紀錄。", code="MEASUREMENT_MORNING_DUPLICATE", messageKey="spc.api.measurementMorningDuplicate", args=ApiUiMessageCatalog.EmptyArguments });
 
         var ppcIds = rows.Select(x => x.PartProcessCharacteristicId).Distinct().ToList();
         var mappings = await db.PartProcessCharacteristics.AsNoTracking()
@@ -132,7 +133,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         [FromQuery] int timezoneOffsetMinutes = 480,
         CancellationToken ct = default)
     {
-        if (ppcId <= 0) return BadRequest("ppcId is required.");
+        if (ppcId <= 0) return ApiUiError.WithLegacyMessage(BadRequest("ppcId is required."), HttpContext, "spc.api.measurementPpcRequired");
         timezoneOffsetMinutes = Math.Clamp(timezoneOffsetMinutes, -840, 840);
         var localStart = DateTime.SpecifyKind(date.ToDateTime(TimeOnly.MinValue), DateTimeKind.Unspecified);
         var utcStart = localStart.AddMinutes(-timezoneOffsetMinutes);
@@ -148,7 +149,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
 
         var batchId = await query.OrderByDescending(x => x.MeasuredAt)
             .Select(x => (Guid?)x.UploadBatchId).FirstOrDefaultAsync(ct);
-        if (!batchId.HasValue) return NotFound("找不到符合日期、班別/人員與檢驗項目的既有資料。");
+        if (!batchId.HasValue) return ApiUiError.WithLegacyMessage(NotFound("找不到符合日期、班別/人員與檢驗項目的既有資料。"), HttpContext, "spc.api.measurementExistingMissing");
 
         var rows = await db.VariableMeasurements.AsNoTracking()
             .Where(x => x.UploadBatchId == batchId.Value && x.PartProcessCharacteristicId == ppcId)
@@ -171,8 +172,8 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
     [HttpPost]
     public async Task<IActionResult> Create(CreateManualMeasurementReq req, CancellationToken ct = default)
     {
-        if (req.PartProcessCharacteristicId <= 0) return BadRequest("PartProcessCharacteristicId is required.");
-        if (req.Values.Count == 0) return BadRequest("At least one measurement value is required.");
+        if (req.PartProcessCharacteristicId <= 0) return ApiUiError.WithLegacyMessage(BadRequest("PartProcessCharacteristicId is required."), HttpContext, "spc.api.manualCharacteristicRequired");
+        if (req.Values.Count == 0) return ApiUiError.WithLegacyMessage(BadRequest("At least one measurement value is required."), HttpContext, "spc.api.manualValueRequired");
 
         var mapping = await db.PartProcessCharacteristics
             .Include(x => x.Part)
@@ -180,12 +181,12 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             .Include(x => x.Characteristic)
             .FirstOrDefaultAsync(x => x.Id == req.PartProcessCharacteristicId && x.IsEnabled, ct);
 
-        if (mapping is null) return NotFound("Part process characteristic not found or disabled.");
+        if (mapping is null) return ApiUiError.WithLegacyMessage(NotFound("Part process characteristic not found or disabled."), HttpContext, "spc.api.manualItemMissing");
 
         var dataCategory = mapping.Characteristic?.DataCategory ?? "Variable";
         if (!string.Equals(dataCategory, "Variable", StringComparison.OrdinalIgnoreCase))
         {
-            return BadRequest("Manual entry currently supports variable measurements. Please use attribute import for count data.");
+            return ApiUiError.WithLegacyMessage(BadRequest("Manual entry currently supports variable measurements. Please use attribute import for count data."), HttpContext, "spc.api.manualVariableOnly");
         }
 
         var machineId = await db.Machines
@@ -295,19 +296,19 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
     public async Task<IActionResult> Update(Guid uploadBatchId, CreateManualMeasurementReq req, CancellationToken ct = default)
     {
         if (req.PartProcessCharacteristicId <= 0 || req.Values.Count == 0)
-            return BadRequest("檢驗項目與量測值為必填。");
+            return ApiUiError.WithLegacyMessage(BadRequest("檢驗項目與量測值為必填。"), HttpContext, "spc.api.manualInspectionRequired");
 
         var mapping = await db.PartProcessCharacteristics
             .FirstOrDefaultAsync(x => x.Id == req.PartProcessCharacteristicId && x.IsEnabled, ct);
-        if (mapping is null) return NotFound("檢驗項目不存在或已停用。");
+        if (mapping is null) return ApiUiError.WithLegacyMessage(NotFound("檢驗項目不存在或已停用。"), HttpContext, "spc.api.manualInspectionMissing");
 
         var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
         var rows = await db.VariableMeasurements
             .Where(x => x.UploadBatchId == uploadBatchId && x.PartProcessCharacteristicId == req.PartProcessCharacteristicId)
             .OrderBy(x => x.SampleNo).ToListAsync(ct);
-        if (batch is null || rows.Count == 0) return NotFound("找不到要修改的手動量測批次。");
+        if (batch is null || rows.Count == 0) return ApiUiError.WithLegacyMessage(NotFound("找不到要修改的手動量測批次。"), HttpContext, "spc.api.manualBatchMissing");
         if (rows.Any(x => x.SourceType != SourceType.Manual))
-            return Conflict("此資料不是手動錄入來源，禁止在本頁修改。");
+            return ApiUiError.WithLegacyMessage(Conflict("此資料不是手動錄入來源，禁止在本頁修改。"), HttpContext, "spc.api.manualPageEditDenied");
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var before = rows.Select(x => new { x.Id, x.SampleNo, x.MeasuredValue, x.MeasuredAt, x.Operator }).ToList();
@@ -397,8 +398,8 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
     public async Task<IActionResult> UpdateItem(long id, UpdateManualMeasurementItemReq req, CancellationToken ct = default)
     {
         var row = await db.VariableMeasurements.FirstOrDefaultAsync(x => x.Id == id, ct);
-        if (row is null) return NotFound("找不到要修改的量測資料。");
-        if (row.SourceType != SourceType.Manual) return Conflict("此資料不是手動錄入來源，禁止修改。");
+        if (row is null) return ApiUiError.WithLegacyMessage(NotFound("找不到要修改的量測資料。"), HttpContext, "spc.api.manualMeasurementMissing");
+        if (row.SourceType != SourceType.Manual) return ApiUiError.WithLegacyMessage(Conflict("此資料不是手動錄入來源，禁止修改。"), HttpContext, "spc.api.manualEditDenied");
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var before = new { row.MeasuredValue, row.RecheckValue, row.AdjustAction, row.AdjustAmount, row.MeasuredAt, row.Operator };
@@ -444,9 +445,9 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
     public async Task<IActionResult> DeleteItem(long id, [FromQuery] string? operatorName = null, CancellationToken ct = default)
     {
         var row = await db.VariableMeasurements.FirstOrDefaultAsync(x => x.Id == id, ct);
-        if (row is null) return NotFound("找不到要刪除的量測資料。");
+        if (row is null) return ApiUiError.WithLegacyMessage(NotFound("找不到要刪除的量測資料。"), HttpContext, "spc.api.measurementDeleteMissing");
         if (row.SourceType != SourceType.Manual || !row.PortalDailyDate.HasValue)
-            return Conflict("只允許刪除 Portal 藥液日報的單筆量測資料。");
+            return ApiUiError.WithLegacyMessage(Conflict("只允許刪除 Portal 藥液日報的單筆量測資料。"), HttpContext, "spc.api.measurementPortalDeleteOnly");
 
         var actor = string.IsNullOrWhiteSpace(operatorName)
             ? User.Identity?.Name ?? row.Operator

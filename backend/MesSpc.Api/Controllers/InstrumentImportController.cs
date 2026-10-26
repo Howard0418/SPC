@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Text.Json;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services.Calibration;
@@ -20,7 +21,7 @@ public sealed class InstrumentImportController(CalibrationImportService import, 
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Access(CancellationToken ct)
     {
-        if (User.Identity?.IsAuthenticated!=true) return Unauthorized(new { success=false,message="請先登入。" });
+        if (User.Identity?.IsAuthenticated!=true) return Unauthorized(new { success=false,message="請先登入。", code="SIGN_IN_REQUIRED", messageKey="spc.api.signInRequired", args=ApiUiMessageCatalog.EmptyArguments });
         return Ok(new { success=true,data=new { canManage=await CanManageAsync(ct) },message="" });
     }
 
@@ -37,7 +38,7 @@ public sealed class InstrumentImportController(CalibrationImportService import, 
     public async Task<IActionResult> Preview(IFormFile file, CancellationToken ct)
     {
         var denied=await DeniedAsync(ct); if (denied is not null) return denied;
-        try { return Ok(new { success=true,data=await import.PreviewAsync(await ReadAsync(file,ct),ct),message="請核對警示並勾選有效資料。" }); }
+        try { return Ok(new { success=true,data=await import.PreviewAsync(await ReadAsync(file,ct),ct),message="請核對警示並勾選有效資料。", code="IMPORT_SELECTION_NOTICE", messageKey="spc.api.importSelectionNotice", args=ApiUiMessageCatalog.EmptyArguments }); }
         catch (CalibrationException ex) { return StatusCode(ex.Status,new { success=false,message=ex.Message,code=ex.Code }); }
     }
 
@@ -58,12 +59,12 @@ public sealed class InstrumentImportController(CalibrationImportService import, 
         var denied=await DeniedAsync(ct); if (denied is not null) return denied;
         CalibrationImportOptions? request;
         try { request=JsonSerializer.Deserialize<CalibrationImportOptions>(options,new JsonSerializerOptions(JsonSerializerDefaults.Web)); }
-        catch (JsonException) { return BadRequest(new { success=false,message="匯入選項格式無效。" }); }
-        if (request is null) return BadRequest(new { success=false,message="缺少匯入選項。" });
+        catch (JsonException) { return BadRequest(new { success=false,message="匯入選項格式無效。", code="IMPORT_OPTIONS_INVALID", messageKey="spc.api.importOptionsInvalid", args=ApiUiMessageCatalog.EmptyArguments }); }
+        if (request is null) return BadRequest(new { success=false,message="缺少匯入選項。", code="IMPORT_OPTIONS_REQUIRED", messageKey="spc.api.importOptionsRequired", args=ApiUiMessageCatalog.EmptyArguments });
         try
         {
             var result=await import.CommitAsync(await ReadAsync(file,ct),file.FileName,request,User.Identity!.Name!,ct);
-            return StatusCode(result.Failed>0 ? 409 : 200,new { success=result.Failed==0,data=result,message=result.Failed>0 ? "本次未新增資料，請查看逐列原因。" : "匯入完成。" });
+            return StatusCode(result.Failed>0 ? 409 : 200,new { success=result.Failed==0,data=result,messageKey=result.Failed>0 ? "spc.api.instrumentImportRejected" : "spc.api.instrumentImportCompleted",args=ApiUiMessageCatalog.EmptyArguments,message=result.Failed>0 ? "本次未新增資料，請查看逐列原因。" : "匯入完成。" });
         }
         catch (CalibrationException ex) { return StatusCode(ex.Status,new { success=false,message=ex.Message,code=ex.Code }); }
     }
@@ -74,8 +75,8 @@ public sealed class InstrumentImportController(CalibrationImportService import, 
     }
     private async Task<IActionResult?> DeniedAsync(CancellationToken ct)
     {
-        if (User.Identity?.IsAuthenticated!=true) return Unauthorized(new { success=false,message="請先登入。" });
-        return await CanManageAsync(ct) ? null : StatusCode(403,new { success=false,message="需要啟用的 Editor 與校正管理權限。" });
+        if (User.Identity?.IsAuthenticated!=true) return Unauthorized(new { success=false,message="請先登入。", code="SIGN_IN_REQUIRED", messageKey="spc.api.signInRequired", args=ApiUiMessageCatalog.EmptyArguments });
+        return await CanManageAsync(ct) ? null : StatusCode(403,new { success=false,message="需要啟用的 Editor 與校正管理權限。", code="CALIBRATION_EDITOR_REQUIRED", messageKey="spc.api.calibrationEditorRequired", args=ApiUiMessageCatalog.EmptyArguments });
     }
     private static async Task<byte[]> ReadAsync(IFormFile file,CancellationToken ct)
     {
