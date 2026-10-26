@@ -319,3 +319,5 @@
 - 2026-10-26 I18N-TASK-08A完成：[規格](../specs/20261026-i18n-task08a/spec.md)／[驗證](../specs/20261026-i18n-task08a/verification.md)。API共用12鍵、相容錯誤／validation附加metadata、明示locale與安全前端fallback；保留HTTP／授權／舊message與原數值格式。測試Web0.1.92/API0.1.73。
 
 - 2026-10-26 I18N-TASK-08B完成：[規格](../specs/20261026-i18n-task08b/spec.md)／[驗證](../specs/20261026-i18n-task08b/verification.md)。身分與Viewer安全提示13鍵三語，原HTTP／繁中message／簽章／nonce／claims／權限保持；只測試Web0.1.93/API0.1.74。
+
+- 2026-10-26 I18N-TASK-08C1完成：[規格](../specs/20261026-i18n-task08c1/spec.md)／[驗證](../specs/20261026-i18n-task08c1/verification.md)。管制項目26驗證訊息三語，原HTTP/message/正規化/歷史保持，LSL0.2正常編輯與真重複拒絕回歸通過，只測試Web0.1.94/API0.1.75。

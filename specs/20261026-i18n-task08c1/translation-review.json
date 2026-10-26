@@ -1,0 +1,1180 @@
+{
+  "task": "I18N-TASK-08C1",
+  "contractVersion": "1.0.0",
+  "status": "draft",
+  "metadata": [
+    {
+      "key": "spc.api.ppcProcessRequired",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "12436ce20342e4e6941688cd8cb93629835993dd073728b32bc6851598c8872d",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcCharacteristicRequired",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "d3c7c38912ab2c18e1d2fa2fab918bf1668f1b1e0ef0f2b7ac45503daac298da",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcScopeGroupMissing",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "963da822c6caff50110572784aa1d85649bdeba201f1e36add6f257970087778",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcScopeMismatch",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "690117b12bc7097d5890cf358186fabe9d823d8241e51f592ba91c98bf2e9feb",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcPartRequired",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "c22b66bb56934cf20b1547dd2193fe230578a5988cbe793979a5f5173408b13c",
+      "placeholders": [
+        {
+          "name": "groupName",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcMachineRequired",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "746f5059c28c3aa177e3b78b19c698a62a6bf2345457c3498f82064666aab56f",
+      "placeholders": [
+        {
+          "name": "groupName",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcTankRequired",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "a4a37ca59bc22bb9ca04c7fa44bea47a7443b01214924bc4ef4d770d279346b9",
+      "placeholders": [
+        {
+          "name": "groupName",
+          "count": 1
+        }
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcTankBeforeSlot",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "dbc19410819d54669c76d5e296c3fd56de547e10d08f506ace00f1063570683a",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcSlotMismatch",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "11627c791abc247d506609806671ea0b3e11d0c973457a2873237fa927e187cc",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcFormulaInvalid",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "8aded2600b7af28cf09b20596544fc63d151043478e9a0827c03d8b27e570d8b",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcChemicalFormulaInvalid",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "8f93e849e12848d3d90a274ee81ed1a5db0fb9ffcb3334f438c2711d783020d8",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcCharacteristicMissing",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "0fe8148c5f72c682cc2765f3456d740b5dbcfa2246c2e23ebfb5cbd0cb993a49",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcProcessMissing",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "03df9455c4f8f9d4fa788c96483c157f0950e57600cd2e1ccda0c3f00151f56e",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcTrendGroupMissing",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "1bde97d377998ffa088b57ce0683b4ac3369f9720f68d6bee739afc54f081aaf",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcTrendScopeMismatch",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "3bd52f53123e95c684dbe8c16a4cef85aa43214cf213e768d6ee6821ef115f8e",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcChartTypeRequired",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "ef8d72c2f0b3dd10304a7df83b64b99a07a23659dc713a7361a6afadf3af5104",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.ppcChartTypeMissing",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "31b632e00f487f33ab7935987a70bb5e6a2990953e8bc3d31da5fbaa3627b378",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.ppcChartGroupMissing",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "cfa8690ef8269b356364b6a3173758332c8734f3d4aee3b37ea4b7eec630590e",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcDataCategoryMismatch",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "122cf30b93218ded2c4c62c79155b08fdd66d080a9ba2979d5cac0c7822f5559",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcTrendTypeOnly",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "29560494d2bf6c2af385612dbc096c05b6f9bb46fa6df4155c5ff66bdf0b276a",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcControlTypeOnly",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "dff3d3030c3d4b6e46c4966bb500c84c09238e9230b552bba126a38408d16edc",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcDuplicate",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "b07debb327da55bd4ac76cf7435a1316216881512bfeb8b918cd2d070bcff6e7",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.ppcRulesFixed",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "a5f031c2834de7343c77b7df7cfa96283fbf05a163a7d4e4a70c6b7aff04bdfa",
+      "placeholders": [],
+      "protectedTokens": [
+        "WE"
+      ]
+    },
+    {
+      "key": "spc.api.ppcHasMeasurements",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "f5b4095885d302f21b0ba15391e1f04125904272b27054490e158dc993cbcda2",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.ppcClosedAlert",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "e6e5ef447aae768011d38a982de4542f2a5f1feaff53bb1ff5f565d18418ecd4",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.ppcReasonTooLong",
+      "context": "管制項目原驗證分支，HTTP與原message保持；群組名稱原文僅資料",
+      "surface": "text/api",
+      "sourceHash": "05cb5ad2c59288234e3d4aab3e8734ccef0c2525e57e2b415a0915a109ff5685",
+      "placeholders": [],
+      "protectedTokens": [
+        "500"
+      ]
+    }
+  ],
+  "ledger": [
+    {
+      "key": "spc.api.ppcProcessRequired",
+      "locale": "zh-TW",
+      "sourceHash": "12436ce20342e4e6941688cd8cb93629835993dd073728b32bc6851598c8872d",
+      "translationHash": "12436ce20342e4e6941688cd8cb93629835993dd073728b32bc6851598c8872d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcProcessRequired",
+      "locale": "zh-CN",
+      "sourceHash": "12436ce20342e4e6941688cd8cb93629835993dd073728b32bc6851598c8872d",
+      "translationHash": "27c3c9aca227ed48988c68cef9c52966099dfd08db3908a2612035ee478bd010",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcProcessRequired",
+      "locale": "en-US",
+      "sourceHash": "12436ce20342e4e6941688cd8cb93629835993dd073728b32bc6851598c8872d",
+      "translationHash": "7e7beccb5c0d4c0afdb99987f798d11f2af261c66fba134a587ac18ba77c6412",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcCharacteristicRequired",
+      "locale": "zh-TW",
+      "sourceHash": "d3c7c38912ab2c18e1d2fa2fab918bf1668f1b1e0ef0f2b7ac45503daac298da",
+      "translationHash": "d3c7c38912ab2c18e1d2fa2fab918bf1668f1b1e0ef0f2b7ac45503daac298da",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcCharacteristicRequired",
+      "locale": "zh-CN",
+      "sourceHash": "d3c7c38912ab2c18e1d2fa2fab918bf1668f1b1e0ef0f2b7ac45503daac298da",
+      "translationHash": "20df1a5359f9b94e394b18c64d8870659f3417d5c2a80dec85c7f0faa2edc97f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcCharacteristicRequired",
+      "locale": "en-US",
+      "sourceHash": "d3c7c38912ab2c18e1d2fa2fab918bf1668f1b1e0ef0f2b7ac45503daac298da",
+      "translationHash": "2330a11d97702e9025b8b8250176125124f9fd022421d3738fe4dde15f2ef17b",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcScopeGroupMissing",
+      "locale": "zh-TW",
+      "sourceHash": "963da822c6caff50110572784aa1d85649bdeba201f1e36add6f257970087778",
+      "translationHash": "963da822c6caff50110572784aa1d85649bdeba201f1e36add6f257970087778",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcScopeGroupMissing",
+      "locale": "zh-CN",
+      "sourceHash": "963da822c6caff50110572784aa1d85649bdeba201f1e36add6f257970087778",
+      "translationHash": "e33884368608cccf7231fc62b928ca77c2331ec6ec3ed4eb6f55adb0a8d7c254",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcScopeGroupMissing",
+      "locale": "en-US",
+      "sourceHash": "963da822c6caff50110572784aa1d85649bdeba201f1e36add6f257970087778",
+      "translationHash": "d448524feea99377da6b660a42bfc4baf56cf967220540b7e59f93111d1a937c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcScopeMismatch",
+      "locale": "zh-TW",
+      "sourceHash": "690117b12bc7097d5890cf358186fabe9d823d8241e51f592ba91c98bf2e9feb",
+      "translationHash": "690117b12bc7097d5890cf358186fabe9d823d8241e51f592ba91c98bf2e9feb",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcScopeMismatch",
+      "locale": "zh-CN",
+      "sourceHash": "690117b12bc7097d5890cf358186fabe9d823d8241e51f592ba91c98bf2e9feb",
+      "translationHash": "37a4320f679685fd9390ce3b8c17afba1e27104bd75e961408da63df2537bd43",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcScopeMismatch",
+      "locale": "en-US",
+      "sourceHash": "690117b12bc7097d5890cf358186fabe9d823d8241e51f592ba91c98bf2e9feb",
+      "translationHash": "7a8fa279ad64ce898d215422dd271c6e6f6fe596baaec580feff138093d17ed1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcPartRequired",
+      "locale": "zh-TW",
+      "sourceHash": "c22b66bb56934cf20b1547dd2193fe230578a5988cbe793979a5f5173408b13c",
+      "translationHash": "c22b66bb56934cf20b1547dd2193fe230578a5988cbe793979a5f5173408b13c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcPartRequired",
+      "locale": "zh-CN",
+      "sourceHash": "c22b66bb56934cf20b1547dd2193fe230578a5988cbe793979a5f5173408b13c",
+      "translationHash": "366a3adb16b52fc8ef07004878fb99f0ff18a5048b20d1306eab41d7b7ee5f96",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcPartRequired",
+      "locale": "en-US",
+      "sourceHash": "c22b66bb56934cf20b1547dd2193fe230578a5988cbe793979a5f5173408b13c",
+      "translationHash": "e5e5b94cff1210b5dec92f61c35805182dedd81a7b222453abe0e74e1d0421f1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcMachineRequired",
+      "locale": "zh-TW",
+      "sourceHash": "746f5059c28c3aa177e3b78b19c698a62a6bf2345457c3498f82064666aab56f",
+      "translationHash": "746f5059c28c3aa177e3b78b19c698a62a6bf2345457c3498f82064666aab56f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcMachineRequired",
+      "locale": "zh-CN",
+      "sourceHash": "746f5059c28c3aa177e3b78b19c698a62a6bf2345457c3498f82064666aab56f",
+      "translationHash": "5f54b319a39b8f876d6658a6e8e3a20516201fb27000fc6c5b5e4536deeeadd2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcMachineRequired",
+      "locale": "en-US",
+      "sourceHash": "746f5059c28c3aa177e3b78b19c698a62a6bf2345457c3498f82064666aab56f",
+      "translationHash": "cd61c54391785d835849789a7765e3fdca581b8e5970daa942904b50ad200bc0",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTankRequired",
+      "locale": "zh-TW",
+      "sourceHash": "a4a37ca59bc22bb9ca04c7fa44bea47a7443b01214924bc4ef4d770d279346b9",
+      "translationHash": "a4a37ca59bc22bb9ca04c7fa44bea47a7443b01214924bc4ef4d770d279346b9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTankRequired",
+      "locale": "zh-CN",
+      "sourceHash": "a4a37ca59bc22bb9ca04c7fa44bea47a7443b01214924bc4ef4d770d279346b9",
+      "translationHash": "2f38bcb845002707a8e1d2eb9072bb8e5d4066071cae33ad86732d68e7cd3909",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTankRequired",
+      "locale": "en-US",
+      "sourceHash": "a4a37ca59bc22bb9ca04c7fa44bea47a7443b01214924bc4ef4d770d279346b9",
+      "translationHash": "e9b56864dd0a53fbe36b788b9508936cc68b02f03b40357e74eec96049dd24c7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTankBeforeSlot",
+      "locale": "zh-TW",
+      "sourceHash": "dbc19410819d54669c76d5e296c3fd56de547e10d08f506ace00f1063570683a",
+      "translationHash": "dbc19410819d54669c76d5e296c3fd56de547e10d08f506ace00f1063570683a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTankBeforeSlot",
+      "locale": "zh-CN",
+      "sourceHash": "dbc19410819d54669c76d5e296c3fd56de547e10d08f506ace00f1063570683a",
+      "translationHash": "5eb0b2fb697b8a02c1546f9d47810d05fb3035c45ff81b8fa920a968593401f3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTankBeforeSlot",
+      "locale": "en-US",
+      "sourceHash": "dbc19410819d54669c76d5e296c3fd56de547e10d08f506ace00f1063570683a",
+      "translationHash": "211a6722a99c0fd1837980bbb730036a3b8273946866b7cd213ecb44527fd726",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcSlotMismatch",
+      "locale": "zh-TW",
+      "sourceHash": "11627c791abc247d506609806671ea0b3e11d0c973457a2873237fa927e187cc",
+      "translationHash": "11627c791abc247d506609806671ea0b3e11d0c973457a2873237fa927e187cc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcSlotMismatch",
+      "locale": "zh-CN",
+      "sourceHash": "11627c791abc247d506609806671ea0b3e11d0c973457a2873237fa927e187cc",
+      "translationHash": "cee908e78a2f621b2c8dbb92e06a4a9a6367c12fde1be9a94fda08cb45dbc3b3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcSlotMismatch",
+      "locale": "en-US",
+      "sourceHash": "11627c791abc247d506609806671ea0b3e11d0c973457a2873237fa927e187cc",
+      "translationHash": "9ba62d9c0a537890dd829508714b27362b2a29b445b1215afdec82cfefb2265a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcFormulaInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "8aded2600b7af28cf09b20596544fc63d151043478e9a0827c03d8b27e570d8b",
+      "translationHash": "8aded2600b7af28cf09b20596544fc63d151043478e9a0827c03d8b27e570d8b",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcFormulaInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "8aded2600b7af28cf09b20596544fc63d151043478e9a0827c03d8b27e570d8b",
+      "translationHash": "f4e01dbd00191fe9dd4ef10a5dbabca0d366f4b66fbb9d53cef021046246a414",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcFormulaInvalid",
+      "locale": "en-US",
+      "sourceHash": "8aded2600b7af28cf09b20596544fc63d151043478e9a0827c03d8b27e570d8b",
+      "translationHash": "552acdde3726101607970e6a4dbc9e63816f1178aac03e90d739b58fdd407d02",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChemicalFormulaInvalid",
+      "locale": "zh-TW",
+      "sourceHash": "8f93e849e12848d3d90a274ee81ed1a5db0fb9ffcb3334f438c2711d783020d8",
+      "translationHash": "8f93e849e12848d3d90a274ee81ed1a5db0fb9ffcb3334f438c2711d783020d8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChemicalFormulaInvalid",
+      "locale": "zh-CN",
+      "sourceHash": "8f93e849e12848d3d90a274ee81ed1a5db0fb9ffcb3334f438c2711d783020d8",
+      "translationHash": "19825136ec4abc5d994105576272f0bf900b84b9bcaab91d0fe7eb22be6c9ec5",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChemicalFormulaInvalid",
+      "locale": "en-US",
+      "sourceHash": "8f93e849e12848d3d90a274ee81ed1a5db0fb9ffcb3334f438c2711d783020d8",
+      "translationHash": "2e8a626a2c2bde2e14c366e83b002e2cc93f7e51566ced719d998761226c797c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcCharacteristicMissing",
+      "locale": "zh-TW",
+      "sourceHash": "0fe8148c5f72c682cc2765f3456d740b5dbcfa2246c2e23ebfb5cbd0cb993a49",
+      "translationHash": "0fe8148c5f72c682cc2765f3456d740b5dbcfa2246c2e23ebfb5cbd0cb993a49",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcCharacteristicMissing",
+      "locale": "zh-CN",
+      "sourceHash": "0fe8148c5f72c682cc2765f3456d740b5dbcfa2246c2e23ebfb5cbd0cb993a49",
+      "translationHash": "28613e2d016d5ffc057a138c6714f5848a5af82d0b91927c4105c6f5c9ade1b1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcCharacteristicMissing",
+      "locale": "en-US",
+      "sourceHash": "0fe8148c5f72c682cc2765f3456d740b5dbcfa2246c2e23ebfb5cbd0cb993a49",
+      "translationHash": "c54726cf12fb9cf8b21205b9c244d9262f6fa6eb358e1f2abddc5b3f9af1698a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcProcessMissing",
+      "locale": "zh-TW",
+      "sourceHash": "03df9455c4f8f9d4fa788c96483c157f0950e57600cd2e1ccda0c3f00151f56e",
+      "translationHash": "03df9455c4f8f9d4fa788c96483c157f0950e57600cd2e1ccda0c3f00151f56e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcProcessMissing",
+      "locale": "zh-CN",
+      "sourceHash": "03df9455c4f8f9d4fa788c96483c157f0950e57600cd2e1ccda0c3f00151f56e",
+      "translationHash": "b30945ae3b9991bd3eca4aa5fc0e9e91f1028c50e924650c8f3b5225d4b02abc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcProcessMissing",
+      "locale": "en-US",
+      "sourceHash": "03df9455c4f8f9d4fa788c96483c157f0950e57600cd2e1ccda0c3f00151f56e",
+      "translationHash": "9f4ae6b48ac4977939123b03ec3cbdffb93728016222d2ae40290b70752e2fd1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendGroupMissing",
+      "locale": "zh-TW",
+      "sourceHash": "1bde97d377998ffa088b57ce0683b4ac3369f9720f68d6bee739afc54f081aaf",
+      "translationHash": "1bde97d377998ffa088b57ce0683b4ac3369f9720f68d6bee739afc54f081aaf",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendGroupMissing",
+      "locale": "zh-CN",
+      "sourceHash": "1bde97d377998ffa088b57ce0683b4ac3369f9720f68d6bee739afc54f081aaf",
+      "translationHash": "3323360038ad656a62d621c66365d4ddde24d04355bef1a80a58a10b56e2eea1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendGroupMissing",
+      "locale": "en-US",
+      "sourceHash": "1bde97d377998ffa088b57ce0683b4ac3369f9720f68d6bee739afc54f081aaf",
+      "translationHash": "b2597cff2dfea52d4e019caafdc638a46023307256a0330797d964f13773ee1e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendScopeMismatch",
+      "locale": "zh-TW",
+      "sourceHash": "3bd52f53123e95c684dbe8c16a4cef85aa43214cf213e768d6ee6821ef115f8e",
+      "translationHash": "3bd52f53123e95c684dbe8c16a4cef85aa43214cf213e768d6ee6821ef115f8e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendScopeMismatch",
+      "locale": "zh-CN",
+      "sourceHash": "3bd52f53123e95c684dbe8c16a4cef85aa43214cf213e768d6ee6821ef115f8e",
+      "translationHash": "59128fe1c59b52da2022b081bb35cbf376ba4d15f5e970047b6e3b6e7a0097c8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendScopeMismatch",
+      "locale": "en-US",
+      "sourceHash": "3bd52f53123e95c684dbe8c16a4cef85aa43214cf213e768d6ee6821ef115f8e",
+      "translationHash": "741d8bb78d25c54f3315815cd35997097205aeeb16aa7bce72a4e01080f2aea8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartTypeRequired",
+      "locale": "zh-TW",
+      "sourceHash": "ef8d72c2f0b3dd10304a7df83b64b99a07a23659dc713a7361a6afadf3af5104",
+      "translationHash": "ef8d72c2f0b3dd10304a7df83b64b99a07a23659dc713a7361a6afadf3af5104",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartTypeRequired",
+      "locale": "zh-CN",
+      "sourceHash": "ef8d72c2f0b3dd10304a7df83b64b99a07a23659dc713a7361a6afadf3af5104",
+      "translationHash": "b95fefb0b11db34d5f3721f50d966f71880e533cca45c6cde20b4a9bae4c56a3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartTypeRequired",
+      "locale": "en-US",
+      "sourceHash": "ef8d72c2f0b3dd10304a7df83b64b99a07a23659dc713a7361a6afadf3af5104",
+      "translationHash": "26be1c55f3f7f87217ba9af8692b7b51644d15bba26ad02e10fe2e30eeb719f4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartTypeMissing",
+      "locale": "zh-TW",
+      "sourceHash": "31b632e00f487f33ab7935987a70bb5e6a2990953e8bc3d31da5fbaa3627b378",
+      "translationHash": "31b632e00f487f33ab7935987a70bb5e6a2990953e8bc3d31da5fbaa3627b378",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartTypeMissing",
+      "locale": "zh-CN",
+      "sourceHash": "31b632e00f487f33ab7935987a70bb5e6a2990953e8bc3d31da5fbaa3627b378",
+      "translationHash": "52a1c7fd5414ee4b13f972264e3e060c8f4a45013a127ba28cbd394c610e99d4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartTypeMissing",
+      "locale": "en-US",
+      "sourceHash": "31b632e00f487f33ab7935987a70bb5e6a2990953e8bc3d31da5fbaa3627b378",
+      "translationHash": "fefe6250527808f28220b65337764a2a402351b9b298760642796ce0fe3443d2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartGroupMissing",
+      "locale": "zh-TW",
+      "sourceHash": "cfa8690ef8269b356364b6a3173758332c8734f3d4aee3b37ea4b7eec630590e",
+      "translationHash": "cfa8690ef8269b356364b6a3173758332c8734f3d4aee3b37ea4b7eec630590e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartGroupMissing",
+      "locale": "zh-CN",
+      "sourceHash": "cfa8690ef8269b356364b6a3173758332c8734f3d4aee3b37ea4b7eec630590e",
+      "translationHash": "21e39051364fdb31699e9b0ed3a83d109bae7120a7af50da3497d4976bbf4b67",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcChartGroupMissing",
+      "locale": "en-US",
+      "sourceHash": "cfa8690ef8269b356364b6a3173758332c8734f3d4aee3b37ea4b7eec630590e",
+      "translationHash": "4879db7d75b887c8583e80f37bbeaa57c750b81f9e0a69479819c77936b1863d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcDataCategoryMismatch",
+      "locale": "zh-TW",
+      "sourceHash": "122cf30b93218ded2c4c62c79155b08fdd66d080a9ba2979d5cac0c7822f5559",
+      "translationHash": "122cf30b93218ded2c4c62c79155b08fdd66d080a9ba2979d5cac0c7822f5559",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcDataCategoryMismatch",
+      "locale": "zh-CN",
+      "sourceHash": "122cf30b93218ded2c4c62c79155b08fdd66d080a9ba2979d5cac0c7822f5559",
+      "translationHash": "cb7954eaf524645dfbff214fa9ddc5a563701d55d15a4f44a9a1be2f28c57b3a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcDataCategoryMismatch",
+      "locale": "en-US",
+      "sourceHash": "122cf30b93218ded2c4c62c79155b08fdd66d080a9ba2979d5cac0c7822f5559",
+      "translationHash": "19813101f5541287a11c4d66b1ac209a93e52165ccd995f7df4db69fde0e7fdf",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendTypeOnly",
+      "locale": "zh-TW",
+      "sourceHash": "29560494d2bf6c2af385612dbc096c05b6f9bb46fa6df4155c5ff66bdf0b276a",
+      "translationHash": "29560494d2bf6c2af385612dbc096c05b6f9bb46fa6df4155c5ff66bdf0b276a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendTypeOnly",
+      "locale": "zh-CN",
+      "sourceHash": "29560494d2bf6c2af385612dbc096c05b6f9bb46fa6df4155c5ff66bdf0b276a",
+      "translationHash": "a51fce31cf61766e8bd217d972cce58a216f75edd21298aafdad170be635e047",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcTrendTypeOnly",
+      "locale": "en-US",
+      "sourceHash": "29560494d2bf6c2af385612dbc096c05b6f9bb46fa6df4155c5ff66bdf0b276a",
+      "translationHash": "d3d3f527cff95134f548ce29396d7a8a6cfb748d95ec543d92e88b6b4bcf0959",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcControlTypeOnly",
+      "locale": "zh-TW",
+      "sourceHash": "dff3d3030c3d4b6e46c4966bb500c84c09238e9230b552bba126a38408d16edc",
+      "translationHash": "dff3d3030c3d4b6e46c4966bb500c84c09238e9230b552bba126a38408d16edc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcControlTypeOnly",
+      "locale": "zh-CN",
+      "sourceHash": "dff3d3030c3d4b6e46c4966bb500c84c09238e9230b552bba126a38408d16edc",
+      "translationHash": "bb7abba8d18155e3230aa4007ccf62abcc9eea450d27c0635351dd3df601dad5",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcControlTypeOnly",
+      "locale": "en-US",
+      "sourceHash": "dff3d3030c3d4b6e46c4966bb500c84c09238e9230b552bba126a38408d16edc",
+      "translationHash": "cb883bc7fd11c89a8563201a301b42867d6f61a8afcc60c66d57aa2a6d926e1d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcDuplicate",
+      "locale": "zh-TW",
+      "sourceHash": "b07debb327da55bd4ac76cf7435a1316216881512bfeb8b918cd2d070bcff6e7",
+      "translationHash": "b07debb327da55bd4ac76cf7435a1316216881512bfeb8b918cd2d070bcff6e7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcDuplicate",
+      "locale": "zh-CN",
+      "sourceHash": "b07debb327da55bd4ac76cf7435a1316216881512bfeb8b918cd2d070bcff6e7",
+      "translationHash": "3de7875a5c5337837a76a97712da8cce7e9143f41bf911970e3e901652848854",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcDuplicate",
+      "locale": "en-US",
+      "sourceHash": "b07debb327da55bd4ac76cf7435a1316216881512bfeb8b918cd2d070bcff6e7",
+      "translationHash": "1edd2cce971e4d9266549c1d015089e9904f4b7f6ebb49a7eedb9ea4729a1d8a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcRulesFixed",
+      "locale": "zh-TW",
+      "sourceHash": "a5f031c2834de7343c77b7df7cfa96283fbf05a163a7d4e4a70c6b7aff04bdfa",
+      "translationHash": "a5f031c2834de7343c77b7df7cfa96283fbf05a163a7d4e4a70c6b7aff04bdfa",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcRulesFixed",
+      "locale": "zh-CN",
+      "sourceHash": "a5f031c2834de7343c77b7df7cfa96283fbf05a163a7d4e4a70c6b7aff04bdfa",
+      "translationHash": "83c3bffdb15ab13865905eb829eadd18bf9b3b9a8f527d184a3d4f1f839ac8c8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcRulesFixed",
+      "locale": "en-US",
+      "sourceHash": "a5f031c2834de7343c77b7df7cfa96283fbf05a163a7d4e4a70c6b7aff04bdfa",
+      "translationHash": "ac9629cca519ea97c3a9724fe7798f6b903bf7879454e16edbf227ccc72f1d3b",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcHasMeasurements",
+      "locale": "zh-TW",
+      "sourceHash": "f5b4095885d302f21b0ba15391e1f04125904272b27054490e158dc993cbcda2",
+      "translationHash": "f5b4095885d302f21b0ba15391e1f04125904272b27054490e158dc993cbcda2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcHasMeasurements",
+      "locale": "zh-CN",
+      "sourceHash": "f5b4095885d302f21b0ba15391e1f04125904272b27054490e158dc993cbcda2",
+      "translationHash": "de300db0ecc68da44892ca4720c46a17d88702bee675cce605e14e7557a01312",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcHasMeasurements",
+      "locale": "en-US",
+      "sourceHash": "f5b4095885d302f21b0ba15391e1f04125904272b27054490e158dc993cbcda2",
+      "translationHash": "1f5d4812a60cb08c418a8e364947f80df6df4f2510d39b7cb7d6fbd433f93412",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcClosedAlert",
+      "locale": "zh-TW",
+      "sourceHash": "e6e5ef447aae768011d38a982de4542f2a5f1feaff53bb1ff5f565d18418ecd4",
+      "translationHash": "e6e5ef447aae768011d38a982de4542f2a5f1feaff53bb1ff5f565d18418ecd4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcClosedAlert",
+      "locale": "zh-CN",
+      "sourceHash": "e6e5ef447aae768011d38a982de4542f2a5f1feaff53bb1ff5f565d18418ecd4",
+      "translationHash": "593b5e75d9f04cb6318ea10a7304e9692498a8e5fe7e5c89c146df53c5e1f22c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcClosedAlert",
+      "locale": "en-US",
+      "sourceHash": "e6e5ef447aae768011d38a982de4542f2a5f1feaff53bb1ff5f565d18418ecd4",
+      "translationHash": "7f80075937244b76b0fd25aadf3838c1482980d139450c98e7eba6442826fbee",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcReasonTooLong",
+      "locale": "zh-TW",
+      "sourceHash": "05cb5ad2c59288234e3d4aab3e8734ccef0c2525e57e2b415a0915a109ff5685",
+      "translationHash": "05cb5ad2c59288234e3d4aab3e8734ccef0c2525e57e2b415a0915a109ff5685",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcReasonTooLong",
+      "locale": "zh-CN",
+      "sourceHash": "05cb5ad2c59288234e3d4aab3e8734ccef0c2525e57e2b415a0915a109ff5685",
+      "translationHash": "ca1e90251cfb1a700afba8208254a97896b1280a7f6848b3c698c3c10af3285b",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.ppcReasonTooLong",
+      "locale": "en-US",
+      "sourceHash": "05cb5ad2c59288234e3d4aab3e8734ccef0c2525e57e2b415a0915a109ff5685",
+      "translationHash": "c00d2c123abcb654f7d3ea60879227f74b99f31eb2117904494b08981e46061a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    }
+  ]
+}

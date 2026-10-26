@@ -2030,3 +2030,6 @@
 
 ## 2026-10-26 I18N-TASK-08B 身分與權限提示三語
 - 13鍵／39列draft；Auth錯誤與Viewer guard附加安全metadata，原安全分支／狀態與message不變。102前端、31 API與12隔離身分測試、本機15／發布15與build/hash/health/同源通過。只測試Web0.1.93/API0.1.74，無DB／正式變更。[驗證及回復](specs/20261026-i18n-task08b/verification.md)。剩16件接續08C。
+
+## 2026-10-26 I18N-TASK-08C1 管制項目業務驗證三語
+- 26鍵／78列draft，typed驗證保留原分支／繁中message與HTTP，群組名稱具名原文；LSL0.2正常編輯及真重複拒絕回歸通過。103前端、26後端、本機18／發布18與build/hash/health/同源通過，只測試Web0.1.94/API0.1.75。[驗證與回復](specs/20261026-i18n-task08c1/verification.md)。剩19件接續C2。

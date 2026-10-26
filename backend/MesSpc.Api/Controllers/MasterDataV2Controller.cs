@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain;
 using MesSpc.Api.Infrastructure.Data;
@@ -509,15 +510,15 @@ public class PartProcessCharacteristicsController(
     public async Task<IActionResult> Create(PartProcessCharacteristic req)
     {
         var validation = await ValidateScopeAsync(req);
-        if (validation is not null) return BadRequest(new { message = validation });
+        if (validation is not null) return BadRequest(validation);
         var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
-        if (displayValidation is not null) return BadRequest(new { message = displayValidation });
+        if (displayValidation is not null) return BadRequest(displayValidation);
         req.Unit = CleanUnit(req.Unit);
         req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
         req.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson);
         req.RuleGroupId = null;
         if (await HasDuplicateBusinessKeyAsync(req, null))
-            return Conflict(new { message = BuildDuplicateBusinessKeyMessage() });
+            return Conflict(ApiUiError.Create("PPC_DUPLICATE", "spc.api.ppcDuplicate"));
         db.PartProcessCharacteristics.Add(req);
         await db.SaveChangesAsync();
         return Ok(req);
@@ -527,15 +528,15 @@ public class PartProcessCharacteristicsController(
     public async Task<IActionResult> Update(int id, PartProcessCharacteristic req)
     {
         if (ChemicalAnalysisFormulaVersionService.ValidateReason(req.ChemicalAnalysisFormulaVersionReason) is { } reasonError)
-            return BadRequest(new { message = reasonError });
+            return BadRequest(ApiUiError.Create("PPC_REASON_TOO_LONG", "spc.api.ppcReasonTooLong"));
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
         var previousDisplayMode = x.DisplayMode;
         var previousFormulaConfigJson = x.FormulaConfigJson;
         var previousChemicalAnalysisConfigJson = x.ChemicalAnalysisConfigJson;
         var validation = await ValidateScopeAsync(req);
-        if (validation is not null) return BadRequest(new { message = validation });
+        if (validation is not null) return BadRequest(validation);
         var displayValidation = await ValidateAndNormalizeDisplayModeAsync(req);
-        if (displayValidation is not null) return BadRequest(new { message = displayValidation });
+        if (displayValidation is not null) return BadRequest(displayValidation);
         req.Unit = CleanUnit(req.Unit);
         req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
         req.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson);
@@ -547,7 +548,7 @@ public class PartProcessCharacteristicsController(
             req.LCL = null;
         }
         if (await HasDuplicateBusinessKeyAsync(req, id))
-            return Conflict(new { message = BuildDuplicateBusinessKeyMessage() });
+            return Conflict(ApiUiError.Create("PPC_DUPLICATE", "spc.api.ppcDuplicate"));
         x.ControlScope = NormalizeScope(req.ControlScope); x.PartId = req.PartId; x.ProcessId = req.ProcessId; x.MachineId = req.MachineId; x.TankId = req.TankId; x.SlotId = req.SlotId; x.CharacteristicId = req.CharacteristicId; x.SequenceNo = req.SequenceNo;
         x.Unit = req.Unit;
         x.USL = req.USL; x.LSL = req.LSL; x.UCL = req.UCL; x.CL = req.CL; x.LCL = req.LCL; x.TargetValue = req.TargetValue;
@@ -606,7 +607,7 @@ public class PartProcessCharacteristicsController(
     {
         var item = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.Id == id);
         if (item is null) return NotFound();
-        return BadRequest(new { message = "所有管制項目統一使用 WE 八大規則，不支援項目專屬規則。" });
+        return BadRequest(ApiUiError.Create("PPC_RULES_FIXED", "spc.api.ppcRulesFixed"));
     }
 
     [HttpGet("{id:int}/delete-impact")]
@@ -651,10 +652,7 @@ public class PartProcessCharacteristicsController(
 
         if (!purge && (hasMeasurements || hasCalculations))
         {
-            return Conflict(new
-            {
-                message = "此管制項目已有量測或 SPC 計算資料。請改為停用；若確定是錯誤或測試資料，請使用永久清除。"
-            });
+            return Conflict(ApiUiError.Create("PPC_HAS_MEASUREMENTS", "spc.api.ppcHasMeasurements"));
         }
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
@@ -672,7 +670,7 @@ public class PartProcessCharacteristicsController(
                 (x.AttributeMeasurementId.HasValue && attributeIds.Contains(x.AttributeMeasurementId.Value))).ToListAsync(ct);
             if (linkedAlerts.Any(x => string.Equals(x.Status, "Closed", StringComparison.OrdinalIgnoreCase)))
             {
-                return Conflict(new { message = "此管制項目包含已結案異常，為保留品質追溯紀錄，只能停用，不能永久清除。" });
+                return Conflict(ApiUiError.Create("PPC_CLOSED_ALERT", "spc.api.ppcClosedAlert"));
             }
 
             db.AlertEvents.RemoveRange(linkedAlerts);
@@ -733,8 +731,6 @@ public class PartProcessCharacteristicsController(
             x.Unit == req.Unit);
     }
 
-    private static string BuildDuplicateBusinessKeyMessage() =>
-        "此 SPC 管制項目已存在相同的管制類型、料號、工站製程、線別、槽體、槽位、檢驗特性與單位；請改為編輯既有項目，或調整其中一個識別欄位。";
 
     private static string? CleanFormulaConfig(string? formulaConfigJson)
     {
@@ -773,30 +769,30 @@ public class PartProcessCharacteristicsController(
         return ControlScopeCodes.Normalize(scope);
     }
 
-    private async Task<string?> ValidateScopeAsync(PartProcessCharacteristic req)
+    private async Task<ApiUiError?> ValidateScopeAsync(PartProcessCharacteristic req)
     {
         req.ControlScope = NormalizeScope(req.ControlScope);
-        if (req.ProcessId <= 0) return "工站製程為必填。";
-        if (req.CharacteristicId <= 0) return "品質特性為必填。";
+        if (req.ProcessId <= 0) return ApiUiError.Create("PPC_PROCESS_REQUIRED", "spc.api.ppcProcessRequired");
+        if (req.CharacteristicId <= 0) return ApiUiError.Create("PPC_CHARACTERISTIC_REQUIRED", "spc.api.ppcCharacteristicRequired");
         var selectedGroup = await ResolveSelectedGroupAsync(req);
-        if (selectedGroup is null) return "找不到業務範圍對應的管制圖大類別。";
+        if (selectedGroup is null) return ApiUiError.Create("PPC_SCOPE_GROUP_MISSING", "spc.api.ppcScopeGroupMissing");
         if (!GroupMatchesScope(selectedGroup, req.ControlScope))
-            return "管制圖大類與所選業務範圍不一致。";
+            return ApiUiError.Create("PPC_SCOPE_MISMATCH", "spc.api.ppcScopeMismatch");
         if (selectedGroup.RequiresPart && (!req.PartId.HasValue || req.PartId.Value <= 0))
-            return $"{selectedGroup.GroupName}管制項目必須選擇產品料號。";
+            return ApiUiError.Create("PPC_PART_REQUIRED", "spc.api.ppcPartRequired", new Dictionary<string,string> { ["groupName"] = selectedGroup.GroupName });
         if (selectedGroup.RequiresMachine && (!req.MachineId.HasValue || req.MachineId.Value <= 0))
-            return $"{selectedGroup.GroupName}管制項目必須選擇線別/機台。";
+            return ApiUiError.Create("PPC_MACHINE_REQUIRED", "spc.api.ppcMachineRequired", new Dictionary<string,string> { ["groupName"] = selectedGroup.GroupName });
         if (selectedGroup.RequiresTank && (!req.TankId.HasValue || req.TankId.Value <= 0))
-            return $"{selectedGroup.GroupName}管制項目必須選擇槽體。";
+            return ApiUiError.Create("PPC_TANK_REQUIRED", "spc.api.ppcTankRequired", new Dictionary<string,string> { ["groupName"] = selectedGroup.GroupName });
         if (!selectedGroup.RequiresPart) req.PartId = null;
         // An optional machine is allowed to be selected; do not erase its business key.
         if (!selectedGroup.RequiresTank) req.TankId = null;
         if (req.SlotId.HasValue)
         {
-            if (!req.TankId.HasValue) return "選擇槽位前必須先選擇槽體。";
+            if (!req.TankId.HasValue) return ApiUiError.Create("PPC_TANK_BEFORE_SLOT", "spc.api.ppcTankBeforeSlot");
             var slotMatchesTank = await db.Slots.AsNoTracking()
                 .AnyAsync(x => x.Id == req.SlotId.Value && x.TankId == req.TankId.Value);
-            if (!slotMatchesTank) return "槽位不屬於所選槽體。";
+            if (!slotMatchesTank) return ApiUiError.Create("PPC_SLOT_MISMATCH", "spc.api.ppcSlotMismatch");
         }
         if (!string.IsNullOrWhiteSpace(req.FormulaConfigJson))
         {
@@ -806,30 +802,30 @@ public class PartProcessCharacteristicsController(
             }
             catch (System.Text.Json.JsonException)
             {
-                return "公式配置格式不正確。";
+                return ApiUiError.Create("PPC_FORMULA_INVALID", "spc.api.ppcFormulaInvalid");
             }
         }
         if (!string.IsNullOrWhiteSpace(req.ChemicalAnalysisConfigJson))
         {
             try { using var _ = System.Text.Json.JsonDocument.Parse(req.ChemicalAnalysisConfigJson); }
-            catch (System.Text.Json.JsonException) { return "藥液分析公式配置格式不正確。"; }
+            catch (System.Text.Json.JsonException) { return ApiUiError.Create("PPC_CHEMICAL_FORMULA_INVALID", "spc.api.ppcChemicalFormulaInvalid"); }
         }
         return null;
     }
 
-    private async Task<string?> ValidateAndNormalizeDisplayModeAsync(PartProcessCharacteristic req)
+    private async Task<ApiUiError?> ValidateAndNormalizeDisplayModeAsync(PartProcessCharacteristic req)
     {
         var characteristic = await db.QualityCharacteristics
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.CharacteristicId);
-        if (characteristic is null) return "找不到指定的品質特性。";
+        if (characteristic is null) return ApiUiError.Create("PPC_CHARACTERISTIC_MISSING", "spc.api.ppcCharacteristicMissing");
         req.DisplayMode = string.Equals(req.DisplayMode?.Trim(), "TREND_CHART", StringComparison.OrdinalIgnoreCase)
             ? "TREND_CHART"
             : "CONTROL_CHART";
 
         var processExists = await db.Processes.AsNoTracking()
             .AnyAsync(x => x.Id == req.ProcessId && x.IsEnabled);
-        if (!processExists) return "找不到指定的啟用中工站製程。";
+        if (!processExists) return ApiUiError.Create("PPC_PROCESS_MISSING", "spc.api.ppcProcessMissing");
 
         if (req.DisplayMode == "TREND_CHART")
         {
@@ -840,14 +836,14 @@ public class PartProcessCharacteristicsController(
             req.LCL = null;
 
             var trendGroup = await ResolveSelectedGroupAsync(req);
-            if (trendGroup is null) return "此業務範圍尚未設定啟用中的趨勢圖大類別。";
+            if (trendGroup is null) return ApiUiError.Create("PPC_TREND_GROUP_MISSING", "spc.api.ppcTrendGroupMissing");
             if (!GroupMatchesScope(trendGroup, req.ControlScope))
-                return "趨勢圖大類與所選業務範圍不一致。";
+                return ApiUiError.Create("PPC_TREND_SCOPE_MISMATCH", "spc.api.ppcTrendScopeMismatch");
             return null;
         }
 
         if (!req.ChartTypeId.HasValue)
-            return "選擇管制圖顯示時，必須指定 SPC 管制圖類型。";
+            return ApiUiError.Create("PPC_CHART_TYPE_REQUIRED", "spc.api.ppcChartTypeRequired");
 
         if (req.ChartTypeId.HasValue)
         {
@@ -858,17 +854,17 @@ public class PartProcessCharacteristicsController(
                 where type.Id == req.ChartTypeId.Value && type.IsEnabled
                 select new { Type = type, groupInfo.GroupType }
             ).FirstOrDefaultAsync();
-            if (chartType is null) return "找不到指定的 SPC 管制圖類型。";
+            if (chartType is null) return ApiUiError.Create("PPC_CHART_TYPE_MISSING", "spc.api.ppcChartTypeMissing");
             var selectedGroup = await ResolveSelectedGroupAsync(req);
-            if (selectedGroup is null) return "找不到管制類型對應的管制圖大類別。";
+            if (selectedGroup is null) return ApiUiError.Create("PPC_CHART_GROUP_MISSING", "spc.api.ppcChartGroupMissing");
             if (!GroupMatchesScope(selectedGroup, req.ControlScope))
-                return "管制圖大類與所選業務範圍不一致。";
+                return ApiUiError.Create("PPC_SCOPE_MISMATCH", "spc.api.ppcScopeMismatch");
             if (!chartType.Type.DataCategory.Equals(characteristic.DataCategory, StringComparison.OrdinalIgnoreCase))
-                return "管制圖類型與品質特性的資料型態不一致。";
+                return ApiUiError.Create("PPC_DATA_CATEGORY_MISMATCH", "spc.api.ppcDataCategoryMismatch");
             if (!string.Equals(chartType.GroupType, req.DisplayMode, StringComparison.OrdinalIgnoreCase))
                 return req.DisplayMode == "TREND_CHART"
-                    ? "趨勢圖顯示只能選擇趨勢圖類型，不能同時選管制圖。"
-                    : "管制圖顯示只能選擇管制圖類型，不能同時選趨勢圖。";
+                    ? ApiUiError.Create("PPC_TREND_TYPE_ONLY", "spc.api.ppcTrendTypeOnly")
+                    : ApiUiError.Create("PPC_CONTROL_TYPE_ONLY", "spc.api.ppcControlTypeOnly");
         }
 
         return null;
