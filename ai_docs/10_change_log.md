@@ -1001,3 +1001,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 
 ### 2026-10-26 I18N-TASK-08C3A 完成
 2026-10-26 08C3A完成：60鍵／106前端、34後端、本機27／發布27及build/hash/health/同源通過，11控制器除顯示metadata外與原文完全相同；只測試Web0.1.96/API0.1.77，剩18件，接續08C3B 服務例外與動態驗證。
+
+### 2026-10-26 I18N-TASK-08C3B 目的（實作前）
+既有服務例外附加明示descriptor，保留原型別／Message／Inner與分支；controller沿原catch回應，未知fallback與global安全策略不變；動態舊string header受限UTF8 args，先測再改。
+
+### 2026-10-26 I18N-TASK-08C3B 完成
+2026-10-26 08C3B完成：79鍵／108前端、64必要後端、公式基準15與TransFiles來源特徵10、本機33／發布33及build/hash/health/同源通過，9服務除例外metadata外全文不變；只測試Web0.1.97/API0.1.78，剩17件，接續08C4 匯入／設備／校驗／設定驗證。

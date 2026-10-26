@@ -26,6 +26,12 @@ export function formatApiErrorDescriptor(data,source,translate){
 // Additive metadata for old API endpoints whose response body must remain a string.
 export function resolveLegacyApiDescriptor(data,headers,source){
  if(typeof data!=='string')return null;
- const key=typeof headers?.get==='function'?headers.get('x-spc-message-key'):headers?.['x-spc-message-key'];
- return resolveApiErrorDescriptor({messageKey:key,args:{}},source);
+ const header=name=>typeof headers?.get==='function'?headers.get(name):headers?.[name];
+ const key=header('x-spc-message-key'),encoded=header('x-spc-message-args');
+ let args={};
+ if(encoded!=null){
+  if(typeof encoded!=='string'||encoded.length>4096||!encoded.length||!/^[A-Za-z0-9_-]+$/.test(encoded)||encoded.length%4===1)return null;
+  try{const bytes=Uint8Array.from(atob(encoded.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-encoded.length%4)%4)),c=>c.charCodeAt(0));args=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{return null;}
+ }
+ return resolveApiErrorDescriptor({messageKey:key,args},source);
 }

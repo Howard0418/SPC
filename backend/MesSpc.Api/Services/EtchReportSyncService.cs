@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
@@ -24,7 +25,7 @@ public sealed class EtchReportSyncService(AppDbContext db)
         "PT2" => (10, .975m),
         "QE1" => (5, 1.944m),
         "QE2" => (10, 2.268m),
-        _ => throw new ArgumentException("只支援PT1、PT2、QE1、QE2。")
+        _ => throw ApiUiException.Attach(new ArgumentException("只支援PT1、PT2、QE1、QE2。"), "spc.api.etchLineUnsupported")
     };
 
     /// <summary>Validate a complete paired report; blank points and negative differences must not enter a subgroup.</summary>
@@ -32,10 +33,10 @@ public sealed class EtchReportSyncService(AppDbContext db)
     {
         var (ops, _) = Rule(r.LineCode);
         if (r.ReportDate == default || r.ReportDate != r.ReportDate.Date || r.LineSpeed <= 0 || r.LineSpeed > 10000 || string.IsNullOrWhiteSpace(r.OperatorName) || r.OperatorName.Length > 100)
-            throw new ArgumentException("日期、量測人員或線速無效。");
+            throw ApiUiException.Attach(new ArgumentException("日期、量測人員或線速無效。"), "spc.api.etchFieldsInvalid");
         if (r.Points is null || r.Points.Count != ops * 10 || r.Points.Any(p => p.Side is not ("A" or "B") || p.RepeatNo < 1 || p.RepeatNo > 5 || p.OpNo < 1 || p.OpNo > ops || p.BeforeValue < 0 || p.AfterValue < 0 || p.BeforeValue < p.AfterValue)
             || r.Points.Select(p => (p.Side, p.RepeatNo, p.OpNo)).Distinct().Count() != ops * 10)
-            throw new ArgumentException("原始點位缺漏、重複或有負咬蝕量，整份日報未同步。");
+            throw ApiUiException.Attach(new ArgumentException("原始點位缺漏、重複或有負咬蝕量，整份日報未同步。"), "spc.api.etchSamplesInvalid");
     }
 
     /// <summary>Strict imports reject changed content; explicit Portal saves may update only records owned by this report.</summary>
@@ -63,18 +64,18 @@ public sealed class EtchReportSyncService(AppDbContext db)
             await db.Database.ExecuteSqlInterpolatedAsync($"DECLARE @r int; EXEC @r=sys.sp_getapplock @Resource={key}, @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=15000; IF @r<0 THROW 51000, 'Etch report lock unavailable', 1;", ct);
         }
         var machine = await db.Machines.SingleOrDefaultAsync(x => x.MachineCode == request.LineCode && x.IsEnabled, ct)
-            ?? throw new InvalidOperationException($"找不到已啟用的咬蝕線別主檔：{request.LineCode}。");
+            ?? throw ApiUiException.Attach(new InvalidOperationException($"找不到已啟用的咬蝕線別主檔：{request.LineCode}。"), "spc.api.etchLineMissing", new Dictionary<string,string> { ["line"] = request.LineCode });
         var mappings = await db.PartProcessCharacteristics.Include(x => x.Characteristic)
             .Where(x => x.MachineId == machine.Id && x.ControlScope == "PROCESS" && x.IsEnabled && Codes.Contains(x.Characteristic!.CharacteristicCode)).ToListAsync(ct);
         if (mappings.Count != 3 || mappings.Select(x => x.Characteristic!.CharacteristicCode).Distinct().Count() != 3)
-            throw new InvalidOperationException("咬蝕量／速率管制項目未完整設定。");
+            throw ApiUiException.Attach(new InvalidOperationException("咬蝕量／速率管制項目未完整設定。"), "spc.api.etchMappingsIncomplete");
         foreach (var m in mappings)
             if (m.SampleSize != (m.Characteristic!.CharacteristicCode is "ETCH_A_AVG" or "ETCH_B_AVG" ? ops * 5 : 1))
-                throw new InvalidOperationException("管制項目樣本數與完整子組不一致。");
+                throw ApiUiException.Attach(new InvalidOperationException("管制項目樣本數與完整子組不一致。"), "spc.api.etchSampleCountMismatch");
         var ids = mappings.Select(x => x.Id).ToList(); var next = request.ReportDate.AddDays(1);
         var existing = await db.VariableMeasurements.Where(x => ids.Contains(x.PartProcessCharacteristicId) && x.MeasuredAt >= request.ReportDate && x.MeasuredAt < next).ToListAsync(ct);
-        if (existing.Any(x => x.SourceReference != key)) throw new InvalidOperationException("同日已有其他來源資料，請先核對，未覆寫。");
-        if (existing.GroupBy(x => (x.PartProcessCharacteristicId, x.SampleNo)).Any(g => g.Count() != 1)) throw new InvalidOperationException("既有子組點位重複，未覆寫。");
+        if (existing.Any(x => x.SourceReference != key)) throw ApiUiException.Attach(new InvalidOperationException("同日已有其他來源資料，請先核對，未覆寫。"), "spc.api.etchSourceConflict");
+        if (existing.GroupBy(x => (x.PartProcessCharacteristicId, x.SampleNo)).Any(g => g.Count() != 1)) throw ApiUiException.Attach(new InvalidOperationException("既有子組點位重複，未覆寫。"), "spc.api.etchExistingDuplicate");
         var desired = new List<(PartProcessCharacteristic Mapping, int SampleNo, double Value)>();
         foreach (var m in mappings)
         {
@@ -84,15 +85,15 @@ public sealed class EtchReportSyncService(AppDbContext db)
             else desired.Add((m, 1, (double)(code == "ETCH_RATE" ? ordered.Average(p => p.BeforeValue - p.AfterValue) * request.LineSpeed / length : request.LineSpeed)));
         }
         var expected = desired.ToDictionary(x => (x.Mapping.Id, x.SampleNo), x => x.Value);
-        if (existing.Any(x => !expected.ContainsKey((x.PartProcessCharacteristicId, x.SampleNo)))) throw new InvalidOperationException("既有子組結構衝突。");
+        if (existing.Any(x => !expected.ContainsKey((x.PartProcessCharacteristicId, x.SampleNo)))) throw ApiUiException.Attach(new InvalidOperationException("既有子組結構衝突。"), "spc.api.etchExistingStructureConflict");
         if (existing.Count == desired.Count && existing.All(x => Math.Abs(x.MeasuredValue - expected[(x.PartProcessCharacteristicId, x.SampleNo)]) < 1e-10 && x.Operator == request.OperatorName))
         {
             var batchId = existing[0].UploadBatchId;
             var oldHash = await db.UploadBatches.Where(b => b.UploadBatchId == batchId).Select(b => b.FileHash).SingleOrDefaultAsync(ct)
-                ?? throw new InvalidOperationException($"同日同線既有資料缺少匯入批次：{key}，請先核對既有資料來源。");
+                ?? throw ApiUiException.Attach(new InvalidOperationException($"同日同線既有資料缺少匯入批次：{key}，請先核對既有資料來源。"), "spc.api.etchBatchMissing", new Dictionary<string,string> { ["source"] = key });
             if (oldHash == hash) { if(tx is not null)await tx.CommitAsync(ct); return new(batchId, true, desired.Count); }
         }
-        if (existing.Count > 0 && !allowUpdate) throw new InvalidOperationException("同日同線內容不同，嚴格匯入拒絕覆寫。");
+        if (existing.Count > 0 && !allowUpdate) throw ApiUiException.Attach(new InvalidOperationException("同日同線內容不同，嚴格匯入拒絕覆寫。"), "spc.api.etchOverwriteDenied");
         if (preview) return new(Guid.Empty, false, desired.Count);
         var batch = new UploadBatch { SourceType = "EtchReport", UploadType = "Variable", ImportStatus = "Imported", OriginalFileName = key, FileHash = hash, TotalRows = desired.Count, ValidRows = desired.Count, ConfirmedAt = DateTime.UtcNow, CreatedBy = actor };
         db.UploadBatches.Add(batch);

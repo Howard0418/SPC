@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Text.Json;
 using MesSpc.Api.Domain;
 using MesSpc.Api.Domain.Entities;
@@ -25,7 +26,7 @@ public sealed class ChemicalTraceQueryService(AppDbContext db)
  public const int PageSize=20;
  public async Task<ChemicalTracePage?> GetAsync(int ppcId,int? segmentId,long? measurementId,int skip,int traceSkip,CancellationToken ct)
  {
-  if(skip<0 || traceSkip<0 || segmentId is <=0 || measurementId is <=0)throw new ArgumentException("無效的分段／量測／分頁範圍。");
+  if(skip<0 || traceSkip<0 || segmentId is <=0 || measurementId is <=0)throw ApiUiException.Attach(new ArgumentException("無效的分段／量測／分頁範圍。"), "spc.api.tracePageRangeInvalid");
   var mapping=await db.PartProcessCharacteristics.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==ppcId && x.IsEnabled,ct);
   if(mapping is null)return null;
   if(ControlScopeCodes.Normalize(mapping.ControlScope)!=ControlScopeCodes.Chemical)return new(false,0,0,false,[],false,false);

@@ -82,12 +82,24 @@ public sealed class ApiUiHttpTests : IAsyncLifetime
         Assert.Equal("text/plain",response.Content.Headers.ContentType?.MediaType);
         Assert.Equal("spc.api.masterProcessNameRequired",Assert.Single(response.Headers.GetValues("X-SPC-Message-Key")));
     }
+
+    [Fact]
+    public async Task DynamicHeaderSafelyCarriesUtf8ArgumentsWithoutReplacingLegacyBody()
+    {
+        using var response=await client.GetAsync("/api/i18n-probe/legacy-dynamic");
+        Assert.Equal(HttpStatusCode.BadRequest,response.StatusCode);Assert.Equal("原body",await response.Content.ReadAsStringAsync());
+        var encoded=Assert.Single(response.Headers.GetValues("X-SPC-Message-Args"));
+        using var json=JsonDocument.Parse(Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlDecode(encoded));
+        Assert.Equal("原名 <b>@:key {field}</b>",json.RootElement.GetProperty("field").GetString());
+    }
 }
 
 [ApiController]
 [Route("api/i18n-probe")]
 public sealed class ApiUiProbeController : ControllerBase
 {
+    [HttpGet("legacy-dynamic")]
+    public IActionResult LegacyDynamic()=>ApiUiError.WithLegacyMessage(BadRequest("原body"),HttpContext,"spc.api.invalidField",new Dictionary<string,string>{{"field","原名 <b>@:key {field}</b>"}});
     [HttpGet("legacy")]
     public IActionResult Legacy()=>ApiUiError.WithLegacyMessage(BadRequest("製程中文名稱為必填欄位。"),HttpContext,"spc.api.masterProcessNameRequired");
     [HttpPost]

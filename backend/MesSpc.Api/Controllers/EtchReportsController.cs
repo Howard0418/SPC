@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,7 @@ public sealed class EtchReportsController(EtchReportSyncService sync):Controller
     public async Task<IActionResult> Put(EtchReportRequest report,CancellationToken ct)
     {
         try{return Ok(await sync.SyncAsync(report,User.Identity?.Name??"authenticated-user",true,ct));}
-        catch(ArgumentException e){return BadRequest(new{message=e.Message});}
-        catch(InvalidOperationException e){return Conflict(new{message=e.Message});}
+        catch(ArgumentException e){return BadRequest(ApiUiException.Describe(e));}
+        catch(InvalidOperationException e){return Conflict(ApiUiException.Describe(e));}
     }
 }

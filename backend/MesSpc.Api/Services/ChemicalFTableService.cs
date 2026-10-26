@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -165,7 +166,7 @@ public class ChemicalFTableService(AppDbContext db)
     public async Task<List<ChemicalFTableVersionHistorySummary>> GetVersionHistoryAsync(int take, CancellationToken ct, string? fromDate = null, string? toDate = null, int skip = 0)
     {
         var range = VersionHistoryDateRange.Parse(fromDate, toDate);
-        if (skip < 0) throw new ArgumentException("無效的分頁範圍。");
+        if (skip < 0) throw ApiUiException.Attach(new ArgumentException("無效的分頁範圍。"), "spc.api.historyPageInvalid");
         var limit = Math.Clamp(take, 1, 100);
         var query = db.ChemicalFTableVersionHistories.AsNoTracking();
         if (range.FromUtc.HasValue) query = query.Where(x => x.ChangedAt >= range.FromUtc.Value);
@@ -213,7 +214,7 @@ public class ChemicalFTableService(AppDbContext db)
         var history = await GetVersionHistoryDetailAsync(id, ct);
         if (history is null)
         {
-            throw new ArgumentException("找不到指定的 F 表版本記錄。");
+            throw ApiUiException.Attach(new ArgumentException("找不到指定的 F 表版本記錄。"), "spc.api.fTableVersionMissing");
         }
 
         var seedCells = history.Cells
@@ -221,7 +222,7 @@ public class ChemicalFTableService(AppDbContext db)
             .ToList();
         if (seedCells.Count == 0)
         {
-            throw new ArgumentException("指定的 F 表版本記錄沒有可回復的儲存格。");
+            throw ApiUiException.Attach(new ArgumentException("指定的 F 表版本記錄沒有可回復的儲存格。"), "spc.api.fTableRestoreEmpty");
         }
 
         return await SyncCellsAsync(
@@ -317,7 +318,7 @@ public class ChemicalFTableService(AppDbContext db)
     public async Task<ChemicalFormulaEvaluationResult> EvaluateChemicalFormulaAsync(string expression, Dictionary<string, decimal>? variables, CancellationToken ct)
     {
         var version = await GetActiveVersionAsync(ct)
-            ?? throw new InvalidOperationException("尚未啟用 F 表版本，無法計算含 F 表參照的公式。");
+            ?? throw ApiUiException.Attach(new InvalidOperationException("尚未啟用 F 表版本，無法計算含 F 表參照的公式。"), "spc.api.fTableCalculationNotEnabled");
         var refs = ExtractCellReferences(expression);
         var cells = refs.Count == 0
             ? new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
@@ -329,7 +330,7 @@ public class ChemicalFTableService(AppDbContext db)
         var missing = refs.Where(x => !cells.ContainsKey(x)).OrderBy(x => x).ToList();
         if (missing.Count > 0)
         {
-            throw new InvalidOperationException($"F 表缺少儲存格：{string.Join(", ", missing)}");
+            throw ApiUiException.Attach(new InvalidOperationException($"F 表缺少儲存格：{string.Join(", ", missing)}"), "spc.api.fTableMissingCells", new Dictionary<string,string> { ["cells"] = string.Join(", ", missing) });
         }
 
         var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -372,7 +373,7 @@ public class ChemicalFTableService(AppDbContext db)
     public static string NormalizeCellAddress(string cellAddress)
     {
         var match = CellReferenceRegex.Match(cellAddress.Trim());
-        if (!match.Success) throw new ArgumentException($"F 表儲存格格式不正確：{cellAddress}", nameof(cellAddress));
+        if (!match.Success) throw ApiUiException.Attach(new ArgumentException($"F 表儲存格格式不正確：{cellAddress}", nameof(cellAddress)), "spc.api.fTableCellInvalid", new Dictionary<string,string> { ["cell"] = cellAddress });
         return $"F!{match.Groups[2].Value.ToUpperInvariant()}{match.Groups[3].Value}";
     }
 

@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
@@ -15,7 +16,7 @@ public sealed class ChemicalAnalysisFormulaVersionService(AppDbContext db)
         string? reason,
         CancellationToken ct)
     {
-        if (ValidateReason(reason) is { } error) throw new InvalidOperationException(error);
+        if (ValidateReason(reason) is { } error) throw ApiUiException.Attach(new InvalidOperationException(error), "spc.api.ppcReasonTooLong");
         if (ConfigEquals(previousConfigJson, newConfigJson))
         {
             return new ChemicalAnalysisFormulaVersionChangeResult(false, null);
@@ -42,12 +43,12 @@ public sealed class ChemicalAnalysisFormulaVersionService(AppDbContext db)
         string? reason,
         CancellationToken ct)
     {
-        if (ValidateReason(reason) is { } error) throw new InvalidOperationException(error);
+        if (ValidateReason(reason) is { } error) throw ApiUiException.Attach(new InvalidOperationException(error), "spc.api.ppcReasonTooLong");
         var mapping = await GetChemicalMappingAsync(partProcessCharacteristicId, ct);
         var targetVersion = await db.ChemicalAnalysisFormulaVersions
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == versionId && x.PartProcessCharacteristicId == partProcessCharacteristicId, ct)
-            ?? throw new KeyNotFoundException($"Chemical analysis formula version {versionId} was not found.");
+            ?? throw ApiUiException.Attach(new KeyNotFoundException($"Chemical analysis formula version {versionId} was not found."), "spc.api.chemicalVersionMissing", new Dictionary<string,string> { ["versionId"] = versionId.ToString(System.Globalization.CultureInfo.InvariantCulture) });
 
         if (ConfigEquals(mapping.ChemicalAnalysisConfigJson, targetVersion.ConfigJson))
         {
@@ -77,11 +78,11 @@ public sealed class ChemicalAnalysisFormulaVersionService(AppDbContext db)
     {
         var mapping = await db.PartProcessCharacteristics
             .FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId, ct)
-            ?? throw new KeyNotFoundException($"PartProcessCharacteristic {partProcessCharacteristicId} was not found.");
+            ?? throw ApiUiException.Attach(new KeyNotFoundException($"PartProcessCharacteristic {partProcessCharacteristicId} was not found."), "spc.api.chemicalVersionItemMissing", new Dictionary<string,string> { ["itemId"] = partProcessCharacteristicId.ToString(System.Globalization.CultureInfo.InvariantCulture) });
 
         if (!string.Equals(ControlScopeCodes.Normalize(mapping.ControlScope), ControlScopeCodes.Chemical, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Chemical analysis formula versioning only supports CHEM mappings.");
+            throw ApiUiException.Attach(new InvalidOperationException("Chemical analysis formula versioning only supports CHEM mappings."), "spc.api.chemicalVersionScopeOnly");
         }
 
         return mapping;

@@ -43,9 +43,9 @@ public sealed class ChemicalFormulaScheduleController(ChemicalFormulaScheduleSer
     private async Task<IActionResult> Execute(Func<Task<object>> work)
     {
         try { return Ok(new { success=true,data=await work(),message="" }); }
-        catch(KeyNotFoundException ex) { return NotFound(new { success=false,data=(object?)null,message=ex.Message }); }
-        catch(ArgumentException ex) { return BadRequest(new { success=false,data=(object?)null,message=ex.Message }); }
-        catch(ChemicalPreviewConflictException ex) { return Conflict(new { success=false,data=(object?)null,message=ex.Message }); }
+        catch(KeyNotFoundException ex) { return NotFound(ApiUiException.DescribeFailure(ex)); }
+        catch(ArgumentException ex) { return BadRequest(ApiUiException.DescribeFailure(ex)); }
+        catch(ChemicalPreviewConflictException ex) { return Conflict(ApiUiException.DescribeFailure(ex)); }
         catch(Exception ex) when (ex is SqlException { Number:1205 or 1222 } || ex is DbUpdateException { InnerException: SqlException { Number:1205 or 1222 or 2601 or 2627 } })
         {
             logger.LogWarning(ex,"Chemical schedule concurrency conflict");

@@ -15,7 +15,7 @@ public sealed class ParticlesController(ParticleQueryService service) : Controll
         [FromQuery] Guid? uploadBatchId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100,
         [FromQuery] string sort = "asc", CancellationToken ct = default)
     {
-        if (!TryValidate(from, to, locations ?? [], particleSizes ?? [], out var error)) return BadRequest(new { message = error });
+        if (!TryValidate(from, to, locations ?? [], particleSizes ?? [], out var error)) return BadRequest(error);
         page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 500);
         return Ok(await service.GetMeasurementsAsync(from.UtcDateTime, to.UtcDateTime, locations ?? [], particleSizes ?? [], Normalize(deviceCode), uploadBatchId, page, pageSize, sort != "desc", ct));
     }
@@ -25,7 +25,7 @@ public sealed class ParticlesController(ParticleQueryService service) : Controll
     public async Task<IActionResult> Trend([FromQuery] DateTimeOffset from, [FromQuery] DateTimeOffset to,
         [FromQuery] string location, [FromQuery] decimal particleSize, [FromQuery] string? deviceCode, CancellationToken ct)
     {
-        if (!TryValidate(from, to, [location], [particleSize], out var error)) return BadRequest(new { message = error });
+        if (!TryValidate(from, to, [location], [particleSize], out var error)) return BadRequest(error);
         try { return Ok(await service.GetTrendAsync(from.UtcDateTime, to.UtcDateTime, location.ToUpperInvariant(), particleSize, Normalize(deviceCode), ct)); }
         catch (InvalidOperationException ex) when (ex.Message == "TOO_MANY_POINTS") { return UnprocessableEntity(new { code = ex.Message, message = "資料點超過 10,000，請縮小日期範圍。", messageKey="spc.api.particlePointLimit", args=ApiUiMessageCatalog.EmptyArguments }); }
     }
@@ -46,7 +46,7 @@ public sealed class ParticlesController(ParticleQueryService service) : Controll
         [FromQuery] string location, [FromQuery] decimal particleSize, [FromQuery] string? deviceCode,
         [FromQuery] string chartType = "C", CancellationToken ct = default)
     {
-        if (!TryValidate(from, to, [location], [particleSize], out var error)) return BadRequest(new { message = error });
+        if (!TryValidate(from, to, [location], [particleSize], out var error)) return BadRequest(error);
         try
         {
             return Ok(await service.GetSpcAsync(from.UtcDateTime, to.UtcDateTime, location.ToUpperInvariant(), particleSize, Normalize(deviceCode), chartType, ct));
@@ -74,11 +74,11 @@ public sealed class ParticlesController(ParticleQueryService service) : Controll
     }
 
     private static readonly HashSet<decimal> AllowedSizes = [0.5m, 1m, 5m, 10m];
-    private static bool TryValidate(DateTimeOffset from, DateTimeOffset to, IReadOnlyCollection<string> locations, IReadOnlyCollection<decimal> sizes, out string? error)
+    private static bool TryValidate(DateTimeOffset from, DateTimeOffset to, IReadOnlyCollection<string> locations, IReadOnlyCollection<decimal> sizes, out ApiUiError? error)
     {
-        if (from >= to) { error = "from 必須早於 to。"; return false; }
-        if (locations.Any(location => !Enumerable.Range(1, 9).Select(number => $"R{number}").Contains(location.ToUpperInvariant()))) { error = "Location 僅支援 R1 至 R9。"; return false; }
-        if (sizes.Any(size => !AllowedSizes.Contains(size))) { error = "ParticleSize 僅支援 0.5、1、5、10。"; return false; }
+        if (from >= to) { error = ApiUiError.Create("PARTICLE_QUERY_INVALID", "spc.api.particleDateOrder"); return false; }
+        if (locations.Any(location => !Enumerable.Range(1, 9).Select(number => $"R{number}").Contains(location.ToUpperInvariant()))) { error = ApiUiError.Create("PARTICLE_QUERY_INVALID", "spc.api.particleLocationInvalid"); return false; }
+        if (sizes.Any(size => !AllowedSizes.Contains(size))) { error = ApiUiError.Create("PARTICLE_QUERY_INVALID", "spc.api.particleSizeInvalid"); return false; }
         error = null; return true;
     }
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

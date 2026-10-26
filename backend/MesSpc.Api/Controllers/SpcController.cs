@@ -808,7 +808,7 @@ public class FormulaController(AppDbContext db, FormulaEngineService formulaEngi
     public async Task<IActionResult> Evaluate(EvaluateFormulaReq req)
     {
         var formula = await db.FormulaDefinitions.FirstOrDefaultAsync(x => x.FormulaCode == req.FormulaCode && x.IsActive);
-        if (formula is null) return NotFound($"Formula '{req.FormulaCode}' not found or inactive.");
+        if (formula is null) return ApiUiError.WithLegacyMessage(NotFound($"Formula '{req.FormulaCode}' not found or inactive."), HttpContext, "spc.api.formulaCodeMissing", new Dictionary<string,string> { ["code"] = req.FormulaCode });
         var value = formulaEngine.EvaluateByExpression(formula.Expression, req.Values, req.Usl, req.Lsl);
         return Ok(new { req.FormulaCode, formula.Expression, value });
     }
@@ -858,7 +858,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(ApiUiException.Describe(ex));
         }
     }
 
@@ -875,7 +875,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(ApiUiException.Describe(ex));
         }
     }
 
@@ -892,11 +892,11 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new { message = ex.Message });
+            return Conflict(ApiUiException.Describe(ex));
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(ApiUiException.Describe(ex));
         }
     }
 
@@ -915,7 +915,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
             var result = await fTableService.GetVersionHistoryAsync(take <= 0 ? 50 : take, ct, fromDate, toDate, skip);
             return Ok(result);
         }
-        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (ArgumentException ex) { return BadRequest(ApiUiException.Describe(ex)); }
     }
 
     [HttpGet("versions/{id:long}")]
@@ -935,7 +935,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(ApiUiException.Describe(ex));
         }
     }
 

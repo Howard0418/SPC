@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Globalization;
 namespace MesSpc.Api.Services;
 /// <summary>Version history uses inclusive Taipei calendar days and an exclusive UTC upper bound.</summary>
@@ -9,13 +10,13 @@ public sealed record VersionHistoryDateRange(DateTime? FromUtc, DateTime? UntilU
         {
             if(string.IsNullOrWhiteSpace(text))return null;
             if(!DateOnly.TryParseExact(text,"yyyy-MM-dd",CultureInfo.InvariantCulture,DateTimeStyles.None,out var date))
-                throw new ArgumentException("請使用YYYY-MM-DD有效日期，例如2026-10-19。");
+                throw ApiUiException.Attach(new ArgumentException("請使用YYYY-MM-DD有效日期，例如2026-10-19。"), "spc.api.historyDateInvalid");
             return date;
         }
         var from=Read(fromDate);var to=Read(toDate);
-        if(from>to)throw new ArgumentException("起日不可晚於迄日。");
+        if(from>to)throw ApiUiException.Attach(new ArgumentException("起日不可晚於迄日。"), "spc.api.queryDateOrder");
         static DateTime Utc(DateOnly day) => DateTime.SpecifyKind(day.ToDateTime(TimeOnly.MinValue).AddHours(-8),DateTimeKind.Utc);
         try {return new(from.HasValue?Utc(from.Value):null,to.HasValue?Utc(to.Value).AddDays(1):null);}
-        catch(ArgumentOutOfRangeException){throw new ArgumentException("日期超出可查詢範圍，請使用有效日期。");}
+        catch(ArgumentOutOfRangeException){throw ApiUiException.Attach(new ArgumentException("日期超出可查詢範圍，請使用有效日期。"), "spc.api.historyDateOutOfRange");}
     }
 }

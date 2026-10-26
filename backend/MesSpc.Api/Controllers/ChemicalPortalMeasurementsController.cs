@@ -33,8 +33,8 @@ public sealed class ChemicalPortalMeasurementsController(ChemicalPortalMeasureme
     private async Task<IActionResult> Execute(Func<Task<object>> work)
     {
         try{return Ok(new{success=true,data=await work(),message=""});}
-        catch(ArgumentException ex){return BadRequest(new{success=false,data=(object?)null,message=ex.Message});}
-        catch(ChemicalPreviewConflictException ex){return Conflict(new{success=false,data=(object?)null,message=ex.Message});}
+        catch(ArgumentException ex){return BadRequest(ApiUiException.DescribeFailure(ex));}
+        catch(ChemicalPreviewConflictException ex){return Conflict(ApiUiException.DescribeFailure(ex));}
         catch(Exception ex) when(ex is SqlException{Number:1205 or 1222 or 51200} || ex is DbUpdateException)
         {logger.LogWarning(ex,"Portal chemical transaction rejected");return Conflict(new{message="資料或公式版本已衝突，整批未完成；請重新載入並預覽後再確認。", code="CHEMICAL_BATCH_CONFLICT", messageKey="spc.api.chemicalBatchConflict", args=ApiUiMessageCatalog.EmptyArguments});}
     }

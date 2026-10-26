@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 // Portal ExcelFormulaEvaluator compatibility snapshot (2026-10-20). Engine: portal-excel8-v1.
 // TASK-004 clients use the SPC contract; keep semantics covered by cross-repository fixtures.
 using System.Globalization;
@@ -14,10 +15,10 @@ internal static class ChemicalExcelFormulaEvaluator
 
     public static decimal EvaluateNumber(string? formula, IReadOnlyDictionary<string, decimal> cells)
     {
-        if (string.IsNullOrWhiteSpace(formula)) throw new ArgumentException("公式不可為空白。", nameof(formula));
+        if (string.IsNullOrWhiteSpace(formula)) throw ApiUiException.Attach(new ArgumentException("公式不可為空白。", nameof(formula)), "spc.api.excelFormulaRequired");
         var text = new Parser(formula, cells).Parse().AsText();
         if (!decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
-            throw new InvalidOperationException("公式結果不是數字。");
+            throw ApiUiException.Attach(new InvalidOperationException("公式結果不是數字。"), "spc.api.excelResultNotNumeric");
         return value;
     }
 
@@ -36,7 +37,7 @@ internal static class ChemicalExcelFormulaEvaluator
         {
             var value = ParseComparison();
             Skip();
-            if (_position != source.Length) throw new FormatException("公式包含未支援的語法。");
+            if (_position != source.Length) throw ApiUiException.Attach(new FormatException("公式包含未支援的語法。"), "spc.api.excelSyntaxUnsupported");
             return value;
         }
 
@@ -131,7 +132,7 @@ internal static class ChemicalExcelFormulaEvaluator
                 var digits = (int)ParseComparison().AsNumber(); Expect(')');
                 return new(Number: decimal.Round(number, Math.Clamp(digits, 0, 28), MidpointRounding.AwayFromZero));
             }
-            throw new NotSupportedException($"不支援函數 {name}。");
+            throw ApiUiException.Attach(new NotSupportedException($"不支援函數 {name}。"), "spc.api.excelFunctionUnsupported", new Dictionary<string,string> { ["name"] = name });
         }
 
         private void SkipArgument()
@@ -150,7 +151,7 @@ internal static class ChemicalExcelFormulaEvaluator
         {
             Skip(); var start = _position;
             while (_position < source.Length && (char.IsLetterOrDigit(source[_position]) || source[_position] is '$' or '!' or '_' or '.')) _position++;
-            if (start == _position) throw new FormatException("缺少識別字。");
+            if (start == _position) throw ApiUiException.Attach(new FormatException("缺少識別字。"), "spc.api.excelIdentifierRequired");
             return source[start.._position];
         }
 
@@ -164,7 +165,7 @@ internal static class ChemicalExcelFormulaEvaluator
                 if (_position < source.Length && source[_position] == '"') { result.Append('"'); _position++; continue; }
                 return result.ToString();
             }
-            throw new FormatException("字串未結束。");
+            throw ApiUiException.Attach(new FormatException("字串未結束。"), "spc.api.excelStringUnterminated");
         }
 
         private decimal ReadNumber()
@@ -183,7 +184,7 @@ internal static class ChemicalExcelFormulaEvaluator
         }
 
         private bool Try(char expected) { Skip(); if (Peek() != expected) return false; _position++; return true; }
-        private void Expect(char expected) { if (!Try(expected)) throw new FormatException($"缺少 {expected}。"); }
+        private void Expect(char expected) { if (!Try(expected)) throw ApiUiException.Attach(new FormatException($"缺少 {expected}。"), "spc.api.excelTokenMissing", new Dictionary<string,string> { ["token"] = expected.ToString() }); }
         private char Peek() => _position < source.Length ? source[_position] : '\0';
         private void Skip() { while (_position < source.Length && char.IsWhiteSpace(source[_position])) _position++; }
     }

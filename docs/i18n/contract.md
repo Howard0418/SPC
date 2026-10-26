@@ -38,3 +38,8 @@
 - reviewer須為實際審核者，不能填AI為真人簽核；AI初稿/自查不計人工通過率。敏感權限/刪除警告/統計與公式術語全量人工審核、重大誤譯0；分語言報合格率及審核覆蓋率，不能把尚未審稿標成97%。
 
 - translationHash以同樣UTF-8字串hash規則計算當前locale譯文；即使繁中未改，只改英文/簡中文案也使該locale審核stale。ledger由key/locale引用字典譯文，不另外複製文字造成雙重來源。
+
+## 7. API 增量錯誤顯示實作補充（2026-10-26，08A～08C3B）
+- API JSON 模組為前後端共用單一來源，後端 embedded resource；`X-SPC-UI-Locale` 僅明示 canonical 顯示語言，不改全域 Culture／資料解析，舊 `message`／HTTP 與欄位保持。
+- 原 string response body 保持原樣，`X-SPC-Message-Key` 為附加已知 API key；具名參數使用 `X-SPC-Message-Args`（base64url UTF8 JSON，上限 4096 字元）。前端只接受已知 key 與 exact 純字串／有限數值參數；超長、非法編碼／JSON、未知 key 或 nested args 均回原文，不編譯外來模板。
+- 服務只在明示例外建立點附加 metadata，原 Exception 型別、Message、ParamName、Inner 與 catch 分支不變；controller 只讀本模組 marker。未知例外不從文字猜 key，全域 500 隱藏內部錯誤策略保持。不得把 token、簽章、actor、SQL 或原公式 JSON 放入 args。

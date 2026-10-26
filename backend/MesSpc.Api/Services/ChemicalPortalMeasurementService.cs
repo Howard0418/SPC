@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
@@ -27,11 +28,11 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
     private async Task<ChemicalPreviewInput> InputAsync(ChemicalPortalPreviewRequest request,CancellationToken ct)
     {
         var mapping=await db.PartProcessCharacteristics.AsNoTracking().Include(x=>x.Machine)
-            .SingleOrDefaultAsync(x=>x.Id==request.PpcId && x.IsEnabled,ct) ?? throw new ArgumentException("管制項目不存在或已停用。");
-        if(ControlScopeCodes.Normalize(mapping.ControlScope)!=ControlScopeCodes.Chemical)throw new ArgumentException("此入口只支援藥液日報。");
+            .SingleOrDefaultAsync(x=>x.Id==request.PpcId && x.IsEnabled,ct) ?? throw ApiUiException.Attach(new ArgumentException("管制項目不存在或已停用。"), "spc.api.chemicalItemDisabled");
+        if(ControlScopeCodes.Normalize(mapping.ControlScope)!=ControlScopeCodes.Chemical)throw ApiUiException.Attach(new ArgumentException("此入口只支援藥液日報。"), "spc.api.chemicalDailyOnly");
         var at=ChemicalFormulaCalculation.ParseMeasuredAt(request.MeasuredAt);
-        if(request.SamplingPhase is not ("OPEN" or "MIDDLE"))throw new ArgumentException("請選早班或中班。");
-        if(!ChemicalSamplingStage.TryNormalize(mapping.Machine?.MachineCode,request.SamplingStage,out var stage))throw new ArgumentException(ChemicalSamplingStage.Error);
+        if(request.SamplingPhase is not ("OPEN" or "MIDDLE"))throw ApiUiException.Attach(new ArgumentException("請選早班或中班。"), "spc.api.chemicalShiftRequired");
+        if(!ChemicalSamplingStage.TryNormalize(mapping.Machine?.MachineCode,request.SamplingStage,out var stage))throw ApiUiException.Attach(new ArgumentException(ChemicalSamplingStage.Error), "spc.api.chemicalSamplingStageInvalid");
         return new(request.MeasuredAt,request.Primary,request.Secondary,$"PortalDaily|{request.PpcId}|{at.AddHours(8):yyyyMMdd}|{request.SamplingPhase}|{stage}");
     }
 
@@ -43,12 +44,12 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
     public async Task<ChemicalPortalConfirmed> ConfirmAsync(ChemicalPortalConfirmRequest request,string actor,CancellationToken ct)
     {
         if(request.RequestId==Guid.Empty || request.Rows is null || request.Rows.Count is <1 or >200 || request.Rows.Any(x=>x is null))
-            throw new ArgumentException("請提供唯一requestId及1至200筆日報。");
-        if(string.IsNullOrWhiteSpace(actor) || actor.Length>100)throw new ArgumentException("缺少有效操作者。");
+            throw ApiUiException.Attach(new ArgumentException("請提供唯一requestId及1至200筆日報。"), "spc.api.chemicalBatchRequired");
+        if(string.IsNullOrWhiteSpace(actor) || actor.Length>100)throw ApiUiException.Attach(new ArgumentException("缺少有效操作者。"), "spc.api.actorRequired");
         var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(actor+"|"+JsonSerializer.Serialize(request.Rows))));
         var rows=request.Rows.Select(x=>new Dictionary<string,string?>(x,StringComparer.Ordinal)).ToList();
-        var ids=rows.Select(x=>int.TryParse(Get(x,"PpcId"),out var id) && id>0?id:throw new ArgumentException("每筆須有有效PpcId。")).ToList();
-        if(ids.Distinct().Count()!=ids.Count)throw new ArgumentException("同批每個管制項目只可有一筆日報。");
+        var ids=rows.Select(x=>int.TryParse(Get(x,"PpcId"),out var id) && id>0?id:throw ApiUiException.Attach(new ArgumentException("每筆須有有效PpcId。"), "spc.api.chemicalRowIdRequired")).ToList();
+        if(ids.Distinct().Count()!=ids.Count)throw ApiUiException.Attach(new ArgumentException("同批每個管制項目只可有一筆日報。"), "spc.api.chemicalBatchDuplicate");
         await using var tx=await db.Database.BeginTransactionAsync(IsolationLevel.Serializable,ct);
         var committed=false;
         try
@@ -63,7 +64,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
             if(existing is not null)
             {
                 if(existing.FileHash!=hash || existing.OriginalFileName!=Marker || existing.ImportStatus!="Imported")
-                    throw new ChemicalPreviewConflictException("requestId已用於其他內容或狀態，請重新確認資料。");
+                    throw ApiUiException.Attach(new ChemicalPreviewConflictException("requestId已用於其他內容或狀態，請重新確認資料。"), "spc.api.chemicalRequestUsed");
                 await tx.CommitAsync(ct);return new(existing.UploadBatchId,true);
             }
             var evidence=new Dictionary<int,ChemicalPortalEvidence>();
@@ -73,18 +74,18 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 // Validate date/stage even for legacy rows; no system-date fallback on this new entry point.
                 var input=await InputAsync(new(id,Get(row,"MeasuredAt")??"",Get(row,"TitrationValue")??"",Get(row,"SecondaryTitrationValue"),Get(row,"SamplingPhase")??"",Get(row,"SamplingStage")??"GENERAL"),ct);
                 if(ControlScopeCodes.Normalize(Get(row,"ControlScope"))!=ControlScopeCodes.Chemical || await uploads.ResolveMappingIdAsync(row,ct)!=id)
-                    throw new ArgumentException("PpcId與線別／槽位／檢驗特性不一致，請重新載入主檔。");
+                    throw ApiUiException.Attach(new ArgumentException("PpcId與線別／槽位／檢驗特性不一致，請重新載入主檔。"), "spc.api.chemicalIdentityMismatch");
                 var policy=await db.ChemicalFormulaPolicies.AsNoTracking().SingleOrDefaultAsync(x=>x.PartProcessCharacteristicId==id,ct);
                 if(policy?.ActiveScheduleRevisionId is null)continue;
-                if(Get(row,"SampleNo") is not (null or "" or "1"))throw new ArgumentException("公式日報只支援單筆樣本。");
-                if(string.IsNullOrWhiteSpace(Get(row,"ChemicalPreviewToken")))throw new ChemicalPreviewConflictException("初驗尚未依量測日期預覽，請重新計算。");
+                if(Get(row,"SampleNo") is not (null or "" or "1"))throw ApiUiException.Attach(new ArgumentException("公式日報只支援單筆樣本。"), "spc.api.chemicalSingleSampleOnly");
+                if(string.IsNullOrWhiteSpace(Get(row,"ChemicalPreviewToken")))throw ApiUiException.Attach(new ChemicalPreviewConflictException("初驗尚未依量測日期預覽，請重新計算。"), "spc.api.chemicalInitialPreviewRequired");
                 var initial=await schedule.PrepareAsync(id,new(input,Get(row,"ChemicalPreviewToken")!),actor,ct);
                 ChemicalCalculationReceipt? recheck=null;
                 var hasRecheck=!string.IsNullOrWhiteSpace(Get(row,"RecheckTitrationValue"));
-                if(!hasRecheck && !string.IsNullOrWhiteSpace(Get(row,"RecheckValue")))throw new ArgumentException("日期公式複驗須提供原始滴定值，不可只填濃度。");
+                if(!hasRecheck && !string.IsNullOrWhiteSpace(Get(row,"RecheckValue")))throw ApiUiException.Attach(new ArgumentException("日期公式複驗須提供原始滴定值，不可只填濃度。"), "spc.api.chemicalRecheckInputRequired");
                 if(hasRecheck)
                 {
-                    if(string.IsNullOrWhiteSpace(Get(row,"ChemicalRecheckPreviewToken")))throw new ChemicalPreviewConflictException("複驗尚未預覽，請重新計算。");
+                    if(string.IsNullOrWhiteSpace(Get(row,"ChemicalRecheckPreviewToken")))throw ApiUiException.Attach(new ChemicalPreviewConflictException("複驗尚未預覽，請重新計算。"), "spc.api.chemicalRecheckPreviewRequired");
                     recheck=await schedule.PrepareAsync(id,new(input with{Primary=Get(row,"RecheckTitrationValue")!,Secondary=Get(row,"RecheckSecondaryTitrationValue")},Get(row,"ChemicalRecheckPreviewToken")!),actor,ct);
                 }
                 evidence[id]=new(initial,recheck);

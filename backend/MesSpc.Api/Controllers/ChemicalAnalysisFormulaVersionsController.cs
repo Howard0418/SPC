@@ -21,7 +21,7 @@ public sealed class ChemicalAnalysisFormulaVersionsController(
     {
         VersionHistoryDateRange range;
         try { range = VersionHistoryDateRange.Parse(fromDate, toDate); }
-        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (ArgumentException ex) { return BadRequest(ApiUiException.Describe(ex)); }
         if (skip < 0 || take is < 1 or > 100) return BadRequest(new { message = "無效的分頁範圍。", code="HISTORY_PAGE_INVALID", messageKey="spc.api.historyPageInvalid", args=ApiUiMessageCatalog.EmptyArguments });
         var mapping = await db.PartProcessCharacteristics.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId, ct);
@@ -77,11 +77,11 @@ public sealed class ChemicalAnalysisFormulaVersionsController(
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return NotFound(ApiUiException.Describe(ex));
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(ApiUiException.Describe(ex));
         }
     }
 
