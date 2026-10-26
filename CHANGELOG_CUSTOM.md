@@ -1971,3 +1971,9 @@
 - 65單元、本機37＋追加錯誤1＝38情境、原分段17與shell17、發布38＋17/build/1138鍵三語/14同源/真health/四檔SHA256通過。查詢涵蓋93/94天、倒置／缺料號、PART/ALL、閏年月份／跨年週次、CSV／快取返回與原恢復DTO；瀏覽器讀寫全mock，不冒稱真DB／SSO或真人審稿。
 - 測試Web0.1.81/API沿用0.1.72；備份54檔／payload4／保護設定4，不重啟pool，未改正式／DB／後端／其他系統。[驗證與回復](specs/20261026-i18n-task06b1/verification.md)。
 - 06B拆B1～B3，本件完成後剩B2／B3／C／D＋07～21共19件，另受阻1／暫緩2；STOP於06B1，不開始06B2。
+
+## 2026-10-26 I18N-TASK-06B2 圖表與總覽三語
+- 新增99鍵／297列draft，累計1237鍵三語。locale只patch標題／軸／legend／graphic與toolbox title，不dispose、不改series/dataZoom／數值／排序／排行；原series識別與CSV檔名保持。tooltip固定文字翻譯、原始參數純文字編碼，無API新增。
+- 67 i18n＋4 presentation單元、build、新29與查詢38／分段17／AD8回歸通過；發佈新29＋查詢38，工具列修訂後再驗新29與hash／health，14同源通過。
+- 只測試Web0.1.82/API0.1.72；原備份57檔／payload4／保護設定4，不重啟pool、無DB／後端／正式變更。[驗證／回復與限制](specs/20261026-i18n-task06b2/verification.md)。draft待真人TASK20，不冒稱真DB／SSO／人工審核。
+- 連續授權已記錄；剩18件，另受阻1／暫緩2，直接接續B3。

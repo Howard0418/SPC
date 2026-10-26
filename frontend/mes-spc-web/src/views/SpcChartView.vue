@@ -3,6 +3,7 @@ import { formatNormalityPValue, normalityConclusion, normalityUnavailableReason 
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
+import { captureChartPresentation, translateChartPresentation, escapeChartText } from "../i18n/chartPresentation";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
@@ -50,7 +51,7 @@ import ChartSegmentDetails from "../components/ChartSegmentDetails.vue";
 
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n({ useScope: "global" });
+const { t, locale } = useI18n({ useScope: "global" });
 const analysisSectionByPath = {
   "/process-analysis/capability": "process-capability-analysis",
   "/process-analysis/violations": "violation-analysis",
@@ -1125,6 +1126,93 @@ async function saveOcapForSelectedPoint() {
   }
 }
 
+
+const chartLabelKeys = {
+  "儲存為圖片": "saveImage",
+  "還原": "restoreChart",
+  "Xbar 平均值管制圖": "xbarTitle",
+  "I 個別值管制圖": "individualTitle",
+  "R 全距管制圖": "rangeTitle",
+  "S 標準差管制圖": "stdTitle",
+  "MR 移動全距圖": "mrTitle",
+  "量測值 (I)": "individual",
+  "移動全距 (MR)": "movingRange",
+  "全距 (R)": "range",
+  "標準差 (S)": "std",
+  "Xbar 平均值": "xbar",
+  "單值 (I)": "single",
+  "原始量測值": "rawValue",
+  "量測值": "value",
+  "此期間無可納入直方圖的量測值": "histEmpty",
+  "量測值分布": "distribution",
+  "常態分佈曲線": "normalCurve",
+  "筆數": "count",
+  "規格界限（USL / Target / LSL）": "specToggle",
+  "管制界限（UCL / CL / LCL）": "controlToggle",
+  "各點數值": "pointValues",
+  "規格/管制界限失控點": "outOfControl",
+  "正常管制點位": "normalPoint",
+  "已排除點位": "excludedPoint",
+  "放大": "zoom",
+  "重設縮放": "resetZoom",
+  "量測值分布直方圖 (Raw Measurements Histogram)": "histogram",
+  "規格上下線": "specRange",
+  "管制上下線": "controlRange",
+  "已剔除資料不納入統計": "excludedNotice",
+  "納入樣本數": "included",
+  "常態性檢定 (P-val)": "pValue",
+  "常態判定": "normality",
+  "無法檢定": "unavailable",
+  "未拒絕常態假設": "notRejected",
+  "偏離常態": "rejected",
+  "沒有有效的檢定結果，無法進行常態判定。": "invalidResult",
+  "有效樣本不足，常態檢定至少3筆未排除量測值。": "insufficient",
+  "批號": "lot",
+  "板面": "side",
+  "產線": "line",
+  "槽體": "tank",
+  "備註": "remark",
+  "槽位": "slot",
+  "班別": "shift",
+  "取樣階段": "stage",
+  "實際量測": "measuredAt",
+  "⚠️ 西方電氣規則違規：": "ruleViolation",
+  "樣本數 (n)": "sampleN",
+  "序號": "serial",
+  "人員": "operator",
+  "常態性檢定": "normalityTest",
+  "量測值區間": "interval",
+  "區間筆數": "intervalCount",
+  "總樣本數 N": "totalN",
+  "平均值": "mean",
+  "標準差": "standardDeviation",
+  "早班": "early",
+  "中班": "middle",
+  "晚班": "late",
+  "早(開)": "earlyOpen",
+  "中(開)": "middleOpen",
+  "早(收)": "earlyClose",
+  "中(收)": "middleClose",
+  "開線": "opening",
+  "收線": "closing",
+  "未分階段": "unstaged"
+};
+const chartPresentations = new WeakMap();
+function chartLabel(value) {
+ if (typeof value !== 'string') return value;
+ const key=chartLabelKeys[value];
+ if(key)return t('spc.chartLabels.'+key);
+ const type=/^(.*) 數值$/.exec(value);
+ return type?t('spc.chartLabels.typeValue',{type:type[1]}):value;
+}
+const htmlChartLabel = value => escapeChartText(chartLabel(value));
+function localizeChart(instance) {
+ if (!instance || instance.isDisposed()) return;
+ if(!chartPresentations.has(instance))chartPresentations.set(instance,captureChartPresentation(instance.getOption()));
+ instance.setOption(translateChartPresentation(chartPresentations.get(instance),chartLabel));
+}
+watch(locale,async()=>{await nextTick();for(const instance of [chartInstance,trendChartInstance,histogramChartInstance])localizeChart(instance)});
+
 function renderECharts() {
   if (!chartEl.value || !chartResult.value) return;
 
@@ -1576,33 +1664,33 @@ function renderECharts() {
       borderColor: "#334155",
       textStyle: { color: "#fff", fontSize: 12 },
       formatter: (params) => {
-        let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${params[0].axisValue}</div>`;
+        let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${escapeChartText(params[0].axisValue)}</div>`;
         const meta = params[0].data?.meta;
         if (meta) {
           res += `<div class="text-[10px] text-slate-400 mb-2">`;
-          if (meta.lotNo) res += `<div>批號: <span class="text-slate-200">${meta.lotNo}</span></div>`;
-          if (meta.sideCode && meta.sideCode !== "0") res += `<div>板面: <span class="text-blue-300 font-bold">${meta.sideCode === "1" ? "S1 (Top)" : "S2 (Bottom)"}</span></div>`;
-          if (meta.lineId) res += `<div>產線: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
-          if (meta.tankId) res += `<div>槽體: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
-          if (meta.pointRemark) res += `<div>備註: <span class="text-amber-200">${meta.pointRemark}</span></div>`;
-          if (meta.slotId) res += `<div>槽位: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
+          if (meta.lotNo) res += `<div>${htmlChartLabel("批號")}: <span class="text-slate-200">${escapeChartText(meta.lotNo)}</span></div>`;
+          if (meta.sideCode && meta.sideCode !== "0") res += `<div>${htmlChartLabel("板面")}: <span class="text-blue-300 font-bold">${meta.sideCode === "1" ? "S1 (Top)" : "S2 (Bottom)"}</span></div>`;
+          if (meta.lineId) res += `<div>${htmlChartLabel("產線")}: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
+          if (meta.tankId) res += `<div>${htmlChartLabel("槽體")}: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
+          if (meta.pointRemark) res += `<div>${htmlChartLabel("備註")}: <span class="text-amber-200">${escapeChartText(meta.pointRemark)}</span></div>`;
+          if (meta.slotId) res += `<div>${htmlChartLabel("槽位")}: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
           const phase = normalizeChemicalShift(meta.samplingPhase);
           const phaseColors = { OPEN: "text-blue-300", MIDDLE: "text-emerald-300", CLOSE: "text-orange-300" };
-          res += `<div>班別: <span class="font-bold ${phaseColors[phase]}">${chartStageShiftLabel(meta.samplingPhase, meta.samplingStage, singleChemicalLine)}</span></div>`;
-          if (singleChemicalLine) res += `<div>取樣階段: ${stageLabel(meta.samplingStage)}</div>`;
-          if (meta.measuredAt) res += `<div>實際量測: <span class="text-slate-200">${new Date(meta.measuredAt).toLocaleString("zh-TW", { hour12: false })}</span></div>`;
+          res += `<div>${htmlChartLabel("班別")}: <span class="font-bold ${phaseColors[phase]}">${htmlChartLabel(chartStageShiftLabel(meta.samplingPhase, meta.samplingStage, singleChemicalLine))}</span></div>`;
+          if (singleChemicalLine) res += `<div>${htmlChartLabel("取樣階段")}: ${htmlChartLabel(stageLabel(meta.samplingStage))}</div>`;
+          if (meta.measuredAt) res += `<div>${htmlChartLabel("實際量測")}: <span class="text-slate-200">${new Date(meta.measuredAt).toLocaleString("zh-TW", { hour12: false })}</span></div>`;
           res += `</div>`;
         }
         params.forEach(p => {
           const rawValue = p.data?.value !== undefined ? p.data?.value : p.value;
           if (rawValue === null || rawValue === undefined || Number.isNaN(Number(rawValue))) return;
-          res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> ${p.seriesName}: <strong>${Number(rawValue).toFixed(4)}</strong></div>`;
+          res += `<div><span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color:${p.color}"></span> ${htmlChartLabel(p.seriesName)}: <strong>${Number(rawValue).toFixed(4)}</strong></div>`;
           if (p.data?.violatedRules?.length > 0) {
-            res += `<div class="mt-1.5 px-2 py-0.5 rounded bg-red-900/50 border border-red-500/50 text-red-300 text-[11px] font-bold">⚠️ 西方電氣規則違規：<br>${p.data.violatedRules.map(formatRuleCode).join("<br>")}</div>`;
+            res += `<div class="mt-1.5 px-2 py-0.5 rounded bg-red-900/50 border border-red-500/50 text-red-300 text-[11px] font-bold">${htmlChartLabel("⚠️ 西方電氣規則違規：")}<br>${p.data.violatedRules.map(formatRuleCode).map(escapeChartText).join("<br>")}</div>`;
           }
         });
         if (hasDynamicLimits && meta) {
-          if (meta.n != null) res += `<div class="text-[10px] text-slate-400 mt-2">樣本數 (n): <strong class="text-slate-200">${meta.n}</strong></div>`;
+          if (meta.n != null) res += `<div class="text-[10px] text-slate-400 mt-2">${htmlChartLabel("樣本數 (n)")}: <strong class="text-slate-200">${meta.n}</strong></div>`;
         }
         return res;
       }
@@ -1668,6 +1756,7 @@ function renderECharts() {
   };
 
   chartInstance.setOption(option);
+  localizeChart(chartInstance);
 
   // Attach Point Click listener for Drill-down cards
   chartInstance.on("click", (params) => {
@@ -1795,17 +1884,17 @@ function renderTrendChart() {
       borderColor: "#334155",
       textStyle: { color: "#fff", fontSize: 12 },
       formatter: (params) => {
-        let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${params[0].axisValue}</div>`;
+        let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${escapeChartText(params[0].axisValue)}</div>`;
         const meta = params[0].data?.meta;
         if (meta) {
           res += `<div class="text-[10px] text-slate-400 mb-2">`;
-          if (meta.lotNo) res += `<div>批號: <span class="text-slate-200">${meta.lotNo}</span></div>`;
-          if (meta.serialNo) res += `<div>序號: <span class="text-slate-200">${meta.serialNo}</span></div>`;
-          if (meta.operator) res += `<div>人員: <span class="text-slate-200">${meta.operator}</span></div>`;
-          if (meta.pointRemark) res += `<div>備註: <span class="text-amber-200">${meta.pointRemark}</span></div>`;
-          if (meta.lineId) res += `<div>產線: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
-          if (meta.tankId) res += `<div>槽體: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
-          if (meta.slotId) res += `<div>槽位: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
+          if (meta.lotNo) res += `<div>${htmlChartLabel("批號")}: <span class="text-slate-200">${escapeChartText(meta.lotNo)}</span></div>`;
+          if (meta.serialNo) res += `<div>${htmlChartLabel("序號")}: <span class="text-slate-200">${escapeChartText(meta.serialNo)}</span></div>`;
+          if (meta.operator) res += `<div>${htmlChartLabel("人員")}: <span class="text-slate-200">${escapeChartText(meta.operator)}</span></div>`;
+          if (meta.pointRemark) res += `<div>${htmlChartLabel("備註")}: <span class="text-amber-200">${escapeChartText(meta.pointRemark)}</span></div>`;
+          if (meta.lineId) res += `<div>${htmlChartLabel("產線")}: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
+          if (meta.tankId) res += `<div>${htmlChartLabel("槽體")}: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
+          if (meta.slotId) res += `<div>${htmlChartLabel("槽位")}: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
           res += `</div>`;
         }
         params.forEach(p => {
@@ -1843,6 +1932,7 @@ function renderTrendChart() {
   };
 
   trendChartInstance.setOption(option);
+  localizeChart(trendChartInstance);
 }
 
 function renderHistogramChart() {
@@ -1873,6 +1963,7 @@ function renderHistogramChart() {
         style: { text: "此期間無可納入直方圖的量測值", fontSize: 14, fill: "#94a3b8" }
       }]
     });
+    localizeChart(histogramChartInstance);
     return;
   }
 
@@ -1990,18 +2081,18 @@ function renderHistogramChart() {
         let normalityInfo = "";
         if (data.normality) {
           const pValStr = data.normality.pValue !== null ? formatNormalityPValue(data.normality.pValue) : "N/A";
-          const normalStatus = normalityConclusion(data.normality);
+          const normalStatus = chartLabel(normalityConclusion(data.normality));
           const methodNote = data.normality.methodNote
-            ? `<div style="margin-top:4px;color:#cbd5e1">${data.normality.methodNote}</div>`
+            ? `<div style="margin-top:4px;color:#cbd5e1">${escapeChartText(data.normality.methodNote)}</div>`
             : "";
-          normalityInfo = `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">常態性檢定 ${data.normality.testName || ""} (P-val): <strong style="color:#fbbf24">${pValStr}</strong> (${normalStatus})${methodNote}</div>`;
+          normalityInfo = `<div style="margin-top:6px;border-top:1px dashed #334155;padding-top:6px;font-size:11px">${htmlChartLabel("常態性檢定")} ${escapeChartText(data.normality.testName || "")} (P-val): <strong style="color:#fbbf24">${pValStr}</strong> (${normalStatus})${methodNote}</div>`;
         }
 
         return [
-          `<div style="font-weight:700;border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px">量測值區間</div>`,
+          `<div style="font-weight:700;border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px">${htmlChartLabel("量測值區間")}</div>`,
           `<div>${formatNumber(bin.min, 4)} &lt;= X ${point.dataIndex === bins.length - 1 ? "&lt;=" : "&lt;"} ${formatNumber(bin.max, 4)}</div>`,
-          `<div style="margin-top:4px">區間筆數: <strong style="color:#fbbf24">${bin.count}</strong></div>`,
-          `<div style="margin-top:4px;color:#94a3b8;font-size:11px">總樣本數 N=${values.length}, 平均值=${formatNumber(mean, 4)}, 標準差=${formatNumber(std, 4)}</div>`,
+          `<div style="margin-top:4px">${htmlChartLabel("區間筆數")}: <strong style="color:#fbbf24">${bin.count}</strong></div>`,
+          `<div style="margin-top:4px;color:#94a3b8;font-size:11px">${htmlChartLabel("總樣本數 N")}=${values.length}, ${htmlChartLabel("平均值")}=${formatNumber(mean, 4)}, ${htmlChartLabel("標準差")}=${formatNumber(std, 4)}</div>`,
           normalityInfo
         ].join("");
       }
@@ -2026,6 +2117,7 @@ function renderHistogramChart() {
     },
     series: seriesList
   });
+  localizeChart(histogramChartInstance);
 }
 
 function handleResize() {
@@ -2402,19 +2494,19 @@ onBeforeUnmount(() => {
           <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
             <label class="flex items-center gap-1.5 cursor-pointer">
               <input v-model="showSpecLimits" type="checkbox" class="rounded border-slate-300 text-red-600" />
-              規格界限（USL / Target / LSL）
+              {{ t('spc.chartLabels.specToggle') }}
             </label>
             <label class="flex items-center gap-1.5 cursor-pointer">
               <input v-model="showControlLimits" type="checkbox" class="rounded border-slate-300 text-amber-600" />
-              管制界限（UCL / CL / LCL）
+              {{ t('spc.chartLabels.controlToggle') }}
             </label>
             <label class="flex items-center gap-1.5 cursor-pointer">
               <input v-model="showPointValues" type="checkbox" class="rounded border-slate-300 text-emerald-600" />
-              各點數值
+              {{ t('spc.chartLabels.pointValues') }}
             </label>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span> 規格/管制界限失控點</span>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> 正常管制點位</span>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-400 inline-block border border-slate-500"></span> 已排除點位</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span> {{ t('spc.chartLabels.outOfControl') }}</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> {{ t('spc.chartLabels.normalPoint') }}</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-400 inline-block border border-slate-500"></span> {{ t('spc.chartLabels.excludedPoint') }}</span>
           </div>
         </div>
 
@@ -2426,10 +2518,10 @@ onBeforeUnmount(() => {
 
         <div class="relative">
           <div class="absolute top-1 right-12 z-20 flex items-center gap-1">
-            <button type="button" @click="zoomChartIn" title="放大" aria-label="放大" class="p-1 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
+            <button type="button" @click="zoomChartIn" :title="t('spc.chartLabels.zoom')" :aria-label="t('spc.chartLabels.zoom')" class="p-1 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
               <ZoomIn class="w-5 h-5" />
             </button>
-            <button type="button" @click="resetChartZoom" title="重設縮放" aria-label="重設縮放" class="p-1 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
+            <button type="button" @click="resetChartZoom" :title="t('spc.chartLabels.resetZoom')" :aria-label="t('spc.chartLabels.resetZoom')" class="p-1 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
               <RotateCcw class="w-5 h-5" />
             </button>
           </div>
@@ -2578,20 +2670,20 @@ onBeforeUnmount(() => {
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
             <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <BarChart3 class="w-5 h-5 text-amber-500" />
-              量測值分布直方圖 (Raw Measurements Histogram)
+              {{ t('spc.chartLabels.histogram') }}
             </h3>
             <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
-              <span class="flex items-center gap-1.5"><span class="w-5 h-0.5 bg-red-500 border-t border-dashed border-red-500 inline-block"></span>規格上下線</span>
-              <span class="flex items-center gap-1.5"><span class="w-5 h-0.5 bg-amber-500 inline-block"></span>管制上下線</span>
-              <span class="text-slate-400">已剔除資料不納入統計</span>
+              <span class="flex items-center gap-1.5"><span class="w-5 h-0.5 bg-red-500 border-t border-dashed border-red-500 inline-block"></span>{{ t('spc.chartLabels.specRange') }}</span>
+              <span class="flex items-center gap-1.5"><span class="w-5 h-0.5 bg-amber-500 inline-block"></span>{{ t('spc.chartLabels.controlRange') }}</span>
+              <span class="text-slate-400">{{ t('spc.chartLabels.excludedNotice') }}</span>
             </div>
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold">
             <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">納入樣本數</span>
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{{ t('spc.chartLabels.included') }}</span>
               <span class="text-slate-800 dark:text-slate-200 font-mono">
-                {{ isEtchAverageChart ? chartPoints.length : (chartResult.rawDataPoints || []).filter(p => !p.isExcluded && p.value !== null && p.value !== undefined).length }} {{ isEtchAverageChart ? '點' : '筆' }}
+                {{ isEtchAverageChart ? t('spc.chartQuery.pointCount', { count: chartPoints.length }) : t('spc.chartQuery.measurementCount', { count: (chartResult.rawDataPoints || []).filter(p => !p.isExcluded && p.value !== null && p.value !== undefined).length }) }}
               </span>
             </div>
             <div class="space-y-1">
@@ -2613,29 +2705,29 @@ onBeforeUnmount(() => {
               </span>
             </div>
             <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">常態性檢定 (P-val)</span>
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{{ t('spc.chartLabels.pValue') }}</span>
               <span class="text-slate-800 dark:text-slate-200 font-mono">
                 {{ chartResult.normality && chartResult.normality.pValue !== null ? formatNormalityPValue(chartResult.normality.pValue) : 'N/A' }}
               </span>
             </div>
             <div class="space-y-1">
-              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">常態判定</span>
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{{ t('spc.chartLabels.normality') }}</span>
               <div>
                 <span v-if="normalityConclusion(chartResult.normality) === '無法檢定'" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  無法檢定
+                  {{ t('spc.chartLabels.unavailable') }}
                 </span>
                 <span v-else-if="normalityConclusion(chartResult.normality) === '未拒絕常態假設'" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  未拒絕常態假設
+                  {{ t('spc.chartLabels.notRejected') }}
                 </span>
                 <span v-else-if="chartResult.normality" class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse">
-                  偏離常態
+                  {{ t('spc.chartLabels.rejected') }}
                 </span>
                 <span v-else class="text-slate-400 font-mono">N/A</span>
               </div>
             </div>
           </div>
           <p v-if="normalityUnavailableReason(chartResult.normality)" data-testid="normality-unavailable" class="text-xs text-amber-700 dark:text-amber-300">
-            {{ normalityUnavailableReason(chartResult.normality) }}
+            {{ chartResult.normality?.note || chartLabel(normalityUnavailableReason(chartResult.normality)) }}
           </p>
           <p v-if="chartResult.normality?.methodNote" class="text-xs text-slate-500 dark:text-slate-400">
             {{ chartResult.normality.methodNote }}

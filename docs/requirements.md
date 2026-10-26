@@ -295,3 +295,5 @@
 - 2026-10-26 I18N-TASK-06A完成：[規格](../specs/20261026-i18n-task06a/spec.md)／[驗證回復](../specs/20261026-i18n-task06a/verification.md)。共用分段版本與已保存計算證據固定UI三語104新鍵，保留數值／原公式／JSON／台北日期／GET分頁／過期回應保護，不推定舊版本；手機兩圖表入口沿用堆疊導覽。62單元、本機29＋原分段17＋shell17、發布29＋17/build/同源/hash/health通過；測試Web0.1.80/API0.1.72，無DB/後端/正式變更。06拆A～D，本次只完成A，剩18件；真人審稿留TASK20。
 
 - 2026-10-26 I18N-TASK-06B1完成：[規格](../specs/20261026-i18n-task06b1/spec.md)／[驗證回復](../specs/20261026-i18n-task06b1/verification.md)。管制圖查詢／週月報控制／監控摘要／下載及排除清單固定UI70新鍵三語，原日期限制／query／數值／CSV／圖表canvas／恢復DELETE保持；三別名入口沿用手機堆疊，手機欄位全寬。65單元、本機38＋原分段17＋shell17、發布38＋17/build/hash/同源/health通過；測試Web0.1.81/API0.1.72，正式/DB/後端未改。B2圖內及總覽、B3點位表單另列，剩19件；draft真人審稿待TASK20。
+
+- 2026-10-26 I18N-TASK-06B2完成：[規格](../specs/20261026-i18n-task06b2/spec.md)／[驗證](../specs/20261026-i18n-task06b2/verification.md)。圖表presentation、直方圖固定UI與共用總覽99新鍵，保留原series／zoom／數值／AD／排序。67 i18n＋4 presentation單元、新29與原查詢38／分段17／AD8及測試發布通過；Web0.1.82/API0.1.72，正式未改，剩18件直接接續。

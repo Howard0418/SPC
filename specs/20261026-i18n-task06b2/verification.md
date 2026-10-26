@@ -1,0 +1,12 @@
+# 06B2 驗證
+- 日期2026-10-26；完成後狀態以本件Git提交及下列發布結果為準。Web0.1.82/API0.1.72，只有測試站。
+- 99鍵／297列draft，累計1237鍵三語；字典及來源hash／protected術語通過，67項i18n單元與4項presentation單元通過，build通過（既有大chunk提示）。
+- AC1/AC4：新29情境通過；本機dev實際ECharts I-MR／Xbar-R／Xbar-S／P三語比對instance id、完整series／data與zoom不變，tooltipHTML外觀文字編碼；已發布build以原canvas連線及UI／query驗證，不冒稱發布版直接檢查私有option。
+- AC1/AC5：總覽三語四尺寸12情境保留原排序行序／排行metric與mode／DOM／URL，無新增API；手機英文截圖檢視，寬表內部橫捲保留。
+- AC2/AC3：p值0、0.00001、0.049999、0.05、null，原顯示4位／<0.0001及未取位值判定保持；不恢復偏態峰態或方法下拉。空圖graphic與工具列title純文字patch單元通過，圖片檔名不進patch。
+- 原查詢／CSV38、分段點位17、固定AD8個不同情境回歸通過（其中normality舊中文固定預期改為依spc語言，7＋修正後1）；新增測試重用原fixture，不改真API。
+- 初版發布後新29＋查詢38＝67通過；工具列補齊後重驗本機與已發布新29，真health/version與4檔hash再次一致。同源14請求通過。
+- test環境實際核對SpcSingleTest backend `D:\SPC\release\test\backend` / AppEnvironment=test；發布目標 `D:\SPC\release\test\frontend`，原前端57檔備份、payload4、保護設定4、資產先index最後，不重啟pool。
+- 原rollback備份 `.codex-tmp/i18n-task06b2/backup-frontend`；工具列修訂另存backup-before-toolbar，不覆原rollback。回復先核test路徑，再以原備份資產／index覆回（資產先），不覆設定、不刪其他資產，查原hash/health。未觸發回復。
+- 業務API全mock、真站只讀health/version/hash；不等於真DB/SSO／真人審稿。Portal／後端／DB／正式未變。所有譯文仍draft／uncertain，人工審稿留20。
+- 完成後剩18件（06B3／C／D及07～21），另受阻1／暫緩2；依連續授權接續B3，不等待核准。

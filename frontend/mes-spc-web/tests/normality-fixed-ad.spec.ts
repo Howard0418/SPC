@@ -83,7 +83,8 @@ for(const path of ['/spc','/trend-chart'])for(const scenario of ['normal','tiny'
       expect(await chartNodes.evaluateAll(nodes=>nodes.map(node=>node.getAttribute('_echarts_instance_')))).toEqual(before);
       expect(await page.locator('input[type="date"]').evaluateAll(nodes=>nodes.map(node=>(node as HTMLInputElement).value))).toEqual(dates);
       expect(page.url()).toBe(currentUrl);expect(chartMethods.length).toBe(requestCount);
-      await expect(page.getByText('未拒絕常態假設',{exact:true})).toBeVisible();
+      const conclusion=path==='/spc'?({'en-US':'Normality hypothesis not rejected','zh-CN':'未拒绝常态假设','zh-TW':'未拒絕常態假設'}[locale]):'未拒絕常態假設';
+      await expect(page.getByText(conclusion,{exact:true})).toBeVisible();
     }
   }
   expect(writes).toEqual([]);expect(errors).toEqual([]);

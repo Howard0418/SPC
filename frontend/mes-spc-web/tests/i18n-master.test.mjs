@@ -23,7 +23,8 @@ test('master draft review metadata, parameters and complete runtime coverage',()
  const uploads=JSON.parse(readFileSync(new URL('../../../specs/20261025-i18n-task05e/translation-review.json',import.meta.url),'utf8'));
  const segments=JSON.parse(readFileSync(new URL('../../../specs/20261026-i18n-task06a/translation-review.json',import.meta.url),'utf8'));
  const query=JSON.parse(readFileSync(new URL('../../../specs/20261026-i18n-task06b1/translation-review.json',import.meta.url),'utf8'));
- assert.deepEqual([...query.metadata.map(row=>row.key),...segments.metadata.map(row=>row.key),...uploads.metadata.map(row=>row.key),...entry.metadata.map(row=>row.key),...ppc.metadata.map(row=>row.key),...chemical.metadata.map(row=>row.key),...types.metadata.map(row=>row.key),...pilot.metadata.map(row=>row.key),...keys,...next.metadata.map(row=>row.key)].sort(),Object.keys(flat['zh-TW']).sort());
+ const plots=JSON.parse(readFileSync(new URL('../../../specs/20261026-i18n-task06b2/translation-review.json',import.meta.url),'utf8'));
+ assert.deepEqual([...plots.metadata.map(row=>row.key),...query.metadata.map(row=>row.key),...segments.metadata.map(row=>row.key),...uploads.metadata.map(row=>row.key),...entry.metadata.map(row=>row.key),...ppc.metadata.map(row=>row.key),...chemical.metadata.map(row=>row.key),...types.metadata.map(row=>row.key),...pilot.metadata.map(row=>row.key),...keys,...next.metadata.map(row=>row.key)].sort(),Object.keys(flat['zh-TW']).sort());
  const sha=value=>createHash('sha256').update(value,'utf8').digest('hex');
  for(const row of review.ledger){
   assert.equal(row.sourceHash,sha(flat['zh-TW'][row.key]));assert.equal(row.translationHash,sha(flat[row.locale][row.key]));

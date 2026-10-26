@@ -5,38 +5,38 @@
       class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h3 class="font-black text-slate-800 dark:text-white flex items-center gap-2">
-          <List class="w-5 h-5 text-blue-500" /> SPC 管制項目總覽
+          <List class="w-5 h-5 text-blue-500" /> {{ t('spc.chartSummary.title') }}
         </h3>
-        <p class="text-[11px] text-slate-400 mt-0.5">共 {{ data.length }} 筆量測資料受管制</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">{{ t('spc.chartSummary.count', { count: data.length }) }}</p>
       </div>
       <span
         class="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
-        線別：全部 (All)
+        {{ t('spc.chartSummary.allLines') }}
       </span>
     </div>
 
     <div v-if="data.length === 0" class="py-10 text-center text-slate-400">
       <BarChart3 class="w-8 h-8 mx-auto mb-2 opacity-50" />
-      <p class="font-bold">此條件下沒有可計算之量測點</p>
+      <p class="font-bold">{{ t('spc.chartSummary.empty') }}</p>
     </div>
 
     <div v-if="isMonthlyReport && data.length > 0" class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-4 space-y-4">
       <div class="flex flex-wrap items-end gap-3">
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">排行指標</label>
-          <select v-model="rankingMetric" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold">
-            <option value="oos">OOS 件數</option>
-            <option value="cpk">Cpk（實際 Ppk）</option>
+          <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">{{ t('spc.chartSummary.rankingMetric') }}</label>
+          <select data-testid="summary-rankingMetric" v-model="rankingMetric" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold">
+            <option value="oos">{{ t('spc.chartSummary.oosCount') }}</option>
+            <option value="cpk">{{ t('spc.chartSummary.actualPpk') }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">排行範圍</label>
-          <select v-model="rankingMode" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold">
-            <option value="high5">最高 5 位</option>
-            <option value="low3">最低 3 位</option>
+          <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">{{ t('spc.chartSummary.rankingRange') }}</label>
+          <select data-testid="summary-rankingMode" v-model="rankingMode" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold">
+            <option value="high5">{{ t('spc.chartSummary.highFive') }}</option>
+            <option value="low3">{{ t('spc.chartSummary.lowThree') }}</option>
           </select>
         </div>
-        <div class="text-xs text-slate-500 dark:text-slate-400 pb-2">排行只依目前週報/月報查詢結果計算。</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 pb-2">{{ t('spc.chartSummary.rankingNotice') }}</div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -51,12 +51,12 @@
       </div>
 
       <div class="rounded-lg border border-blue-100 dark:border-blue-900/50 bg-blue-50/70 dark:bg-blue-950/20 px-3 py-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 space-y-1">
-        <strong class="text-blue-700 dark:text-blue-300">Cpk／Ppk 計算說明：</strong>
-        <div>雙邊規格：Cpk = min((USL − 平均值) / (3 × σwithin), (平均值 − LSL) / (3 × σwithin))；Ppk 使用 σoverall。</div>
-        <div>只有 USL：Cpk = (USL − 平均值) / (3 × σwithin)；Ppk = (USL − 平均值) / (3 × σoverall)。</div>
-        <div>只有 LSL：Cpk = (平均值 − LSL) / (3 × σwithin)；Ppk = (平均值 − LSL) / (3 × σoverall)。</div>
-        <div>σwithin 是組內短期變異；σoverall 是所有報表量測值的整體長期變異。</div>
-        <div class="font-semibold text-blue-700 dark:text-blue-300">本報表欄位雖標示 Cpk，但實際顯示後端 Ppk 數值，代表整段週期的整體能力。</div>
+        <strong class="text-blue-700 dark:text-blue-300">{{ t('spc.chartSummary.calculationTitle') }}</strong>
+        <div>{{ t('spc.chartSummary.twoSided') }}</div>
+        <div>{{ t('spc.chartSummary.upperOnly') }}</div>
+        <div>{{ t('spc.chartSummary.lowerOnly') }}</div>
+        <div>{{ t('spc.chartSummary.sigmaNotice') }}</div>
+        <div class="font-semibold text-blue-700 dark:text-blue-300">{{ t('spc.chartSummary.ppkNotice') }}</div>
       </div>
     </div>
 
@@ -70,7 +70,7 @@
               class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('controlCategory')">
               <div class="flex items-center gap-1">
-                <span>管制類別</span>
+                <span>{{ t('spc.chartSummary.category') }}</span>
                 <span class="text-slate-400 dark:text-slate-500">
                   <ArrowUp v-if="sortKey === 'controlCategory' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                   <ArrowDown v-else-if="sortKey === 'controlCategory' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
@@ -82,7 +82,7 @@
               class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('lineOrProcessName')">
               <div class="flex items-center gap-1">
-                <span>製程線別</span>
+                <span>{{ t('spc.chartSummary.process') }}</span>
                 <ArrowUp v-if="sortKey === 'lineOrProcessName' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                 <ArrowDown v-else-if="sortKey === 'lineOrProcessName' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                 <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
@@ -92,7 +92,7 @@
               class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('slotName')">
               <div class="flex items-center gap-1">
-                <span>槽位</span>
+                <span>{{ t('spc.chartSummary.slot') }}</span>
                 <ArrowUp v-if="sortKey === 'slotName' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                 <ArrowDown v-else-if="sortKey === 'slotName' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                 <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
@@ -102,7 +102,7 @@
               class="px-4 py-3 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('chartName')">
               <div class="flex items-center gap-1">
-                <span>管制圖名稱</span>
+                <span>{{ t('spc.chartSummary.chartName') }}</span>
                 <ArrowUp v-if="sortKey === 'chartName' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                 <ArrowDown v-else-if="sortKey === 'chartName' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                 <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
@@ -115,7 +115,7 @@
                 <ArrowUp v-if="sortKey === 'totalCount' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                 <ArrowDown v-else-if="sortKey === 'totalCount' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                 <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                <span>匯入資料數</span>
+                <span>{{ t('spc.chartSummary.importedCount') }}</span>
               </div>
             </th>
             <th
@@ -184,7 +184,7 @@
                 <span>{{ comparisonPrefix }}OOS</span>
               </span>
             </th>
-            <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">OOS 差異</th>
+            <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">{{ t('spc.chartSummary.oosDifference') }}</th>
             <th
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('oosPercentage')">
@@ -203,7 +203,7 @@
                 <span>{{ comparisonPrefix }}%OOS</span>
               </span>
             </th>
-            <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">%OOS 差異</th>
+            <th v-if="comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">{{ t('spc.chartSummary.percentDifference') }}</th>
             <th v-if="isSpc"
               class="px-4 py-3 text-right cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               @click="handleSort('ca')">
@@ -236,7 +236,7 @@
                   <ArrowUp v-if="sortKey === 'ppk' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
                   <ArrowDown v-else-if="sortKey === 'ppk' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
                   <ArrowUpDown v-else class="w-3.5 h-3.5 opacity-60" />
-                  <span>本期Cpk</span>
+                  <span>{{ t('spc.chartSummary.currentCpk') }}</span>
                 </span>
               </div>
             </th>
@@ -246,8 +246,8 @@
                 <span>{{ comparisonPrefix }}Cpk</span>
               </span>
             </th>
-            <th v-if="isSpc && comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">Cpk 差異</th>
-            <th class="px-4 py-3 text-center sticky right-0 bg-slate-50 dark:bg-slate-800">製圖</th>
+            <th v-if="isSpc && comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">{{ t('spc.chartSummary.cpkDifference') }}</th>
+            <th class="px-4 py-3 text-center sticky right-0 bg-slate-50 dark:bg-slate-800">{{ t('spc.chartSummary.draw') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-200">
@@ -300,7 +300,7 @@
                 class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-sm whitespace-nowrap">
                 <TrendingUp v-if="isTrendRow(row)" class="w-4 h-4" />
                 <LineChart v-else class="w-4 h-4" />
-                製圖
+                {{ t('spc.chartSummary.draw') }}
               </button>
             </td>
           </tr>
@@ -319,6 +319,8 @@
 
 <script setup>
 import { ref, computed, nextTick, onBeforeUnmount, onMounted, watch } from "vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n({ useScope: "global" });
 import { List, BarChart3, LineChart, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-vue-next"; // 新增三個排序圖示
 
 // 1. 新增排序狀態
@@ -381,7 +383,7 @@ const props = defineProps({
   }
 });
 
-const comparisonPrefix = computed(() => props.comparisonPeriod === "WEEK" ? "上週" : "上月");
+const comparisonPrefix = computed(() => props.comparisonPeriod === "WEEK" ? t('spc.chartSummary.previousWeek') : t('spc.chartSummary.previousMonth'));
 const isMonthlyReport = computed(() => props.comparisonPeriod === "WEEK" || props.comparisonPeriod === "MONTH");
 const rankingMetric = ref("oos");
 const rankingMode = ref("high5");
@@ -394,7 +396,7 @@ const rankingRows = computed(() => {
   return rows.slice(0, rankingMode.value === "high5" ? 5 : 3).map(item => item.row);
 });
 
-const rankingValue = row => rankingMetric.value === "oos" ? `${row.oosCount ?? 0} 件` : formatNumber(row.ppk);
+const rankingValue = row => rankingMetric.value === "oos" ? t('spc.chartSummary.rankingCount', { count: row.oosCount ?? 0 }) : formatNumber(row.ppk);
 
 defineEmits(["draw-chart"]);
 
