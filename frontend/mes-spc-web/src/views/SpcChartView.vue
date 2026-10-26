@@ -1,6 +1,8 @@
 <script setup>
 import { formatNormalityPValue, normalityConclusion, normalityUnavailableReason } from "../utils/normalityPresentation";
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
+import { useI18n } from "vue-i18n";
+import { displayUiMessage } from "../i18n/uiMessage";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
@@ -48,6 +50,7 @@ import ChartSegmentDetails from "../components/ChartSegmentDetails.vue";
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n({ useScope: "global" });
 const analysisSectionByPath = {
   "/process-analysis/capability": "process-capability-analysis",
   "/process-analysis/violations": "violation-analysis",
@@ -60,13 +63,13 @@ function focusRequestedAnalysis() {
 }
 const isMonthlyChartPage = computed(() => route.path.startsWith("/monthly-control-chart"));
 const pageHeading = computed(() => ({
-  "/process-analysis/capability": "製程能力分析",
-  "/process-analysis/violations": "異常點分析",
-}[route.path] || (isMonthlyChartPage.value ? "SPC 週月報表" : "SPC 即時互動管制圖")));
+  "/process-analysis/capability": t('spc.chartQuery.capabilityHeading'),
+  "/process-analysis/violations": t('spc.chartQuery.violationsHeading'),
+}[route.path] || (isMonthlyChartPage.value ? t('spc.chartQuery.reportHeading') : t('spc.chartQuery.heading'))));
 const pageDescription = computed(() => ({
-  "/process-analysis/capability": "檢視 Cp、Cpk、Pp、Ppk 與製程變異能力",
-  "/process-analysis/violations": "定位 OOS、OOC、違規點與 OCAP 處置狀態",
-}[route.path] || (isMonthlyChartPage.value ? "依週期檢視 SPC 管制結果與前期比較" : "使用統計管制界線與規則監控製程穩定性")));
+  "/process-analysis/capability": t('spc.chartQuery.capabilityDescription'),
+  "/process-analysis/violations": t('spc.chartQuery.violationsDescription'),
+}[route.path] || (isMonthlyChartPage.value ? t('spc.chartQuery.reportDescription') : t('spc.chartQuery.description'))));
 
 // SPC master data source: PartProcessCharacteristics
 const mappings = ref([]);
@@ -247,7 +250,7 @@ const monitorMapping = computed(() =>
 function formatMonitorMaster(code, name, fallbackName) {
   const displayName = name || fallbackName || "";
   if (code && displayName) return `[${code}] ${displayName}`;
-  return displayName || code || "未提供";
+  return displayName || code || t('spc.chartQuery.notProvided');
 }
 
 const monitorProcessLabel = computed(() =>
@@ -255,13 +258,13 @@ const monitorProcessLabel = computed(() =>
   || chartResult.value?.monitorContext?.processName
   || monitorMapping.value?.process?.processName
   || selectedSummaryRow.value?.lineOrProcessName
-  || "未提供"
+  || t('spc.chartQuery.notProvided')
 );
 const monitorCharacteristicLabel = computed(() =>
   chartResult.value?.monitorContext?.characteristicName
   || monitorMapping.value?.characteristic?.characteristicName
   || selectedSummaryRow.value?.chartName
-  || "未提供"
+  || t('spc.chartQuery.notProvided')
 );
 const monitorMachineLabel = computed(() =>
   chartResult.value?.monitorContext?.lineName
@@ -271,7 +274,7 @@ const monitorMachineLabel = computed(() =>
   || chartResult.value?.monitorContext?.lineCode
   || monitorMapping.value?.machine?.machineCode
   || monitorMapping.value?.process?.processCode
-  || "未提供"
+  || t('spc.chartQuery.notProvided')
 );
 const monitorSlotLabel = computed(() =>
   chartResult.value?.monitorContext?.slotName
@@ -283,7 +286,7 @@ const monitorSlotLabel = computed(() =>
   || chartResult.value?.monitorContext?.tankCode
   || monitorMapping.value?.slot?.slotCode
   || monitorMapping.value?.tank?.tankCode
-  || "未提供"
+  || t('spc.chartQuery.notProvided')
 );
 
 const monitorSpecLimits = computed(() => {
@@ -380,9 +383,9 @@ const formatPercentage = (value) => value === null || value === undefined ? "N/A
 const readField = (row, camelName, pascalName) => row?.[camelName] ?? row?.[pascalName];
 const formatExclusionState = (row) => {
   const state = readField(row, "state", "State");
-  if (state === "ExcludedHidden") return "隱藏且不列入計算";
-  if (state === "ExcludedVisible") return "顯示但不列入計算";
-  return state || "已排除";
+  if (state === "ExcludedHidden") return t('spc.chartQuery.hidden');
+  if (state === "ExcludedVisible") return t('spc.chartQuery.visible');
+  return state || t('spc.chartQuery.excludedFallback');
 };
 const formatExclusionPointLabel = (row) => {
   const variableId = readField(row, "variableMeasurementId", "VariableMeasurementId");
@@ -390,7 +393,7 @@ const formatExclusionPointLabel = (row) => {
   const pointKey = readField(row, "pointKey", "PointKey");
   if (variableId) return `Variable #${variableId}`;
   if (attributeId) return `Attribute #${attributeId}`;
-  return pointKey || "聚合點位";
+  return pointKey || t('spc.chartQuery.aggregatePoint');
 };
 const formatExclusionUpdatedAt = (row) => {
   const value = readField(row, "updatedAt", "UpdatedAt") || readField(row, "createdAt", "CreatedAt");
@@ -559,7 +562,7 @@ async function loadMappings() {
       selectedPartId.value = "";
     }
   } catch (e) {
-    error.value = "無法載入檢驗項目基準及管制圖配置：" + getApiErrorMessage(e);
+    error.value = { key: 'spc.chartQuery.loadMappingsFailed', args: { error: getApiErrorMessage(e) } };
   }
 }
 
@@ -642,7 +645,7 @@ async function loadActiveChart() {
   const useProductPart = selectedDimension.value === "PRODUCT" && productQueryMode.value === "PART";
   if (useProductPart) {
     if (!productPartId.value) {
-      error.value = "請選擇料號。";
+      error.value = { key: 'spc.chartQuery.choosePartError' };
       return;
     }
   } else {
@@ -655,7 +658,7 @@ async function loadActiveChart() {
     }
 
     if (startDate.value > endDate.value) {
-      error.value = "量測起日不可晚於量測迄日。";
+      error.value = { key: 'spc.chartQuery.dateOrder' };
       return;
     }
 
@@ -666,8 +669,8 @@ async function loadActiveChart() {
     const maxQueryDays = isMonthlyChartPage.value ? 31 : 93;
     if (diffDays > maxQueryDays) {
       error.value = isMonthlyChartPage.value
-        ? "月管制圖查詢時間範圍最多不可超過 1 個月。"
-        : "查詢時間範圍最多不可超過 3 個月。";
+        ? { key: 'spc.chartQuery.monthRange' }
+        : { key: 'spc.chartQuery.queryRange' };
       return;
     }
   }
@@ -697,7 +700,7 @@ async function loadActiveChart() {
       summaryQueryMode.value = productQueryMode.value;
       summaryProductPartId.value = productPartId.value;
     } catch (e) {
-      error.value = "無法載入總覽資料：" + getApiErrorMessage(e);
+      error.value = { key: 'spc.chartQuery.loadSummaryFailed', args: { error: getApiErrorMessage(e) } };
       tableSummaryData.value = null;
     } finally {
       loading.value = false;
@@ -708,7 +711,7 @@ async function loadActiveChart() {
   tableSummaryData.value = null;
 
   if (!ppcId.value) {
-    error.value = "請選擇一個檢驗項目，或選擇全部(All)以檢視總表。";
+    error.value = { key: 'spc.chartQuery.chooseItemError' };
     return;
   }
 
@@ -740,7 +743,7 @@ async function loadUploadBatchChart() {
     focusRequestedAnalysis();
   } catch (e) {
     if (e?.response?.status === 404) {
-      error.value = "找不到該 Excel/匯入批次的管制圖資料，可能尚未確認匯入或檢驗基準不存在。";
+      error.value = { key: 'spc.chartQuery.batchNotFound' };
     } else {
       error.value = getApiErrorMessage(e);
     }
@@ -773,7 +776,7 @@ async function loadInteractiveChart() {
     focusRequestedAnalysis();
   } catch (e) {
     if (e?.response?.status === 404) {
-      error.value = "找不到該檢驗項目的管制圖資料，可能尚無量測數據或尚未配置管制圖。";
+      error.value = { key: 'spc.chartQuery.chartNotFound' };
     } else {
       error.value = getApiErrorMessage(e);
     }
@@ -794,7 +797,7 @@ async function loadExcludedPoints(activePpcId = activePpcIdValue.value) {
     });
     excludedPoints.value = res.data?.data || [];
   } catch (e) {
-    error.value = "無法載入已排除點清單：" + getApiErrorMessage(e);
+    error.value = { key: 'spc.chartQuery.loadExcludedFailed', args: { error: getApiErrorMessage(e) } };
     excludedPoints.value = [];
   } finally {
     excludedPointsLoading.value = false;
@@ -813,7 +816,7 @@ async function loadPointRemarks(activePpcId = activePpcIdValue.value) {
     pointRemarks.value = res.data?.data || [];
     applyPointRemarksToChart();
   } catch (e) {
-    error.value = "無法載入點位備註：" + getApiErrorMessage(e);
+    error.value = { key: 'spc.chartQuery.loadRemarksFailed', args: { error: getApiErrorMessage(e) } };
     pointRemarks.value = [];
   }
 }
@@ -826,7 +829,7 @@ async function drawSingleChart(row) {
 
   const match = mappings.value.find(m => m.id === row.partProcessCharacteristicId);
   if (!match) {
-    error.value = "找不到此管制項目的設定，可能已停用或刪除。";
+    error.value = { key: 'spc.chartQuery.mappingNotFound' };
     return;
   }
 
@@ -843,7 +846,7 @@ async function drawSingleChart(row) {
 async function downloadRawData() {
   const activePpcId = activePpcIdValue.value;
   if (!activePpcId) {
-    error.value = "請先查詢一張管制圖後再下載 raw data。";
+    error.value = { key: 'spc.chartQuery.queryBeforeDownload' };
     return;
   }
 
@@ -865,7 +868,7 @@ async function downloadRawData() {
     link.remove();
     URL.revokeObjectURL(url);
   } catch (e) {
-    error.value = "下載 raw data 失敗：" + getApiErrorMessage(e);
+    error.value = { key: 'spc.chartQuery.downloadFailed', args: { error: getApiErrorMessage(e) } };
   } finally {
     rawDataDownloading.value = false;
   }
@@ -2091,9 +2094,9 @@ onBeforeUnmount(() => {
         @click="router.push({ path: '/part-process-characteristics', query: { editId: selectedMapping.id } })"
         type="button"
         class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-orange-600 dark:text-orange-400 text-xs font-bold transition-all border border-orange-200 dark:border-slate-700"
-        title="編輯此項檢驗基準與規格"
+        :title="t('spc.chartQuery.editTitle')"
       >
-        <Sliders class="w-4 h-4" /> 編輯此基準
+        <Sliders class="w-4 h-4" /> {{ t('spc.chartQuery.edit') }}
       </button>
     </div>
 
@@ -2101,7 +2104,7 @@ onBeforeUnmount(() => {
     <div class="flex flex-wrap gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
       <button
         v-for="dimension in dimensionOptions"
-        :key="dimension.id"
+        :key="dimension.id" :data-testid="'chart-dimension-' + dimension.id"
         @click="selectedDimension = dimension.id"
         :class="dimensionButtonClass(dimension.id)"
         class="flex-1 min-w-40 py-3 px-4 rounded-xl text-center text-xs md:text-sm font-semibold transition-all duration-200"
@@ -2111,94 +2114,94 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Selection Controls -->
-    <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-      <div class="flex flex-wrap items-end gap-2 w-full">
+    <div data-testid="chart-query" class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-2 w-full">
         <!-- Query Conditions -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 items-end flex-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 items-end flex-1 min-w-0 w-full">
           <div v-if="selectedDimension === 'PRODUCT' && !isMonthlyChartPage" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">查詢條件</label>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.queryConditions') }}</label>
             <select
               v-model="productQueryMode"
               data-testid="product-query-mode"
               class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500"
             >
-              <option value="DATE">量測起迄日</option>
-              <option value="PART">料號</option>
+              <option value="DATE">{{ t('spc.chartQuery.dateRange') }}</option>
+              <option value="PART">{{ t('spc.chartQuery.part') }}</option>
             </select>
           </div>
 
           <div v-if="isMonthlyChartPage" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">報表週期</label>
-            <select v-model="reportPeriodType" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
-              <option value="MONTH">月報</option>
-              <option value="WEEK">週報</option>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.period') }}</label>
+            <select data-testid="chart-query-reportPeriodType" v-model="reportPeriodType" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+              <option value="MONTH">{{ t('spc.chartQuery.monthReport') }}</option>
+              <option value="WEEK">{{ t('spc.chartQuery.weekReport') }}</option>
             </select>
           </div>
 
           <div v-if="isMonthlyChartPage && reportPeriodType === 'MONTH'" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">報表月份</label>
-            <input v-model="reportMonth" type="month" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.reportMonth') }}</label>
+            <input data-testid="chart-query-reportMonth" v-model="reportMonth" type="month" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div v-if="isMonthlyChartPage && reportPeriodType === 'WEEK'" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">報表週次</label>
-            <input v-model="reportWeek" type="week" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.reportWeek') }}</label>
+            <input data-testid="chart-query-reportWeek" v-model="reportWeek" type="week" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div v-if="!isMonthlyChartPage" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">量測起日</label>
-            <input v-model="startDate" :disabled="selectedDimension === 'PRODUCT' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.startDate') }}</label>
+            <input data-testid="chart-query-startDate" v-model="startDate" :disabled="selectedDimension === 'PRODUCT' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
           </div>
 
           <div v-if="!isMonthlyChartPage" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">量測迄日</label>
-            <input v-model="endDate" :disabled="selectedDimension === 'PRODUCT' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.endDate') }}</label>
+            <input data-testid="chart-query-endDate" v-model="endDate" :disabled="selectedDimension === 'PRODUCT' && productQueryMode === 'PART'" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
           </div>
 
           <div v-if="selectedDimension === 'PRODUCT' && !isMonthlyChartPage" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">料號</label>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.part') }}</label>
             <select
               v-model="productPartId"
               :disabled="productQueryMode !== 'PART'"
               data-testid="product-part-id"
               class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              <option value="">選擇料號...</option>
-              <option value="ALL">全部 (All)</option>
+              <option value="">{{ t('spc.chartQuery.choosePart') }}</option>
+              <option value="ALL">{{ t('spc.chartQuery.all') }}</option>
               <option v-for="part in productPartOptions" :key="part.id" :value="part.id">[{{ part.partNo }}] {{ part.partName }}</option>
             </select>
           </div>
 
           <div v-if="selectedDimension !== 'PROD'" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">線別</label>
-            <select v-model="selectedProcessId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-              <option value="">選擇線別...</option>
-              <option value="ALL">全部 (All)</option>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.line') }}</label>
+            <select data-testid="chart-query-selectedProcessId" v-model="selectedProcessId" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+              <option value="">{{ t('spc.chartQuery.chooseLine') }}</option>
+              <option value="ALL">{{ t('spc.chartQuery.all') }}</option>
               <option v-for="pr in availableProcesses" :key="pr.id" :value="pr.id">{{ pr.processName || pr.processCode }}</option>
             </select>
           </div>
 
           <div v-if="!isMonthlyChartPage" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">常態檢定方法</label>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.normalityMethod') }}</label>
             <p data-testid="normality-method" class="px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white">Anderson-Darling</p>
           </div>
 
         </div>
 
-        <button @click="loadActiveChart" :disabled="loading" class="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all text-sm h-[38px] min-w-32">
-          <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" /> 查詢總表
+        <button data-testid="chart-query-submit" @click="loadActiveChart" :disabled="loading" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all text-sm h-[38px] min-w-32">
+          <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" /> {{ t('spc.chartQuery.query') }}
         </button>
       </div>
     </div>
 
     <!-- Error Display -->
     <div v-if="error" class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
-      <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ error }}
+      <ShieldAlert class="w-5 h-5 flex-shrink-0" /> {{ displayUiMessage(t, error) }}
     </div>
 
     <div v-if="loading && !chartResult" class="h-64 flex flex-col items-center justify-center space-y-2 text-slate-400">
       <Activity class="w-8 h-8 animate-bounce text-blue-500" />
-      <p class="text-sm font-bold">查詢中...</p>
+      <p class="text-sm font-bold">{{ t('spc.chartQuery.querying') }}</p>
     </div>
 
     <!-- All-lines summary table -->
@@ -2220,7 +2223,7 @@ onBeforeUnmount(() => {
           @click="returnToSummary"
           class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-bold text-xs shadow-sm transition-colors"
         >
-          ← 返回已查詢總表
+          {{ t('spc.chartQuery.returnSummary') }}
         </button>
         <button
           type="button"
@@ -2229,7 +2232,7 @@ onBeforeUnmount(() => {
           :disabled="rawDataDownloading"
           class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-bold text-xs shadow-sm transition-colors disabled:opacity-50"
         >
-          <Download class="w-4 h-4" /> {{ rawDataDownloading ? '下載中...' : '下載 raw data' }}
+          <Download class="w-4 h-4" /> {{ rawDataDownloading ? t('spc.chartQuery.downloading') : t('spc.chartQuery.download') }}
         </button>
         <button
           type="button"
@@ -2237,7 +2240,7 @@ onBeforeUnmount(() => {
           @click="showExcludedPointsPanel = !showExcludedPointsPanel"
           class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-xs shadow-sm transition-colors"
         >
-          <List class="w-4 h-4" /> 已排除點 {{ activeExclusionCount }}
+          <List class="w-4 h-4" /> {{ t('spc.chartQuery.excludedCount', { count: activeExclusionCount }) }}
         </button>
       </div>
 
@@ -2247,18 +2250,18 @@ onBeforeUnmount(() => {
         class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
       >
         <div class="flex items-center justify-between gap-2 mb-2">
-          <h3 class="text-sm font-black text-slate-800 dark:text-white">已排除點</h3>
+          <h3 class="text-sm font-black text-slate-800 dark:text-white">{{ t('spc.chartQuery.excluded') }}</h3>
           <button
             type="button"
             class="px-2 py-1 text-xs font-bold rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
             :disabled="excludedPointsLoading"
             @click="loadExcludedPoints()"
           >
-            重新整理
+            {{ t('spc.chartQuery.refresh') }}
           </button>
         </div>
-        <div v-if="excludedPointsLoading" class="text-xs text-slate-500">載入中...</div>
-        <div v-else-if="excludedPoints.length === 0" class="text-xs text-slate-500">目前沒有已排除點。</div>
+        <div v-if="excludedPointsLoading" class="text-xs text-slate-500">{{ t('spc.chartQuery.loading') }}</div>
+        <div v-else-if="excludedPoints.length === 0" class="text-xs text-slate-500">{{ t('spc.chartQuery.noExcluded') }}</div>
         <div v-else class="divide-y divide-slate-200 dark:divide-slate-800">
           <div
             v-for="row in excludedPoints"
@@ -2280,7 +2283,7 @@ onBeforeUnmount(() => {
               :disabled="pointExclusionSaving"
               @click="restoreExcludedPoint(row)"
             >
-              恢復列入計算
+              {{ t('spc.chartQuery.restore') }}
             </button>
           </div>
         </div>
@@ -2291,7 +2294,7 @@ onBeforeUnmount(() => {
         data-testid="active-chart-display-name"
         class="px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
       >
-        <p class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">圖表名稱</p>
+        <p class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ t('spc.chartQuery.chartName') }}</p>
         <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white leading-snug">
           {{ activeChartDisplayName }}
         </h2>
@@ -2300,7 +2303,7 @@ onBeforeUnmount(() => {
       <!-- Capability Summary Cards -->
       <div v-if="chartResult.capability" class="grid grid-cols-1 gap-2">
         <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">整體標準差 (σ_overall)</p>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ t('spc.chartQuery.overallSigma') }}</p>
           <h3 class="text-lg font-bold mt-0.5 text-slate-800 dark:text-white">
             {{ chartResult.capability.sigmaOverall !== null ? Number(chartResult.capability.sigmaOverall).toFixed(4) : 'N/A' }}
           </h3>
@@ -2308,35 +2311,35 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Monitor Detail Summary -->
-      <div id="process-capability-analysis" class="scroll-mt-4 grid grid-cols-1 xl:grid-cols-4 gap-5 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div id="process-capability-analysis" data-testid="chart-monitor" class="scroll-mt-4 grid grid-cols-1 xl:grid-cols-4 gap-5 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="p-1">
           <h3 class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
-            <Info class="w-4 h-4 text-blue-500" /> 管制圖監控明細
+            <Info class="w-4 h-4 text-blue-500" /> {{ t('spc.chartQuery.monitor') }}
           </h3>
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <p class="text-slate-400 font-bold">製程 / 線別</p>
+              <p class="text-slate-400 font-bold">{{ t('spc.chartQuery.processLine') }}</p>
               <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorProcessLabel }}</p>
             </div>
             <div>
-              <p class="text-slate-400 font-bold">藥液 / 檢驗特性</p>
+              <p class="text-slate-400 font-bold">{{ t('spc.chartQuery.characteristic') }}</p>
               <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorCharacteristicLabel }}</p>
             </div>
             <div>
-              <p class="text-slate-400 font-bold">機台</p>
+              <p class="text-slate-400 font-bold">{{ t('spc.chartQuery.machine') }}</p>
               <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorMachineLabel }}</p>
             </div>
             <div>
-              <p class="text-slate-400 font-bold">槽位</p>
+              <p class="text-slate-400 font-bold">{{ t('spc.chartQuery.slot') }}</p>
               <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorSlotLabel }}</p>
             </div>
             <div>
-              <p class="text-slate-400 font-bold">{{ isEtchAverageChart ? '管制點數' : '量測筆數' }}</p>
-              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ displayedMeasurementCount }} {{ isEtchAverageChart ? '點' : '筆' }}</p>
+              <p class="text-slate-400 font-bold">{{ isEtchAverageChart ? t('spc.chartQuery.pointCountLabel') : t('spc.chartQuery.measurementCountLabel') }}</p>
+              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ isEtchAverageChart ? t('spc.chartQuery.pointCount', { count: displayedMeasurementCount }) : t('spc.chartQuery.measurementCount', { count: displayedMeasurementCount }) }}</p>
             </div>
             <div>
-              <p class="text-slate-400 font-bold">異常點數</p>
-              <p class="font-semibold" :class="violationRows.length > 0 ? 'text-red-500' : 'text-emerald-500'">{{ violationRows.length }} 點</p>
+              <p class="text-slate-400 font-bold">{{ t('spc.chartQuery.abnormal') }}</p>
+              <p class="font-semibold" :class="violationRows.length > 0 ? 'text-red-500' : 'text-emerald-500'">{{ t('spc.chartQuery.pointCount', { count: violationRows.length }) }}</p>
             </div>
           </div>
         </div>
@@ -2344,7 +2347,7 @@ onBeforeUnmount(() => {
         <div class="p-1 xl:border-l xl:border-slate-200 xl:dark:border-slate-800 xl:pl-5">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
-              <Sliders class="w-4 h-4 text-amber-500" /> 管制界線
+              <Sliders class="w-4 h-4 text-amber-500" /> {{ t('spc.chartQuery.controlLimits') }}
             </h3>
           </div>
           <div class="grid grid-cols-2 gap-2 text-xs">
@@ -2365,7 +2368,7 @@ onBeforeUnmount(() => {
 
         <div class="p-1 xl:border-l xl:border-slate-200 xl:dark:border-slate-800 xl:pl-5">
           <h3 class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
-            <ShieldAlert class="w-4 h-4 text-red-500" /> 規格界線
+            <ShieldAlert class="w-4 h-4 text-red-500" /> {{ t('spc.chartQuery.specLimits') }}
           </h3>
           <div data-testid="monitor-spec-limits" class="space-y-1 text-xs">
             <p class="font-mono text-slate-700 dark:text-slate-200">USL {{ formatSpecLimit(monitorSpecLimits.usl) }}</p>
@@ -2376,7 +2379,7 @@ onBeforeUnmount(() => {
 
         <div class="p-1 xl:border-l xl:border-slate-200 xl:dark:border-slate-800 xl:pl-5">
           <h3 class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
-            <Activity class="w-4 h-4 text-emerald-500" /> 能力指標
+            <Activity class="w-4 h-4 text-emerald-500" /> {{ t('spc.chartQuery.capability') }}
           </h3>
           <div class="grid grid-cols-3 gap-2 text-xs">
             <div v-for="row in capabilityRows" :key="row.label" class="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
