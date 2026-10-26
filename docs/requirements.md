@@ -299,3 +299,5 @@
 - 2026-10-26 I18N-TASK-06B2完成：[規格](../specs/20261026-i18n-task06b2/spec.md)／[驗證](../specs/20261026-i18n-task06b2/verification.md)。圖表presentation、直方圖固定UI與共用總覽99新鍵，保留原series／zoom／數值／AD／排序。67 i18n＋4 presentation單元、新29與原查詢38／分段17／AD8及測試發布通過；Web0.1.82/API0.1.72，正式未改，剩18件直接接續。
 
 - 2026-10-26 I18N-TASK-06B3完成：[規格](../specs/20261026-i18n-task06b3/spec.md)／[驗證](../specs/20261026-i18n-task06b3/verification.md)。點位備註／右鍵排除與OCAP固定UI98鍵三語，原中文enum值／狀態／DTO／reason／零值／日期／草稿保持，備註視窗復用語言選單。70單元、本機22＋查詢38／分段17、發布15＋38及build/hash/health/同源通過；本機座標7案例在發布站條件略過。測試Web0.1.83/API0.1.72，正式未變，剩17件接續06C。
+
+- 2026-10-26 I18N-TASK-06C完成：[規格](../specs/20261026-i18n-task06c/spec.md)／[驗證](../specs/20261026-i18n-task06c/verification.md)。趨勢／統計顯示54鍵三語，原數值／日期／query／series／zoom保持，固定AD；72單元＋5工具、本機18／原分段17／AD8與發布18、build/hash/health/同源通過。測試Web0.1.84/API0.1.72，正式未改。

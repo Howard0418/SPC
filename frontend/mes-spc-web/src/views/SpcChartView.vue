@@ -4,6 +4,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue"
 import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
 import { captureChartPresentation, translateChartPresentation, escapeChartText } from "../i18n/chartPresentation";
+import { createChartLabelTranslator } from "../i18n/chartLabels";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiErrorMessage } from "../api/client";
@@ -1129,84 +1130,8 @@ async function saveOcapForSelectedPoint() {
 }
 
 
-const chartLabelKeys = {
-  "儲存為圖片": "saveImage",
-  "還原": "restoreChart",
-  "Xbar 平均值管制圖": "xbarTitle",
-  "I 個別值管制圖": "individualTitle",
-  "R 全距管制圖": "rangeTitle",
-  "S 標準差管制圖": "stdTitle",
-  "MR 移動全距圖": "mrTitle",
-  "量測值 (I)": "individual",
-  "移動全距 (MR)": "movingRange",
-  "全距 (R)": "range",
-  "標準差 (S)": "std",
-  "Xbar 平均值": "xbar",
-  "單值 (I)": "single",
-  "原始量測值": "rawValue",
-  "量測值": "value",
-  "此期間無可納入直方圖的量測值": "histEmpty",
-  "量測值分布": "distribution",
-  "常態分佈曲線": "normalCurve",
-  "筆數": "count",
-  "規格界限（USL / Target / LSL）": "specToggle",
-  "管制界限（UCL / CL / LCL）": "controlToggle",
-  "各點數值": "pointValues",
-  "規格/管制界限失控點": "outOfControl",
-  "正常管制點位": "normalPoint",
-  "已排除點位": "excludedPoint",
-  "放大": "zoom",
-  "重設縮放": "resetZoom",
-  "量測值分布直方圖 (Raw Measurements Histogram)": "histogram",
-  "規格上下線": "specRange",
-  "管制上下線": "controlRange",
-  "已剔除資料不納入統計": "excludedNotice",
-  "納入樣本數": "included",
-  "常態性檢定 (P-val)": "pValue",
-  "常態判定": "normality",
-  "無法檢定": "unavailable",
-  "未拒絕常態假設": "notRejected",
-  "偏離常態": "rejected",
-  "沒有有效的檢定結果，無法進行常態判定。": "invalidResult",
-  "有效樣本不足，常態檢定至少3筆未排除量測值。": "insufficient",
-  "批號": "lot",
-  "板面": "side",
-  "產線": "line",
-  "槽體": "tank",
-  "備註": "remark",
-  "槽位": "slot",
-  "班別": "shift",
-  "取樣階段": "stage",
-  "實際量測": "measuredAt",
-  "⚠️ 西方電氣規則違規：": "ruleViolation",
-  "樣本數 (n)": "sampleN",
-  "序號": "serial",
-  "人員": "operator",
-  "常態性檢定": "normalityTest",
-  "量測值區間": "interval",
-  "區間筆數": "intervalCount",
-  "總樣本數 N": "totalN",
-  "平均值": "mean",
-  "標準差": "standardDeviation",
-  "早班": "early",
-  "中班": "middle",
-  "晚班": "late",
-  "早(開)": "earlyOpen",
-  "中(開)": "middleOpen",
-  "早(收)": "earlyClose",
-  "中(收)": "middleClose",
-  "開線": "opening",
-  "收線": "closing",
-  "未分階段": "unstaged"
-};
 const chartPresentations = new WeakMap();
-function chartLabel(value) {
- if (typeof value !== 'string') return value;
- const key=chartLabelKeys[value];
- if(key)return t('spc.chartLabels.'+key);
- const type=/^(.*) 數值$/.exec(value);
- return type?t('spc.chartLabels.typeValue',{type:type[1]}):value;
-}
+const chartLabel = createChartLabelTranslator(t);
 const htmlChartLabel = value => escapeChartText(chartLabel(value));
 function localizeChart(instance) {
  if (!instance || instance.isDisposed()) return;

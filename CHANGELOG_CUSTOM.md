@@ -1983,3 +1983,8 @@
 - 70單元／本機22＋查詢38／分段17通過；發布OCAP15＋查詢38通過，7個本機ECharts座標案例在發布站明示略過。build／14同源／真health／四檔hash通過。
 - 只測試Web0.1.83/API0.1.72，備份62檔／payload4／保護設定4、不重啟pool、無DB／後端／其他系統／正式變更。[驗證與回復](specs/20261026-i18n-task06b3/verification.md)。業務讀寫全mock、draft真人審核留20。
 - 剩17件、另受阻1／暫緩2；直接接續06C。
+
+## 2026-10-26 I18N-TASK-06C 趨勢圖三語
+- 固定文字、統計卡、圖內標籤、tooltip與錯誤三語；54新鍵／162列draft，累計1389鍵。提取共享chart factory，保持原series、數值、日期、查詢及固定AD。
+- 72單元＋5工具、本機18／原分段17／AD8、發布18與build/hash/health/同源通過。只測試Web0.1.84/API0.1.72，完整備份65檔，不改設定／DB／正式。[驗證與回復](specs/20261026-i18n-task06c/verification.md)。
+- 剩16件，直接接續06D；draft真人審稿留20。
