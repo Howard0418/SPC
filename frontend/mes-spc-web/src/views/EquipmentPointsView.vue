@@ -1,4 +1,6 @@
 <script setup>
+import {useI18n} from "vue-i18n";
+const {t}=useI18n({useScope:"global"});
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, getApiErrorMessage } from '../api/client'
@@ -98,29 +100,29 @@ onMounted(init)
 
 <template>
   <section class="space-y-4">
-    <h1 class="text-2xl font-black">設備點位總覽</h1>
-    <p class="text-sm text-slate-500">每台設備可指定一個「運轉狀態」點位，並可指定多個「告警訊號」點位；NC 接點請選擇「等於 0」。</p>
+    <h1 class="text-2xl font-black">{{ t('spc.equipment.pointsTitle') }}</h1>
+    <p class="text-sm text-slate-500">{{ t('spc.equipment.pointsHelp') }}</p>
     <p v-if="error" class="text-red-600">{{ error }}</p>
     <div class="flex flex-wrap gap-2">
-      <select v-model="sourceId" @change="switchSource"><option v-for="source in sources" :key="source.sourceId" :value="source.sourceId">{{ source.displayName }}</option></select>
-      <select v-model="equipmentId" @change="load"><option v-for="equipment in equipments" :key="equipment">{{ equipment }}</option></select>
-      <button @click="load">重新讀取</button>
-      <input v-model="search" class="min-w-64" placeholder="搜尋名稱、ID 或分類" @change="syncRoute">
-      <select v-model="role" @change="syncRoute"><option value="all">全部用途</option><option value="RUNNING">運轉狀態</option><option value="ALARM">告警訊號</option><option value="none">一般點位</option></select>
-      <span class="self-center text-sm text-slate-500">{{ filteredPoints.length }} / {{ points.length }} 點</span>
+      <select data-testid="equipment-sourceId" v-model="sourceId" @change="switchSource"><option v-for="source in sources" :key="source.sourceId" :value="source.sourceId">{{ source.displayName }}</option></select>
+      <select data-testid="equipment-equipmentId" v-model="equipmentId" @change="load"><option v-for="equipment in equipments" :key="equipment">{{ equipment }}</option></select>
+      <button data-testid="equipment-reload" @click="load">{{ t('spc.equipment.reload') }}</button>
+      <input data-testid="equipment-search" v-model="search" class="min-w-64" :placeholder="t('spc.equipment.pointSearch')" @change="syncRoute">
+      <select data-testid="equipment-role" v-model="role" @change="syncRoute"><option value="all">{{ t('spc.equipment.allRoles') }}</option><option value="RUNNING">{{ t('spc.equipment.runningRole') }}</option><option value="ALARM">{{ t('spc.equipment.alarmRole') }}</option><option value="none">{{ t('spc.equipment.generalRole') }}</option></select>
+      <span class="self-center text-sm text-slate-500">{{ filteredPoints.length }} / {{ points.length }} {{ t('spc.equipment.pointUnit') }}</span>
     </div>
-    <table>
-      <tr><th>名稱</th><th>ID</th><th>值</th><th>狀態用途</th><th>成立條件</th><th>監控</th><th>警戒低/高</th><th></th></tr>
+    <div class="overflow-x-auto"><table>
+      <tr><th>{{ t('spc.equipment.name') }}</th><th>ID</th><th>{{ t('spc.equipment.value') }}</th><th>{{ t('spc.equipment.statusRole') }}</th><th>{{ t('spc.equipment.activeWhen') }}</th><th>{{ t('spc.equipment.monitoring') }}</th><th>{{ t('spc.equipment.warningRange') }}</th><th></th></tr>
       <tr v-for="point in filteredPoints" :key="point.channelId">
-        <td><input v-model="point.displayName"></td><td>{{ point.channelId }}</td><td>{{ point.value }}</td>
-        <td><select v-model="point.statusRole"><option :value="null">一般點位</option><option value="RUNNING">運轉狀態</option><option value="ALARM">告警訊號</option></select></td>
-        <td><select v-model="point.activeWhen" :disabled="!point.statusRole"><option value="NONZERO">非 0</option><option value="ZERO">等於 0（NC）</option></select></td>
-        <td><input v-model="point.isPinned" type="checkbox">釘選</td>
-        <td><input v-model.number="point.warningLow" placeholder="低"><input v-model.number="point.warningHigh" placeholder="高"></td>
-        <td><button @click="save(point)">儲存</button></td>
+        <td><input data-testid="equipment-point.displayName" v-model="point.displayName"></td><td>{{ point.channelId }}</td><td>{{ point.value }}</td>
+        <td><select data-testid="equipment-point.statusRole" v-model="point.statusRole"><option :value="null">{{ t('spc.equipment.generalRole') }}</option><option value="RUNNING">{{ t('spc.equipment.runningRole') }}</option><option value="ALARM">{{ t('spc.equipment.alarmRole') }}</option></select></td>
+        <td><select data-testid="equipment-point.activeWhen" v-model="point.activeWhen" :disabled="!point.statusRole"><option value="NONZERO">{{ t('spc.equipment.nonzero') }}</option><option value="ZERO">{{ t('spc.equipment.zero') }}</option></select></td>
+        <td><input data-testid="equipment-point.isPinned" v-model="point.isPinned" type="checkbox">{{ t('spc.equipment.pin') }}</td>
+        <td><input data-testid="equipment-point.warningLow" v-model.number="point.warningLow" :placeholder="t('spc.equipment.low')"><input data-testid="equipment-point.warningHigh" v-model.number="point.warningHigh" :placeholder="t('spc.equipment.high')"></td>
+        <td><button data-testid="equipment-save" @click="save(point)">{{ t('spc.equipment.save') }}</button></td>
       </tr>
-    </table>
-    <p v-if="!filteredPoints.length" class="p-6 text-center text-slate-500">沒有符合條件的點位。</p>
+    </table></div>
+    <p v-if="!filteredPoints.length" class="p-6 text-center text-slate-500">{{ t('spc.equipment.noPoints') }}</p>
   </section>
 </template>
 

@@ -303,3 +303,5 @@
 - 2026-10-26 I18N-TASK-06C完成：[規格](../specs/20261026-i18n-task06c/spec.md)／[驗證](../specs/20261026-i18n-task06c/verification.md)。趨勢／統計顯示54鍵三語，原數值／日期／query／series／zoom保持，固定AD；72單元＋5工具、本機18／原分段17／AD8與發布18、build/hash/health/同源通過。測試Web0.1.84/API0.1.72，正式未改。
 
 - 2026-10-26 I18N-TASK-06D完成：[規格](../specs/20261026-i18n-task06d/spec.md)／[驗證](../specs/20261026-i18n-task06d/verification.md)。警示／處置117鍵三語，原權限／狀態／預填／DTO／Closed後ACK保持；75單元、本機48與發布48、build/hash/health/同源通過，只測試Web0.1.85/API0.1.72。
+
+- 2026-10-26 I18N-TASK-07A完成：[規格](../specs/20261026-i18n-task07a/spec.md)／[驗證](../specs/20261026-i18n-task07a/verification.md)。設備三頁73鍵三語，原狀態／相對時間判定／timer／mapping DTO保持；78單元、本機41／發布41及build/hash/health/同源通過，只測試Web0.1.86/API0.1.72。
