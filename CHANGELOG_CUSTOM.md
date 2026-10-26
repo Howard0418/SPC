@@ -1977,3 +1977,9 @@
 - 67 i18n＋4 presentation單元、build、新29與查詢38／分段17／AD8回歸通過；發佈新29＋查詢38，工具列修訂後再驗新29與hash／health，14同源通過。
 - 只測試Web0.1.82/API0.1.72；原備份57檔／payload4／保護設定4，不重啟pool、無DB／後端／正式變更。[驗證／回復與限制](specs/20261026-i18n-task06b2/verification.md)。draft待真人TASK20，不冒稱真DB／SSO／人工審核。
 - 連續授權已記錄；剩18件，另受阻1／暫緩2，直接接續B3。
+
+## 2026-10-26 I18N-TASK-06B3 點位備註／OCAP與排除三語
+- 98新鍵／294列draft、累計1335鍵三語。完整SPC主頁固定模板文字及屬性翻譯；OCAP中文值與狀態、原請求ID／reason／數值／日期保持；備註視窗沿用LocalePicker、失敗保留草稿、取消不寫入、500字限制不變，補齊缺少圖示import。
+- 70單元／本機22＋查詢38／分段17通過；發布OCAP15＋查詢38通過，7個本機ECharts座標案例在發布站明示略過。build／14同源／真health／四檔hash通過。
+- 只測試Web0.1.83/API0.1.72，備份62檔／payload4／保護設定4、不重啟pool、無DB／後端／其他系統／正式變更。[驗證與回復](specs/20261026-i18n-task06b3/verification.md)。業務讀寫全mock、draft真人審核留20。
+- 剩17件、另受阻1／暫緩2；直接接續06C。

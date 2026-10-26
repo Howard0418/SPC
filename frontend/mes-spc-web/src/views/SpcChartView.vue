@@ -43,11 +43,13 @@ import {
   Loader2,
   ZoomIn,
   RotateCcw,
-  StickyNote
+  StickyNote,
+  CheckCircle2
 } from "lucide-vue-next";
 import SpcSummaryTable from "../components/SpcSummaryTable.vue";
 import ChemicalCalculationDetails from "../components/ChemicalCalculationDetails.vue";
 import ChartSegmentDetails from "../components/ChartSegmentDetails.vue";
+import LocalePicker from "../components/LocalePicker.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -908,7 +910,7 @@ async function toggleExcludeBatch() {
     await api.post(`/v1/spc/exclude-batch/${batchIdToToggle}`);
     await loadActiveChart();
   } catch (e) {
-    alert("剔除狀態更新失敗：" + getApiErrorMessage(e));
+    alert(t('spc.chartActions.batchFailed', { error: getApiErrorMessage(e) }));
   }
 }
 
@@ -956,7 +958,7 @@ function openPointRemarkModal() {
   const point = pointContextMenu.value.point || selectedPoint.value;
   const payload = getPointRemarkPayload(point, "");
   if (!payload) {
-    alert("此點位缺少單點識別資料，暫時無法設定備註。");
+    alert(t('spc.chartActions.noRemarkId'));
     hidePointContextMenu();
     return;
   }
@@ -984,7 +986,7 @@ async function savePointRemark() {
     await loadActiveChart();
     closePointRemarkModal();
   } catch (e) {
-    alert("點位備註儲存失敗：" + getApiErrorMessage(e));
+    alert(t('spc.chartActions.remarkFailed', { error: getApiErrorMessage(e) }));
   } finally {
     pointRemarkSaving.value = false;
   }
@@ -1006,7 +1008,7 @@ async function clearPointRemark() {
     await loadActiveChart();
     closePointRemarkModal();
   } catch (e) {
-    alert("點位備註清空失敗：" + getApiErrorMessage(e));
+    alert(t('spc.chartActions.clearFailed', { error: getApiErrorMessage(e) }));
   } finally {
     pointRemarkSaving.value = false;
   }
@@ -1015,7 +1017,7 @@ async function clearPointRemark() {
 async function setPointExclusion(state) {
   const payload = getPointExclusionPayload(pointContextMenu.value.point || selectedPoint.value, state);
   if (!payload) {
-    alert("此點位缺少單點識別資料，暫時無法設定單點排除。");
+    alert(t('spc.chartActions.noExcludeId'));
     hidePointContextMenu();
     return;
   }
@@ -1026,7 +1028,7 @@ async function setPointExclusion(state) {
     await loadExcludedPoints(payload.partProcessCharacteristicId);
     await loadActiveChart();
   } catch (e) {
-    alert("單點排除設定失敗：" + getApiErrorMessage(e));
+    alert(t('spc.chartActions.excludeFailed', { error: getApiErrorMessage(e) }));
   } finally {
     pointExclusionSaving.value = false;
   }
@@ -1036,7 +1038,7 @@ async function restorePointExclusion() {
   const point = pointContextMenu.value.point || selectedPoint.value;
   const payload = getPointExclusionPayload(point, "ExcludedVisible");
   if (!payload) {
-    alert("此點位缺少單點識別資料，暫時無法恢復。");
+    alert(t('spc.chartActions.noRestoreId'));
     hidePointContextMenu();
     return;
   }
@@ -1057,7 +1059,7 @@ async function restorePointExclusion() {
     hidePointContextMenu();
     await loadActiveChart();
   } catch (e) {
-    alert("單點排除恢復失敗：" + getApiErrorMessage(e));
+    alert(t('spc.chartActions.restoreFailed', { error: getApiErrorMessage(e) }));
   } finally {
     pointExclusionSaving.value = false;
   }
@@ -1071,7 +1073,7 @@ async function restoreExcludedPoint(row) {
     await api.delete(`/v1/spc/point-exclusions/${exclusionId}`);
     await loadActiveChart();
   } catch (e) {
-    alert("恢復已排除點失敗：" + getApiErrorMessage(e));
+    alert(t('spc.chartActions.restoreRowFailed', { error: getApiErrorMessage(e) }));
   } finally {
     pointExclusionSaving.value = false;
   }
@@ -1088,7 +1090,7 @@ async function updateControlLimitsFromChart() {
     });
     await loadActiveChart();
   } catch (e) {
-    alert("更新管制界線失敗：" + getApiErrorMessage(e));
+    alert(t('spc.chartActions.limitsFailed', { error: getApiErrorMessage(e) }));
   } finally {
     savingControlLimits.value = false;
   }
@@ -1120,7 +1122,7 @@ async function saveOcapForSelectedPoint() {
     });
     await loadActiveChart();
   } catch (e) {
-    alert("儲存 OCAP 處置失敗：" + getApiErrorMessage(e));
+    alert(t('spc.chartActions.ocapFailed', { error: getApiErrorMessage(e) }));
   } finally {
     savingOcap.value = false;
   }
@@ -2162,7 +2164,11 @@ onBeforeUnmount(() => {
   histogramChartInstance?.dispose();
   histogramChartInstance = null;
 });
+const ocapOptionKeys = {"人為": "people", "機器": "machine", "工法": "method", "測量": "measurementCause", "材料": "material", "環境": "environment", "其他": "other", "輸入錯誤": "inputError", "操作不當": "operationError", "違反SOP": "sopViolation", "機台異常": "machineFault", "溫度異常": "temperatureFault", "測量準確度不佳": "measurementAccuracy", "材料品質不佳": "materialQuality", "環境因素": "environmentCause", "確認輸入是否正確": "verifyInput", "確認機台是否正常": "verifyMachine", "通知工程師處理": "notifyEngineer", "調整參數": "adjustParameters", "清理機台": "cleanMachine", "重新量測": "remeasure", "通知主管": "notifySupervisor"};
+const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." + ocapOptionKeys[value]) : value;
+
 </script>
+
 
 <template>
   <section class="space-y-6">
@@ -2536,50 +2542,50 @@ onBeforeUnmount(() => {
               type="button"
               class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               :disabled="pointRemarkSaving"
-              @click="openPointRemarkModal"
+              data-testid="chart-action-openPointRemarkModal" @click="openPointRemarkModal"
             >
-              新增/編輯備註
+              {{ t('spc.chartActions.editRemark') }}
             </button>
             <button
               type="button"
               class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               :disabled="pointExclusionSaving"
-              @click="setPointExclusion('ExcludedVisible')"
+              data-testid="chart-action-exclude-visible" @click="setPointExclusion('ExcludedVisible')"
             >
-              顯示但不列入計算
+              {{ t('spc.chartActions.visible') }}
             </button>
             <button
               type="button"
               class="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               :disabled="pointExclusionSaving"
-              @click="setPointExclusion('ExcludedHidden')"
+              data-testid="chart-action-exclude-hidden" @click="setPointExclusion('ExcludedHidden')"
             >
-              隱藏且不列入計算
+              {{ t('spc.chartActions.hidden') }}
             </button>
             <button
               type="button"
               class="w-full px-3 py-2 text-left text-xs font-bold text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 disabled:opacity-50"
               :disabled="pointExclusionSaving"
-              @click="restorePointExclusion"
+              data-testid="chart-action-restore-point" @click="restorePointExclusion"
             >
-              恢復列入計算
+              {{ t('spc.chartActions.restore') }}
             </button>
           </div>
         </div>
 
         <div
-          v-if="pointRemarkModal.visible"
+          v-if="pointRemarkModal.visible" data-testid="chart-remark-overlay"
           class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4"
           @click.self="closePointRemarkModal"
         >
-          <div class="w-full max-w-md rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-4">
-            <h3 class="text-sm font-black text-slate-900 dark:text-white mb-3">點位備註</h3>
+          <div data-testid="chart-remark-dialog" role="dialog" :aria-label="t('spc.chartActions.remark')" class="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-4">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 class="text-sm font-black text-slate-900 dark:text-white">{{ t('spc.chartActions.remark') }}</h3><LocalePicker /></div>
             <textarea
-              v-model="pointRemarkModal.text"
+              data-testid="chart-action-pointRemarkModal.text" v-model="pointRemarkModal.text"
               maxlength="500"
               rows="5"
               class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="輸入此量測點的備註"
+              :placeholder="t('spc.chartActions.remarkPlaceholder')"
             ></textarea>
             <div class="mt-2 flex items-center justify-between gap-3">
               <span class="text-xs text-slate-500">{{ pointRemarkModal.text.length }}/500</span>
@@ -2588,24 +2594,24 @@ onBeforeUnmount(() => {
                   type="button"
                   class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
                   :disabled="pointRemarkSaving"
-                  @click="clearPointRemark"
+                  data-testid="chart-action-clearPointRemark" @click="clearPointRemark"
                 >
-                  清空
+                  {{ t('spc.chartActions.clear') }}
                 </button>
                 <button
                   type="button"
                   class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  @click="closePointRemarkModal"
+                  data-testid="chart-action-closePointRemarkModal" @click="closePointRemarkModal"
                 >
-                  取消
+                  {{ t('spc.chartActions.cancel') }}
                 </button>
                 <button
                   type="button"
                   class="px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
                   :disabled="pointRemarkSaving"
-                  @click="savePointRemark"
+                  data-testid="chart-action-savePointRemark" @click="savePointRemark"
                 >
-                  儲存
+                  {{ t('spc.chartActions.save') }}
                 </button>
               </div>
             </div>
@@ -2615,26 +2621,26 @@ onBeforeUnmount(() => {
         <div id="violation-analysis" class="scroll-mt-4 mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
-              <ShieldAlert class="w-4 h-4 text-red-500" /> SPC 異常 / 違規點清單
+              <ShieldAlert class="w-4 h-4 text-red-500" /> {{ t('spc.chartActions.violations') }}
             </h3>
             <span class="text-xs font-bold" :class="violationRows.length > 0 ? 'text-red-500' : 'text-emerald-500'">
-              {{ violationRows.length > 0 ? `${violationRows.length} 點需確認` : '目前無異常點' }}
+              {{ violationRows.length > 0 ? t('spc.chartActions.needsReview', { count: violationRows.length }) : t('spc.chartActions.noAbnormal') }}
             </span>
           </div>
           <div v-if="violationRows.length === 0" class="text-xs text-slate-500">
-            沒有超規、失控或觸發 8 大管制規則的點位。
+            {{ t('spc.chartActions.noViolation') }}
           </div>
           <div v-else class="overflow-x-auto">
             <table class="min-w-full text-xs">
               <thead class="text-slate-400 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th class="text-left py-2 pr-3">點位</th>
-                  <th class="text-left py-2 pr-3">時間</th>
-                  <th class="text-left py-2 pr-3">量測值</th>
-                  <th class="text-left py-2 pr-3">類型</th>
-                  <th class="text-left py-2 pr-3">規則</th>
-                  <th class="text-left py-2 pr-3">處置狀態</th>
-                  <th class="text-left py-2 pr-3">操作</th>
+                  <th class="text-left py-2 pr-3">{{ t('spc.chartActions.point') }}</th>
+                  <th class="text-left py-2 pr-3">{{ t('spc.chartActions.time') }}</th>
+                  <th class="text-left py-2 pr-3">{{ t('spc.chartActions.value') }}</th>
+                  <th class="text-left py-2 pr-3">{{ t('spc.chartActions.type') }}</th>
+                  <th class="text-left py-2 pr-3">{{ t('spc.chartActions.rules') }}</th>
+                  <th class="text-left py-2 pr-3">{{ t('spc.chartActions.handlingStatus') }}</th>
+                  <th class="text-left py-2 pr-3">{{ t('spc.chartActions.actions') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-200">
@@ -2648,15 +2654,15 @@ onBeforeUnmount(() => {
                   </td>
                   <td class="py-2 pr-3 max-w-md">
                     <span v-if="row.violatedRules?.length">{{ row.violatedRules.map(formatRuleCode).join('、') }}</span>
-                    <span v-else class="text-slate-400">界限判定</span>
+                    <span v-else class="text-slate-400">{{ t('spc.chartActions.limitJudgment') }}</span>
                   </td>
-                  <td class="py-2 pr-3">{{ row.alertStatus || (row.rootCause || row.correctiveAction ? 'Handled' : '未處置') }}</td>
+                  <td class="py-2 pr-3">{{ row.alertStatus || (row.rootCause || row.correctiveAction ? 'Handled' : t('spc.chartActions.unhandled')) }}</td>
                   <td class="py-2 pr-3">
                     <button
-                      @click="selectedPoint = row; selectedPointIndex = row.pointNo - 1; prepareOcapForm(row)"
+                      data-testid="chart-action-select-point" @click="selectedPoint = row; selectedPointIndex = row.pointNo - 1; prepareOcapForm(row)"
                       class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold"
                     >
-                      選取處置
+                      {{ t('spc.chartActions.selectAction') }}
                     </button>
                   </td>
                 </tr>
@@ -2736,30 +2742,30 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Point Detail Drilldown Card -->
-        <div v-if="selectedPoint" class="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 shadow-inner transition-all duration-300">
+        <div v-if="selectedPoint" data-testid="chart-point-details" class="min-w-0 break-words mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 shadow-inner transition-all duration-300">
           <ChemicalCalculationDetails v-if="activePpcIdValue" :ppc-id="activePpcIdValue" :measurement-id="selectedPoint.variableMeasurementId||null" :aggregate="Number(selectedPoint.n||1)>1" point-mode />
           <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">
             <h4 class="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-              點位品質追溯詳細資料 (點位 #{{ selectedPointIndex + 1 }})
+              {{ t('spc.chartActions.pointDetails', { point: selectedPointIndex + 1 }) }}
             </h4>
             <div class="flex gap-2">
               <span v-if="selectedPoint.isExcluded" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
-                ✖ 已剔除不計 (Excluded)
+                {{ t('spc.chartActions.excluded') }}
               </span>
               <span v-else-if="selectedPoint.outOfSpec" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400 border border-red-200 dark:border-red-900/50">
-                OOS 超出規格
+                {{ t('spc.chartActions.oos') }}
               </span>
               <span v-else-if="selectedPoint.outOfControl" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
-                OOC 管制失控
+                {{ t('spc.chartActions.ooc') }}
               </span>
               <span v-else class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
-                正常 (In Control)
+                {{ t('spc.chartActions.inControl') }}
               </span>
               
               <!-- Toggle Exclude Button -->
               <button @click="toggleExcludeBatch" v-if="selectedPoint.measurementBatchId || uploadBatchId" class="ml-2 px-3 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border transition-colors focus:outline-none" :class="selectedPoint.isExcluded ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'">
-                {{ selectedPoint.isExcluded ? '↺ 恢復此數據' : '✖ 剔除此數據' }}
+                {{ selectedPoint.isExcluded ? t('spc.chartActions.restoreBatch') : t('spc.chartActions.excludeBatch') }}
               </button>
             </div>
           </div>
@@ -2768,40 +2774,40 @@ onBeforeUnmount(() => {
             <div v-if="selectedPoint.pointRemark" class="md:col-span-4 flex items-start gap-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-3">
               <StickyNote class="w-4 h-4 text-amber-500 mt-1" />
               <div>
-                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase mb-1">點位備註</p>
+                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase mb-1">{{ t('spc.chartActions.remark') }}</p>
                 <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{{ selectedPoint.pointRemark }}</p>
               </div>
             </div>
             <div class="flex items-start gap-2.5">
               <Hash class="w-4 h-4 text-slate-400 mt-1" />
               <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase">生產批號 (Lot No)</p>
-                <p class="text-sm font-bold text-slate-700 dark:text-slate-200 select-all">{{ selectedPoint.lotNo || '無批號資料' }}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">{{ t('spc.chartActions.lot') }}</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200 select-all">{{ selectedPoint.lotNo || t('spc.chartActions.noLot') }}</p>
               </div>
             </div>
 
             <div v-if="selectedPoint.serialNo" class="flex items-start gap-2.5">
               <Sparkles class="w-4 h-4 text-slate-400 mt-1" />
               <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase">序號 (Serial No)</p>
-                <p class="text-sm font-bold text-slate-700 dark:text-slate-200 select-all">{{ selectedPoint.serialNo || '無序號資料' }}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">{{ t('spc.chartActions.serial') }}</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200 select-all">{{ selectedPoint.serialNo || t('spc.chartActions.noSerial') }}</p>
               </div>
             </div>
 
             <div class="flex items-start gap-2.5">
               <User class="w-4 h-4 text-slate-400 mt-1" />
               <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase">作業人員 (Operator)</p>
-                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ selectedPoint.operator || selectedPoint.Operator || '系統自動匯入' }}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">{{ t('spc.chartActions.operator') }}</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ selectedPoint.operator || selectedPoint.Operator || t('spc.chartActions.autoImport') }}</p>
               </div>
             </div>
 
             <div class="flex items-start gap-2.5">
               <Clock class="w-4 h-4 text-slate-400 mt-1" />
               <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase">量測時間 (Measured At)</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">{{ t('spc.chartActions.measuredAt') }}</p>
                 <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
-                  {{ selectedPoint.measuredAt ? new Date(selectedPoint.measuredAt).toLocaleString('zh-TW', { hour12: false }) : '無時間資料' }}
+                  {{ selectedPoint.measuredAt ? new Date(selectedPoint.measuredAt).toLocaleString('zh-TW', { hour12: false }) : t('spc.chartActions.noTime') }}
                 </p>
               </div>
             </div>
@@ -2809,11 +2815,11 @@ onBeforeUnmount(() => {
             <div v-if="selectedPoint.samplingPhase || selectedPoint.samplingStage" class="flex items-start gap-2.5">
               <Calendar class="w-4 h-4 text-slate-400 mt-1" />
               <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase">班別 / 取樣階段</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">{{ t('spc.chartActions.shift') }}</p>
                 <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
-                  {{ chartStageShiftLabel(selectedPoint.samplingPhase, selectedPoint.samplingStage, useSingleChemicalLine(selectedMapping)) }}
+                  {{ chartLabel(chartStageShiftLabel(selectedPoint.samplingPhase, selectedPoint.samplingStage, useSingleChemicalLine(selectedMapping))) }}
                   <span v-if="selectedPoint.samplingStage && selectedPoint.samplingStage !== 'GENERAL' && !useSingleChemicalLine(selectedMapping)" class="text-xs text-slate-400">
-                    / {{ stageLabel(selectedPoint.samplingStage) }}
+                    / {{ chartLabel(stageLabel(selectedPoint.samplingStage)) }}
                   </span>
                 </p>
               </div>
@@ -2823,11 +2829,11 @@ onBeforeUnmount(() => {
           <!-- Bottom detailed measurements & violation rules -->
           <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">量測數據 (Measured Value)</p>
+              <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">{{ t('spc.chartActions.measurement') }}</p>
               <h3 class="text-xl font-black" :class="selectedPoint.isExcluded ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-white'">
                 {{ selectedPoint.value !== undefined ? Number(selectedPoint.value).toFixed(4) : (selectedPoint.xbar !== undefined ? Number(selectedPoint.xbar).toFixed(4) : 'N/A') }}
                 <span v-if="selectedPoint.range !== undefined" class="text-sm text-slate-400 font-semibold ml-3 no-underline">
-                  (子組全距 R = {{ Number(selectedPoint.range).toFixed(4) }}, 子組大小 n = {{ selectedPoint.n }})
+                  {{ t('spc.chartActions.subgroup', { range: Number(selectedPoint.range).toFixed(4), size: selectedPoint.n }) }}
                 </span>
               </h3>
             </div>
@@ -2835,15 +2841,15 @@ onBeforeUnmount(() => {
             <!-- Action trace panel (Root Cause & Corrective Action) -->
             <div v-if="selectedPoint.rootCause || selectedPoint.correctiveAction" class="w-full md:flex-1 md:ml-6 p-3 rounded-xl bg-blue-50 dark:bg-slate-900 border border-blue-100 dark:border-slate-700">
               <p class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-2 flex items-center gap-1">
-                <Info class="w-3.5 h-3.5" /> 處置追溯紀錄
+                <Info class="w-3.5 h-3.5" /> {{ t('spc.chartActions.trace') }}
               </p>
               <div class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
                 <div v-if="selectedPoint.rootCause" class="flex gap-2">
-                  <span class="font-bold shrink-0">發生原因：</span>
+                  <span class="font-bold shrink-0">{{ t('spc.chartActions.rootCauseLabel') }}</span>
                   <span>{{ selectedPoint.rootCause }}</span>
                 </div>
                 <div v-if="selectedPoint.correctiveAction" class="flex gap-2">
-                  <span class="font-bold shrink-0">初步對策：</span>
+                  <span class="font-bold shrink-0">{{ t('spc.chartActions.actionLabel') }}</span>
                   <span>{{ selectedPoint.correctiveAction }}</span>
                 </div>
               </div>
@@ -2851,7 +2857,7 @@ onBeforeUnmount(() => {
 
             <div v-if="selectedPoint.violatedRules?.length > 0" class="w-full md:w-auto">
               <p class="text-[10px] font-bold text-red-500 uppercase mb-1 flex items-center gap-1">
-                <AlertTriangle class="w-3.5 h-3.5" /> 觸發西方電氣判讀規則
+                <AlertTriangle class="w-3.5 h-3.5" /> {{ t('spc.chartActions.triggeredRules') }}
               </p>
               <div class="flex flex-wrap gap-1.5">
                 <span v-for="(rule, rIdx) in selectedPoint.violatedRules" :key="rIdx" class="px-2.5 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 text-[11px] font-bold">
@@ -2864,62 +2870,62 @@ onBeforeUnmount(() => {
           <div class="mt-5 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
             <div class="flex items-center justify-between gap-3 mb-4">
               <h4 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
-                <CheckCircle2 class="w-4 h-4 text-emerald-500" /> OCAP 異常原因與處置
+                <CheckCircle2 class="w-4 h-4 text-emerald-500" /> {{ t('spc.chartActions.ocap') }}
               </h4>
               <span class="text-xs font-semibold text-slate-400">
-                {{ selectedPoint.alertId ? `Alert #${selectedPoint.alertId}` : '尚未建立 Alert，儲存後會自動建立' }}
+                {{ selectedPoint.alertId ? `Alert #${selectedPoint.alertId}` : t('spc.chartActions.noAlert') }}
               </span>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label class="block text-[11px] font-bold text-slate-400 mb-1">原因分類</label>
-                <select v-model="ocapForm.causeCategory" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white">
-                  <option value="">選擇原因分類...</option>
-                  <option v-for="item in ocapCauseCategories" :key="item" :value="item">{{ item }}</option>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.chartActions.causeCategory') }}</label>
+                <select data-testid="chart-action-ocapForm.causeCategory" v-model="ocapForm.causeCategory" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white">
+                  <option value="">{{ t('spc.chartActions.chooseCategory') }}</option>
+                  <option v-for="item in ocapCauseCategories" :key="item" :value="item">{{ ocapOptionLabel(item) }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-slate-400 mb-1">原因類型</label>
-                <select v-model="ocapForm.causeType" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white">
-                  <option value="">選擇原因類型...</option>
-                  <option v-for="item in ocapCauseTypes" :key="item" :value="item">{{ item }}</option>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.chartActions.causeType') }}</label>
+                <select data-testid="chart-action-ocapForm.causeType" v-model="ocapForm.causeType" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white">
+                  <option value="">{{ t('spc.chartActions.chooseCause') }}</option>
+                  <option v-for="item in ocapCauseTypes" :key="item" :value="item">{{ ocapOptionLabel(item) }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-slate-400 mb-1">處置類型</label>
-                <select v-model="ocapForm.actionType" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white">
-                  <option value="">選擇處置類型...</option>
-                  <option v-for="item in ocapActionTypes" :key="item" :value="item">{{ item }}</option>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.chartActions.actionType') }}</label>
+                <select data-testid="chart-action-ocapForm.actionType" v-model="ocapForm.actionType" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white">
+                  <option value="">{{ t('spc.chartActions.chooseAction') }}</option>
+                  <option v-for="item in ocapActionTypes" :key="item" :value="item">{{ ocapOptionLabel(item) }}</option>
                 </select>
               </div>
               <div class="md:col-span-3">
-                <label class="block text-[11px] font-bold text-slate-400 mb-1">發生原因說明</label>
-                <textarea v-model="ocapForm.rootCause" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white" placeholder="例如：補藥後濃度尚未均勻、槽液溫度偏移、檢測輸入需確認"></textarea>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.chartActions.rootCause') }}</label>
+                <textarea data-testid="chart-action-ocapForm.rootCause" v-model="ocapForm.rootCause" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white" :placeholder="t('spc.chartActions.rootCausePlaceholder')"></textarea>
               </div>
               <div class="md:col-span-3">
-                <label class="block text-[11px] font-bold text-slate-400 mb-1">矯正 / 處置內容</label>
-                <textarea v-model="ocapForm.correctiveAction" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white" placeholder="例如：重新取樣確認、調整藥液參數、通知工程師覆核"></textarea>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.chartActions.correctiveAction') }}</label>
+                <textarea data-testid="chart-action-ocapForm.correctiveAction" v-model="ocapForm.correctiveAction" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white" :placeholder="t('spc.chartActions.actionPlaceholder')"></textarea>
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-slate-400 mb-1">狀態</label>
-                <select v-model="ocapForm.status" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white">
-                  <option value="Open">Open</option>
-                  <option value="InProgress">InProgress</option>
-                  <option value="Closed">Closed</option>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.chartActions.status') }}</label>
+                <select data-testid="chart-action-ocapForm.status" v-model="ocapForm.status" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white">
+                  <option value="Open">{{ t('spc.chartActions.open') }}</option>
+                  <option value="InProgress">{{ t('spc.chartActions.inProgress') }}</option>
+                  <option value="Closed">{{ t('spc.chartActions.closed') }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-slate-400 mb-1">責任人員</label>
-                <input v-model="ocapForm.responsibleUser" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white" placeholder="輸入人員代號或姓名" />
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.chartActions.responsible') }}</label>
+                <input data-testid="chart-action-ocapForm.responsibleUser" v-model="ocapForm.responsibleUser" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-white" :placeholder="t('spc.chartActions.responsiblePlaceholder')" />
               </div>
               <div class="flex items-end">
                 <button
-                  @click="saveOcapForSelectedPoint"
+                  data-testid="chart-action-saveOcapForSelectedPoint" @click="saveOcapForSelectedPoint"
                   :disabled="savingOcap"
                   class="w-full px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-black disabled:opacity-50"
                 >
-                  {{ savingOcap ? '儲存中...' : '儲存 OCAP 處置' }}
+                  {{ savingOcap ? t('spc.chartActions.saving') : t('spc.chartActions.saveOcap') }}
                 </button>
               </div>
             </div>

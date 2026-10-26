@@ -1,0 +1,13 @@
+# 06B3 驗證與發布
+- 2026-10-26 DONE；98新鍵／294列draft，累計1335鍵三語。原OCAP中文value／Open/InProgress/Closed、reason、數值／日期／DTO與端點不變。補齊原缺少的CheckCircle2圖示import。
+- AC1/AC5：OCAP三語四尺寸12情境保留DOM／草稿／中文value／零值，切語言無額外API；手機英文截圖檢視，備註overlay復用LocalePicker。
+- AC2/AC3：備註原稿失敗保留／取消不寫入；既有備註DELETE201、新備註清空PUT空字串；500字及第501字阻擋、零量測值、缺單點ID禁止備註／排除。
+- AC4：三語OCAP失敗／重送兩次DTO逐欄相同，actualValue=0、中文category/type/action與InProgress原樣；三語排除PUT兩種state與原中文audit reason、恢復GET身份query與DELETE91保持。
+- 單元：70 i18n通過（含全頁模板編譯／固定文字、ledger／參數／純文字錯誤）；build通過，1335鍵×3，既有chunk提示保留。
+- 本機新18＋邊界4＝22不同情境通過；原查詢CSV38／分段點位17通過。瀏覽器未處理JS錯誤為0。
+- 發布後OCAP15通過；另7個備註／右鍵案例使用本機實際ECharts座標，發布測試明示略過，不冒稱通過。發布查詢CSV38通過，共53通過／7條件略過。
+- 真匿名version/health HTTP200、environment=test、API0.1.72、status=ok；14同源請求通過；index/CSS/主JS/guideJS共4檔實際SHA256與dist一致。
+- 只發布SpcSingleTest Web0.1.83/API沿用0.1.72。先核appcmd實際backend D:/SPC/release/test/backend及AppEnvironment=test，目標frontend D:/SPC/release/test/frontend；備份62檔／payload4／保護設定4、資產先index最後、不重啟pool。
+- 回復：重核test路徑，以 `.codex-tmp/i18n-task06b3/backup-frontend` 原備份資產先index最後覆回同目錄、不覆設定、不刪其他檔案，查原hash及health。未觸發rollback；截圖／部署摘要不提交。
+- 業務API全部mock，真站只有health/version/static唯讀，無真DB／SSO／真人審稿驗收；DB／後端／Portal／TransFiles／正式未改。譯文draft／uncertain待TASK20。
+- 完成後剩06C／D與07～21共17件，另受阻1／暫緩2；依連續授權接續06C。
