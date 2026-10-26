@@ -307,3 +307,5 @@
 - 2026-10-26 I18N-TASK-07A完成：[規格](../specs/20261026-i18n-task07a/spec.md)／[驗證](../specs/20261026-i18n-task07a/verification.md)。設備三頁73鍵三語，原狀態／相對時間判定／timer／mapping DTO保持；78單元、本機41／發布41及build/hash/health/同源通過，只測試Web0.1.86/API0.1.72。
 
 - 2026-10-26 I18N-TASK-07B完成：[規格](../specs/20261026-i18n-task07b/spec.md)／[驗證](../specs/20261026-i18n-task07b/verification.md)。粒子28鍵三語、原C/U／queryRange／三端點／數列／raw保持；81單元、本機25／發布25及build/hash/health/同源通過，只測試Web0.1.87/API0.1.72。
+
+- 2026-10-26 I18N-TASK-07C完成：[規格](../specs/20261026-i18n-task07c/spec.md)／[驗證](../specs/20261026-i18n-task07c/verification.md)。儀器校驗／匯入199鍵三語，日期／版本／DTO／FormData／原value與raw保持；86單元、本機45＋舊回歸14／發布45及build/hash/health/同源通過，只測試Web0.1.88/API0.1.72。

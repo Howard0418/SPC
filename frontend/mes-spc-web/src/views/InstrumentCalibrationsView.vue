@@ -1,4 +1,8 @@
 <script setup>
+import {useI18n} from "vue-i18n";
+import {displayUiMessage} from "../i18n/uiMessage";
+import LocalePicker from "../components/LocalePicker.vue";
+const {t}=useI18n({useScope:"global"});
 import { ref, onMounted, computed, watch } from "vue";
 import { api, getApiErrorMessage } from "../api/client";
 import InstrumentImportPanel from "../components/InstrumentImportPanel.vue";
@@ -116,12 +120,12 @@ const reminderOptions = computed(() => [...new Set([30, 14, 7, 3, 1, 0, ...setti
 function addReminderDay() {
   const day = Number(customReminderDay.value);
   if (customReminderDay.value === "" || !Number.isInteger(day) || day < 0 || day > 365) {
-    reminderError.value = "請輸入 0～365 的整數天數。";
+    reminderError.value = {key:'spc.calibration.reminderInvalid'};
     return;
   }
   if (!settingsForm.value.reminderDays.includes(day)) {
     if (settingsForm.value.reminderDays.length >= 12) {
-      reminderError.value = "最多選擇 12 個提醒時間。";
+      reminderError.value = {key:'spc.calibration.reminderLimit'};
       return;
     }
     settingsForm.value.reminderDays.push(day);
@@ -248,19 +252,19 @@ function openEditModal(item) {
 async function saveInstrument() {
   instrumentFormErr.value = "";
   if (!instrumentForm.value.code.trim()) {
-    instrumentFormErr.value = "請填寫儀器編號。";
+    instrumentFormErr.value = {key:'spc.calibration.codeMissing'};
     return;
   }
   if (!instrumentForm.value.name.trim()) {
-    instrumentFormErr.value = "請填寫儀器名稱。";
+    instrumentFormErr.value = {key:'spc.calibration.nameMissing'};
     return;
   }
   if (!instrumentForm.value.department.trim()) {
-    instrumentFormErr.value = "請填寫部門。";
+    instrumentFormErr.value = {key:'spc.calibration.departmentMissing'};
     return;
   }
   if (!instrumentForm.value.custodianOperatorId) {
-    instrumentFormErr.value = "請指定保管人。";
+    instrumentFormErr.value = {key:'spc.calibration.custodianMissing'};
     return;
   }
 
@@ -290,10 +294,10 @@ async function saveInstrument() {
   try {
     if (isEditing.value) {
       await api.put(`/v1/instruments/${instrumentForm.value.id}`, payload);
-      successMsg.value = `儀器 ${payload.code} 更新成功。`;
+      successMsg.value = {key:"spc.calibration.updated",args:{code:payload.code}};
     } else {
       await api.post("/v1/instruments", payload);
-      successMsg.value = `儀器 ${payload.code} 建立成功。`;
+      successMsg.value = {key:"spc.calibration.created",args:{code:payload.code}};
     }
     showInstrumentModal.value = false;
     await Promise.all([loadInstruments(), loadSummary()]);
@@ -342,7 +346,7 @@ function onCertificateFileSelected(e) {
   const file = e.target.files?.[0];
   if (file) {
     if (file.size > 10 * 1024 * 1024) {
-      recordFormErr.value = "檔案不能超過 10 MB。";
+      recordFormErr.value = {key:'spc.calibration.certificateTooLarge'};
       return;
     }
     recordForm.value.certificateFile = file;
@@ -353,7 +357,7 @@ function onCertificateFileSelected(e) {
 async function saveCalibrationRecord() {
   recordFormErr.value = "";
   if (!recordForm.value.calibrationDate) {
-    recordFormErr.value = "請選擇校正日期。";
+    recordFormErr.value = {key:'spc.calibration.dateMissing'};
     return;
   }
   const payload = {
@@ -381,7 +385,7 @@ async function saveCalibrationRecord() {
       });
     }
 
-    successMsg.value = `儀器 ${selectedInstrument.value.code} 校正紀錄已成功登記。`;
+    successMsg.value = {key:"spc.calibration.recordSaved",args:{code:selectedInstrument.value.code}};
     showRecordModal.value = false;
     await Promise.all([loadInstruments(), loadSummary()]);
   } catch (e) {
@@ -415,7 +419,7 @@ async function downloadCert(certId, fileName) {
     link.click();
     link.remove();
   } catch (e) {
-    alert("下載證書失敗：" + getApiErrorMessage(e));
+    alert(t('spc.calibration.downloadFailed',{error:getApiErrorMessage(e)}));
   }
 }
 
@@ -437,7 +441,7 @@ async function openSettingsModal() {
       testError.value = "";
     }
   } catch (e) {
-    alert("載入設定失敗：" + getApiErrorMessage(e));
+    alert(t('spc.calibration.settingsLoadFailed',{error:getApiErrorMessage(e)}));
     return;
   }
   showSettingsModal.value = true;
@@ -446,11 +450,11 @@ async function openSettingsModal() {
 async function saveSettings() {
   const parts = [...new Set(settingsForm.value.reminderDays)].sort((a, b) => b - a);
   if (parts.length === 0 || parts.length > 12) {
-    reminderError.value = "請選擇 1～12 個提醒時間。";
+    reminderError.value = {key:'spc.calibration.reminderSelection'};
     return;
   }
   if (customReminderDay.value !== "") {
-    reminderError.value = "自訂天數尚未加入，請先按「加入」或清空輸入。";
+    reminderError.value = {key:'spc.calibration.reminderPending'};
     return;
   }
   reminderError.value = "";
@@ -462,11 +466,11 @@ async function saveSettings() {
       notificationChannel: settingsForm.value.notificationChannel,
       chatWebhookUrl: chatWebhookUrl.value.trim() || undefined
     });
-    successMsg.value = "校正提醒設定已儲存。";
+    successMsg.value = {key:'spc.calibration.settingsSaved'};
     chatWebhookUrl.value = "";
     showSettingsModal.value = false;
   } catch (e) {
-    alert("儲存設定失敗：" + (e.response?.data?.message || getApiErrorMessage(e)));
+    alert(t('spc.calibration.settingsSaveFailed',{error:e.response?.data?.message || getApiErrorMessage(e)}));
   }
 }
 
@@ -474,11 +478,11 @@ async function sendTestNotification() {
   const email = testEmail.value.trim();
   const isChat = settingsForm.value.notificationChannel === "SynologyChat";
   if (isChat && !chatWebhookUrl.value.trim() && !settingsForm.value.chatWebhookConfigured) {
-    testError.value = "請先貼上 Synology Chat Webhook 網址。";
+    testError.value = {key:'spc.calibration.webhookMissing'};
     return;
   }
   if (!isChat && !email) {
-    testError.value = "請先填寫測試收件人 Email。";
+    testError.value = {key:'spc.calibration.emailMissing'};
     testResult.value = "";
     return;
   }
@@ -491,15 +495,15 @@ async function sendTestNotification() {
       : await api.post("/v1/instrument-calibrations/test-email", { email });
     if (isChat) {
       if (res.data?.success) testResult.value = res.data.message;
-      else testError.value = res.data?.message || "Chat 傳送失敗，請檢查群組設定。";
+      else testError.value = res.data?.message || {key:'spc.calibration.chatFailed'};
       return;
     }
     if (res.data?.success) {
       const data = res.data.data || {};
-      testResult.value = `已寄出測試通知至 ${data.recipient || email}（儀器 ${data.instrumentCode || "-"}）。此信不寫入每日提醒紀錄。`;
+      testResult.value = {key:"spc.calibration.testSent",args:{recipient:data.recipient||email,code:data.instrumentCode||"-"}};
     } else {
       const folder = res.data?.data?.outboxFolder;
-      testError.value = (res.data?.message || "SMTP 未成功。") + (folder ? ` 本機備份：${folder}` : "");
+      testError.value = folder ? {key:res.data?.message?"spc.calibration.backupError":"spc.calibration.smtpBackupFailed",args:{error:res.data?.message,folder}} : (res.data?.message || {key:"spc.calibration.smtpFailed"});
     }
   } catch (e) {
     testError.value = e.response?.data?.message || getApiErrorMessage(e);
@@ -510,10 +514,10 @@ async function sendTestNotification() {
 
 function getStatusBadge(status) {
   switch (status) {
-    case "Active": return { label: "正常使用", class: "bg-emerald-100 text-emerald-700 border-emerald-200" };
-    case "InCalibration": return { label: "送校中", class: "bg-sky-100 text-sky-700 border-sky-200" };
-    case "Inactive": return { label: "已停用", class: "bg-slate-100 text-slate-600 border-slate-200" };
-    case "Retired": return { label: "已報廢", class: "bg-rose-100 text-rose-700 border-rose-200" };
+    case "Active": return { label: t('spc.calibration.active'), class: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+    case "InCalibration": return { label: t('spc.calibration.inCalibration'), class: "bg-sky-100 text-sky-700 border-sky-200" };
+    case "Inactive": return { label: t('spc.calibration.inactive'), class: "bg-slate-100 text-slate-600 border-slate-200" };
+    case "Retired": return { label: t('spc.calibration.retired'), class: "bg-rose-100 text-rose-700 border-rose-200" };
     default: return { label: status, class: "bg-slate-100 text-slate-600 border-slate-200" };
   }
 }
@@ -525,16 +529,16 @@ function getDueDateBadge(dateStr, status) {
   const today = todayTaipei();
   if (!today || !dateStr) return { class: "text-slate-500" };
   if (dateStr < today) {
-    return { class: "text-rose-600 font-bold flex items-center gap-1", label: "已逾期" };
+    return { class: "text-rose-600 font-bold flex items-center gap-1", label: t('spc.calibration.overdue') };
   }
   if (dateStr === today) {
-    return { class: "text-orange-600 font-bold flex items-center gap-1", label: "今日到期" };
+    return { class: "text-orange-600 font-bold flex items-center gap-1", label: t('spc.calibration.dueToday') };
   }
   const windowDays = summary.value.windowDays || 30;
   const [y, m, d] = today.split("-").map(Number);
   const until = new Date(Date.UTC(y, m - 1, d + windowDays)).toISOString().slice(0, 10);
   if (dateStr <= until) {
-    return { class: "text-amber-600 flex items-center gap-1", label: "即將到期" };
+    return { class: "text-amber-600 flex items-center gap-1", label: t('spc.calibration.dueSoonPlain') };
   }
   return { class: "text-slate-700" };
 }
@@ -551,26 +555,26 @@ onMounted(async () => {
       <div>
         <h1 class="text-2xl font-bold flex items-center gap-2 text-slate-800">
           <Clock class="w-7 h-7 text-cyan-500" />
-          儀器校正到期管理
+          {{ t('spc.calibration.title') }}
         </h1>
-        <p class="text-sm text-slate-500 mt-1">管理各部門儀器主檔、校正週期與證書歷史，提供定時到期提醒。</p>
+        <p class="text-sm text-slate-500 mt-1">{{ t('spc.calibration.description') }}</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
         <InstrumentImportPanel :operators="operators" @imported="loadInstruments(); loadSummary()" />
         <button
-          @click="openSettingsModal"
+          data-testid="calibration-openSettingsModal" @click="openSettingsModal"
           class="px-3 py-2 rounded-lg bg-white hover:bg-cyan-50 text-cyan-700 text-sm font-medium border border-cyan-200 flex items-center gap-2 transition"
         >
           <Sliders class="w-4 h-4 text-cyan-500" />
-          提醒天數設定
+          {{ t('spc.calibration.reminderSettings') }}
         </button>
         <button
-          @click="openCreateModal"
+          data-testid="calibration-openCreateModal" @click="openCreateModal"
           class="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-white text-sm font-medium flex items-center gap-2 transition shadow-sm shadow-cyan-200"
         >
           <Plus class="w-4 h-4" />
-          新增儀器主檔
+          {{ t('spc.calibration.create') }}
         </button>
       </div>
     </div>
@@ -579,7 +583,7 @@ onMounted(async () => {
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div class="p-4 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-between">
         <div>
-          <div class="text-xs text-amber-700 font-medium">即將到期 (30天內)</div>
+          <div class="text-xs text-amber-700 font-medium">{{ t('spc.calibration.dueSoon') }}</div>
           <div class="text-2xl font-bold text-amber-600 mt-1">{{ summary.upcomingCount }}</div>
         </div>
         <AlertTriangle class="w-8 h-8 text-amber-400" />
@@ -587,7 +591,7 @@ onMounted(async () => {
 
       <div class="p-4 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-between">
         <div>
-          <div class="text-xs text-orange-700 font-medium">今日到期</div>
+          <div class="text-xs text-orange-700 font-medium">{{ t('spc.calibration.dueToday') }}</div>
           <div class="text-2xl font-bold text-orange-600 mt-1">{{ summary.dueTodayCount }}</div>
         </div>
         <Clock class="w-8 h-8 text-orange-400" />
@@ -595,7 +599,7 @@ onMounted(async () => {
 
       <div class="p-4 rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-between">
         <div>
-          <div class="text-xs text-rose-700 font-medium">已逾期</div>
+          <div class="text-xs text-rose-700 font-medium">{{ t('spc.calibration.overdue') }}</div>
           <div class="text-2xl font-bold text-rose-600 mt-1">{{ summary.overdueCount }}</div>
         </div>
         <XCircle class="w-8 h-8 text-rose-400" />
@@ -603,7 +607,7 @@ onMounted(async () => {
 
       <div class="p-4 rounded-xl bg-sky-100 border border-sky-200 flex items-center justify-between">
         <div>
-          <div class="text-xs text-sky-700 font-medium">送校中處理</div>
+          <div class="text-xs text-sky-700 font-medium">{{ t('spc.calibration.inCalibrationSummary') }}</div>
           <div class="text-2xl font-bold text-sky-600 mt-1">{{ summary.inCalibrationCount }}</div>
         </div>
         <RefreshCw class="w-8 h-8 text-sky-400" />
@@ -614,7 +618,7 @@ onMounted(async () => {
     <div v-if="successMsg" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <CheckCircle2 class="w-5 h-5 flex-shrink-0" />
-        <span>{{ successMsg }}</span>
+        <span>{{ displayUiMessage(t,successMsg) }}</span>
       </div>
       <button @click="successMsg = ''" class="text-slate-400 hover:text-slate-700"><X class="w-4 h-4" /></button>
     </div>
@@ -633,84 +637,84 @@ onMounted(async () => {
         <div class="relative w-64">
           <Search class="w-4 h-4 text-cyan-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
-            v-model="searchQuery"
+            data-testid="calibration-searchQuery" v-model="searchQuery"
             @keyup.enter="loadInstruments"
-            placeholder="搜尋編號或儀器名稱..."
+            :placeholder="t('spc.calibration.search')"
             class="w-full bg-white border border-cyan-200 rounded-lg pl-9 pr-3 py-1.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-cyan-400"
           />
         </div>
 
         <select
-          v-model="filterDepartment"
+          data-testid="calibration-filterDepartment" v-model="filterDepartment"
           @change="loadInstruments"
           class="bg-white border border-cyan-200 rounded-lg px-3 py-1.5 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
         >
-          <option value="">全部部門</option>
+          <option value="">{{ t('spc.calibration.allDepartments') }}</option>
           <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
         </select>
 
         <select
-          v-model="filterStatus"
+          data-testid="calibration-filterStatus" v-model="filterStatus"
           @change="loadInstruments"
           class="bg-white border border-cyan-200 rounded-lg px-3 py-1.5 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
         >
-          <option value="">全部狀態</option>
-          <option value="Active">正常使用</option>
-          <option value="InCalibration">送校中</option>
-          <option value="Inactive">已停用</option>
-          <option value="Retired">已報廢</option>
+          <option value="">{{ t('spc.calibration.allStatuses') }}</option>
+          <option value="Active">{{ t('spc.calibration.active') }}</option>
+          <option value="InCalibration">{{ t('spc.calibration.inCalibration') }}</option>
+          <option value="Inactive">{{ t('spc.calibration.inactive') }}</option>
+          <option value="Retired">{{ t('spc.calibration.retired') }}</option>
         </select>
 
         <button
           @click="loadInstruments"
           class="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-white text-sm rounded-lg transition"
         >
-          篩選
+          {{ t('spc.calibration.filter') }}
         </button>
       </div>
 
       <div class="text-xs text-slate-500">
-        共計 {{ total }} 台儀器
+        {{ t('spc.calibration.totalPrefix') }} {{ total }} {{ t('spc.calibration.instrumentUnit') }}
       </div>
     </div>
 
     <!-- 儀器表格 -->
     <div class="rounded-xl border border-cyan-100 overflow-hidden bg-white shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-sky-50 border-b border-cyan-100">
-        <p id="instrument-scroll-help" class="text-xs text-slate-600">表格內上下捲動；左右按鈕、底部捲軸或觸控滑動可查看全部欄位。</p>
+        <p id="instrument-scroll-help" class="text-xs text-slate-600">{{ t('spc.calibration.scrollHelp') }}</p>
         <div class="flex gap-2">
-          <button type="button" aria-label="儀器表格向左" @click="scrollInstrumentTable(-1)" class="px-3 py-2 rounded-lg border border-cyan-200 bg-white text-cyan-800 text-sm hover:bg-cyan-100">← 向左</button>
-          <button type="button" aria-label="儀器表格向右" @click="scrollInstrumentTable(1)" class="px-3 py-2 rounded-lg border border-cyan-200 bg-white text-cyan-800 text-sm hover:bg-cyan-100">向右 →</button>
+          <button type="button" :aria-label="t('spc.calibration.scrollLeftLabel')" @click="scrollInstrumentTable(-1)" class="px-3 py-2 rounded-lg border border-cyan-200 bg-white text-cyan-800 text-sm hover:bg-cyan-100">{{ t('spc.calibration.scrollLeft') }}</button>
+          <button type="button" :aria-label="t('spc.calibration.scrollRightLabel')" @click="scrollInstrumentTable(1)" class="px-3 py-2 rounded-lg border border-cyan-200 bg-white text-cyan-800 text-sm hover:bg-cyan-100">{{ t('spc.calibration.scrollRight') }}</button>
         </div>
       </div>
-      <div ref="instrumentTableViewport" role="region" aria-label="儀器資料表格" aria-describedby="instrument-scroll-help" tabindex="0" class="max-h-[60dvh] overflow-auto overscroll-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-500">
+      <div ref="instrumentTableViewport" role="region" :aria-label="t('spc.calibration.tableLabel')" aria-describedby="instrument-scroll-help" tabindex="0" class="max-h-[60dvh] overflow-auto overscroll-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-500">
         <table class="w-full min-w-[2200px] text-left text-sm border-separate border-spacing-0">
           <thead class="sticky top-0 z-10 bg-cyan-100">
             <tr class="bg-gradient-to-r from-cyan-100 to-sky-100 text-cyan-800 font-semibold border-b border-cyan-100 whitespace-nowrap">
-              <th class="py-3 px-4">儀器編號</th>
-              <th class="py-3 px-4">儀器名稱</th>
-              <th class="py-3 px-4">部門</th>
-              <th class="py-3 px-4">放置地點</th>
-              <th class="py-3 px-4">週期</th>
-              <th class="py-3 px-4">校驗方式</th>
-              <th class="py-3 px-4 whitespace-nowrap">量測規格</th>
-              <th class="py-3 px-4 whitespace-nowrap">精度</th>
-              <th class="py-3 px-4 whitespace-nowrap">備註</th>
-              <th class="py-3 px-4 whitespace-nowrap">校驗規範</th>
-              <th class="py-3 px-4 whitespace-nowrap">允收標準</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.code') }}</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.name') }}</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.department') }}</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.location') }}</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.cycle') }}</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.method') }}</th>
+              <th class="py-3 px-4 whitespace-nowrap">{{ t('spc.calibration.specification') }}</th>
+              <th class="py-3 px-4 whitespace-nowrap">{{ t('spc.calibration.precision') }}</th>
+              <th class="py-3 px-4 whitespace-nowrap">{{ t('spc.calibration.remarks') }}</th>
+              <th class="py-3 px-4 whitespace-nowrap">{{ t('spc.calibration.standard') }}</th>
+              <th class="py-3 px-4 whitespace-nowrap">{{ t('spc.calibration.acceptance') }}</th>
 
-              <th class="py-3 px-4">上次校正</th>
-              <th class="py-3 px-4">下次校正期限</th>
-              <th class="py-3 px-4">使用狀態</th>
-              <th class="py-3 px-4 text-right">操作</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.lastCalibration') }}</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.nextCalibration') }}</th>
+              <th class="py-3 px-4">{{ t('spc.calibration.usageStatus') }}</th>
+              <th class="py-3 px-4 text-right">{{ t('spc.calibration.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-cyan-50">
             <tr v-if="loading" class="text-center">
-              <td colspan="15" class="py-8 text-slate-400">載入中...</td>
+              <td colspan="15" class="py-8 text-slate-400">{{ t('spc.calibration.loading') }}</td>
             </tr>
             <tr v-else-if="instruments.length === 0" class="text-center">
-              <td colspan="15" class="py-8 text-slate-400">目前尚無符合條件之儀器資料。</td>
+              <td colspan="15" class="py-8 text-slate-400">{{ t('spc.calibration.empty') }}</td>
             </tr>
             <tr
               v-for="item in instruments"
@@ -721,7 +725,7 @@ onMounted(async () => {
               <td class="py-3 px-4 font-medium text-slate-800">{{ item.name }}</td>
               <td class="py-3 px-4 text-slate-600">{{ item.department }}</td>
               <td class="py-3 px-4 text-slate-600">{{ item.location || '—' }}</td>
-              <td class="py-3 px-4 text-slate-600">{{ item.cycleMonths }} 個月</td>
+              <td class="py-3 px-4 text-slate-600">{{ item.cycleMonths }} {{ t('spc.calibration.months') }}</td>
               <td class="py-3 px-4 text-slate-600">{{ item.calibrationMethod || '—' }}</td>
               <td class="py-3 px-4 min-w-44 max-w-xs whitespace-pre-wrap break-words text-slate-600">{{ item.measurementSpecification || '—' }}</td>
               <td class="py-3 px-4 min-w-44 max-w-xs whitespace-pre-wrap break-words text-slate-600">{{ item.precision || '—' }}</td>
@@ -746,24 +750,24 @@ onMounted(async () => {
               <td class="py-3 px-4 text-right">
                 <div class="flex items-center justify-end gap-2">
                   <button
-                    @click="openRecordModal(item)"
-                    title="登記校正結果"
+                    data-testid="calibration-openRecordModal" @click="openRecordModal(item)"
+                    :title="t('spc.calibration.recordTitle')"
                     class="px-2 py-1 rounded bg-cyan-100 hover:bg-cyan-200 text-cyan-700 border border-cyan-200 text-xs font-medium flex items-center gap-1 transition"
                   >
                     <CheckCircle2 class="w-3.5 h-3.5" />
-                    登記校正
+                    {{ t('spc.calibration.record') }}
                   </button>
                   <button
-                    @click="openHistoryModal(item)"
-                    title="檢視校正歷史與證書"
+                    data-testid="calibration-openHistoryModal" @click="openHistoryModal(item)"
+                    :title="t('spc.calibration.historyLabel')"
                     class="px-2 py-1 rounded bg-white hover:bg-sky-50 text-sky-700 border border-sky-200 text-xs font-medium flex items-center gap-1 transition"
                   >
                     <FileText class="w-3.5 h-3.5" />
-                    歷史
+                    {{ t('spc.calibration.history') }}
                   </button>
                   <button
-                    @click="openEditModal(item)"
-                    title="編輯儀器"
+                    data-testid="calibration-openEditModal" @click="openEditModal(item)"
+                    :title="t('spc.calibration.edit')"
                     class="p-1 rounded hover:bg-cyan-100 text-cyan-500 hover:text-cyan-700 transition"
                   >
                     <Edit class="w-4 h-4" />
@@ -778,34 +782,35 @@ onMounted(async () => {
 
     <!-- 新增 / 編輯 儀器 Modal -->
     <div v-if="showInstrumentModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div role="dialog" aria-modal="true" :aria-label="isEditing ? '編輯儀器主檔' : '新增儀器主檔'" class="bg-white border border-cyan-200 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div data-testid="calibration-instrument-dialog" role="dialog" aria-modal="true" :aria-label="isEditing ? t('spc.calibration.editTitle') : t('spc.calibration.create')" class="bg-white border border-cyan-200 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
         <div class="p-4 border-b border-cyan-100 flex items-center justify-between">
           <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
             <Clock class="w-5 h-5 text-cyan-500" />
-            {{ isEditing ? '編輯儀器主檔' : '新增儀器主檔' }}
+            {{ isEditing ? t('spc.calibration.editTitle') : t('spc.calibration.create') }}
           </h3>
           <button @click="showInstrumentModal = false" class="text-slate-400 hover:text-slate-800"><X class="w-5 h-5" /></button>
         </div>
 
         <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+<LocalePicker />
           <div v-if="instrumentFormErr" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded text-sm">
-            {{ instrumentFormErr }}
+            {{ displayUiMessage(t,instrumentFormErr) }}
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">儀器編號 *</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.codeRequired') }}</label>
               <input
-                v-model="instrumentForm.code"
-                placeholder="例如：CAL-001"
+                data-testid="calibration-instrumentForm.code" v-model="instrumentForm.code"
+                :placeholder="t('spc.calibration.codeExample')"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">儀器名稱 *</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.nameRequired') }}</label>
               <input
-                v-model="instrumentForm.name"
-                placeholder="例如：電子微量分度天平"
+                data-testid="calibration-instrumentForm.name" v-model="instrumentForm.name"
+                :placeholder="t('spc.calibration.nameExample')"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
             </div>
@@ -813,18 +818,18 @@ onMounted(async () => {
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">所屬部門 *</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.departmentRequired') }}</label>
               <input
-                v-model="instrumentForm.department"
-                placeholder="例如：品保組"
+                data-testid="calibration-instrumentForm.department" v-model="instrumentForm.department"
+                :placeholder="t('spc.calibration.departmentExample')"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">放置地點</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.location') }}</label>
               <input
-                v-model="instrumentForm.location"
-                placeholder="例如：發泡實驗室"
+                data-testid="calibration-instrumentForm.location" v-model="instrumentForm.location"
+                :placeholder="t('spc.calibration.locationExample')"
                 maxlength="100"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
@@ -833,9 +838,9 @@ onMounted(async () => {
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">保管人 *</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.custodianRequired') }}</label>
               <select
-                v-model="instrumentForm.custodianOperatorId"
+                data-testid="calibration-instrumentForm.custodianOperatorId" v-model="instrumentForm.custodianOperatorId"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               >
                 <option v-for="op in operators" :key="op.id" :value="op.id">
@@ -844,10 +849,10 @@ onMounted(async () => {
               </select>
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">校驗方式</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.method') }}</label>
               <input
-                v-model="instrumentForm.calibrationMethod"
-                placeholder="例如：外校、內校、免校"
+                data-testid="calibration-instrumentForm.calibrationMethod" v-model="instrumentForm.calibrationMethod"
+                :placeholder="t('spc.calibration.methodExample')"
                 maxlength="100"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
@@ -855,93 +860,93 @@ onMounted(async () => {
           </div>
 
           <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <legend class="text-sm font-semibold text-slate-700 mb-2">量測與校驗資訊</legend>
-            <label class="block text-xs font-medium text-slate-500">量測規格
-              <textarea v-model="instrumentForm.measurementSpecification" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
+            <legend class="text-sm font-semibold text-slate-700 mb-2">{{ t('spc.calibration.measurementInfo') }}</legend>
+            <label class="block text-xs font-medium text-slate-500">{{ t('spc.calibration.specification') }}
+              <textarea data-testid="calibration-instrumentForm.measurementSpecification" v-model="instrumentForm.measurementSpecification" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
             </label>
-            <label class="block text-xs font-medium text-slate-500">精度
-              <textarea v-model="instrumentForm.precision" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
+            <label class="block text-xs font-medium text-slate-500">{{ t('spc.calibration.precision') }}
+              <textarea data-testid="calibration-instrumentForm.precision" v-model="instrumentForm.precision" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
             </label>
-            <label class="block text-xs font-medium text-slate-500">備註
-              <textarea v-model="instrumentForm.remarks" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
+            <label class="block text-xs font-medium text-slate-500">{{ t('spc.calibration.remarks') }}
+              <textarea data-testid="calibration-instrumentForm.remarks" v-model="instrumentForm.remarks" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
             </label>
-            <label class="block text-xs font-medium text-slate-500">校驗規範
-              <textarea v-model="instrumentForm.calibrationStandard" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
+            <label class="block text-xs font-medium text-slate-500">{{ t('spc.calibration.standard') }}
+              <textarea data-testid="calibration-instrumentForm.calibrationStandard" v-model="instrumentForm.calibrationStandard" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
             </label>
-            <label class="block text-xs font-medium text-slate-500">允收標準
-              <textarea v-model="instrumentForm.acceptanceCriteria" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
+            <label class="block text-xs font-medium text-slate-500">{{ t('spc.calibration.acceptance') }}
+              <textarea data-testid="calibration-instrumentForm.acceptanceCriteria" v-model="instrumentForm.acceptanceCriteria" maxlength="2000" rows="2" class="mt-1 w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800" />
             </label>
           </fieldset>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">校正週期 (月) *</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.cycleRequired') }}</label>
               <input
                 type="number"
                 min="1"
                 max="120"
-                v-model.number="instrumentForm.cycleMonths"
+                data-testid="calibration-instrumentForm.cycleMonths" v-model.number="instrumentForm.cycleMonths"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">使用狀態</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.usageStatus') }}</label>
               <select
-                v-model="instrumentForm.usageStatus"
+                data-testid="calibration-instrumentForm.usageStatus" v-model="instrumentForm.usageStatus"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               >
-                <option value="Active">正常使用 (Active)</option>
-                <option value="InCalibration">送校中 (InCalibration)</option>
-                <option value="Inactive">已停用 (Inactive)</option>
-                <option value="Retired">已報廢 (Retired)</option>
+                <option value="Active">{{ t('spc.calibration.activeOption') }}</option>
+                <option value="InCalibration">{{ t('spc.calibration.inCalibrationOption') }}</option>
+                <option value="Inactive">{{ t('spc.calibration.inactiveOption') }}</option>
+                <option value="Retired">{{ t('spc.calibration.retiredOption') }}</option>
               </select>
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">上次校正日期 (選填)</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.lastDateOptional') }}</label>
               <input
                 type="date"
-                v-model="instrumentForm.lastCalibrationDate"
-                aria-label="上次校正日期"
+                data-testid="calibration-instrumentForm.lastCalibrationDate" v-model="instrumentForm.lastCalibrationDate"
+                :aria-label="t('spc.calibration.lastDate')"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">下次校正期限（可後補）</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.nextDateOptional') }}</label>
               <input
                 type="date"
-                v-model="instrumentForm.nextCalibrationDate"
-                aria-label="下次校正日期"
+                data-testid="calibration-instrumentForm.nextCalibrationDate" v-model="instrumentForm.nextCalibrationDate"
+                :aria-label="t('spc.calibration.nextDate')"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
             </div>
           </div>
 
           <div v-if="isEditing">
-            <p class="mb-3 text-xs text-slate-600">可直接修改上次與下次校正日期；儲存會留下異動紀錄，不會改寫校正歷史或自動重算下次日期。</p>
-            <label class="block text-xs font-medium text-slate-500 mb-1">變更理由（若已有下次期限再修改時必填）</label>
+            <p class="mb-3 text-xs text-slate-600">{{ t('spc.calibration.dateEditHelp') }}</p>
+            <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.reasonLabel') }}</label>
             <input
-              v-model="instrumentForm.reason"
-              placeholder="請填寫手動調整原因..."
+              data-testid="calibration-instrumentForm.reason" v-model="instrumentForm.reason"
+              :placeholder="t('spc.calibration.reasonPlaceholder')"
               class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
             />
           </div>
 
           <div class="pt-2 border-t border-cyan-100">
             <label class="flex items-center gap-2 text-sm text-slate-600">
-              <input type="checkbox" v-model="instrumentForm.includeCustodian" class="rounded bg-white border-cyan-300 text-cyan-600 focus:ring-cyan-400" />
-              自動發送提醒 Email 給保管人
+              <input type="checkbox" data-testid="calibration-instrumentForm.includeCustodian" v-model="instrumentForm.includeCustodian" class="rounded bg-white border-cyan-300 text-cyan-600 focus:ring-cyan-400" />
+              {{ t('spc.calibration.notifyCustodian') }}
             </label>
           </div>
         </div>
 
         <div class="p-4 bg-sky-50 border-t border-cyan-100 flex justify-end gap-3">
-          <button @click="showInstrumentModal = false" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-medium hover:bg-slate-200 transition">取消</button>
-          <button @click="saveInstrument" class="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-400 transition flex items-center gap-2">
+          <button @click="showInstrumentModal = false" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-medium hover:bg-slate-200 transition">{{ t('spc.calibration.cancel') }}</button>
+          <button data-testid="calibration-saveInstrument" @click="saveInstrument" class="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-400 transition flex items-center gap-2">
             <Save class="w-4 h-4" />
-            儲存儀器
+            {{ t('spc.calibration.saveInstrument') }}
           </button>
         </div>
       </div>
@@ -949,65 +954,66 @@ onMounted(async () => {
 
     <!-- 登記校正 Modal -->
     <div v-if="showRecordModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white border border-cyan-200 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div data-testid="calibration-record-dialog" role="dialog" :aria-label="t('spc.calibration.recordTitle')" class="bg-white border border-cyan-200 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
         <div class="p-4 border-b border-cyan-100 flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-lg text-slate-800">登記校正結果</h3>
-            <p class="text-xs text-slate-400 mt-0.5">儀器：{{ selectedInstrument?.code }} - {{ selectedInstrument?.name }}</p>
+            <h3 class="font-bold text-lg text-slate-800">{{ t('spc.calibration.recordTitle') }}</h3>
+            <p class="text-xs text-slate-400 mt-0.5">{{ t('spc.calibration.instrumentPrefix') }}{{ selectedInstrument?.code }} - {{ selectedInstrument?.name }}</p>
           </div>
           <button @click="showRecordModal = false" class="text-slate-400 hover:text-slate-800"><X class="w-5 h-5" /></button>
         </div>
 
         <div class="p-5 space-y-4">
+<LocalePicker />
           <div v-if="recordFormErr" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded text-sm">
-            {{ recordFormErr }}
+            {{ displayUiMessage(t,recordFormErr) }}
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">本次校正日期 *</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.calibrationDateRequired') }}</label>
               <input
                 type="date"
-                v-model="recordForm.calibrationDate"
+                data-testid="calibration-recordForm.calibrationDate" v-model="recordForm.calibrationDate"
                 @change="onCalibrationDateChange"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-500 mb-1">校正結果 *</label>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.resultRequired') }}</label>
               <select
-                v-model="recordForm.result"
+                data-testid="calibration-recordForm.result" v-model="recordForm.result"
                 @change="onCalibrationDateChange"
                 class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
               >
-                <option value="Passed">合格 (Passed)</option>
-                <option value="Failed">不合格 (Failed)</option>
+                <option value="Passed">{{ t('spc.calibration.passedOption') }}</option>
+                <option value="Failed">{{ t('spc.calibration.failedOption') }}</option>
               </select>
             </div>
           </div>
 
           <div v-if="recordForm.result === 'Passed'">
-            <label class="block text-xs font-medium text-slate-500 mb-1">更新後下次校正期限</label>
+            <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.updatedNextDue') }}</label>
             <input
               type="date"
-              v-model="recordForm.nextDueDate"
+              data-testid="calibration-recordForm.nextDueDate" v-model="recordForm.nextDueDate"
               class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
             />
-            <small class="text-xs text-slate-500 mt-1 block">已依校正週期 {{ selectedInstrument?.cycleMonths }} 個月自動推算。</small>
+            <small class="text-xs text-slate-500 mt-1 block">{{ t('spc.calibration.calculated',{months:selectedInstrument?.cycleMonths}) }}</small>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">校正說明 / 備註</label>
+            <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.recordRemarks') }}</label>
             <textarea
-              v-model="recordForm.reason"
+              data-testid="calibration-recordForm.reason" v-model="recordForm.reason"
               rows="2"
-              placeholder="填寫校正廠商、證書編號或異常描述..."
+              :placeholder="t('spc.calibration.recordRemarksPlaceholder')"
               class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
             ></textarea>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">上傳校正證書附件 (PDF / 圖片，上限 10 MB)</label>
+            <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('spc.calibration.certificateUpload') }}</label>
             <input
               type="file"
               accept=".pdf,.png,.jpg,.jpeg"
@@ -1018,10 +1024,10 @@ onMounted(async () => {
         </div>
 
         <div class="p-4 bg-sky-50 border-t border-cyan-100 flex justify-end gap-3">
-          <button @click="showRecordModal = false" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-medium hover:bg-slate-200 transition">取消</button>
-          <button @click="saveCalibrationRecord" class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition flex items-center gap-2">
+          <button @click="showRecordModal = false" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-medium hover:bg-slate-200 transition">{{ t('spc.calibration.cancel') }}</button>
+          <button data-testid="calibration-saveCalibrationRecord" @click="saveCalibrationRecord" class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition flex items-center gap-2">
             <CheckCircle2 class="w-4 h-4" />
-            確認登記
+            {{ t('spc.calibration.confirmRecord') }}
           </button>
         </div>
       </div>
@@ -1029,37 +1035,38 @@ onMounted(async () => {
 
     <!-- 校正歷史與證書 Modal -->
     <div v-if="showHistoryModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white border border-cyan-200 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
+      <div data-testid="calibration-history-dialog" role="dialog" :aria-label="t('spc.calibration.historyTitle')" class="bg-white border border-cyan-200 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
         <div class="p-4 border-b border-cyan-100 flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-lg text-slate-800">歷次校正與證書紀錄</h3>
+            <h3 class="font-bold text-lg text-slate-800">{{ t('spc.calibration.historyTitle') }}</h3>
             <p class="text-xs text-slate-400 mt-0.5">{{ selectedInstrument?.code }} - {{ selectedInstrument?.name }}</p>
           </div>
           <button @click="showHistoryModal = false" class="text-slate-400 hover:text-slate-800"><X class="w-5 h-5" /></button>
         </div>
 
         <div class="p-5 max-h-[70vh] overflow-y-auto space-y-4">
-          <div v-if="historyLoading" class="text-center py-6 text-slate-400">載入歷史紀錄中...</div>
-          <div v-else-if="historyRecords.length === 0" class="text-center py-6 text-slate-500">目前尚無歷史校正紀錄。</div>
+<LocalePicker />
+          <div v-if="historyLoading" class="text-center py-6 text-slate-400">{{ t('spc.calibration.historyLoading') }}</div>
+          <div v-else-if="historyRecords.length === 0" class="text-center py-6 text-slate-500">{{ t('spc.calibration.historyEmpty') }}</div>
 
           <div v-for="rec in historyRecords" :key="rec.id" class="p-4 rounded-xl bg-sky-50 border border-cyan-100 space-y-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span :class="['px-2 py-0.5 rounded text-xs font-semibold', rec.result === 'Passed' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700']">
-                  {{ rec.result === 'Passed' ? '合格' : '不合格' }}
+                  {{ rec.result === 'Passed' ? t('spc.calibration.passed') : t('spc.calibration.failed') }}
                 </span>
-                <span class="font-mono text-sm text-slate-800 font-bold">校正日期：{{ rec.calibrationDate }}</span>
+                <span class="font-mono text-sm text-slate-800 font-bold">{{ t('spc.calibration.calibrationDatePrefix') }}{{ rec.calibrationDate }}</span>
               </div>
-              <span class="text-xs text-slate-400">登記人員：{{ rec.createdBy }} ({{ rec.createdAt }})</span>
+              <span class="text-xs text-slate-400">{{ t('spc.calibration.recordedBy') }}{{ rec.createdBy }} ({{ rec.createdAt }})</span>
             </div>
 
             <div class="text-xs text-slate-500 grid grid-cols-2 gap-2 pt-1 border-t border-cyan-100">
-              <div>原到期日：<span class="font-mono text-slate-700">{{ rec.previousDueDate }}</span></div>
-              <div>更新後到期日：<span class="font-mono text-slate-700">{{ rec.nextDueDate }}</span></div>
+              <div>{{ t('spc.calibration.originalDue') }}<span class="font-mono text-slate-700">{{ rec.previousDueDate }}</span></div>
+              <div>{{ t('spc.calibration.updatedDue') }}<span class="font-mono text-slate-700">{{ rec.nextDueDate }}</span></div>
             </div>
 
             <div v-if="rec.reason" class="text-xs text-slate-600 bg-white p-2 rounded border border-cyan-50">
-              備註：{{ rec.reason }}
+              {{ t('spc.calibration.remarksPrefix') }}{{ rec.reason }}
             </div>
 
             <!-- 附件下載按鈕 -->
@@ -1078,107 +1085,108 @@ onMounted(async () => {
         </div>
 
         <div class="p-4 bg-sky-50 border-t border-cyan-100 flex justify-end">
-          <button @click="showHistoryModal = false" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-medium hover:bg-slate-200 transition">關閉</button>
+          <button @click="showHistoryModal = false" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-medium hover:bg-slate-200 transition">{{ t('spc.calibration.close') }}</button>
         </div>
       </div>
     </div>
 
     <!-- 提醒天數設定 Modal -->
     <div v-if="showSettingsModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white border border-cyan-200 rounded-xl w-full max-w-md max-h-[90dvh] overflow-y-auto shadow-2xl">
+      <div data-testid="calibration-settings-dialog" role="dialog" :aria-label="t('spc.calibration.settingsTitle')" class="bg-white border border-cyan-200 rounded-xl w-full max-w-md max-h-[90dvh] overflow-y-auto shadow-2xl">
         <div class="p-4 border-b border-cyan-100 flex items-center justify-between">
           <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
             <Sliders class="w-5 h-5 text-cyan-500" />
-            校正提醒天數設定
+            {{ t('spc.calibration.settingsTitle') }}
           </h3>
           <button @click="showSettingsModal = false" class="text-slate-400 hover:text-slate-800"><X class="w-5 h-5" /></button>
         </div>
 
         <div class="p-5 space-y-4">
+<LocalePicker />
           <div>
-            <p class="text-sm font-medium text-slate-700 mb-2">什麼時候提醒？（可複選）</p>
+            <p class="text-sm font-medium text-slate-700 mb-2">{{ t('spc.calibration.whenRemind') }}</p>
             <div class="grid grid-cols-2 gap-2">
               <label v-for="day in reminderOptions" :key="day" class="flex items-center gap-2 rounded-lg border border-cyan-200 p-2 text-sm text-slate-700 cursor-pointer">
-                <input v-model="settingsForm.reminderDays" type="checkbox" :value="day" class="rounded text-cyan-600" />
-                {{ day === 0 ? '到期當天' : '提前 ' + day + ' 天' }}
+                <input data-testid="calibration-settingsForm.reminderDays" v-model="settingsForm.reminderDays" type="checkbox" :value="day" class="rounded text-cyan-600" />
+                {{ day === 0 ? t('spc.calibration.dueDay') : t('spc.calibration.daysBefore',{day}) }}
               </label>
             </div>
             <div class="flex items-end gap-2 mt-3">
-              <label class="flex-1 min-w-0 text-xs text-slate-600">自訂提前天數
-                <input v-model="customReminderDay" type="number" min="0" max="365" step="1" placeholder="例如 45" @keydown.enter.prevent="addReminderDay"
+              <label class="flex-1 min-w-0 text-xs text-slate-600">{{ t('spc.calibration.customDays') }}
+                <input data-testid="calibration-customReminderDay" v-model="customReminderDay" type="number" min="0" max="365" step="1" :placeholder="t('spc.calibration.customDaysExample')" @keydown.enter.prevent="addReminderDay"
                   class="mt-1 w-full rounded-lg border border-cyan-200 px-3 py-2 text-sm" />
               </label>
-              <button type="button" @click="addReminderDay" class="rounded-lg bg-cyan-100 px-3 py-2 text-sm text-cyan-800">加入</button>
+              <button type="button" data-testid="calibration-addReminderDay" @click="addReminderDay" class="rounded-lg bg-cyan-100 px-3 py-2 text-sm text-cyan-800">{{ t('spc.calibration.add') }}</button>
             </div>
-            <button type="button" @click="settingsForm.reminderDays = [30, 7, 0]; customReminderDay = ''; reminderError = ''" class="mt-2 text-xs text-cyan-700 underline">恢復預設（提前 30 天、7 天、到期當天）</button>
-            <p v-if="reminderError" role="alert" class="mt-2 text-xs text-rose-600">{{ reminderError }}</p>
+            <button type="button" @click="settingsForm.reminderDays = [30, 7, 0]; customReminderDay = ''; reminderError = ''" class="mt-2 text-xs text-cyan-700 underline">{{ t('spc.calibration.resetDefaults') }}</button>
+            <p v-if="reminderError" role="alert" class="mt-2 text-xs text-rose-600">{{ displayUiMessage(t,reminderError) }}</p>
           </div>
 
           <fieldset :disabled="testLoading" class="space-y-2 border-t border-cyan-100 pt-3">
-            <legend class="text-sm font-medium text-slate-700">通知方式</legend>
+            <legend class="text-sm font-medium text-slate-700">{{ t('spc.calibration.notificationChannel') }}</legend>
             <div class="grid grid-cols-2 gap-2">
               <label class="flex items-center gap-2 border border-cyan-200 rounded-lg p-3 text-sm text-slate-700">
-                <input v-model="settingsForm.notificationChannel" type="radio" value="Email" name="notification-channel" />Email
+                <input data-testid="calibration-settingsForm.notificationChannel" v-model="settingsForm.notificationChannel" type="radio" value="Email" name="notification-channel" />Email
               </label>
               <label class="flex items-center gap-2 border border-cyan-200 rounded-lg p-3 text-sm text-slate-700">
-                <input v-model="settingsForm.notificationChannel" type="radio" value="SynologyChat" name="notification-channel" />Synology Chat
+                <input data-testid="calibration-settingsForm.notificationChannel" v-model="settingsForm.notificationChannel" type="radio" value="SynologyChat" name="notification-channel" />Synology Chat
               </label>
             </div>
-            <p v-if="settingsForm.notificationChannel === 'Email'" class="text-xs text-slate-500">每日提醒寄給各儀器設定的 Email 收件人。</p>
+            <p v-if="settingsForm.notificationChannel === 'Email'" class="text-xs text-slate-500">{{ t('spc.calibration.emailHelp') }}</p>
             <div v-else class="space-y-2">
-              <p class="text-xs text-slate-500">每日提醒送到此 Webhook 指定的 Chat 群組。每台儀器每個提醒階段送一則訊息。</p>
-              <label class="block text-xs text-slate-600">Synology Chat Webhook 網址
-                <input v-model="chatWebhookUrl" type="password" autocomplete="off" :disabled="testLoading"
-                  :placeholder="settingsForm.chatWebhookConfigured ? '已設定；留空保留原網址' : '貼上傳入 Webhook 網址'"
+              <p class="text-xs text-slate-500">{{ t('spc.calibration.chatHelp') }}</p>
+              <label class="block text-xs text-slate-600">{{ t('spc.calibration.webhook') }}
+                <input data-testid="calibration-chatWebhookUrl" v-model="chatWebhookUrl" type="password" autocomplete="off" :disabled="testLoading"
+                  :placeholder="settingsForm.chatWebhookConfigured ? t('spc.calibration.webhookKeep') : t('spc.calibration.webhookPaste')"
                   class="mt-1 w-full border border-cyan-200 rounded-lg px-3 py-2 text-sm" />
               </label>
-              <p v-if="settingsForm.chatWebhookConfigured" class="text-xs text-emerald-700">已儲存 Webhook；可直接測試，或貼上新網址替換。</p>
+              <p v-if="settingsForm.chatWebhookConfigured" class="text-xs text-emerald-700">{{ t('spc.calibration.webhookStored') }}</p>
               <details class="text-xs text-slate-500">
-                <summary class="cursor-pointer text-cyan-700">如何取得 Webhook 網址？</summary>
-                <p class="mt-1">在 Synology Chat 點個人頭像 → 整合（Integration）→ 傳入 Webhook（Incoming Webhooks），新增並選擇接收群組，再複製完整網址貼到上方。</p>
+                <summary class="cursor-pointer text-cyan-700">{{ t('spc.calibration.webhookHow') }}</summary>
+                <p class="mt-1">{{ t('spc.calibration.webhookInstructions') }}</p>
               </details>
             </div>
           </fieldset>
 
           <div class="pt-2">
             <label class="flex items-center gap-2 text-sm text-slate-600">
-              <input type="checkbox" v-model="settingsForm.isEnabled" class="rounded bg-white border-cyan-300 text-cyan-600 focus:ring-cyan-400" />
-              啟用每日定時通知 (08:00 台北時間)
+              <input type="checkbox" data-testid="calibration-settingsForm.isEnabled" v-model="settingsForm.isEnabled" class="rounded bg-white border-cyan-300 text-cyan-600 focus:ring-cyan-400" />
+              {{ t('spc.calibration.enableDaily') }}
             </label>
           </div>
 
           <div class="pt-3 border-t border-cyan-100 space-y-2">
-            <label class="block text-xs font-medium text-slate-400">發送測試校正通知</label>
-            <p v-if="settingsForm.notificationChannel === 'Email'" class="text-xs text-slate-500">只寄給下方指定信箱，主旨含【測試】，不寫入到期通知紀錄，也不開啟每日自動寄信。</p>
-            <p v-else class="text-xs text-slate-500">測試會立即送一則【測試】訊息到指定群組，不開啟每日排程。新網址需按「儲存設定」才會保留。</p>
+            <label class="block text-xs font-medium text-slate-400">{{ t('spc.calibration.sendTest') }}</label>
+            <p v-if="settingsForm.notificationChannel === 'Email'" class="text-xs text-slate-500">{{ t('spc.calibration.emailTestHelp') }}</p>
+            <p v-else class="text-xs text-slate-500">{{ t('spc.calibration.chatTestHelp') }}</p>
             <input
               v-if="settingsForm.notificationChannel === 'Email'"
-              v-model="testEmail"
+              data-testid="calibration-testEmail" v-model="testEmail"
               type="email"
               placeholder="test@pmr.com.tw"
-              aria-label="測試通知收件人"
+              :aria-label="t('spc.calibration.testRecipient')"
               class="w-full bg-white border border-cyan-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-cyan-400"
             />
             <button
               type="button"
-              @click="sendTestNotification"
+              data-testid="calibration-sendTestNotification" @click="sendTestNotification"
               :disabled="testLoading"
               class="w-full px-3 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-white text-sm font-medium flex items-center justify-center gap-2 transition"
             >
               <RefreshCw v-if="testLoading" class="w-4 h-4 animate-spin" />
               <Send v-else class="w-4 h-4" />
-              {{ testLoading ? "正在傳送測試通知…" : settingsForm.notificationChannel === "SynologyChat" ? "發送測試 Chat 通知" : "發送測試校正通知" }}
+              {{ testLoading ? t('spc.calibration.testSending') : settingsForm.notificationChannel === "SynologyChat" ? t('spc.calibration.testChat') : t('spc.calibration.sendTest') }}
             </button>
-            <p v-if="testResult" class="text-xs text-emerald-600">{{ testResult }}</p>
-            <p v-if="testError" class="text-xs text-rose-600">{{ testError }}</p>
+            <p v-if="testResult" class="text-xs text-emerald-600">{{ displayUiMessage(t,testResult) }}</p>
+            <p v-if="testError" class="text-xs text-rose-600">{{ displayUiMessage(t,testError) }}</p>
           </div>
         </div>
 
         <div class="p-4 bg-sky-50 border-t border-cyan-100 flex justify-end gap-3">
-          <button @click="showSettingsModal = false" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-medium hover:bg-slate-200 transition">取消</button>
-          <button @click="saveSettings" :disabled="testLoading" class="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-400 transition flex items-center gap-2">
+          <button @click="showSettingsModal = false" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-medium hover:bg-slate-200 transition">{{ t('spc.calibration.cancel') }}</button>
+          <button data-testid="calibration-saveSettings" @click="saveSettings" :disabled="testLoading" class="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-400 transition flex items-center gap-2">
             <Save class="w-4 h-4" />
-            儲存設定
+            {{ t('spc.calibration.saveSettings') }}
           </button>
         </div>
       </div>
