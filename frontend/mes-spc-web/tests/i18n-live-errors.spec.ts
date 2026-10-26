@@ -85,3 +85,11 @@ test('SMTP recipient failure switches language without another send',async({page
  for(const locale of ['en-US','zh-CN','zh-TW']){await page.getByTestId('locale-select').selectOption(locale);await expect(page.locator('main')).toContainText(apiCatalog(locale).mailSmtpFailed);expect(fixture.count()).toBe(count)}
  expect(fixture.errors).toEqual([]);await expect(page.locator('main b')).toHaveCount(0);
 });
+
+
+test('report recipient failure switches language without another send or losing original diagnostics',async({page})=>{
+ const fixture=await prepare(page,path=>({json:path==='/api/v1/spc-report-settings'?{schedule:{sendTime:'08:00',weeklyDayOfWeek:1,monthlyDay:1},recipientOperatorIds:[1],operators:[{id:1,operatorCode:'001',operatorName:raw,email:'fixture@example.invalid',isActive:true}],departments:[]}:path==='/api/v1/spc-report-settings/send-now'?{reportType:'weekly',displayType:'週報',periodLabel:'2026-10-01 ~ 2026-10-25',fileName:'SPC_Item_Overview_週報_20261026.xlsx',total:2,success:0,failed:2,recipients:[{operatorName:raw,email:'fixture@example.invalid',success:false,errorMessage:'寄信服務回傳失敗。',displayMessage:{messageKey:'spc.api.mailSmtpFailed',args:{}}},{operatorName:raw,email:'unknown@example.invalid',success:false,errorMessage:raw,displayMessage:{messageKey:'common.actions.refresh'}}]}:[]}),['POST /api/v1/spc-report-settings/send-now']);
+ await page.goto('/settings/spc-reports');await page.getByTestId('settings-sendWeekly').click();await expect(page.locator('main')).toContainText(apiCatalog('zh-TW').mailSmtpFailed);const count=fixture.count();
+ for(const locale of ['en-US','zh-CN','zh-TW']){await page.getByTestId('locale-select').selectOption(locale);await expect(page.locator('main')).toContainText(apiCatalog(locale).mailSmtpFailed);await expect(page.locator('main')).toContainText(raw);expect(fixture.count()).toBe(count)}
+ expect(fixture.errors).toEqual([]);await expect(page.locator('main b')).toHaveCount(0);
+});

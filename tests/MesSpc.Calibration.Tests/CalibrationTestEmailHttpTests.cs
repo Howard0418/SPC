@@ -38,7 +38,7 @@ public sealed class CapturingEmailService : IEmailNotificationService
         FileSubjects.Add(fileSubject);
         return Task.FromResult(Result);
     }
-    public Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName) => Task.FromResult(Result);
+    public Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName, string? uiLocale = null) => Task.FromResult(Result);
 }
 
 public sealed class CalibrationTestEmailFactory : WebApplicationFactory<InstrumentCalibrationsController>

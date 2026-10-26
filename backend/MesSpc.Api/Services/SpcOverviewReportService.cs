@@ -1,3 +1,5 @@
+using MesSpc.Api.Services.Localization;
+using MesSpc.Api.Controllers;
 using ClosedXML.Excel;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +8,7 @@ namespace MesSpc.Api.Services;
 
 public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : ISpcOverviewReportBuilder
 {
-    public async Task<byte[]> BuildExcelAsync(DateTime startUtc, DateTime endUtc, CancellationToken ct = default)
+    public async Task<byte[]> BuildExcelAsync(DateTime startUtc, DateTime endUtc, CancellationToken ct = default, string? uiLocale = null)
     {
         var dimensions = await db.ControlChartGroups.AsNoTracking()
             .Where(x => x.IsEnabled)
@@ -47,12 +49,19 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : 
             .ThenBy(x => x.ChartName)
             .ToList();
 
+        return BuildWorkbook(summaryRows, startUtc, endUtc, uiLocale);
+    }
+
+    /// <summary>Formats human-readable labels only; source values and cell types remain unchanged.</summary>
+    public static byte[] BuildWorkbook(IEnumerable<ChartSummaryDto> summaryRows, DateTime startUtc, DateTime endUtc, string? uiLocale = null)
+    {
+        string T(string key) => SpcReportPresentation.Text(key, uiLocale);
         using var wb = new XLWorkbook();
-        var ws = wb.Worksheets.Add("項目管制總覽");
-        string[] headers = ["ID", "管制類別", "圖表類型", "製程線別", "槽位", "管制圖名稱", "管制圖種類",
-            "USL", "LSL", "UCL", "LCL", "管制界線計算方式", "本期量測數", "本期OOS", "上月OOS",
-            "本期%OOS", "上月%OOS", "本期OOC", "本期%OOC", "Ca", "Pp", "本期Ppk", "上月Ppk",
-            "工程負責人", "備註"];
+        var ws = wb.Worksheets.Add(T("reportOverviewSheet"));
+        string[] headers = ["ID", T("reportControlCategory"), T("reportChartKindHeader"), T("reportProcessLine"), T("reportSlot"), T("reportChartName"), T("reportChartTypeHeader"),
+            "USL", "LSL", "UCL", "LCL", T("reportLimitMethod"), T("reportMeasurementsCurrent"), T("reportOosCurrent"), T("reportOosPrevious"),
+            T("reportOosPercentCurrent"), T("reportOosPercentPrevious"), T("reportOocCurrent"), T("reportOocPercentCurrent"), "Ca", "Pp", T("reportPpkCurrent"), T("reportPpkPrevious"),
+            T("reportOwner"), T("reportRemarks")];
         for (var i = 0; i < headers.Length; i++)
         {
             ws.Cell(3, i + 1).Value = headers[i];
@@ -61,18 +70,18 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : 
             ws.Cell(3, i + 1).Style.Font.FontColor = XLColor.White;
         }
 
-        ws.Cell(1, 1).Value = "SPC 管制項目總覽報表";
+        ws.Cell(1, 1).Value = T("reportOverviewTitle");
         ws.Cell(1, 1).Style.Font.Bold = true;
-        ws.Cell(2, 1).Value = "報表期間";
+        ws.Cell(2, 1).Value = T("reportPeriod");
         ws.Cell(2, 2).Value = $"{startUtc:yyyy-MM-dd HH:mm} ~ {endUtc:yyyy-MM-dd HH:mm}";
         ws.Range(1, 1, 2, headers.Length).Style.Fill.BackgroundColor = XLColor.LightYellow;
 
         var row = 4;
         foreach (var item in summaryRows)
         {
-            object?[] values = [item.PartProcessCharacteristicId, item.ControlCategory, item.ChartKind,
+            object?[] values = [item.PartProcessCharacteristicId, item.ControlCategory, SpcReportPresentation.Display(item.ChartKindMessage, item.ChartKind, uiLocale),
                 item.LineOrProcessName, item.SlotName, item.ChartName, item.ChartType,
-                item.Usl, item.Lsl, item.Ucl, item.Lcl, item.LimitCalculationMethod,
+                item.Usl, item.Lsl, item.Ucl, item.Lcl, SpcReportPresentation.Display(item.LimitCalculationMethodMessage, item.LimitCalculationMethod, uiLocale),
                 item.TotalCount, item.OosCount, item.PreviousMonthOosCount,
                 item.OosPercentage, item.PreviousMonthOosPercentage, item.OocCount,
                 item.OocPercentage, item.Ca, item.Pp, item.Ppk, item.PreviousMonthPpk,

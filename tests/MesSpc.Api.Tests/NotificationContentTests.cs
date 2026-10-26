@@ -130,6 +130,6 @@ public class NotificationContentTests
         public Task<bool> SendAlertEmailAsync(AlertEvent alert,string recipientEmail,string recipientName,SmtpSettingsOverride? overrideSettings=null,string? uiLocale=null) {Calls.Add((recipientEmail,uiLocale,overrideSettings));return Task.FromResult(Result);}
         public Task<bool> SendTestEmailAsync(string recipientEmail,SmtpSettingsOverride? overrideSettings=null,string? uiLocale=null) {Calls.Add((recipientEmail,uiLocale,overrideSettings));return Task.FromResult(Result);}
         public Task<bool> SendHtmlEmailAsync(string recipientEmail,string recipientName,string subject,string htmlBody,SmtpSettingsOverride? overrideSettings=null, string? uiLocale = null, string? fileSubject = null)=>throw new InvalidOperationException("No real delivery");
-        public Task<bool> SendReportEmailAsync(string recipientEmail,string recipientName,string subject,string htmlBody,byte[] excelBytes,string fileName)=>throw new InvalidOperationException("No real delivery");
+        public Task<bool> SendReportEmailAsync(string recipientEmail,string recipientName,string subject,string htmlBody,byte[] excelBytes,string fileName, string? uiLocale = null)=>throw new InvalidOperationException("No real delivery");
     }
 }

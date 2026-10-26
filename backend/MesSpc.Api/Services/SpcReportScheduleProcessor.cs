@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Text.Json;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -44,11 +45,12 @@ public class SpcReportScheduleProcessor(
         var successfulSendCount = 0;
         foreach (var recipient in recipients)
         {
+            var content = SpcReportPresentation.ScheduledMail(recipient.OperatorName, weeklyDue, now);
             var sent = await email.SendReportEmailAsync(
                 recipient.Email!,
                 recipient.OperatorName,
-                $"【SPC 項目管制總覽{period}】{now:yyyy-MM-dd}",
-                $"<p>{recipient.OperatorName} 您好，附件為 {now:yyyy-MM-dd} 的 SPC 項目管制總覽{period}。</p>",
+                content.Subject,
+                content.HtmlBody,
                 bytes,
                 $"SPC_Item_Overview_{period}_{now:yyyyMMdd}.xlsx");
 

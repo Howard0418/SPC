@@ -102,7 +102,7 @@ public class SpcReportScheduleProcessorTests
     {
         public int BuildCount { get; private set; }
 
-        public Task<byte[]> BuildExcelAsync(DateTime startUtc, DateTime endUtc, CancellationToken ct = default)
+        public Task<byte[]> BuildExcelAsync(DateTime startUtc, DateTime endUtc, CancellationToken ct = default, string? uiLocale = null)
         {
             BuildCount++;
             return Task.FromResult(new byte[] { 1, 2, 3 });
@@ -122,7 +122,7 @@ public class SpcReportScheduleProcessorTests
         public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null, string? fileSubject = null)
             => Task.FromResult(true);
 
-        public Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName)
+        public Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName, string? uiLocale = null)
         {
             Attempts++;
             return Task.FromResult(sendResult(recipientEmail));

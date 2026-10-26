@@ -761,6 +761,8 @@ public class ChartSummaryDto
     public string ControlCategory { get; set; } = string.Empty;
     public string GroupType { get; set; } = string.Empty;
     public string ChartKind { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public MesSpc.Api.SpcEngine.Models.UiDisplayMessage? ChartKindMessage { get; set; }
     public string LineOrProcessName { get; set; } = string.Empty;
     public string SlotName { get; set; } = string.Empty;
     public string ChartName { get; set; } = string.Empty;
@@ -770,6 +772,8 @@ public class ChartSummaryDto
     public double? Ucl { get; set; }
     public double? Lcl { get; set; }
     public string LimitCalculationMethod { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public MesSpc.Api.SpcEngine.Models.UiDisplayMessage? LimitCalculationMethodMessage { get; set; }
     public int TotalCount { get; set; }
     public int OosCount { get; set; }
     public double OosPercentage { get; set; }

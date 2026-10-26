@@ -12,7 +12,7 @@ namespace MesSpc.Api.Controllers;
 [Route("api/v1/spc-report-settings")]
 public class SpcReportSchedulesController(
     AppDbContext db,
-    SpcOverviewReportService reportService,
+    ISpcOverviewReportBuilder reportService,
     IEmailNotificationService emailService) : ControllerBase
 {
     [HttpGet]
@@ -54,7 +54,7 @@ public class SpcReportSchedulesController(
     {
         var endUtc = end?.ToUniversalTime() ?? DateTime.UtcNow;
         var startUtc = start?.ToUniversalTime() ?? endUtc.AddMonths(-1);
-        var bytes = await reportService.BuildExcelAsync(startUtc, endUtc, ct);
+        var bytes = await reportService.BuildExcelAsync(startUtc, endUtc, ct, ApiUiMessageCatalog.RequestLocale(Request));
         return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"SPC_Item_Overview_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
     }
@@ -78,7 +78,7 @@ public class SpcReportSchedulesController(
         var tz = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
         var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
         var (startUtc, endUtc, periodLabel) = GetReportPeriod(reportType, nowLocal, tz);
-        var bytes = await reportService.BuildExcelAsync(startUtc, endUtc, ct);
+        var bytes = await reportService.BuildExcelAsync(startUtc, endUtc, ct, ApiUiMessageCatalog.RequestLocale(Request));
         var displayType = reportType == "weekly" ? "週報" : "月報";
         var fileName = $"SPC_Item_Overview_{displayType}_{nowLocal:yyyyMMdd_HHmm}.xlsx";
         var results = new List<SendNowRecipientResult>();
@@ -87,20 +87,23 @@ public class SpcReportSchedulesController(
         {
             try
             {
+                var locale = ApiUiMessageCatalog.RequestLocale(Request);
+                var content = SpcReportPresentation.ManualMail(recipient.OperatorName, reportType == "weekly", nowLocal, periodLabel, locale);
                 var sent = await emailService.SendReportEmailAsync(
                     recipient.Email!,
                     recipient.OperatorName,
-                    $"【SPC 項目管制總覽{displayType}測試寄送】{nowLocal:yyyy-MM-dd HH:mm}",
-                    $"<p>{recipient.OperatorName} 您好，附件為 SPC 項目管制總覽{displayType}。</p><p>報表期間：{periodLabel}</p>",
+                    content.Subject,
+                    content.HtmlBody,
                     bytes,
-                    fileName);
+                    fileName, locale);
                 results.Add(new SendNowRecipientResult(
                     recipient.Id,
                     recipient.OperatorCode,
                     recipient.OperatorName,
                     recipient.Email!,
                     sent,
-                    sent ? null : "寄信服務回傳失敗。"));
+                    sent ? null : "寄信服務回傳失敗。",
+                    sent ? null : ApiUiError.Create("MAIL_SMTP_FAILED", "spc.api.mailSmtpFailed")));
             }
             catch (Exception ex)
             {
@@ -138,7 +141,8 @@ public class SpcReportSchedulesController(
         string SendTime, bool IsEnabled);
 
     public record SendNowRequest(string ReportType, List<int> RecipientOperatorIds);
-    public record SendNowRecipientResult(int Id, string OperatorCode, string OperatorName, string Email, bool Success, string? ErrorMessage);
+    public record SendNowRecipientResult(int Id, string OperatorCode, string OperatorName, string Email, bool Success, string? ErrorMessage,
+        [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] ApiUiError? DisplayMessage = null);
 
     private static string? NormalizeReportType(string? reportType)
     {

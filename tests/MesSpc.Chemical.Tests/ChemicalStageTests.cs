@@ -256,7 +256,7 @@ public class ChemicalStageTests
         public Task<bool> SendAlertEmailAsync(AlertEvent a,string e,string n,SmtpSettingsOverride? o=null, string? uiLocale = null)=>Task.FromResult(true);
         public Task<bool> SendTestEmailAsync(string e,SmtpSettingsOverride? o=null, string? uiLocale = null)=>Task.FromResult(true);
         public Task<bool> SendHtmlEmailAsync(string e,string n,string s,string h,SmtpSettingsOverride? o=null, string? uiLocale = null, string? fileSubject = null)=>Task.FromResult(true);
-        public Task<bool> SendReportEmailAsync(string e,string n,string s,string h,byte[] b,string f)=>Task.FromResult(true);
+        public Task<bool> SendReportEmailAsync(string e,string n,string s,string h,byte[] b,string f,string? uiLocale=null)=>Task.FromResult(true);
     }
 }
 

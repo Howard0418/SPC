@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using ClosedXML.Excel;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +12,14 @@ namespace MesSpc.Api.Controllers;
 public class ReportsController(AppDbContext dbContext) : ControllerBase
 {
     [HttpGet("cpk-summary")]
-    public async Task<IActionResult> ExportCpkSummary([FromQuery] string? month)
+    public async Task<IActionResult> ExportCpkSummary([FromQuery] string? month, [FromQuery] string? uiLocale = null)
     {
         if (Request.Path.StartsWithSegments("/api/v2", StringComparison.OrdinalIgnoreCase))
             return LegacyV2Api.Gone("/api/v1/reports/cpk-summary");
 
+        // This optional query is a display preference for the existing popup download, never a data filter.
+        var locale = uiLocale is null ? ApiUiMessageCatalog.RequestLocale(Request) : ApiUiMessageCatalog.NormalizeLocale(uiLocale);
+        string T(string key) => SpcReportPresentation.Text(key, locale);
         var targetMonth = string.IsNullOrEmpty(month) ? DateTime.UtcNow.ToString("yyyy-MM") : month;
         
         var characteristics = await dbContext.PartProcessCharacteristics
@@ -33,30 +37,30 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
         using var wb = new XLWorkbook();
         
         // Sheet 1: Executive Summary
-        var wsSummary = wb.Worksheets.Add("廠級品質執行摘要");
-        wsSummary.Cell("B2").Value = "PMR 全廠品管指標與 SPC 執行摘要";
+        var wsSummary = wb.Worksheets.Add(T("reportExecutiveSheet"));
+        wsSummary.Cell("B2").Value = T("reportExecutiveTitle");
         wsSummary.Cell("B2").Style.Font.Bold = true;
         wsSummary.Cell("B2").Style.Font.FontSize = 18;
         wsSummary.Cell("B2").Style.Font.FontColor = XLColor.DarkBlue;
 
-        wsSummary.Cell("B4").Value = "統計月份:";
+        wsSummary.Cell("B4").Value = T("reportMonth");
         wsSummary.Cell("C4").Value = targetMonth;
-        wsSummary.Cell("B5").Value = "報表產出時間:";
+        wsSummary.Cell("B5").Value = T("reportGeneratedAt");
         wsSummary.Cell("C5").Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-        wsSummary.Cell("B7").Value = "指標名稱";
-        wsSummary.Cell("C7").Value = "統計數據";
+        wsSummary.Cell("B7").Value = T("reportMetric");
+        wsSummary.Cell("C7").Value = T("reportMetricValue");
         wsSummary.Range("B7:C7").Style.Font.Bold = true;
         wsSummary.Range("B7:C7").Style.Fill.BackgroundColor = XLColor.SteelBlue;
         wsSummary.Range("B7:C7").Style.Font.FontColor = XLColor.White;
 
-        wsSummary.Cell("B8").Value = "總量測數據筆數";
+        wsSummary.Cell("B8").Value = T("reportMeasurementsTotal");
         wsSummary.Cell("C8").Value = totalMeasurements;
-        wsSummary.Cell("B9").Value = "異常通報件數 (未結案)";
+        wsSummary.Cell("B9").Value = T("reportAlertsOpen");
         wsSummary.Cell("C9").Value = alertCount;
-        wsSummary.Cell("B10").Value = "SPC 觸發失控/判定不良次數";
+        wsSummary.Cell("B10").Value = T("reportViolationsTotal");
         wsSummary.Cell("C10").Value = oocMeasurements;
-        wsSummary.Cell("B11").Value = "全廠製程合格率 (%)";
+        wsSummary.Cell("B11").Value = T("reportPassRate");
         wsSummary.Cell("C11").Value = passRate + "%";
 
         wsSummary.Range("B8:C11").Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
@@ -64,8 +68,8 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
         wsSummary.Columns().AdjustToContents();
 
         // Sheet 2: Master CPK Table
-        var wsCpk = wb.Worksheets.Add("各項料號 CPK 總表");
-        string[] headers = ["項次", "產品料號", "產品名稱", "工站名稱", "檢驗特性", "子組大小 N", "USL", "LSL", "量測平均數", "標準差 (Sigma)", "Cp", "Cpk", "能力判定狀態"];
+        var wsCpk = wb.Worksheets.Add(T("reportCpkSheet"));
+        string[] headers = [T("reportIndex"), T("reportPartNo"), T("reportPartName"), T("reportProcessName"), T("reportCharacteristic"), T("reportSubgroupN"), "USL", "LSL", T("reportMean"), T("reportStdDev"), "Cp", "Cpk", T("reportCapabilityStatus")];
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = wsCpk.Cell(1, i + 1);
@@ -90,6 +94,7 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
             double cp = 0;
             double cpk = 0;
             string status = "未檢測";
+            string statusKey = "reportUntested";
 
             if (measurements.Count > 1)
             {
@@ -108,14 +113,15 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
                     cpk = Math.Round(Math.Min(cpu, cpl), 2);
                 }
 
-                if (cpk >= 1.33) status = "優良 (A級)";
-                else if (cpk >= 1.0) status = "警告 (B級)";
-                else status = "能力不足 (C級)";
+                if (cpk >= 1.33) { status = "優良 (A級)"; statusKey = "reportGradeA"; }
+                else if (cpk >= 1.0) { status = "警告 (B級)"; statusKey = "reportGradeB"; }
+                else { status = "能力不足 (C級)"; statusKey = "reportGradeC"; }
             }
             else if (measurements.Count == 1)
             {
                 mean = measurements[0];
                 status = "單筆樣本不足";
+                statusKey = "reportSingleSample";
             }
 
             wsCpk.Cell(rowNo, 1).Value = idx++;
@@ -124,8 +130,8 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
             wsCpk.Cell(rowNo, 4).Value = ppc.Process?.ProcessName ?? "N/A";
             wsCpk.Cell(rowNo, 5).Value = ppc.Characteristic?.CharacteristicName ?? "N/A";
             wsCpk.Cell(rowNo, 6).Value = ppc.SampleSize;
-            wsCpk.Cell(rowNo, 7).Value = ppc.USL.HasValue ? ppc.USL.Value.ToString("F2") : "無";
-            wsCpk.Cell(rowNo, 8).Value = ppc.LSL.HasValue ? ppc.LSL.Value.ToString("F2") : "無";
+            wsCpk.Cell(rowNo, 7).Value = ppc.USL.HasValue ? ppc.USL.Value.ToString("F2") : T("reportNone");
+            wsCpk.Cell(rowNo, 8).Value = ppc.LSL.HasValue ? ppc.LSL.Value.ToString("F2") : T("reportNone");
             wsCpk.Cell(rowNo, 9).Value = measurements.Count > 0 ? Math.Round(mean, 3) : 0;
             wsCpk.Cell(rowNo, 10).Value = measurements.Count > 1 ? Math.Round(stdev, 4) : 0;
             wsCpk.Cell(rowNo, 11).Value = cp > 0 ? cp : 0;
@@ -134,7 +140,7 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
             cpkCell.Value = cpk > 0 ? cpk : 0;
 
             var statusCell = wsCpk.Cell(rowNo, 13);
-            statusCell.Value = status;
+            statusCell.Value = T(statusKey);
 
             if (status.Contains("優良"))
             {

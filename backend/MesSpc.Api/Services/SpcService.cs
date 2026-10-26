@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
@@ -1246,6 +1247,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 ControlCategory = groupName,
                 GroupType = mappingGroupType,
                 ChartKind = FormatChartKind(mappingGroupType),
+                ChartKindMessage = SpcReportPresentation.ChartKind(mappingGroupType),
                 LineOrProcessName = lineName,
                 SlotName = FormatSlotName(mapping.Tank),
                 ChartName = mapping.Characteristic?.CharacteristicName ?? "",
@@ -1255,6 +1257,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 Ucl = mapping.UCL ?? calculatedLimits.Ucl ?? result.Limits?.UCL,
                 Lcl = mapping.LCL ?? calculatedLimits.Lcl ?? result.Limits?.LCL,
                 LimitCalculationMethod = calcMethod,
+                LimitCalculationMethodMessage = SpcReportPresentation.CalculationMethod(calculatedLimits.CalculationMethod, result.ChartType, usesManualLimits),
                 TotalCount = importedCount,
                 OosCount = oosCount,
                 OosPercentage = Math.Round(oosPercentage, 2),

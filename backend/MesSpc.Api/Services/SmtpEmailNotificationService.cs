@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
@@ -24,14 +25,14 @@ public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEma
     public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null, string? fileSubject = null)
         => SendEmailInternalAsync(recipientEmail, recipientName, subject, htmlBody, overrideSettings, uiLocale, fileSubject);
 
-    public async Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName)
+    public async Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName, string? uiLocale = null)
     {
         var host = config["SmtpSettings:Host"] ?? "localhost";
         var port = int.TryParse(config["SmtpSettings:Port"], out var p) ? p : 25;
         var sender = config["SmtpSettings:SenderEmail"] ?? "mes-spc-report@pmr-spc.internal";
         using var mail = new MailMessage
         {
-            From = new MailAddress(sender, "MES+SPC 報表中心"),
+            From = new MailAddress(sender, SpcReportPresentation.Text("reportMailSender", uiLocale)),
             Subject = subject,
             Body = htmlBody,
             IsBodyHtml = true,

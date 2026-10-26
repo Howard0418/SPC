@@ -1,7 +1,8 @@
 <script setup>
 import {useI18n} from "vue-i18n";
 import {displayUiMessage} from "../i18n/uiMessage";
-const {t}=useI18n({useScope:"global"});
+import {normalizeLocale} from "../i18n/preferences";
+const {t,locale}=useI18n({useScope:"global"});
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
@@ -39,7 +40,7 @@ const exportMonth = ref(new Date().toISOString().slice(0, 7));
 function exportCpkMaster() {
   const baseUrl = (api.defaults?.baseURL || "/api").replace(/\/+$/, "");
   const month = encodeURIComponent(exportMonth.value);
-  const url = `${baseUrl}/v1/reports/cpk-summary?month=${month}`;
+  const url = `${baseUrl}/v1/reports/cpk-summary?month=${month}&uiLocale=${encodeURIComponent(normalizeLocale(locale.value))}`;
   window.open(url, "_blank");
 }
 

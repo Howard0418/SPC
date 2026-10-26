@@ -3,7 +3,7 @@ import {useI18n} from "vue-i18n";
 import {displayUiMessage} from "../i18n/uiMessage";
 const {t}=useI18n({useScope:"global"});
 import { computed, onMounted, ref } from "vue";
-import { api, getApiErrorDisplay } from "../api/client";
+import { api, getApiErrorDisplay, getApiMessageDisplay } from "../api/client";
 import {
   CalendarClock,
   CheckCircle2,
@@ -254,7 +254,7 @@ onMounted(load);
               recipient.success ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'
             ]"
           >
-            {{ recipient.success ? t('spc.settings.deliverySuccess') : recipient.errorMessage || t('spc.settings.deliveryFailed') }}
+            {{ recipient.success ? t('spc.settings.deliverySuccess') : displayUiMessage(t, getApiMessageDisplay(recipient.displayMessage, recipient.errorMessage)) || t('spc.settings.deliveryFailed') }}
           </div>
         </div>
       </div>
