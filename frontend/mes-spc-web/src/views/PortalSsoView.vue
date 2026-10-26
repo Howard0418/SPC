@@ -1,14 +1,19 @@
 <template>
-  <main class="min-h-screen flex items-center justify-center bg-slate-100 p-6">
-    <div class="rounded-xl bg-white p-8 shadow text-center">
-      <h1 class="text-xl font-semibold mb-3">正在登入 SPC</h1>
-      <p :class="error ? 'text-red-600' : 'text-slate-500'">{{ error || '請稍候，正在驗證 PmrPortal 登入資訊…' }}</p>
-      <router-link v-if="error" to="/login" class="inline-block mt-4 text-blue-600">前往 SPC 登入頁</router-link>
+  <main data-testid="signin-view" class="min-h-96 w-full flex items-center justify-center bg-slate-100 p-4 sm:p-6">
+    <div class="w-full max-w-lg rounded-xl bg-white p-6 sm:p-8 shadow text-center">
+      <LocalePicker />
+      <h1 class="text-xl font-semibold mb-3">{{ t('spc.help.signingIn') }}</h1>
+      <p :class="error ? 'text-red-600' : 'text-slate-500'">{{ displayUiMessage(t,error) || t('spc.help.verifying') }}</p>
+      <router-link v-if="error" to="/login" class="inline-block mt-4 text-blue-600">{{ t('spc.help.goLogin') }}</router-link>
     </div>
   </main>
 </template>
 
 <script setup>
+import {displayUiMessage} from "../i18n/uiMessage";
+import LocalePicker from "../components/LocalePicker.vue";
+import {useI18n} from "vue-i18n";
+const {t}=useI18n({useScope:"global"});
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { setAuthSession } from "../utils/auth";
@@ -20,7 +25,7 @@ const error = ref("");
 onMounted(async () => {
   const token = new URLSearchParams(window.location.hash.slice(1)).get("token") || "";
   history.replaceState(null, "", "/portal-sso");
-  if (!token) { error.value = "缺少 SPC 單一登入資訊。"; return; }
+  if (!token) { error.value = {key:"spc.help.missingToken"}; return; }
   try {
     const encoded = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     const binary = atob(encoded.padEnd(encoded.length + (4 - encoded.length % 4) % 4, '='));
@@ -42,7 +47,7 @@ onMounted(async () => {
     const safePath = requestedPath.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/spc";
     await router.replace(safePath);
   } catch (e) {
-    error.value = "SPC 單一登入資訊無效，請重新由 PmrPortal 進入。";
+    error.value = {key:"spc.help.invalidToken"};
   }
 });
 </script>

@@ -965,3 +965,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 
 ### 2026-10-26 I18N-TASK-07E1 完成
 公開查詢／系譜／咬蝕入口94鍵三語，原query／code／series／raw與連結保持；95單元、本機40／發布40及build/hash/health/同源通過，只測試Web0.1.90/API0.1.72。剩15件接續E2。
+
+### 2026-10-26 I18N-TASK-07E2 目的
+操作手冊與SSO固定顯示三語；保留token／claims／hash／redirect／登入協定原碼，僅固定訊息與原handler語言選單，無Portal／AD操作。
+
+### 2026-10-26 I18N-TASK-07E2 完成
+手冊／SSO固定顯示127鍵三語，原token／claims／hash／redirect保持；97單元、本機41／最終發布41及build/hash/health/同源通過，只測試Web0.1.91/API0.1.72。剩14件接續08。

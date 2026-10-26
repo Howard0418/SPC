@@ -2018,3 +2018,8 @@
 - 07E依公開路由拆E1/E2，本批94新鍵／282列draft、累計2073鍵；固定UI、提示及tree tooltip三語，raw參數HTML編碼、保留圖表series／識別／query與連結。
 - 95單元、本機40／發布40、build/hash/health/同源通過，只測試Web0.1.90/API0.1.72，備份78檔／保護設定4；無DB／後端／Portal／正式變更。[驗證與回復](specs/20261026-i18n-task07e1/verification.md)。
 - 首頁原導向/spc已三語，未接路由舊檔不新增入口；剩15件接續E2，draft真人審稿留20。
+
+## 2026-10-26 I18N-TASK-07E2 手冊與SSO顯示三語
+- 127新鍵／381列draft、累計2200鍵，保留原手冊術語／路徑與登入協定；SSO錯誤復用原語言handler，手機堆疊導覽及卡片寬度驗證。
+- 97單元、本機41與最終發布41、build/hash/health/同源通過，只測試Web0.1.91/API0.1.72；原備份81檔保留，手機版前另備份83檔，保護設定4，無DB／後端／Portal／AD／正式變更。[驗證與回復](specs/20261026-i18n-task07e2/verification.md)。
+- 剩14件接續08，draft真人審查待20。

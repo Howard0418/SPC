@@ -62,6 +62,7 @@ const stackedMobileNav = computed(() => [
   '/calibration-instruments', '/processes', '/traceability-master',
   '/control-chart-groups', '/spc-rule-groups',
   '/chemical-analysis-overview', '/chemical-f-table', '/part-process-characteristics', '/measurements',
+  '/guide', '/portal-sso',
   '/spc/query', '/genealogy', '/etch-analysis',
   '/settings/smtp', '/settings/spc-reports', '/operators',
   '/particle-monitoring', '/equipment-status', '/equipment-points', '/equipment-monitor',

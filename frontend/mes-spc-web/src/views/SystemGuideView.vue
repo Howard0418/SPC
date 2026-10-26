@@ -1,4 +1,6 @@
 <script setup>
+import {useI18n} from "vue-i18n";
+const {t}=useI18n({useScope:"global"});
 import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
 </script>
 
@@ -9,13 +11,13 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
       <div class="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
       <div class="relative z-10 space-y-2">
         <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 w-max text-xs font-bold text-indigo-200 border border-white/20">
-          <BookOpen class="w-3.5 h-3.5" /> 系統幫助中心
+          <BookOpen class="w-3.5 h-3.5" /> {{ t('spc.help.helpCenter') }}
         </div>
         <h1 class="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-indigo-200">
-          MES-SPC 系統操作手冊與流程總覽
+          {{ t('spc.help.title') }}
         </h1>
         <p class="text-indigo-200 text-sm max-w-2xl leading-relaxed">
-          這套系統的目標是「讓工廠的品質檢驗數據從人工記錄，轉變為即時自動化監控與異常防堵」。在此為您詳細說明從基礎設定到最終產出的操作流程。
+          {{ t('spc.help.description') }}
         </p>
       </div>
     </div>
@@ -26,34 +28,34 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
       <!-- Workflow Diagram Section -->
       <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
         <h2 class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2 mb-6">
-          <Map class="w-5 h-5 text-indigo-500" /> 系統運作總覽 (Workflow)
+          <Map class="w-5 h-5 text-indigo-500" /> {{ t('spc.help.workflow') }}
         </h2>
         <div class="flex flex-col md:flex-row gap-4 items-stretch justify-center">
           
           <div class="flex-1 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
             <div class="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">Phase 1: Setup</div>
             <div class="space-y-3">
-              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300 text-center border border-slate-100 dark:border-slate-700">建立料號與工站主檔</div>
+              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300 text-center border border-slate-100 dark:border-slate-700">{{ t('spc.help.createMasters') }}</div>
               <div class="flex justify-center text-slate-300 dark:text-slate-600"><ArrowRight class="w-4 h-4 rotate-90 md:rotate-0" /></div>
-              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300 text-center border border-slate-100 dark:border-slate-700">設定 USL/LSL 檢驗基準</div>
+              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300 text-center border border-slate-100 dark:border-slate-700">{{ t('spc.help.setLimits') }}</div>
             </div>
           </div>
 
           <div class="flex-1 bg-blue-50 dark:bg-blue-900/20 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/50">
             <div class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-3">Phase 2: Execution</div>
             <div class="space-y-3 h-full flex flex-col justify-center">
-              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-sm font-bold text-blue-700 dark:text-blue-300 text-center border border-blue-100 dark:border-blue-800">現場人員 / 機台輸入數據</div>
+              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-sm font-bold text-blue-700 dark:text-blue-300 text-center border border-blue-100 dark:border-blue-800">{{ t('spc.help.enterData') }}</div>
               <div class="flex justify-center text-blue-300 dark:text-blue-700"><ArrowRight class="w-4 h-4 rotate-90 md:rotate-0" /></div>
-              <div class="p-3 bg-blue-600 text-white rounded-xl shadow-md text-sm font-black text-center border border-blue-500">SPC 引擎即時運算</div>
+              <div class="p-3 bg-blue-600 text-white rounded-xl shadow-md text-sm font-black text-center border border-blue-500">{{ t('spc.help.calculate') }}</div>
             </div>
           </div>
 
           <div class="flex-1 bg-emerald-50 dark:bg-emerald-900/20 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 flex flex-col">
             <div class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3">Phase 3: Result</div>
             <div class="space-y-3 flex-1 flex flex-col justify-center">
-              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-sm font-bold text-emerald-700 dark:text-emerald-300 text-center border border-emerald-100 dark:border-emerald-800">數據歸檔並更新 SPC 圖表</div>
-              <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl shadow-sm text-sm font-bold text-red-700 dark:text-red-300 text-center border border-red-100 dark:border-red-900">異常觸發 SMTP 警報 Email</div>
-              <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl shadow-sm text-sm font-bold text-amber-700 dark:text-amber-300 text-center border border-amber-100 dark:border-amber-900">負責人填寫異常處置並結案</div>
+              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-sm font-bold text-emerald-700 dark:text-emerald-300 text-center border border-emerald-100 dark:border-emerald-800">{{ t('spc.help.archive') }}</div>
+              <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl shadow-sm text-sm font-bold text-red-700 dark:text-red-300 text-center border border-red-100 dark:border-red-900">{{ t('spc.help.alertEmail') }}</div>
+              <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl shadow-sm text-sm font-bold text-amber-700 dark:text-amber-300 text-center border border-amber-100 dark:border-amber-900">{{ t('spc.help.resolve') }}</div>
             </div>
           </div>
 
@@ -64,79 +66,79 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-          <h3 class="text-lg font-black text-slate-800 dark:text-white">👣 系統初期設定步驟</h3>
+          <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ t('spc.help.initialSetup') }}</h3>
           
           <div class="space-y-4">
             <div class="relative pl-6 before:absolute before:left-0 before:top-2 before:w-2 before:h-2 before:bg-indigo-500 before:rounded-full">
-              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第一步：先建立大分類群組</div>
+              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">{{ t('spc.help.stepOne') }}</div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                前往「管制圖配置維護」，建立大分類群組（如製程管制、藥液管制等），並可選擇該群組為「管制圖」或「趨勢圖」。此類型決定了管制項目設定中點擊「查看」時導向的目標畫面。
+                {{ t('spc.help.stepOneHelp') }}
               </p>
             </div>
             
             <div class="relative pl-6 before:absolute before:left-0 before:top-2 before:w-2 before:h-2 before:bg-indigo-500 before:rounded-full">
-              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第二步：再建立品質特性</div>
+              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">{{ t('spc.help.stepTwo') }}</div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                前往「品質特性項目」，建立要管制的檢驗特性，例如長度、厚度、濃度、不良率或缺點數，並設定資料類型與預設管制圖。
+                {{ t('spc.help.stepTwoHelp') }}
               </p>
             </div>
             
             <div class="relative pl-6 before:absolute before:left-0 before:top-2 before:w-2 before:h-2 before:bg-indigo-500 before:rounded-full">
-              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">第三步：最後綁定基準並錄入量測</div>
+              <div class="font-bold text-sm text-slate-700 dark:text-slate-200 mb-1">{{ t('spc.help.stepThree') }}</div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                建立「工站製程主檔」（含生產機台配置）與必要的「產品料號主檔」後，前往「SPC 管制項目設定」綁定管制類型、製程、特性與 USL/LSL，再錄入或匯入量測資料查看 SPC 管制圖。
+                {{ t('spc.help.stepThreeHelp') }}
               </p>
             </div>
           </div>
         </div>
 
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-          <h3 class="text-lg font-black text-slate-800 dark:text-white">🎯 系統產生之最終成果</h3>
+          <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ t('spc.help.results') }}</h3>
           
           <div class="space-y-4">
             <div class="p-4 bg-sky-50 dark:bg-sky-900/20 rounded-2xl border border-sky-100 dark:border-sky-800/50">
-              <div class="font-bold text-sm text-sky-800 dark:text-sky-300 mb-1">成果一：動態 SPC 管制圖</div>
+              <div class="font-bold text-sm text-sky-800 dark:text-sky-300 mb-1">{{ t('spc.help.chartResult') }}</div>
               <p class="text-xs text-sky-600 dark:text-sky-400/80 leading-relaxed">
-                只要選定條件，系統即自動向後端撈取歷史數據，瞬間繪製出精美的 Xbar-R 或 I-MR 趨勢圖，取代傳統 Excel 報表。
+                {{ t('spc.help.chartResultHelp') }}
               </p>
             </div>
             
             <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-800/50">
-              <div class="font-bold text-sm text-red-800 dark:text-red-300 mb-1">成果二：即時防呆與警報 (OOC)</div>
+              <div class="font-bold text-sm text-red-800 dark:text-red-300 mb-1">{{ t('spc.help.alertResult') }}</div>
               <p class="text-xs text-red-600 dark:text-red-400/80 leading-relaxed">
-                一旦數據超出您設定的 USL/LSL 規格，或符合西方電氣規則的不良趨勢，系統會立刻卡控畫面並發送 Email 通知品管負責人。
+                {{ t('spc.help.alertResultHelp') }}
               </p>
             </div>
             
             <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-100 dark:border-amber-800/50">
-              <div class="font-bold text-sm text-amber-800 dark:text-amber-300 mb-1">成果三：異常追蹤閉環 (Alert Workflow)</div>
+              <div class="font-bold text-sm text-amber-800 dark:text-amber-300 mb-1">{{ t('spc.help.workflowResult') }}</div>
               <p class="text-xs text-amber-600 dark:text-amber-400/80 leading-relaxed">
-                所有的警報都會集中在「異常處置工作流」中，工程師必須進來填寫真因分析 (Root Cause) 與對策，作為 ISO 稽核與 8D Report 的強力證據。
+                {{ t('spc.help.workflowResultHelp') }}
               </p>
             </div>
             
             <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/50">
-              <div class="font-bold text-sm text-purple-800 dark:text-purple-300 mb-1">進階功能：切換「不列入計算」</div>
+              <div class="font-bold text-sm text-purple-800 dark:text-purple-300 mb-1">{{ t('spc.help.excludeTitle') }}</div>
               <div class="space-y-3 text-xs text-purple-600 dark:text-purple-400/80 leading-relaxed">
                 <div>
-                  <div class="font-black text-purple-800 dark:text-purple-300">進入管制圖畫面</div>
-                  <p>到「SPC 查詢 / 管制圖」，選產品、製程、檢驗項目後產生管制圖。</p>
+                  <div class="font-black text-purple-800 dark:text-purple-300">{{ t('spc.help.openChart') }}</div>
+                  <p>{{ t('spc.help.openChartHelp') }}</p>
                 </div>
                 <div>
-                  <div class="font-black text-purple-800 dark:text-purple-300">點圖上的資料點</div>
-                  <p>在管制圖上直接點某一個點。下方會展開「點位品質追溯詳細資料」。</p>
+                  <div class="font-black text-purple-800 dark:text-purple-300">{{ t('spc.help.selectPoint') }}</div>
+                  <p>{{ t('spc.help.selectPointHelp') }}</p>
                 </div>
                 <div>
-                  <div class="font-black text-purple-800 dark:text-purple-300">按「剔除此數據」</div>
-                  <p>在點位明細右上方會看到「✖ 剔除此數據」按鈕。按下後，系統會把該點所屬的資料批次設為「不列入計算」，然後自動重新載入管制圖。</p>
+                  <div class="font-black text-purple-800 dark:text-purple-300">{{ t('spc.help.excludePoint') }}</div>
+                  <p>{{ t('spc.help.excludePointHelp') }}</p>
                 </div>
                 <div>
-                  <div class="font-black text-purple-800 dark:text-purple-300">看結果</div>
-                  <p>被排除的點會顯示成「已剔除不計 (Excluded)」，而且不再參與 CL / UCL / LCL 重新計算，也不再算 OOC。</p>
+                  <div class="font-black text-purple-800 dark:text-purple-300">{{ t('spc.help.checkResult') }}</div>
+                  <p>{{ t('spc.help.checkResultHelp') }}</p>
                 </div>
                 <div>
-                  <div class="font-black text-purple-800 dark:text-purple-300">要恢復</div>
-                  <p>再點同一個已排除的點，按「↺ 恢復此數據」即可還原。</p>
+                  <div class="font-black text-purple-800 dark:text-purple-300">{{ t('spc.help.restore') }}</div>
+                  <p>{{ t('spc.help.restoreHelp') }}</p>
                 </div>
               </div>
             </div>
@@ -147,105 +149,105 @@ import { BookOpen, Map, ArrowRight } from "lucide-vue-next";
       <!-- Page Operation Guide -->
       <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
         <h2 class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
-          <BookOpen class="w-5 h-5 text-indigo-500" /> 各功能頁面操作說明
+          <BookOpen class="w-5 h-5 text-indigo-500" /> {{ t('spc.help.pageInstructions') }}
         </h2>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
-            <div class="font-black text-sm text-slate-800 dark:text-white">產品料號主檔</div>
+            <div class="font-black text-sm text-slate-800 dark:text-white">{{ t('spc.help.parts') }}</div>
             <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 產品料號主檔」。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">查詢資料：</span>使用搜尋框輸入料號或產品名稱，快速找到既有產品。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">新增料號：</span>按「新增」，填入產品料號、產品名稱與必要資訊。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">啟用設定：</span>確認產品為啟用狀態，後續檢驗基準與匯入資料才能正常選用。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">儲存結果：</span>按「確認儲存」，回到列表確認資料已出現。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.enterPage') }}</span>{{ t('spc.help.partsPage') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.search') }}</span>{{ t('spc.help.partsSearch') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.addPart') }}</span>{{ t('spc.help.partsAdd') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.enable') }}</span>{{ t('spc.help.partsEnable') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.save') }}</span>{{ t('spc.help.partsSave') }}</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
-            <div class="font-black text-sm text-slate-800 dark:text-white">工站製程主檔</div>
+            <div class="font-black text-sm text-slate-800 dark:text-white">{{ t('spc.help.processes') }}</div>
             <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 工站製程主檔」。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">建立製程：</span>按「新增」，填入製程代號與製程名稱，例如 OQC、IQC 或製程站別。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">配置機台：</span>選取製程後，可在右側「配置生產機台」區塊新增、編輯或移除該製程的機台設備。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">啟用設定：</span>確認製程為啟用狀態，避免後續下拉選單找不到資料。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.enterPage') }}</span>{{ t('spc.help.processesPage') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.createProcess') }}</span>{{ t('spc.help.processesAdd') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.configureMachine') }}</span>{{ t('spc.help.processesEquipment') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.enable') }}</span>{{ t('spc.help.processesEnable') }}</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
-            <div class="font-black text-sm text-slate-800 dark:text-white">品質特性項目</div>
+            <div class="font-black text-sm text-slate-800 dark:text-white">{{ t('spc.help.characteristics') }}</div>
             <div class="space-y-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">進入畫面：</span>到「基礎主檔設定 / 品質特性項目」。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">新增檢驗項目：</span>填入特性代號與特性名稱，例如厚度、尺寸、缺點數或不良率。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">選資料類型：</span>計量型適用連續數值，計數型適用不良數、缺點數或比例資料。</p>
-              <p><span class="font-bold text-slate-700 dark:text-slate-200">指定管制圖：</span>選擇預設管制圖類型，後續 SPC 管制項目可帶入或調整。</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.enterPage') }}</span>{{ t('spc.help.characteristicsPage') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.addCharacteristic') }}</span>{{ t('spc.help.characteristicsAdd') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.chooseDataCategory') }}</span>{{ t('spc.help.dataCategoryHelp') }}</p>
+              <p><span class="font-bold text-slate-700 dark:text-slate-200">{{ t('spc.help.assignChart') }}</span>{{ t('spc.help.assignChartHelp') }}</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
-            <div class="font-black text-sm text-blue-800 dark:text-blue-300">SPC 管制項目設定</div>
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">{{ t('spc.help.controlItems') }}</div>
             <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「基礎主檔設定 / SPC 管制項目設定」。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">建立綁定：</span>先選製程管制、藥水管制或產品管制，再選必要的主檔與品質特性項目。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">設定規格：</span>輸入 USL、LSL、目標值、樣本數與是否必檢。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">選管制圖：</span>依資料類型選擇 I-MR、XBAR-R、XBAR-S、P、NP、C 或 U 管制圖。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">確認啟用：</span>儲存後確認該基準為啟用，資料匯入與管制圖查詢才會套用。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">動態圖表跳轉：</span>點擊操作欄的「查看管制圖與趨勢圖」圖示，系統會依據其所屬大類別的「群組類型」設定，自動導向至 **SPC 管制圖** (路徑 `/spc`) 或 **量測趨勢區** (路徑 `/trend-chart`)。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.enterPage') }}</span>{{ t('spc.help.controlItemsPage') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.createMapping') }}</span>{{ t('spc.help.createMappingHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.setSpecification') }}</span>{{ t('spc.help.setSpecificationHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.chooseChart') }}</span>{{ t('spc.help.chooseChartHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.confirmEnabled') }}</span>{{ t('spc.help.confirmEnabledHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.chartNavigation') }}</span>{{ t('spc.help.chartNavigationHelp') }}</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-900/50 space-y-3">
             <div class="font-black text-sm text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
-              <span>管制界線試算與分段管制</span>
+              <span>{{ t('spc.help.segments') }}</span>
               <span class="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/60 text-[10px] text-purple-600 dark:text-purple-400 font-bold border border-purple-200 dark:border-purple-800 animate-pulse">New</span>
             </div>
             <div class="space-y-2 text-xs text-purple-600 dark:text-purple-400/80 leading-relaxed">
-              <p><span class="font-bold text-purple-800 dark:text-purple-300">進入設定：</span>前往「SPC 管制項目設定」，在清單項目右側操作欄點擊 **「分段界線與試算」** 紫色圖示按鈕（Sliders）。</p>
-              <p><span class="font-bold text-purple-800 dark:text-purple-300">界線試算：</span>在彈窗左側選擇歷史量測日期範圍，點擊「開始歷史數據試算」，系統將依據該時段數據統計出 UCL、CL、LCL 以及總點數，可一鍵點擊「帶入右側分段表單」。</p>
-              <p><span class="font-bold text-purple-800 dark:text-purple-300">建立分段：</span>在右側表單中填入生效起日、失效止日（留空代表無期限）、UCL、CL、LCL 與說明備註，點擊「新增分段」即可儲存。</p>
-              <p><span class="font-bold text-purple-800 dark:text-purple-300">運作原理：</span>數據匯入時，系統會自動比對其量測時間點，套用對應生效區間的分段界線進行異常（OOS / OOC）規則判定。圖表查詢時，管制線（CL/UCL/LCL）亦會隨時間分段呈現階梯折線效果。</p>
-              <p><span class="font-bold text-purple-800 text-amber-500">* 重疊防呆：</span>同一個管制項目的多個分段生效時間區間不可重疊，若有重疊，系統在儲存時會進行攔截並提示錯誤。</p>
+              <p><span class="font-bold text-purple-800 dark:text-purple-300">{{ t('spc.help.openSettings') }}</span>{{ t('spc.help.openSettingsHelp') }}</p>
+              <p><span class="font-bold text-purple-800 dark:text-purple-300">{{ t('spc.help.calculateLimits') }}</span>{{ t('spc.help.calculateLimitsHelp') }}</p>
+              <p><span class="font-bold text-purple-800 dark:text-purple-300">{{ t('spc.help.createSegment') }}</span>{{ t('spc.help.createSegmentHelp') }}</p>
+              <p><span class="font-bold text-purple-800 dark:text-purple-300">{{ t('spc.help.howSegmentsWork') }}</span>{{ t('spc.help.segmentsHelp') }}</p>
+              <p><span class="font-bold text-purple-800 text-amber-500">{{ t('spc.help.overlapCheck') }}</span>{{ t('spc.help.overlapHelp') }}</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3 lg:col-span-2">
-            <div class="font-black text-sm text-blue-800 dark:text-blue-300">TransFiles 資料匯入與 SPC 批次追蹤</div>
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">{{ t('spc.help.transfiles') }}</div>
             <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">匯入方式：</span>藥液、製程與落塵監控資料改由 TransFiles 轉檔工具執行檢查與匯入，SPC 網站不再提供 Excel 上傳確認匯入。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">查看批次：</span>到「資料匯入與量測 / 匯入批次查詢」，確認 TransFiles 匯入時間、來源檔案、成功筆數與錯誤筆數。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">修正錯誤：</span>若批次含錯誤，點「查看」確認檔案、工作表、Excel 列號、欄位、原始值、錯誤代碼與修正建議，再回 TransFiles 修正來源資料後重新匯入。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">確認製圖：</span>匯入成功後從批次頁或首頁新資料提示進入 SPC 管制圖／趨勢圖，核對點數、日期、線別、槽位、製程與管制項目。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.importMethod') }}</span>{{ t('spc.help.importMethodHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.viewBatch') }}</span>{{ t('spc.help.viewBatchHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.fixErrors') }}</span>{{ t('spc.help.fixErrorsHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.confirmChart') }}</span>{{ t('spc.help.confirmChartHelp') }}</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 space-y-3">
-            <div class="font-black text-sm text-blue-800 dark:text-blue-300">SPC 查詢 / 管制圖</div>
+            <div class="font-black text-sm text-blue-800 dark:text-blue-300">{{ t('spc.help.spcQuery') }}</div>
             <div class="space-y-2 text-xs text-blue-600 dark:text-blue-400/80 leading-relaxed">
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">進入畫面：</span>到「資料匯入與量測 / SPC 查詢 / 管制圖」。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">選擇條件：</span>選產品、製程與檢驗項目後產生管制圖。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">查看判定：</span>紅色或警示點代表 OOS、OOC 或符合異常規則，需要進一步追蹤。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">查看明細：</span>點選圖上的資料點，下方會展開「點位品質追溯詳細資料」。</p>
-              <p><span class="font-bold text-blue-800 dark:text-blue-300">不列入計算：</span>在點位明細按「剔除此數據」，系統會重新計算管制線並標示 Excluded。</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.enterPage') }}</span>{{ t('spc.help.spcQueryPage') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.selectConditions') }}</span>{{ t('spc.help.selectConditionsHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.viewJudgment') }}</span>{{ t('spc.help.viewJudgmentHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.viewDetails') }}</span>{{ t('spc.help.viewDetailsHelp') }}</p>
+              <p><span class="font-bold text-blue-800 dark:text-blue-300">{{ t('spc.help.exclude') }}</span>{{ t('spc.help.excludeHelp') }}</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/50 space-y-3">
-            <div class="font-black text-sm text-amber-800 dark:text-amber-300">異常通報與處置</div>
+            <div class="font-black text-sm text-amber-800 dark:text-amber-300">{{ t('spc.help.alertWorkflow') }}</div>
             <div class="space-y-2 text-xs text-amber-600 dark:text-amber-400/80 leading-relaxed">
-              <p><span class="font-bold text-amber-800 dark:text-amber-300">進入總覽：</span>到「異常管理與追溯 / 異常通報總覽」查看系統產生的異常。</p>
-              <p><span class="font-bold text-amber-800 dark:text-amber-300">查看異常：</span>確認異常類型、產品、製程、檢驗項目與發生時間。</p>
-              <p><span class="font-bold text-amber-800 dark:text-amber-300">處置簽核：</span>到「異常單簽核處置」填寫原因分析、改善對策與處理結果。</p>
-              <p><span class="font-bold text-amber-800 dark:text-amber-300">結案追蹤：</span>處理完成後更新狀態，讓異常形成可追蹤的閉環紀錄。</p>
+              <p><span class="font-bold text-amber-800 dark:text-amber-300">{{ t('spc.help.openOverview') }}</span>{{ t('spc.help.openOverviewHelp') }}</p>
+              <p><span class="font-bold text-amber-800 dark:text-amber-300">{{ t('spc.help.viewAlert') }}</span>{{ t('spc.help.viewAlertHelp') }}</p>
+              <p><span class="font-bold text-amber-800 dark:text-amber-300">{{ t('spc.help.resolution') }}</span>{{ t('spc.help.resolutionHelp') }}</p>
+              <p><span class="font-bold text-amber-800 dark:text-amber-300">{{ t('spc.help.closure') }}</span>{{ t('spc.help.closureHelp') }}</p>
             </div>
           </div>
 
           <div class="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50 space-y-3">
-            <div class="font-black text-sm text-emerald-800 dark:text-emerald-300">SMTP 郵件與預警設定</div>
+            <div class="font-black text-sm text-emerald-800 dark:text-emerald-300">{{ t('spc.help.smtp') }}</div>
             <div class="space-y-2 text-xs text-emerald-600 dark:text-emerald-400/80 leading-relaxed">
-              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">進入畫面：</span>到「系統管理與通報設定 / SMTP 郵件與預警設定」。</p>
-              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">設定主機：</span>填入 SMTP 主機、連接埠、帳號、密碼、寄件者與 SSL 設定。</p>
-              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">儲存設定：</span>確認資料後儲存，讓異常通知可以使用此設定寄信。</p>
-              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">測試發信：</span>使用測試收件者寄出測試信，確認郵件伺服器與帳密正確。</p>
+              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">{{ t('spc.help.enterPage') }}</span>{{ t('spc.help.smtpPage') }}</p>
+              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">{{ t('spc.help.configureHost') }}</span>{{ t('spc.help.configureHostHelp') }}</p>
+              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">{{ t('spc.help.saveSettings') }}</span>{{ t('spc.help.saveSettingsHelp') }}</p>
+              <p><span class="font-bold text-emerald-800 dark:text-emerald-300">{{ t('spc.help.testMail') }}</span>{{ t('spc.help.testMailHelp') }}</p>
             </div>
           </div>
         </div>
