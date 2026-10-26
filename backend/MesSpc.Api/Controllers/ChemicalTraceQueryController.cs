@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,8 +15,8 @@ public sealed class ChemicalTraceQueryController(ChemicalTraceQueryService servi
   try
   {
    var data=await service.GetAsync(ppcId,segmentId,measurementId,skip,traceSkip,ct);
-   if(data is null)return NotFound(new{success=false,data=(object?)null,message="找不到所屬管制項目、分段或量測。"});
-   return Ok(new{success=true,data,message="只顯示已保存證據；未知不推定、不重算。"});
+   if(data is null)return NotFound(new{success=false,data=(object?)null,message="找不到所屬管制項目、分段或量測。", code="TRACE_MEASUREMENT_MISSING", messageKey="spc.api.traceMeasurementMissing", args=ApiUiMessageCatalog.EmptyArguments});
+   return Ok(new{success=true,data,message="只顯示已保存證據；未知不推定、不重算。", code="TRACE_EVIDENCE_NOTICE", messageKey="spc.api.traceEvidenceNotice", args=ApiUiMessageCatalog.EmptyArguments});
   }
   catch(ArgumentException ex){return BadRequest(new{success=false,data=(object?)null,message=ex.Message});}
  }

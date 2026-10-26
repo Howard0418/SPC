@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
@@ -21,12 +22,12 @@ public sealed class ChemicalAnalysisFormulaVersionsController(
         VersionHistoryDateRange range;
         try { range = VersionHistoryDateRange.Parse(fromDate, toDate); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
-        if (skip < 0 || take is < 1 or > 100) return BadRequest(new { message = "無效的分頁範圍。" });
+        if (skip < 0 || take is < 1 or > 100) return BadRequest(new { message = "無效的分頁範圍。", code="HISTORY_PAGE_INVALID", messageKey="spc.api.historyPageInvalid", args=ApiUiMessageCatalog.EmptyArguments });
         var mapping = await db.PartProcessCharacteristics.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == partProcessCharacteristicId, ct);
-        if (mapping is null) return NotFound(new { message = "找不到指定的 SPC 管制項目。" });
+        if (mapping is null) return NotFound(new { message = "找不到指定的 SPC 管制項目。", code="FORMULA_ITEM_MISSING", messageKey="spc.api.formulaItemMissing", args=ApiUiMessageCatalog.EmptyArguments });
         if (!string.Equals(ControlScopeCodes.Normalize(mapping.ControlScope), ControlScopeCodes.Chemical, StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { message = "只有藥液管制項目支援公式版本紀錄。" });
+            return BadRequest(new { message = "只有藥液管制項目支援公式版本紀錄。", code="CHEMICAL_HISTORY_ONLY", messageKey="spc.api.chemicalHistoryOnly", args=ApiUiMessageCatalog.EmptyArguments });
 
         var query = db.ChemicalAnalysisFormulaVersions.AsNoTracking().Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId);
         if (range.FromUtc.HasValue) query = query.Where(x => x.ChangedAt >= range.FromUtc.Value);

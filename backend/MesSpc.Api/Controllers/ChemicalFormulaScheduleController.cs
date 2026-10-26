@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Services;
 using MesSpc.Api.Services.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -36,7 +37,7 @@ public sealed class ChemicalFormulaScheduleController(ChemicalFormulaScheduleSer
     public Task<IActionResult> Prepare(int ppcId, ChemicalPrepareRequest request, CancellationToken ct) => Execute(async () => {
         var receipt=await service.PrepareAsync(ppcId,request,Actor,ct);
         return (object)new { receiptId=receipt.Id, receipt.Actor, receipt.ExpiresAtUtc, receipt.InputHash, receipt.SourceKeyHash,
-            message="僅建立計算憑證，尚未匯入量測；須由TransFiles受控DB程序確認並查核統計狀態。" };
+            message="僅建立計算憑證，尚未匯入量測；須由TransFiles受控DB程序確認並查核統計狀態。", code="CHEMICAL_RECEIPT_NOTICE", messageKey="spc.api.chemicalReceiptNotice", args=ApiUiMessageCatalog.EmptyArguments };
     });
 
     private async Task<IActionResult> Execute(Func<Task<object>> work)
@@ -48,7 +49,7 @@ public sealed class ChemicalFormulaScheduleController(ChemicalFormulaScheduleSer
         catch(Exception ex) when (ex is SqlException { Number:1205 or 1222 } || ex is DbUpdateException { InnerException: SqlException { Number:1205 or 1222 or 2601 or 2627 } })
         {
             logger.LogWarning(ex,"Chemical schedule concurrency conflict");
-            return Conflict(new { success=false,data=(object?)null,message="其他人正在更新排程，請重新載入後再試。" });
+            return Conflict(new { success=false,data=(object?)null,message="其他人正在更新排程，請重新載入後再試。", code="SCHEDULE_CONCURRENT_UPDATE", messageKey="spc.api.scheduleConcurrentUpdate", args=ApiUiMessageCatalog.EmptyArguments });
         }
     }
 }

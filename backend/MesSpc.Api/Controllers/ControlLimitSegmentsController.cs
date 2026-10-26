@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -24,10 +25,10 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Create(ControlLimitSegmentRequest req)
     {
         var ppcExists = await db.PartProcessCharacteristics.AnyAsync(x => x.Id == req.PartProcessCharacteristicId && x.IsEnabled);
-        if (!ppcExists) return BadRequest("SPC 管制項目設定不存在。");
+        if (!ppcExists) return ApiUiError.WithLegacyMessage(BadRequest("SPC 管制項目設定不存在。"), HttpContext, "spc.api.chartMappingMissing");
 
-        if (req.StartDate == default) return BadRequest("起日為必填。");
-        if (req.EndDate.HasValue && req.StartDate > req.EndDate.Value) return BadRequest("起日不可大於迄日。");
+        if (req.StartDate == default) return ApiUiError.WithLegacyMessage(BadRequest("起日為必填。"), HttpContext, "spc.api.segmentStartRequired");
+        if (req.EndDate.HasValue && req.StartDate > req.EndDate.Value) return ApiUiError.WithLegacyMessage(BadRequest("起日不可大於迄日。"), HttpContext, "spc.api.segmentDateOrder");
 
         var start = req.StartDate;
         var end = req.EndDate ?? DateTime.MaxValue;
@@ -38,7 +39,7 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
                         && (s.EndDate == null || s.EndDate >= start));
         if (overlap)
         {
-            return BadRequest("分段時間區間不可重疊，請調整起迄日期。");
+            return ApiUiError.WithLegacyMessage(BadRequest("分段時間區間不可重疊，請調整起迄日期。"), HttpContext, "spc.api.segmentOverlap");
         }
 
         var segment = new ControlLimitSegment
@@ -64,10 +65,10 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Update(int id, ControlLimitSegmentRequest req)
     {
         var x = await db.ControlLimitSegments.FindAsync(id);
-        if (x is null) return NotFound("此分段設定不存在。");
+        if (x is null) return ApiUiError.WithLegacyMessage(NotFound("此分段設定不存在。"), HttpContext, "spc.api.segmentMissing");
 
-        if (req.StartDate == default) return BadRequest("起日為必填。");
-        if (req.EndDate.HasValue && req.StartDate > req.EndDate.Value) return BadRequest("起日不可大於迄日。");
+        if (req.StartDate == default) return ApiUiError.WithLegacyMessage(BadRequest("起日為必填。"), HttpContext, "spc.api.segmentStartRequired");
+        if (req.EndDate.HasValue && req.StartDate > req.EndDate.Value) return ApiUiError.WithLegacyMessage(BadRequest("起日不可大於迄日。"), HttpContext, "spc.api.segmentDateOrder");
 
         var start = req.StartDate;
         var end = req.EndDate ?? DateTime.MaxValue;
@@ -79,7 +80,7 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
                         && (s.EndDate == null || s.EndDate >= start));
         if (overlap)
         {
-            return BadRequest("分段時間區間不可重疊，請調整起迄日期。");
+            return ApiUiError.WithLegacyMessage(BadRequest("分段時間區間不可重疊，請調整起迄日期。"), HttpContext, "spc.api.segmentOverlap");
         }
 
         x.StartDate = req.StartDate;
@@ -100,7 +101,7 @@ public class ControlLimitSegmentsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var x = await db.ControlLimitSegments.FindAsync(id);
-        if (x is null) return NotFound("此分段設定不存在。");
+        if (x is null) return ApiUiError.WithLegacyMessage(NotFound("此分段設定不存在。"), HttpContext, "spc.api.segmentMissing");
 
         db.ControlLimitSegments.Remove(x);
         await db.SaveChangesAsync();

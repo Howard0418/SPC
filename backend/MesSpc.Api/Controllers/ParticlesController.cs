@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,7 +27,7 @@ public sealed class ParticlesController(ParticleQueryService service) : Controll
     {
         if (!TryValidate(from, to, [location], [particleSize], out var error)) return BadRequest(new { message = error });
         try { return Ok(await service.GetTrendAsync(from.UtcDateTime, to.UtcDateTime, location.ToUpperInvariant(), particleSize, Normalize(deviceCode), ct)); }
-        catch (InvalidOperationException ex) when (ex.Message == "TOO_MANY_POINTS") { return UnprocessableEntity(new { code = ex.Message, message = "資料點超過 10,000，請縮小日期範圍。" }); }
+        catch (InvalidOperationException ex) when (ex.Message == "TOO_MANY_POINTS") { return UnprocessableEntity(new { code = ex.Message, message = "資料點超過 10,000，請縮小日期範圍。", messageKey="spc.api.particlePointLimit", args=ApiUiMessageCatalog.EmptyArguments }); }
     }
 
     /// <summary>比較同一量測事件、同一粒徑的 R1 至 R9 Particle Count；重測歧義回 409 與候選事件。</summary>
@@ -34,7 +35,7 @@ public sealed class ParticlesController(ParticleQueryService service) : Controll
     public async Task<IActionResult> LocationComparison([FromQuery] DateTimeOffset measurementTime, [FromQuery] decimal particleSize,
         [FromQuery] string? deviceCode, [FromQuery] Guid? uploadBatchId, [FromQuery] string? sourceSheet, [FromQuery] int? sourceRow, CancellationToken ct)
     {
-        if (!AllowedSizes.Contains(particleSize)) return BadRequest(new { message = "ParticleSize 僅支援 0.5、1、5、10。" });
+        if (!AllowedSizes.Contains(particleSize)) return BadRequest(new { message = "ParticleSize 僅支援 0.5、1、5、10。", code="PARTICLE_SIZE_INVALID", messageKey="spc.api.particleSizeInvalid", args=ApiUiMessageCatalog.EmptyArguments });
         var result = await service.GetLocationComparisonAsync(measurementTime.UtcDateTime, particleSize, Normalize(deviceCode), uploadBatchId, Normalize(sourceSheet), sourceRow, ct);
         return result.IsAmbiguous ? Conflict(new { code = "COMPARISON_AMBIGUOUS", result.Candidates }) : Ok(result);
     }
@@ -52,23 +53,23 @@ public sealed class ParticlesController(ParticleQueryService service) : Controll
         }
         catch (InvalidOperationException ex) when (ex.Message == "TOO_MANY_POINTS")
         {
-            return UnprocessableEntity(new { code = ex.Message, message = "資料點超過 10,000，請縮小日期範圍。" });
+            return UnprocessableEntity(new { code = ex.Message, message = "資料點超過 10,000，請縮小日期範圍。", messageKey="spc.api.particlePointLimit", args=ApiUiMessageCatalog.EmptyArguments });
         }
         catch (ArgumentOutOfRangeException ex) when (ex.Message.Contains("COUNT_PRECISION_EXCEEDED", StringComparison.Ordinal))
         {
-            return UnprocessableEntity(new { code = "COUNT_PRECISION_EXCEEDED", message = "Count 超過 C-chart 可精確計算範圍。" });
+            return UnprocessableEntity(new { code = "COUNT_PRECISION_EXCEEDED", message = "Count 超過 C-chart 可精確計算範圍。", messageKey="spc.api.particleCountLimit", args=ApiUiMessageCatalog.EmptyArguments });
         }
         catch (ArgumentException ex) when (ex.Message.Contains("SAMPLING_VOLUME_REQUIRED", StringComparison.Ordinal))
         {
-            return UnprocessableEntity(new { code = "SAMPLING_VOLUME_REQUIRED", message = "U-chart 要求每筆 SamplingVolume 與單位皆有效。" });
+            return UnprocessableEntity(new { code = "SAMPLING_VOLUME_REQUIRED", message = "U-chart 要求每筆 SamplingVolume 與單位皆有效。", messageKey="spc.api.particleVolumeRequired", args=ApiUiMessageCatalog.EmptyArguments });
         }
         catch (ArgumentException ex) when (ex.Message.Contains("SAMPLING_VOLUME_UNIT_MISMATCH", StringComparison.Ordinal))
         {
-            return UnprocessableEntity(new { code = "SAMPLING_VOLUME_UNIT_MISMATCH", message = "U-chart 查詢範圍內的 SamplingVolume 單位不一致。" });
+            return UnprocessableEntity(new { code = "SAMPLING_VOLUME_UNIT_MISMATCH", message = "U-chart 查詢範圍內的 SamplingVolume 單位不一致。", messageKey="spc.api.particleVolumeUnitMismatch", args=ApiUiMessageCatalog.EmptyArguments });
         }
         catch (ArgumentException ex) when (ex.Message.Contains("CHART_TYPE_UNSUPPORTED", StringComparison.Ordinal))
         {
-            return BadRequest(new { code = "CHART_TYPE_UNSUPPORTED", message = "chartType 僅支援 C 或 U。" });
+            return BadRequest(new { code = "CHART_TYPE_UNSUPPORTED", message = "chartType 僅支援 C 或 U。", messageKey="spc.api.particleChartTypeInvalid", args=ApiUiMessageCatalog.EmptyArguments });
         }
     }
 

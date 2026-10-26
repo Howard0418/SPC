@@ -323,3 +323,5 @@
 - 2026-10-26 I18N-TASK-08C1完成：[規格](../specs/20261026-i18n-task08c1/spec.md)／[驗證](../specs/20261026-i18n-task08c1/verification.md)。管制項目26驗證訊息三語，原HTTP/message/正規化/歷史保持，LSL0.2正常編輯與真重複拒絕回歸通過，只測試Web0.1.94/API0.1.75。
 
 - 2026-10-26 08C2完成：24鍵／105前端、30後端、本機24／發布24及build/hash/health/同源通過，原string body與text/plain相容、舊關聯清單保持；只測試Web0.1.95/API0.1.76，剩18件，接續08C3 公式／圖表與查詢。[規格](../specs/20261026-i18n-task08c2/spec.md)／[驗證](../specs/20261026-i18n-task08c2/verification.md)。
+
+- 2026-10-26 08C3A完成：60鍵／106前端、34後端、本機27／發布27及build/hash/health/同源通過，11控制器除顯示metadata外與原文完全相同；只測試Web0.1.96/API0.1.77，剩18件，接續08C3B 服務例外與動態驗證。[規格](../specs/20261026-i18n-task08c3a/spec.md)／[驗證](../specs/20261026-i18n-task08c3a/verification.md)。

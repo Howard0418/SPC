@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -15,8 +16,8 @@ public sealed class SpecificationLimitVersionsController(AppDbContext db) : Cont
         VersionHistoryDateRange range;
         try {range=VersionHistoryDateRange.Parse(fromDate,toDate);}
         catch(ArgumentException ex){return BadRequest(new{message=ex.Message});}
-        if(skip<0 || take is <1 or >100)return BadRequest(new{message="無效的分頁範圍。"});
-        if(!await db.PartProcessCharacteristics.IgnoreQueryFilters().AnyAsync(x=>x.Id==ppcId,ct))return NotFound(new{message="找不到指定的管制項目。"});
+        if(skip<0 || take is <1 or >100)return BadRequest(new{message="無效的分頁範圍。", code="HISTORY_PAGE_INVALID", messageKey="spc.api.historyPageInvalid", args=ApiUiMessageCatalog.EmptyArguments});
+        if(!await db.PartProcessCharacteristics.IgnoreQueryFilters().AnyAsync(x=>x.Id==ppcId,ct))return NotFound(new{message="找不到指定的管制項目。", code="HISTORY_ITEM_MISSING", messageKey="spc.api.historyItemMissing", args=ApiUiMessageCatalog.EmptyArguments});
         var query=db.SpecificationLimitVersions.AsNoTracking().Where(x=>x.PartProcessCharacteristicId==ppcId);
         if(range.FromUtc.HasValue)query=query.Where(x=>x.ChangedAt>=range.FromUtc.Value);
         if(range.UntilUtc.HasValue)query=query.Where(x=>x.ChangedAt<range.UntilUtc.Value);

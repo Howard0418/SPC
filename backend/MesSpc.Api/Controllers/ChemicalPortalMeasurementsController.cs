@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Services;
 using MesSpc.Api.Services.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -35,6 +36,6 @@ public sealed class ChemicalPortalMeasurementsController(ChemicalPortalMeasureme
         catch(ArgumentException ex){return BadRequest(new{success=false,data=(object?)null,message=ex.Message});}
         catch(ChemicalPreviewConflictException ex){return Conflict(new{success=false,data=(object?)null,message=ex.Message});}
         catch(Exception ex) when(ex is SqlException{Number:1205 or 1222 or 51200} || ex is DbUpdateException)
-        {logger.LogWarning(ex,"Portal chemical transaction rejected");return Conflict(new{message="資料或公式版本已衝突，整批未完成；請重新載入並預覽後再確認。"});}
+        {logger.LogWarning(ex,"Portal chemical transaction rejected");return Conflict(new{message="資料或公式版本已衝突，整批未完成；請重新載入並預覽後再確認。", code="CHEMICAL_BATCH_CONFLICT", messageKey="spc.api.chemicalBatchConflict", args=ApiUiMessageCatalog.EmptyArguments});}
     }
 }

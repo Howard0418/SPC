@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -85,7 +86,7 @@ public class TraceabilityMasterController(AppDbContext db) : ControllerBase
         if (lineId.HasValue)
         {
             var process = await db.Processes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == lineId.Value);
-            if (process is null) return NotFound("找不到指定的工站製程。");
+            if (process is null) return ApiUiError.WithLegacyMessage(NotFound("找不到指定的工站製程。"), HttpContext, "spc.api.traceProcessMissing");
             var lineCodes = await db.Machines.AsNoTracking()
                 .Where(x => x.ProcessId == process.Id)
                 .Select(x => x.MachineCode)
@@ -103,9 +104,9 @@ public class TraceabilityMasterController(AppDbContext db) : ControllerBase
     [HttpPost("tanks")]
     public async Task<IActionResult> CreateTank(Tank req)
     {
-        if (string.IsNullOrWhiteSpace(req.TankName)) return BadRequest("槽體中文名稱為必填欄位。");
+        if (string.IsNullOrWhiteSpace(req.TankName)) return ApiUiError.WithLegacyMessage(BadRequest("槽體中文名稱為必填欄位。"), HttpContext, "spc.api.masterTankNameRequired");
         var process = await db.Processes.FirstOrDefaultAsync(x => x.Id == req.LineId);
-        if (process is null) return BadRequest("找不到指定的工站製程。");
+        if (process is null) return ApiUiError.WithLegacyMessage(BadRequest("找不到指定的工站製程。"), HttpContext, "spc.api.traceProcessMissing");
         var line = await GetOrCreateProcessLineAsync(process);
         req.LineId = line.Id;
         req.TankCode = $"TANK-TMP-{Guid.NewGuid():N}";
@@ -123,7 +124,7 @@ public class TraceabilityMasterController(AppDbContext db) : ControllerBase
     {
         var x = await db.Tanks.FindAsync(id);
         if (x is null) return NotFound();
-        if (string.IsNullOrWhiteSpace(req.TankName)) return BadRequest("槽體中文名稱為必填欄位。");
+        if (string.IsNullOrWhiteSpace(req.TankName)) return ApiUiError.WithLegacyMessage(BadRequest("槽體中文名稱為必填欄位。"), HttpContext, "spc.api.masterTankNameRequired");
         x.TankName = req.TankName.Trim();
         x.TankNameEn = CleanOptional(req.TankNameEn);
         x.SequenceNo = req.SequenceNo;

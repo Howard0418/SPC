@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
 using MesSpc.Api.Infrastructure.Data;
@@ -12,7 +13,7 @@ internal static class LegacyV2Api
     public static ObjectResult Gone(string replacement) => new(
         new
         {
-            message = "V2 API 已封存，禁止再寫入舊版資料。請改用 V1 流程。",
+            message = "V2 API 已封存，禁止再寫入舊版資料。請改用 V1 流程。", code="LEGACY_API_ARCHIVED", messageKey="spc.api.legacyApiArchived", args=ApiUiMessageCatalog.EmptyArguments,
             replacement
         })
     {
@@ -66,7 +67,7 @@ public class StationOpsV2Controller(AppDbContext db) : ControllerBase
         var session = await db.StationOperationSessions.FindAsync(sessionId);
         if (session is null) return NotFound();
         var wo = await db.WorkOrders.FindAsync(session.WorkOrderId);
-        if (wo is null) return NotFound("Work order not found.");
+        if (wo is null) return ApiUiError.WithLegacyMessage(NotFound("Work order not found."), HttpContext, "spc.api.queryWorkOrderMissing");
 
         var itemIds = await db.ProductStationItems
             .Where(x => x.ProductId == wo.ProductId && x.StationId == session.StationId && x.IsActive)

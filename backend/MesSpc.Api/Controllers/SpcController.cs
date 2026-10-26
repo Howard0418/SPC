@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -30,16 +31,16 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
 
         if (start.HasValue && end.HasValue && start.Value.Date > end.Value.Date)
         {
-            return BadRequest("量測起日不可晚於量測迄日。");
+            return ApiUiError.WithLegacyMessage(BadRequest("量測起日不可晚於量測迄日。"), HttpContext, "spc.api.measurementDateOrder");
         }
 
         if (start.HasValue && end.HasValue && (end.Value.Date - start.Value.Date).TotalDays > 93)
         {
-            return BadRequest("查詢時間範圍最多不可超過 3 個月。");
+            return ApiUiError.WithLegacyMessage(BadRequest("查詢時間範圍最多不可超過 3 個月。"), HttpContext, "spc.api.queryWindowLimit");
         }
 
         var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId, start, end, batchNo, partId, normalityMethod);
-        if (chart is null) return NotFound("Chart data not found or invalid part process characteristic.");
+        if (chart is null) return ApiUiError.WithLegacyMessage(NotFound("Chart data not found or invalid part process characteristic."), HttpContext, "spc.api.chartMissing");
         return Ok(chart);
     }
 
@@ -58,12 +59,12 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
 
         if (start.HasValue && end.HasValue && start.Value.Date > end.Value.Date)
         {
-            return BadRequest("量測起日不可晚於量測迄日。");
+            return ApiUiError.WithLegacyMessage(BadRequest("量測起日不可晚於量測迄日。"), HttpContext, "spc.api.measurementDateOrder");
         }
 
         if (start.HasValue && end.HasValue && (end.Value.Date - start.Value.Date).TotalDays > 93)
         {
-            return BadRequest("查詢時間範圍最多不可超過 3 個月。");
+            return ApiUiError.WithLegacyMessage(BadRequest("查詢時間範圍最多不可超過 3 個月。"), HttpContext, "spc.api.queryWindowLimit");
         }
 
         var mapping = await db.PartProcessCharacteristics
@@ -72,13 +73,13 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             .Include(x => x.Machine)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == ppcId && x.IsEnabled);
-        if (mapping is null) return NotFound("Part process characteristic not found.");
+        if (mapping is null) return ApiUiError.WithLegacyMessage(NotFound("Part process characteristic not found."), HttpContext, "spc.api.chartItemMissing");
 
         var chart = await spcService.GetInteractiveChartAsync(ppcId, uploadBatchId, start, end, batchNo, partId);
-        if (chart?.RawDataPoints is null) return NotFound("Raw data not found.");
+        if (chart?.RawDataPoints is null) return ApiUiError.WithLegacyMessage(NotFound("Raw data not found."), HttpContext, "spc.api.chartRawMissing");
 
         var rows = ToEnumerable(chart.RawDataPoints).ToList();
-        if (rows.Count == 0) return NotFound("Raw data not found.");
+        if (rows.Count == 0) return ApiUiError.WithLegacyMessage(NotFound("Raw data not found."), HttpContext, "spc.api.chartRawMissing");
 
         var csv = RawDataCsvExporter.Build(rows, mapping);
         var fileName = $"SPC_RawData_{ppcId}_{DateTime.Now:yyyyMMddHHmmss}.csv";
@@ -103,12 +104,12 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
 
         if (start.HasValue && end.HasValue && start.Value.Date > end.Value.Date)
         {
-            return BadRequest("量測起日不可晚於量測迄日。");
+            return ApiUiError.WithLegacyMessage(BadRequest("量測起日不可晚於量測迄日。"), HttpContext, "spc.api.measurementDateOrder");
         }
 
         if (start.HasValue && end.HasValue && (end.Value.Date - start.Value.Date).TotalDays > 93)
         {
-            return BadRequest("查詢時間範圍最多不可超過 3 個月。");
+            return ApiUiError.WithLegacyMessage(BadRequest("查詢時間範圍最多不可超過 3 個月。"), HttpContext, "spc.api.queryWindowLimit");
         }
 
         var list = await spcService.GetChartSummaryListAsync(dimension, uploadBatchId, start, end, batchNo, partId, groupType, processId, comparisonPeriod);
@@ -119,7 +120,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     public async Task<IActionResult> ToggleExcludeUploadBatch(Guid uploadBatchId, CancellationToken ct = default)
     {
         var batch = await db.UploadBatches.FindAsync([uploadBatchId], ct);
-        if (batch is null) return NotFound("Upload batch not found.");
+        if (batch is null) return ApiUiError.WithLegacyMessage(NotFound("Upload batch not found."), HttpContext, "spc.api.chartUploadMissing");
 
         batch.IsExcluded = !batch.IsExcluded;
         await db.SaveChangesAsync(ct);
@@ -139,7 +140,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         [FromQuery] string? pointKey,
         CancellationToken ct = default)
     {
-        if (ppcId <= 0) return BadRequest(new { message = "ppcId 為必填。" });
+        if (ppcId <= 0) return BadRequest(new { message = "ppcId 為必填。", code="CHART_PPC_REQUIRED", messageKey="spc.api.chartPpcRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         var query = db.SpcPointExclusions
             .AsNoTracking()
@@ -185,7 +186,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             })
             .ToListAsync(ct);
 
-        return Ok(new { success = true, data = rows, message = "已取得點位排除清單。" });
+        return Ok(new { success = true, data = rows, message = "已取得點位排除清單。", code="POINT_EXCLUSION_LIST_LOADED", messageKey="spc.api.pointExclusionListLoaded", args=ApiUiMessageCatalog.EmptyArguments });
     }
 
     /// <summary>
@@ -200,7 +201,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         [FromQuery] string? pointKey,
         CancellationToken ct = default)
     {
-        if (ppcId <= 0) return BadRequest(new { message = "ppcId 為必填。" });
+        if (ppcId <= 0) return BadRequest(new { message = "ppcId 為必填。", code="CHART_PPC_REQUIRED", messageKey="spc.api.chartPpcRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         var query = db.SpcPointRemarks
             .AsNoTracking()
@@ -237,7 +238,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             })
             .ToListAsync(ct);
 
-        return Ok(new { success = true, data = rows, message = "已取得點位備註清單。" });
+        return Ok(new { success = true, data = rows, message = "已取得點位備註清單。", code="POINT_REMARK_LIST_LOADED", messageKey="spc.api.pointRemarkListLoaded", args=ApiUiMessageCatalog.EmptyArguments });
     }
 
     /// <summary>
@@ -286,6 +287,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         {
             success = true,
             data = ToPointExclusionDto(entity),
+            code = "POINT_EXCLUDED", messageKey = state == "ExcludedHidden" ? "spc.api.pointExcludedHidden" : "spc.api.pointExcludedVisible", args = ApiUiMessageCatalog.EmptyArguments,
             message = state == "ExcludedHidden" ? "點位已設定為隱藏且不列入計算。" : "點位已設定為顯示但不列入計算。"
         });
     }
@@ -321,7 +323,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
                 await db.SaveChangesAsync(ct);
             }
 
-            return Ok(new { success = true, data = entity is null ? null : ToPointRemarkDto(entity), message = "點位備註已清空。" });
+            return Ok(new { success = true, data = entity is null ? null : ToPointRemarkDto(entity), message = "點位備註已清空。", code="POINT_REMARK_CLEARED", messageKey="spc.api.pointRemarkCleared", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         if (entity is null)
@@ -344,7 +346,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        return Ok(new { success = true, data = ToPointRemarkDto(entity), message = "點位備註已儲存。" });
+        return Ok(new { success = true, data = ToPointRemarkDto(entity), message = "點位備註已儲存。", code="POINT_REMARK_SAVED", messageKey="spc.api.pointRemarkSaved", args=ApiUiMessageCatalog.EmptyArguments });
     }
 
     /// <summary>
@@ -355,14 +357,14 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     public async Task<IActionResult> RestorePointExclusion(long id, CancellationToken ct = default)
     {
         var entity = await db.SpcPointExclusions.FirstOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
-        if (entity is null) return NotFound(new { success = false, data = (object?)null, message = "找不到有效的點位排除狀態。" });
+        if (entity is null) return NotFound(new { success = false, data = (object?)null, message = "找不到有效的點位排除狀態。", code="POINT_EXCLUSION_MISSING", messageKey="spc.api.pointExclusionMissing", args=ApiUiMessageCatalog.EmptyArguments });
 
         entity.IsActive = false;
         entity.UpdatedBy = CurrentUserName();
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        return Ok(new { success = true, data = ToPointExclusionDto(entity), message = "點位已恢復列入計算。" });
+        return Ok(new { success = true, data = ToPointExclusionDto(entity), message = "點位已恢復列入計算。", code="POINT_RESTORED", messageKey="spc.api.pointRestored", args=ApiUiMessageCatalog.EmptyArguments });
     }
 
     /// <summary>
@@ -373,21 +375,21 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     public async Task<IActionResult> DeletePointRemark(long id, CancellationToken ct = default)
     {
         var entity = await db.SpcPointRemarks.FirstOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
-        if (entity is null) return NotFound(new { success = false, data = (object?)null, message = "找不到有效的點位備註。" });
+        if (entity is null) return NotFound(new { success = false, data = (object?)null, message = "找不到有效的點位備註。", code="POINT_REMARK_MISSING", messageKey="spc.api.pointRemarkMissing", args=ApiUiMessageCatalog.EmptyArguments });
 
         entity.IsActive = false;
         entity.UpdatedBy = CurrentUserName();
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        return Ok(new { success = true, data = ToPointRemarkDto(entity), message = "點位備註已清空。" });
+        return Ok(new { success = true, data = ToPointRemarkDto(entity), message = "點位備註已清空。", code="POINT_REMARK_CLEARED", messageKey="spc.api.pointRemarkCleared", args=ApiUiMessageCatalog.EmptyArguments });
     }
 
     [HttpPut("control-limits/{ppcId:int}")]
     public async Task<IActionResult> UpdateControlLimits(int ppcId, [FromBody] UpdateControlLimitsReq req, CancellationToken ct = default)
     {
         var mapping = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.Id == ppcId && x.IsEnabled, ct);
-        if (mapping is null) return NotFound("Part process characteristic not found.");
+        if (mapping is null) return ApiUiError.WithLegacyMessage(NotFound("Part process characteristic not found."), HttpContext, "spc.api.chartItemMissing");
 
         mapping.UCL = req.Ucl;
         mapping.CL = req.Cl;
@@ -400,9 +402,9 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     [HttpPost("trial-calculate")]
     public async Task<IActionResult> TrialCalculate([FromBody] TrialCalculateReq req, CancellationToken ct = default)
     {
-        if (req.PartProcessCharacteristicId <= 0) return BadRequest("PartProcessCharacteristicId 為必填。");
-        if (!req.StartDate.HasValue || !req.EndDate.HasValue) return BadRequest("量測起迄時間為必填。");
-        if (req.StartDate.Value > req.EndDate.Value) return BadRequest("起日不可晚於迄日。");
+        if (req.PartProcessCharacteristicId <= 0) return ApiUiError.WithLegacyMessage(BadRequest("PartProcessCharacteristicId 為必填。"), HttpContext, "spc.api.chartCharacteristicIdRequired");
+        if (!req.StartDate.HasValue || !req.EndDate.HasValue) return ApiUiError.WithLegacyMessage(BadRequest("量測起迄時間為必填。"), HttpContext, "spc.api.measurementRangeRequired");
+        if (req.StartDate.Value > req.EndDate.Value) return ApiUiError.WithLegacyMessage(BadRequest("起日不可晚於迄日。"), HttpContext, "spc.api.queryDateOrder");
 
         var result = await spcService.TrialCalculateLimitsAsync(
             req.PartProcessCharacteristicId,
@@ -410,18 +412,18 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
             req.EndDate.Value,
             ct);
 
-        if (result is null) return NotFound("找不到該 SPC 管制項目。");
+        if (result is null) return ApiUiError.WithLegacyMessage(NotFound("找不到該 SPC 管制項目。"), HttpContext, "spc.api.chartSpecifiedItemMissing");
         return Ok(result);
     }
 
     [HttpPost("ocap")]
     public async Task<IActionResult> SaveOcap([FromBody] SaveOcapReq req, CancellationToken ct = default)
     {
-        if (req.PpcId <= 0) return BadRequest("PpcId is required.");
+        if (req.PpcId <= 0) return ApiUiError.WithLegacyMessage(BadRequest("PpcId is required."), HttpContext, "spc.api.chartPpcIdRequired");
 
         var mapping = await db.PartProcessCharacteristics.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == req.PpcId && x.IsEnabled, ct);
-        if (mapping is null) return NotFound("Part process characteristic not found.");
+        if (mapping is null) return ApiUiError.WithLegacyMessage(NotFound("Part process characteristic not found."), HttpContext, "spc.api.chartItemMissing");
 
         VariableMeasurement? measurement = null;
         if (req.VariableMeasurementId.HasValue)
@@ -446,7 +448,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         var actualValue = req.ActualValue ?? measurement?.MeasuredValue;
         if (alert is null)
         {
-            if (!actualValue.HasValue) return BadRequest("ActualValue or VariableMeasurementId is required when creating OCAP.");
+            if (!actualValue.HasValue) return ApiUiError.WithLegacyMessage(BadRequest("ActualValue or VariableMeasurementId is required when creating OCAP."), HttpContext, "spc.api.ocapValueRequired");
 
             var isOutOfSpec = (mapping.USL.HasValue && actualValue.Value > mapping.USL.Value)
                 || (mapping.LSL.HasValue && actualValue.Value < mapping.LSL.Value);
@@ -503,26 +505,26 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     private async Task<IActionResult?> ValidatePointExclusionRequestAsync(UpsertSpcPointExclusionReq req, CancellationToken ct)
     {
         if (req.PartProcessCharacteristicId <= 0)
-            return BadRequest(new { success = false, data = (object?)null, message = "PartProcessCharacteristicId 為必填。" });
+            return BadRequest(new { success = false, data = (object?)null, message = "PartProcessCharacteristicId 為必填。", code="CHART_CHARACTERISTIC_ID_REQUIRED", messageKey="spc.api.chartCharacteristicIdRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         if (!IsValidExclusionState(req.State))
-            return BadRequest(new { success = false, data = (object?)null, message = "State 僅允許 ExcludedVisible 或 ExcludedHidden。" });
+            return BadRequest(new { success = false, data = (object?)null, message = "State 僅允許 ExcludedVisible 或 ExcludedHidden。", code="POINT_STATE_INVALID", messageKey="spc.api.pointStateInvalid", args=ApiUiMessageCatalog.EmptyArguments });
 
         var pointScope = NormalizePointScope(req.PointScope);
         if (!IsValidPointScope(pointScope))
-            return BadRequest(new { success = false, data = (object?)null, message = "PointScope 僅允許 VariableMeasurement、AttributeMeasurement 或 Subgroup。" });
+            return BadRequest(new { success = false, data = (object?)null, message = "PointScope 僅允許 VariableMeasurement、AttributeMeasurement 或 Subgroup。", code="POINT_SCOPE_INVALID", messageKey="spc.api.pointScopeInvalid", args=ApiUiMessageCatalog.EmptyArguments });
 
         if (!req.VariableMeasurementId.HasValue
             && !req.AttributeMeasurementId.HasValue
             && string.IsNullOrWhiteSpace(req.PointKey))
         {
-            return BadRequest(new { success = false, data = (object?)null, message = "需提供 VariableMeasurementId、AttributeMeasurementId 或 PointKey 其中之一。" });
+            return BadRequest(new { success = false, data = (object?)null, message = "需提供 VariableMeasurementId、AttributeMeasurementId 或 PointKey 其中之一。", code="POINT_IDENTITY_REQUIRED", messageKey="spc.api.pointIdentityRequired", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         var ppcExists = await db.PartProcessCharacteristics.AsNoTracking()
             .AnyAsync(x => x.Id == req.PartProcessCharacteristicId && x.IsEnabled, ct);
         if (!ppcExists)
-            return NotFound(new { success = false, data = (object?)null, message = "找不到 SPC 管制項目。" });
+            return NotFound(new { success = false, data = (object?)null, message = "找不到 SPC 管制項目。", code="CHART_CONTROL_ITEM_MISSING", messageKey="spc.api.chartControlItemMissing", args=ApiUiMessageCatalog.EmptyArguments });
 
         if (req.VariableMeasurementId.HasValue)
         {
@@ -531,7 +533,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
                 .Select(x => new { x.PartProcessCharacteristicId, x.UploadBatchId })
                 .FirstOrDefaultAsync(ct);
             if (measurement is null || measurement.PartProcessCharacteristicId != req.PartProcessCharacteristicId)
-                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 VariableMeasurement。" });
+                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 VariableMeasurement。", code="POINT_VARIABLE_MISSING", messageKey="spc.api.pointVariableMissing", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         if (req.AttributeMeasurementId.HasValue)
@@ -541,7 +543,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
                 .Select(x => new { x.PartProcessCharacteristicId, x.UploadBatchId })
                 .FirstOrDefaultAsync(ct);
             if (measurement is null || measurement.PartProcessCharacteristicId != req.PartProcessCharacteristicId)
-                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 AttributeMeasurement。" });
+                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 AttributeMeasurement。", code="POINT_ATTRIBUTE_MISSING", messageKey="spc.api.pointAttributeMissing", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         return null;
@@ -550,7 +552,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
     private async Task<IActionResult?> ValidatePointRemarkRequestAsync(UpsertSpcPointRemarkReq req, CancellationToken ct)
     {
         if (!string.IsNullOrWhiteSpace(req.Remark) && req.Remark.Trim().Length > 500)
-            return BadRequest(new { success = false, data = (object?)null, message = "Remark 不可超過 500 字。" });
+            return BadRequest(new { success = false, data = (object?)null, message = "Remark 不可超過 500 字。", code="POINT_REMARK_TOO_LONG", messageKey="spc.api.pointRemarkTooLong", args=ApiUiMessageCatalog.EmptyArguments });
 
         return await ValidatePointReferenceAsync(
             req.PartProcessCharacteristicId,
@@ -570,23 +572,23 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
         CancellationToken ct)
     {
         if (partProcessCharacteristicId <= 0)
-            return BadRequest(new { success = false, data = (object?)null, message = "PartProcessCharacteristicId 為必填。" });
+            return BadRequest(new { success = false, data = (object?)null, message = "PartProcessCharacteristicId 為必填。", code="CHART_CHARACTERISTIC_ID_REQUIRED", messageKey="spc.api.chartCharacteristicIdRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         var pointScope = NormalizePointScope(pointScopeValue);
         if (!IsValidPointScope(pointScope))
-            return BadRequest(new { success = false, data = (object?)null, message = "PointScope 僅允許 VariableMeasurement、AttributeMeasurement 或 Subgroup。" });
+            return BadRequest(new { success = false, data = (object?)null, message = "PointScope 僅允許 VariableMeasurement、AttributeMeasurement 或 Subgroup。", code="POINT_SCOPE_INVALID", messageKey="spc.api.pointScopeInvalid", args=ApiUiMessageCatalog.EmptyArguments });
 
         if (!variableMeasurementId.HasValue
             && !attributeMeasurementId.HasValue
             && string.IsNullOrWhiteSpace(pointKey))
         {
-            return BadRequest(new { success = false, data = (object?)null, message = "需提供 VariableMeasurementId、AttributeMeasurementId 或 PointKey 其中之一。" });
+            return BadRequest(new { success = false, data = (object?)null, message = "需提供 VariableMeasurementId、AttributeMeasurementId 或 PointKey 其中之一。", code="POINT_IDENTITY_REQUIRED", messageKey="spc.api.pointIdentityRequired", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         var ppcExists = await db.PartProcessCharacteristics.AsNoTracking()
             .AnyAsync(x => x.Id == partProcessCharacteristicId && x.IsEnabled, ct);
         if (!ppcExists)
-            return NotFound(new { success = false, data = (object?)null, message = "找不到 SPC 管制項目。" });
+            return NotFound(new { success = false, data = (object?)null, message = "找不到 SPC 管制項目。", code="CHART_CONTROL_ITEM_MISSING", messageKey="spc.api.chartControlItemMissing", args=ApiUiMessageCatalog.EmptyArguments });
 
         if (variableMeasurementId.HasValue)
         {
@@ -595,7 +597,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
                 .Select(x => new { x.PartProcessCharacteristicId, x.UploadBatchId })
                 .FirstOrDefaultAsync(ct);
             if (measurement is null || measurement.PartProcessCharacteristicId != partProcessCharacteristicId)
-                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 VariableMeasurement。" });
+                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 VariableMeasurement。", code="POINT_VARIABLE_MISSING", messageKey="spc.api.pointVariableMissing", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         if (attributeMeasurementId.HasValue)
@@ -605,7 +607,7 @@ public class SpcController(SpcService spcService, AppDbContext db) : ControllerB
                 .Select(x => new { x.PartProcessCharacteristicId, x.UploadBatchId })
                 .FirstOrDefaultAsync(ct);
             if (measurement is null || measurement.PartProcessCharacteristicId != partProcessCharacteristicId)
-                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 AttributeMeasurement。" });
+                return NotFound(new { success = false, data = (object?)null, message = "找不到符合管制項目的 AttributeMeasurement。", code="POINT_ATTRIBUTE_MISSING", messageKey="spc.api.pointAttributeMissing", args=ApiUiMessageCatalog.EmptyArguments });
         }
 
         return null;
@@ -822,7 +824,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
     public async Task<IActionResult> GetActive(CancellationToken ct)
     {
         var detail = await fTableService.GetActiveDetailAsync(ct);
-        return detail is null ? NotFound(new { message = "尚未啟用 F 表版本。" }) : Ok(detail);
+        return detail is null ? NotFound(new { message = "尚未啟用 F 表版本。", code="F_TABLE_NOT_ENABLED", messageKey="spc.api.fTableNotEnabled", args=ApiUiMessageCatalog.EmptyArguments }) : Ok(detail);
     }
 
     [HttpPost("sync-default")]
@@ -836,7 +838,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
     public async Task<IActionResult> Apply([FromBody] ChemicalFTableApplyRequest req, CancellationToken ct)
     {
         if (req.Cells is null || req.Cells.Count == 0)
-            return BadRequest(new { message = "F 表儲存格不可空白。" });
+            return BadRequest(new { message = "F 表儲存格不可空白。", code="F_TABLE_CELL_REQUIRED", messageKey="spc.api.fTableCellRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         try
         {
@@ -864,7 +866,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
     public async Task<IActionResult> GetImpact([FromQuery] string cellAddress, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(cellAddress))
-            return BadRequest(new { message = "請指定 F 表儲存格。" });
+            return BadRequest(new { message = "請指定 F 表儲存格。", code="F_TABLE_CELL_SELECTION_REQUIRED", messageKey="spc.api.fTableCellSelectionRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         try
         {
@@ -881,7 +883,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
     public async Task<IActionResult> Evaluate([FromBody] ChemicalFTableEvaluateRequest req, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Expression))
-            return BadRequest(new { message = "公式不可空白。" });
+            return BadRequest(new { message = "公式不可空白。", code="FORMULA_REQUIRED", messageKey="spc.api.formulaRequired", args=ApiUiMessageCatalog.EmptyArguments });
 
         try
         {
@@ -920,7 +922,7 @@ public class ChemicalFTableController(ChemicalFTableService fTableService) : Con
     public async Task<IActionResult> VersionDetail(long id, CancellationToken ct)
     {
         var result = await fTableService.GetVersionHistoryDetailAsync(id, ct);
-        return result is null ? NotFound(new { message = "找不到指定的 F 表版本記錄。" }) : Ok(result);
+        return result is null ? NotFound(new { message = "找不到指定的 F 表版本記錄。", code="F_TABLE_VERSION_MISSING", messageKey="spc.api.fTableVersionMissing", args=ApiUiMessageCatalog.EmptyArguments }) : Ok(result);
     }
 
     [HttpPost("versions/{id:long}/restore")]
