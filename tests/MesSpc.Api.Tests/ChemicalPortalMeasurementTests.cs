@@ -140,8 +140,8 @@ public class ChemicalPortalMeasurementTests
     }
     internal sealed class FakeEmail : IEmailNotificationService
     { public int Sent {get;private set;} public bool BeforeCommit {get;private set;} public Func<bool>? IsTransaction {get;set;}
-      public Task<bool> SendAlertEmailAsync(AlertEvent a,string e,string n,SmtpSettingsOverride? o=null){Sent++;BeforeCommit|=IsTransaction?.Invoke()??false;return Task.FromResult(true);}
-      public Task<bool> SendTestEmailAsync(string e,SmtpSettingsOverride? o=null)=>Task.FromResult(true);
+      public Task<bool> SendAlertEmailAsync(AlertEvent a,string e,string n,SmtpSettingsOverride? o=null, string? uiLocale = null){Sent++;BeforeCommit|=IsTransaction?.Invoke()??false;return Task.FromResult(true);}
+      public Task<bool> SendTestEmailAsync(string e,SmtpSettingsOverride? o=null, string? uiLocale = null)=>Task.FromResult(true);
       public Task<bool> SendHtmlEmailAsync(string e,string n,string s,string h,SmtpSettingsOverride? o=null)=>Task.FromResult(true);
       public Task<bool> SendReportEmailAsync(string e,string n,string s,string h,byte[] b,string f)=>Task.FromResult(true); }
 }

@@ -364,7 +364,7 @@ onMounted(() => {
             <div v-if="testResult.recipients?.length" class="space-y-1 text-xs">
               <div v-for="recipient in testResult.recipients" :key="recipient.email" class="flex justify-between gap-2">
                 <span class="truncate">{{ recipient.name }} ({{ recipient.email }})</span>
-                <span :class="recipient.success ? 'text-emerald-300' : 'text-rose-300'">{{ recipient.success ? t('spc.settings.succeeded') : (recipient.errorMessage || t('spc.settings.failed')) }}</span>
+                <span :class="recipient.success ? 'text-emerald-300' : 'text-rose-300'">{{ recipient.success ? t('spc.settings.succeeded') : displayUiMessage(t, getApiMessageDisplay(recipient.displayMessage, recipient.errorMessage) || {key:'spc.settings.failed'}) }}</span>
               </div>
             </div>
 

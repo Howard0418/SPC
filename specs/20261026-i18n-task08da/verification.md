@@ -1,0 +1,11 @@
+# 08DA 驗證與發布
+- 2026-10-26 DONE。27郵件純文字鍵／81列draft，累計2649鍵三語。新增純SpcMailContent builder，以明示locale格式化後對HTML參數／固定文字編碼；日期台北原格式、數值F4 invariant，null保持空白、0／負數不變；原Alert.Message／enum／ID與收件人值不翻譯、不修改實體。HTML段落沿用警報／測試信結構，移除原內插未編碼外部內容風險。
+- IEmail Alert/Test方法末尾新增optional uiLocale，只有Settings／Alerts手動測試caller讀X-SPC-UI-Locale並傳入；canonical之外回繁中，Accept-Language及CurrentCulture不影響。原業務SpcService背景呼叫保持預設null／繁中；未建立偏好schema或翻收件人姓名。必要五處test fake sender僅同步介面簽名，原斷言保持。
+- SMTP主機／port／SSL／帳密／收件人解析、保存本機副本及寄送try/catch／回傳bool未變。Alert/Test副本檔名使用原繁中主旨且原日期prefix／非法字元清理保持；HTML title採當次主旨並編碼；sender display label三語化。Report／通用Html介面未改，留DB/E。
+- SMTP逐收件人已知服務false結果保留ErrorMessage／Success，新增可忽略null的DisplayMessage；未知Exception.Message不猜翻譯、無新機敏args；前端顯示經已驗證API adapter，切三語不會再寄一次。
+- 核心先紅後綠，初始新optional介面未實作紅燈；31項必要API通過，含9郵件／fake request header、設定、報表背景成功失敗、手動量測、交易後通知與隔離HTTP。補nullable量測驗收後郵件10項全通過（31批之外新增1項，無需重跑未改邏輯）。藥液59及校驗假寄送HTTP5通過，皆InMemory／SQLite/fake service，不連真SQL、SMTP或Webhook。既有CAL-VERIFY-001/002仍待辦，不宣稱整體後端全綠。
+- 118前端單元與ledger hash／placeholder／protected terms通過；本機SMTP原DTO3及新失敗三語1通過，發布32個公開頁／DTO與新SMTP情境全通過。所有業務API完全攔截，無實際寄信或寫業務資料。6封虛構內容以390/800寬渲染共12次無水平溢出／JS錯誤，人工視看英文手機警報與繁中桌面測試信版面可讀。證據僅ignored scratch，非真人翻譯審查。
+- test build／Release publish通過，既有chunk/table／obsolete測試host提示保持。唯讀核172.16.110.16 / PMR_SPC_TEST pending=[]；IIS SpcSingleTest/及同名pool、backend D:\SPC\release\test\backend、AppEnvironment=test。完整成對 .codex-tmp/i18n-task08da/backup逐檔hash核對，runtime94／前端4，保護設定4不變，僅該test pool stop/start。
+- 實際API version/health200/0.1.82/test/ok，Web0.1.103四檔SHA256等於dist，14同源API通過。正式／Portal未改，無migration或資料修補。
+- 回復：核同test目錄/pool，停該pool，以backup/backend與frontend成對回復runtime／資產後index最後，保護設定／資料，啟pool核版本與health；無DB回復需求。
+- 剩15件接DB；校驗及報表通知仍待該批。真人審稿留20，附件掃毒外部阻擋1／Runtime與TransFiles暫緩2及校驗基準差異2獨立保留。

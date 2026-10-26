@@ -1,3 +1,4 @@
+using MesSpc.Api.Services.Localization;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
 using MesSpc.Api.Infrastructure.Data;
@@ -74,7 +75,7 @@ public class AlertsController(AppDbContext db, IEmailNotificationService emailSe
     public async Task<IActionResult> TestEmail([FromQuery] string? email)
     {
         var targetEmail = email ?? config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw";
-        var success = await emailService.SendTestEmailAsync(targetEmail);
+        var success = await emailService.SendTestEmailAsync(targetEmail, uiLocale: ApiUiMessageCatalog.RequestLocale(Request));
         return Ok(new { success, recipient = targetEmail, outboxFolder = config["SmtpSettings:LocalDiskFolder"] ?? @"C:\Users\ihao_ting.PMR.000\Desktop\MES\EmailOutbox" });
     }
 
@@ -96,7 +97,7 @@ public class AlertsController(AppDbContext db, IEmailNotificationService emailSe
         await db.SaveChangesAsync();
 
         var targetEmail = req.TargetEmail ?? config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw";
-        var emailSent = await emailService.SendAlertEmailAsync(alert, targetEmail, "品管工程師 (測試)");
+        var emailSent = await emailService.SendAlertEmailAsync(alert, targetEmail, ApiUiMessageCatalog.Shared.Format("spc.api.mailTestEngineer", ApiUiMessageCatalog.RequestLocale(Request)), uiLocale: ApiUiMessageCatalog.RequestLocale(Request));
 
         return Ok(new { alert, emailSent, recipient = targetEmail, outboxFolder = config["SmtpSettings:LocalDiskFolder"] ?? @"C:\Users\ihao_ting.PMR.000\Desktop\MES\EmailOutbox" });
     }

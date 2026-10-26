@@ -27,8 +27,8 @@ public sealed class CapturingEmailService : IEmailNotificationService
 {
     public readonly List<(string Email, string Subject, string Body)> Sent = [];
     public bool Result { get; set; } = true;
-    public Task<bool> SendAlertEmailAsync(AlertEvent alertEvent, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null) => Task.FromResult(Result);
-    public Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null) => Task.FromResult(Result);
+    public Task<bool> SendAlertEmailAsync(AlertEvent alertEvent, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null) => Task.FromResult(Result);
+    public Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null) => Task.FromResult(Result);
     public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null)
     {
         Sent.Add((recipientEmail, subject, htmlBody));

@@ -113,10 +113,10 @@ public class SpcReportScheduleProcessorTests
     {
         public int Attempts { get; private set; }
 
-        public Task<bool> SendAlertEmailAsync(AlertEvent alert, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null)
+        public Task<bool> SendAlertEmailAsync(AlertEvent alert, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null)
             => Task.FromResult(true);
 
-        public Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null)
+        public Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null)
             => Task.FromResult(true);
 
         public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null)

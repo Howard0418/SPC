@@ -137,8 +137,8 @@ public class ManualMeasurementsV1ControllerTests
 
     private sealed class StubEmailService : IEmailNotificationService
     {
-        public Task<bool> SendAlertEmailAsync(AlertEvent alertEvent, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null) => Task.FromResult(true);
-        public Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null) => Task.FromResult(true);
+        public Task<bool> SendAlertEmailAsync(AlertEvent alertEvent, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null) => Task.FromResult(true);
+        public Task<bool> SendTestEmailAsync(string recipientEmail, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null) => Task.FromResult(true);
         public Task<bool> SendHtmlEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, SmtpSettingsOverride? overrideSettings = null) => Task.FromResult(true);
         public Task<bool> SendReportEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody, byte[] excelBytes, string fileName) => Task.FromResult(true);
     }

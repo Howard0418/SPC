@@ -1,0 +1,1240 @@
+{
+  "task": "I18N-TASK-08DA",
+  "contractVersion": "1.0.0",
+  "status": "draft",
+  "metadata": [
+    {
+      "key": "spc.api.mailAlertSubject",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "dde150ea3ecd57aa125065e240e9d29137de636acce054ac6cd019039e8280d9",
+      "placeholders": [
+        "type",
+        "part",
+        "process"
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailTestSubject",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "64cb574b727875740abbea1df3f9222ebe7d83683a34d4c105c2c63ac8890e8a",
+      "placeholders": [
+        "host",
+        "port"
+      ],
+      "protectedTokens": [
+        "SPC",
+        "MES"
+      ]
+    },
+    {
+      "key": "spc.api.mailAlertHeading",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "df6907039619c96e3e23fbb4f3cb9fab5c9053b4276d8ea45cba62dbb4318b22",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailOos",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "6aac95d67f326054a27ff2c9b7d29cbe2e4ac9a60c53f896d559e78343d712fd",
+      "placeholders": [],
+      "protectedTokens": [
+        "OOS"
+      ]
+    },
+    {
+      "key": "spc.api.mailOoc",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "42072484081fd71708dac86d9fcd1fe9f52e3841afd7ad028a259bc19c1d681c",
+      "placeholders": [],
+      "protectedTokens": [
+        "OOC"
+      ]
+    },
+    {
+      "key": "spc.api.mailGreeting",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "873355719deff6eb206e733972466636c3c6759967d61c6a72a29674e2dd3274",
+      "placeholders": [
+        "name"
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailAlertIntro",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "e918111426ad0771eef8e91cd4a5332fcc5d824d7c71632c44dc5f9cab8cb107",
+      "placeholders": [
+        "time"
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailEvent",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "451d8314712362a9f531ded2a9a6d0c19b3d4d08108a75aa7c53c14983b32aa2",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailType",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "e68ced0db8c7d507c340fa72816e3f46caf9cecd9cd1a19159d7b56e8e45b719",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailPartProcess",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "503e8c9a0fc6e1769c31985cb68e615197de502ac2ebfe395f56297d83814bff",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailMeasured",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "69d48c1e17daaddb35bbbffc0a7da2d52ba5f4ee46acec050e2cbb36b26cf753",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailReason",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "d0e16e2401998a789dd681ac8064175ec3c050f62fb28c4662b6d31e4307ecd1",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailActionLabel",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "3dc8de0ccfc3fd667f1ce8e4e056ee3dfe5e78806ebdd6891c9df4e00c6f3b86",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailAction",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "ca54f42a9aea2f2b0d413febf845127f1d6f2e0787028ff3bc564e3b634f0365",
+      "placeholders": [],
+      "protectedTokens": [
+        "IATF 16949",
+        "Root Cause",
+        "SPC",
+        "Open"
+      ]
+    },
+    {
+      "key": "spc.api.mailFooter",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "d29fb2f0c6ccbd468eea8d72420c75b414147467fef9cf50314b6c2684d889ce",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC"
+      ]
+    },
+    {
+      "key": "spc.api.mailNoReply",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "b07b358efa2387e350453c859fe495822d836e945b1391e3c084aaa2b6194b79",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailTestHeading",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "5a6ba50f79f3b54e941fc8bd5769a9f30db54d9d0c01a7810d10cdb30450119e",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC",
+        "MES"
+      ]
+    },
+    {
+      "key": "spc.api.mailTestGreeting",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "9ae4049ee445163bbcf7088cd5ed1a4f7260f0d0bded2d3f6758c59046b56551",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailTestIntro",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "b90fb1cdd5665e403b929d18659eb0c5f835030bea3075921a636df25f015cd4",
+      "placeholders": [],
+      "protectedTokens": [
+        "SMTP",
+        "MES",
+        "Antigravity"
+      ]
+    },
+    {
+      "key": "spc.api.mailTestTime",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "802c85bde978c731ab7b29335ae2af2fafc923cc86bfa24b55e627b1dcd206d0",
+      "placeholders": [
+        "time"
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailServer",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "245f8e3ed41b391fd3ae6a6b820b30040881b918741ef4e82177a5067725d1f9",
+      "placeholders": [
+        "host",
+        "port"
+      ],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailTestFuture",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "78cc6b46746958641b1998a3c6e442e3c24a3b2976fcb589cbfdae807c48ae5f",
+      "placeholders": [],
+      "protectedTokens": [
+        "OOS",
+        "OOC"
+      ]
+    },
+    {
+      "key": "spc.api.mailSender",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "17cc1d36a176e689053e6e7ba2edd1d1eb31dc5f3a6199c18c369e7334a7b2f5",
+      "placeholders": [],
+      "protectedTokens": [
+        "SPC",
+        "MES"
+      ]
+    },
+    {
+      "key": "spc.api.mailTestRecipient",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "9138fe6778d41f098c3a582b0317f99de059ef643648359f35099f7ea64a34d2",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailTestEngineer",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "d877af7a46062eb5ed50d5d3fba2e7390c9315e9c6aa22bb79ada694f6c3c7dc",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailDefaultRecipient",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "771a29bb110b0059455e0af34c1c014c0b77dbe42348385d9df806ce0f4283a4",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.api.mailSmtpFailed",
+      "context": "郵件純顯示資源；原名／診斷／enum不翻譯，HTML參數編碼，背景預設繁中",
+      "surface": "text/mail",
+      "sourceHash": "f98ca0074587a917f6bc70cd3bd0fb331ab33ab5d7cbf44e5757b234748cba09",
+      "placeholders": [],
+      "protectedTokens": []
+    }
+  ],
+  "ledger": [
+    {
+      "key": "spc.api.mailAlertSubject",
+      "locale": "zh-TW",
+      "sourceHash": "dde150ea3ecd57aa125065e240e9d29137de636acce054ac6cd019039e8280d9",
+      "translationHash": "dde150ea3ecd57aa125065e240e9d29137de636acce054ac6cd019039e8280d9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAlertSubject",
+      "locale": "zh-CN",
+      "sourceHash": "dde150ea3ecd57aa125065e240e9d29137de636acce054ac6cd019039e8280d9",
+      "translationHash": "e0bff1df72d798e8acb591a2236c5c28623dfd7732a045f39f3cb9c2d5b7053c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAlertSubject",
+      "locale": "en-US",
+      "sourceHash": "dde150ea3ecd57aa125065e240e9d29137de636acce054ac6cd019039e8280d9",
+      "translationHash": "c41a839f0a044eaa7b90f83843c38800e23c53b222cecd3ffdf9da072ba0a10c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestSubject",
+      "locale": "zh-TW",
+      "sourceHash": "64cb574b727875740abbea1df3f9222ebe7d83683a34d4c105c2c63ac8890e8a",
+      "translationHash": "64cb574b727875740abbea1df3f9222ebe7d83683a34d4c105c2c63ac8890e8a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestSubject",
+      "locale": "zh-CN",
+      "sourceHash": "64cb574b727875740abbea1df3f9222ebe7d83683a34d4c105c2c63ac8890e8a",
+      "translationHash": "1a57ec0cd8d895daa8f86d347ca8ee7e82a3c2d0ed6bda4f5f52010881524671",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestSubject",
+      "locale": "en-US",
+      "sourceHash": "64cb574b727875740abbea1df3f9222ebe7d83683a34d4c105c2c63ac8890e8a",
+      "translationHash": "325f35da57ad1fe2b440b21fc6916945043b3175293dcc84f2363018138c5e5c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAlertHeading",
+      "locale": "zh-TW",
+      "sourceHash": "df6907039619c96e3e23fbb4f3cb9fab5c9053b4276d8ea45cba62dbb4318b22",
+      "translationHash": "df6907039619c96e3e23fbb4f3cb9fab5c9053b4276d8ea45cba62dbb4318b22",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAlertHeading",
+      "locale": "zh-CN",
+      "sourceHash": "df6907039619c96e3e23fbb4f3cb9fab5c9053b4276d8ea45cba62dbb4318b22",
+      "translationHash": "0e5f3c7b40b2fe44a7d91ed7e594cb9f627314a2c6399053c398162f2b4dc476",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAlertHeading",
+      "locale": "en-US",
+      "sourceHash": "df6907039619c96e3e23fbb4f3cb9fab5c9053b4276d8ea45cba62dbb4318b22",
+      "translationHash": "d8eaeef511029fb78e3233002a99aadf4ca62d576780da10669a6e42d7c2c484",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailOos",
+      "locale": "zh-TW",
+      "sourceHash": "6aac95d67f326054a27ff2c9b7d29cbe2e4ac9a60c53f896d559e78343d712fd",
+      "translationHash": "6aac95d67f326054a27ff2c9b7d29cbe2e4ac9a60c53f896d559e78343d712fd",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailOos",
+      "locale": "zh-CN",
+      "sourceHash": "6aac95d67f326054a27ff2c9b7d29cbe2e4ac9a60c53f896d559e78343d712fd",
+      "translationHash": "d1dd75c8d4f535446a3f736d360cef1ab29ee3c34dbf76637593a149eeb49d29",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailOos",
+      "locale": "en-US",
+      "sourceHash": "6aac95d67f326054a27ff2c9b7d29cbe2e4ac9a60c53f896d559e78343d712fd",
+      "translationHash": "6e299237db2592f762bbeafb8177fcefa8cf4658650c84d287ae63b60d00480e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailOoc",
+      "locale": "zh-TW",
+      "sourceHash": "42072484081fd71708dac86d9fcd1fe9f52e3841afd7ad028a259bc19c1d681c",
+      "translationHash": "42072484081fd71708dac86d9fcd1fe9f52e3841afd7ad028a259bc19c1d681c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailOoc",
+      "locale": "zh-CN",
+      "sourceHash": "42072484081fd71708dac86d9fcd1fe9f52e3841afd7ad028a259bc19c1d681c",
+      "translationHash": "03808e0681af0dc3251f1e0ef58701edae6c08be12fdbd8401250c544b202ddb",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailOoc",
+      "locale": "en-US",
+      "sourceHash": "42072484081fd71708dac86d9fcd1fe9f52e3841afd7ad028a259bc19c1d681c",
+      "translationHash": "c8aaa7017c3d133d19706a6ccc2e1872338f5f347df96722a33ae36109726fce",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailGreeting",
+      "locale": "zh-TW",
+      "sourceHash": "873355719deff6eb206e733972466636c3c6759967d61c6a72a29674e2dd3274",
+      "translationHash": "873355719deff6eb206e733972466636c3c6759967d61c6a72a29674e2dd3274",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailGreeting",
+      "locale": "zh-CN",
+      "sourceHash": "873355719deff6eb206e733972466636c3c6759967d61c6a72a29674e2dd3274",
+      "translationHash": "97162d854722ddb449498ec1840c83d407d46b37305abc2b8fd39fbe825774d9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailGreeting",
+      "locale": "en-US",
+      "sourceHash": "873355719deff6eb206e733972466636c3c6759967d61c6a72a29674e2dd3274",
+      "translationHash": "ec6b334e36ce8a7e89ae1d7104d00a40caa27a33e8e0a5c0645ffacb6b3ba64a",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAlertIntro",
+      "locale": "zh-TW",
+      "sourceHash": "e918111426ad0771eef8e91cd4a5332fcc5d824d7c71632c44dc5f9cab8cb107",
+      "translationHash": "e918111426ad0771eef8e91cd4a5332fcc5d824d7c71632c44dc5f9cab8cb107",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAlertIntro",
+      "locale": "zh-CN",
+      "sourceHash": "e918111426ad0771eef8e91cd4a5332fcc5d824d7c71632c44dc5f9cab8cb107",
+      "translationHash": "aab9ac4e0ac80f1209a82a1fec1653e98024e745fa69fbf8b909a68b2a99b1df",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAlertIntro",
+      "locale": "en-US",
+      "sourceHash": "e918111426ad0771eef8e91cd4a5332fcc5d824d7c71632c44dc5f9cab8cb107",
+      "translationHash": "f105320dcef33f4f7e795eb496c1bf2b91ffbb19679efcc50b828661f7b87f47",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailEvent",
+      "locale": "zh-TW",
+      "sourceHash": "451d8314712362a9f531ded2a9a6d0c19b3d4d08108a75aa7c53c14983b32aa2",
+      "translationHash": "451d8314712362a9f531ded2a9a6d0c19b3d4d08108a75aa7c53c14983b32aa2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailEvent",
+      "locale": "zh-CN",
+      "sourceHash": "451d8314712362a9f531ded2a9a6d0c19b3d4d08108a75aa7c53c14983b32aa2",
+      "translationHash": "478e880b942cad67dca35e7fafa630d89ae50059953fb095ec9dc4d4e89ef4e3",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailEvent",
+      "locale": "en-US",
+      "sourceHash": "451d8314712362a9f531ded2a9a6d0c19b3d4d08108a75aa7c53c14983b32aa2",
+      "translationHash": "3045abafb173899ffb59e15812e118041bbb8b7a02869ad8ef549e7a846d4dfd",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailType",
+      "locale": "zh-TW",
+      "sourceHash": "e68ced0db8c7d507c340fa72816e3f46caf9cecd9cd1a19159d7b56e8e45b719",
+      "translationHash": "e68ced0db8c7d507c340fa72816e3f46caf9cecd9cd1a19159d7b56e8e45b719",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailType",
+      "locale": "zh-CN",
+      "sourceHash": "e68ced0db8c7d507c340fa72816e3f46caf9cecd9cd1a19159d7b56e8e45b719",
+      "translationHash": "fcdadea4ed3acbf55c8fd867c8880ea9d2a773e39a5aa2937942780cb3fab446",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailType",
+      "locale": "en-US",
+      "sourceHash": "e68ced0db8c7d507c340fa72816e3f46caf9cecd9cd1a19159d7b56e8e45b719",
+      "translationHash": "ab30d609b7e2e4aee3f2e84b7abba4e34f206c3f0ff2497d6707f57bfbdb3f43",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailPartProcess",
+      "locale": "zh-TW",
+      "sourceHash": "503e8c9a0fc6e1769c31985cb68e615197de502ac2ebfe395f56297d83814bff",
+      "translationHash": "503e8c9a0fc6e1769c31985cb68e615197de502ac2ebfe395f56297d83814bff",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailPartProcess",
+      "locale": "zh-CN",
+      "sourceHash": "503e8c9a0fc6e1769c31985cb68e615197de502ac2ebfe395f56297d83814bff",
+      "translationHash": "94678094cad4d1ba1d2a5fa57077e3c07a5ae013e06a96211d735fafb6bd03f2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailPartProcess",
+      "locale": "en-US",
+      "sourceHash": "503e8c9a0fc6e1769c31985cb68e615197de502ac2ebfe395f56297d83814bff",
+      "translationHash": "d1aa1d4a424e49e88a7fce40a31b417d01e49b66473c8a70278a0909e74065e9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailMeasured",
+      "locale": "zh-TW",
+      "sourceHash": "69d48c1e17daaddb35bbbffc0a7da2d52ba5f4ee46acec050e2cbb36b26cf753",
+      "translationHash": "69d48c1e17daaddb35bbbffc0a7da2d52ba5f4ee46acec050e2cbb36b26cf753",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailMeasured",
+      "locale": "zh-CN",
+      "sourceHash": "69d48c1e17daaddb35bbbffc0a7da2d52ba5f4ee46acec050e2cbb36b26cf753",
+      "translationHash": "e4a6c90dddc95562e56b2a0b78e872c33a44f4a6fe44d5be504d928cf5b17311",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailMeasured",
+      "locale": "en-US",
+      "sourceHash": "69d48c1e17daaddb35bbbffc0a7da2d52ba5f4ee46acec050e2cbb36b26cf753",
+      "translationHash": "0516405bf5ef9f11b471772d4f10b11340576d415f6cdc501e61bd4339d60425",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailReason",
+      "locale": "zh-TW",
+      "sourceHash": "d0e16e2401998a789dd681ac8064175ec3c050f62fb28c4662b6d31e4307ecd1",
+      "translationHash": "d0e16e2401998a789dd681ac8064175ec3c050f62fb28c4662b6d31e4307ecd1",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailReason",
+      "locale": "zh-CN",
+      "sourceHash": "d0e16e2401998a789dd681ac8064175ec3c050f62fb28c4662b6d31e4307ecd1",
+      "translationHash": "f240fc980069f1a41e48cc91dcae644db221234ce3285359ae3bad3d5f1c9a2d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailReason",
+      "locale": "en-US",
+      "sourceHash": "d0e16e2401998a789dd681ac8064175ec3c050f62fb28c4662b6d31e4307ecd1",
+      "translationHash": "a88b098b12e3c544dd8a230fa2606b5d3f1b7806cb18ab8ffd7396d56c6c50fb",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailActionLabel",
+      "locale": "zh-TW",
+      "sourceHash": "3dc8de0ccfc3fd667f1ce8e4e056ee3dfe5e78806ebdd6891c9df4e00c6f3b86",
+      "translationHash": "3dc8de0ccfc3fd667f1ce8e4e056ee3dfe5e78806ebdd6891c9df4e00c6f3b86",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailActionLabel",
+      "locale": "zh-CN",
+      "sourceHash": "3dc8de0ccfc3fd667f1ce8e4e056ee3dfe5e78806ebdd6891c9df4e00c6f3b86",
+      "translationHash": "277df3bafe224357186710b9c13e2ebac9b3daad9d828a1ac2a469220443ff94",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailActionLabel",
+      "locale": "en-US",
+      "sourceHash": "3dc8de0ccfc3fd667f1ce8e4e056ee3dfe5e78806ebdd6891c9df4e00c6f3b86",
+      "translationHash": "595c7c4059861df9277309ef9c6ae3501e754d97be846adde3c8b811e327ce55",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAction",
+      "locale": "zh-TW",
+      "sourceHash": "ca54f42a9aea2f2b0d413febf845127f1d6f2e0787028ff3bc564e3b634f0365",
+      "translationHash": "ca54f42a9aea2f2b0d413febf845127f1d6f2e0787028ff3bc564e3b634f0365",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAction",
+      "locale": "zh-CN",
+      "sourceHash": "ca54f42a9aea2f2b0d413febf845127f1d6f2e0787028ff3bc564e3b634f0365",
+      "translationHash": "d2833c516e60d645a1ab08f8267d086f3c10f119e0ce786c61c326a024522a89",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailAction",
+      "locale": "en-US",
+      "sourceHash": "ca54f42a9aea2f2b0d413febf845127f1d6f2e0787028ff3bc564e3b634f0365",
+      "translationHash": "9abb9a50810caae5d74a82b7a02665d3a01b36c448b943d1d297d72e66fdaa9c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailFooter",
+      "locale": "zh-TW",
+      "sourceHash": "d29fb2f0c6ccbd468eea8d72420c75b414147467fef9cf50314b6c2684d889ce",
+      "translationHash": "d29fb2f0c6ccbd468eea8d72420c75b414147467fef9cf50314b6c2684d889ce",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailFooter",
+      "locale": "zh-CN",
+      "sourceHash": "d29fb2f0c6ccbd468eea8d72420c75b414147467fef9cf50314b6c2684d889ce",
+      "translationHash": "7b7e5fc35e3cc8c9098117d7c40d2fc2191d840917e61400e77bb853e39a739e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailFooter",
+      "locale": "en-US",
+      "sourceHash": "d29fb2f0c6ccbd468eea8d72420c75b414147467fef9cf50314b6c2684d889ce",
+      "translationHash": "fdc8400d52225b397811c21c9352fdcc8546f94e638583285bc32a9c17e282e7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailNoReply",
+      "locale": "zh-TW",
+      "sourceHash": "b07b358efa2387e350453c859fe495822d836e945b1391e3c084aaa2b6194b79",
+      "translationHash": "b07b358efa2387e350453c859fe495822d836e945b1391e3c084aaa2b6194b79",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailNoReply",
+      "locale": "zh-CN",
+      "sourceHash": "b07b358efa2387e350453c859fe495822d836e945b1391e3c084aaa2b6194b79",
+      "translationHash": "45a0901aa640c0fb95944e84f24df6f33587c676be012daf2a2bca4a5ff51282",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailNoReply",
+      "locale": "en-US",
+      "sourceHash": "b07b358efa2387e350453c859fe495822d836e945b1391e3c084aaa2b6194b79",
+      "translationHash": "56765093b9477be201c43228fea19c9743649c779c7462cd249ca04e279c69ba",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestHeading",
+      "locale": "zh-TW",
+      "sourceHash": "5a6ba50f79f3b54e941fc8bd5769a9f30db54d9d0c01a7810d10cdb30450119e",
+      "translationHash": "5a6ba50f79f3b54e941fc8bd5769a9f30db54d9d0c01a7810d10cdb30450119e",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestHeading",
+      "locale": "zh-CN",
+      "sourceHash": "5a6ba50f79f3b54e941fc8bd5769a9f30db54d9d0c01a7810d10cdb30450119e",
+      "translationHash": "6f51b4471e7be9919382c4eef7192b2570746df31a566b21fed77f00593f1256",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestHeading",
+      "locale": "en-US",
+      "sourceHash": "5a6ba50f79f3b54e941fc8bd5769a9f30db54d9d0c01a7810d10cdb30450119e",
+      "translationHash": "ff4d4ec396f277ba2a7a847a1085075c7790a5b696a36fc535d7aeebc65e384c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestGreeting",
+      "locale": "zh-TW",
+      "sourceHash": "9ae4049ee445163bbcf7088cd5ed1a4f7260f0d0bded2d3f6758c59046b56551",
+      "translationHash": "9ae4049ee445163bbcf7088cd5ed1a4f7260f0d0bded2d3f6758c59046b56551",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestGreeting",
+      "locale": "zh-CN",
+      "sourceHash": "9ae4049ee445163bbcf7088cd5ed1a4f7260f0d0bded2d3f6758c59046b56551",
+      "translationHash": "09b57d8c4f765f761671261b5a15f0f9a056ca4853ce6fa7c3c0cc6758f256d8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestGreeting",
+      "locale": "en-US",
+      "sourceHash": "9ae4049ee445163bbcf7088cd5ed1a4f7260f0d0bded2d3f6758c59046b56551",
+      "translationHash": "83ec6e1db3fdee53f6160d4f6414db8560191d7c7b7b05ea4402af69790da260",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestIntro",
+      "locale": "zh-TW",
+      "sourceHash": "b90fb1cdd5665e403b929d18659eb0c5f835030bea3075921a636df25f015cd4",
+      "translationHash": "b90fb1cdd5665e403b929d18659eb0c5f835030bea3075921a636df25f015cd4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestIntro",
+      "locale": "zh-CN",
+      "sourceHash": "b90fb1cdd5665e403b929d18659eb0c5f835030bea3075921a636df25f015cd4",
+      "translationHash": "d826771619d2f0c949a5c178403d4d11d5bc51ed8a65eb0c639e9d31547fa146",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestIntro",
+      "locale": "en-US",
+      "sourceHash": "b90fb1cdd5665e403b929d18659eb0c5f835030bea3075921a636df25f015cd4",
+      "translationHash": "9737e7e82c4c84b9681749fd4fa6ea2a47a9fcba8ee5d0a0d262281cbc069b9d",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestTime",
+      "locale": "zh-TW",
+      "sourceHash": "802c85bde978c731ab7b29335ae2af2fafc923cc86bfa24b55e627b1dcd206d0",
+      "translationHash": "802c85bde978c731ab7b29335ae2af2fafc923cc86bfa24b55e627b1dcd206d0",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestTime",
+      "locale": "zh-CN",
+      "sourceHash": "802c85bde978c731ab7b29335ae2af2fafc923cc86bfa24b55e627b1dcd206d0",
+      "translationHash": "ebadd51ce0dbf97cbf62fde905c94b78ddd919d8e407e7c4eb894855b3a27544",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestTime",
+      "locale": "en-US",
+      "sourceHash": "802c85bde978c731ab7b29335ae2af2fafc923cc86bfa24b55e627b1dcd206d0",
+      "translationHash": "11d3360a082d4110d8e626b58fb79258b25e0f6340cc7b5d8ca27c5c2c9c5df0",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailServer",
+      "locale": "zh-TW",
+      "sourceHash": "245f8e3ed41b391fd3ae6a6b820b30040881b918741ef4e82177a5067725d1f9",
+      "translationHash": "245f8e3ed41b391fd3ae6a6b820b30040881b918741ef4e82177a5067725d1f9",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailServer",
+      "locale": "zh-CN",
+      "sourceHash": "245f8e3ed41b391fd3ae6a6b820b30040881b918741ef4e82177a5067725d1f9",
+      "translationHash": "d514ceeacf1eee0e936c4cdfc638664fa9153f21b5bd802cf01508b4d9226c04",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailServer",
+      "locale": "en-US",
+      "sourceHash": "245f8e3ed41b391fd3ae6a6b820b30040881b918741ef4e82177a5067725d1f9",
+      "translationHash": "698eca5d2e6c9f789712e6a5a8f70720f3eb519223221df97ea6cf4b10a5d5a7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestFuture",
+      "locale": "zh-TW",
+      "sourceHash": "78cc6b46746958641b1998a3c6e442e3c24a3b2976fcb589cbfdae807c48ae5f",
+      "translationHash": "78cc6b46746958641b1998a3c6e442e3c24a3b2976fcb589cbfdae807c48ae5f",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestFuture",
+      "locale": "zh-CN",
+      "sourceHash": "78cc6b46746958641b1998a3c6e442e3c24a3b2976fcb589cbfdae807c48ae5f",
+      "translationHash": "8f539b442a43d1eefeb71043e46d48a4b01a4053ecfc84ebdf15b866dda87fff",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestFuture",
+      "locale": "en-US",
+      "sourceHash": "78cc6b46746958641b1998a3c6e442e3c24a3b2976fcb589cbfdae807c48ae5f",
+      "translationHash": "41f306da56b056db667699b2dd8e19fe854491049a781e929df63078f81a5c58",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailSender",
+      "locale": "zh-TW",
+      "sourceHash": "17cc1d36a176e689053e6e7ba2edd1d1eb31dc5f3a6199c18c369e7334a7b2f5",
+      "translationHash": "17cc1d36a176e689053e6e7ba2edd1d1eb31dc5f3a6199c18c369e7334a7b2f5",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailSender",
+      "locale": "zh-CN",
+      "sourceHash": "17cc1d36a176e689053e6e7ba2edd1d1eb31dc5f3a6199c18c369e7334a7b2f5",
+      "translationHash": "181c85a76d6e5c26f15ee11f7bc0bdf1901239d061aa7e4ddedf9c8dead9cfbd",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailSender",
+      "locale": "en-US",
+      "sourceHash": "17cc1d36a176e689053e6e7ba2edd1d1eb31dc5f3a6199c18c369e7334a7b2f5",
+      "translationHash": "10999afb2376601758b78e1525556613b3b92a549b9fb3690cfebc8bc84daf48",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestRecipient",
+      "locale": "zh-TW",
+      "sourceHash": "9138fe6778d41f098c3a582b0317f99de059ef643648359f35099f7ea64a34d2",
+      "translationHash": "9138fe6778d41f098c3a582b0317f99de059ef643648359f35099f7ea64a34d2",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestRecipient",
+      "locale": "zh-CN",
+      "sourceHash": "9138fe6778d41f098c3a582b0317f99de059ef643648359f35099f7ea64a34d2",
+      "translationHash": "a0638db618610d003f892e10f35ec64a4259d1e89ff84050bf826a159018e6ba",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestRecipient",
+      "locale": "en-US",
+      "sourceHash": "9138fe6778d41f098c3a582b0317f99de059ef643648359f35099f7ea64a34d2",
+      "translationHash": "7b9c0c1e1d015f9f9e9f394894f38ae7bf4cb4ee9474db1aa64ee478244c3ccf",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestEngineer",
+      "locale": "zh-TW",
+      "sourceHash": "d877af7a46062eb5ed50d5d3fba2e7390c9315e9c6aa22bb79ada694f6c3c7dc",
+      "translationHash": "d877af7a46062eb5ed50d5d3fba2e7390c9315e9c6aa22bb79ada694f6c3c7dc",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestEngineer",
+      "locale": "zh-CN",
+      "sourceHash": "d877af7a46062eb5ed50d5d3fba2e7390c9315e9c6aa22bb79ada694f6c3c7dc",
+      "translationHash": "e58a85fdd1129936552fa12da719475cfe850f59ac2eea5ff7f982ea0c964f77",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailTestEngineer",
+      "locale": "en-US",
+      "sourceHash": "d877af7a46062eb5ed50d5d3fba2e7390c9315e9c6aa22bb79ada694f6c3c7dc",
+      "translationHash": "84f4bc153d164a7ee59996dd3696fc09ba27c6ab2a6be9c7e853d57407deab93",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailDefaultRecipient",
+      "locale": "zh-TW",
+      "sourceHash": "771a29bb110b0059455e0af34c1c014c0b77dbe42348385d9df806ce0f4283a4",
+      "translationHash": "771a29bb110b0059455e0af34c1c014c0b77dbe42348385d9df806ce0f4283a4",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailDefaultRecipient",
+      "locale": "zh-CN",
+      "sourceHash": "771a29bb110b0059455e0af34c1c014c0b77dbe42348385d9df806ce0f4283a4",
+      "translationHash": "cec484ea49c03385fea45f52fe2690c35c3559081419a37567b4219847be25ec",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailDefaultRecipient",
+      "locale": "en-US",
+      "sourceHash": "771a29bb110b0059455e0af34c1c014c0b77dbe42348385d9df806ce0f4283a4",
+      "translationHash": "73895d4e59a20aab7db047c7733cc6c45161d736c1d8ce2dc5514187407b2d0c",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailSmtpFailed",
+      "locale": "zh-TW",
+      "sourceHash": "f98ca0074587a917f6bc70cd3bd0fb331ab33ab5d7cbf44e5757b234748cba09",
+      "translationHash": "f98ca0074587a917f6bc70cd3bd0fb331ab33ab5d7cbf44e5757b234748cba09",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailSmtpFailed",
+      "locale": "zh-CN",
+      "sourceHash": "f98ca0074587a917f6bc70cd3bd0fb331ab33ab5d7cbf44e5757b234748cba09",
+      "translationHash": "b651fd207bfb0fd391afc81d8a2a2429f2cb4d35591f9d719ff775f6512967c7",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.api.mailSmtpFailed",
+      "locale": "en-US",
+      "sourceHash": "f98ca0074587a917f6bc70cd3bd0fb331ab33ab5d7cbf44e5757b234748cba09",
+      "translationHash": "5155c874be33550855d3a8076e110768dffc20cb5e88f3a8614a560721349a49",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    }
+  ]
+}

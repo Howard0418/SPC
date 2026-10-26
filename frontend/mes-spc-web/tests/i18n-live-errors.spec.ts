@@ -78,3 +78,10 @@ test('process related metadata switches while original unknown lines remain',asy
  for(const locale of ['en-US','zh-CN','zh-TW']){await page.getByTestId('locale-select').selectOption(locale);const catalog=apiCatalog(locale);await expect(page.locator('main')).toContainText(catalog.invalidField.replace('{field}',raw));await expect(page.locator('main')).toContainText(catalog.masterRelatedVariable.replace('{count}','0'));await expect(page.locator('main')).toContainText('2. '+raw);expect(fixture.count()).toBe(count)}
  expect(fixture.errors).toEqual([]);
 });
+
+test('SMTP recipient failure switches language without another send',async({page})=>{
+ const fixture=await prepare(page,path=>({json:path==='/api/settings/smtp'?{smtp:{host:'smtp.invalid',port:2525,defaultRecipientEmail:'fixture@example.invalid',recipientOperatorIds:[]},operators:[],departments:[]}:path==='/api/settings/smtp/test'?{success:false,recipients:[{email:'fixture@example.invalid',name:raw,success:false,errorMessage:'寄信服務回傳失敗。',displayMessage:{messageKey:'spc.api.mailSmtpFailed',args:{}}}],host:'smtp.invalid',port:2525}:[]}),['POST /api/settings/smtp/test']);
+ await page.goto('/settings/smtp');await page.getByTestId('settings-sendTestEmail').click();await expect(page.locator('main')).toContainText(apiCatalog('zh-TW').mailSmtpFailed);const count=fixture.count();
+ for(const locale of ['en-US','zh-CN','zh-TW']){await page.getByTestId('locale-select').selectOption(locale);await expect(page.locator('main')).toContainText(apiCatalog(locale).mailSmtpFailed);expect(fixture.count()).toBe(count)}
+ expect(fixture.errors).toEqual([]);await expect(page.locator('main b')).toHaveCount(0);
+});

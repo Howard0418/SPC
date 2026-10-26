@@ -125,8 +125,9 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
         {
             try
             {
-                var sent = await emailService.SendTestEmailAsync(recipient.Email, overrideSettings);
-                results.Add(new(recipient.Email, recipient.Name, sent, sent ? null : "寄信服務回傳失敗。"));
+                var sent = await emailService.SendTestEmailAsync(recipient.Email, overrideSettings, ApiUiMessageCatalog.RequestLocale(Request));
+                results.Add(new(recipient.Email, recipient.Name, sent, sent ? null : "寄信服務回傳失敗。")
+                    { DisplayMessage = sent ? null : ApiUiError.Create("SMTP_DELIVERY_FAILED", "spc.api.mailSmtpFailed") });
             }
             catch (Exception ex) { results.Add(new(recipient.Email, recipient.Name, false, ex.Message)); }
         }
@@ -171,8 +172,9 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
         {
             try
             {
-                var sent = await emailService.SendAlertEmailAsync(dummyAlert, recipient.Email, recipient.Name, overrideSettings);
-                results.Add(new(recipient.Email, recipient.Name, sent, sent ? null : "寄信服務回傳失敗。"));
+                var sent = await emailService.SendAlertEmailAsync(dummyAlert, recipient.Email, recipient.Name, overrideSettings, ApiUiMessageCatalog.RequestLocale(Request));
+                results.Add(new(recipient.Email, recipient.Name, sent, sent ? null : "寄信服務回傳失敗。")
+                    { DisplayMessage = sent ? null : ApiUiError.Create("SMTP_DELIVERY_FAILED", "spc.api.mailSmtpFailed") });
             }
             catch (Exception ex) { results.Add(new(recipient.Email, recipient.Name, false, ex.Message)); }
         }
@@ -191,7 +193,7 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
                 .ToListAsync();
         }
         var email = string.IsNullOrWhiteSpace(explicitEmail) ? config["SmtpSettings:DefaultRecipientEmail"] ?? "ihao_ting@pmr.com.tw" : explicitEmail.Trim();
-        return [(email, "品管收件人")];
+        return [(email, ApiUiMessageCatalog.Shared.Format("spc.api.mailDefaultRecipient", ApiUiMessageCatalog.RequestLocale(Request)))];
     }
 
     private static List<int> ParseRecipientIds(string? json)
@@ -245,4 +247,8 @@ public class TestSmtpReq
     public List<int> RecipientOperatorIds { get; set; } = [];
 }
 
-public record TestRecipientResult(string Email, string Name, bool Success, string? ErrorMessage);
+public record TestRecipientResult(string Email, string Name, bool Success, string? ErrorMessage)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public ApiUiError? DisplayMessage { get; init; }
+}

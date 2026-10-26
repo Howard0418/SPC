@@ -337,3 +337,5 @@
 - 2026-10-26 08C5A完成：115前端、49錯誤切換／17共用／39主檔／56製程群組回歸、發布49與build/hash/health/同源通過；已存錯誤無新請求即時切語言；只測試Web0.1.101/API0.1.81，剩16件，接續08C5B 其餘頁面與巢狀DTO接線。[規格](../specs/20261026-i18n-task08c5a/spec.md)／[驗證](../specs/20261026-i18n-task08c5a/verification.md)。
 
 - 2026-10-26 08C5B完成：117前端、31即時錯誤／DTO、49相容API與17共用、193操作回歸通過；發布31與build/hash/health/同源通過；只測試Web0.1.102/API0.1.81，剩15件，接續08D 郵件與背景通知。[規格](../specs/20261026-i18n-task08c5b/spec.md)／[驗證](../specs/20261026-i18n-task08c5b/verification.md)。
+
+- 2026-10-26 08DA完成：27鍵／118前端、31必要API加nullable郵件補驗10、藥液59及校驗郵件5、12郵件版面、SMTP3／發布32與build/hash/health/同源通過；只測試Web0.1.103/API0.1.82，剩15件，接續08DB 校驗Email／Chat與背景通知。[規格](../specs/20261026-i18n-task08da/spec.md)／[驗證](../specs/20261026-i18n-task08da/verification.md)。

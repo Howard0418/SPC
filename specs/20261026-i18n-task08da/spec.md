@@ -1,0 +1,12 @@
+# I18N-TASK-08DA SMTP測試與品質警報郵件三語
+- 2026-10-26 DONE，必要驗證與測試發布完成；依[連續授權](../20261026-i18n-continuation/spec.md)。D拆A共用SMTP／品質警報、B校驗Email／Chat與背景通知，E另處理人讀報表及郵件；不新增業務功能。
+- 主系統SPC，Portal/TransFiles與schema/DB無修改。依既有預設繁中，無收件人語言偏好schema；request用明示X-SPC-UI-Locale，背景呼叫未指定仍zh-TW，不從Accept-Language／CurrentCulture／使用者姓名推定語言。
+- R1 Alert/Test郵件純內容builder使用既有受驗證三語資源，主旨、固定標籤與段落翻譯；原使用者姓名／診斷Message／enum／ID、OOS/OOC與IATF 16949原樣。HTML參數編碼，非HTML資源；日期仍台北yyyy-MM-dd HH:mm:ss，量測值仍F4且不因語言變動解析／精度。
+- R2 Settings及Dashboard手動測試端點明示傳當次語言；IEmail Alert/Test介面末尾optional locale，原業務背景呼叫沿用預設。SMTP主機／port／認證／SSL／收件清單／寄送次數／成功與失敗判定完全不變；不操作真SMTP。
+- R3 舊outbox路徑與檔名組合保持，Alert/Test檔名仍用繁中主旨，HTML title／內容採當次語言；禁止把外部文字當HTML或翻譯key。原生API結果契約保持，已知逐收件人SMTP失敗可加安全display descriptor，未知ex原診斷保留。
+- BDD Happy：Given手動指定canonical locale，When產生郵件，Thensubject/body為該語言且接收者與SMTP override相同；未指定／非法locale回繁中。
+- BDD Boundary：Given數值0／負數、原姓名含HTML/i18n符號、平行三語與不同Thread Culture，Then原資料不變、HTML安全、台北時間／數值固定、互不污染。
+- BDD Invalid：Given缺語言或錯誤SMTP回傳，Then原成功／失敗語意不變，未知diagnostic不猜翻譯，無認證機敏進新args。
+- BDD Regression：核心先測builder與controller明示locale，既有警報／校驗／報表fake sender回歸與compile；不真寄信／Webhook／寫業務DB。三語ledger仍draft，不冒稱真人審稿。
+- 測試發布前後端備份及PMR_SPC_TEST/IIS核對，Web0.1.103/API0.1.82，只test；回復成對runtime/frontend且不動設定資料。正式另授權。
+- [計畫](plan.md)／[任務](tasks.md)／[驗證](verification.md)。
