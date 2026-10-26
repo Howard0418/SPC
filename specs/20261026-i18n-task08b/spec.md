@@ -1,0 +1,11 @@
+# I18N-TASK-08B 身分與權限安全提示
+- 2026-10-26 DONE，必要驗證及測試發布完成；依[連續授權](../20261026-i18n-continuation/spec.md)，接續[08A](../20261026-i18n-task08a/spec.md)。主系統SPC，相依Portal僅SSO既有契約，無資料庫／schema／claims／角色／AD協定調整。
+- R1 AuthController各既有失敗分支與ViewerWriteGuard回應增量code/messageKey/args，原message與HTTP原樣保留；採08A API單一來源，前端可依已知key顯示三語，無機敏值放入args。
+- R2 不改任何簽章、時效、nonce消費、帳號比對／provision／交易、token claims、權限分支、guard bypass路徑；JWT framework空401/403保留原回應，前端沿用08A安全fallback。不以譯文判斷授權。
+- BDD Happy：Given既有SSO成功／拒絕條件，When執行原流程，Then成功token及資料結果不變，拒絕狀態／繁中message相同且新增合法descriptor。
+- BDD Boundary：Given重複nonce、過期、錯誤簽章、停用／重複身分及legacy exchange，Then原拒絕與不另建帳號規則保持；args不含帳號／簽章／secret。
+- BDD Invalid：Given無設定／停用local password／不合法locale，Then原503/410等狀態不變，前端只解析known key；無全域Culture變更。
+- BDD Regression：Given Viewer讀取／寫入與Editor寫入，Then guard原放行／403保持，不改claims或登入行為；必要自動化InMemory／無DB HTTP／瀏覽器驗證。
+- 測試規劃含Happy／Boundary／Invalid／Regression；測試先行，完整build後僅發布test Web0.1.93/API0.1.74，依08A唯讀DB preflight與成對備份。正式未授權。
+- 回復：僅核定test pool與目錄，成對備份回復前後端、保護設定與資料；無DB migration或資料回復。
+- 譯文draft待20真人審查。[任務](tasks.md)／[驗證](verification.md)。

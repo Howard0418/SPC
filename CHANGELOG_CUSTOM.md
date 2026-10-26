@@ -2027,3 +2027,6 @@
 ## 2026-10-26 I18N-TASK-08A API三語資源與相容錯誤契約
 - 單一來源12鍵，API embedded與前端共用；增量messageKey/args、validation安全metadata與明示locale標頭，原message/status/field keys保持。
 - 101前端／25後端、本機12／shell17／發布12及build/hash/health/同源通過。唯讀核PMR_SPC_TEST無待migration，完整備份、設定保護，只測試Web0.1.92/API0.1.73。[驗證與回復](specs/20261026-i18n-task08a/verification.md)。剩17件接續08B；真人譯文審查留20。
+
+## 2026-10-26 I18N-TASK-08B 身分與權限提示三語
+- 13鍵／39列draft；Auth錯誤與Viewer guard附加安全metadata，原安全分支／狀態與message不變。102前端、31 API與12隔離身分測試、本機15／發布15與build/hash/health/同源通過。只測試Web0.1.93/API0.1.74，無DB／正式變更。[驗證及回復](specs/20261026-i18n-task08b/verification.md)。剩16件接續08C。

@@ -977,3 +977,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 
 ### 2026-10-26 I18N-TASK-08A 完成
 12鍵單一來源API三語模組、相容metadata與顯示adapter；101前端／25後端、本機12／shell17／發布12與build/hash/health/同源通過。只測試Web0.1.92/API0.1.73，無schema修改，剩17件接續08B。
+
+### 2026-10-26 I18N-TASK-08B 目的（實作前）
+僅Auth失敗與Viewer guard安全提示附加三語descriptor，先測既有拒絕／成功與資料結果；簽章／nonce／claims／權限分支與HTTP不改，無schema。
+
+### 2026-10-26 I18N-TASK-08B 完成
+身分與Viewer安全提示13鍵三語；102前端、31 API／12隔離身分、本機15／發布15與build/hash/health/同源通過。只測試Web0.1.93/API0.1.74，剩16件接續08C。

@@ -1,14 +1,31 @@
-{"spc":{"api":{
-"unexpected":"An unexpected server error occurred. Contact the system administrator.",
-"concurrentUpdate":"Another user has updated this record. Reload it before saving.",
-"databaseUpdateFailed":"The database update failed. Contact the system administrator.",
-"foreignKey":"Other records reference this data. Remove those records or their links before continuing.",
-"validationFailed":"The input is invalid. Check the field values.",
-"invalidField":"The value for {field} is invalid.",
-"network":"Cannot connect to the backend API. Check that the service is running at {baseUrl}, then refresh this page.",
-"unauthorized":"Unauthorized (401). If sign-in is enabled, sign in to obtain a Token.",
-"conflict":"Other records reference this data. Remove the related child records or their links before continuing.",
-"forbidden":"Permission denied (403). Viewers can only view and query data.",
-"requestFailed":"Request failed",
-"environmentMismatch":"Safety check blocked the request: WEB is {webEnvironment} and API is {apiEnvironment}. Writes are prohibited because the environments differ."
-}}}
+{
+  "spc": {
+    "api": {
+      "unexpected": "An unexpected server error occurred. Contact the system administrator.",
+      "concurrentUpdate": "Another user has updated this record. Reload it before saving.",
+      "databaseUpdateFailed": "The database update failed. Contact the system administrator.",
+      "foreignKey": "Other records reference this data. Remove those records or their links before continuing.",
+      "validationFailed": "The input is invalid. Check the field values.",
+      "invalidField": "The value for {field} is invalid.",
+      "network": "Cannot connect to the backend API. Check that the service is running at {baseUrl}, then refresh this page.",
+      "unauthorized": "Unauthorized (401). If sign-in is enabled, sign in to obtain a Token.",
+      "conflict": "Other records reference this data. Remove the related child records or their links before continuing.",
+      "forbidden": "Permission denied (403). Viewers can only view and query data.",
+      "requestFailed": "Request failed",
+      "environmentMismatch": "Safety check blocked the request: WEB is {webEnvironment} and API is {apiEnvironment}. Writes are prohibited because the environments differ.",
+      "ssoNotConfigured": "Portal SSO is not configured.",
+      "ssoExpired": "The Portal SSO request has expired.",
+      "ssoSignature": "The Portal SSO signature is invalid.",
+      "ssoReplayed": "The Portal SSO request has already been used.",
+      "accountAmbiguous": "This AD account matches multiple SPC users. Contact an administrator; no new account will be created.",
+      "employeeAmbiguous": "This employee number matches multiple SPC users. Contact an administrator; no new account will be created.",
+      "identityConflict": "The AD account and employee number belong to different SPC users. Contact an administrator; accounts will not be merged or created automatically.",
+      "employeeBound": "This employee number is linked to another AD account. Contact an administrator; no new account will be created.",
+      "accountDisabled": "This SPC operator account is disabled.",
+      "legacyProvisionDenied": "The legacy sign-in exchange cannot create users. Sign in again through the portal with complete account and employee-number information.",
+      "localLoginDisabled": "Local password sign-in is disabled in SPC. Use your AD account or employee number.",
+      "jwtNotConfigured": "Auth:JwtKey is missing or too short (at least 32 characters).",
+      "viewerWriteDenied": "Viewers can only view and query data. They cannot add, edit, delete or import data."
+    }
+  }
+}
