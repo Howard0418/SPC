@@ -5,7 +5,7 @@ import { displayUiMessage } from "../i18n/uiMessage";
 const { t } = useI18n({ useScope: "global" });
 const messageText = value => displayUiMessage(t, value);
 import { onMounted, ref, computed } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import {
   Layers,
   Plus,
@@ -85,7 +85,7 @@ async function load() {
       selectedProcessId.value = rows.value[0].id;
     }
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -159,7 +159,7 @@ async function save() {
     }
     showModal.value = false;
   } catch (e) {
-    formErr.value = getApiErrorMessage(e);
+    formErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -181,7 +181,7 @@ async function confirmDelete(item) {
     if (status === 409 && data?.relatedItems?.length > 0) {
       err.value = `${data.message}\n${data.relatedItems.map((r, i) => `  ${i + 1}. ${r}`).join('\n')}`;
     } else {
-      err.value = getApiErrorMessage(e);
+      err.value = getApiErrorDisplay(e);
     }
   } finally {
     loading.value = false;
@@ -203,7 +203,7 @@ async function openMeasurementsModal(type = "variable") {
     measurementRows.value = data.rows || [];
     measurementTotal.value = data.total || 0;
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     measurementLoading.value = false;
   }
@@ -269,7 +269,7 @@ async function openEditMachineModal(item) {
       isActive: t.isActive ?? true
     }));
   } catch (e) {
-    machineFormErr.value = getApiErrorMessage(e);
+    machineFormErr.value = getApiErrorDisplay(e);
   }
 }
 
@@ -325,7 +325,7 @@ async function saveMachine() {
     }
     showMachineModal.value = false;
   } catch (e) {
-    machineFormErr.value = getApiErrorMessage(e);
+    machineFormErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -339,7 +339,7 @@ async function confirmDeleteMachine(item) {
     machines.value = machines.value.filter(x => x.id !== item.id);
     successAlert({ key: "spc.processes.machineDeleted", args: { name: String(item.machineName) } });
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }

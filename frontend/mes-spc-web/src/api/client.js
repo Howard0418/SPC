@@ -2,8 +2,9 @@ import axios from "axios";
 import { clearAuthSession } from "../utils/auth";
 import { resolveApiBase } from "../utils/apiBase";
 import { i18n, apiMessageSource } from "../i18n";
+import { displayUiMessage, snapshotApiDisplay } from "../i18n/uiMessage";
 import { normalizeLocale } from "../i18n/preferences";
-import { formatApiErrorDescriptor, resolveLegacyApiDescriptor } from "../i18n/apiMessages";
+import { captureApiErrorDisplay, resolveLegacyApiDescriptor } from "../i18n/apiMessages";
 
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 const baseURL = resolveApiBase(webEnvironment, import.meta.env.VITE_PRODUCTION_API_BASE);
@@ -84,11 +85,16 @@ export function markSsoGracePeriod() {
 
 /** 附帶於 catch，讓頁面顯示可讀訊息（含後端未啟動） */
 export function getApiErrorMessage(err) {
+  return displayUiMessage((key,args) => i18n.global.t(key,args), getApiErrorDisplay(err));
+}
+
+/** Store this display value in reactive page state; render with displayUiMessage. */
+export function getApiErrorDisplay(err) {
   const msg = err?.message || "";
   const code = err?.code || "";
-  const translate = (key,args) => i18n.global.t(key,args);
+  const translate = (key,args = {}) => snapshotApiDisplay({key,args});
   if (code === "ENVIRONMENT_MISMATCH") return translate('spc.api.environmentMismatch',{webEnvironment,apiEnvironment});
-  const knownMessage = formatApiErrorDescriptor(err?.response?.data,apiMessageSource,translate);
+  const knownMessage = captureApiErrorDisplay(err?.response?.data,apiMessageSource);
   if (knownMessage !== null) return knownMessage;
   const legacyDescriptor = resolveLegacyApiDescriptor(err?.response?.data,err?.response?.headers,apiMessageSource);
   if (legacyDescriptor) return translate(legacyDescriptor.key,legacyDescriptor.args);

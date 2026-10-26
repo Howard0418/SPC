@@ -6,7 +6,7 @@ const { t } = useI18n({ useScope: "global" });
 const messageText = value => displayUiMessage(t, value);
 import { onMounted, ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import {
   Layers,
   Plus,
@@ -139,7 +139,7 @@ async function saveGroup() {
     }
     groupsShowModal.value = false;
   } catch (e) {
-    groupsFormErr.value = getApiErrorMessage(e);
+    groupsFormErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -153,7 +153,7 @@ async function deleteGroup(item) {
     groupsRows.value = groupsRows.value.filter(x => x.id !== item.id);
     successAlert({ key: "spc.groups.deleted", args: { name: String(item.groupName) } });
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -369,7 +369,7 @@ async function openTypesEdit(item) {
   try {
     await loadTypeRules(item.id);
   } catch (e) {
-    typesFormErr.value = { key: "spc.chartTypes.loadRulesFailed", args: { error: getApiErrorMessage(e) } };
+    typesFormErr.value = { key: "spc.chartTypes.loadRulesFailed", args: { error: getApiErrorDisplay(e) } };
   }
 }
 
@@ -410,7 +410,7 @@ async function saveType() {
     await loadRuleGroups();
     typesShowModal.value = false;
   } catch (e) {
-    typesFormErr.value = getApiErrorMessage(e);
+    typesFormErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -427,7 +427,7 @@ async function deleteType(item) {
     typesRows.value = typesRows.value.filter(x => x.id !== item.id);
     successAlert({ key: "spc.chartTypes.deleted", args: { name: String(item.chartTypeName) } });
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -445,7 +445,7 @@ async function loadAll() {
     await loadRuleLibrary();
     await loadTypes();
   } catch (e) {
-    err.value = { key: "spc.groups.loadFailed", args: { error: getApiErrorMessage(e) } };
+    err.value = { key: "spc.groups.loadFailed", args: { error: getApiErrorDisplay(e) } };
   } finally {
     loading.value = false;
   }

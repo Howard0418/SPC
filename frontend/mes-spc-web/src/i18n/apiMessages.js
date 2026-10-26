@@ -1,4 +1,14 @@
+import { snapshotApiDisplay } from './uiMessage.js';
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));
+
+// A validated independent snapshot can be rendered again after a locale change.
+export function captureApiErrorDisplay(data,source){
+ const descriptor=resolveApiErrorDescriptor(data,source);
+ if(!descriptor)return null;
+ const tree=resolveApiErrorTree(data,source);
+ if(tree)return snapshotApiDisplay(tree);
+ return typeof data.message==='string'&&data.message?data.message:snapshotApiDisplay(descriptor);
+}
 
 // Server keys are accepted only from the packaged API namespace; parameters are data.
 export function resolveApiErrorDescriptor(data,source){

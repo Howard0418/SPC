@@ -1,9 +1,10 @@
 <script setup>
+import { displayUiMessage } from "../i18n/uiMessage";
 import { useI18n } from "vue-i18n";
 import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed } from "vue";
-import { api, getApiErrorMessage } from "../api/client";
+import { api, getApiErrorDisplay } from "../api/client";
 import {
   Package,
   Plus,
@@ -42,7 +43,7 @@ const form = ref({
 });
 const formErr = ref("");
 const formErrKey = ref("");
-const formError = computed(() => formErrKey.value ? t(formErrKey.value) : formErr.value);
+const formError = computed(() => formErrKey.value ? t(formErrKey.value) : displayUiMessage(t, formErr.value));
 
 async function load() {
   err.value = "";
@@ -51,7 +52,7 @@ async function load() {
     const { data } = await api.get("/parts");
     rows.value = data || [];
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -124,7 +125,7 @@ async function save() {
     }
     showModal.value = false;
   } catch (e) {
-    formErr.value = getApiErrorMessage(e);
+    formErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -138,7 +139,7 @@ async function confirmDelete(item) {
     rows.value = rows.value.filter(x => x.id !== item.id);
     successAlert("spc.parts.deleted", { partNo: String(item.partNo) });
   } catch (e) {
-    err.value = getApiErrorMessage(e);
+    err.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
@@ -203,7 +204,7 @@ onMounted(load);
     <!-- Alert Messages -->
     <div v-if="err" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 rounded-2xl shadow-sm animate-fade-in">
       <AlertTriangle class="w-6 h-6 flex-shrink-0 text-red-500" />
-      <div class="text-sm font-semibold">{{ err }}</div>
+      <div class="text-sm font-semibold">{{ displayUiMessage(t, err) }}</div>
     </div>
 
     <div v-if="successMsg" class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl shadow-sm animate-fade-in">

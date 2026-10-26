@@ -333,3 +333,5 @@
 - 2026-10-26 08C4B完成：55鍵／110前端、21必要API與設備來源3、本機39／發布39與build/hash/health/同源通過；校驗124為122通過、同2項既有差異保留；只測試Web0.1.99/API0.1.80，剩17件，接續08C4C 匯入逐列錯誤與警示。[規格](../specs/20261026-i18n-task08c4b/spec.md)／[驗證](../specs/20261026-i18n-task08c4b/verification.md)。
 
 - 2026-10-26 08C4C完成：67鍵／112前端、24核心與6隔離HTTP、本機45／發布45與build/hash/health/同源通過；DB錯誤／payload與稽核欄位保持，校驗125為123通過／同2既有差異；只測試Web0.1.100/API0.1.81，剩16件，接續08C5 逐頁即時錯誤descriptor接線。[規格](../specs/20261026-i18n-task08c4c/spec.md)／[驗證](../specs/20261026-i18n-task08c4c/verification.md)。
+
+- 2026-10-26 08C5A完成：115前端、49錯誤切換／17共用／39主檔／56製程群組回歸、發布49與build/hash/health/同源通過；已存錯誤無新請求即時切語言；只測試Web0.1.101/API0.1.81，剩16件，接續08C5B 其餘頁面與巢狀DTO接線。[規格](../specs/20261026-i18n-task08c5a/spec.md)／[驗證](../specs/20261026-i18n-task08c5a/verification.md)。
