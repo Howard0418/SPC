@@ -51,7 +51,31 @@
       "ppcRulesFixed": "All control items use the eight WE rules. Item-specific rules are not supported.",
       "ppcHasMeasurements": "This control item has measurements or SPC calculation data. Disable it; use permanent purge only for confirmed incorrect or test data.",
       "ppcClosedAlert": "This control item has closed alerts. To retain quality traceability, it can only be disabled and cannot be permanently purged.",
-      "ppcReasonTooLong": "The reference document/change reason is limited to 500 characters. Shorten the document name or description."
+      "ppcReasonTooLong": "The reference document/change reason is limited to 500 characters. Shorten the document name or description.",
+      "masterProcessNameRequired": "The Chinese process name is required.",
+      "masterPageRangeInvalid": "The page offset cannot be negative and the start date cannot be after the end date.",
+      "masterMachineMissing": "The specified machine was not found.",
+      "masterTankNameRequired": "The Chinese tank name is required.",
+      "masterCharacteristicNameRequired": "The Chinese characteristic name is required.",
+      "masterLocalCreateDisabled": "SPC no longer sets local passwords. Use your AD account or employee number to sign in.",
+      "masterLocalChangeDisabled": "SPC no longer changes local passwords. Use your AD account or employee number to sign in.",
+      "masterOperatorRequired": "The operator employee number and name are required.",
+      "masterChartNameRequired": "The chart display name cannot be blank.",
+      "masterChartRulesFixed": "All charts use the eight WE rules. Chart-specific rules are not supported.",
+      "masterWeGroupFixed": "The eight WE rules form a fixed system-wide rule group. It cannot be disabled, recoded or deleted.",
+      "masterWeGroupDeleteDenied": "The eight WE rules form a fixed system-wide rule group and cannot be deleted.",
+      "masterWeCreateDenied": "SPC uses the fixed Western Electric rules 1–8. Other rules cannot be added.",
+      "masterWeOnly": "Only Western Electric rules 1–8 are allowed.",
+      "masterWeDeleteDenied": "Western Electric rules 1–8 are fixed system rules and cannot be deleted.",
+      "masterAccountExists": "The sign-in account “{account}” already exists.",
+      "masterEmployeeExists": "The employee number “{employee}” already exists.",
+      "masterGroupExists": "Business scope “{scope}” already has an enabled “{groupType}” group. Only one group per scope and chart mode can be enabled.",
+      "masterProcessInUse": "Cannot delete process “{processCode} ({processName})” because the following records use it:",
+      "masterRelatedMachine": "Production machine: {code} ({name})",
+      "masterRelatedPpc": "SPC control item: [{scope}] × [{characteristic}]",
+      "masterRelatedVariable": "Variable measurement records: {count}",
+      "masterRelatedAttribute": "Attribute measurement records: {count}",
+      "masterRelatedAlert": "SPC alert records: {count}"
     }
   }
 }

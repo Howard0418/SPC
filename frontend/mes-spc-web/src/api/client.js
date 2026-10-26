@@ -3,7 +3,7 @@ import { clearAuthSession } from "../utils/auth";
 import { resolveApiBase } from "../utils/apiBase";
 import { i18n, apiMessageSource } from "../i18n";
 import { normalizeLocale } from "../i18n/preferences";
-import { formatApiErrorDescriptor } from "../i18n/apiMessages";
+import { formatApiErrorDescriptor, resolveLegacyApiDescriptor } from "../i18n/apiMessages";
 
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 const baseURL = resolveApiBase(webEnvironment, import.meta.env.VITE_PRODUCTION_API_BASE);
@@ -90,6 +90,8 @@ export function getApiErrorMessage(err) {
   if (code === "ENVIRONMENT_MISMATCH") return translate('spc.api.environmentMismatch',{webEnvironment,apiEnvironment});
   const knownMessage = formatApiErrorDescriptor(err?.response?.data,apiMessageSource,translate);
   if (knownMessage !== null) return knownMessage;
+  const legacyDescriptor = resolveLegacyApiDescriptor(err?.response?.data,err?.response?.headers,apiMessageSource);
+  if (legacyDescriptor) return translate(legacyDescriptor.key,legacyDescriptor.args);
   if (!err?.response && (code === "ERR_NETWORK" || code === "ECONNREFUSED" || /Network Error/i.test(msg))) {
     return translate('spc.api.network',{baseUrl:baseURL});
   }

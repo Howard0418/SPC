@@ -50,7 +50,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
 
     [HttpPost] public async Task<IActionResult> Create(Process req)
     {
-        if (string.IsNullOrWhiteSpace(req.ProcessName)) return BadRequest("製程中文名稱為必填欄位。");
+        if (string.IsNullOrWhiteSpace(req.ProcessName)) return ApiUiError.WithLegacyMessage(BadRequest("製程中文名稱為必填欄位。"), HttpContext, "spc.api.masterProcessNameRequired");
         req.ProcessCode = $"PROC-TMP-{Guid.NewGuid():N}";
         req.ProcessName = req.ProcessName.Trim();
         req.ControlScope = ControlScopeCodes.Process;
@@ -65,7 +65,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Update(int id, Process req)
     {
         var x = await db.Processes.FindAsync(id); if (x is null) return NotFound();
-        if (string.IsNullOrWhiteSpace(req.ProcessName)) return BadRequest("製程中文名稱為必填欄位。");
+        if (string.IsNullOrWhiteSpace(req.ProcessName)) return ApiUiError.WithLegacyMessage(BadRequest("製程中文名稱為必填欄位。"), HttpContext, "spc.api.masterProcessNameRequired");
         x.ProcessName = req.ProcessName.Trim(); x.ProcessNameEn = CleanOptional(req.ProcessNameEn); x.SequenceNo = req.SequenceNo; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
@@ -78,7 +78,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         [FromQuery] int skip = 0, [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null)
     {
         if (skip < 0 || (start.HasValue && end.HasValue && start > end))
-            return BadRequest("分頁起點不可為負數，開始日期不可晚於結束日期。");
+            return ApiUiError.WithLegacyMessage(BadRequest("分頁起點不可為負數，開始日期不可晚於結束日期。"), HttpContext, "spc.api.masterPageRangeInvalid");
         var process = await db.Processes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (process is null) return NotFound();
 
@@ -167,7 +167,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         // ── 刪除前檢查所有關聯資料 ──
         var machines = await db.Machines
             .Where(m => m.ProcessId == id)
-            .Select(m => new { m.Id, Label = $"生產機台：{m.MachineCode} ({m.MachineName})" })
+            .Select(m => new { m.Id, m.MachineCode, m.MachineName, Label = $"生產機台：{m.MachineCode} ({m.MachineName})" })
             .ToListAsync();
 
         var ppcs = await db.PartProcessCharacteristics
@@ -177,6 +177,8 @@ public class ProcessesController(AppDbContext db) : ControllerBase
             .Select(p => new
             {
                 p.Id,
+                ScopeLabel = p.ControlScope == "PRODUCT" ? p.Part!.PartNo : p.ControlScope,
+                CharacteristicCode = p.Characteristic!.CharacteristicCode,
                 Label = $"SPC 管制項目：[{(p.ControlScope == "PRODUCT" ? p.Part!.PartNo : p.ControlScope)}] × [{p.Characteristic!.CharacteristicCode}]"
             })
             .ToListAsync();
@@ -209,12 +211,20 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         if (alerts?.Count > 0)
             relatedItems.Add($"SPC 異常通報記錄：共 {alerts.Count} 筆");
 
+        var relatedItemMessages = new List<ApiUiError>();
+        relatedItemMessages.AddRange(machines.Select(m => ApiUiError.Create("MASTER_RELATED_MACHINE", "spc.api.masterRelatedMachine", new Dictionary<string,string> { ["code"] = m.MachineCode, ["name"] = m.MachineName })));
+        relatedItemMessages.AddRange(ppcs.Select(p => ApiUiError.Create("MASTER_RELATED_PPC", "spc.api.masterRelatedPpc", new Dictionary<string,string> { ["scope"] = p.ScopeLabel, ["characteristic"] = p.CharacteristicCode })));
+        if (varMeasurements?.Count > 0) relatedItemMessages.Add(ApiUiError.Create("MASTER_RELATED_VARIABLE", "spc.api.masterRelatedVariable", new Dictionary<string,string> { ["count"] = varMeasurements.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
+        if (attrMeasurements?.Count > 0) relatedItemMessages.Add(ApiUiError.Create("MASTER_RELATED_ATTRIBUTE", "spc.api.masterRelatedAttribute", new Dictionary<string,string> { ["count"] = attrMeasurements.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
+        if (alerts?.Count > 0) relatedItemMessages.Add(ApiUiError.Create("MASTER_RELATED_ALERT", "spc.api.masterRelatedAlert", new Dictionary<string,string> { ["count"] = alerts.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
         if (relatedItems.Count > 0)
         {
             return Conflict(new
             {
                 message = $"無法刪除工站製程「{x.ProcessCode} ({x.ProcessName})」，因為以下資料正在使用此製程：",
-                relatedItems
+                code = "MASTER_PROCESS_IN_USE", messageKey = "spc.api.masterProcessInUse",
+                args = new Dictionary<string,string> { ["processCode"] = x.ProcessCode, ["processName"] = x.ProcessName },
+                relatedItems, relatedItemMessages
             });
         }
 
@@ -244,8 +254,8 @@ public class MachinesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> CreateTank(int id, MachineTankRequest req)
     {
         var machine = await db.Machines.FindAsync(id);
-        if (machine is null) return NotFound("找不到指定機台。");
-        if (string.IsNullOrWhiteSpace(req.TankName)) return BadRequest("槽體中文名稱為必填欄位。");
+        if (machine is null) return ApiUiError.WithLegacyMessage(NotFound("找不到指定機台。"), HttpContext, "spc.api.masterMachineMissing");
+        if (string.IsNullOrWhiteSpace(req.TankName)) return ApiUiError.WithLegacyMessage(BadRequest("槽體中文名稱為必填欄位。"), HttpContext, "spc.api.masterTankNameRequired");
         var line = await db.ProductionLines.FirstOrDefaultAsync(x => x.LineCode == machine.MachineCode);
         var existing = line is null ? [] : await db.Tanks.Where(x => x.LineId == line.Id)
             .Select(x => new MachineTankRequest { Id = x.Id, TankCode = x.TankCode, TankName = x.TankName, TankNameEn = x.TankNameEn, SequenceNo = x.SequenceNo, IsActive = x.IsActive }).ToListAsync();
@@ -399,7 +409,7 @@ public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(QualityCharacteristic req)
     {
-        if (string.IsNullOrWhiteSpace(req.CharacteristicName)) return BadRequest("特性中文名稱為必填欄位。");
+        if (string.IsNullOrWhiteSpace(req.CharacteristicName)) return ApiUiError.WithLegacyMessage(BadRequest("特性中文名稱為必填欄位。"), HttpContext, "spc.api.masterCharacteristicNameRequired");
         req.CharacteristicCode = $"CHAR-TMP-{Guid.NewGuid():N}";
         req.CharacteristicName = req.CharacteristicName.Trim();
         req.ControlScope = ControlScopeCodes.Process; req.CharacteristicNameEn = CleanOptional(req.CharacteristicNameEn); req.InputMode = NormalizeInputMode(req.InputMode); req.ValueLabel = string.IsNullOrWhiteSpace(req.ValueLabel) ? "量測值" : req.ValueLabel.Trim(); req.DecimalPlaces = Math.Clamp(req.DecimalPlaces, 0, 8);
@@ -413,7 +423,7 @@ public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Update(int id, QualityCharacteristic req)
     {
         var x = await db.QualityCharacteristics.FindAsync(id); if (x is null) return NotFound();
-        if (string.IsNullOrWhiteSpace(req.CharacteristicName)) return BadRequest("特性中文名稱為必填欄位。");
+        if (string.IsNullOrWhiteSpace(req.CharacteristicName)) return ApiUiError.WithLegacyMessage(BadRequest("特性中文名稱為必填欄位。"), HttpContext, "spc.api.masterCharacteristicNameRequired");
         x.CharacteristicName = req.CharacteristicName.Trim(); x.CharacteristicNameEn = CleanOptional(req.CharacteristicNameEn); x.DataCategory = req.DataCategory;
         x.InputMode = NormalizeInputMode(req.InputMode); x.ValueLabel = string.IsNullOrWhiteSpace(req.ValueLabel) ? "量測值" : req.ValueLabel.Trim(); x.DecimalPlaces = Math.Clamp(req.DecimalPlaces, 0, 8);
         x.DefaultChartTypeId = req.DefaultChartTypeId; x.IsSpcEnabled = req.IsSpcEnabled; x.IsEnabled = req.IsEnabled;
@@ -939,7 +949,7 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
     {
         NormalizeBusinessRules(req);
         var conflict = await FindEnabledConflictAsync(req);
-        if (conflict is not null) return Conflict(new { message = conflict });
+        if (conflict is not null) return Conflict(conflict);
         db.ControlChartGroups.Add(req); await db.SaveChangesAsync(); return Ok(req);
     }
     [HttpPut("{id:int}")]
@@ -948,7 +958,7 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
         var x = await db.ControlChartGroups.FindAsync(id); if (x is null) return NotFound();
         NormalizeBusinessRules(req);
         var conflict = await FindEnabledConflictAsync(req, id);
-        if (conflict is not null) return Conflict(new { message = conflict });
+        if (conflict is not null) return Conflict(conflict);
         x.GroupCode = req.GroupCode; x.GroupName = req.GroupName; x.GroupType = req.GroupType;
         x.BusinessScopeCode = req.BusinessScopeCode; x.RequiresPart = req.RequiresPart;
         x.RequiresMachine = req.RequiresMachine; x.RequiresTank = req.RequiresTank;
@@ -971,7 +981,7 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
             string.IsNullOrWhiteSpace(group.BusinessScopeCode) ? group.GroupCode : group.BusinessScopeCode);
     }
 
-    private async Task<string?> FindEnabledConflictAsync(ControlChartGroup group, int? excludeId = null)
+    private async Task<ApiUiError?> FindEnabledConflictAsync(ControlChartGroup group, int? excludeId = null)
     {
         if (!group.IsEnabled) return null;
         var exists = await db.ControlChartGroups.AsNoTracking().AnyAsync(x =>
@@ -980,7 +990,7 @@ public class ControlChartGroupsController(AppDbContext db) : ControllerBase
             && x.BusinessScopeCode == group.BusinessScopeCode
             && x.GroupType == group.GroupType);
         return exists
-            ? $"業務範圍「{group.BusinessScopeCode}」已有啟用中的「{group.GroupType}」大類別；同一範圍與圖表模式只能啟用一個。"
+            ? ApiUiError.Create("MASTER_GROUP_EXISTS", "spc.api.masterGroupExists", new Dictionary<string,string> { ["scope"] = group.BusinessScopeCode, ["groupType"] = group.GroupType })
             : null;
     }
 }
@@ -1010,7 +1020,7 @@ public class OperatorsController(
         if (validation is not null) return validation;
 
         if (!string.IsNullOrWhiteSpace(req.Password))
-            return BadRequest(new { message = "SPC 不再設定本機密碼，請使用 AD 帳號或工號登入。" });
+            return BadRequest(ApiUiError.Create("MASTER_LOCAL_CREATE_DISABLED", "spc.api.masterLocalCreateDisabled"));
 
         var user = new Operator
         {
@@ -1036,7 +1046,7 @@ public class OperatorsController(
         var validation = await ValidateRequestAsync(req, id);
         if (validation is not null) return validation;
         if (!string.IsNullOrWhiteSpace(req.Password))
-            return BadRequest(new { message = "SPC 不再修改本機密碼，請使用 AD 帳號或工號登入。" });
+            return BadRequest(ApiUiError.Create("MASTER_LOCAL_CHANGE_DISABLED", "spc.api.masterLocalChangeDisabled"));
 
         x.OperatorCode = req.OperatorCode.Trim();
         x.OperatorName = req.OperatorName.Trim();
@@ -1055,15 +1065,15 @@ public class OperatorsController(
     private async Task<IActionResult?> ValidateRequestAsync(OperatorRequest req, int? currentId = null)
     {
         if (string.IsNullOrWhiteSpace(req.OperatorCode) || string.IsNullOrWhiteSpace(req.OperatorName))
-            return BadRequest(new { message = "作業員工號與姓名皆為必填欄位。" });
+            return BadRequest(ApiUiError.Create("MASTER_OPERATOR_REQUIRED", "spc.api.masterOperatorRequired"));
         if (!string.IsNullOrWhiteSpace(req.Username))
         {
             var username = req.Username.Trim();
             if (await db.Operators.AnyAsync(x => x.Username == username && (!currentId.HasValue || x.Id != currentId.Value)))
-                return Conflict(new { message = $"登入帳號「{username}」已存在。" });
+                return Conflict(ApiUiError.Create("MASTER_ACCOUNT_EXISTS", "spc.api.masterAccountExists", new Dictionary<string,string> { ["account"] = username }));
         }
         if (await db.Operators.AnyAsync(x => x.OperatorCode == req.OperatorCode.Trim() && (!currentId.HasValue || x.Id != currentId.Value)))
-            return Conflict(new { message = $"工號「{req.OperatorCode.Trim()}」已存在。" });
+            return Conflict(ApiUiError.Create("MASTER_EMPLOYEE_EXISTS", "spc.api.masterEmployeeExists", new Dictionary<string,string> { ["employee"] = req.OperatorCode.Trim() }));
         return null;
     }
 
@@ -1119,7 +1129,7 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> UpdateName(int id, UpdateChartTypeNameRequest req)
     {
         var name = req.ChartTypeName?.Trim();
-        if (string.IsNullOrWhiteSpace(name)) return BadRequest("管制圖顯示名稱不可空白。");
+        if (string.IsNullOrWhiteSpace(name)) return ApiUiError.WithLegacyMessage(BadRequest("管制圖顯示名稱不可空白。"), HttpContext, "spc.api.masterChartNameRequired");
         var x = await db.ControlChartTypes.FindAsync(id);
         if (x is null) return NotFound();
         x.ChartTypeName = name;
@@ -1151,7 +1161,7 @@ public class ControlChartTypesController(AppDbContext db) : ControllerBase
     {
         var chartType = await db.ControlChartTypes.FirstOrDefaultAsync(x => x.Id == id);
         if (chartType is null) return NotFound();
-        return BadRequest(new { message = "所有管制圖統一使用 WE 八大規則，不支援管制圖專屬規則。" });
+        return BadRequest(ApiUiError.Create("MASTER_CHART_RULES_FIXED", "spc.api.masterChartRulesFixed"));
     }
 
     [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.ControlChartTypes.FindAsync(id); if (x is null) return NotFound(); db.ControlChartTypes.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
@@ -1197,11 +1207,11 @@ public class SpcRuleGroupsController(AppDbContext db) : ControllerBase
     {
         var x = await db.SpcRuleGroups.FindAsync(id); if (x is null) return NotFound();
         if (string.Equals(x.RuleGroupCode, "WE", StringComparison.OrdinalIgnoreCase))
-            return BadRequest("WE 八大規則為全系統固定規則群組，不可停用、改碼或刪除。");
+            return ApiUiError.WithLegacyMessage(BadRequest("WE 八大規則為全系統固定規則群組，不可停用、改碼或刪除。"), HttpContext, "spc.api.masterWeGroupFixed");
         x.RuleGroupCode = req.RuleGroupCode; x.RuleGroupName = req.RuleGroupName; x.Description = req.Description; x.IsEnabled = req.IsEnabled;
         await db.SaveChangesAsync(); return Ok(x);
     }
-    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.SpcRuleGroups.FindAsync(id); if (x is null) return NotFound(); if (string.Equals(x.RuleGroupCode, "WE", StringComparison.OrdinalIgnoreCase)) return BadRequest("WE 八大規則為全系統固定規則群組，不可刪除。"); db.SpcRuleGroups.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
+    [HttpDelete("{id:int}")] public async Task<IActionResult> Delete(int id) { var x = await db.SpcRuleGroups.FindAsync(id); if (x is null) return NotFound(); if (string.Equals(x.RuleGroupCode, "WE", StringComparison.OrdinalIgnoreCase)) return ApiUiError.WithLegacyMessage(BadRequest("WE 八大規則為全系統固定規則群組，不可刪除。"), HttpContext, "spc.api.masterWeGroupDeleteDenied"); db.SpcRuleGroups.Remove(x); await db.SaveChangesAsync(); return NoContent(); }
 }
 
 [ApiController]
@@ -1253,7 +1263,7 @@ public class SpcRulesController(AppDbContext db) : ControllerBase
     [HttpPost] 
     public async Task<IActionResult> Create(SpcRule req) 
     { 
-        return BadRequest("SPC 管制規則固定為西方電氣規則 1～8，不可新增其他規則。");
+        return ApiUiError.WithLegacyMessage(BadRequest("SPC 管制規則固定為西方電氣規則 1～8，不可新增其他規則。"), HttpContext, "spc.api.masterWeCreateDenied");
     }
     
     [HttpPut("{id:int}")]
@@ -1262,7 +1272,7 @@ public class SpcRulesController(AppDbContext db) : ControllerBase
         var x = await db.SpcRules.FindAsync(id); 
         if (x is null) return NotFound();
         if (!AllowedRuleCodes.Contains(x.RuleCode))
-            return BadRequest("只允許西方電氣規則 1～8。");
+            return ApiUiError.WithLegacyMessage(BadRequest("只允許西方電氣規則 1～8。"), HttpContext, "spc.api.masterWeOnly");
         x.RuleName = req.RuleName;
         x.RuleConfigJson = req.RuleConfigJson;
         x.Priority = req.Priority;
@@ -1276,7 +1286,7 @@ public class SpcRulesController(AppDbContext db) : ControllerBase
     { 
         var x = await db.SpcRules.FindAsync(id); 
         if (x is null) return NotFound(); 
-        return BadRequest("西方電氣規則 1～8 為系統固定規則，不可刪除。");
+        return ApiUiError.WithLegacyMessage(BadRequest("西方電氣規則 1～8 為系統固定規則，不可刪除。"), HttpContext, "spc.api.masterWeDeleteDenied");
     }
 
     private async Task<int> EnsureDefaultRuleGroupIdAsync()

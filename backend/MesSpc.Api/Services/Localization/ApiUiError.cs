@@ -12,4 +12,12 @@ public sealed record ApiUiError(string Message, string Code, string MessageKey, 
         var copy = new System.Collections.ObjectModel.ReadOnlyDictionary<string,string>(new Dictionary<string,string>(args, StringComparer.Ordinal));
         return new(ApiUiMessageCatalog.Shared.Format(key, args: copy), code, key, copy);
     }
+
+    /// <summary>Adds display metadata without replacing a legacy string body, result instance or status.</summary>
+    public static Microsoft.AspNetCore.Mvc.ObjectResult WithLegacyMessage(Microsoft.AspNetCore.Mvc.ObjectResult result, HttpContext? context, string key)
+    {
+        _ = ApiUiMessageCatalog.Shared.Format(key); // Validates a known argument-free resource before setting headers.
+        if (context is not null) context.Response.Headers["X-SPC-Message-Key"] = key;
+        return result;
+    }
 }

@@ -72,12 +72,24 @@ public sealed class ApiUiHttpTests : IAsyncLifetime
     }
 
     public async Task DisposeAsync(){client.Dispose();await app.DisposeAsync();}
+
+    [Fact]
+    public async Task LegacyStringBodyAndContentNegotiationRemainPlainTextWithAdditiveHeader()
+    {
+        using var response=await client.GetAsync("/api/i18n-probe/legacy");
+        Assert.Equal(HttpStatusCode.BadRequest,response.StatusCode);
+        Assert.Equal("製程中文名稱為必填欄位。",await response.Content.ReadAsStringAsync());
+        Assert.Equal("text/plain",response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("spc.api.masterProcessNameRequired",Assert.Single(response.Headers.GetValues("X-SPC-Message-Key")));
+    }
 }
 
 [ApiController]
 [Route("api/i18n-probe")]
 public sealed class ApiUiProbeController : ControllerBase
 {
+    [HttpGet("legacy")]
+    public IActionResult Legacy()=>ApiUiError.WithLegacyMessage(BadRequest("製程中文名稱為必填欄位。"),HttpContext,"spc.api.masterProcessNameRequired");
     [HttpPost]
     public IActionResult Post([FromBody]ApiUiProbeRequest request)=>Ok(new {amount=request.Amount,locale=ApiUiMessageCatalog.RequestLocale(Request)});
     [HttpGet("failure")]

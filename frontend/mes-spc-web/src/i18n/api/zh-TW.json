@@ -51,7 +51,31 @@
       "ppcRulesFixed": "所有管制項目統一使用 WE 八大規則，不支援項目專屬規則。",
       "ppcHasMeasurements": "此管制項目已有量測或 SPC 計算資料。請改為停用；若確定是錯誤或測試資料，請使用永久清除。",
       "ppcClosedAlert": "此管制項目包含已結案異常，為保留品質追溯紀錄，只能停用，不能永久清除。",
-      "ppcReasonTooLong": "參照文件／修改依據最多500字，請縮短文件名稱或說明。"
+      "ppcReasonTooLong": "參照文件／修改依據最多500字，請縮短文件名稱或說明。",
+      "masterProcessNameRequired": "製程中文名稱為必填欄位。",
+      "masterPageRangeInvalid": "分頁起點不可為負數，開始日期不可晚於結束日期。",
+      "masterMachineMissing": "找不到指定機台。",
+      "masterTankNameRequired": "槽體中文名稱為必填欄位。",
+      "masterCharacteristicNameRequired": "特性中文名稱為必填欄位。",
+      "masterLocalCreateDisabled": "SPC 不再設定本機密碼，請使用 AD 帳號或工號登入。",
+      "masterLocalChangeDisabled": "SPC 不再修改本機密碼，請使用 AD 帳號或工號登入。",
+      "masterOperatorRequired": "作業員工號與姓名皆為必填欄位。",
+      "masterChartNameRequired": "管制圖顯示名稱不可空白。",
+      "masterChartRulesFixed": "所有管制圖統一使用 WE 八大規則，不支援管制圖專屬規則。",
+      "masterWeGroupFixed": "WE 八大規則為全系統固定規則群組，不可停用、改碼或刪除。",
+      "masterWeGroupDeleteDenied": "WE 八大規則為全系統固定規則群組，不可刪除。",
+      "masterWeCreateDenied": "SPC 管制規則固定為西方電氣規則 1～8，不可新增其他規則。",
+      "masterWeOnly": "只允許西方電氣規則 1～8。",
+      "masterWeDeleteDenied": "西方電氣規則 1～8 為系統固定規則，不可刪除。",
+      "masterAccountExists": "登入帳號「{account}」已存在。",
+      "masterEmployeeExists": "工號「{employee}」已存在。",
+      "masterGroupExists": "業務範圍「{scope}」已有啟用中的「{groupType}」大類別；同一範圍與圖表模式只能啟用一個。",
+      "masterProcessInUse": "無法刪除工站製程「{processCode} ({processName})」，因為以下資料正在使用此製程：",
+      "masterRelatedMachine": "生產機台：{code} ({name})",
+      "masterRelatedPpc": "SPC 管制項目：[{scope}] × [{characteristic}]",
+      "masterRelatedVariable": "計量型量測記錄：共 {count} 筆",
+      "masterRelatedAttribute": "計數型量測記錄：共 {count} 筆",
+      "masterRelatedAlert": "SPC 異常通報記錄：共 {count} 筆"
     }
   }
 }

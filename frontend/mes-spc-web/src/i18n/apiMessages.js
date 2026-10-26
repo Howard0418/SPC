@@ -22,3 +22,10 @@ export function formatApiErrorDescriptor(data,source,translate){
  const descriptor=resolveApiErrorDescriptor(data,source);
  return descriptor?translate(descriptor.key,descriptor.args):null;
 }
+
+// Additive metadata for old API endpoints whose response body must remain a string.
+export function resolveLegacyApiDescriptor(data,headers,source){
+ if(typeof data!=='string')return null;
+ const key=typeof headers?.get==='function'?headers.get('x-spc-message-key'):headers?.['x-spc-message-key'];
+ return resolveApiErrorDescriptor({messageKey:key,args:{}},source);
+}

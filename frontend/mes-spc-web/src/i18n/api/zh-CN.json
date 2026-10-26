@@ -51,7 +51,31 @@
       "ppcRulesFixed": "所有控制项目统一使用 WE 八大规则，不支持项目专属规则。",
       "ppcHasMeasurements": "此控制项目已有测量或 SPC 计算数据。请改为停用；若确定是错误或测试数据，请使用永久清除。",
       "ppcClosedAlert": "此控制项目包含已结案异常，为保留质量追溯记录，只能停用，不能永久清除。",
-      "ppcReasonTooLong": "参照文件／修改依据最多500字，请缩短文件名称或说明。"
+      "ppcReasonTooLong": "参照文件／修改依据最多500字，请缩短文件名称或说明。",
+      "masterProcessNameRequired": "制程中文名称为必填字段。",
+      "masterPageRangeInvalid": "分页起点不可为负数，开始日期不可晚于结束日期。",
+      "masterMachineMissing": "找不到指定机台。",
+      "masterTankNameRequired": "槽体中文名称为必填字段。",
+      "masterCharacteristicNameRequired": "特性中文名称为必填字段。",
+      "masterLocalCreateDisabled": "SPC 不再设置本机密码，请使用 AD 账号或工号登录。",
+      "masterLocalChangeDisabled": "SPC 不再修改本机密码，请使用 AD 账号或工号登录。",
+      "masterOperatorRequired": "操作员工号与姓名均为必填字段。",
+      "masterChartNameRequired": "控制图显示名称不可为空。",
+      "masterChartRulesFixed": "所有控制图统一使用 WE 八大规则，不支持控制图专属规则。",
+      "masterWeGroupFixed": "WE 八大规则为全系统固定规则组，不可停用、改码或删除。",
+      "masterWeGroupDeleteDenied": "WE 八大规则为全系统固定规则组，不可删除。",
+      "masterWeCreateDenied": "SPC 控制规则固定为西方电气规则 1～8，不可新增其他规则。",
+      "masterWeOnly": "只允许西方电气规则 1～8。",
+      "masterWeDeleteDenied": "西方电气规则 1～8 为系统固定规则，不可删除。",
+      "masterAccountExists": "登录账号“{account}”已存在。",
+      "masterEmployeeExists": "工号“{employee}”已存在。",
+      "masterGroupExists": "业务范围“{scope}”已有启用中的“{groupType}”大类别；同一范围与图表模式只能启用一个。",
+      "masterProcessInUse": "无法删除工站制程“{processCode} ({processName})”，因为以下数据正在使用此制程：",
+      "masterRelatedMachine": "生产机台：{code} ({name})",
+      "masterRelatedPpc": "SPC 控制项目：[{scope}] × [{characteristic}]",
+      "masterRelatedVariable": "计量型测量记录：共 {count} 条",
+      "masterRelatedAttribute": "计数型测量记录：共 {count} 条",
+      "masterRelatedAlert": "SPC 异常通报记录：共 {count} 条"
     }
   }
 }
