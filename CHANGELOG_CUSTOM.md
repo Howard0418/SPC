@@ -2081,3 +2081,6 @@
 
 ## 2026-10-27 I18N-CHAR-001-C 品質特性名稱報表與剩餘頁面收尾
 - 2026-10-27 I18N-CHAR-001-C完成：人讀報表／郵件附件、藥液總覽與F表品質特性名稱切語；歷史快照／CSV與原計算不變。126語系／40必要API、本機5及發布74瀏覽器、build/hash/health/同源14通過；只測試Web0.1.110/API0.1.87，正式未更新。SPC本案A／B／C完成，剩09～21共13件維持暫停，真人審稿未完成。[驗證](specs/20261027-i18n-characteristic-names/verification.md)。
+
+## 2026-10-27 SPC-PROGRESS-001 進度圖唯讀盤點與規劃
+- 2026-10-27 SPC-PROGRESS-001：依進度表.xlsx原甘特圖與使用者確認，只規劃更新Excel SPC區。10階段現況／格式問題已對照，新增A狀態日期與圖例明細、B圖表更新及驗證兩件P2，A先B後；未改原檔或程式／DB／站台。原三語13件維持暫停，既有受阻／暫緩／資料差異不重複立案。[驗證](specs/20261027-spc-progress-workbook-plan/verification.md)。

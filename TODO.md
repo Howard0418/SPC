@@ -451,3 +451,9 @@
 - 2026-10-27 I18N-CHAR-001-B完成：圖表／摘要／警報／追溯品質特性名稱三語接線，additive英文欄位保留原名、代碼及歷史；125語系／32 API、本機16與警報補驗4、發布16加原144回歸、build/hash/health/同源14通過。只測試Web0.1.109/API0.1.86，正式未更新；三語化剩14件，其中SPC C一件。[驗證與回復](specs/20261027-i18n-characteristic-names/verification.md)。
 
 - 2026-10-27 I18N-CHAR-001-C完成：人讀報表／郵件附件、藥液總覽與F表品質特性名稱切語；歷史快照／CSV與原計算不變。126語系／40必要API、本機5及發布74瀏覽器、build/hash/health/同源14通過；只測試Web0.1.110/API0.1.87，正式未更新。SPC本案A／B／C完成，剩09～21共13件維持暫停，真人審稿未完成。[驗證與回復](specs/20261027-i18n-characteristic-names/verification.md)。
+
+## SPC進度圖Excel更新（2026-10-27，只規劃）
+- [規格與現況對照](specs/20261027-spc-progress-workbook-plan/spec.md)／[排序清單](specs/20261027-spc-progress-workbook-plan/tasks.md)。
+- [ ] SPC-PROGRESS-001-A／P2：SPC更新明細、狀態／日期／圖例配置；先執行，不改Excel。
+- [ ] SPC-PROGRESS-001-B／P2，依賴A：備份後更新Excel SPC甘特圖，保留其他專案及原生圖形，重開與視覺／內容驗證。
+- 2026-10-27 SPC-PROGRESS-001：依進度表.xlsx原甘特圖與使用者確認，只規劃更新Excel SPC區。10階段現況／格式問題已對照，新增A狀態日期與圖例明細、B圖表更新及驗證兩件P2，A先B後；未改原檔或程式／DB／站台。原三語13件維持暫停，既有受阻／暫緩／資料差異不重複立案。本次新增未完成Excel小工作2件；與三語13件合計本輪追蹤15件，非整個歷史工作池總數。
