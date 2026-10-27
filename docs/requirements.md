@@ -1,3 +1,5 @@
+> Portal LOGO人工驗收：2026-10-27使用者確認完成；待人工11、待核銷4、核心19。[追溯](../specs/20261027-all-task-progress/inventory.md)。
+
 > 2026-10-27 REPORT-PPT-001結案：[驗證](../specs/20261027-mes-spc-report-plan/verification.md)。A～H完成，10頁15圖、原背景保持、原PPT及進度表交付；無網站／DB／發布，其餘19件維持。
 
 # SPC 現行需求索引
