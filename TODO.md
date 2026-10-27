@@ -2,6 +2,12 @@
 
 狀態：僅顯示未完成、待規格、待執行、待確認小工作。已完成小工作不再保留於本檔，完成紀錄請查 `CHANGELOG_CUSTOM.md` 與對應 `specs/`。
 
+
+## 最新整併計數（2026-10-27，以此節優先於下方歷史計數）
+- 核心未完成19件：三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
+- 另12筆人工驗收／覆蓋限制註記、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
+- 原進度表新增「小工作總表」，193筆登錄中177件具名工作（158完成、19未完成），來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)。舊4件／20包／三語13等均保留歷史或子集合意義，不再冒充全池總數。
+
 ## 執行規則
 
 - 每次只執行一個 TASK。
@@ -481,3 +487,7 @@
 - [x] PROGRESS-PORTAL-KM-001／P2：入口網站與KM現況、日期、甘特圖及共用更新規則同步，詳specs/20261027-cross-project-progress/spec.md。
 
 - 2026-10-27 PROGRESS-PORTAL-KM-001完成：原Excel加入Portal／KM十月日期、甘特條及16項明細，規則與三系統入口同步。內容／圖形回歸、OpenXML0錯誤與3頁列印通過，原檔已取代。本件剩0；三語13件仍暫停，其他受阻／暫緩與資料差異維持。[驗證](specs/20261027-cross-project-progress/spec.md)。
+
+- [x] PROGRESS-ALL-TASKS-001／P2：所有明確小工作與人工追溯同步原Excel小工作總表，依specs/20261027-all-task-progress/spec.md執行。
+
+- 2026-10-27 PROGRESS-ALL-TASKS-001完成：原Excel新增可篩選小工作總表，193登錄／核心未完成19，原表與13圖形保持、公式／來源／OpenXML0錯誤／重開列印檢查通過。已備份並取代原檔；本件剩0，原待辦與暫停狀態不變。[驗證](specs/20261027-all-task-progress/spec.md)。
