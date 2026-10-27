@@ -2084,3 +2084,7 @@
 
 ## 2026-10-27 SPC-PROGRESS-001 進度圖唯讀盤點與規劃
 - 2026-10-27 SPC-PROGRESS-001：依進度表.xlsx原甘特圖與使用者確認，只規劃更新Excel SPC區。10階段現況／格式問題已對照，新增A狀態日期與圖例明細、B圖表更新及驗證兩件P2，A先B後；未改原檔或程式／DB／站台。原三語13件維持暫停，既有受阻／暫緩／資料差異不重複立案。[驗證](specs/20261027-spc-progress-workbook-plan/verification.md)。
+
+
+## 2026-10-27 SPC進度圖授權執行
+SPC-PROGRESS-001-A完成更新明細與版面／圖例驗收；B接續。見specs/20261027-spc-progress-workbook-plan/update-detail.md。

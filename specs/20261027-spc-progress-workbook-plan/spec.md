@@ -1,6 +1,6 @@
 # SPC進度圖更新規劃
-- 功能ID：SPC-PROGRESS-001；版本1；日期2026-10-27。
-- 狀態：規劃完成、兩件小工作已入池，尚未修改Excel／應用程式。使用者已明確回覆「更新 Excel 的 SPC 進度圖」，不是新增網站頁面。
+- 功能ID：SPC-PROGRESS-001；版本2；日期2026-10-27。
+- 狀態：使用者授權兩件P2先完成並取代原檔；A更新明細已完成，B接續執行。使用者已明確回覆「更新 Excel 的 SPC 進度圖」，不是新增網站頁面。
 - 主系統：SPC（功能現況與SDD主規格）；目標文件位於Voice目錄，不修改Voice應用程式。相依Portal／TransFiles僅用既有責任與驗證紀錄對照，不恢復它們的工作。
 - 來源：C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/Voice/進度表.xlsx，「專案進度表」A1:Z21；SPC為A3:A12／B3:B12。來源SHA256 a79939099d6a633752180bf4794e06342e2223b0e1f643ce7339032c83d14bf2，21806 bytes。
 - [現況與格式對照](source-review.md)／[計畫](plan.md)／[待辦排序](tasks.md)／[本次驗證](verification.md)。現行SPC需求見[索引](../../docs/requirements.md)，不將舊進度圖視為覆蓋已確認業務規則的依據。
