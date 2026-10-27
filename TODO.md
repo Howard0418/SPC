@@ -473,3 +473,7 @@
 - [x] SPC-PROGRESS-RULE-001／P2：將進度表同步納入SPC更新規則，依specs/20261027-spc-progress-update-rule/spec.md處理。
 
 - 2026-10-27 SPC-PROGRESS-RULE-001完成：AGENTS及開發規則加入原進度表同步入口，規定實際日期／狀態／原生甘特圖、備份／OpenXML驗證後取代原檔；純文件無進度影響可記不適用。本次未改xlsx、無站台發布；本件剩0，三語13件仍暫停。[規則](docs/spc-progress-update-rules.md)。
+
+- [x] SPC-PROGRESS-001-O／P2：SPC甘特圖只從10月開始顯示，詳specs/20261027-spc-progress-workbook-plan/october-axis.md。
+
+- 2026-10-27 SPC-PROGRESS-001-O完成：SPC圖改從2026/10/1逐日顯示，裁切跨月條／略過期前里程碑，保留原始日期及其他專案；OpenXML 0錯誤、重開／日期圖形比對與2頁列印通過，原檔已取代。規則同步；本案剩0，三語13件仍暫停。[驗證](specs/20261027-spc-progress-workbook-plan/october-axis.md)。
