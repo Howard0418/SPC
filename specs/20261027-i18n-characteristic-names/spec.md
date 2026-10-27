@@ -1,6 +1,6 @@
 # SPC品質特性名稱隨語言切換
 - 功能ID：I18N-CHAR-001；版本1；日期2026-10-27。
-- 狀態：原規劃入池後，2026-10-27依後續「繼續下一項」授權完成A；B／C未實作。原要求只規劃的歷史保留，不視為全案完成。
+- 狀態：原規劃入池後，2026-10-27依後續「繼續下一項」及「SPC繼」授權完成A／B；C未實作。原要求只規劃的歷史保留，不視為全案完成。
 - 主系統SPC；Portal／KM／TransFiles無修改。既有三語化批次完成紀錄保留；本案為新增的主檔名稱顯示需求。
 - 基準：[語系契約](../../docs/i18n/contract.md)、[三語化主任務](../20261022-i18n-task01/tasks.md)、[報表前案](../20261026-i18n-task08e/spec.md)。新需求覆蓋「原名稱固定顯示」在品質特性呈現層的限制，原名稱資料及編輯值仍須保持。
 
@@ -30,3 +30,5 @@ QualityCharacteristic已有CharacteristicName／nullable CharacteristicNameEn，
 [計畫](plan.md)／[任務與排序](tasks.md)／[驗證狀態](verification.md)。
 
 - A已完成[單件範圍](task-a.md)及[驗證](verification.md)，測試Web0.1.108/API0.1.85；圖表／摘要／警報／追溯仍待B，報表／郵件仍待C。
+
+- B已完成[單件範圍](task-b.md)及[驗證](verification.md)，測試Web0.1.109/API0.1.86；其餘頁面盤點與人讀報表／郵件仍待C，原A的發布紀錄保留歷史。

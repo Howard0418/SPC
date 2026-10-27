@@ -1,4 +1,6 @@
 <script setup>
+import {characteristicDisplayName} from "../i18n/characteristicNames";
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
 import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
 import LocalePicker from "../components/LocalePicker.vue";
@@ -21,7 +23,7 @@ import {
   FileText
 } from "lucide-vue-next";
 
-const { t } = useI18n({ useScope: "global" });
+const { t, locale } = useI18n({ useScope: "global" });
 const rows = ref([]);
 const loading = ref(false);
 const err = ref("");
@@ -54,6 +56,8 @@ const filteredRows = computed(() => {
       r.partNo?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       r.processCode?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       r.characteristicCode?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      r.characteristicName?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      r.characteristicNameEn?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       r.partId?.toString().includes(searchQuery.value) ||
       r.id?.toString().includes(searchQuery.value);
     
@@ -417,6 +421,7 @@ onMounted(load);
               <td class="py-3.5 px-4">
                 <div class="font-bold text-slate-800 dark:text-white">{{ r.partNo || `Part ID: ${r.partId || 'N/A'}` }}</div>
                 <div class="text-xs text-slate-400 font-mono">{{ r.processCode || `Process ID: ${r.processId || 'N/A'}` }} / {{ r.characteristicCode || `Characteristic ID: ${r.characteristicId || 'N/A'}` }}</div>
+                <div v-if="r.characteristicName || r.characteristicNameEn" data-testid="quality-characteristic-name" class="text-xs text-slate-600 dark:text-slate-300 break-words">{{ characteristicName(r) }}</div>
               </td>
 
               <!-- Value -->

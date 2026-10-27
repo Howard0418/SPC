@@ -1,0 +1,28 @@
+import {test,expect,Page} from '@playwright/test';
+import {prepare,raw} from './fixtures/chart-query';
+const english='Proportion <b>@:key {name}</b>';
+async function inspect(page:Page,path:string){
+ if(process.env.SPC_I18N_TEST_URL)return null;
+ return page.evaluate(async path=>{const source=await(await fetch(`/src/views/${path==='/spc'?'SpcChartView':'TrendChartView'}.vue`)).text();const module=source.match(/from ["']([^"']*echarts[^"']*)["']/)?.[1];const ec=await import(module!);const instance=ec.getInstanceByDom(document.querySelector(path==='/spc'?'[data-testid="primary-spc-chart"]':'[data-testid="chemical-trend-chart"]'));instance.dispatchAction({type:'dataZoom',start:20,end:80});const option=instance.getOption();return {id:instance.id,series:option.series,zoom:option.dataZoom,title:option.title?.[0]?.text};},path);
+}
+for(const width of [390,1280])for(const path of ['/spc','/trend-chart'])for(const mode of ['known','missing'])test(`names ${width} ${path} ${mode}: summary context and title change without data reload`,async({page})=>{
+ await page.setViewportSize({width,height:900});const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));const fixture=await prepare(page,path,true);fixture.state.nameMode=mode;await page.goto(fixture.url);
+ const canvas=page.getByTestId(path==='/spc'?'primary-spc-chart':'chemical-trend-chart').locator('canvas').first();await expect(canvas).toBeVisible();const node=await canvas.elementHandle();const before=await inspect(page,path),count=fixture.reads.length;
+ for(const locale of ['en-US','zh-CN','zh-TW']){await page.getByTestId('locale-select').selectOption(locale);const name=locale==='en-US'&&mode==='known'?english:raw;if(path==='/spc')await expect(page.getByTestId('monitor-characteristic-name')).toHaveText(name);else await expect(page.getByTestId('characteristic-chart-title')).toContainText(name);expect(await node!.evaluate(n=>n.isConnected)).toBe(true);expect(fixture.reads.length).toBe(count);const after=await inspect(page,path);if(before&&after){expect(after.id).toBe(before.id);expect(after.series).toEqual(before.series);expect(after.zoom).toEqual(before.zoom);if(path==='/trend-chart')expect(after.title).toContain(name)}}
+ expect(fixture.writes).toEqual([]);expect(errors).toEqual([]);await expect(page.getByTestId('characteristic-chart-title').locator('b')).toHaveCount(0);
+});
+
+for(const width of [390,1280])for(const path of ['/alerts','/alerts-workflow','/spc/query'])test(`names ${width} ${path}: literal master name changes; identity and history remain`,async({page})=>{
+ await page.setViewportSize({width,height:900});const reads:string[]=[],errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>{localStorage.setItem('mes_spc_token','fixture');localStorage.setItem('mes_spc_user',JSON.stringify({id:101,role:'Editor',username:'names'}))});
+ const row={id:1,ppcId:1,partNo:'PART0',processCode:'PROCESS0',characteristicCode:'CHAR0',characteristicName:raw,characteristicNameEn:english,message:raw,status:'Open',actualValue:0,occurredAt:'2026-10-27T04:00:00Z',measuredAt:'2026-10-27T04:00:00Z',values:[0]};
+ await page.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!==new URL(test.info().project.use.baseURL as string).origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();expect(route.request().method()).toBe('GET');reads.push(u.pathname);let data:any=[];if(u.pathname.endsWith('/version'))data={environment:'test',version:'0.1.86'};else if(u.pathname.endsWith('/traceability'))data={batches:[row],alerts:[]};else if(u.pathname.includes('/alerts'))data=[row];return route.fulfill({json:data})});
+ await page.goto(path);await expect(page.getByTestId('quality-characteristic-name').first()).toHaveText(raw);if(path!=='/spc/query')await page.getByTestId('alerts-searchQuery').fill('Proportion');const count=reads.length;const handle=await page.getByTestId('quality-characteristic-name').first().elementHandle();
+ for(const [locale,name] of [['en-US',english],['zh-CN',raw],['zh-TW',raw]]){await page.getByTestId('locale-select').selectOption(locale);await expect(page.getByTestId('quality-characteristic-name').first()).toHaveText(name);await expect(page.locator('main')).toContainText('CHAR0');expect(await handle!.evaluate(n=>n.isConnected)).toBe(true);expect(reads.length).toBe(count)}
+ await expect(page.locator('main b')).toHaveCount(0);expect(errors).toEqual([]);
+});
+
+for(const width of [390,1280])test(`summary names ${width}: overview and selected chart use explicit characteristic metadata`,async({page})=>{
+ await page.setViewportSize({width,height:900});const fixture=await prepare(page,'/spc');fixture.state.nameMode='known';await page.goto(fixture.url);await page.getByTestId('chart-query-selectedProcessId').selectOption('ALL');await page.getByTestId('chart-query-submit').click();await expect(page.getByTestId('spc-summary-table')).toBeVisible();const count=fixture.reads.length;
+ for(const [locale,name] of [['en-US',english],['zh-CN',raw],['zh-TW',raw]]){await page.getByTestId('locale-select').selectOption(locale);await expect(page.getByTestId('summary-characteristic-name').last()).toHaveText(name);expect(fixture.reads.length).toBe(count)}
+ await page.getByTestId('draw-chart-1').click();await expect(page.getByTestId('characteristic-chart-title')).toContainText(raw);const reads=fixture.reads.length;await page.getByTestId('locale-select').selectOption('en-US');await expect(page.getByTestId('characteristic-chart-title')).toContainText(english);expect(fixture.reads.length).toBe(reads);expect(fixture.writes).toEqual([]);
+});

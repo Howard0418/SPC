@@ -349,3 +349,5 @@
 - 2026-10-27 新增[品質特性名稱隨語言切換規劃](../specs/20261027-i18n-characteristic-names/spec.md)：既有中英文名選用／缺值回退、編輯雙欄保持；A／B／C三件進工作池，尚未實作，不代表既有上線行為已改變。
 
 - 2026-10-27 I18N-CHAR-001-A完成：主檔／管制項目／量測名稱隨語系切換、缺值回退與代碼搜尋，原編輯雙欄／DTO／數值保留；124語系、發布105瀏覽器及4項補驗、build/hash/health/同源14通過。只測試Web0.1.108/API0.1.85，正式未更新；三語化剩15件，其中SPC B／C兩件，未自動開始。[本件](../specs/20261027-i18n-characteristic-names/task-a.md)／[驗證](../specs/20261027-i18n-characteristic-names/verification.md)。
+
+- 2026-10-27 I18N-CHAR-001-B完成：圖表／摘要／警報／追溯品質特性名稱三語接線，additive英文欄位保留原名、代碼及歷史；125語系／32 API、本機16與警報補驗4、發布16加原144回歸、build/hash/health/同源14通過。只測試Web0.1.109/API0.1.86，正式未更新；三語化剩14件，其中SPC C一件。[單件範圍](../specs/20261027-i18n-characteristic-names/task-b.md)／[驗證](../specs/20261027-i18n-characteristic-names/verification.md)。

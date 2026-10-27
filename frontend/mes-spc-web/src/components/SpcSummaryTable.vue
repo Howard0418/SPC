@@ -43,7 +43,7 @@
         <div v-for="(row, index) in rankingRows" :key="`${row.partProcessCharacteristicId}-${index}`" class="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
           <span class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs font-black">{{ index + 1 }}</span>
           <div class="min-w-0 flex-1">
-            <div class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">{{ row.chartName || 'N/A' }}</div>
+            <div class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate"><span data-testid="summary-characteristic-name">{{ summaryName(row) }}</span></div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ formatLineName(row.lineOrProcessName) }}／{{ formatSlotName(row.slotName) }}</div>
           </div>
           <span class="font-mono font-black text-sm" :class="rankingMetric === 'oos' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'">{{ rankingValue(row) }}</span>
@@ -256,7 +256,7 @@
             <td class="px-4 py-3 font-bold whitespace-nowrap">{{ row.controlCategory || 'N/A' }}</td>
             <td class="px-4 py-3 min-w-44" :title="row.lineOrProcessName || ''">{{ formatLineName(row.lineOrProcessName) }}</td>
             <td class="px-4 py-3 min-w-36" :title="row.slotName || ''">{{ formatSlotName(row.slotName) }}</td>
-            <td class="px-4 py-3 min-w-44 font-bold text-blue-700 dark:text-blue-300">{{ row.chartName || 'N/A' }}</td>
+            <td class="px-4 py-3 min-w-44 font-bold text-blue-700 dark:text-blue-300"><span data-testid="summary-characteristic-name">{{ summaryName(row) }}</span></td>
             <td class="px-4 py-3 text-right font-mono font-bold">{{ row.totalCount ?? 0 }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.usl) }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ formatLimit(row.lsl) }}</td>
@@ -318,9 +318,11 @@
 </template>
 
 <script setup>
+import {summaryCharacteristicDisplayName} from "../i18n/characteristicNames";
+const summaryName = row => summaryCharacteristicDisplayName(row, locale.value, t("spc.characteristics.unnamed"));
 import { ref, computed, nextTick, onBeforeUnmount, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
-const { t } = useI18n({ useScope: "global" });
+const { t, locale } = useI18n({ useScope: "global" });
 import { List, BarChart3, LineChart, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-vue-next"; // 新增三個排序圖示
 
 // 1. 新增排序狀態

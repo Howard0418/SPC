@@ -1,4 +1,6 @@
 <script setup>
+import {characteristicDisplayName} from "../i18n/characteristicNames";
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
 import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
 import LocalePicker from "../components/LocalePicker.vue";
@@ -20,7 +22,7 @@ import {
   ArrowRight
 } from "lucide-vue-next";
 
-const { t } = useI18n({ useScope: "global" });
+const { t, locale } = useI18n({ useScope: "global" });
 const rows = ref([]);
 const loading = ref(false);
 const err = ref("");
@@ -72,6 +74,8 @@ const filteredRows = computed(() => {
       (r.partNo && r.partNo.toLowerCase().includes(q)) ||
       (r.processCode && r.processCode.toLowerCase().includes(q)) ||
       (r.characteristicCode && r.characteristicCode.toLowerCase().includes(q)) ||
+      (r.characteristicName && r.characteristicName.toLowerCase().includes(q)) ||
+      (r.characteristicNameEn && r.characteristicNameEn.toLowerCase().includes(q)) ||
       (r.id.toString().includes(q));
 
     // 2. Status Filter
@@ -287,6 +291,7 @@ onMounted(load);
                 <div class="mt-2 text-[11px] text-slate-500 font-mono leading-relaxed">
                   <div>{{ r.partNo || `Part ${r.partId || '-'}` }}</div>
                   <div>{{ r.processCode || `Process ${r.processId || '-'}` }} / {{ r.characteristicCode || `Characteristic ${r.characteristicId || '-'}` }}</div>
+                <div v-if="r.characteristicName || r.characteristicNameEn" data-testid="quality-characteristic-name" class="text-xs text-slate-600 dark:text-slate-300 break-words">{{ characteristicName(r) }}</div>
                   <div>Value: {{ r.actualValue != null ? Number(r.actualValue).toFixed(3) : '-' }}</div>
                 </div>
                 <RouterLink

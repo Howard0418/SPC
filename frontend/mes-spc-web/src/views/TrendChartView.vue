@@ -1,4 +1,7 @@
 <script setup>
+import {characteristicDisplayName, summaryCharacteristicDisplayName} from "../i18n/characteristicNames";
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
+const summaryName = row => summaryCharacteristicDisplayName(row, locale.value, t("spc.characteristics.unnamed"));
 const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import { formatNormalityPValue, normalityConclusion, normalityUnavailableReason } from "../utils/normalityPresentation";
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
@@ -181,7 +184,7 @@ const activeChartDisplayName = computed(() => {
   const rowTitleParts = uniqueNonEmptyParts([
     row?.lineOrProcessName,
     row?.slotName,
-    row?.chartName
+    row ? summaryName(row) : ""
   ]);
   if (rowTitleParts.length > 0) return rowTitleParts.join(" - ");
 
@@ -189,7 +192,7 @@ const activeChartDisplayName = computed(() => {
   const mappingTitleParts = uniqueNonEmptyParts([
     mapping?.process?.processName || mapping?.machine?.machineName,
     formatTankLabel(mapping?.tank),
-    mapping?.characteristic?.characteristicName
+    mapping?.characteristic ? characteristicName(mapping.characteristic) : ""
   ]);
   return mappingTitleParts.join(" - ") || t('spc.trend.title');
 });
@@ -737,6 +740,7 @@ function localizeChart(instance) {
  if(!instance || instance.isDisposed())return;
  if(!chartPresentations.has(instance))chartPresentations.set(instance,captureChartPresentation(instance.getOption()));
  instance.setOption(translateChartPresentation(chartPresentations.get(instance),chartLabel));
+ if(instance === trendChartInstance)instance.setOption({title:{text:activeChartDisplayName.value}});
 }
 watch(locale,async()=>{await nextTick();for(const i of [trendChartInstance,histogramChartInstance])localizeChart(i)});
 
@@ -1358,7 +1362,7 @@ const trendStats = computed(() => {
       >
         <p class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ t('spc.chartQuery.chartName') }}</p>
         <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white leading-snug">
-          {{ activeChartDisplayName }}
+          <span data-testid="characteristic-chart-title">{{ activeChartDisplayName }}</span>
         </h2>
       </div>
 
@@ -1371,7 +1375,7 @@ const trendStats = computed(() => {
         <div class="space-y-1">
           <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">{{ t('spc.trend.characteristic') }}</span>
           <span class="text-slate-800 dark:text-slate-200">
-            {{ selectedMapping.characteristic?.characteristicName }}
+            {{ characteristicName(selectedMapping.characteristic) }}
             <span v-if="selectedMapping.unit" class="text-slate-400">({{ selectedMapping.unit }})</span>
           </span>
         </div>

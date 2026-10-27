@@ -108,6 +108,7 @@ public class TraceabilityV1Controller(AppDbContext db) : ControllerBase
             ProcessName = ppc.Process?.ProcessName,
             CharacteristicCode = ppc.Characteristic?.CharacteristicCode,
             CharacteristicName = ppc.Characteristic?.CharacteristicName,
+            CharacteristicNameEn = ppc.Characteristic?.CharacteristicNameEn,
             WorkOrderNo = key.WorkOrderNo,
             LotNo = key.LotNo,
             SerialNo = key.SerialNo,
@@ -148,6 +149,7 @@ public class TraceabilityV1Controller(AppDbContext db) : ControllerBase
             ProcessName = ppc.Process?.ProcessName,
             CharacteristicCode = ppc.Characteristic?.CharacteristicCode,
             CharacteristicName = ppc.Characteristic?.CharacteristicName,
+            CharacteristicNameEn = ppc.Characteristic?.CharacteristicNameEn,
             WorkOrderNo = key.WorkOrderNo,
             LotNo = key.LotNo,
             SerialNo = key.SerialNo,
@@ -185,6 +187,8 @@ public class TraceabilityV1Controller(AppDbContext db) : ControllerBase
         public string? ProcessName { get; set; }
         public string? CharacteristicCode { get; set; }
         public string? CharacteristicName { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? CharacteristicNameEn { get; set; }
         public string? WorkOrderNo { get; set; }
         public string? LotNo { get; set; }
         public string? SerialNo { get; set; }

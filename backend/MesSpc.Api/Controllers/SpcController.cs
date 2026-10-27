@@ -766,6 +766,12 @@ public class ChartSummaryDto
     public string LineOrProcessName { get; set; } = string.Empty;
     public string SlotName { get; set; } = string.Empty;
     public string ChartName { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? CharacteristicName { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? CharacteristicNameEn { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? CharacteristicCode { get; set; }
     public string ChartType { get; set; } = string.Empty;
     public double? Usl { get; set; }
     public double? Lsl { get; set; }

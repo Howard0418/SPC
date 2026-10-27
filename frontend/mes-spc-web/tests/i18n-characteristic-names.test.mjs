@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {characteristicDisplayName} from '../src/i18n/characteristicNames.js';
+import {characteristicDisplayName, summaryCharacteristicDisplayName} from '../src/i18n/characteristicNames.js';
 
 test('characteristic display follows canonical locale, preserves literal names and original records',()=>{
  const raw='比重 <b>@:key {name}</b>',english='Proportion =1+1';
@@ -24,4 +24,11 @@ test('unnamed characteristic fallback translations retain draft provenance',asyn
  const ledger=JSON.parse(readFileSync(new URL('../../../specs/20261027-i18n-characteristic-names/translation-review-a.json',import.meta.url),'utf8'));
  const sha=value=>createHash('sha256').update(value).digest('hex');assert.equal(ledger.ledger.length,3);
  for(const entry of ledger.ledger){const text=JSON.parse(readFileSync(new URL(`../src/i18n/locales/${entry.locale}.json`,import.meta.url),'utf8')).spc.characteristics.unnamed;assert.equal(entry.sourceHash,sha('未命名特性'));assert.equal(entry.translationHash,sha(text));assert.equal(entry.status,'draft');assert.equal(entry.reviewer,null)}
+});
+
+test('summary display only uses explicit characteristic fields; legacy independent chart title stays literal',()=>{
+ const row=Object.freeze({chartName:'Original private title',characteristicName:'比重',characteristicNameEn:'Proportion',characteristicCode:'D0'});
+ assert.equal(summaryCharacteristicDisplayName(row,'en-US','Unnamed'),'Proportion');assert.equal(row.chartName,'Original private title');
+ assert.equal(summaryCharacteristicDisplayName({chartName:'獨立原圖名 <b>@:key {name}</b>'},'en-US','Unnamed'),'獨立原圖名 <b>@:key {name}</b>');
+ assert.equal(summaryCharacteristicDisplayName({characteristicName:'比重',characteristicNameEn:' '},'en-US','Unnamed'),'比重');
 });

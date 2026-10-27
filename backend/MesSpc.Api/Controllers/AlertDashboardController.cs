@@ -287,6 +287,7 @@ internal static class AlertDtoMapper
                 ProcessName = ppc?.Process?.ProcessName,
                 CharacteristicCode = ppc?.Characteristic?.CharacteristicCode,
                 CharacteristicName = ppc?.Characteristic?.CharacteristicName,
+                CharacteristicNameEn = ppc?.Characteristic?.CharacteristicNameEn,
                 a.ActualValue,
                 a.AlertType,
                 a.Message,

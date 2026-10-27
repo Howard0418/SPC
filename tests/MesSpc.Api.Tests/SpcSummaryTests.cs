@@ -25,6 +25,7 @@ public class SpcSummaryTests
             Id = 1,
             CharacteristicCode = "CU",
             CharacteristicName = "銅離子濃度",
+            CharacteristicNameEn = "Copper concentration <b>@:key {name}</b>",
             DataCategory = "Variable"
         };
         var chartType = new ControlChartType
@@ -134,6 +135,9 @@ public class SpcSummaryTests
         row.LimitCalculationMethod.Should().Be("移動全距法");
         row.Pp.Should().NotBeNull();
         row.Ppk.Should().NotBeNull();
+        row.CharacteristicName.Should().Be("銅離子濃度");
+        row.CharacteristicNameEn.Should().Be("Copper concentration <b>@:key {name}</b>");
+        row.CharacteristicCode.Should().Be("CU");
 
         var batchRows = await service.GetChartSummaryListAsync(
             "CHEMICAL",

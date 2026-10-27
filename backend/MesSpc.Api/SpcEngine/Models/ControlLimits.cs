@@ -72,6 +72,8 @@ public record ChartMonitorContext
     public string? ProcessName { get; init; }
     public string? CharacteristicCode { get; init; }
     public string? CharacteristicName { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? CharacteristicNameEn { get; init; }
     public string? LineCode { get; init; }
     public string? LineName { get; init; }
     public string? TankCode { get; init; }

@@ -1,4 +1,6 @@
 <script setup>
+import {characteristicDisplayName} from "../i18n/characteristicNames";
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
 import {useI18n} from "vue-i18n";
 import {displayUiMessage} from "../i18n/uiMessage";
 import {normalizeLocale} from "../i18n/preferences";
@@ -245,6 +247,7 @@ onMounted(() => {
                 <div class="text-xs text-slate-500 mt-1 font-mono">
                   {{ b.processCode || t('spc.trace.processFallback',{id:String(b.processId)}) }} / {{ b.characteristicCode || t('spc.trace.itemFallback',{id:String(b.characteristicId)}) }}
                 </div>
+                <div v-if="b.characteristicName || b.characteristicNameEn" data-testid="quality-characteristic-name" class="text-xs text-slate-600 dark:text-slate-300 break-words">{{ characteristicName(b) }}</div>
               </td>
 
               <!-- Lot / SN -->

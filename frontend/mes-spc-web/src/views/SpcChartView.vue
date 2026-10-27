@@ -1,4 +1,7 @@
 <script setup>
+import {characteristicDisplayName, summaryCharacteristicDisplayName} from "../i18n/characteristicNames";
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
+const summaryName = row => summaryCharacteristicDisplayName(row, locale.value, t("spc.characteristics.unnamed"));
 const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import { formatNormalityPValue, normalityConclusion, normalityUnavailableReason } from "../utils/normalityPresentation";
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
@@ -265,12 +268,14 @@ const monitorProcessLabel = computed(() =>
   || selectedSummaryRow.value?.lineOrProcessName
   || t('spc.chartQuery.notProvided')
 );
-const monitorCharacteristicLabel = computed(() =>
-  chartResult.value?.monitorContext?.characteristicName
-  || monitorMapping.value?.characteristic?.characteristicName
-  || selectedSummaryRow.value?.chartName
-  || t('spc.chartQuery.notProvided')
-);
+const monitorCharacteristicLabel = computed(() => {
+  const context = chartResult.value?.monitorContext;
+  const characteristic = monitorMapping.value?.characteristic;
+  if (context?.characteristicName || context?.characteristicNameEn || characteristic) {
+    return characteristicName({...characteristic, ...context, characteristicNameEn: context?.characteristicNameEn ?? characteristic?.characteristicNameEn});
+  }
+  return selectedSummaryRow.value ? summaryName(selectedSummaryRow.value) : t('spc.chartQuery.notProvided');
+});
 const monitorMachineLabel = computed(() =>
   chartResult.value?.monitorContext?.lineName
   || monitorMapping.value?.machine?.machineName
@@ -320,7 +325,7 @@ const activeChartDisplayName = computed(() => {
   const rowTitleParts = uniqueNonEmptyParts([
     row?.lineOrProcessName,
     row?.slotName,
-    row?.chartName
+    row ? summaryName(row) : ""
   ]);
   if (rowTitleParts.length > 0) return rowTitleParts.join(" - ");
 
@@ -328,7 +333,7 @@ const activeChartDisplayName = computed(() => {
   const mappingTitleParts = uniqueNonEmptyParts([
     mapping?.process?.processName || mapping?.machine?.machineName,
     formatTankLabel(mapping?.tank),
-    mapping?.characteristic?.characteristicName
+    mapping?.characteristic ? characteristicName(mapping.characteristic) : ""
   ]);
   return mappingTitleParts.join(" - ");
 });
@@ -2322,7 +2327,7 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
       >
         <p class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ t('spc.chartQuery.chartName') }}</p>
         <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white leading-snug">
-          {{ activeChartDisplayName }}
+          <span data-testid="characteristic-chart-title">{{ activeChartDisplayName }}</span>
         </h2>
       </div>
 
@@ -2349,7 +2354,7 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
             </div>
             <div>
               <p class="text-slate-400 font-bold">{{ t('spc.chartQuery.characteristic') }}</p>
-              <p class="font-semibold text-slate-800 dark:text-slate-200">{{ monitorCharacteristicLabel }}</p>
+              <p class="font-semibold text-slate-800 dark:text-slate-200"><span data-testid="monitor-characteristic-name">{{ monitorCharacteristicLabel }}</span></p>
             </div>
             <div>
               <p class="text-slate-400 font-bold">{{ t('spc.chartQuery.machine') }}</p>
