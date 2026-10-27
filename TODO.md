@@ -452,10 +452,12 @@
 
 - 2026-10-27 I18N-CHAR-001-C完成：人讀報表／郵件附件、藥液總覽與F表品質特性名稱切語；歷史快照／CSV與原計算不變。126語系／40必要API、本機5及發布74瀏覽器、build/hash/health/同源14通過；只測試Web0.1.110/API0.1.87，正式未更新。SPC本案A／B／C完成，剩09～21共13件維持暫停，真人審稿未完成。[驗證與回復](specs/20261027-i18n-characteristic-names/verification.md)。
 
-## SPC進度圖Excel更新（2026-10-27，只規劃）
+## SPC進度圖Excel更新（2026-10-27，兩件完成）
 - [規格與現況對照](specs/20261027-spc-progress-workbook-plan/spec.md)／[排序清單](specs/20261027-spc-progress-workbook-plan/tasks.md)。
 - [x] SPC-PROGRESS-001-A／P2：SPC更新明細、狀態／日期／圖例配置；先執行，不改Excel。
-- [ ] SPC-PROGRESS-001-B／P2，依賴A：備份後更新Excel SPC甘特圖，保留其他專案及原生圖形，重開與視覺／內容驗證。
+- [x] SPC-PROGRESS-001-B／P2，依賴A：備份後更新Excel SPC甘特圖，保留其他專案及原生圖形，重開與視覺／內容驗證。
 - 2026-10-27 SPC-PROGRESS-001：依進度表.xlsx原甘特圖與使用者確認，只規劃更新Excel SPC區。10階段現況／格式問題已對照，新增A狀態日期與圖例明細、B圖表更新及驗證兩件P2，A先B後；未改原檔或程式／DB／站台。原三語13件維持暫停，既有受阻／暫緩／資料差異不重複立案。本次新增未完成Excel小工作2件；與三語13件合計本輪追蹤15件，非整個歷史工作池總數。
 
 - 2026-10-27 SPC-PROGRESS-001-A完成：使用者授權兩件P2直接完成／取代原檔，狀態、圖例及版面明細已定稿；B接續，Excel尚未覆蓋。
+
+- 2026-10-27 SPC-PROGRESS-001-B完成：備份後直接取代原進度表.xlsx，現況／圖例／來源同表更新；保留其他專案及35原生圖形，重開、內容／圖形、兩頁列印與回復檢查通過。[驗證](specs/20261027-spc-progress-workbook-plan/verification.md)。Excel兩件均完成，剩0件；原三語13件仍暫停（Portal6／KM4／共用3），外部受阻1、Runtime／TransFiles暫緩2另列，既有校驗／報表差異保留，不自動續做。

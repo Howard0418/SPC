@@ -359,3 +359,7 @@
 
 ## 2026-10-27 SPC進度圖授權執行
 SPC-PROGRESS-001-A已完成狀態／日期／圖例與版面定稿，使用者授權兩件直接完成並取代原檔；B接續。[更新明細](../specs/20261027-spc-progress-workbook-plan/update-detail.md)。
+
+
+## 2026-10-27 SPC-PROGRESS-001-B完成
+兩件P2已完成，依授權備份後直接取代原Excel；更新SPC原10階段與現況矩陣、圖例／證據，未知原年份／週次明示待確認，保留其他專案及35原生圖形。重開／內容／圖形與A3橫式兩頁列印驗證通過；建置及站台發布不適用。Excel待辦0，三語13件維持暫停，其餘受阻／暫緩／差異不變。[驗證與回復](../specs/20261027-spc-progress-workbook-plan/verification.md)。
