@@ -2120,3 +2120,6 @@ SPC-PROGRESS-001-A完成更新明細與版面／圖例驗收；B接續。見spec
 
 ## 2026-10-27 REPORT-PPT-001 只規劃
 唯讀檢視6頁MES暨SPC簡報，規劃保留原背景／母片與每頁一張最新截圖，列出孤字／舊日期／截圖缺漏及裁切等修正建議。5件P2依證據A→進度圖B→封面說明C→畫面D→驗證交付E入池，均未開始；PPT／網站未修改。依既有規則只同步原Excel任務登錄，核心未完成24（原19＋新5），三語／受阻／暫緩不變。[規格](specs/20261027-mes-spc-report-plan/spec.md)／[驗證](specs/20261027-mes-spc-report-plan/verification.md)。
+
+## 2026-10-27 REPORT-PPT-001-A 完成
+已核對現況並取得六頁對應證據圖，來源與限制見 specs/20261027-mes-spc-report-plan/screenshot-sources.md。原PPT未修改，B～E四件待執行；進度表已備份同步A完成，核心未完成23件（原19＋報告4），人工12／待核銷4另列。OpenXML原檔0錯誤、儲存格／圖形回歸、重開與列印目視通過。無程式／DB變更，網站發布不適用。
