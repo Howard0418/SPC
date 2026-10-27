@@ -1,3 +1,5 @@
+> 2026-10-27 REPORT-PPT-001結案：[驗證](../specs/20261027-mes-spc-report-plan/verification.md)。A～H完成，10頁15圖、原背景保持、原PPT及進度表交付；無網站／DB／發布，其餘19件維持。
+
 # SPC 現行需求索引
 
 - SPC Pkcs安全修補：[驗證](../specs/20261021-spc-pkcs-security/verification.md)，234項通過、8條件式略過；測試API0.1.68，正式未更新。

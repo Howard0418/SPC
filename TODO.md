@@ -1,12 +1,14 @@
+> 2026-10-27報告結案：F/G/H/E已完成，本報告剩0件；其餘19件維持。舊節為歷史，以最新整併計數及[驗證](specs/20261027-mes-spc-report-plan/verification.md)為準。
+
 # SPC 全系統未完成小工作池
 
 狀態：僅顯示未完成、待規格、待執行、待確認小工作。已完成小工作不再保留於本檔，完成紀錄請查 `CHANGELOG_CUSTOM.md` 與對應 `specs/`。
 
 
 ## 最新整併計數（2026-10-27，以此節優先於下方歷史計數）
-- 核心未完成23件：十頁簡報F／G／H／E共4件P2（未開始）＋三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
+- 核心未完成19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
 - 另12筆人工驗收／覆蓋限制註記、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
-- 原進度表「小工作總表」202筆登錄中186件具名工作（163完成、23未完成）；本次只新增F／G／H三件，E原件調整相依、不重複立案，A～D完成紀錄保留。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。舊計數只保留歷史或子集合意義。
+- 原進度表「小工作總表」202筆登錄中186件具名工作（167完成、19未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。舊計數只保留歷史或子集合意義。
 
 ## 執行規則
 
@@ -495,11 +497,6 @@
 
 ## MES暨SPC進度報告調整（2026-10-27，只規劃）
 [規格](specs/20261027-mes-spc-report-plan/spec.md)／[逐頁建議](specs/20261027-mes-spc-report-plan/slide-plan.md)／[排序](specs/20261027-mes-spc-report-plan/tasks.md)。保留背景與6頁，每頁1截圖；本次不改PPT／網站，不立即執行。
-- [ ] REPORT-PPT-001-A／P2：現況核對與6張截圖來源，先。
-- [ ] REPORT-PPT-001-B／P2：第2頁十月進度圖，依A。
-- [ ] REPORT-PPT-001-C／P2：第1／3頁內容及截圖，依A／B。
-- [ ] REPORT-PPT-001-D／P2：第4～6頁實際畫面及裁切，依A～C。
-- [ ] REPORT-PPT-001-E／P2：背景／每頁1圖／相容性及交付驗證，最後。
 
 - 2026-10-27 REPORT-PPT-001規劃完成：原6頁唯讀盤點、背景／每頁一圖／逐頁格式建議及A～E五件P2已入池。只更新小工作總表登錄，PPT／網站未改，5件皆未開始。核心未完成由19增24，三語13與原受阻／暫緩不變。[逐頁建議](specs/20261027-mes-spc-report-plan/slide-plan.md)／[待辦](specs/20261027-mes-spc-report-plan/tasks.md)。
 

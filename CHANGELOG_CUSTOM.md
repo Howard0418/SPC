@@ -1,3 +1,6 @@
+## 2026-10-27 完成 REPORT-PPT-001-F／G／H／E 十頁報告
+依指定測試網域授權唯讀補6圖，現況與未來建議共10頁15圖；原背景與前6頁保持。封裝、OpenXML、重開及渲染通過，原PPT與進度表備份交付。PowerPoint人工未做；無網站／DB／發布。報告0待辦、核心19件，詳[驗證](specs/20261027-mes-spc-report-plan/verification.md)。
+
 # 客製需求與回歸檢查
 
 ## 2026-10-21 SEC-FOLLOWUP-006 Pkcs修補測試發布
