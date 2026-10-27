@@ -469,3 +469,7 @@
 - [x] SPC-PROGRESS-001-G／P1：實際更新2026日期及甘特條，取代前件僅文字版本；依specs/20261027-spc-progress-workbook-plan/actual-gantt.md執行。
 
 - 2026-10-27 SPC-PROGRESS-001-G完成：依使用者確認2026實際進度，已更新24週日期、20個紀錄起迄日期，重畫10個SPC甘特條／里程碑，保留其他專案11圖形及原排程；OpenXML錯誤0、日期／錨點／重開與2頁列印通過，原檔已取代。本案剩0；三語13件仍暫停。[驗證](specs/20261027-spc-progress-workbook-plan/actual-gantt.md)。
+
+- [x] SPC-PROGRESS-RULE-001／P2：將進度表同步納入SPC更新規則，依specs/20261027-spc-progress-update-rule/spec.md處理。
+
+- 2026-10-27 SPC-PROGRESS-RULE-001完成：AGENTS及開發規則加入原進度表同步入口，規定實際日期／狀態／原生甘特圖、備份／OpenXML驗證後取代原檔；純文件無進度影響可記不適用。本次未改xlsx、無站台發布；本件剩0，三語13件仍暫停。[規則](docs/spc-progress-update-rules.md)。

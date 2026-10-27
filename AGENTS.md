@@ -6,6 +6,7 @@
 - 既有技術規則見 ai_docs/09_development_rules.md、backend_rules/、frontend_rules/、database_rules/、testing_rules/；依本次修改範圍閱讀。
 - 修改核心邏輯前先建立對應單元測試；修改前依既有規範在 ai_docs/10_change_log.md 記錄目的。
 - 保留既有工作區修改，只處理授權範圍；完成後同步需求與 CHANGELOG_CUSTOM.md。
+- SPC功能／小工作進度或發布、驗收、暫緩、阻擋狀態變更時，當次收尾須依[進度表更新規則](docs/spc-progress-update-rules.md)同步原Excel的實際日期、狀態及原生甘特條／里程碑，不可只改文字；備份及相容性驗證通過後直接取代原檔，不必逐次詢問。純文件且不影響進度可明示不適用；更新失敗須保留原檔並列為未完成，不得宣稱已同步。
 - 文件變更做內容與連結檢查；程式變更依範圍編譯、測試。測試通過後直接發布 SPC 測試站（`release/test`），不必再問；正式站仍須另行授權，並核對實際目標環境。不可發布到 `D:\Sites\PmrPortal`。
 - SPC 提供主檔、儲存、運算與圖表；Portal 負責入口與量測輸入；TransFiles 為獨立轉檔工具。
 - 回覆繁體中文，簡述結果、驗證及發布狀態。
