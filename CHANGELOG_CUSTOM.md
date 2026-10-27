@@ -2126,3 +2126,6 @@ SPC-PROGRESS-001-A完成更新明細與版面／圖例驗收；B接續。見spec
 
 ## 2026-10-27 REPORT-PPT-001-B 完成
 PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試／待辦摘要，原背景／標題／頁尾保留；另五頁XML與渲染像素保持。PPT封裝／版面、OpenXML零錯誤、重開渲染通過；PowerPoint人工未做。原PPT待E取代。原進度表已備份同步B完成，核心未完成22（原19＋報告C～E三件），人工12／待核銷4另列；無程式／DB或站台發布。詳 specs/20261027-mes-spc-report-plan/verification.md。
+
+## 2026-10-27 REPORT-PPT-001-C 完成
+工作副本第1／3頁標題／現況文案及各1張截圖已更新，保留10/30報告日並標10/27資料截點；原背景／母片保持，另4頁XML與渲染像素不變。PPT封裝／幾何、重開渲染及OpenXML零錯誤通過；PowerPoint人工未做，原PPT待E取代。原進度表已備份同步C完成，核心未完成21（原19＋報告D／E兩件），人工12／待核銷4另列。無程式／DB或網站發布，未開始D。詳 specs/20261027-mes-spc-report-plan/verification.md。
