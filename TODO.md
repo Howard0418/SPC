@@ -477,3 +477,7 @@
 - [x] SPC-PROGRESS-001-O／P2：SPC甘特圖只從10月開始顯示，詳specs/20261027-spc-progress-workbook-plan/october-axis.md。
 
 - 2026-10-27 SPC-PROGRESS-001-O完成：SPC圖改從2026/10/1逐日顯示，裁切跨月條／略過期前里程碑，保留原始日期及其他專案；OpenXML 0錯誤、重開／日期圖形比對與2頁列印通過，原檔已取代。規則同步；本案剩0，三語13件仍暫停。[驗證](specs/20261027-spc-progress-workbook-plan/october-axis.md)。
+
+- [x] PROGRESS-PORTAL-KM-001／P2：入口網站與KM現況、日期、甘特圖及共用更新規則同步，詳specs/20261027-cross-project-progress/spec.md。
+
+- 2026-10-27 PROGRESS-PORTAL-KM-001完成：原Excel加入Portal／KM十月日期、甘特條及16項明細，規則與三系統入口同步。內容／圖形回歸、OpenXML0錯誤與3頁列印通過，原檔已取代。本件剩0；三語13件仍暫停，其他受阻／暫緩與資料差異維持。[驗證](specs/20261027-cross-project-progress/spec.md)。

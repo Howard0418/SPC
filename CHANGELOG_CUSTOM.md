@@ -2108,3 +2108,7 @@ SPC-PROGRESS-001-A完成更新明細與版面／圖例驗收；B接續。見spec
 
 ## 2026-10-27 SPC-PROGRESS-001-O 十月起始
 依使用者要求，SPC甘特圖僅從2026/10/1逐日顯示，前月份不佔用SPC圖面，原始日期仍保留；跨月裁切、期前事件不搬到10月。31日期／9條形及其他專案回歸、OpenXML 0錯誤、重開渲染與列印檢查通過；已備份並取代原檔，更新規則同步。本件剩0，三語13件仍暫停，網站發布不適用。[驗證](specs/20261027-spc-progress-workbook-plan/october-axis.md)。
+
+
+## 2026-10-27 PROGRESS-PORTAL-KM-001
+完成同一原進度表的Portal／KM摘要、日期、4個甘特條與16項明細，KM更正已有正式1.6.7。SPC9圖形及內容不變，OpenXML 0錯誤、重開與3頁列印通過；備份後已取代原檔。規則擴充三系統並加入各repo入口；無程式／DB／網站變更。[驗證與回復](specs/20261027-cross-project-progress/spec.md)。

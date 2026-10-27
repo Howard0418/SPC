@@ -379,3 +379,7 @@ SPC進度或發布／驗收／暫緩狀態變更，當次收尾須同步原Excel
 
 ## 2026-10-27 SPC-PROGRESS-001-O 十月起始
 依使用者要求，SPC甘特圖僅從2026/10/1逐日顯示，前月份不佔用SPC圖面，原始日期仍保留；跨月裁切、期前事件不搬到10月。31日期／9條形及其他專案回歸、OpenXML 0錯誤、重開渲染與列印檢查通過；已備份並取代原檔，更新規則同步。本件剩0，三語13件仍暫停，網站發布不適用。[驗證](../specs/20261027-spc-progress-workbook-plan/october-axis.md)。
+
+
+## 2026-10-27 Portal／KM共用進度表
+原Excel已納入Portal與KM十月實際日期、原生甘特圖及各8項現況，保留SPC／其他專案；三系統日後收尾同依[更新規則](spc-progress-update-rules.md)。正式依既有紀錄，不恢復三語／掃毒；[範圍與驗證](../specs/20261027-cross-project-progress/spec.md)。
