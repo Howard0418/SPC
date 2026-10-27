@@ -461,3 +461,7 @@
 - 2026-10-27 SPC-PROGRESS-001-A完成：使用者授權兩件P2直接完成／取代原檔，狀態、圖例及版面明細已定稿；B接續，Excel尚未覆蓋。
 
 - 2026-10-27 SPC-PROGRESS-001-B完成：備份後直接取代原進度表.xlsx，現況／圖例／來源同表更新；保留其他專案及35原生圖形，重開、內容／圖形、兩頁列印與回復檢查通過。[驗證](specs/20261027-spc-progress-workbook-plan/verification.md)。Excel兩件均完成，剩0件；原三語13件仍暫停（Portal6／KM4／共用3），外部受阻1、Runtime／TransFiles暫緩2另列，既有校驗／報表差異保留，不自動續做。
+
+- [x] SPC-PROGRESS-001-R／P1：使用者回報進度表無法開啟，優先修復交付相容性；範圍及驗收見specs/20261027-spc-progress-workbook-plan/repair.md。
+
+- 2026-10-27 SPC-PROGRESS-001-R完成：已修正前件重複分頁／列印範圍造成的OpenXML格式回歸，SDK錯誤1降0，原路徑已取代；內容／35原生圖形、冪等、重開／列印檢查通過。Excel人工未執行；本案剩0、三語13件仍暫停。[根因及驗證](specs/20261027-spc-progress-workbook-plan/repair.md)。
