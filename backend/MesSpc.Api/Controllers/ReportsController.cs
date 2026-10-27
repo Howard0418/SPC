@@ -128,7 +128,7 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
             wsCpk.Cell(rowNo, 2).Value = ppc.Part?.PartNo ?? "N/A";
             wsCpk.Cell(rowNo, 3).Value = ppc.Part?.PartName ?? "N/A";
             wsCpk.Cell(rowNo, 4).Value = ppc.Process?.ProcessName ?? "N/A";
-            wsCpk.Cell(rowNo, 5).Value = ppc.Characteristic?.CharacteristicName ?? "N/A";
+            wsCpk.Cell(rowNo, 5).Value = CharacteristicNamePresentation.Name(ppc.Characteristic?.CharacteristicName, ppc.Characteristic?.CharacteristicNameEn, ppc.Characteristic?.CharacteristicCode, locale);
             wsCpk.Cell(rowNo, 6).Value = ppc.SampleSize;
             wsCpk.Cell(rowNo, 7).Value = ppc.USL.HasValue ? ppc.USL.Value.ToString("F2") : T("reportNone");
             wsCpk.Cell(rowNo, 8).Value = ppc.LSL.HasValue ? ppc.LSL.Value.ToString("F2") : T("reportNone");

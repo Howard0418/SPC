@@ -533,7 +533,8 @@
       "reportMailPeriodLine": "Report period: {range}",
       "reportMailSubjectScheduled": "[SPC control item overview {period}] {date}",
       "reportMailBodyScheduled": "Hello {name}, attached is the SPC control item overview {period} for {date}.",
-      "reportMailSender": "MES+SPC Report Center"
+      "reportMailSender": "MES+SPC Report Center",
+      "reportUnnamedCharacteristic": "Unnamed characteristic"
     }
   }
 }

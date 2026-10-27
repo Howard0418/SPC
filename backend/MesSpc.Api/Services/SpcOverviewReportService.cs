@@ -80,7 +80,7 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : 
         foreach (var item in summaryRows)
         {
             object?[] values = [item.PartProcessCharacteristicId, item.ControlCategory, SpcReportPresentation.Display(item.ChartKindMessage, item.ChartKind, uiLocale),
-                item.LineOrProcessName, item.SlotName, item.ChartName, item.ChartType,
+                item.LineOrProcessName, item.SlotName, CharacteristicNamePresentation.Summary(item, uiLocale), item.ChartType,
                 item.Usl, item.Lsl, item.Ucl, item.Lcl, SpcReportPresentation.Display(item.LimitCalculationMethodMessage, item.LimitCalculationMethod, uiLocale),
                 item.TotalCount, item.OosCount, item.PreviousMonthOosCount,
                 item.OosPercentage, item.PreviousMonthOosPercentage, item.OocCount,

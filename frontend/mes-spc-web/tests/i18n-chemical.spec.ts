@@ -11,7 +11,7 @@ test.beforeEach(({page})=>{const list:string[]=[];errors.set(page,list);page.on(
 test.afterEach(({page})=>expect(errors.get(page)).toEqual([]));
 async function prepare(page:Page,path='chemical-analysis-overview',role='Editor'){
  await page.addInitScript(role=>{localStorage.setItem('mes_spc_token','mock-ui-only-token');localStorage.setItem('mes_spc_user',JSON.stringify({id:101,role,username:'chemical-fixture'}))},role);
- const writes:any[]=[];const reads:string[]=[];const state={empty:false,reject:false,rejectIds:[] as number[],noActive:false,historyEmpty:false,failHistory:false,failLoad:false,records:structuredClone(items)};
+ const writes:any[]=[];const reads:string[]=[];const state={empty:false,reject:false,rejectIds:[] as number[],noActive:false,historyEmpty:false,failHistory:false,failLoad:false,impactEnglish:null as string|null,records:structuredClone(items)};
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());if(u.origin!==new URL(test.info().project.use.baseURL as string).origin)return route.abort();
   if(!u.pathname.startsWith('/api/'))return route.continue();const method=route.request().method();
@@ -33,7 +33,7 @@ async function prepare(page:Page,path='chemical-analysis-overview',role='Editor'
    if(state.noActive)return route.fulfill({status:404,json:{message:'Not found'}});data={versionCode:'F-RAW-0',displayName:raw,effectiveAt:'2026-10-24T04:05:00Z',cells};
   }else if(u.pathname.endsWith('/chemical-f-table/versions')){
    if(state.failHistory)return route.fulfill({status:500,json:{message:'原 API 歷史錯誤'}});data=state.historyEmpty?[]:versions;
-  }else if(u.pathname.endsWith('/chemical-f-table/impact'))data=state.empty?[]:[{partProcessCharacteristicId:1,referenceContext:'Concentration',machineName:raw,machineCode:'LN-A',tankName:raw,tankCode:'T-RAW',characteristicName:raw,characteristicCode:'C-1',sourceFormula:config.concentrationFormula}];
+  }else if(u.pathname.endsWith('/chemical-f-table/impact'))data=state.empty?[]:[{partProcessCharacteristicId:1,referenceContext:'Concentration',machineName:raw,machineCode:'LN-A',tankName:raw,tankCode:'T-RAW',characteristicName:raw,...(state.impactEnglish?{characteristicNameEn:state.impactEnglish}:{}),characteristicCode:'C-1',sourceFormula:config.concentrationFormula}];
   return route.fulfill({json:data});
  });
  await page.goto('/'+path+'?keep=42');return {writes,reads,state};
@@ -112,4 +112,18 @@ for(const path of Object.keys(titles))test(`${path}: Viewer keeps existing route
 });
 test('formula history API failure keeps original text and retry context across languages',async({page})=>{
  const {state,writes}=await prepare(page);state.failHistory=true;await page.getByTestId('overview-history').first().click();await expect(page.getByRole('alert')).toContainText('原 API 歷史錯誤');await page.getByTestId('locale-select').selectOption('en-US');await expect(page.getByRole('alert')).toContainText('原 API 歷史錯誤');state.failHistory=false;await page.getByRole('button',{name:'Retry',exact:true}).click();await expect(page.locator('article')).toHaveCount(20);expect(writes).toEqual([]);
+});
+
+for(const width of [390,1280])test(`chemical names ${width}: overview history draft and Excel change only name`,async({page})=>{
+ await page.setViewportSize({width,height:900});const {reads,writes,state}=await prepare(page);const english='=1+1 <b>@:key {name}</b>';state.records[0].characteristic={...state.records[0].characteristic,characteristicNameEn:english};await page.reload();const row=page.getByTestId('overview-row-1');await row.getByTestId('overview-edit').click();await row.getByTestId('overview-concentrationFormula').fill('Primary * 3');await row.getByTestId('overview-history').click();await expect(page.locator('article')).toHaveCount(20);const count=reads.length,handle=await row.getByTestId('overview-concentrationFormula').elementHandle();
+ for(const [locale,name] of [['en-US',english],['zh-CN',raw+'-1'],['zh-TW',raw+'-1']]){await page.getByTestId('locale-select').selectOption(locale);await expect(row.getByTestId('overview-characteristic-name')).toHaveText(name);await expect(page.getByRole('heading',{level:2}).filter({hasText:name})).toHaveCount(1);await expect(row.getByTestId('overview-concentrationFormula')).toHaveValue('Primary * 3');expect(await handle!.evaluate(n=>n.isConnected)).toBe(true);expect(reads.length).toBe(count)}
+ await page.getByTestId('locale-select').selectOption('en-US');const downloadPromise=page.waitForEvent('download');await page.getByTestId('overview-export').click();const download=await downloadPromise;expect(download.suggestedFilename()).toMatch(/^SPC_藥液分析項目總覽_/);const book=XLSX.read(await readFile((await download.path())!));expect(book.SheetNames).toEqual(['藥液分析項目']);const sheet=book.Sheets[book.SheetNames[0]],data:any[]=XLSX.utils.sheet_to_json(sheet);expect(data[0]['分析項目']).toBe(english);expect(data[0]['濃度公式']).toBe('Primary * 3');expect(data[0]['小數位']).toBe(2);expect(sheet.D2.t).toBe('s');expect(sheet.D2.f).toBeUndefined();await expect(row.locator('b')).toHaveCount(0);expect(writes).toEqual([]);
+});
+for(const width of [390,1280])test(`chemical names ${width}: F impact keeps reference and cell selection`,async({page})=>{
+ await page.setViewportSize({width,height:900});const {reads,writes,state}=await prepare(page,'chemical-f-table');state.impactEnglish='Proportion <b>@:key {name}</b>';await page.reload();await expect(page.getByTestId('f-impact-characteristic-name')).toHaveCount(1);const count=reads.length;
+ for(const [locale,name] of [['en-US',state.impactEnglish],['zh-CN',raw],['zh-TW',raw]]){await page.getByTestId('locale-select').selectOption(locale);await expect(page.getByTestId('f-impact-characteristic-name')).toHaveText(name);await expect(page.getByTestId('f-cell')).toHaveValue('F!B3');expect(reads.length).toBe(count)}
+ await expect(page.getByTestId('f-impact-characteristic-name').locator('b')).toHaveCount(0);expect(writes).toEqual([]);
+});
+test('chemical names missing English: both remaining pages fall back to original name',async({page})=>{
+ await prepare(page);await page.getByTestId('locale-select').selectOption('en-US');await expect(page.getByTestId('overview-characteristic-name').first()).toHaveText(raw+'-1');await page.goto('/chemical-f-table?keep=42');await expect(page.getByTestId('f-impact-characteristic-name')).toHaveText(raw);
 });

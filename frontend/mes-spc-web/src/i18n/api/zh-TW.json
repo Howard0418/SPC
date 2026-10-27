@@ -533,7 +533,8 @@
       "reportMailPeriodLine": "報表期間：{range}",
       "reportMailSubjectScheduled": "【SPC 項目管制總覽{period}】{date}",
       "reportMailBodyScheduled": "{name} 您好，附件為 {date} 的 SPC 項目管制總覽{period}。",
-      "reportMailSender": "MES+SPC 報表中心"
+      "reportMailSender": "MES+SPC 報表中心",
+      "reportUnnamedCharacteristic": "未命名特性"
     }
   }
 }

@@ -47,7 +47,7 @@ public class ReportLocalizationTests
     {
         using var db=new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         db.Processes.Add(new Process {Id=1,ProcessCode="P0",ProcessName=Raw});
-        db.QualityCharacteristics.Add(new QualityCharacteristic {Id=1,CharacteristicCode="C0",CharacteristicName=Raw});
+        db.QualityCharacteristics.Add(new QualityCharacteristic {Id=1,CharacteristicCode="C0",CharacteristicName=Raw,CharacteristicNameEn="English <b>@:key {name}</b>"});
         var sets=new[]{Array.Empty<double>(),new[]{1d},new[]{0d,1d,2d},new[]{0d,1d,2d},new[]{0d,1d,2d},new[]{1d,1d,1d}};
         for(var index=0;index<sets.Length;index++) {
             var id=index+1;db.Parts.Add(new Part {Id=id,PartNo="RAW"+id,PartName=Raw});
@@ -67,7 +67,7 @@ public class ReportLocalizationTests
         var cpks=new[]{0d,0d,1.33,1d,.97,0d};
         for(var index=0;index<sets.Length;index++) {
             var row=cpk.RowsUsed().Single(row=>row.Cell(2).GetString()=="RAW"+(index+1));
-            Assert.Equal(Raw,row.Cell(3).GetString());Assert.Equal(Raw,row.Cell(4).GetString());Assert.Equal(Raw,row.Cell(5).GetString());
+            Assert.Equal(Raw,row.Cell(3).GetString());Assert.Equal(Raw,row.Cell(4).GetString());Assert.Equal(locale=="en-US"?"English <b>@:key {name}</b>":Raw,row.Cell(5).GetString());
             Assert.Equal(3,row.Cell(6).GetValue<int>());Assert.Equal(cpks[index],row.Cell(12).GetValue<double>());Assert.Equal(T(keys[index],locale),row.Cell(13).GetString());
             if(index>0)Assert.Equal(XLColor.FromHtml(index==2?"#D4EDDA":index==3?"#FFF3CD":"#F8D7DA"),row.Cell(13).Style.Fill.BackgroundColor);
             else Assert.Equal(T("reportNone",locale),row.Cell(7).GetString());
@@ -122,7 +122,7 @@ public class ReportLocalizationTests
     {
         using var db=new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         db.Operators.Add(new Operator {Id=1,OperatorCode="001",OperatorName=Raw,Email="fixture@example.invalid",IsActive=true});await db.SaveChangesAsync();
-        var builder=new Moq.Mock<ISpcOverviewReportBuilder>(Moq.MockBehavior.Strict);byte[] bytes=[0,1,2];
+        var builder=new Moq.Mock<ISpcOverviewReportBuilder>(Moq.MockBehavior.Strict);var bytes=SpcOverviewReportService.BuildWorkbook([new ChartSummaryDto {ChartName="比重",CharacteristicName="比重",CharacteristicNameEn="Proportion",CharacteristicCode="D0"}],new(2026,10,1),new(2026,11,1),locale);
         builder.Setup(x=>x.BuildExcelAsync(Moq.It.IsAny<DateTime>(),Moq.It.IsAny<DateTime>(),Moq.It.IsAny<CancellationToken>(),locale)).ReturnsAsync(bytes);
         var sender=new Moq.Mock<IEmailNotificationService>(Moq.MockBehavior.Strict);
         sender.Setup(x=>x.SendReportEmailAsync("fixture@example.invalid",Raw,Moq.It.IsAny<string>(),Moq.It.IsAny<string>(),bytes,Moq.It.IsAny<string>(),locale)).ReturnsAsync(false);
@@ -132,6 +132,7 @@ public class ReportLocalizationTests
         Assert.Equal("週報",json.GetProperty("displayType").GetString());Assert.StartsWith("SPC_Item_Overview_週報_",json.GetProperty("fileName").GetString());
         Assert.Equal(0,json.GetProperty("success").GetInt32());var recipient=json.GetProperty("recipients")[0];
         Assert.Equal("寄信服務回傳失敗。",recipient.GetProperty("errorMessage").GetString());Assert.Equal("spc.api.mailSmtpFailed",recipient.GetProperty("displayMessage").GetProperty("messageKey").GetString());
+        using var attachment=new XLWorkbook(new MemoryStream(bytes));Assert.Equal(locale=="en-US"?"Proportion":"比重",attachment.Worksheets.First().Cell(4,6).GetString());
         builder.VerifyAll();sender.VerifyAll();Assert.Empty(await db.SpcReportSchedules.ToListAsync());
     }
 

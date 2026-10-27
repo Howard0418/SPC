@@ -342,7 +342,7 @@
 - 本件DONE，工作池由21降為i18n20個待確認包；另附件掃毒受阻1、Runtime及TransFiles人工故障驗收暫緩2，不開始其他工作。
 
 ## 國際化目前待辦（2026-10-27）
-- 原SPC三語化批次及品質特性名稱A／B完成；剩名稱C一件，共14個未完成三語化小工作（SPC1＋Portal6＋KM4＋共用3）。本次只完成B，其餘09～21維持暫停。
+- SPC三語化開發及品質特性名稱A／B／C已完成；共13個未完成三語化小工作（Portal6＋KM4＋共用3），09～21維持暫停，真人審稿仍待TASK20。
 - [SPC最新驗證/回復](specs/20261026-i18n-task08e/verification.md)：測試Web0.1.107／API0.1.85；全部譯文初稿，真人審核仍在TASK20。
 - 另附件掃毒受阻1、Runtime與TransFiles人工故障驗收暫緩2；Portal既有真人確認另列；本次不恢復其他系統。
 
@@ -449,3 +449,5 @@
 - 2026-10-27 I18N-CHAR-001-A完成：主檔／管制項目／量測名稱隨語系切換、缺值回退與代碼搜尋，原編輯雙欄／DTO／數值保留；124語系、發布105瀏覽器及4項補驗、build/hash/health/同源14通過。只測試Web0.1.108/API0.1.85，正式未更新；三語化剩15件，其中SPC B／C兩件，未自動開始。[驗證與回復](specs/20261027-i18n-characteristic-names/verification.md)。
 
 - 2026-10-27 I18N-CHAR-001-B完成：圖表／摘要／警報／追溯品質特性名稱三語接線，additive英文欄位保留原名、代碼及歷史；125語系／32 API、本機16與警報補驗4、發布16加原144回歸、build/hash/health/同源14通過。只測試Web0.1.109/API0.1.86，正式未更新；三語化剩14件，其中SPC C一件。[驗證與回復](specs/20261027-i18n-characteristic-names/verification.md)。
+
+- 2026-10-27 I18N-CHAR-001-C完成：人讀報表／郵件附件、藥液總覽與F表品質特性名稱切語；歷史快照／CSV與原計算不變。126語系／40必要API、本機5及發布74瀏覽器、build/hash/health/同源14通過；只測試Web0.1.110/API0.1.87，正式未更新。SPC本案A／B／C完成，剩09～21共13件維持暫停，真人審稿未完成。[驗證與回復](specs/20261027-i18n-characteristic-names/verification.md)。

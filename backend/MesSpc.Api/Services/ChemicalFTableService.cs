@@ -285,7 +285,7 @@ public class ChemicalFTableService(AppDbContext db)
                     characteristic?.CharacteristicCode ?? "",
                     characteristic?.CharacteristicName ?? "",
                     reference.SourceFormula,
-                    reference.ReferenceContext);
+                    reference.ReferenceContext) { CharacteristicNameEn = characteristic?.CharacteristicNameEn };
             })
             .OrderBy(x => x.ProcessCode)
             .ThenBy(x => x.MachineCode)
@@ -479,4 +479,8 @@ public record ChemicalFTableVersionHistorySummary(long Id, int VersionNo, string
 public record ChemicalFTableVersionHistoryDetail(long Id, int VersionNo, string VersionCode, string DisplayName, string? PreviousVersionCode, string ChangeType, DateTime ChangedAt, string? ChangedBy, string? Reason, long? RestoredFromHistoryId, List<ChemicalFTableHistoryCell> Cells, List<ChemicalFTableHistoryCell> PreviousCells);
 public record ChemicalFormulaEvaluationResult(string VersionCode, string SourceExpression, string EvaluatedExpression, decimal Value, List<string> CellReferences);
 public record ChemicalFormulaReference(string CellAddress, string Formula, string Context);
-public record ChemicalFTableImpactItem(int PartProcessCharacteristicId, string ProcessCode, string ProcessName, string MachineCode, string MachineName, string TankCode, string TankName, string CharacteristicCode, string CharacteristicName, string? SourceFormula, string? ReferenceContext);
+public record ChemicalFTableImpactItem(int PartProcessCharacteristicId, string ProcessCode, string ProcessName, string MachineCode, string MachineName, string TankCode, string TankName, string CharacteristicCode, string CharacteristicName, string? SourceFormula, string? ReferenceContext)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? CharacteristicNameEn { get; init; }
+}

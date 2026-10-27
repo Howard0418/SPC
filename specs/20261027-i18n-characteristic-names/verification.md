@@ -37,3 +37,19 @@
 - Rollback：核對相同test實際IIS目標後，只停SpcSingleTest，以本件前後端完整備份回復Web0.1.108／API0.1.85，保護設定資料並重啟驗version／health／前端hash；無DB回復需求。本次未實際執行覆寫回退。
 - 原始測試／發布證據保留ignored .codex-tmp/i18n-char-b，不提交。譯文真人審稿仍在TASK20，未冒稱完成。
 - B完成後三語化剩14件＝SPC C一件＋09～21十三件。化學總覽／F表等剩餘名稱使用點與報表／郵件依C完整盤點處理，本件不宣稱全SPC最後驗收完成，不自動開始C。
+
+
+## I18N-CHAR-001-C 2026-10-27完成
+- 先建立workbook／helper／F表投影測試，缺helper與英文property預期Red；完成後必要API共40項通過，涵蓋新名稱5、原ReportLocalization16（包含三語CPK原數字／門檻顏色、手動寄送附件）、F表3、排程3、郵件10、B投影／摘要3。
+- Overview名稱在寫入cell時選用中英文，原ChartName與主檔不變；舊DTO無明示名稱metadata時獨立原圖名保持。CPK僅特性名稱cell改選用，0／單筆／零變異／1.33及1.0門檻與原顏色、cell type、精度、欄序、原月份範圍與檔名均通過。=1+1及HTML／i18n字樣為文字，不是Excel公式。
+- C#名字helper同前端規則：英文優先英文、TW／CN優先原中文、空白回另一名→代碼→本地化未命名；不trim改寫原值、不改Culture／資料識別。新增1個API fallback鍵／3列review-c draft，未冒稱真人審稿。
+- 報表郵件本文沒有品質特性欄位，名稱只在附件；三語fake寄送以實際產出的Overview workbook bytes傳入sender、解析附件名稱正確，原收件人／週月報原fileName／displayType／結果保持，不真寄送。背景仍沿無locale的繁中預設。
+- F表impact僅新增nullable英文名，原positional constructor、代碼／公式／reference context保持；該service除顯示metadata外全文與7782d063相同。ReportsController與Overview service反向移除各一個名稱cell改動後全文也與該基準相同，原SQL／統計／格式不變。
+- 前端126項語系測試通過，2735鍵×三語參數／draft hash一致。藥液總覽主列、已開歷史標題、人讀Excel及F影響列名稱即時切語；公式草稿／分頁／歷史ID／F!B3選取與請求／原儲存DTO保留。藥液Excel只改名稱cell，原工作表／表頭／欄序／檔名／公式文字保持。
+- 本機新增5項名稱／歷史／Excel與缺值回退瀏覽器驗收通過；發布後完整化學52項（原47＋新5）、A名稱6、B名稱16，共74項隔離瀏覽器驗收全通過。390／1280覆蓋切語不重載／不寫入、開啟歷史標題更新與字串安全，SheetJS輸出的公式前綴名稱確認type=s且無formula。
+- build:test與Release publish通過；既有Vite大chunk／設備table-tr提示未擴張修理。
+- 盤點排除依R6：UploadPreview的ResolvedCharacteristicName為歷史匯入解析快照、RawDataCsvExporter為機器資料、UploadService／UploadsController／Migration的輸入與識別語意保持；4個後端來源檔全文與基準相同，未修改其字串／CSV bytes／schema。未路由Dashboard舊分析碼不恢復；ValueLabel／原始公式／歷史diagnostic也不從主檔反查翻譯。CPK月份業務範圍REPORT-DATA-VERIFY-001仍另案，不因本件已完成而刪除。
+- test preflight為172.16.110.16／PMR_SPC_TEST、pending=[]。實際IIS SpcSingleTest/與pool同名、physicalPath=D:/SPC/release/test/backend；成對完整備份至D:/SPC/.codex-tmp/i18n-char-c/backup/backend及frontend並逐檔hash核對，發布94 runtime／4前端檔，4設定保護檔不變，pool已重啟。
+- 真實HTTPS version／health=200、test／ok、API0.1.87；Web0.1.110四檔SHA256與dist一致，同源14項通過。正式站未更新，無DB migration或業務資料變更。
+- Rollback：再核對同一test實際IIS目標，只停SpcSingleTest，以本件完整備份回復Web0.1.109／API0.1.86，保護設定資料，重啟驗health／version／前端hash；無DB回復需求。本次未實際覆寫回退。
+- 測試輸出／發布證據留ignored .codex-tmp/i18n-char-c，不提交。review-c.json是必要翻譯初稿帳冊，仍draft。SPC本案A／B／C開發完成；09～21共13件（Portal6／KM4／共用3）維持暫停，TASK20真人審稿及TASK21跨站總驗收未完成，正式發布另授權。

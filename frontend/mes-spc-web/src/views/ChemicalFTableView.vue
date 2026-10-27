@@ -1,7 +1,9 @@
 <script setup>
+import {characteristicDisplayName} from "../i18n/characteristicNames";
 import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
-const { t } = useI18n({ useScope: "global" });
+const { t, locale } = useI18n({ useScope: "global" });
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
 const messageText = value => displayUiMessage(t, value);
 import { computed, onMounted, ref } from "vue";
 import { api, getApiErrorDisplay } from "../api/client";
@@ -307,7 +309,7 @@ onMounted(async () => {
             <tr v-for="row in impactRows" :key="`${row.partProcessCharacteristicId}-${row.referenceContext}`" class="border-t dark:border-slate-800">
               <td class="px-3 py-2"><div class="font-bold">{{ row.machineName || row.processName }}</div><small class="text-slate-400">{{ row.machineCode || row.processCode }}</small></td>
               <td class="px-3 py-2"><div>{{ row.tankName || "-" }}</div><small class="text-slate-400">{{ row.tankCode }}</small></td>
-              <td class="px-3 py-2"><div class="font-bold">{{ row.characteristicName }}</div><small class="text-slate-400">{{ row.characteristicCode }}</small></td>
+              <td class="px-3 py-2"><div class="font-bold"><span data-testid="f-impact-characteristic-name">{{ characteristicName(row) }}</span></div><small class="text-slate-400">{{ row.characteristicCode }}</small></td>
               <td class="px-3 py-2 font-mono text-xs">{{ row.sourceFormula }}</td>
             </tr>
             <tr v-if="!impactRows.length"><td colspan="4" class="px-3 py-8 text-center text-slate-500">{{ t('spc.fTable.noReferences', { cell: selectedCell }) }}</td></tr>
