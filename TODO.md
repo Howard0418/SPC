@@ -465,3 +465,7 @@
 - [x] SPC-PROGRESS-001-R／P1：使用者回報進度表無法開啟，優先修復交付相容性；範圍及驗收見specs/20261027-spc-progress-workbook-plan/repair.md。
 
 - 2026-10-27 SPC-PROGRESS-001-R完成：已修正前件重複分頁／列印範圍造成的OpenXML格式回歸，SDK錯誤1降0，原路徑已取代；內容／35原生圖形、冪等、重開／列印檢查通過。Excel人工未執行；本案剩0、三語13件仍暫停。[根因及驗證](specs/20261027-spc-progress-workbook-plan/repair.md)。
+
+- [x] SPC-PROGRESS-001-G／P1：實際更新2026日期及甘特條，取代前件僅文字版本；依specs/20261027-spc-progress-workbook-plan/actual-gantt.md執行。
+
+- 2026-10-27 SPC-PROGRESS-001-G完成：依使用者確認2026實際進度，已更新24週日期、20個紀錄起迄日期，重畫10個SPC甘特條／里程碑，保留其他專案11圖形及原排程；OpenXML錯誤0、日期／錨點／重開與2頁列印通過，原檔已取代。本案剩0；三語13件仍暫停。[驗證](specs/20261027-spc-progress-workbook-plan/actual-gantt.md)。
