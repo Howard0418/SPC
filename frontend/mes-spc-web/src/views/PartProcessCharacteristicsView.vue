@@ -1,8 +1,10 @@
 <script setup>
+import {characteristicDisplayName} from "../i18n/characteristicNames";
 const dtoText = (data, fallback) => displayUiMessage(t, getApiMessageDisplay(data, fallback));
 import { useI18n } from 'vue-i18n';
 import { displayUiMessage } from '../i18n/uiMessage';
-const { t } = useI18n({ useScope: 'global' });
+const { t, locale } = useI18n({ useScope: 'global' });
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
 const messageText = value => displayUiMessage(t, value);
 import LocalePicker from '../components/LocalePicker.vue';
 import ChemicalFormulaSchedule from '../components/ChemicalFormulaSchedule.vue';
@@ -678,6 +680,7 @@ const filteredRows = computed(() => {
     const pName = row.part?.partName || "";
     const prName = row.process?.processName || "";
     const prNameEn = row.process?.processNameEn || "";
+    const chCode = row.characteristic?.characteristicCode || "";
     const chName = row.characteristic?.characteristicName || "";
     const chNameEn = row.characteristic?.characteristicNameEn || "";
     const machineCode = row.machine?.machineCode || "";
@@ -688,7 +691,7 @@ const filteredRows = computed(() => {
     const matchQuery = !q || 
       pNo.toLowerCase().includes(q) || pName.toLowerCase().includes(q) ||
       prName.toLowerCase().includes(q) || prNameEn.toLowerCase().includes(q) ||
-      chName.toLowerCase().includes(q) || chNameEn.toLowerCase().includes(q) ||
+      chCode.toLowerCase().includes(q) || chName.toLowerCase().includes(q) || chNameEn.toLowerCase().includes(q) ||
       machineCode.toLowerCase().includes(q) || machineName.toLowerCase().includes(q) ||
       tankCode.toLowerCase().includes(q) || tankName.toLowerCase().includes(q);
 
@@ -1016,7 +1019,7 @@ async function save() {
 
 async function confirmDelete(item) {
   const pNo = item.controlScope === "PRODUCT" ? (item.part?.partNo || item.partId) : scopeLabel(item.controlScope);
-  const cName = item.characteristic?.characteristicName || item.characteristicId;
+  const cName = characteristicName(item.characteristic);
   if (!confirm(t("spc.ppc.confirmDelete", { name: `${pNo} - ${cName}` }))) return;
   loading.value = true;
   try {
@@ -1032,7 +1035,7 @@ async function confirmDelete(item) {
 
 async function confirmPurge(item) {
   const pNo = item.controlScope === "PRODUCT" ? (item.part?.partNo || item.partId) : scopeLabel(item.controlScope);
-  const cName = item.characteristic?.characteristicName || item.characteristicId;
+  const cName = characteristicName(item.characteristic);
   const label = `${pNo} - ${cName}`;
   loading.value = true;
   err.value = "";
@@ -1504,8 +1507,7 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                 </div>
                 <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs mt-2">
                   <Sliders class="w-3.5 h-3.5 text-pink-500 flex-shrink-0" />
-                  <span>{{ item.characteristic?.characteristicName || `Char #${item.characteristicId}` }}</span>
-                  <span v-if="item.characteristic?.characteristicNameEn" class="text-cyan-600 dark:text-cyan-400 font-normal">{{ item.characteristic.characteristicNameEn }}</span>
+                  <span data-testid="ppc-characteristic-name">{{ characteristicName(item.characteristic) }}</span>
                   <span v-if="item.unit || item.characteristic?.unit" class="text-xs text-slate-400 font-normal">({{ item.unit || item.characteristic?.unit }})</span>
                   <span v-if="item.isRequired" class="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800 ml-1 tracking-wider">{{ t('spc.ppc.required') }}</span>
                 </div>
@@ -1835,7 +1837,7 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                     class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
                   >
                     <option disabled value="null">{{ t('spc.ppc.selectCharacteristic') }}</option>
-                    <option v-for="ch in availableCharacteristics" :key="ch.id" :value="ch.id">{{ ch.characteristicName }}{{ ch.characteristicNameEn ? ` / ${ch.characteristicNameEn}` : '' }}</option>
+                    <option v-for="ch in availableCharacteristics" :key="ch.id" :value="ch.id">{{ characteristicName(ch) }}</option>
                   </select>
                 </div>
                 <div class="space-y-1.5">
@@ -2228,7 +2230,7 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                   {{ t('spc.ppc.limitSegmentsAndHistoricalCalculation') }}
                 </h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" v-if="selectedPpc">
-                  {{ selectedPpc.process?.processName }} - {{ selectedPpc.characteristic?.characteristicName }}
+                  {{ selectedPpc.process?.processName }} - {{ characteristicName(selectedPpc.characteristic) }}
                 </p>
               </div>
             </div>

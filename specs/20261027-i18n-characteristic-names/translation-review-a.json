@@ -1,0 +1,53 @@
+{
+  "task": "I18N-CHAR-001-A",
+  "contractVersion": "1.0.0",
+  "status": "draft",
+  "metadata": [
+    {
+      "key": "spc.characteristics.unnamed",
+      "context": "品質特性中英文與代碼皆空時之顯示回退",
+      "surface": "text",
+      "sourceHash": "94fc1445f0fd82ebb43d7ae7dd6aa3792ce9f14e9cdd01d6901fb8794992e932",
+      "placeholders": [],
+      "protectedTokens": []
+    }
+  ],
+  "ledger": [
+    {
+      "key": "spc.characteristics.unnamed",
+      "locale": "zh-TW",
+      "sourceHash": "94fc1445f0fd82ebb43d7ae7dd6aa3792ce9f14e9cdd01d6901fb8794992e932",
+      "translationHash": "94fc1445f0fd82ebb43d7ae7dd6aa3792ce9f14e9cdd01d6901fb8794992e932",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.characteristics.unnamed",
+      "locale": "zh-CN",
+      "sourceHash": "94fc1445f0fd82ebb43d7ae7dd6aa3792ce9f14e9cdd01d6901fb8794992e932",
+      "translationHash": "94fc1445f0fd82ebb43d7ae7dd6aa3792ce9f14e9cdd01d6901fb8794992e932",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    },
+    {
+      "key": "spc.characteristics.unnamed",
+      "locale": "en-US",
+      "sourceHash": "94fc1445f0fd82ebb43d7ae7dd6aa3792ce9f14e9cdd01d6901fb8794992e932",
+      "translationHash": "cf4fbf5e2d7b36c88e7382dc7620a3d5abff6a4c4b57ba2e61938adf609cfdc8",
+      "status": "draft",
+      "reviewer": null,
+      "reviewedAt": null,
+      "severity": null,
+      "uncertain": true,
+      "comment": "待TASK20真人審稿"
+    }
+  ]
+}

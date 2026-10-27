@@ -1,4 +1,5 @@
 <script setup>
+import {characteristicDisplayName} from "../i18n/characteristicNames";
 import { displayUiMessage } from "../i18n/uiMessage";
 import { useI18n } from "vue-i18n";
 import LocalePicker from "../components/LocalePicker.vue";
@@ -25,12 +26,13 @@ const { embedded } = defineProps({
   embedded: { type: Boolean, default: false }
 });
 
-const { t } = useI18n({ useScope: "global" });
+const { t, locale } = useI18n({ useScope: "global" });
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
 
 const rows = ref([]);
 const err = ref("");
 const successMsg = ref(null);
-const successText = computed(() => successMsg.value ? t(successMsg.value.key, successMsg.value.args) : "");
+const successText = computed(() => successMsg.value ? t(successMsg.value.key, { ...successMsg.value.args, name: characteristicName(successMsg.value.characteristic) }) : "");
 const loading = ref(false);
 
 const searchQuery = ref("");
@@ -72,6 +74,7 @@ const filteredRows = computed(() => {
   return rows.value.filter(row => {
     const q = searchQuery.value.toLowerCase();
     const matchQuery = !q || 
+      (row.characteristicCode && row.characteristicCode.toLowerCase().includes(q)) ||
       (row.characteristicName && row.characteristicName.toLowerCase().includes(q)) ||
       (row.characteristicNameEn && row.characteristicNameEn.toLowerCase().includes(q));
       
@@ -136,12 +139,12 @@ async function save() {
     if (modalMode.value === "create") {
       const { data } = await api.post("/characteristics", payload);
       rows.value.push(data);
-      successAlert("spc.characteristics.created", { name: String(data.characteristicName) });
+      successAlert("spc.characteristics.created", { name: characteristicName(data) }, data);
     } else {
       const { data } = await api.put(`/characteristics/${currentId.value}`, payload);
       const idx = rows.value.findIndex(x => x.id === currentId.value);
       if (idx !== -1) rows.value[idx] = data;
-      successAlert("spc.characteristics.updated", { name: String(data.characteristicName) });
+      successAlert("spc.characteristics.updated", { name: characteristicName(data) }, data);
     }
     showModal.value = false;
   } catch (e) {
@@ -152,12 +155,12 @@ async function save() {
 }
 
 async function confirmDelete(item) {
-  if (!confirm(t("spc.characteristics.confirmDelete", { name: String(item.characteristicName) }))) return;
+  if (!confirm(t("spc.characteristics.confirmDelete", { name: characteristicName(item) }))) return;
   loading.value = true;
   try {
     await api.delete(`/characteristics/${item.id}`);
     rows.value = rows.value.filter(x => x.id !== item.id);
-    successAlert("spc.characteristics.deleted", { name: String(item.characteristicName) });
+    successAlert("spc.characteristics.deleted", { name: characteristicName(item) }, item);
   } catch (e) {
     err.value = getApiErrorDisplay(e);
   } finally {
@@ -165,8 +168,9 @@ async function confirmDelete(item) {
   }
 }
 
-function successAlert(key, args) {
-  successMsg.value = { key, args };
+function successAlert(key, args, item) {
+  const characteristic = { characteristicName: item?.characteristicName, characteristicNameEn: item?.characteristicNameEn, characteristicCode: item?.characteristicCode };
+  successMsg.value = { key, args, characteristic };
   setTimeout(() => { successMsg.value = null; }, 3000);
 }
 
@@ -315,10 +319,9 @@ onMounted(load);
             >
               <td class="py-6 px-6 font-mono text-xs text-slate-400 dark:text-slate-500">#{{ item.id }}</td>
               <td class="py-6 px-6">
-                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
-                  <Sliders class="w-4 h-4 text-pink-500" /> {{ item.characteristicName }}
+                <div data-testid="characteristic-display-name" class="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-base">
+                  <Sliders class="w-4 h-4 text-pink-500" /> {{ characteristicName(item) }}
                 </div>
-                <div v-if="item.characteristicNameEn" class="text-xs text-cyan-600 dark:text-cyan-400 mt-0.5">{{ item.characteristicNameEn }}</div>
               </td>
               <td class="py-6 px-6">
                 <span :class="[

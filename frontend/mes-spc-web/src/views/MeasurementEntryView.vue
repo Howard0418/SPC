@@ -1,8 +1,10 @@
 <script setup>
+import {characteristicDisplayName} from "../i18n/characteristicNames";
 import { useI18n } from 'vue-i18n';
 import { displayUiMessage } from '../i18n/uiMessage';
 import LocalePicker from '../components/LocalePicker.vue';
-const { t } = useI18n({ useScope: 'global' });
+const { t, locale } = useI18n({ useScope: 'global' });
+const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
 const messageText = value => displayUiMessage(t, value);
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { ref, computed, onMounted, watch } from "vue";
@@ -507,7 +509,7 @@ async function submitHandleAlerts() {
             <select data-testid="entry-selectedItemId" v-model="selectedItemId" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-base font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
               <option value="">{{ t('spc.entry.select') }}</option>
               <option v-for="i in filteredItems" :key="i.mappingId" :value="i.mappingId">
-                {{ selectedControlScope === 'CHEM' ? `${i.tankName} · ` : '' }}{{ i.characteristicName }}{{ i.characteristicNameEn ? ` / ${i.characteristicNameEn}` : '' }}{{ i.unit ? `（${i.unit}）` : '' }}
+                {{ selectedControlScope === 'CHEM' ? `${i.tankName} · ` : '' }}{{ characteristicName(i) }}{{ i.unit ? `（${i.unit}）` : '' }}
               </option>
             </select>
           </div>

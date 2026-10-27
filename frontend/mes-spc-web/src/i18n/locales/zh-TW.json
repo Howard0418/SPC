@@ -175,7 +175,8 @@
       "created": "成功建立新特性：{name}",
       "updated": "成功更新特性：{name}",
       "deleted": "成功刪除特性：{name}",
-      "confirmDelete": "確定要刪除品質特性「{name}」嗎？"
+      "confirmDelete": "確定要刪除品質特性「{name}」嗎？",
+      "unnamed": "未命名特性"
     },
     "processes": {
       "title": "工站製程配置中心",

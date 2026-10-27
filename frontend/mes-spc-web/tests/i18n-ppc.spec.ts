@@ -16,7 +16,7 @@ test.beforeEach(({page})=>{const list:string[]=[];errors.set(page,list);page.on(
 test.afterEach(({page})=>expect(errors.get(page)).toEqual([]));
 async function prepare(page:Page,id?:number,role='Editor'){
  await page.addInitScript(role=>{localStorage.setItem('mes_spc_token','mock-ui-only-token');localStorage.setItem('mes_spc_user',JSON.stringify({id:101,role,username:'ppc-fixture'}))},role);
- const reads:string[]=[];const writes:any[]=[];const state={reject:false,empty:false,closed:0,failSchedule:false,noteMetadata:false,records:structuredClone(records),segments:[structuredClone(segment)]};
+ const reads:string[]=[];const writes:any[]=[];const state={reject:false,empty:false,closed:0,failSchedule:false,noteMetadata:false,englishName:null as string|null,records:structuredClone(records),segments:[structuredClone(segment)]};
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());if(u.origin!==new URL(test.info().project.use.baseURL as string).origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();const path=u.pathname,method=route.request().method();
   if(method!=='GET'){
@@ -41,7 +41,7 @@ async function prepare(page:Page,id?:number,role='Editor'){
    if(path==='/api/part-process-characteristics')data=state.records;
    else if(path==='/api/parts')data=[{id:1,partNo:'RAW-001',partName:raw}];
    else if(path==='/api/processes')data=[{id:21,processCode:'P-RAW',processName:raw,isEnabled:true}];
-   else if(path==='/api/characteristics')data=[{id:51,characteristicName:raw,dataCategory:'Variable',unit:'μm',isEnabled:true,isSpcEnabled:true}];
+   else if(path==='/api/characteristics')data=[{id:51,characteristicName:raw,...(state.englishName?{characteristicNameEn:state.englishName}:{}),dataCategory:'Variable',unit:'μm',isEnabled:true,isSpcEnabled:true}];
    else if(path==='/api/control-chart-types')data=chartTypes;
    else if(path==='/api/control-chart-groups')data=groups;
    else if(path==='/api/spc-rules')data=rules;
@@ -121,4 +121,13 @@ test('schedule note metadata: fixed explanation switches while publication draft
  const s=dialog(page).locator('section').filter({has:page.getByTestId('schedule-add')});await expect(s.getByTestId('schedule-p.fromDate')).toHaveValue('2026-10-02');
  await s.getByTestId('schedule-reason').fill('原排程草稿');const count=reads.length,handle=await s.getByTestId('schedule-reason').elementHandle();
  for(const locale of ['en-US','zh-CN','zh-TW']){await dialog(page).getByTestId('locale-select').selectOption(locale);await expect(s).toContainText(noteCatalog(locale).chemicalSchedulePreviewOnly);await expect(s.getByTestId('schedule-reason')).toHaveValue('原排程草稿');expect(await handle!.evaluate(el=>el.isConnected)).toBe(true);expect(reads.length).toBe(count);expect(writes).toEqual([])}
+});
+
+for(const width of [390,1280])test(`characteristic name switch ${width}: mapping names and query remain stable`,async({page})=>{
+ await page.setViewportSize({width,height:900});const {reads,writes,state}=await prepare(page);
+ state.englishName='Proportion <b>@:key {name}</b>';state.records[0].characteristic={...state.records[0].characteristic,characteristicNameEn:state.englishName};await page.reload();await expect(page.getByTestId('ppc-characteristic-name').first()).toContainText(raw);const count=reads.length;
+ const handle=await page.getByTestId('ppc-characteristic-name').first().elementHandle();
+ for(const [locale,name] of [['en-US','Proportion <b>@:key {name}</b>'],['zh-CN',raw],['zh-TW',raw]]){await page.getByTestId('locale-select').selectOption(locale);await expect(page.getByTestId('ppc-characteristic-name').first()).toHaveText(name);expect(await handle!.evaluate(n=>n.isConnected)).toBe(true);expect(reads.length).toBe(count)}
+ await page.getByTestId('locale-select').selectOption('en-US');await expect(page.getByTestId('ppc-characteristic-name').nth(1)).toHaveText(raw);await expect(page.locator('main b')).toHaveCount(0);expect(writes).toEqual([]);
+ await page.getByTestId('ppc-edit').first().click();await expect(field(page,'characteristicId')).toHaveValue('51');await expect(field(page,'characteristicId').locator('option:checked')).toContainText(state.englishName);await dialog(page).getByTestId('locale-select').selectOption('zh-TW');await expect(field(page,'characteristicId')).toHaveValue('51');await expect(field(page,'characteristicId').locator('option:checked')).toContainText(raw);expect(writes).toEqual([]);
 });

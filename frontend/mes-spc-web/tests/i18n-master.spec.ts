@@ -13,7 +13,7 @@ async function prepare(page: Page, endpoint: 'parts'|'characteristics', role='Ed
   localStorage.setItem('mes_spc_user',JSON.stringify({id:101,role,username:'i18n-master-fixture'}));
  },{role});
  const writes: {method:string,path:string,body:any}[]=[];
- const state={reject:false};
+ const reads:string[]=[];const state={reject:false};
  await page.route('**/*',async route=>{
   const url=new URL(route.request().url());
   if(url.origin!==new URL(test.info().project.use.baseURL as string).origin)return route.abort();
@@ -26,11 +26,12 @@ async function prepare(page: Page, endpoint: 'parts'|'characteristics', role='Ed
    const id=method==='POST' ? (endpoint==='parts'?31:41) : (endpoint==='parts'?11:21);
    return route.fulfill({status:method==='DELETE'?204:200,...(method==='DELETE'?{}:{json:{id,...body}})});
   }
+  reads.push(url.pathname);
   const rows=empty?[]:endpoint==='parts'?[part,{...part,id:12,partNo:'P-OFF',partName:'inactive',isEnabled:false}]:[characteristic,{...characteristic,id:22,characteristicName:'inactive',dataCategory:'Attribute',isEnabled:false}];
   return route.fulfill({json:url.pathname.endsWith('/version')?{version:'0.1.72',environment:'test'}:url.pathname===`/api/${endpoint}`?rows:[]});
  });
  await page.goto(`/${endpoint}?keep=42`);
- return {writes,state};
+ return {writes,state,reads};
 }
 
 test('parts page switches its own title',async({page})=>{
@@ -45,7 +46,7 @@ for(const endpoint of ['parts','characteristics'] as const) {
    await page.setViewportSize({width,height:900});await page.emulateMedia({colorScheme:width===390?'dark':'light'});
    await prepare(page,endpoint);await page.getByTestId('locale-select').selectOption(language);
    await expect(page.getByRole('heading',{name:titles[endpoint][language],exact:true})).toBeVisible();
-   await expect(page.locator('tbody')).toContainText(fixtureName);await expect(page.locator('tbody b')).toHaveCount(0);
+   await expect(page.locator('tbody')).toContainText(endpoint==='characteristics'&&language==='en-US'?'Original English':fixtureName);await expect(page.locator('tbody b')).toHaveCount(0);
    await page.getByRole('button',{name:/展開或收合|展开或收起|Expand or collapse/}).click();
    await expect(page.getByRole('button',{name:/展開或收合|展开或收起|Expand or collapse/})).toHaveAttribute('aria-expanded','true');
    await page.getByTestId('master-add').click();const dialog=page.getByRole('dialog');
@@ -68,7 +69,7 @@ for(const endpoint of ['parts','characteristics'] as const) {
    await dialog.locator('button[type="submit"]').click();await expect(dialog).toHaveCount(0);
    expect(writes[0]).toEqual(endpoint==='parts'?{method:'PUT',path:'/api/parts/11',body:{partNo:part.partNo,partName:'未存名稱 <b>{name}@</b>',specification:part.specification,customer:part.customer,isEnabled:true}}:{method:'PUT',path:'/api/characteristics/21',body:{characteristicCode:'C-RAW',characteristicName:fixtureName,characteristicNameEn:'Original English',dataCategory:'Attribute',inputMode:'RECORD_ONLY',valueLabel:'濃度',decimalPlaces:0,isSpcEnabled:true,isEnabled:true,defaultChartTypeId:null}});
    // An existing success message also follows a later language switch.
-   await page.getByTestId('locale-select').selectOption('en-US');await expect(page.locator('main')).toContainText(endpoint==='parts'?'Part updated: P-原始':`Characteristic updated: ${fixtureName}`);
+   await page.getByTestId('locale-select').selectOption('en-US');await expect(page.locator('main')).toContainText(endpoint==='parts'?'Part updated: P-原始':'Characteristic updated: Original English');
    await page.getByTestId('master-add').click();dialog=page.getByRole('dialog');await dialog.getByTestId('locale-select').selectOption(language);
    if(endpoint==='parts'){
     await dialog.getByTestId('partNo').fill('新增 RAW');await dialog.getByTestId('partName').fill('保留產品原文');
@@ -78,7 +79,7 @@ for(const endpoint of ['parts','characteristics'] as const) {
    await dialog.locator('button[type="submit"]').click();await expect(dialog).toHaveCount(0);
    expect(writes[1]).toEqual(endpoint==='parts'?{method:'POST',path:'/api/parts',body:{partNo:'新增 RAW',partName:'保留產品原文',specification:'',customer:'',isEnabled:true}}:{method:'POST',path:'/api/characteristics',body:{characteristicCode:'',characteristicName:'保留特性原文',characteristicNameEn:'',dataCategory:'Variable',inputMode:'DIRECT',valueLabel:'濃度',decimalPlaces:8,isSpcEnabled:true,isEnabled:true,defaultChartTypeId:null}});
    let confirmation='';page.once('dialog',async prompt=>{confirmation=prompt.message();await prompt.dismiss()});await page.getByTestId('master-delete').first().click();expect(writes).toHaveLength(2);
-   expect(confirmation).toContain(endpoint==='parts'?part.partNo:fixtureName);
+   expect(confirmation).toContain(endpoint==='parts'?part.partNo:language==='en-US'?'Original English':fixtureName);
    page.once('dialog',async prompt=>prompt.accept());await page.getByTestId('master-delete').first().click();await expect.poll(()=>writes.length).toBe(3);
    expect(writes[2]).toEqual({method:'DELETE',path:`/api/${endpoint}/${endpoint==='parts'?11:21}`,body:null});
   });
@@ -115,3 +116,13 @@ for(const endpoint of ['parts','characteristics'] as const) {
   await expect(page.getByTestId('master-add')).toHaveCount(0);
  });
 }
+
+for(const width of [390,1280])test(`characteristic name switch ${width}: search and bilingual draft stay intact`,async({page})=>{
+ await page.setViewportSize({width,height:900});const {writes,reads}=await prepare(page,'characteristics');const count=reads.length;
+ for(const query of ['C-RAW','Original English',fixtureName]){await page.getByTestId('master-search').fill(query);await expect(page.getByTestId('characteristic-display-name')).toHaveCount(query===fixtureName?1:2)}
+ const handle=await page.getByTestId('master-search').elementHandle();
+ for(const [locale,name] of [['en-US','Original English'],['zh-CN',fixtureName],['zh-TW',fixtureName]]){await page.getByTestId('locale-select').selectOption(locale);await expect(page.getByTestId('characteristic-display-name')).toContainText(name);expect(await handle!.evaluate(n=>n.isConnected)).toBe(true);expect(reads.length).toBe(count)}
+ await page.getByTestId('master-edit').first().click();const d=page.getByRole('dialog');await d.getByTestId('characteristicNameEn').fill('Proportion');
+ await d.getByTestId('locale-select').selectOption('en-US');await expect(d.getByTestId('characteristicName')).toHaveValue(fixtureName);await expect(d.getByTestId('characteristicNameEn')).toHaveValue('Proportion');await expect(d.getByTestId('valueLabel')).toHaveValue('濃度');
+ expect(writes).toEqual([]);await expect(d.locator('b')).toHaveCount(0);const box=await d.boundingBox();expect(box!.width).toBeLessThanOrEqual(width);await expect.poll(async()=>{const b=await d.boundingBox();return b!.x+b!.width}).toBeLessThanOrEqual(width+0.5);await page.screenshot({path:`../../.codex-tmp/i18n-char-a/master-${width}-en.png`});
+});

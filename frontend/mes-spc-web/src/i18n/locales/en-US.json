@@ -175,7 +175,8 @@
       "created": "Characteristic created: {name}",
       "updated": "Characteristic updated: {name}",
       "deleted": "Characteristic deleted: {name}",
-      "confirmDelete": "Delete quality characteristic \"{name}\"?"
+      "confirmDelete": "Delete quality characteristic \"{name}\"?",
+      "unnamed": "Unnamed characteristic"
     },
     "processes": {
       "title": "Process configuration",

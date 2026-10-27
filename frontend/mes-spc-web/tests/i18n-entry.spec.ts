@@ -70,3 +70,10 @@ test('Viewer keeps the existing measurement route guard',async({page})=>{
 for(const locale of ['zh-TW','zh-CN','en-US'])test(`rebind same station ${locale}: existing draft and binding retained`,async({page})=>{
  const {reads,writes}=await prepare(page);await fill(page);const handle=await field(page,'val.valueNumeric').first().elementHandle();const before=reads.length;await page.getByRole('button',{name:'變更綁定設定',exact:true}).click();const d=page.getByTestId('binding-dialog');await d.getByTestId('locale-select').selectOption(locale);await expect(d.getByTestId('entry-boundStationId')).toHaveValue('21');await d.getByTestId('entry-bind').click();await expect(d).toHaveCount(0);expect(await handle!.evaluate(el=>el.isConnected)).toBe(true);expect(reads.length).toBe(before);expect(writes).toEqual([]);await expect(field(page,'val.valueNumeric').first()).toHaveValue('0.2');await expect(field(page,'payload.operatorName')).toHaveValue(' 操作員 '+raw+' ');expect(await page.evaluate(()=>localStorage.getItem('spc_bound_station_id'))).toBe('21');
 });
+
+for(const width of [390,1280])test(`characteristic name switch ${width}: measurement selection and values preserved`,async({page})=>{
+ await page.setViewportSize({width,height:900});const {reads,writes}=await prepare(page);await fill(page);const count=reads.length;
+ const input=field(page,'selectedItemId'),handle=await input.elementHandle();
+ for(const [locale,name] of [['en-US','Original characteristic'],['zh-CN',raw],['zh-TW',raw]]){await page.getByTestId('locale-select').selectOption(locale);await expect(input.locator('option:checked')).toContainText(name);await expect(input).toHaveValue('1');await expect(field(page,'val.valueNumeric').first()).toHaveValue('0.2');expect(await handle!.evaluate(n=>n.isConnected)).toBe(true);expect(reads.length).toBe(count)}
+ await select(page,'CHEM');await page.getByTestId('locale-select').selectOption('en-US');await expect(input.locator('option:checked')).toContainText(raw);expect(writes).toEqual([]);
+});
