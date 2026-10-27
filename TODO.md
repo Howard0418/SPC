@@ -4,9 +4,9 @@
 
 
 ## 最新整併計數（2026-10-27，以此節優先於下方歷史計數）
-- 核心未完成19件：三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
+- 核心未完成24件：本次簡報5件P2待執行＋三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
 - 另12筆人工驗收／覆蓋限制註記、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
-- 原進度表新增「小工作總表」，193筆登錄中177件具名工作（158完成、19未完成），來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)。舊4件／20包／三語13等均保留歷史或子集合意義，不再冒充全池總數。
+- 原進度表新增「小工作總表」，199筆登錄中183件具名工作（159完成、24未完成；含本次規劃完成及5件待辦），來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)。舊4件／20包／三語13等均保留歷史或子集合意義，不再冒充全池總數。
 
 ## 執行規則
 
@@ -491,3 +491,14 @@
 - [x] PROGRESS-ALL-TASKS-001／P2：所有明確小工作與人工追溯同步原Excel小工作總表，依specs/20261027-all-task-progress/spec.md執行。
 
 - 2026-10-27 PROGRESS-ALL-TASKS-001完成：原Excel新增可篩選小工作總表，193登錄／核心未完成19，原表與13圖形保持、公式／來源／OpenXML0錯誤／重開列印檢查通過。已備份並取代原檔；本件剩0，原待辦與暫停狀態不變。[驗證](specs/20261027-all-task-progress/spec.md)。
+
+
+## MES暨SPC進度報告調整（2026-10-27，只規劃）
+[規格](specs/20261027-mes-spc-report-plan/spec.md)／[逐頁建議](specs/20261027-mes-spc-report-plan/slide-plan.md)／[排序](specs/20261027-mes-spc-report-plan/tasks.md)。保留背景與6頁，每頁1截圖；本次不改PPT／網站，不立即執行。
+- [ ] REPORT-PPT-001-A／P2：現況核對與6張截圖來源，先。
+- [ ] REPORT-PPT-001-B／P2：第2頁十月進度圖，依A。
+- [ ] REPORT-PPT-001-C／P2：第1／3頁內容及截圖，依A／B。
+- [ ] REPORT-PPT-001-D／P2：第4～6頁實際畫面及裁切，依A～C。
+- [ ] REPORT-PPT-001-E／P2：背景／每頁1圖／相容性及交付驗證，最後。
+
+- 2026-10-27 REPORT-PPT-001規劃完成：原6頁唯讀盤點、背景／每頁一圖／逐頁格式建議及A～E五件P2已入池。只更新小工作總表登錄，PPT／網站未改，5件皆未開始。核心未完成由19增24，三語13與原受阻／暫緩不變。[逐頁建議](specs/20261027-mes-spc-report-plan/slide-plan.md)／[待辦](specs/20261027-mes-spc-report-plan/tasks.md)。
