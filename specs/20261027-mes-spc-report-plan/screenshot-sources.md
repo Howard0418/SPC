@@ -26,3 +26,17 @@
 
 ## 後續檔案安全
 六圖均已目視，不含密碼／token；製作C／D可裁去非必要使用者欄，保留日期、特性、圖形及結果。來源圖私有留存，禁止將圖片或資料輸出加入git。PPT原檔本件未改，B～E仍須按規格備份、保留背景與原生文字、逐頁驗證。
+
+## 2026-10-27 F新增採證10～15
+全部為授權 https://spctest.pmr.com.tw 同網域1905×904唯讀畫面；原圖在Voice/報告截圖_20261027，manifest-final.json私有雜湊不提交。
+
+|編號／檔名|來源路徑|內容／限制|報告頁|
+|---|---|---|---|
+|10-SPC校正清單.jpg|/calibration-instruments|59台主檔、週期規範；不替代缺失原始Excel|7|
+|11-SPC落塵U圖.jpg|/particle-monitoring|2026/5/1～6/30、R1、0.5μm、TEST-U-28P3L、28.3L、32點既有驗收資料；混單位查詢有防呆|7|
+|12-SPC異常處置.jpg|/alerts-workflow|29未處置、0處置中、0結案；未送出|8|
+|13-SPC週月報表.jpg|/monthly-control-chart|2026/10、PT2，類別及月份篩選；不代表廠級CPK月份口徑已驗收|8|
+|14-SPC品質履歷.jpg|/spc/query|工單／Lot／SN及CPK匯出入口；未匯出|9|
+|15-SPC匯入批次.jpg|/uploads|80批／80已匯入／0錯誤，含驗收與PortalDaily既有資料；未匯入|10|
+
+正式環境未重核；CAL-VERIFY-001/002、REPORT-DATA-VERIFY-001、真人譯文與儀器人工驗收仍未完成，不以報告結案核銷。
