@@ -7,6 +7,7 @@
 使用者允許且要求不得影響正式入口與SPC；SPC8443只新增Portal單一來源，Portal設定備份後只改SPC_API_BASE為HTTPS並回收App Pool。兩站健康、spcConnected、launch及唯讀主檔15筆均通過；未輸出機敏值、未匯入／排程／寫資料，001完成且不自動開始002。
 依正式入口截圖確認Portal Web仍使用HTTP81；使用者確認後備份並只把PortalApi:BaseUrl切至HTTPS8443。入口200、health200、未登入auth/me回401，未改SPC／DB／資料流程。
 正式SPC前端截圖錯誤確認bundle仍指向8081；依授權更新來源正式API allowlist至HTTPS8443，API base測試與production build通過，備份後發布SpcWeb。公開bundle、API health及production version通過，未改後端／DB／匯入。
+Portal QualityAssurance 截圖確認 SSO 仍跳舊HTTP IP；備份後只改SpcSso WebBaseUrl至正式SPC HTTPS主機，launch與唯讀主檔驗證通過，未改SSO key／角色／DB。
 
 ## [2026-10-28] SPC-ADJUST-1028-TASK-005 修改目的
 004測試完成並上傳後，依授權接005；先測1001點／1000告警／狀態變化／去重／唯讀，再沿Overall共用口徑新增月報畫面與Excel處置件數。僅測試站發布，正式待授權，原Excel保留待辦旗標。
