@@ -1,3 +1,5 @@
+> 2026-10-28 [TransFiles正式匯入唯讀核對](../specs/20261028-transfiles-production-readiness/verification.md)：本機正式URL未設定、日期公式DB client及咬蝕流程限定測試；正式Particle資料／批次0。83項隔離測試通過，不等同正式寫入成功；未改設定、資料、發布或既有小工作狀態，核心26件保持。
+
 > 2026-10-28 TASK-005：[月報異常處置件數](../specs/20261028-monthly-disposition/spec.md)測試API92／Web113完成；沿Overall去重／目前狀態，完整期間讀取，畫面及各分類Excel有已／未處置件數。正式待授權，核心26件保持。
 
 > 2026-10-28 TASK-004：[月報分類工作表](../specs/20261028-monthly-category-sheets/spec.md)測試API91／Web112完成；三張指定Sheet、產品保留、趨勢查詢及精確期間。正式待授權，核心26件保持。

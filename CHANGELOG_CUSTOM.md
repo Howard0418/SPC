@@ -1,3 +1,7 @@
+## 2026-10-28 TransFiles正式匯入唯讀核對
+- 已核對三類工具路徑、本機白名單profile及正式SPC90／Portal200。正式URL空白、日期公式DB與咬蝕限定測試；落塵正式量測與批次皆0，不能宣稱三類已正常正式匯入。
+- Python43、Particle16、Etch24通過；未送正式preview／confirm或SQL寫入，未打包／發布／改權限。純稽核不核銷小工作、進度表不適用，核心26保持。[結果與限制](specs/20261028-transfiles-production-readiness/verification.md)。
+
 ## 2026-10-28 TASK-005 月報處置件數測試完成
 - 月報畫面及各分類Excel新增異常／已處置／未處置件數，沿Overall去重及目前狀態，完整讀取不受500／1000限制；不改公式／F／DB／既有量測。
 - API305通過／8條件略過、Overall9通過、UI39通過，測試站已發布bundle5項通過；長中文備註邊界修正後報表29項通過。測試API92／Web113發布，正式未發布，既有排除點刷新UI限制另記。
