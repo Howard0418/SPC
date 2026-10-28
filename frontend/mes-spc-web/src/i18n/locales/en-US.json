@@ -30,6 +30,28 @@
     }
   },
   "spc": {
+    "overall": {
+      "title": "Overall control and exception summary",
+      "scope": "All enabled control items, independent of the dimension or line selected below.",
+      "start": "Measurement start",
+      "end": "Measurement end",
+      "query": "Query overall",
+      "loading": "Calculating all control items…",
+      "items": "Control items",
+      "itemValue": "{count} items",
+      "caseValue": "Cases: {count}",
+      "registered": "{total} registered, including {disabled} disabled",
+      "affected": "Affects {count} control items",
+      "handled": "Handled",
+      "unhandled": "Handling incomplete",
+      "handledHint": "Closed or acknowledged",
+      "unhandledHint": "Includes open, in progress, and cases without handling records",
+      "total": "Distinct abnormal cases: {count}",
+      "rules": "A point can count as both OOC and OOS, but counts once in the total. Each subgroup is one case; primary and secondary signals are merged; excluded points are omitted. Counts reflect current charts and handling states, excluding historical alerts for points now normal.",
+      "invalidDates": "Select valid dates with start no later than end and a maximum difference of 93 days.",
+      "loadFailed": "Unable to load overall data.",
+      "partial": "{count} items have measurement data but no usable chart and are not included in abnormal counts."
+    },
     "shell": {
       "subtitle": "Statistical process and manufacturing quality analysis",
       "portal": "Portal",

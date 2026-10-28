@@ -30,6 +30,28 @@
     }
   },
   "spc": {
+    "overall": {
+      "title": "Overall 管制與異常總覽",
+      "scope": "所有啟用管制項目；不受下方維度或線別篩選影響。",
+      "start": "量測起日",
+      "end": "量測迄日",
+      "query": "查詢總覽",
+      "loading": "正在統計所有管制項目…",
+      "items": "管制項目",
+      "itemValue": "{count} 項",
+      "caseValue": "{count} 件",
+      "registered": "登錄 {total} 項，其中停用 {disabled} 項",
+      "affected": "涉及 {count} 個管制項目",
+      "handled": "已處置",
+      "unhandled": "未完成處置",
+      "handledHint": "已結案／已確認",
+      "unhandledHint": "含未處置、處置中及尚未建立處置",
+      "total": "去重後異常合計：{count} 件",
+      "rules": "同一點兼具 OOC／OOS，各類各計一件，合計僅計一次；子組圖每組算一件，主副圖合併，排除點不計。依目前圖表判定與處置狀態統計，不另加已恢復正常的歷史告警。",
+      "invalidDates": "請選擇有效起迄日，起日不可晚於迄日，日期間隔最多93天。",
+      "loadFailed": "無法載入總覽資料。",
+      "partial": "有 {count} 個項目有量測資料，但沒有可用圖表，尚未納入異常統計。"
+    },
     "shell": {
       "subtitle": "智能統計製程與製造品質分析系統",
       "portal": "入口網站",

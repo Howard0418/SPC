@@ -1,4 +1,5 @@
 <script setup>
+import OverallSummary from "../components/OverallSummary.vue";
 import {characteristicDisplayName, summaryCharacteristicDisplayName} from "../i18n/characteristicNames";
 const characteristicName = item => characteristicDisplayName(item, locale.value, t("spc.characteristics.unnamed"));
 const summaryName = row => summaryCharacteristicDisplayName(row, locale.value, t("spc.characteristics.unnamed"));
@@ -2130,6 +2131,8 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
         <Sliders class="w-4 h-4" /> {{ t('spc.chartQuery.edit') }}
       </button>
     </div>
+
+    <OverallSummary v-if="route.path === '/spc'" />
 
     <!-- 🌟 三大類管制項目維度選擇器 -->
     <div class="flex flex-wrap gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">

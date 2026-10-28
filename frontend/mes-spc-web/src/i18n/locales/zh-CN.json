@@ -30,6 +30,28 @@
     }
   },
   "spc": {
+    "overall": {
+      "title": "Overall 管制与异常总览",
+      "scope": "所有启用管制项目；不受下方维度或线别筛选影响。",
+      "start": "量测起日",
+      "end": "量测迄日",
+      "query": "查询总览",
+      "loading": "正在统计所有管制项目…",
+      "items": "管制项目",
+      "itemValue": "{count} 项",
+      "caseValue": "{count} 件",
+      "registered": "登记 {total} 项，其中停用 {disabled} 项",
+      "affected": "涉及 {count} 个管制项目",
+      "handled": "已处置",
+      "unhandled": "未完成处置",
+      "handledHint": "已结案／已确认",
+      "unhandledHint": "含未处置、处置中及尚未建立处置",
+      "total": "去重后异常合计：{count} 件",
+      "rules": "同一点兼具 OOC／OOS，各类各计一件，合计仅计一次；子组图每组算一件，主副图合并，排除点不计。依目前图表判定与处置状态统计，不另加已恢复正常的历史告警。",
+      "invalidDates": "请选择有效起止日，起日不可晚于止日，日期间隔最多93天。",
+      "loadFailed": "无法加载总览数据。",
+      "partial": "有 {count} 个项目有量测数据，但没有可用图表，尚未纳入异常统计。"
+    },
     "shell": {
       "subtitle": "智能统计制程与制造质量分析系统",
       "portal": "门户网站",

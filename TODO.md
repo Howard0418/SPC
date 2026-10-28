@@ -5,10 +5,10 @@
 狀態：僅顯示未完成、待規格、待執行、待確認小工作。已完成小工作不再保留於本檔，完成紀錄請查 `CHANGELOG_CUSTOM.md` 與對應 `specs/`。
 
 
-## 最新整併計數（2026-10-27，以此節優先於下方歷史計數）
+## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
 - 核心未完成19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
-- 原進度表「小工作總表」202筆登錄中186件具名工作（167完成、19未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。舊計數只保留歷史或子集合意義。
+- 原進度表「小工作總表」203筆登錄中187件具名工作（168完成、19未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。本次同步依[Overall驗證](specs/20261028-spc-overall/verification.md)；舊計數只保留歷史或子集合意義。
 
 ## 執行規則
 

@@ -389,7 +389,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         string? batchNo = null,
         int? partId = null,
         string? normalityMethod = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        bool includeAllPoints = false)
     {
         var mapping = await db.PartProcessCharacteristics
             .Include(x => x.Machine)
@@ -456,7 +457,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             var measurements = isEtchSubgroup
                 ? await query.Where(x => x.SourceReference != null && x.SourceReference.StartsWith("ETCH:"))
                     .OrderBy(x => x.MeasuredAt).ThenBy(x => x.SampleNo).ToListAsync(ct)
-                : await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
+                : await (includeAllPoints ? query.OrderBy(x => x.MeasuredAt).ThenBy(x => x.Id)
+                    : query.OrderBy(x => x.MeasuredAt).Take(1000)).ToListAsync(ct);
             if (measurements.Count == 0) return null;
             if (mapping.ControlScope == "CHEM" && mapping.Machine?.MachineCode is "N1" or "N2")
                 measurements = ChemicalStageChart.Order(measurements);
@@ -587,7 +589,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             if (startDate.HasValue) query = query.Where(x => x.MeasuredAt >= startDate.Value.Date);
             if (endDate.HasValue) query = query.Where(x => x.MeasuredAt < endDate.Value.Date.AddDays(1));
 
-            var measurements = await query.OrderBy(x => x.MeasuredAt).Take(1000).ToListAsync(ct);
+            var measurements = await (includeAllPoints ? query.OrderBy(x => x.MeasuredAt).ThenBy(x => x.Id)
+                : query.OrderBy(x => x.MeasuredAt).Take(1000)).ToListAsync(ct);
             if (measurements.Count == 0) return null;
             var contextMeasurement = measurements.LastOrDefault(x => x.LineId.HasValue || x.TankId.HasValue || x.SlotId.HasValue) ?? measurements[^1];
             var monitorContext = await BuildMonitorContextAsync(

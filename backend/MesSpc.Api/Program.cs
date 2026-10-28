@@ -80,6 +80,7 @@ builder.Services.AddScoped<ChemicalTraceQueryService>();
 builder.Services.AddHostedService<ChemicalStatisticsWorker>();
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<SpcService>();
+builder.Services.AddScoped<OverallStatisticsService>();
 builder.Services.AddScoped<ChartSegmentDetailsService>();
 builder.Services.AddScoped<UploadService>();
 builder.Services.AddScoped<ParticleUploadService>();
