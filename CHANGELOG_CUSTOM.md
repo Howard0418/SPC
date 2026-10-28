@@ -3,6 +3,8 @@
 - 使用者指定172.16.119.140／ihao_ting；唯讀確認PMR-SPC-SRV／PMR\ihao_ting、既有SQL登入啟用但正式庫無user映射。443的406來自SpcWeb靜態站，SpcApi目前只有HTTP8081；8443未占用且已有適用憑證。僅記錄HTTPS8443與受控程序角色候選，不宣稱正式預檢成功。
 - 未改IIS／憑證／防火牆、角色／DB、profile／排程或重包EXE；正式HTTPS、正式庫最小權限與非互動Portal認證仍待另行授權／驗證，SPC／Portal無發布。
 - 原Excel同步001進行中狀態與原生里程碑，原26圖形保持加1；OpenXML 0錯誤、重開／公式錯誤0及13頁列印通過。核心34件不變，002未開始。
+- 使用者另行授權後，正式SpcApi已備份並新增HTTPS8443 SNI；防火牆只允許工作端172.16.110.27。完整TLS GET回production／API0.1.90，工具網址驗證接受。PMR_SPC_2026新增PMR\ihao_ting user並加入既有受控程序角色；兩程序execute=1、量測表SELECT／DML=0。未排程／未匯入，001仍待Portal非互動認證。
+- 原Excel再同步001待認證狀態與綠色原生里程碑，原27圖形保持加1；OpenXML0錯誤、重開／公式錯誤0及13頁列印通過，核心34件不變。
 - 原Excel狀態／日期／來源測試里程碑同步，原25圖形保持加1；OpenXML0錯誤／重開／12頁列印通過。001未結案，核心34件保持，002未開始。[結果與回復](specs/20261028-transfiles-production-identity/verification.md)。
 
 ## 2026-10-28 TransFiles正式匯入／來源與定時僅規劃

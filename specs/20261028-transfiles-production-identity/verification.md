@@ -1,5 +1,5 @@
 # TASK-001 執行紀錄
-- 2026-10-28；狀態：契約與工具來源環境防護已完成測試，主機／完整帳號已唯讀確認；正式HTTPS、正式庫最小權限及非互動認證待核准／驗證，001未結案；002～008未開始。
+- 2026-10-28；狀態：契約與工具來源環境防護已完成測試；主機／帳號、正式HTTPS與正式庫最小權限已核准並驗證。非互動Portal認證／憑證保管待確認，001未結案；002～008未開始。
 
 ## 已完成
 - 已比對[原規劃](../20261028-transfiles-production-schedule-plan/spec.md)、connection_settings／connection_test、Portal帳密登入、ChemicalFormulaScheduleController及ChemicalDirectWriterSqlV1的actor／USER_NAME要求，寫成[正式目標／身分／最小權限契約](identity-contract.md)。沒有預先認定gMSA或既有個人測試帳號可供正式無人值守使用。
@@ -16,9 +16,9 @@
 - 8443未監聽，主機已有含私鑰、涵蓋`*.pmr.com.tw`且有效的憑證。已在[契約](identity-contract.md)記錄最小HTTPS 8443與正式庫受控程序角色候選；尚未變更IIS／憑證／防火牆／資料庫。
 
 ## 尚未完成／實際環境限制
-- 尚待另行核准並驗證正式SpcApi HTTPS端點、PMR_SPC_2026最小權限映射，以及Portal非互動認證與憑證保管方式；使用者指定個人帳號不等於允許保存密碼或建立排程。
+- 尚待確認Portal非互動認證與憑證保管方式；使用者指定個人帳號及本次HTTPS／DB授權不等於允許保存密碼或建立排程。
 - 使用合成輸入、Mock Portal factory及現有TLS helper，只匿名GET已知正式SPC HTTPS `/api/version`，測試誤選test應在登入前拒絕。初次沙箱未取得可確認回應；允許網路後實際HTTP406，沒有取得environment，因此只確認未知／失敗時未建立Portal client，不宣稱真實錯置環境已回production或正式登入成功。
-- HTTPS406原因已定位，但核准對外profile仍未建立；本件不改IIS、Proxy、TLS驗證、網址設定或正式角色來繞過。既有本機正式URL空白仍保留。
+- HTTPS406原因已定位並建立核准API端點；本件未把正式URL或密碼寫入本機profile，後續設定仍須配合非互動認證與安全保管。沒有修改SpcWeb 443、停用TLS驗證或以HTTP繞過。
 - 不建立帳號、角色／grant、資料庫連線、prepare／preview／confirm或Windows工作；沒有讀取／保存真實帳密與權杖。69測試均mock／暫存，不是正式正向寫入或排程驗收。
 
 ## 進度、交付與回復
@@ -31,3 +31,10 @@
 ## 續作進度同步
 - 原進度表已將001更新為「進行中，待HTTPS／權限核准」，主表補上主機身分已核的橘色原生里程碑313；原26個圖形逐一保持，其他工作列及核心34／完成171／人工11／核銷4計數不變。
 - 更新前來源SHA256仍為20F8901F4AAD1D2FAE6C94E39B16CC02B7A0FED58E82FBEFFC0BE44132951F0D；備份`Voice/備份/進度表_轉檔001主機身分核對前_20261028-152217.xlsx`，取代後SHA256為355100964FB97C488873E4A0D417D2EBFA895E63ED3B691E9F15CB6C28439C3E。OpenXML SDK 0錯誤、Artifact重開／公式錯誤0、LibreOffice重開／13頁列印及變更區目視通過；未宣稱Microsoft Excel人工驗收。
+
+## 正式HTTPS與最小權限發布
+- 使用者明確允許後，先以IIS backup建立`TransFiles001-20261028-152600`；SpcApi新增`172.16.119.140:8443:PMR-SPC-SRV.pmr.com.tw`的HTTPS SNI綁定，沿用有效wildcard憑證。防火牆初設LocalSubnet無法涵蓋工作端；較寬`172.16.0.0/16`被安全審核拒絕，最後只允許實際工作端`172.16.110.27`，沒有擴及其他來源。
+- 從工作端以Python預設TLS驗證GET `https://PMR-SPC-SRV.pmr.com.tw:8443/api/version`回200、environment=production、version=0.1.90；沒有關閉憑證驗證。TransFiles `normalize_api_url`接受並正規化此HTTPS 8443 `/api`網址。
+- 同一授權下於PMR_SPC_2026建立`PMR\ihao_ting` database user並加入既有`SpcChemicalDirectWriter`。`EXECUTE AS USER`驗證角色成員=1、兩個受控程序EXECUTE=1，VariableMeasurements SELECT／INSERT／UPDATE／DELETE均=0；沒有執行程序、prepare／confirm或任何資料寫入。
+- 回復：先停用使用此端點的後續設定；移除`SPC API HTTPS 8443`防火牆規則、HTTPS binding與對應SNI SSL binding，或以IIS backup回復。DB回復須先`ALTER ROLE SpcChemicalDirectWriter DROP MEMBER [PMR\ihao_ting]`，再`DROP USER [PMR\ihao_ting]`；不刪SQL Server既有login。執行回復前須確認沒有後續工作依賴。
+- 原進度表再同步為「進行中，待Portal非互動認證」，補綠色原生里程碑314；原27圖形保持加1，核心34／完成171／人工11／核銷4不變。更新前SHA256 355100964FB97C488873E4A0D417D2EBFA895E63ED3B691E9F15CB6C28439C3E，備份`Voice/備份/進度表_轉檔001正式HTTPS權限前_20261028-152918.xlsx`；更新後SHA256 562F261C7CFDCB7F3898A4C692E45AC12E0BA337280BBF485804E2F76C0C84DF。OpenXML 0錯誤、Artifact重開／公式錯誤0、LibreOffice重開／13頁列印及變更區目視通過。

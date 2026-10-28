@@ -8,10 +8,10 @@
 |Portal|portaltest.pmr.com.tw／Target=Test／PMR_PORTAL_TEST|既有PMR-WEB正式API，Target=Production／PMR_PORTAL_UAT；對外HTTPS網址須由核准profile提供|只登入成功不等於正式匯入權限；Portal→SPC上游必須同環境，不能把test-only端點改網址當正式路徑。|
 |執行端|既有個人Windows測試授權只限測試|PMR-SPC-SRV（172.16.119.140）／PMR\ihao_ting；SQL Server登入既有且啟用，預設庫仍為PMR_SPC_TEST，PMR_SPC_2026尚無使用者映射|認證到期、正式庫無映射、檔案來源無讀取權限、API／DB actor不一致則拒絕，不用管理者兜底。|
 
-## 正式HTTPS與最小變更候選
+## 正式HTTPS與最小變更結果
 - 2026/10/28唯讀確認：正式SpcApi只有HTTP `172.16.119.140:8081`；HTTPS 443屬SpcWeb靜態前端，沒有`/api`反向代理，因此對`https://PMR-SPC-SRV.pmr.com.tw/api/version`的406不是API環境回應。工具維持HTTPS及禁止8081的安全規則，不降級TLS或繞過憑證。
-- 8443目前沒有監聽；主機已有含私鑰且涵蓋`*.pmr.com.tw`、有效至2036/10/04的憑證。最小候選是在SpcApi新增hostname `PMR-SPC-SRV.pmr.com.tw`的HTTPS 8443綁定，並核對防火牆／`/api/version`後，profile使用`https://PMR-SPC-SRV.pmr.com.tw:8443/api`。不改SpcWeb 443或前端路由。
-- 正式資料庫只建立`PMR\ihao_ting`對應user並加入既有`SpcChemicalDirectWriter`受控程序角色；不得改預設庫、授予db_owner、直接DML或任意SELECT。建立前須另行正式環境授權，建立後以該身分驗證execute允許、DML／SELECT拒絕及actor一致。
+- 使用者另行授權後，SpcApi已新增hostname `PMR-SPC-SRV.pmr.com.tw`的HTTPS 8443 SNI綁定，使用既有`*.pmr.com.tw`憑證；防火牆只允許實際工作端`172.16.110.27`進入8443。核准profile目標為`https://PMR-SPC-SRV.pmr.com.tw:8443/api`，工具URL正規化通過；不改SpcWeb 443或前端路由。
+- 正式資料庫已建立`PMR\ihao_ting`對應user並加入既有`SpcChemicalDirectWriter`受控程序角色；未改SQL登入預設庫、未授予db_owner、直接DML或任意SELECT。`EXECUTE AS USER`驗證兩個受控程序EXECUTE=1，VariableMeasurements的SELECT／INSERT／UPDATE／DELETE=0。
 - 遠端WinRM整合連線18456可能受Kerberos double-hop影響，不能當成本機排程失敗證據；後續須在執行主機以實際排程登入型態驗證，不啟用CredSSP、不索取或保存使用者密碼。
 
 匿名version只提供應用環境，不能證明資料庫、角色或正式授權；DB核對與權限證據須來自該執行身分的受控唯讀檢查，不能以應用管理連線查到INSERT=1代替個人／排程資格。
@@ -31,7 +31,7 @@
 - 正式執行資格需綁定：主機、Windows主體、Portal/SPC認證主體、允許資料類別／來源／日期範圍、執行窗口、授權依據。這些屬後續可驗證設定，不由本機JSON自己宣告即視為服務端授權。
 
 ## 驗證與拒絕矩陣
-- 主機／帳號已確認；正式HTTPS未核准、正式庫無映射或非互動Portal認證未定→待確認／拒絕啟用；錯API environment／DB→拒絕；僅Viewer→不可prepare／confirm；API actor與DB主體不同→拒絕；來源不可讀→略過／失敗並指出原因；認證過期→停止該run、不重送寫入。
+- 主機／帳號、正式HTTPS與正式庫映射已通過；非互動Portal認證未定→待確認／拒絕啟用；錯API environment／DB→拒絕；僅Viewer→不可prepare／confirm；API actor與DB主體不同→拒絕；來源不可讀→略過／失敗並指出原因；認證過期→停止該run、不重送寫入。
 - 所有查核記錄分開標示「設定格式」「實際環境」「身分一致」「角色／權限」「來源範圍」「正式啟用授權」；前兩項通過不代表後四項通過。
 - 正向身分驗證先在隔離／測試環境，正式只在核准後唯讀核對角色／程序及錯誤拒絕，實際小批寫入依008授權與回復範圍，不以核對時的管理者讀取結果冒稱本人已通過。
 - 本件回復只涉及工具來源防護，沒有正式角色、資料或排程可撤回；未授權狀態持續停用，不自動接下一個Task。

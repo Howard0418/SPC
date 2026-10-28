@@ -1,7 +1,7 @@
 # TASK-001 正式目標、身分與權限契約
 - 工作TRANSFILES-PROD-1028-TASK-001；版本1；執行中。使用者2026/10/28回覆「好，開始」，依[8件計畫](../20261028-transfiles-production-schedule-plan/tasks.md)僅開始001，不自動進002。
 - 主系統TransFiles，相依SPC／Portal；保留既有來源與EXE。此件不建立帳號／正式角色、不改DB或正式profile、不移除三類測試守衛、不匯入／排程／發布網站。
-- 後續指定：使用者提供執行主機172.16.119.140、帳號ihao_ting。本次續作只讀核對主機、帳號完整網域／SID、現有權限及HTTPS406來源；不把指定帳號當作新增正式grant或排程安裝授權。
+- 後續指定：使用者提供執行主機172.16.119.140、帳號ihao_ting；再明確授權正式HTTPS 8443、必要限定防火牆與正式庫受控程序最小權限。已完成備份、變更及正反驗證；指定帳號仍不等於保存密碼或建立排程授權。
 
 ## 現況與最小實作
 - connection_test目前只核對設定URL格式，再登入Portal取得SPC token並讀主檔，未先核對SPC實際environment。增加匿名GET `/api/version`核對，必須在Portal登入／取得token前完成；錯環境、缺欄、非JSON結構或讀取失敗即停止，不帶帳密或Authorization至環境查詢。
@@ -19,7 +19,8 @@
 - [x] 契約與既有環境／身分限制核對。
 - [x] 環境錯置先拒絕測試與來源修正。
 - [x] 唯讀確認執行主機／完整Windows帳號及現有SQL映射。
-- [ ] 核准並驗證正式API HTTPS端點、正式庫最小權限映射及非互動Portal認證；未完成不結案。
+- [x] 核准並驗證正式API HTTPS端點與正式庫最小權限映射。
+- [ ] 決定並驗證非互動Portal認證及憑證保管；未完成不結案。
 - [x] 文件、原Excel狀態與原生記錄同步，依本件提交上傳。
-- 結果：[執行紀錄](verification.md)。001仍待正式HTTPS、正式庫最小權限與非互動認證核准／驗證，不標DONE。
+- 結果：[執行紀錄](verification.md)。正式HTTPS與正式庫最小權限已通過；001仍待非互動Portal認證／憑證保管，不標DONE。
 - rollback：保存修改前檔案與最小patch，回復本件connection_test與其測試；不改舊EXE、Windows角色或任何資料庫狀態。

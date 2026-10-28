@@ -1,4 +1,4 @@
-> 2026-10-28 最新：轉檔001契約／來源環境防護69項測試通過，主機PMR-SPC-SRV與PMR\ihao_ting已唯讀確認；正式HTTPS、正式庫最小權限與非互動認證待核准／驗證，未結案。其餘7件未開始，核心34件保持。[執行紀錄](specs/20261028-transfiles-production-identity/verification.md)。
+> 2026-10-28 最新：轉檔001契約／來源環境防護69項測試通過；主機／帳號、正式HTTPS 8443與正式庫受控程序最小權限已核准驗證，Portal非互動認證／憑證保管待確認，未結案。其餘7件未開始，核心34件保持。[執行紀錄](specs/20261028-transfiles-production-identity/verification.md)。
 
 > 2026-10-28 最新規劃：轉檔正式匯入／來源／固定時間新增8件，僅規劃待執行；核心34件，人工11／核銷4另計。未啟用排程或恢復舊暫緩。[規劃及進度同步](specs/20261028-transfiles-production-schedule-plan/verification.md)。下方舊計數保留歷史。
 
@@ -28,7 +28,7 @@
 
 |順序|工作代號|優先|內容與相依|
 |---|---|---|---|
-|1|TRANSFILES-PROD-1028-TASK-001|P1|[契約與來源環境防護已測](specs/20261028-transfiles-production-identity/spec.md)，69測試通過；主機／帳號已確認，待正式HTTPS、正式庫最小權限與非互動認證核准／驗證，未結案。|
+|1|TRANSFILES-PROD-1028-TASK-001|P1|[契約與來源環境防護已測](specs/20261028-transfiles-production-identity/spec.md)，69測試通過；主機／帳號、正式HTTPS與正式庫最小權限已通過，待Portal非互動認證／憑證保管，未結案。|
 |2|TRANSFILES-PROD-1028-TASK-002|P1|三類來源路徑設定、檔案穩定檢查與格式修正建議；依001。|
 |3|TRANSFILES-PROD-1028-TASK-003|P1|藥液正式匯入、初複驗／日期公式追溯；依001／002。|
 |4|TRANSFILES-PROD-1028-TASK-004|P1|咬蝕正式流程與Portal／SPC雙站恢復；依001／002，003後逐件。|
@@ -37,7 +37,7 @@
 |7|TRANSFILES-PROD-1028-TASK-007|P2|固定時間設定與Windows排程管理；依006及核准身分。|
 |8|TRANSFILES-PROD-1028-TASK-008|P2|獨立交付包與三類分階段正式驗收；依001～007，正式寫入與排程啟用另授權。|
 
-001進行中待正式HTTPS／權限／非互動認證，002～008待執行，核心仍計8件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
+001進行中待Portal非互動認證／憑證保管，002～008待執行，核心仍計8件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
 
 ## 2026-10-28 SPC 網站調整（藥液3件完成，009待F）
 
