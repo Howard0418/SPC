@@ -1,3 +1,5 @@
+> 最新：007驗證及002／008正式完成，009待F及日期；原異常根因未重現不冒稱已定位。詳[正式紀錄](../20261028-chemical-history-refresh/formal-release.md)。
+
 > 最新狀態（10/28）：007已完成[現版驗證](../20261028-chemical-n2-verification/verification.md)，原異常未重現；008仍待正式驗證，其他需求及歷史紀錄保留。
 
 # 功能規格：藥液截圖異常與月報 Excel 分頁補充

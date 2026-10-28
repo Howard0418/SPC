@@ -1,3 +1,5 @@
+> 2026-10-28 藥液優先4件：007驗證及002／008正式發布已完成（SPC90／Portal200/243）；009等F與日期，未改公式／既有量測。核心剩26件。[正式驗證與回復](D:/SPC/specs/20261028-chemical-history-refresh/formal-release.md)。
+
 > 2026-10-28 TASK-002：[保存判定與複驗優先](D:/SPC/specs/20261028-chemical-history-judgment/spec.md)測試完成；SPC API89／Portal API199/Web242已發布測試站，實站12筆查詢通過，正式待授權。007完成、009待F、008待正式；核心28件。
 
 > 2026-10-28 TASK-009：[QE2診斷](D:/SPC/specs/20261028-chemical-qe2-diagnosis/spec.md)確認固定係數差異；使用者F值與日期待確認，保留公式與歷史資料，未完成／未發布。002可依已儲存結果獨立顯示，核心仍28件。

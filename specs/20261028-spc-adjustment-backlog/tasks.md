@@ -14,7 +14,7 @@
 |9 SPC-ADJUST-1028-TASK-006|P3／SPC|常態直方圖淺藍柱（AC-006）|兩種分析頁柱色一致淺藍|暗／亮、hover、手機、單柱／零資料|無量測仍顯既有空資料狀態|bins、頻數、常態曲線、界線與下載數值不變|
 
 - [ ] TASK-001 實作／驗證／測試發布／文件及進度同步。
-- [ ] TASK-002 複驗優先與保存判定測試完成，正式待授權／部署；詳[驗證](../20261028-chemical-history-judgment/verification.md)。
+- [x] TASK-002 複驗優先與保存判定：正式發布及本人登入查詢驗證完成，詳[正式紀錄](../20261028-chemical-history-refresh/formal-release.md)。
 - [ ] TASK-003 實作／驗證／測試發布／文件及進度同步。
 - [ ] TASK-004 實作／驗證／測試發布／文件及進度同步。
 - [ ] TASK-005 實作／驗證／測試發布／文件及進度同步。
@@ -22,7 +22,7 @@
 
 規劃交付檢查：[v1歷史](verification.md)／[v2截圖補充結果](../20261028-chemical-screenshot-followup/verification.md)。優先順序為後續選取依據，不是現在執行授權。
 
-- [ ] TASK-008 保存成功後歷史查詢失敗：已完成Portal測試修正，正式根因／發布／實測待完成，詳[驗證](../20261028-chemical-history-refresh/verification.md)。
+- [x] TASK-008 保存成功後歷史查詢失敗：正式發布及本人登入唯讀驗證完成，詳[正式紀錄](../20261028-chemical-history-refresh/formal-release.md)。
 - [x] 007 N2開／收線現版驗證完成（原異常未重現）；詳[驗證](../20261028-chemical-n2-verification/verification.md)。
 - [ ] TASK-009 QE2分析值差異（先核准計算來源；002在此後驗證判定）。
 

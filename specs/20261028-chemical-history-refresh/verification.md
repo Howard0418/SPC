@@ -1,3 +1,5 @@
+> 2026-10-28正式收尾：使用者另行明確授權後，SPC API0.1.90最小修補及Portal API200/Web243已正式發布，正式登入查詢／N2回歸通過，原Excel已同步，002／008完成。歷史網路錯誤未重現的限制保留；009待F值，核心26件。[完整正式證據與回復](../20261028-chemical-history-refresh/formal-release.md)。下方保留先前測試與候選階段紀錄。
+
 # 驗證紀錄
 - 2026-10-28：使用者確認正式入口網站出錯，尚未重現正式網路根因。
 - 發布前已唯讀核對本機IIS：PmrPortalWeb路徑D:/PmrPortal/publish/portal-web，binding包含portaltest.pmr.com.tw；API為D:/PmrPortal/publish/portal-api:8091。
