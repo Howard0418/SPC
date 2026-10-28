@@ -60,6 +60,7 @@
       </div>
     </div>
 
+    <p v-if="isMonthlyReport" data-testid="summary-disposition-note" class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{{ t('spc.chartSummary.dispositionNote') }}</p>
     <div v-if="data.length > 0" ref="summaryScroll" class="spc-summary-scroll overflow-x-scroll overflow-y-hidden pb-3"
       @scroll="syncSummaryScroll('body')">
       <table :class="isSpc ? 'min-w-[1960px]' : 'min-w-[1280px]'" class="w-full text-left text-xs border-collapse">
@@ -247,6 +248,9 @@
               </span>
             </th>
             <th v-if="isSpc && comparisonPeriod === 'MONTH'" class="px-4 py-3 text-right whitespace-nowrap">{{ t('spc.chartSummary.cpkDifference') }}</th>
+            <th v-if="isMonthlyReport" class="px-4 py-3 text-right">{{ t('spc.chartSummary.abnormalCases') }}</th>
+            <th v-if="isMonthlyReport" class="px-4 py-3 text-right">{{ t('spc.chartSummary.handledCases') }}</th>
+            <th v-if="isMonthlyReport" class="px-4 py-3 text-right">{{ t('spc.chartSummary.unhandledCases') }}</th>
             <th class="px-4 py-3 text-center sticky right-0 bg-slate-50 dark:bg-slate-800">{{ t('spc.chartSummary.draw') }}</th>
           </tr>
         </thead>
@@ -294,6 +298,9 @@
               :class="differenceClass(row.ppk, row.previousMonthPpk, true)">
               {{ formatDifference(row.ppk, row.previousMonthPpk, 2) }}
             </td>
+            <td v-if="isMonthlyReport" class="px-4 py-3 text-right font-mono">{{ row.abnormalCount ?? '—' }}</td>
+            <td v-if="isMonthlyReport" :data-testid="`summary-handled-${row.partProcessCharacteristicId}`" class="px-4 py-3 text-right font-mono">{{ row.handledCount ?? '—' }}</td>
+            <td v-if="isMonthlyReport" :data-testid="`summary-unhandled-${row.partProcessCharacteristicId}`" class="px-4 py-3 text-right font-mono">{{ row.unhandledCount ?? '—' }}</td>
             <td class="px-4 py-3 text-center sticky right-0 bg-white dark:bg-slate-900">
               <button type="button" :data-testid="`draw-chart-${row.partProcessCharacteristicId}`"
                 @click="$emit('draw-chart', row)"

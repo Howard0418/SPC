@@ -1,3 +1,5 @@
+> 2026-10-28 TASK-005：[月報異常處置件數](../specs/20261028-monthly-disposition/spec.md)測試API92／Web113完成；沿Overall去重／目前狀態，完整期間讀取，畫面及各分類Excel有已／未處置件數。正式待授權，核心26件保持。
+
 > 2026-10-28 TASK-004：[月報分類工作表](../specs/20261028-monthly-category-sheets/spec.md)測試API91／Web112完成；三張指定Sheet、產品保留、趨勢查詢及精確期間。正式待授權，核心26件保持。
 
 > 2026-10-28 藥液優先4件：007驗證及002／008正式發布已完成（SPC90／Portal200/243）；009等F與日期，未改公式／既有量測。核心剩26件。[正式驗證與回復](D:/SPC/specs/20261028-chemical-history-refresh/formal-release.md)。

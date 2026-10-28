@@ -1188,7 +1188,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var summaries = new List<MesSpc.Api.Controllers.ChartSummaryDto>();
         foreach (var mapping in mappings)
         {
-            var result = await GetInteractiveChartAsync(mapping.Id, uploadBatchId, startDate, endDate, batchNo, partId, ct: ct, exactUtcRange: exactUtcRange);
+            var result = await GetInteractiveChartAsync(mapping.Id, uploadBatchId, startDate, endDate, batchNo, partId, ct: ct, includeAllPoints: true, exactUtcRange: exactUtcRange);
             if (result == null || result.RawDataPoints == null) continue;
 
             var rawPoints = ToSpcDataPoints(result.RawDataPoints);
@@ -1201,6 +1201,16 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 : rawPoints.Count;
             var includedPoints = rawPoints.Where(x => !x.IsExcluded).ToList();
             if (includedPoints.Count == 0) continue;
+
+            var variableIds = (result.RawDataPoints as IEnumerable<SpcDataPoint> ?? [])
+                .Where(x => x.VariableMeasurementId.HasValue).Select(x => x.VariableMeasurementId!.Value).ToList();
+            var attributeIds = (result.RawDataPoints as IEnumerable<AttributeDataPoint> ?? [])
+                .Where(x => x.AttributeMeasurementId.HasValue).Select(x => x.AttributeMeasurementId!.Value).ToList();
+            var dispositionAlerts = await db.AlertEvents.AsNoTracking()
+                .Where(a => (a.VariableMeasurementId.HasValue && variableIds.Contains(a.VariableMeasurementId.Value))
+                    || (a.AttributeMeasurementId.HasValue && attributeIds.Contains(a.AttributeMeasurementId.Value)))
+                .ToListAsync(ct);
+            var disposition = OverallStatistics.Calculate(1, 0, [new(mapping.Id, result)], dispositionAlerts);
 
             var oosCount = isProcessScope
                 ? CountChartPoints(result.ChartData, IsChartPointOutOfSpec) ?? includedPoints.Count(x => x.IsOutOfSpec)
@@ -1275,6 +1285,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 PreviousMonthOosPercentage = Math.Round(previousMonth.OosPercentage, 2),
                 OocCount = oocCount,
                 OocPercentage = Math.Round(oocPercentage, 2),
+                AbnormalCount = disposition.AbnormalCount,
+                HandledCount = disposition.HandledCount,
+                UnhandledCount = disposition.UnhandledCount,
                 Ca = result.Capability?.Ca,
                 Pp = result.Capability?.Pp,
                 Ppk = result.Capability?.Ppk,
@@ -1296,7 +1309,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         string controlScope,
         CancellationToken ct)
     {
-        var result = await GetInteractiveChartAsync(partProcessCharacteristicId, uploadBatchId, startDate, endDate, batchNo, partId, ct: ct);
+        var result = await GetInteractiveChartAsync(partProcessCharacteristicId, uploadBatchId, startDate, endDate, batchNo, partId, ct: ct, includeAllPoints: true);
         if (result?.RawDataPoints == null) return (0, 0, null);
 
         var rawPoints = ToSpcDataPoints(result.RawDataPoints);

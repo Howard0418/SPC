@@ -14,7 +14,7 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成26件：Portal Grafana入口1件＋網站調整6件（009待F，其餘5件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
+- 核心未完成26件：Portal Grafana入口1件＋網站調整6件（009待F、004／005測試完成待正式，其餘3件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
 - 原進度表「小工作總表」213筆登錄中197件具名工作（171完成、26未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。最新核銷依[藥液正式驗證](specs/20261028-chemical-history-refresh/formal-release.md)；入池同步依[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)，前次[截圖補充驗證](specs/20261028-chemical-screenshot-followup/verification.md)保留，前次[網站調整規劃驗證](specs/20261028-spc-adjustment-backlog/verification.md)保留，前次[Overall驗證](specs/20261028-spc-overall/verification.md)保留；舊計數只保留歷史或子集合意義。
 
@@ -27,8 +27,8 @@
 |1|SPC-ADJUST-1028-TASK-009|P1／SPC，相依Portal|QE2已診斷固定F=0.995；待使用者確認核准F及有效日，保留現行公式與資料。|
 |2|SPC-ADJUST-1028-TASK-001|P1／SPC|管制線公式儲存後重算重繪；手動界限與分段優先序待核。|
 |3|SPC-ADJUST-1028-TASK-003|P1／SPC|測試入口HTTPS根網址，保留Launch及正式目標。|
-|4|SPC-ADJUST-1028-TASK-004|P2／SPC|[三個獨立Sheet與趨勢查詢已測試](specs/20261028-monthly-category-sheets/verification.md)，測試API91／Web112；正式待授權，保留未完成旗標。|
-|5|SPC-ADJUST-1028-TASK-005|P2／SPC|各Sheet已處置件數／未處置件數，含處置中，沿Overall去重。|
+|4|SPC-ADJUST-1028-TASK-004|P2／SPC|[三個獨立Sheet與趨勢查詢已測試](specs/20261028-monthly-category-sheets/verification.md)，現測試API92／Web113保留；正式待授權，保留未完成旗標。|
+|5|SPC-ADJUST-1028-TASK-005|P2／SPC|[已／未處置件數測試完成](specs/20261028-monthly-disposition/verification.md)，測試API92／Web113；正式待授權，保留未完成旗標。|
 |6|SPC-ADJUST-1028-TASK-006|P3／SPC|淺藍直方圖，不改bins／頻數／統計。|
 
 若確認003已阻擋使用／導向錯環境，依既有排序規則調整後續順序。002／008有實際實作／測試發布日期，007是現版驗證、009是唯讀診斷；其餘規劃不造日期，父批次不另重複計數。

@@ -1245,7 +1245,11 @@
       "draw": "Draw chart",
       "previousWeek": "Previous week ",
       "previousMonth": "Previous month ",
-      "rankingCount": "Count: {count}"
+      "rankingCount": "Count: {count}",
+      "abnormalCases": "Abnormal cases",
+      "handledCases": "Handled cases",
+      "unhandledCases": "Unhandled cases",
+      "dispositionNote": "Counts use current disposition, not a month-end snapshot. Unhandled includes in-progress cases and cases without a disposition record. Each abnormal case is counted once."
     },
     "chartLabels": {
       "xbarTitle": "Xbar mean control chart",

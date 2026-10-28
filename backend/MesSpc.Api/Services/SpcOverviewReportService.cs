@@ -71,7 +71,7 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : 
             string[] headers = ["ID", T("reportControlCategory"), T("reportChartKindHeader"), T("reportProcessLine"), T("reportSlot"), T("reportChartName"), T("reportChartTypeHeader"),
                 "USL", "LSL", "UCL", "LCL", T("reportLimitMethod"), T("reportMeasurementsCurrent"), T("reportOosCurrent"), T("reportOosPrevious"),
                 T("reportOosPercentCurrent"), T("reportOosPercentPrevious"), T("reportOocCurrent"), T("reportOocPercentCurrent"), "Ca", "Pp", T("reportPpkCurrent"), T("reportPpkPrevious"),
-                T("reportOwner"), T("reportRemarks")];
+                T("reportOwner"), T("reportRemarks"), "異常件數", "已處置件數", "未處置件數"];
             for (var i = 0; i < headers.Length; i++)
             {
                 ws.Cell(3, i + 1).Value = headers[i];
@@ -82,6 +82,7 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : 
 
             ws.Cell(1, 1).Value = T("reportOverviewTitle");
             ws.Cell(1, 1).Style.Font.Bold = true;
+            ws.Range("D1:Y1").Merge().Value = "依查詢當下處置狀態統計，非月底快照；未處置含處置中及無處置紀錄。";
             ws.Cell(2, 1).Value = T("reportPeriod");
             ws.Cell(2, 2).Value = $"{startUtc:yyyy-MM-dd HH:mm} ~ {endUtc:yyyy-MM-dd HH:mm}";
             ws.Range(1, 1, 2, headers.Length).Style.Fill.BackgroundColor = XLColor.LightYellow;
@@ -95,7 +96,7 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : 
                     item.TotalCount, item.OosCount, item.PreviousMonthOosCount,
                     item.OosPercentage, item.PreviousMonthOosPercentage, item.OocCount,
                     item.OocPercentage, item.Ca, item.Pp, item.Ppk, item.PreviousMonthPpk,
-                    item.ResponsibleUser, item.Remarks];
+                    item.ResponsibleUser, item.Remarks, item.AbnormalCount, item.HandledCount, item.UnhandledCount];
                 for (var i = 0; i < values.Length; i++) ws.Cell(row, i + 1).Value = XLCellValue.FromObject(values[i] ?? "");
                 row++;
             }
@@ -106,8 +107,11 @@ public class SpcOverviewReportService(AppDbContext db, SpcService spcService) : 
             {
                 var textWidth = ws.Range(3, col, Math.Max(4, row - 1), col).Cells()
                     .Max(cell => cell.GetFormattedString().Sum(c => c > 127 ? 2d : 1d));
-                ws.Column(col).Width = Math.Max(ws.Column(col).Width, textWidth + 3);
+                ws.Column(col).Width = Math.Min(255, Math.Max(ws.Column(col).Width, textWidth + 3));
+                if (textWidth + 3 > 255)
+                    ws.Range(3, col, Math.Max(4, row - 1), col).Style.Alignment.WrapText = true;
             }
+            ws.RowsUsed().AdjustToContents();
             ws.SheetView.FreezeRows(3);
         }
         using var stream = new MemoryStream();

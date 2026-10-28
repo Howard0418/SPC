@@ -1245,7 +1245,11 @@
       "draw": "製圖",
       "previousWeek": "上週",
       "previousMonth": "上月",
-      "rankingCount": "{count} 件"
+      "rankingCount": "{count} 件",
+      "abnormalCases": "異常件數",
+      "handledCases": "已處置件數",
+      "unhandledCases": "未處置件數",
+      "dispositionNote": "依查詢當下處置狀態統計，非月底快照；未處置含處置中及無處置紀錄，同一異常去重。"
     },
     "chartLabels": {
       "xbarTitle": "Xbar 平均值管制圖",

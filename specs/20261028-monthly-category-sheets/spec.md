@@ -1,5 +1,5 @@
 # 月報分類工作表
-- 工作：SPC-ADJUST-1028-TASK-004；版本1；狀態：執行中。
+- 工作：SPC-ADJUST-1028-TASK-004；版本1；狀態：測試完成，正式待授權。
 - 授權：使用者同意優先執行月報004，完成後接005。基準見[原規格](../20261028-spc-adjustment-backlog/spec.md)、[截圖補充](../20261028-chemical-screenshot-followup/spec.md)。
 - 主系統SPC；無Portal、DB結構、權限或正式資料變更。測試站發布；正式另授權。
 

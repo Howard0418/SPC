@@ -1245,7 +1245,11 @@
       "draw": "制图",
       "previousWeek": "上周",
       "previousMonth": "上月",
-      "rankingCount": "{count} 件"
+      "rankingCount": "{count} 件",
+      "abnormalCases": "异常件数",
+      "handledCases": "已处置件数",
+      "unhandledCases": "未处置件数",
+      "dispositionNote": "按查询当时的处置状态统计，非月底快照；未处置含处置中及无处置记录，同一异常去重。"
     },
     "chartLabels": {
       "xbarTitle": "Xbar 平均值管制图",

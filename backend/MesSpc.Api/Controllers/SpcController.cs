@@ -788,6 +788,9 @@ public class ChartSummaryDto
     public double PreviousMonthOosPercentage { get; set; }
     public int OocCount { get; set; }
     public double OocPercentage { get; set; }
+    public int AbnormalCount { get; set; }
+    public int HandledCount { get; set; }
+    public int UnhandledCount { get; set; }
     public double? Ca { get; set; }
     public double? Pp { get; set; }
     public double? Ppk { get; set; }
