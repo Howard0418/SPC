@@ -1,0 +1,13 @@
+# 驗證
+- 009的F值及適用日期未定，不改公式；本件只處理已保存值與既有權威判定。
+- 測試先行：新UI用例修改前實際失敗（複驗0仍顯示初驗2／12）；C#新查詢類別測試先建立，實作前因缺類別失敗，實作後通過。沒有解除不可變追溯保護；損壞證據用獨立測試庫種子／不一致輸入驗證。
+- SPC API全套297 passed／8條件式略過；後續補端點契約後，ChemicalHistoryQueryTests 8 passed。ChemicalTraceQueryTests回歸通過；Chemical.Tests全套59 passed（605筆穩定分頁／日期／階段等）。Portal五份藥液Node測試合計21 passed，最後版面調整後受影響2項再通過。
+- 保存raw1.004／stored1／USL1.002仍NG；複驗0為最終OK且初驗NG保留；改目前主檔不改保存判定；缺／損壞／不匹配追溯不猜OK；舊計算快照、等於USL、缺規格及端點舊欄位／分頁均有驗證。
+- SPC Release publish成功；Portal API/Web Release build皆0警告、0錯誤。已核對IIS SpcSingleTest、AppEnvironment=test、PMR_SPC_TEST；Portal為本機portaltest對應publish目錄。只更新SPC測試backend與Portal測試API/Web，無SPC frontend變更／發布。
+- 最終實際DLL：SPC0.1.89.0、Portal API1.0.199.0／Web1.0.242.0；Portal兩次發布皆經根目錄scripts/publish-all.ps1，第二次修正視覺檢查發現的表格擠壓。SPC／Portal設定hash保持（Portal12檔），SPC health/version test通過、Portal Login200／歷史未登入401。
+- 使用本人已有測試站登入工作階段，查詢既有日期公式示範12筆：複驗4.80／NG、初驗6.00／NG，其他OK與精度提示可見；QE2 10/27測試站無資料正確顯示空結果。沒有新增／刪除／修改量測。畫面截圖在本機.codex-tmp/chemical-four-20261028/query-judgment-test.jpg，不進Git。
+- 回復備份：SPC `D:/SPC/release/backup-chemical-judgment-20261028`；Portal `D:/PmrPortal/tmp_publish/chemical-judgment-20261028/portal-api`及`portal-web`。需要時維護模式還原同一測試路徑並核設定hash；沒有DB修改，無資料庫回復需求。
+- 原Excel已同步SPC第7階段及Portal摘要／明細、002登錄及2026/10/28實際測試日期，新增原生里程碑307／308；原20物件及其他專案不變。213登錄、197具名，169完成／28未完成，人工待驗11／核銷4另計。副本及原路徑OpenXML0錯誤，ZIP、重開計數／公式掃描、11頁列印與截圖通過；未以Microsoft Excel人工開啟。
+- Excel備份：Voice/備份/進度表_TASK002測試前_20261028-105929.xlsx；取代前核原檔未變，輸出hash3cfaed88c88505242f41e081aeabdc8978569524648486b08b62b1f6f4b412c9。需回復時先核無後續更新再使用備份。
+- 正式只讀版本核對：SPC0.1.71+9de1599、Portal API196/Web239+bab8f0f；SPC與目前來源有78個既有檔案差異，不可直接以整包測試成果覆蓋正式。正式仍待最小修補包檢查及明確發布授權；002保持未完成。
+- Git只納入本件程式／測試／版號／規格與中央同步，不納入本機輸出或既有團保文件修改。

@@ -77,7 +77,7 @@ public sealed class ChemicalTraceQueryService(AppDbContext db)
   return new(true,count,unknown,multiple,rows,more,moreTrace);
  }
  private static DateTime Utc(DateTime at)=>DateTime.SpecifyKind(at,DateTimeKind.Utc);
- private static ChemicalTraceCalculation Read(ChemicalCalculationTrace trace,Dictionary<Guid,ChemicalCalculationReceipt> receipts,
+ internal static ChemicalTraceCalculation Read(ChemicalCalculationTrace trace,Dictionary<Guid,ChemicalCalculationReceipt> receipts,
   Dictionary<long,ChemicalFormulaEffectivity> effects,Dictionary<long,ChemicalAnalysisFormulaVersion> formulas,int ppcId)
  {
   var unavailable=new ChemicalTraceCalculation(trace.Phase,trace.VersionNo,"Unavailable");

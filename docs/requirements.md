@@ -1,3 +1,5 @@
+> 2026-10-28 TASK-002：[保存判定與複驗優先](D:/SPC/specs/20261028-chemical-history-judgment/spec.md)測試完成；SPC API89／Portal API199/Web242已發布測試站，實站12筆查詢通過，正式待授權。007完成、009待F、008待正式；核心28件。
+
 > 2026-10-28 TASK-009：[QE2診斷](D:/SPC/specs/20261028-chemical-qe2-diagnosis/spec.md)確認固定係數差異；使用者F值與日期待確認，保留公式與歷史資料，未完成／未發布。002可依已儲存結果獨立顯示，核心仍28件。
 
 > 2026-10-28 TASK-007：[N2現版驗證](D:/SPC/specs/20261028-chemical-n2-verification/spec.md)已完成。正式唯讀開／收線各10筆，中班無資料隔離、5項UI回歸通過；原異常未重現，未修改產品或發布。中央剩28件；其他工作不因此結案。

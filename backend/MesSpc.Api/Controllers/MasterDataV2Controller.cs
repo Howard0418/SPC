@@ -121,12 +121,14 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         var variableQuery = db.VariableMeasurements.AsNoTracking().Where(x => x.ProcessId == id);
         if (start.HasValue) variableQuery = variableQuery.Where(x => x.MeasuredAt >= start.Value);
         if (end.HasValue) variableQuery = variableQuery.Where(x => x.MeasuredAt <= end.Value);
-        var variableRows = await variableQuery
+        var page = await variableQuery
             .OrderByDescending(x => x.MeasuredAt)
             .ThenByDescending(x => x.Id)
             .Skip(skip)
             .Take(take)
-            .Select(x => new
+            .ToListAsync();
+        var presentation = await new ChemicalHistoryQueryService(db).GetAsync(page);
+        var variableRows = page.Select(x => new
             {
                 dataType = "Variable",
                 x.Id,
@@ -150,10 +152,16 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 x.SourceType,
                 x.Operator,
                 x.RecheckValue,
+                effectiveValue = presentation[x.Id].EffectiveValue,
+                hasRecheck = presentation[x.Id].HasRecheck,
+                initialJudgment = presentation[x.Id].InitialJudgment,
+                judgment = presentation[x.Id].Judgment,
+                judgmentSource = presentation[x.Id].JudgmentSource,
+                precisionNote = presentation[x.Id].PrecisionNote,
                 x.AdjustAction,
                 x.AdjustAmount
             })
-            .ToListAsync();
+            .ToList();
 
         return Ok(new { process, total = await variableQuery.CountAsync(), rows = variableRows });
     }

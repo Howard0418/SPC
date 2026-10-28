@@ -1,3 +1,5 @@
+> 2026-10-28 002測試完成、正式待部署：複驗0優先，初驗／最終保存判定與精度提示已發布測試API89／Portal199/242，實站唯讀12筆通過。[驗證](D:/SPC/specs/20261028-chemical-history-judgment/verification.md)。核心仍28件。
+
 > 2026-10-28 009已完成唯讀診斷，待使用者確認核准F值與適用日期；未改公式、NG或歷史資料，仍列核心待辦。002依保存值獨立進行。[診斷](D:/SPC/specs/20261028-chemical-qe2-diagnosis/spec.md)。
 
 > 2026-10-28 007 N2現版唯讀驗證完成，原異常未重現；[驗證與限制](specs/20261028-chemical-n2-verification/verification.md)。核心剩28件。
@@ -10,7 +12,7 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成28件：Portal Grafana入口1件＋網站調整8件（008測試完成待正式驗證、其餘7件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
+- 核心未完成28件：Portal Grafana入口1件＋網站調整8件（002／008測試完成待正式、009待F，其餘5件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
 - 原進度表「小工作總表」213筆登錄中197件具名工作（169完成、28未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。最新入池同步依[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)，前次[截圖補充驗證](specs/20261028-chemical-screenshot-followup/verification.md)保留，前次[網站調整規劃驗證](specs/20261028-spc-adjustment-backlog/verification.md)保留，前次[Overall驗證](specs/20261028-spc-overall/verification.md)保留；舊計數只保留歷史或子集合意義。
 
@@ -23,7 +25,7 @@
 |1|SPC-ADJUST-1028-TASK-008|P0／Portal，相依SPC|已完成保存提示／GET復原修正與測試站發布，正式根因、發布及實測待完成，未標DONE。|
 |3|SPC-ADJUST-1028-TASK-009|P1／SPC，相依Portal|QE2硫酸10.8→13.971／14.04及硝酸差異；核對公式／F表／版本與原始精度。|
 |4|SPC-ADJUST-1028-TASK-001|P1／SPC|管制線公式儲存後重算重繪；手動界限與分段優先序待核。|
-|5|SPC-ADJUST-1028-TASK-002|P1／Portal，相依SPC|查詢NG與複驗優先；依009確認分析值來源，0有效。|
+|5|SPC-ADJUST-1028-TASK-002|P1／Portal，相依SPC|複驗優先／保存判定已完成測試與實站唯讀查驗；正式待授權，009未知F不改。|
 |6|SPC-ADJUST-1028-TASK-003|P1／SPC|測試入口HTTPS根網址，保留Launch及正式目標。|
 |7|SPC-ADJUST-1028-TASK-004|P2／SPC|Excel三個獨立Sheet：製程管制、藥液管制、藥液趨勢；不得只在同張分區。|
 |8|SPC-ADJUST-1028-TASK-005|P2／SPC|各Sheet已處置件數／未處置件數，含處置中，沿Overall去重。|
