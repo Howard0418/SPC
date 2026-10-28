@@ -1,4 +1,4 @@
-> 2026-10-28 最新：轉檔001契約／來源環境防護69項測試通過；主機／帳號、正式HTTPS 8443與正式庫受控程序最小權限已核准驗證，Portal非互動認證／憑證保管待確認，未結案。其餘7件未開始，核心34件保持。[執行紀錄](specs/20261028-transfiles-production-identity/verification.md)。
+> 2026-10-28 最新：轉檔001的SPC HTTPS／DB最小權限、DPAPI本人建檔／驗證均通過；正式Portal API僅HTTP81且HTTPS前端無API路由，安全停止，待另授權Portal HTTPS8443。其餘7件未開始，核心34件保持。[執行紀錄](specs/20261028-transfiles-production-identity/verification.md)。
 
 > 2026-10-28 最新規劃：轉檔正式匯入／來源／固定時間新增8件，僅規劃待執行；核心34件，人工11／核銷4另計。未啟用排程或恢復舊暫緩。[規劃及進度同步](specs/20261028-transfiles-production-schedule-plan/verification.md)。下方舊計數保留歷史。
 
@@ -18,17 +18,17 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成34件：轉檔正式匯入／來源／排程新增8件＋Portal Grafana入口1件＋網站調整6件（009待F、004／005測試完成待正式，其餘3件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。001進行中待正式HTTPS／權限／非互動認證，其他7件待執行；未恢復舊暫停工作。
+- 核心未完成34件：轉檔正式匯入／來源／排程新增8件＋Portal Grafana入口1件＋網站調整6件（009待F、004／005測試完成待正式，其餘3件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。001受正式Portal API無HTTPS阻擋，其他7件待執行；未恢復舊暫停工作。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
 - 原進度表「小工作總表」221筆登錄中205件具名工作（171完成、34未完成）；本次[轉檔規劃入池驗證](specs/20261028-transfiles-production-schedule-plan/verification.md)新增8件，父規劃不重複計數。報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。原有[藥液正式驗證](specs/20261028-chemical-history-refresh/formal-release.md)與[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)保留；舊計數只作歷史或子集合意義。
 
 ## 2026-10-28 轉檔工具正式匯入／來源／定時（001進行中，其餘待執行）
 
-[規格](specs/20261028-transfiles-production-schedule-plan/spec.md)／[計畫](specs/20261028-transfiles-production-schedule-plan/plan.md)／[測試矩陣](specs/20261028-transfiles-production-schedule-plan/tasks.md)。初版先規劃入池；使用者後續已授權開始001，主機／完整帳號已確認，現待正式HTTPS／最小權限／非互動認證核准驗證，未結案。以下順序逐件進行，不自動開始002、啟用排程或恢復暫停工作。
+[規格](specs/20261028-transfiles-production-schedule-plan/spec.md)／[計畫](specs/20261028-transfiles-production-schedule-plan/plan.md)／[測試矩陣](specs/20261028-transfiles-production-schedule-plan/tasks.md)。初版先規劃入池；使用者後續已授權開始001，SPC與DPAPI前置均通過，現受正式Portal API缺少HTTPS阻擋，未結案。以下順序逐件進行，不自動開始002、啟用排程或恢復暫停工作。
 
 |順序|工作代號|優先|內容與相依|
 |---|---|---|---|
-|1|TRANSFILES-PROD-1028-TASK-001|P1|[契約與來源環境防護已測](specs/20261028-transfiles-production-identity/spec.md)；主機／帳號、正式HTTPS與最小權限已通過，DPAPI工具7測試及正式部署完成，待本人互動建檔／驗證，未結案。|
+|1|TRANSFILES-PROD-1028-TASK-001|P1|[契約與來源環境防護已測](specs/20261028-transfiles-production-identity/spec.md)；SPC HTTPS／DB最小權限、DPAPI建檔／驗證已通過；正式Portal API僅HTTP81，待另授權HTTPS8443後驗證登入鏈，未結案。|
 |2|TRANSFILES-PROD-1028-TASK-002|P1|三類來源路徑設定、檔案穩定檢查與格式修正建議；依001。|
 |3|TRANSFILES-PROD-1028-TASK-003|P1|藥液正式匯入、初複驗／日期公式追溯；依001／002。|
 |4|TRANSFILES-PROD-1028-TASK-004|P1|咬蝕正式流程與Portal／SPC雙站恢復；依001／002，003後逐件。|
@@ -37,7 +37,7 @@
 |7|TRANSFILES-PROD-1028-TASK-007|P2|固定時間設定與Windows排程管理；依006及核准身分。|
 |8|TRANSFILES-PROD-1028-TASK-008|P2|獨立交付包與三類分階段正式驗收；依001～007，正式寫入與排程啟用另授權。|
 
-001進行中待本人互動建立／驗證DPAPI憑證，002～008待執行，核心仍計8件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
+001進行中，DPAPI已通過但受正式Portal API無HTTPS阻擋；002～008待執行，核心仍計8件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
 
 ## 2026-10-28 SPC 網站調整（藥液3件完成，009待F）
 

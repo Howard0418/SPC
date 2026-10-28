@@ -45,3 +45,9 @@
 - 待本人登入PMR-SPC-SRV互動執行`powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\ProgramData\PMR\TransFiles\credential-tools\Provision-TransFilesPortalCredential.ps1 -Action Provision`，密碼輸入兩次且不顯示。完成後以`-Action Validate`只回帳號／可解密；未完成這一步前001保持進行中。
 - 回復：`-Action Remove`移除本人LocalAppData憑證；刪除正式主機credential-tools目錄前先確認後續封裝未引用。來源交付見[integrations說明](../../integrations/transfiles/production-identity/credential-store/README.md)。
 - 原進度表同步為「進行中，待本人DPAPI建檔」，補紫色原生里程碑315；原28圖形保持加1，核心34／完成171／人工11／核銷4不變。更新前SHA256 562F261C7CFDCB7F3898A4C692E45AC12E0BA337280BBF485804E2F76C0C84DF，備份`Voice/備份/進度表_轉檔001DPAPI部署前_20261028-153548.xlsx`；更新後SHA256 169C8DADB929E68D72A2046715DE8BFF416F057013747F2FDABED4D910883A83。OpenXML 0錯誤、Artifact重開／公式錯誤0、LibreOffice重開／13頁列印及變更區目視通過。
+
+## 本人建檔與Portal HTTPS阻擋
+- 使用者回覆已建立後，以PMR\ihao_ting的Kerberos工作階段執行正式腳本validate通過：account=ihao_ting、purpose與version正確、可由CurrentUser DPAPI解密；憑證檔ACL只有PMR\ihao_ting與SYSTEM FullControl。只輸出非機敏中繼資料，未輸出密文、密碼、Cookie或token。
+- 正式登入前核對發現PmrPortalApi只有`http://172.16.119.130:81`；`https://login.pmr.com.tw`為PmrPortalWeb靜態前端，沒有web application或rewrite `/api`。依契約停止，未把密碼送往HTTP81，未呼叫login／spc-launch／SPC主檔。
+- Portal主機8443未占用，已有含私鑰且涵蓋`*.pmr.com.tw`的有效憑證。最小候選：PmrPortalApi新增`172.16.119.130:8443:login.pmr.com.tw` HTTPS SNI，防火牆只允許排程主機`172.16.119.140`；核准後以`https://login.pmr.com.tw:8443/api`完成登入鏈。這是正式Portal IIS／防火牆變更，尚待另行授權。
+- 原進度表同步為「進行中，Portal HTTPS阻擋」，補紅色原生阻擋里程碑316；原29圖形保持加1，核心34／完成171／人工11／核銷4不變。更新前SHA256 169C8DADB929E68D72A2046715DE8BFF416F057013747F2FDABED4D910883A83，備份`Voice/備份/進度表_轉檔001DPAPI驗證前_20261028-154606.xlsx`；更新後SHA256 6F761C3BEB89D280DB014149933AD857B0FBFD6AFA61CFC1EFE92CD0BED22F72。OpenXML 0錯誤、Artifact重開／公式錯誤0、LibreOffice重開／13頁列印及變更區目視通過。
