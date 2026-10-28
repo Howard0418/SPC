@@ -13,6 +13,7 @@
 - 原Excel同步001為SSO上游HTTPS阻擋並補里程碑317；原30圖形保持加1，OpenXML／Artifact重開／公式錯誤0及目視通過，核心34件不變。LibreOffice本次無回應、未產出PDF，故不列為相容性通過。
 - SPC8443僅新增Portal單一來源，Portal備份後將上游改為HTTPS；入口200、App Pool Started、SPC production0.1.90、spcConnected、launch及唯讀主檔15筆均通過。未匯入／排程／寫資料，001完成。
 - 原Excel同步001為已完成，沿用里程碑317且31個原生圖形保持；OpenXML SDK0錯誤、Artifact原路徑重開／公式錯誤0及目視通過，核心未完成33／完成172。LibreOffice／Microsoft Excel本次未驗證。
+- 依截圖確認正式入口仍指向舊HTTP81；備份後僅將 Portal Web `PortalApi:BaseUrl` 改為 HTTPS8443。登入頁200、API health200、未登入auth/me回401，DefaultAppPool正常；未改SPC、DB或匯入流程。
 - 原Excel狀態／日期／來源測試里程碑同步，原25圖形保持加1；OpenXML0錯誤／重開／12頁列印通過。001未結案，核心34件保持，002未開始。[結果與回復](specs/20261028-transfiles-production-identity/verification.md)。
 
 ## 2026-10-28 TransFiles正式匯入／來源與定時僅規劃
