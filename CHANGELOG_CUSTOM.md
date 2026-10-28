@@ -1,3 +1,8 @@
+## 2026-10-28 TransFiles正式匯入／來源與定時僅規劃
+- 完成三類正式流程、來源可設定與固定時間之規格／BDD／四類測試矩陣；拆8件依身分、資料正確性及相依排序，沿用舊框架，不立即實作。
+- 中央／工具TODO與需求索引同步；原Excel新增8筆、10/28原生規劃標記，原24圖形／其他專案保留，OpenXML0錯誤／重開／12頁列印通過。核心26增34，人工11／核銷4不變。
+- 未更動程式／設定／DB／排程／EXE或網站；實際正式寫入與排程啟用另授權。[規劃與驗證](specs/20261028-transfiles-production-schedule-plan/verification.md)。
+
 ## 2026-10-28 TransFiles正式匯入唯讀核對
 - 已核對三類工具路徑、本機白名單profile及正式SPC90／Portal200。正式URL空白、日期公式DB與咬蝕限定測試；落塵正式量測與批次皆0，不能宣稱三類已正常正式匯入。
 - Python43、Particle16、Etch24通過；未送正式preview／confirm或SQL寫入，未打包／發布／改權限。純稽核不核銷小工作、進度表不適用，核心26保持。[結果與限制](specs/20261028-transfiles-production-readiness/verification.md)。
