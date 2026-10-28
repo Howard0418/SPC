@@ -1,3 +1,5 @@
+> 2026-10-28 TASK-009：[QE2診斷](D:/SPC/specs/20261028-chemical-qe2-diagnosis/spec.md)確認固定係數差異；使用者F值與日期待確認，保留公式與歷史資料，未完成／未發布。002可依已儲存結果獨立顯示，核心仍28件。
+
 > 2026-10-28 TASK-007：[N2現版驗證](D:/SPC/specs/20261028-chemical-n2-verification/spec.md)已完成。正式唯讀開／收線各10筆，中班無資料隔離、5項UI回歸通過；原異常未重現，未修改產品或發布。中央剩28件；其他工作不因此結案。
 
 > 2026-10-28 TASK-008：[藥液歷史刷新修正](../specs/20261028-chemical-history-refresh/spec.md)／[驗證](../specs/20261028-chemical-history-refresh/verification.md)。保存成功與GET失敗分離、GET重試與受限並行／取消／逾時已發布Portal測試API197/Web240；正式根因與實測尚未完成，008保持未完成，中央仍29件。其他工作未啟動。

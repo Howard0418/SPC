@@ -1,3 +1,5 @@
+> 2026-10-28 009已完成唯讀診斷，待使用者確認核准F值與適用日期；未改公式、NG或歷史資料，仍列核心待辦。002依保存值獨立進行。[診斷](D:/SPC/specs/20261028-chemical-qe2-diagnosis/spec.md)。
+
 > 2026-10-28 007 N2現版唯讀驗證完成，原異常未重現；[驗證與限制](specs/20261028-chemical-n2-verification/verification.md)。核心剩28件。
 
 > 2026-10-27報告結案：F/G/H/E已完成，本報告剩0件；其餘19件維持。舊節為歷史，以最新整併計數及[驗證](specs/20261027-mes-spc-report-plan/verification.md)為準。
