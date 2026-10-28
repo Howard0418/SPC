@@ -199,7 +199,7 @@ const ocapActionTypes = ["確認輸入是否正確", "確認機台是否正常",
 const filteredMappingsByDimension = computed(() => {
   return mappings.value.filter(m => {
     if (!m.isEnabled) return false;
-    if (normalizeControlScope(m.controlScope, "") === "CHEM" && m.displayMode === "TREND_CHART") return false;
+    if ((m.displayMode || 'CONTROL_CHART') !== pageGroupType.value) return false;
     const dim = getDimensionForMapping(m);
     return dim === selectedDimension.value;
   });
@@ -451,7 +451,28 @@ const summaryDimensionMap = {
   PRODUCT: "PRODUCT",
   DUST: "DUST"
 };
-const pageGroupType = "CONTROL_CHART";
+const monthlyChartKind = ref('CONTROL_CHART');
+const pageGroupType = computed(() => isMonthlyChartPage.value ? monthlyChartKind.value : 'CONTROL_CHART');
+const monthlyExporting = ref(false);
+
+async function exportMonthlyReport() {
+  monthlyExporting.value = true;
+  error.value = '';
+  try {
+    const start = new Date(`${startDate.value}T00:00:00Z`);
+    const end = new Date(`${endDate.value}T00:00:00Z`);
+    end.setUTCDate(end.getUTCDate() + 1);
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start >= end) throw new Error(t('spc.chartQuery.dateOrder'));
+    const { data } = await api.get('/v1/spc-report-settings/export', { params: { start: start.toISOString(), end: end.toISOString() }, responseType: 'blob' });
+    const url = URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SPC_Monthly_${startDate.value}_${endDate.value}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (e) { error.value = getApiErrorMessage(e); }
+  finally { monthlyExporting.value = false; }
+}
 
 const getDimensionForMapping = (m) => {
   if (m.chartTypeId) {
@@ -469,7 +490,7 @@ const getDimensionForMapping = (m) => {
 
 const dimensionOptions = computed(() =>
   groups.value
-    .filter(group => group.isEnabled !== false && (group.groupType || pageGroupType) === pageGroupType)
+    .filter(group => group.isEnabled !== false && (group.groupType || pageGroupType.value) === pageGroupType.value)
     .map(group => ({
       id: group.groupCode,
       label: group.groupName,
@@ -513,6 +534,16 @@ watch(selectedDimension, (newDim) => {
   tableSummaryData.value = null;
 });
 
+watch(monthlyChartKind, () => {
+  selectedDimension.value = monthlyChartKind.value === 'TREND_CHART' ? 'CHEM' : 'PROCESS';
+  selectedProcessId.value = 'ALL';
+  selectedCharacteristicId.value = '';
+  ppcId.value = '';
+  uploadBatchId.value = '';
+  tableSummaryData.value = null;
+  chartResult.value = null;
+});
+
 watch(selectedPartId, (newValue) => {
   if (updatingCascades.value) return;
   ppcId.value = "";
@@ -541,7 +572,7 @@ async function loadMappings() {
     const [mapRes, typesRes, groupsRes] = await Promise.all([
       api.get("/part-process-characteristics"),
       api.get("/control-chart-types"),
-      api.get("/control-chart-groups", { params: { groupType: pageGroupType } })
+      api.get("/control-chart-groups", { params: isMonthlyChartPage.value ? {} : { groupType: pageGroupType.value } })
     ]);
     
     chartTypes.value = typesRes.data || [];
@@ -691,7 +722,7 @@ async function loadActiveChart() {
     error.value = "";
     chartResult.value = null;
     try {
-      const params = { dimension: summaryDimensionMap[selectedDimension.value] || selectedDimension.value, groupType: pageGroupType };
+      const params = { dimension: summaryDimensionMap[selectedDimension.value] || selectedDimension.value, groupType: pageGroupType.value };
       if (isMonthlyChartPage.value) params.comparisonPeriod = reportPeriodType.value;
       if (useProductPart) {
         if (productPartId.value !== "ALL") params.partId = Number(productPartId.value);
@@ -2135,6 +2166,15 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
     <OverallSummary v-if="route.path === '/spc'" />
 
     <!-- 🌟 三大類管制項目維度選擇器 -->
+    <div v-if="isMonthlyChartPage" class="flex flex-wrap items-center gap-3">
+      <select data-testid="monthly-chart-kind" v-model="monthlyChartKind" :aria-label="t('spc.ppc.chartSettings')" class="p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <option value="CONTROL_CHART">{{ t('spc.ppc.controlChart') }}</option>
+        <option value="TREND_CHART">{{ t('spc.ppc.trendChart') }}</option>
+      </select>
+      <button data-testid="monthly-export" @click="exportMonthlyReport" :disabled="monthlyExporting" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white disabled:opacity-50">
+        <Download class="w-4 h-4" /> {{ t('spc.settings.export') }}
+      </button>
+    </div>
     <div class="flex flex-wrap gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
       <button
         v-for="dimension in dimensionOptions"

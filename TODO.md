@@ -27,7 +27,7 @@
 |1|SPC-ADJUST-1028-TASK-009|P1／SPC，相依Portal|QE2已診斷固定F=0.995；待使用者確認核准F及有效日，保留現行公式與資料。|
 |2|SPC-ADJUST-1028-TASK-001|P1／SPC|管制線公式儲存後重算重繪；手動界限與分段優先序待核。|
 |3|SPC-ADJUST-1028-TASK-003|P1／SPC|測試入口HTTPS根網址，保留Launch及正式目標。|
-|4|SPC-ADJUST-1028-TASK-004|P2／SPC|Excel三個獨立Sheet：製程管制、藥液管制、藥液趨勢；不得只在同張分區。|
+|4|SPC-ADJUST-1028-TASK-004|P2／SPC|[三個獨立Sheet與趨勢查詢已測試](specs/20261028-monthly-category-sheets/verification.md)，測試API91／Web112；正式待授權，保留未完成旗標。|
 |5|SPC-ADJUST-1028-TASK-005|P2／SPC|各Sheet已處置件數／未處置件數，含處置中，沿Overall去重。|
 |6|SPC-ADJUST-1028-TASK-006|P3／SPC|淺藍直方圖，不改bins／頻數／統計。|
 

@@ -54,6 +54,7 @@ public class SpcReportSchedulesController(
     {
         var endUtc = end?.ToUniversalTime() ?? DateTime.UtcNow;
         var startUtc = start?.ToUniversalTime() ?? endUtc.AddMonths(-1);
+        if (startUtc >= endUtc) return BadRequest(new { message = "報表日期範圍不正確。" });
         var bytes = await reportService.BuildExcelAsync(startUtc, endUtc, ct, ApiUiMessageCatalog.RequestLocale(Request));
         return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"SPC_Item_Overview_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");

@@ -12,7 +12,7 @@ public class CharacteristicReportNameTests
     public void OverviewSelectsNameOnlyAtCellWritingAndPreservesLiteralTextAndSource(string locale,string expected)
     {
         var item=new ChartSummaryDto {PartProcessCharacteristicId=1,ChartName="獨立原圖名",CharacteristicName="比重",CharacteristicNameEn="=1+1 <b>@:key {name}</b>",CharacteristicCode="D0",Usl=.4,Lsl=.2,TotalCount=0};
-        var bytes=SpcOverviewReportService.BuildWorkbook([item],new(2026,10,1),new(2026,11,1),locale);using var book=new XLWorkbook(new MemoryStream(bytes));var sheet=book.Worksheets.First();
+        var bytes=SpcOverviewReportService.BuildWorkbook([item],new(2026,10,1),new(2026,11,1),locale);using var book=new XLWorkbook(new MemoryStream(bytes));var sheet=book.Worksheet("未分類");
         Assert.Equal(expected,sheet.Cell(4,6).GetString());Assert.Equal(XLDataType.Text,sheet.Cell(4,6).DataType);Assert.Equal("",sheet.Cell(4,6).FormulaA1);Assert.Equal(.2,sheet.Cell(4,9).GetValue<double>());Assert.Equal(0,sheet.Cell(4,13).GetValue<int>());Assert.Equal("獨立原圖名",item.ChartName);
     }
     [Fact]

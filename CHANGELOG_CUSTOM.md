@@ -1,3 +1,7 @@
+## 2026-10-28 TASK-004 月報分類測試完成
+- 共用月報產生器分成三個指定Sheet，空類保留表頭、產品及未知分類另列；月報可選藥液趨勢及按所選月份下載。無DB／F／公式變更。
+- API303通過／8條件略過；UI38通過／1原版亦失敗，測試站建置檔4項通過。測試API91／Web112已發布，正式未發布；原Excel日期／狀態／里程碑同步，核心仍26件。[驗證及回復](specs/20261028-monthly-category-sheets/verification.md)。
+
 ## 2026-10-28 藥液002／008正式發布完成
 - 使用者明確授權後，SPC正式API0.1.90以既有正式R2來源＋已驗收PPC單行修補為基底，只部署本次歷史查詢的dll/exe/pdb/deps四檔；未帶入測試站其餘功能。Portal從根目錄scripts/publish-all.ps1正式發布API1.0.200／Web1.0.243。
 - 隔離候選查詢／trace13項＋PPC4項回歸通過，Release產包及97檔比對通過；實際EF註冊54筆核對無pending migration。正式備份完成，SPC2個、Portal441個受保護設定／上傳檔hash保持，Portal每個程式也只4個編譯檔改變。無公式／F／量測寫入或schema變更。

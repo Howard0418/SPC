@@ -27,8 +27,8 @@ public class ReportLocalizationTests
             TotalCount=0,OosCount=0,PreviousMonthOosCount=0,OosPercentage=0,OocCount=0,Ca=0,Pp=1.2,Ppk=1.1,ResponsibleUser=Raw,Remarks=Raw};
         var start=new DateTime(2026,10,1,0,0,0,DateTimeKind.Utc);var end=start.AddMonths(1);
         var bytes=SpcOverviewReportService.BuildWorkbook([row],start,end,locale);
-        using var workbook=new XLWorkbook(new MemoryStream(bytes));var sheet=Assert.Single(workbook.Worksheets);
-        Assert.Equal(T("reportOverviewSheet",locale),sheet.Name);Assert.Equal(T("reportOverviewTitle",locale),sheet.Cell(1,1).GetString());
+        using var workbook=new XLWorkbook(new MemoryStream(bytes));var sheet=workbook.Worksheet("未分類");
+        Assert.Equal(4,workbook.Worksheets.Count);Assert.Equal(T("reportOverviewTitle",locale),sheet.Cell(1,1).GetString());
         Assert.Equal(T("reportControlCategory",locale),sheet.Cell(3,2).GetString());Assert.Equal("USL",sheet.Cell(3,8).GetString());
         Assert.Equal(7,sheet.Cell(4,1).GetValue<int>());Assert.Equal(Raw,sheet.Cell(4,2).GetString());Assert.Equal("S0",sheet.Cell(4,5).GetString());
         Assert.Equal(T("reportTrendChart",locale),sheet.Cell(4,3).GetString());Assert.Equal(T("reportManualLimits",locale),sheet.Cell(4,12).GetString());
@@ -132,7 +132,7 @@ public class ReportLocalizationTests
         Assert.Equal("週報",json.GetProperty("displayType").GetString());Assert.StartsWith("SPC_Item_Overview_週報_",json.GetProperty("fileName").GetString());
         Assert.Equal(0,json.GetProperty("success").GetInt32());var recipient=json.GetProperty("recipients")[0];
         Assert.Equal("寄信服務回傳失敗。",recipient.GetProperty("errorMessage").GetString());Assert.Equal("spc.api.mailSmtpFailed",recipient.GetProperty("displayMessage").GetProperty("messageKey").GetString());
-        using var attachment=new XLWorkbook(new MemoryStream(bytes));Assert.Equal(locale=="en-US"?"Proportion":"比重",attachment.Worksheets.First().Cell(4,6).GetString());
+        using var attachment=new XLWorkbook(new MemoryStream(bytes));Assert.Equal(locale=="en-US"?"Proportion":"比重",attachment.Worksheet("未分類").Cell(4,6).GetString());
         builder.VerifyAll();sender.VerifyAll();Assert.Empty(await db.SpcReportSchedules.ToListAsync());
     }
 

@@ -759,6 +759,7 @@ public class ChartSummaryDto
 {
     public int PartProcessCharacteristicId { get; set; }
     public string ControlCategory { get; set; } = string.Empty;
+    public string GroupCode { get; set; } = string.Empty;
     public string GroupType { get; set; } = string.Empty;
     public string ChartKind { get; set; } = string.Empty;
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]

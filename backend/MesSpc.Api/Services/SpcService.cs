@@ -390,7 +390,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         int? partId = null,
         string? normalityMethod = null,
         CancellationToken ct = default,
-        bool includeAllPoints = false)
+        bool includeAllPoints = false,
+        bool exactUtcRange = false)
     {
         var mapping = await db.PartProcessCharacteristics
             .Include(x => x.Machine)
@@ -449,8 +450,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
             if (!string.IsNullOrWhiteSpace(batchNo)) query = query.Where(x => x.LotNo == batchNo);
             if (partId.HasValue) query = query.Where(x => x.PartId == partId.Value);
-            if (startDate.HasValue) query = query.Where(x => x.MeasuredAt >= startDate.Value.Date);
-            if (endDate.HasValue) query = query.Where(x => x.MeasuredAt < endDate.Value.Date.AddDays(1));
+            if (startDate.HasValue) { var from = exactUtcRange ? startDate.Value : startDate.Value.Date; query = query.Where(x => x.MeasuredAt >= from); }
+            if (endDate.HasValue) { var until = exactUtcRange ? endDate.Value : endDate.Value.Date.AddDays(1); query = query.Where(x => x.MeasuredAt < until); }
 
             var isEtchSubgroup = mapping.Characteristic?.CharacteristicCode is "ETCH_A_AVG" or "ETCH_B_AVG"
                 && chartType?.ChartTypeCode is "XBAR_S" or "XBAR-S";
@@ -586,8 +587,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             if (uploadBatchId.HasValue) query = query.Where(x => x.UploadBatchId == uploadBatchId.Value);
             if (!string.IsNullOrWhiteSpace(batchNo)) query = query.Where(x => x.LotNo == batchNo);
             if (partId.HasValue) query = query.Where(x => x.PartId == partId.Value);
-            if (startDate.HasValue) query = query.Where(x => x.MeasuredAt >= startDate.Value.Date);
-            if (endDate.HasValue) query = query.Where(x => x.MeasuredAt < endDate.Value.Date.AddDays(1));
+            if (startDate.HasValue) { var from = exactUtcRange ? startDate.Value : startDate.Value.Date; query = query.Where(x => x.MeasuredAt >= from); }
+            if (endDate.HasValue) { var until = exactUtcRange ? endDate.Value : endDate.Value.Date.AddDays(1); query = query.Where(x => x.MeasuredAt < until); }
 
             var measurements = await (includeAllPoints ? query.OrderBy(x => x.MeasuredAt).ThenBy(x => x.Id)
                 : query.OrderBy(x => x.MeasuredAt).Take(1000)).ToListAsync(ct);
@@ -1128,7 +1129,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         string? groupType = null,
         int? processId = null,
         string? comparisonPeriod = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        bool exactUtcRange = false)
     {
         var normalizedDimension = NormalizeControlScope(dimension);
         var normalizedGroupType = string.IsNullOrWhiteSpace(groupType) ? null : groupType.Trim().ToUpperInvariant();
@@ -1186,7 +1188,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         var summaries = new List<MesSpc.Api.Controllers.ChartSummaryDto>();
         foreach (var mapping in mappings)
         {
-            var result = await GetInteractiveChartAsync(mapping.Id, uploadBatchId, startDate, endDate, batchNo, partId, ct: ct);
+            var result = await GetInteractiveChartAsync(mapping.Id, uploadBatchId, startDate, endDate, batchNo, partId, ct: ct, exactUtcRange: exactUtcRange);
             if (result == null || result.RawDataPoints == null) continue;
 
             var rawPoints = ToSpcDataPoints(result.RawDataPoints);
@@ -1249,6 +1251,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             {
                 PartProcessCharacteristicId = mapping.Id,
                 ControlCategory = groupName,
+                GroupCode = normalizedDimension,
                 GroupType = mappingGroupType,
                 ChartKind = FormatChartKind(mappingGroupType),
                 ChartKindMessage = SpcReportPresentation.ChartKind(mappingGroupType),

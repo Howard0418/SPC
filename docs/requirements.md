@@ -1,3 +1,5 @@
+> 2026-10-28 TASK-004：[月報分類工作表](../specs/20261028-monthly-category-sheets/spec.md)測試API91／Web112完成；三張指定Sheet、產品保留、趨勢查詢及精確期間。正式待授權，核心26件保持。
+
 > 2026-10-28 藥液優先4件：007驗證及002／008正式發布已完成（SPC90／Portal200/243）；009等F與日期，未改公式／既有量測。核心剩26件。[正式驗證與回復](D:/SPC/specs/20261028-chemical-history-refresh/formal-release.md)。
 
 > 2026-10-28 TASK-002：[保存判定與複驗優先](D:/SPC/specs/20261028-chemical-history-judgment/spec.md)測試完成；SPC API89／Portal API199/Web242已發布測試站，實站12筆查詢通過，正式待授權。007完成、009待F、008待正式；核心28件。
