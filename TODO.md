@@ -1,3 +1,5 @@
+> 2026-10-28 007 N2現版唯讀驗證完成，原異常未重現；[驗證與限制](specs/20261028-chemical-n2-verification/verification.md)。核心剩28件。
+
 > 2026-10-27報告結案：F/G/H/E已完成，本報告剩0件；其餘19件維持。舊節為歷史，以最新整併計數及[驗證](specs/20261027-mes-spc-report-plan/verification.md)為準。
 
 # SPC 全系統未完成小工作池
@@ -6,9 +8,9 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成29件：Portal Grafana入口1件＋網站調整9件（008測試完成待正式驗證、其餘8件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
+- 核心未完成28件：Portal Grafana入口1件＋網站調整8件（008測試完成待正式驗證、其餘7件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
-- 原進度表「小工作總表」213筆登錄中197件具名工作（168完成、29未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。最新入池同步依[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)，前次[截圖補充驗證](specs/20261028-chemical-screenshot-followup/verification.md)保留，前次[網站調整規劃驗證](specs/20261028-spc-adjustment-backlog/verification.md)保留，前次[Overall驗證](specs/20261028-spc-overall/verification.md)保留；舊計數只保留歷史或子集合意義。
+- 原進度表「小工作總表」213筆登錄中197件具名工作（169完成、28未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。最新入池同步依[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)，前次[截圖補充驗證](specs/20261028-chemical-screenshot-followup/verification.md)保留，前次[網站調整規劃驗證](specs/20261028-spc-adjustment-backlog/verification.md)保留，前次[Overall驗證](specs/20261028-spc-overall/verification.md)保留；舊計數只保留歷史或子集合意義。
 
 ## 2026-10-28 SPC 網站調整（008測試完成，其他保持待辦）
 
@@ -17,7 +19,6 @@
 |順序|工作代號|優先／主系統|工作與相依|
 |---|---|---|---|
 |1|SPC-ADJUST-1028-TASK-008|P0／Portal，相依SPC|已完成保存提示／GET復原修正與測試站發布，正式根因、發布及實測待完成，未標DONE。|
-|2|SPC-ADJUST-1028-TASK-007|P0／Portal，相依SPC|N2開線未出現、收線載入失敗；先沿008診斷，避免重複修復。|
 |3|SPC-ADJUST-1028-TASK-009|P1／SPC，相依Portal|QE2硫酸10.8→13.971／14.04及硝酸差異；核對公式／F表／版本與原始精度。|
 |4|SPC-ADJUST-1028-TASK-001|P1／SPC|管制線公式儲存後重算重繪；手動界限與分段優先序待核。|
 |5|SPC-ADJUST-1028-TASK-002|P1／Portal，相依SPC|查詢NG與複驗優先；依009確認分析值來源，0有效。|

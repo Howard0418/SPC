@@ -1,3 +1,5 @@
+> 2026-10-28 TASK-007：[N2現版驗證](D:/SPC/specs/20261028-chemical-n2-verification/spec.md)已完成。正式唯讀開／收線各10筆，中班無資料隔離、5項UI回歸通過；原異常未重現，未修改產品或發布。中央剩28件；其他工作不因此結案。
+
 > 2026-10-28 TASK-008：[藥液歷史刷新修正](../specs/20261028-chemical-history-refresh/spec.md)／[驗證](../specs/20261028-chemical-history-refresh/verification.md)。保存成功與GET失敗分離、GET重試與受限並行／取消／逾時已發布Portal測試API197/Web240；正式根因與實測尚未完成，008保持未完成，中央仍29件。其他工作未啟動。
 
 > 2026-10-28 Portal Grafana入口：[中央引用](../specs/20261028-portal-grafana-entry-sync/spec.md)，主規格在Portal；新增PORTAL-GRAFANA-1028-TASK-001／P2待執行，建議首頁快速連結／新分頁。僅規劃，未設定／實作／發布；中央未完成29件，不重複計數。

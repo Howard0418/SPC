@@ -1,3 +1,5 @@
+> 最新狀態（10/28）：007已完成[現版驗證](../20261028-chemical-n2-verification/verification.md)，原異常未重現；008仍待正式驗證，其他需求及歷史紀錄保留。
+
 # 功能規格：SPC 網站調整工作池
 - 功能 ID：SPC-ADJUST-20261028；版本3（僅同步008執行狀態，原需求保持）。
 - 狀態：008已完成Portal測試修正／發布，正式根因及實測待完成；其餘8件未執行。詳[008驗證](../20261028-chemical-history-refresh/verification.md)。

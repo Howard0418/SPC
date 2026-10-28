@@ -23,7 +23,7 @@
 規劃交付檢查：[v1歷史](verification.md)／[v2截圖補充結果](../20261028-chemical-screenshot-followup/verification.md)。優先順序為後續選取依據，不是現在執行授權。
 
 - [ ] TASK-008 保存成功後歷史查詢失敗：已完成Portal測試修正，正式根因／發布／實測待完成，詳[驗證](../20261028-chemical-history-refresh/verification.md)。
-- [ ] TASK-007 N2開／收線問題（依008診斷，避免重複修復）。
+- [x] 007 N2開／收線現版驗證完成（原異常未重現）；詳[驗證](../20261028-chemical-n2-verification/verification.md)。
 - [ ] TASK-009 QE2分析值差異（先核准計算來源；002在此後驗證判定）。
 
 新增三件及截圖測試矩陣見[補充任務](../20261028-chemical-screenshot-followup/tasks.md)。執行順序以本表與補充規格v1為準，原v1排序留在Git歷史。
