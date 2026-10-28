@@ -1,6 +1,8 @@
-## 2026-10-28 轉檔001來源防護已測，正式身分待確認
+## 2026-10-28 轉檔001主機身分已核對，正式HTTPS／權限待核准
 - 使用者授權開始001；完成正式目標／actor／最小權限契約，既有唯讀登入先匿名查SPC環境，錯置／未知／失敗不建立Portal登入。舊碼先紅，修改後4新測試＋4GUI故障＋61回歸共69通過，py_compile與patch獨立重現通過。
-- 實際主機／帳號待回覆；正式HTTPS匿名GET406未取得environment，不宣稱正式預檢成功。未改角色／DB／profile／排程或重包EXE；SPC／Portal無變更，網站發布不適用。
+- 使用者指定172.16.119.140／ihao_ting；唯讀確認PMR-SPC-SRV／PMR\ihao_ting、既有SQL登入啟用但正式庫無user映射。443的406來自SpcWeb靜態站，SpcApi目前只有HTTP8081；8443未占用且已有適用憑證。僅記錄HTTPS8443與受控程序角色候選，不宣稱正式預檢成功。
+- 未改IIS／憑證／防火牆、角色／DB、profile／排程或重包EXE；正式HTTPS、正式庫最小權限與非互動Portal認證仍待另行授權／驗證，SPC／Portal無發布。
+- 原Excel同步001進行中狀態與原生里程碑，原26圖形保持加1；OpenXML 0錯誤、重開／公式錯誤0及13頁列印通過。核心34件不變，002未開始。
 - 原Excel狀態／日期／來源測試里程碑同步，原25圖形保持加1；OpenXML0錯誤／重開／12頁列印通過。001未結案，核心34件保持，002未開始。[結果與回復](specs/20261028-transfiles-production-identity/verification.md)。
 
 ## 2026-10-28 TransFiles正式匯入／來源與定時僅規劃

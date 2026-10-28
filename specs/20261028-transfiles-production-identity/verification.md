@@ -1,5 +1,5 @@
 # TASK-001 執行紀錄
-- 2026-10-28；狀態：契約與工具來源環境防護已完成測試，實際主機／帳號與正式HTTPS核對待確認，001未結案；002～008未開始。
+- 2026-10-28；狀態：契約與工具來源環境防護已完成測試，主機／完整帳號已唯讀確認；正式HTTPS、正式庫最小權限及非互動認證待核准／驗證，001未結案；002～008未開始。
 
 ## 已完成
 - 已比對[原規劃](../20261028-transfiles-production-schedule-plan/spec.md)、connection_settings／connection_test、Portal帳密登入、ChemicalFormulaScheduleController及ChemicalDirectWriterSqlV1的actor／USER_NAME要求，寫成[正式目標／身分／最小權限契約](identity-contract.md)。沒有預先認定gMSA或既有個人測試帳號可供正式無人值守使用。
@@ -9,10 +9,16 @@
 - 既有GUI故障測試fixture改成先回version成功，再於所測階段失敗；新增環境核對失敗情境，並核對只發出version GET／不登入。不核銷舊EXE人工故障驗收。
 - TransFiles非Git repo，實際兩檔變更保存為[最小patch](../../integrations/transfiles/production-identity/README.md)；獨立來源副本通過apply-check、apply及UTF-8／LF正規化逐字比較。CRLF來源及patch換行差異已處理，不以無法apply的產物交付。
 
+## 正式環境唯讀診斷
+- 使用者指定172.16.119.140／ihao_ting；Kerberos唯讀核對實際主機PMR-SPC-SRV、完整帳號PMR\ihao_ting及同一Windows SID。既有SQL Server WINDOWS_LOGIN已啟用、預設庫PMR_SPC_TEST；PMR_SPC_2026沒有對應database principal。沒有建立user／role／grant。
+- 以現有應用連線只查身分中繼資料；另以目前Windows身分新建Integrated Security連線回18456。遠端工作階段只有Impersonation，結果可能含Kerberos double-hop，不能據此宣稱本機排程整合認證失敗或自行啟用委派。
+- IIS紀錄證實Python請求到SpcWeb 443並回406；正式SpcApi實際只綁HTTP 8081，SpcWeb沒有web application或rewrite rule。主機內直接GET 8081 `/api/version`回200、environment=production、version=0.1.90；這不符合工具HTTPS契約，不能寫入核准profile。
+- 8443未監聽，主機已有含私鑰、涵蓋`*.pmr.com.tw`且有效的憑證。已在[契約](identity-contract.md)記錄最小HTTPS 8443與正式庫受控程序角色候選；尚未變更IIS／憑證／防火牆／資料庫。
+
 ## 尚未完成／實際環境限制
-- 已詢問使用者正式執行主機及Windows／網域帳號，目前待回覆。沒有實際帳號就不能查證Portal／SPC／SQL actor一致性、最小角色及無人值守認證；此部分保留待辦。
+- 尚待另行核准並驗證正式SpcApi HTTPS端點、PMR_SPC_2026最小權限映射，以及Portal非互動認證與憑證保管方式；使用者指定個人帳號不等於允許保存密碼或建立排程。
 - 使用合成輸入、Mock Portal factory及現有TLS helper，只匿名GET已知正式SPC HTTPS `/api/version`，測試誤選test應在登入前拒絕。初次沙箱未取得可確認回應；允許網路後實際HTTP406，沒有取得environment，因此只確認未知／失敗時未建立Portal client，不宣稱真實錯置環境已回production或正式登入成功。
-- HTTPS406原因／核准對外profile仍需後續釐清；本件不改IIS、Proxy、TLS驗證、網址設定或正式角色來繞過。既有本機正式URL空白仍保留。
+- HTTPS406原因已定位，但核准對外profile仍未建立；本件不改IIS、Proxy、TLS驗證、網址設定或正式角色來繞過。既有本機正式URL空白仍保留。
 - 不建立帳號、角色／grant、資料庫連線、prepare／preview／confirm或Windows工作；沒有讀取／保存真實帳密與權杖。69測試均mock／暫存，不是正式正向寫入或排程驗收。
 
 ## 進度、交付與回復
@@ -21,3 +27,7 @@
 - 備份Voice/備份/進度表_轉檔001身分核對前_20261028-145931.xlsx；原路徑SHA256 20F8901F4AAD1D2FAE6C94E39B16CC02B7A0FED58E82FBEFFC0BE44132951F0D。取代前核對未變，原路徑再讀及OpenXML0錯誤；需回復先核對沒有後續更新。
 - 程式回復：使用本機.codex-tmp/transfiles-identity-20261028的兩個before.py，或核對無後續修改後反向patch；不刪資料／改角色。舊EXE未覆蓋、未重新打包，008才處理打包／正式驗收。
 - SPC／Portal沒有產品程式變更，網站build／測試站與正式發布不適用。工具來源已實作不等於舊EXE已更新；文件與來源patch依本件提交上傳。
+
+## 續作進度同步
+- 原進度表已將001更新為「進行中，待HTTPS／權限核准」，主表補上主機身分已核的橘色原生里程碑313；原26個圖形逐一保持，其他工作列及核心34／完成171／人工11／核銷4計數不變。
+- 更新前來源SHA256仍為20F8901F4AAD1D2FAE6C94E39B16CC02B7A0FED58E82FBEFFC0BE44132951F0D；備份`Voice/備份/進度表_轉檔001主機身分核對前_20261028-152217.xlsx`，取代後SHA256為355100964FB97C488873E4A0D417D2EBFA895E63ED3B691E9F15CB6C28439C3E。OpenXML SDK 0錯誤、Artifact重開／公式錯誤0、LibreOffice重開／13頁列印及變更區目視通過；未宣稱Microsoft Excel人工驗收。
