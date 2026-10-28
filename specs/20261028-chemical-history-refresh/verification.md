@@ -1,0 +1,13 @@
+# 驗證紀錄
+- 2026-10-28：使用者確認正式入口網站出錯，尚未重現正式網路根因。
+- 發布前已唯讀核對本機IIS：PmrPortalWeb路徑D:/PmrPortal/publish/portal-web，binding包含portaltest.pmr.com.tw；API為D:/PmrPortal/publish/portal-api:8091。
+- 測試先行：新增UI測試在修改前實際失敗（提前宣稱已標示）；修正測試fixture隱藏查詢選單操作後納入回歸。新增查詢錯誤、GET重試、3並行上限、取消舊回應及單頁逾時；既有1205筆、重複頁／總數變動、N1/N2階段、初複驗流程回歸共18項全通過。
+- `node --test tests/chemical-history.cjs tests/chemical-history-refresh-ui.cjs tests/chemical-stage-ui.cjs tests/chemical-effective-ui.cjs`：18 passed。`SpcProxyControllerTests|ChemicalEffectiveProxyTests`：15 passed。Portal API/Web Release build：皆0警告、0錯誤。
+- 僅執行Portal根目錄`scripts/publish-all.ps1`：測試API1.0.197／Web1.0.240實際DLL核對通過。設定／uploads共12個受保護檔案hash未變，未改IIS binding、權限、DB或SPC程式。
+- 測試站唯讀smoke：/Login 200；未登入藥液頁302；未登入/api/spc/measurements?processId=1回401。沒有冒稱真人登入後成功寫入／正式原案例已修復；UI行為以Playwright受控端點驗證。
+- 發布前備份：`D:/PmrPortal/tmp_publish/chemical-history-refresh-20261028/portal-api`及`portal-web`。必要時維護模式還原同一測試目錄，保留環境設定；無DB回復需求。
+- 原Excel已同步Portal量測摘要／明細、AI16最新紀錄日期2026-10-28、008狀態及來源；新增藍色測試里程碑id304（10/28），原17個原生物件逐一不變；SPC／KM及其他專案單元格不變。表格範圍／列印設定及其他ZIP parts不變；213登錄、197具名、168完成／29未完成、11人工待驗／4核銷。
+- Excel副本及原路徑OpenXML均0錯誤；ZIP、重開計數／公式錯誤掃描、artifact預覽與LibreOffice11頁列印通過。未以Microsoft Excel人工開啟驗收。
+- 原檔備份：`C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/Voice/備份/進度表_TASK008測試修正前_20261028-102707.xlsx`；取代前核原檔未變，取代後SHA256 `fac132854149e90478526002611b057b6e05d3377f6727487425064f0ede0e4b`。需回復時使用此備份，先確認沒有後續更新。
+- 正式站未變；`Failed to fetch`正式根因尚未定位，後續需正式瀏覽器Network／伺服器診斷與另行授權發布。008保留核心待辦，其他小工作未啟動。
+- Git：Portal本件9個必要檔案已以`7d828c7`提交並上傳至PmrPortalWebSite/main；既有兩個團保文件修改及未追蹤內容未納入。中央spec／工作池／驗證文件隨本次SPC提交上傳至origin/Develop，提交識別以Git紀錄為準；未納入Excel、截圖、備份或輸出。

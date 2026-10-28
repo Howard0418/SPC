@@ -22,7 +22,7 @@
 
 規劃交付檢查：[v1歷史](verification.md)／[v2截圖補充結果](../20261028-chemical-screenshot-followup/verification.md)。優先順序為後續選取依據，不是現在執行授權。
 
-- [ ] TASK-008 保存成功後歷史查詢失敗（先處理共用查詢）。
+- [ ] TASK-008 保存成功後歷史查詢失敗：已完成Portal測試修正，正式根因／發布／實測待完成，詳[驗證](../20261028-chemical-history-refresh/verification.md)。
 - [ ] TASK-007 N2開／收線問題（依008診斷，避免重複修復）。
 - [ ] TASK-009 QE2分析值差異（先核准計算來源；002在此後驗證判定）。
 

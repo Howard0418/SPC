@@ -1,3 +1,8 @@
+## 2026-10-28 SPC-ADJUST-1028-TASK-008 測試修正
+- Portal保存後保留成功批次，GET失敗可獨立重試，區分權限／服務／網路／逾時；限制最多3製程並行，取消舊查詢，保存後優先同製程。完整分頁與寫入契約保持。
+- 18藥液測試＋15代理測試通過；API/Web Release build皆0警告錯誤。Portal測試API1.0.197/Web1.0.240已發布，設定指紋保持；正式未變。
+- 原Excel日期／008狀態／原生里程碑已備份同步，OpenXML0錯誤、重開／計數／11頁列印通過；原17圖形不變加1測試標記。正式根因與實測未完成，核心仍29件，另人工11／核銷4。詳[驗證及回復](specs/20261028-chemical-history-refresh/verification.md)。
+
 ## 2026-10-28 Portal Grafana入口中央同步
 - [Portal獨立主規格引用](specs/20261028-portal-grafana-entry-sync/spec.md)，單一PORTAL-GRAFANA-1028-TASK-001／P2，排既有錯誤／資料／月報後、配色前。僅規劃，未設定／實作／發布，中央28增為29件。
 - 原Excel僅Portal首頁／快速連結區段與單一總表工作同步，16原生物件保留＋1規劃標記；副本與原路徑OpenXML均0錯誤，ZIP／內容／重開／計數／列印通過。Portal主規格記錄備份與回復；SPC／KM業務內容保持。
