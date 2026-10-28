@@ -1,5 +1,5 @@
 # TASK-001 正式目標、身分與權限契約
-- 工作TRANSFILES-PROD-1028-TASK-001；版本1；執行中。使用者2026/10/28回覆「好，開始」，依[8件計畫](../20261028-transfiles-production-schedule-plan/tasks.md)僅開始001，不自動進002。
+- 工作TRANSFILES-PROD-1028-TASK-001；版本1；已完成。使用者2026/10/28回覆「好，開始」，依[8件計畫](../20261028-transfiles-production-schedule-plan/tasks.md)僅完成001，不自動進002。
 - 主系統TransFiles，相依SPC／Portal；保留既有來源與EXE。此件不建立帳號／正式角色、不改DB或正式profile、不移除三類測試守衛、不匯入／排程／發布網站。
 - 後續指定：使用者提供執行主機172.16.119.140、帳號ihao_ting；再明確授權正式HTTPS 8443、必要限定防火牆與正式庫受控程序最小權限。已完成備份、變更及正反驗證；指定帳號仍不等於保存密碼或建立排程授權。
 
@@ -21,14 +21,14 @@
 - Given相同Windows身分，When排程非互動讀取，Then可在記憶體取得帳號／密碼並於使用後清除參照；不同身分、用途不符、格式破損、密文遭改或ACL套用失敗均拒絕，不回報密碼或密文。
 - Given使用者執行validate／remove，Thenvalidate只顯示帳號與可解密狀態，remove刪除憑證檔；不提供將明文輸出到終端的子命令。實際建檔必須由使用者在PMR-SPC-SRV互動桌面完成，WinRM不代輸入密碼。
 - 使用者已在PMR-SPC-SRV互動建檔；同一Windows身分validate通過，ACL只有PMR\ihao_ting與SYSTEM。後續唯讀登入因正式Portal API只有HTTP81、HTTPS前端沒有`/api`路由而停止，不把密碼降級送往HTTP。
-- 使用者另行允許Portal API HTTPS8443後已發布並以DPAPI登入成功；但Portal→SPC SSO交換未連通，`spcConnected=false`／launch401。下一步須另授權SPC8443單一Portal來源與Portal上游HTTPS設定，不回退HTTP。
+- 使用者另行允許Portal API HTTPS8443後已發布並以DPAPI登入成功；再授權SPC8443只新增Portal來源`172.16.119.130`與Portal上游改HTTPS。`spcConnected=true`、launch成功、唯讀主檔15筆，Portal／SPC既有健康檢查正常；未匯入、排程或寫資料。
 
 ## 任務
 - [x] 契約與既有環境／身分限制核對。
 - [x] 環境錯置先拒絕測試與來源修正。
 - [x] 唯讀確認執行主機／完整Windows帳號及現有SQL映射。
 - [x] 核准並驗證正式API HTTPS端點與正式庫最小權限映射。
-- [ ] 決定並驗證非互動Portal認證及憑證保管；未完成不結案。
+- [x] 決定並驗證非互動Portal認證、憑證保管、SSO launch及唯讀主檔。
 - [x] 文件、原Excel狀態與原生記錄同步，依本件提交上傳。
-- 結果：[執行紀錄](verification.md)。正式HTTPS與正式庫最小權限已通過；001仍待非互動Portal認證／憑證保管，不標DONE。
+- 結果：[執行紀錄](verification.md)。必要Spec／BDD、測試、正式最小權限、DPAPI、HTTPS、SSO launch及唯讀主檔均通過；001標示DONE，002未開始。
 - rollback：保存修改前檔案與最小patch，回復本件connection_test與其測試；不改舊EXE、Windows角色或任何資料庫狀態。

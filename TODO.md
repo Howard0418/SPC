@@ -1,4 +1,4 @@
-> 2026-10-28 最新：轉檔001的SPC／Portal HTTPS、DB最小權限、DPAPI建檔及Portal登入均通過；Portal→SPC SSO上游仍用HTTP且無回應，待另授權SPC8443單一來源與Portal上游HTTPS設定。其餘7件未開始，核心34件保持。[執行紀錄](specs/20261028-transfiles-production-identity/verification.md)。
+> 2026-10-28 最新：轉檔001的SPC／Portal HTTPS、DB最小權限、DPAPI、SSO launch及唯讀主檔15筆均通過，正式入口與SPC健康正常；001完成，002～008未開始，核心未完成33件。[執行紀錄](specs/20261028-transfiles-production-identity/verification.md)。
 
 > 2026-10-28 最新規劃：轉檔正式匯入／來源／固定時間新增8件，僅規劃待執行；核心34件，人工11／核銷4另計。未啟用排程或恢復舊暫緩。[規劃及進度同步](specs/20261028-transfiles-production-schedule-plan/verification.md)。下方舊計數保留歷史。
 
@@ -18,7 +18,7 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成34件：轉檔正式匯入／來源／排程新增8件＋Portal Grafana入口1件＋網站調整6件（009待F、004／005測試完成待正式，其餘3件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。001受Portal→SPC SSO上游未走HTTPS阻擋，其他7件待執行；未恢復舊暫停工作。
+- 核心未完成33件：轉檔正式匯入／來源／排程剩餘7件（001已完成）＋Portal Grafana入口1件＋網站調整6件（009待F、004／005測試完成待正式，其餘3件待執行）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。002～008未開始；未恢復舊暫停工作。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
 - 原進度表「小工作總表」221筆登錄中205件具名工作（171完成、34未完成）；本次[轉檔規劃入池驗證](specs/20261028-transfiles-production-schedule-plan/verification.md)新增8件，父規劃不重複計數。報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。原有[藥液正式驗證](specs/20261028-chemical-history-refresh/formal-release.md)與[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)保留；舊計數只作歷史或子集合意義。
 
@@ -28,7 +28,7 @@
 
 |順序|工作代號|優先|內容與相依|
 |---|---|---|---|
-|1|TRANSFILES-PROD-1028-TASK-001|P1|[契約與來源環境防護已測](specs/20261028-transfiles-production-identity/spec.md)；SPC／Portal HTTPS、DB最小權限、DPAPI及Portal登入通過；待另授權Portal→SPC改走HTTPS8443後驗證launch／主檔，未結案。|
+|1|TRANSFILES-PROD-1028-TASK-001|P1|[契約與來源環境防護已完成](specs/20261028-transfiles-production-identity/spec.md)；SPC／Portal HTTPS、DB最小權限、DPAPI、SSO launch及唯讀主檔通過；正式入口與SPC健康正常。|
 |2|TRANSFILES-PROD-1028-TASK-002|P1|三類來源路徑設定、檔案穩定檢查與格式修正建議；依001。|
 |3|TRANSFILES-PROD-1028-TASK-003|P1|藥液正式匯入、初複驗／日期公式追溯；依001／002。|
 |4|TRANSFILES-PROD-1028-TASK-004|P1|咬蝕正式流程與Portal／SPC雙站恢復；依001／002，003後逐件。|
@@ -37,7 +37,7 @@
 |7|TRANSFILES-PROD-1028-TASK-007|P2|固定時間設定與Windows排程管理；依006及核准身分。|
 |8|TRANSFILES-PROD-1028-TASK-008|P2|獨立交付包與三類分階段正式驗收；依001～007，正式寫入與排程啟用另授權。|
 
-001進行中，Portal HTTPS／登入通過但受Portal→SPC SSO上游阻擋；002～008待執行，核心仍計8件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
+001已完成；002～008待執行，轉檔核心未完成剩7件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
 
 ## 2026-10-28 SPC 網站調整（藥液3件完成，009待F）
 

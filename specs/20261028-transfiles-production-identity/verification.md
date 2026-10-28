@@ -59,3 +59,11 @@
 - 下一個最小候選：SPC API HTTPS8443防火牆另允許Portal主機172.16.119.130，Portal `SPC_API_BASE`改為`https://PMR-SPC-SRV.pmr.com.tw:8443`，備份設定、回收PmrPortalApi後再驗證登入鏈。這涉及SPC防火牆與Portal正式設定，未包含於本次Portal HTTPS授權，尚未執行。
 - Portal HTTPS回復：移除`PMR Portal API HTTPS 8443`規則、PmrPortalApi HTTPS binding與SNI SSL binding，或回復IIS backup；執行前確認後續未引用。
 - 原進度表同步為「進行中，SSO上游HTTPS阻擋」，補綠色原生里程碑317；原30圖形保持並加1，總表221／核心未完成34／完成171／人工11／核銷4不變。更新前SHA256 `6F761C3BEB89D280DB014149933AD857B0FBFD6AFA61CFC1EFE92CD0BED22F72`，備份`Voice/進度表_轉檔001PortalHTTPS前_20261028-155838.xlsx`；更新後SHA256 `C74AECE238758474842065D0BEB609423DF9B9647B95E77F08F89E75F036880A`。OpenXML結構、Artifact重開、公式錯誤0與變更區目視通過；LibreOffice無回應且未產出PDF，已終止本次程序，因此不宣稱LibreOffice／Microsoft Excel相容性通過。
+
+## SSO上游HTTPS完成驗證
+- 使用者明確要求不得影響正式入口網站與SPC。變更前確認SPC API為`production/0.1.90`、Portal首頁200、PmrPortalApi App Pool為Started；先備份再執行，任一步失敗的腳本均會回復設定與防火牆。
+- SPC既有`SPC API HTTPS 8443`規則只由`172.16.110.27`增加單一Portal來源`172.16.119.130`，未放寬網段。Portal主機經完整TLS驗證取得`production/0.1.90`後，建立IIS backup `TransFiles001-SsoHttps-20261028-160254`及`appsettings.json.TransFiles001-SsoHttps-20261028-160254.bak`，只把`SPC_API_BASE`改為`https://PMR-SPC-SRV.pmr.com.tw:8443`並回收PmrPortalApi。
+- 變更後Portal App Pool為Started、入口首頁200、工作端與Portal端讀SPC version均正常。DPAPI正式登入回`spcConnected=true`，`spc-launch`成功；Token只以受保護WinRM安全字串傳遞，未輸出密碼、Cookie或Token。從Portal主機以Token唯讀GET `/api/processes?configuredOnly=true`回15筆；未呼叫preview／confirm、排程或資料寫入。
+- 最終以明確UTF-8讀取並解析正式`appsettings.json`，JSON有效且`SPC_API_BASE`符合核准HTTPS；Portal首頁200、App Pool Started、Portal→SPC為`production/0.1.90`。先前一次Windows PowerShell預設編碼解析警告不代表檔案損壞，安全解析複驗已排除。
+- 回復方式：Portal以本次`appsettings.json`備份覆蓋並回收PmrPortalApi；SPC防火牆RemoteAddress回復為`172.16.110.27`。IIS整體設定亦可使用本次backup回復；回復前確認未有後續工作依賴。
+- 原進度表將001改為「已完成／否」，沿用同日原生里程碑317且31個原生圖形全部保持；總表221／核心未完成33／完成172／人工11／核銷4。更新前SHA256 `C74AECE238758474842065D0BEB609423DF9B9647B95E77F08F89E75F036880A`，備份`Voice/備份/進度表_轉檔001完成前_20261028-160622.xlsx`；更新後SHA256 `66A378F4245AFA6321234961D227B8F82F80F55BA5C5326543F801AE9FC59E4F`。OpenXML SDK 0錯誤、Artifact原路徑重開／公式錯誤0及變更區目視通過；LibreOffice／Microsoft Excel本次未驗證，不冒稱通過。
