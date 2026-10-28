@@ -6,9 +6,24 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
+- 核心未完成25件：本次網站調整6件待執行＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
-- 原進度表「小工作總表」203筆登錄中187件具名工作（168完成、19未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。本次同步依[Overall驗證](specs/20261028-spc-overall/verification.md)；舊計數只保留歷史或子集合意義。
+- 原進度表「小工作總表」209筆登錄中193件具名工作（168完成、25未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。最新入池同步依[網站調整規劃驗證](specs/20261028-spc-adjustment-backlog/verification.md)，前次[Overall驗證](specs/20261028-spc-overall/verification.md)保留；舊計數只保留歷史或子集合意義。
+
+## 2026-10-28 SPC 網站調整（只規劃，尚未開工）
+
+主規格：[SPC-ADJUST-20261028](specs/20261028-spc-adjustment-backlog/spec.md)；[測試矩陣](specs/20261028-spc-adjustment-backlog/tasks.md)。以下依建議優先順序逐件執行，本次不立即實作；既有暫停／受阻工作維持。
+
+|順序|工作代號|優先／主系統|工作與相依|
+|---|---|---|---|
+|1|SPC-ADJUST-1028-TASK-001|P1／SPC|管制線公式儲存後重算重繪；先核對圖型、手動界限與分段優先序。|
+|2|SPC-ADJUST-1028-TASK-002|P1／Portal（相依SPC）|藥液查詢新增NG判定，複驗分析值優先，0有效，保留初驗與原始精度。|
+|3|SPC-ADJUST-1028-TASK-003|P1／SPC|測試入口改為https://portaltest.pmr.com.tw/；保留登入Launch及正式目標。|
+|4|SPC-ADJUST-1028-TASK-004|P2／SPC|月報分製程管制、藥液管制、藥液趨勢；畫面／Excel一致，既有產品內容保留。|
+|5|SPC-ADJUST-1028-TASK-005|P2／SPC|依001／004，月報加入去重後已處置與未完成件數，沿Overall口徑。|
+|6|SPC-ADJUST-1028-TASK-006|P3／SPC|常態分析直方圖柱改淺藍；不更動bins、頻數與計算。|
+
+若確認003已阻擋使用／導向錯環境，依既有排序規則升為第一；這是後續排序條件，本次仍不開工。不填未開始的實際開發日期；規劃父批次不另重複計數。
 
 ## 執行規則
 

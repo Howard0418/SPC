@@ -1,3 +1,5 @@
+> 2026-10-28 網站調整僅規劃：[主規格](../specs/20261028-spc-adjustment-backlog/spec.md)／[6件工作與順序](../specs/20261028-spc-adjustment-backlog/tasks.md)。公式重算、藥液查詢NG與複驗優先、測試入口HTTPS、月報三類、月報處置件數、淺藍直方圖；未實作／未建置／未發布。核心待辦由19增為25，其他暫停／受阻維持。
+
 > 2026-10-28 Overall：[規格](../specs/20261028-spc-overall/spec.md)／[驗證](../specs/20261028-spc-overall/verification.md)。/spc新增全部啟用管制項目、OOC／OOS涉及項目與點位件數、去重後已處置／未完成件數及日期區間。沿用圖表規則、排除與目前處置狀態，無資料寫入；測試API0.1.88／Web0.1.111已發布，正式未更新。原Excel及小工作總表已同步，核心未完成仍19件。
 
 > Portal LOGO人工驗收：2026-10-27使用者確認完成；待人工11、待核銷4、核心19。[追溯](../specs/20261027-all-task-progress/inventory.md)。
