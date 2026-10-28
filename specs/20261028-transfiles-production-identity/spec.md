@@ -15,6 +15,12 @@
 - Happy Path：兩種環境正向；Boundary：大小寫／空白／空回應、正式URL空白；Invalid：錯環境、無效型別及GET失敗；Regression：TLS、既有登入錯誤安全分類、無網路mock／無資料寫入。
 - 核心先新增測試確認舊碼失敗，再修改；必要py_compile／相關unittest。無網站變更，SPC測試發布不適用；打包屬008，不提前執行。
 
+## DPAPI憑證保管續作
+- 使用者另行允許Windows Credential Manager／使用者範圍DPAPI。採Python標準Windows DPAPI，避免新增外部套件；密碼只由執行帳號在主機互動輸入，不接受命令列、JSON、環境變數或聊天室內容。
+- Given `PMR\ihao_ting`互動建檔，When保存Portal帳密，Then檔案只有版本、用途、帳號、建立時間及base64密文，使用CurrentUser DPAPI；ACL關閉繼承，只允許目前帳號及SYSTEM。
+- Given相同Windows身分，When排程非互動讀取，Then可在記憶體取得帳號／密碼並於使用後清除參照；不同身分、用途不符、格式破損、密文遭改或ACL套用失敗均拒絕，不回報密碼或密文。
+- Given使用者執行validate／remove，Thenvalidate只顯示帳號與可解密狀態，remove刪除憑證檔；不提供將明文輸出到終端的子命令。實際建檔必須由使用者在PMR-SPC-SRV互動桌面完成，WinRM不代輸入密碼。
+
 ## 任務
 - [x] 契約與既有環境／身分限制核對。
 - [x] 環境錯置先拒絕測試與來源修正。

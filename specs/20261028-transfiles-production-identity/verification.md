@@ -38,3 +38,10 @@
 - 同一授權下於PMR_SPC_2026建立`PMR\ihao_ting` database user並加入既有`SpcChemicalDirectWriter`。`EXECUTE AS USER`驗證角色成員=1、兩個受控程序EXECUTE=1，VariableMeasurements SELECT／INSERT／UPDATE／DELETE均=0；沒有執行程序、prepare／confirm或任何資料寫入。
 - 回復：先停用使用此端點的後續設定；移除`SPC API HTTPS 8443`防火牆規則、HTTPS binding與對應SNI SSL binding，或以IIS backup回復。DB回復須先`ALTER ROLE SpcChemicalDirectWriter DROP MEMBER [PMR\ihao_ting]`，再`DROP USER [PMR\ihao_ting]`；不刪SQL Server既有login。執行回復前須確認沒有後續工作依賴。
 - 原進度表再同步為「進行中，待Portal非互動認證」，補綠色原生里程碑314；原27圖形保持加1，核心34／完成171／人工11／核銷4不變。更新前SHA256 355100964FB97C488873E4A0D417D2EBFA895E63ED3B691E9F15CB6C28439C3E，備份`Voice/備份/進度表_轉檔001正式HTTPS權限前_20261028-152918.xlsx`；更新後SHA256 562F261C7CFDCB7F3898A4C692E45AC12E0BA337280BBF485804E2F76C0C84DF。OpenXML 0錯誤、Artifact重開／公式錯誤0、LibreOffice重開／13頁列印及變更區目視通過。
+
+## DPAPI憑證工具
+- 使用者允許CurrentUser DPAPI後，新增Python讀取／互動建檔模組及PowerShell 5.1互動工具；7項測試通過，涵蓋只存密文、用途拒絕、竄改錯誤消毒、ACL失敗不留新檔、移除冪等，以及Python產生密文可由PowerShell解密。py_compile通過，另以合成密碼完成真實DPAPI往返，檔案不含明文並已刪除。
+- 正式主機無可用Python runtime，故部署純PowerShell腳本至`C:\ProgramData\PMR\TransFiles\credential-tools`；SHA256 `E1D093C76BA488E5F480288B6FBDFE20BEAEC965211DD10FE8C76D713C714D39`。目錄ACL：SYSTEM／Administrators FullControl、PMR\ihao_ting ReadAndExecute；沒有真實密碼、憑證檔或排程。
+- 待本人登入PMR-SPC-SRV互動執行`powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\ProgramData\PMR\TransFiles\credential-tools\Provision-TransFilesPortalCredential.ps1 -Action Provision`，密碼輸入兩次且不顯示。完成後以`-Action Validate`只回帳號／可解密；未完成這一步前001保持進行中。
+- 回復：`-Action Remove`移除本人LocalAppData憑證；刪除正式主機credential-tools目錄前先確認後續封裝未引用。來源交付見[integrations說明](../../integrations/transfiles/production-identity/credential-store/README.md)。
+- 原進度表同步為「進行中，待本人DPAPI建檔」，補紫色原生里程碑315；原28圖形保持加1，核心34／完成171／人工11／核銷4不變。更新前SHA256 562F261C7CFDCB7F3898A4C692E45AC12E0BA337280BBF485804E2F76C0C84DF，備份`Voice/備份/進度表_轉檔001DPAPI部署前_20261028-153548.xlsx`；更新後SHA256 169C8DADB929E68D72A2046715DE8BFF416F057013747F2FDABED4D910883A83。OpenXML 0錯誤、Artifact重開／公式錯誤0、LibreOffice重開／13頁列印及變更區目視通過。

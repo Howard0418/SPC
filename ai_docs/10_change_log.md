@@ -1,6 +1,7 @@
 ## [2026-10-28] TRANSFILES-PROD-1028-TASK-001 修改目的
 使用者授權開始001；先定正式目標／非互動身分／最小權限契約，並先測再修既有唯讀登入缺少實際SPC環境核對。version GET須在Portal帳密／token前，不改正式profile、角色、DB、測試守衛、EXE或排程。續作唯讀確認PMR-SPC-SRV／PMR\ihao_ting、既有SQL登入與正式庫缺少映射，定位443回406是前端靜態站而API僅HTTP8081；只形成HTTPS8443及受控程序角色候選，未授權前不變更正式站，002不啟動。
 使用者再明確授權正式HTTPS8443、必要限定防火牆及正式庫受控程序權限；備份後只允許工作端172.16.110.27，TLS version回production0.1.90。正式user加入既有角色，兩程序execute=1、表SELECT／DML=0；未排程／匯入，001仍待Portal非互動認證，002不啟動。
+使用者允許Windows Credential Manager／使用者範圍DPAPI；續作只為001新增CurrentUser DPAPI憑證庫與互動provision／validate／remove，先測試再實作。密碼不得來自參數／JSON／環境變數，不接正式匯入、不建立排程、不打包，002不啟動。
 
 ## [2026-10-28] SPC-ADJUST-1028-TASK-005 修改目的
 004測試完成並上傳後，依授權接005；先測1001點／1000告警／狀態變化／去重／唯讀，再沿Overall共用口徑新增月報畫面與Excel處置件數。僅測試站發布，正式待授權，原Excel保留待辦旗標。

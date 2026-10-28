@@ -5,6 +5,8 @@
 - 原Excel同步001進行中狀態與原生里程碑，原26圖形保持加1；OpenXML 0錯誤、重開／公式錯誤0及13頁列印通過。核心34件不變，002未開始。
 - 使用者另行授權後，正式SpcApi已備份並新增HTTPS8443 SNI；防火牆只允許工作端172.16.110.27。完整TLS GET回production／API0.1.90，工具網址驗證接受。PMR_SPC_2026新增PMR\ihao_ting user並加入既有受控程序角色；兩程序execute=1、量測表SELECT／DML=0。未排程／未匯入，001仍待Portal非互動認證。
 - 原Excel再同步001待認證狀態與綠色原生里程碑，原27圖形保持加1；OpenXML0錯誤、重開／公式錯誤0及13頁列印通過，核心34件不變。
+- 使用者允許CurrentUser DPAPI；新增Python憑證庫與PowerShell互動建檔／驗證／移除工具，7測試、py_compile及合成DPAPI往返通過。正式主機部署腳本且ACL只允許本人讀執行，尚無真實憑證；001待本人互動建檔，不接匯入／排程。
+- 原Excel同步001待本人建檔與紫色原生里程碑，原28圖形保持加1；OpenXML0錯誤、重開／公式錯誤0及13頁列印通過，核心34件不變。
 - 原Excel狀態／日期／來源測試里程碑同步，原25圖形保持加1；OpenXML0錯誤／重開／12頁列印通過。001未結案，核心34件保持，002未開始。[結果與回復](specs/20261028-transfiles-production-identity/verification.md)。
 
 ## 2026-10-28 TransFiles正式匯入／來源與定時僅規劃
