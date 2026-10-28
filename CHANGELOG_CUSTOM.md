@@ -9,6 +9,8 @@
 - 原Excel同步001待本人建檔與紫色原生里程碑，原28圖形保持加1；OpenXML0錯誤、重開／公式錯誤0及13頁列印通過，核心34件不變。
 - 本人DPAPI建檔／validate與ACL通過；正式Portal API只有HTTP81、HTTPS前端無API路由，故未送密碼或登入。8443未占用且有適用憑證，最小HTTPS SNI／單一來源防火牆候選待另授權；001未結案。
 - 原Excel同步001 Portal HTTPS阻擋與紅色原生里程碑，原29圖形保持加1；OpenXML0錯誤、重開／公式錯誤0及13頁列印通過，核心34件不變。
+- 使用者允許後正式Portal API HTTPS8443已備份發布，防火牆只允許172.16.119.140；TLS與DPAPI Portal登入通過。本人具品保角色，但Portal→SPC SSO交換未通、launch401；未輸出機敏值或寫資料。待另授權SPC8443加入單一Portal來源及Portal上游改HTTPS。
+- 原Excel同步001為SSO上游HTTPS阻擋並補里程碑317；原30圖形保持加1，OpenXML／Artifact重開／公式錯誤0及目視通過，核心34件不變。LibreOffice本次無回應、未產出PDF，故不列為相容性通過。
 - 原Excel狀態／日期／來源測試里程碑同步，原25圖形保持加1；OpenXML0錯誤／重開／12頁列印通過。001未結案，核心34件保持，002未開始。[結果與回復](specs/20261028-transfiles-production-identity/verification.md)。
 
 ## 2026-10-28 TransFiles正式匯入／來源與定時僅規劃

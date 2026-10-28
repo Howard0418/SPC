@@ -21,6 +21,7 @@
 - Given相同Windows身分，When排程非互動讀取，Then可在記憶體取得帳號／密碼並於使用後清除參照；不同身分、用途不符、格式破損、密文遭改或ACL套用失敗均拒絕，不回報密碼或密文。
 - Given使用者執行validate／remove，Thenvalidate只顯示帳號與可解密狀態，remove刪除憑證檔；不提供將明文輸出到終端的子命令。實際建檔必須由使用者在PMR-SPC-SRV互動桌面完成，WinRM不代輸入密碼。
 - 使用者已在PMR-SPC-SRV互動建檔；同一Windows身分validate通過，ACL只有PMR\ihao_ting與SYSTEM。後續唯讀登入因正式Portal API只有HTTP81、HTTPS前端沒有`/api`路由而停止，不把密碼降級送往HTTP。
+- 使用者另行允許Portal API HTTPS8443後已發布並以DPAPI登入成功；但Portal→SPC SSO交換未連通，`spcConnected=false`／launch401。下一步須另授權SPC8443單一Portal來源與Portal上游HTTPS設定，不回退HTTP。
 
 ## 任務
 - [x] 契約與既有環境／身分限制核對。

@@ -3,6 +3,7 @@
 使用者再明確授權正式HTTPS8443、必要限定防火牆及正式庫受控程序權限；備份後只允許工作端172.16.110.27，TLS version回production0.1.90。正式user加入既有角色，兩程序execute=1、表SELECT／DML=0；未排程／匯入，001仍待Portal非互動認證，002不啟動。
 使用者允許Windows Credential Manager／使用者範圍DPAPI；續作只為001新增CurrentUser DPAPI憑證庫與互動provision／validate／remove，先測試再實作。密碼不得來自參數／JSON／環境變數，不接正式匯入、不建立排程、不打包，002不啟動。
 使用者本人建檔後DPAPI validate與ACL通過；正式登入前發現Portal API只有HTTP81，HTTPS前端沒有API路由，依契約停止而未送密碼。形成login.pmr.com.tw:8443 SNI＋只允許172.16.119.140的最小候選，正式Portal變更待另授權。
+使用者允許Portal API HTTPS8443；備份後SNI／單一來源規則發布，TLS與Portal登入成功。本人具quality_assurance但spcConnected=false、launch401；Portal→SPC HTTP無回應，SPC HTTPS8443未允許Portal來源。下一步單一來源＋Portal上游HTTPS設定另授權，不降級或擴網段。
 
 ## [2026-10-28] SPC-ADJUST-1028-TASK-005 修改目的
 004測試完成並上傳後，依授權接005；先測1001點／1000告警／狀態變化／去重／唯讀，再沿Overall共用口徑新增月報畫面與Excel處置件數。僅測試站發布，正式待授權，原Excel保留待辦旗標。
