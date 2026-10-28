@@ -195,6 +195,14 @@ const ocapCauseCategories = ["人為", "機器", "工法", "測量", "材料", "
 const ocapCauseTypes = ["輸入錯誤", "操作不當", "違反SOP", "機台異常", "溫度異常", "測量準確度不佳", "材料品質不佳", "環境因素", "其他"];
 const ocapActionTypes = ["確認輸入是否正確", "確認機台是否正常", "通知工程師處理", "調整參數", "清理機台", "重新量測", "通知主管", "其他"];
 
+function normalizeArrayResponse(data, label) {
+  if (Array.isArray(data)) return data;
+  for (const key of ["items", "data", "results"]) {
+    if (Array.isArray(data?.[key])) return data[key];
+  }
+  throw new Error(`${label} API 回應格式不是陣列`);
+}
+
 // Filtered mappings based on selected dimension
 const filteredMappingsByDimension = computed(() => {
   return mappings.value.filter(m => {
@@ -575,9 +583,9 @@ async function loadMappings() {
       api.get("/control-chart-groups", { params: isMonthlyChartPage.value ? {} : { groupType: pageGroupType.value } })
     ]);
     
-    chartTypes.value = typesRes.data || [];
-    groups.value = groupsRes.data || [];
-    mappings.value = mapRes.data || [];
+    chartTypes.value = normalizeArrayResponse(typesRes.data, "管制圖類型");
+    groups.value = normalizeArrayResponse(groupsRes.data, "管制圖群組");
+    mappings.value = normalizeArrayResponse(mapRes.data, "管制項目");
     if (!dimensionOptions.value.some(group => group.id === selectedDimension.value)) {
       selectedDimension.value = dimensionOptions.value[0]?.id || "PROCESS";
     }
