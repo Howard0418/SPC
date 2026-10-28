@@ -1,0 +1,20 @@
+--- a/connection_test.py
++++ b/connection_test.py
+@@ -39,0 +40,8 @@
++    # Check the actual target before creating a Portal session or sending credentials.
++    try:
++        version = get_json(f"{profile['spc_api_url']}/version", headers={})
++        reported = version.get("environment") if isinstance(version, dict) else None
++        if not isinstance(reported, str) or reported.strip().lower() != environment:
++            raise ConnectionSettingsError("SPC 實際環境與所選環境不符或無法確認，請核對 API 網址。")
++    except Exception as exc:
++        raise ReadOnlyLoginTestError("SPC 環境核對", exc) from exc
+--- a/test_connection_settings.py
++++ b/test_connection_settings.py
+@@ -135,0 +136,2 @@
++            if url.endswith("/version"):
++                return {"environment": "test"}
+@@ -149 +151,2 @@
+-        self.assertEqual(events[0], ("client", "https://portaltest.pmr.com.tw/api"))
++        self.assertEqual(events[0], ("get", "https://spctest.pmr.com.tw/api/version", {}))
++        self.assertEqual(events[1], ("client", "https://portaltest.pmr.com.tw/api"))

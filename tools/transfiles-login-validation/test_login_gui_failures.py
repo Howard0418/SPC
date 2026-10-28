@@ -29,13 +29,19 @@ class DeferredLoginFailureTests(unittest.TestCase):
                 portal = Mock()
                 portal.login.return_value = None
                 portal.spc_token.return_value = "synthetic-token"
-                get_json = Mock(return_value={"generatedAt": "synthetic"})
+                def read_json(url, headers):
+                    if url.endswith("/version"):
+                        if stage == "SPC 環境核對":
+                            raise failure
+                        return {"environment": "test"}
+                    if stage == "SPC 唯讀驗證":
+                        raise failure
+                    return {"generatedAt": "synthetic"}
+                get_json = Mock(side_effect=read_json)
                 if stage == "Portal 登入":
                     portal.login.side_effect = failure
                 elif stage == "取得 SPC 權杖":
                     portal.spc_token.side_effect = failure
-                else:
-                    get_json.side_effect = failure
 
                 def run(settings, environment, account, password, **ignored):
                     return run_read_only_login_test(settings, environment, account, password,
@@ -65,12 +71,22 @@ class DeferredLoginFailureTests(unittest.TestCase):
                 if stage == "Portal 登入":
                     portal.spc_token.assert_not_called()
                 if stage != "SPC 唯讀驗證":
-                    get_json.assert_not_called()
+                    get_json.assert_called_once()
+                    self.assertTrue(get_json.call_args.args[0].endswith("/api/version"))
+                    self.assertEqual({}, get_json.call_args.kwargs["headers"])
+                else:
+                    self.assertEqual(2, get_json.call_count)
+                if stage == "SPC 環境核對":
+                    portal.login.assert_not_called()
+                    portal.spc_token.assert_not_called()
                 portal.preview.assert_not_called()
                 portal.confirm.assert_not_called()
 
     def test_portal_failures(self):
         self.check_stage("Portal 登入")
+
+    def test_environment_check_failures(self):
+        self.check_stage("SPC 環境核對")
 
     def test_token_failures(self):
         self.check_stage("取得 SPC 權杖")

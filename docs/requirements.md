@@ -1,3 +1,5 @@
+> 2026-10-28 [轉檔001環境與身分契約](../specs/20261028-transfiles-production-identity/spec.md)：唯讀登入先核對實際SPC環境，69隔離測試通過；待實際主機／帳號及HTTPS核對，未重包／發布／正式授權，核心34件不變。
+
 > 2026-10-28 [TransFiles正式匯入／來源與定時規劃](../specs/20261028-transfiles-production-schedule-plan/spec.md)：8件待執行，原Excel及工作池已同步；核心34件。沒有實作、建立排程、匯入或打包／發布。
 
 > 2026-10-28 [TransFiles正式匯入唯讀核對](../specs/20261028-transfiles-production-readiness/verification.md)：本機正式URL未設定、日期公式DB client及咬蝕流程限定測試；正式Particle資料／批次0。83項隔離測試通過，不等同正式寫入成功；未改設定、資料、發布或既有小工作狀態，核心26件保持。
