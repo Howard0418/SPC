@@ -6,9 +6,9 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成28件：網站調整共9件待執行（原6＋截圖新增3）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
+- 核心未完成29件：Portal Grafana入口1件＋網站調整共9件待執行（原6＋截圖新增3）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
-- 原進度表「小工作總表」212筆登錄中196件具名工作（168完成、28未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。最新入池同步依[截圖補充驗證](specs/20261028-chemical-screenshot-followup/verification.md)，前次[網站調整規劃驗證](specs/20261028-spc-adjustment-backlog/verification.md)保留，前次[Overall驗證](specs/20261028-spc-overall/verification.md)保留；舊計數只保留歷史或子集合意義。
+- 原進度表「小工作總表」213筆登錄中197件具名工作（168完成、29未完成）；報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。最新入池同步依[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)，前次[截圖補充驗證](specs/20261028-chemical-screenshot-followup/verification.md)保留，前次[網站調整規劃驗證](specs/20261028-spc-adjustment-backlog/verification.md)保留，前次[Overall驗證](specs/20261028-spc-overall/verification.md)保留；舊計數只保留歷史或子集合意義。
 
 ## 2026-10-28 SPC 網站調整（只規劃，尚未開工）
 
@@ -27,6 +27,12 @@
 |9|SPC-ADJUST-1028-TASK-006|P3／SPC|淺藍直方圖，不改bins／頻數／統計。|
 
 若確認003已阻擋使用／導向錯環境，依既有排序規則升為第一；這是後續排序條件，本次仍不開工。不填未開始的實際開發日期；規劃父批次不另重複計數。
+
+## 2026-10-28 Portal Grafana入口（僅規劃）
+
+- [ ] `PORTAL-GRAFANA-1028-TASK-001`：P2，沿用首頁快速連結，建議名稱「3F 環境監控」，新分頁開啟指定Grafana URL且保留所有參數。[Portal主規格](../PmrPortal/specs/20261028-grafana-entry-plan/spec.md)／[中央引用](specs/20261028-portal-grafana-entry-sync/spec.md)。
+- 後續排在原載入／計算／查詢及月報004／005之後、配色006之前；只規劃，不立即設定或實作。不改Grafana登入／儀表板、不新建API／schema；未來可能經既有admin管理新增1筆連結設定，正式仍另授權。
+- 本件只計1件，不另計中央同步父件，其他暫停／受阻維持。
 
 ## 執行規則
 
