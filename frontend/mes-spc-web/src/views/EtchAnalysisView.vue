@@ -6,7 +6,7 @@ import { computed, onMounted, ref } from 'vue'
 import { Activity, ExternalLink, RefreshCw } from 'lucide-vue-next'
 import { api, getApiErrorDisplay } from '../api/client'
 
-const portalUrl = (import.meta.env.VITE_PORTAL_URL || 'http://172.16.110.27/').replace(/\/$/, '')
+const portalUrl = (import.meta.env.VITE_PORTAL_URL || 'https://portaltest.pmr.com.tw/').replace(/\/$/, '')
 const lineCodes = ['PT1', 'PT2', 'QE1', 'QE2']
 const characteristics = computed(() => [
   { code: 'ETCH_A_AVG', name: t('spc.trace.etchA') },

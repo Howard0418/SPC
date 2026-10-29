@@ -35,7 +35,7 @@ import pkg from "../package.json";
 
 const { t, locale } = useI18n({ useScope: "global" });
 const authOn = import.meta.env.VITE_AUTH_ENABLED === "true";
-const portalUrl = import.meta.env.VITE_PORTAL_URL || "http://172.16.110.27/";
+const portalUrl = import.meta.env.VITE_PORTAL_URL || "https://portaltest.pmr.com.tw/";
 const portalHomeUrl = (() => {
   const url = new URL(portalUrl, window.location.origin);
   url.pathname = url.pathname.replace(/\/login\/?$/i, "/");
