@@ -16,7 +16,7 @@
 - [x] TASK-001 [公式設定變更會清除舊計算並於查詢重算](../20261029-control-line-formula-recalc/verification.md)；4/4 測試通過，測試站 API 套用並完成 health/version 驗收。
 - [x] TASK-002 複驗優先與保存判定：正式發布及本人登入查詢驗證完成，詳[正式紀錄](../20261028-chemical-history-refresh/formal-release.md)。
 - [x] TASK-003 [測試入口根網址改為 portaltest HTTPS](../20261029-spc-entry-https/verification.md)；建置通過並套用測試前端。
-- [ ] TASK-004 [實作／驗證／測試發布／原Excel同步完成](../20261028-monthly-category-sheets/verification.md)；正式待授權。
+- [x] TASK-004 [三個月報 Sheet 實作、測試與正式發布](../20261028-monthly-category-sheets/verification.md)；正式 SPC 已發布並完成 health／version／首頁驗收。
 - [ ] TASK-005 [實作／驗證／測試發布／原Excel同步完成](../20261028-monthly-disposition/verification.md)；正式待授權。
 - [ ] TASK-006 實作／驗證／測試發布／文件及進度同步。
 

@@ -2238,3 +2238,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-10-29 SPC-ADJUST-1028-TASK-003
 測試入口網站根網址改為 `https://portaltest.pmr.com.tw/`，保留 `/Spc/Launch` 登入回跳；測試前端建置與套用完成，正式站未修改。
+
+## 2026-10-29 SPC-ADJUST-1028-TASK-004
+月報匯出三個獨立 Sheet 已正式發布至 SPC；正式 API/Web 完成 health、version、首頁驗收，保留正式回復備份，Portal 未修改。
