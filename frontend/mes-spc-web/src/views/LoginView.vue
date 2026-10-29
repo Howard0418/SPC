@@ -6,8 +6,8 @@ const route = useRoute();
 const portalLaunchUrl = (() => {
   const configured = import.meta.env.VITE_PORTAL_URL || "https://portaltest.pmr.com.tw/";
   const url = new URL(configured, window.location.origin);
-  url.pathname = `${url.pathname.replace(/\/login\/?$/i, "").replace(/\/$/, "")}/Spc/Launch`;
-  url.search = "";
+  url.pathname = `${url.pathname.replace(/\/login\/?$/i, "").replace(/\/$/, "")}/Login`;
+  url.search = "?ReturnUrl=%2FSpc%2FLaunch";
   return url.toString();
 })();
 
