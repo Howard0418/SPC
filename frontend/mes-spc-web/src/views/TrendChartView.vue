@@ -1045,7 +1045,7 @@ function renderHistogramChart() {
     xAxisIndex: 0,
     data: bins.map(bin => ({
       value: bin.count,
-      itemStyle: { color: "rgba(99, 102, 241, 0.75)", borderRadius: [4, 4, 0, 0] }
+      itemStyle: { color: "rgba(125, 211, 252, 0.82)", borderRadius: [4, 4, 0, 0] }
     })),
     barMaxWidth: 42,
     markLine: markLines.length > 0 ? { symbol: "none", data: markLines, animation: false } : undefined

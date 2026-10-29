@@ -2014,7 +2014,7 @@ function renderHistogramChart() {
       data: bins.map(bin => ({
         value: bin.count,
         itemStyle: {
-          color: "rgba(245, 158, 11, 0.75)",
+          color: "rgba(125, 211, 252, 0.82)",
           borderRadius: [4, 4, 0, 0]
         }
       })),
