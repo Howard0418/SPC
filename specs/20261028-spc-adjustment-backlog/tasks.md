@@ -17,7 +17,7 @@
 - [x] TASK-002 複驗優先與保存判定：正式發布及本人登入查詢驗證完成，詳[正式紀錄](../20261028-chemical-history-refresh/formal-release.md)。
 - [x] TASK-003 [測試入口根網址改為 portaltest HTTPS](../20261029-spc-entry-https/verification.md)；建置通過並套用測試前端。
 - [x] TASK-004 [三個月報 Sheet 實作、測試與正式發布](../20261028-monthly-category-sheets/verification.md)；正式 SPC 已發布並完成 health／version／首頁驗收。
-- [ ] TASK-005 [實作／驗證／測試發布／原Excel同步完成](../20261028-monthly-disposition/verification.md)；正式待授權。
+- [x] TASK-005 [已／未處置件數實作、測試與正式發布](../20261028-monthly-disposition/verification.md)；正式 SPC 已發布並完成 health／首頁驗收。
 - [ ] TASK-006 實作／驗證／測試發布／文件及進度同步。
 
 規劃交付檢查：[v1歷史](verification.md)／[v2截圖補充結果](../20261028-chemical-screenshot-followup/verification.md)。優先順序為後續選取依據，不是現在執行授權。

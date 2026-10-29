@@ -2241,3 +2241,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-10-29 SPC-ADJUST-1028-TASK-004
 月報匯出三個獨立 Sheet 已正式發布至 SPC；正式 API/Web 完成 health、version、首頁驗收，保留正式回復備份，Portal 未修改。
+
+## 2026-10-29 SPC-ADJUST-1028-TASK-005
+月報已處置／未處置件數已正式發布至 SPC；正式 API/Web health 與首頁驗收通過，保留回復備份，未修改資料庫與 Portal。
