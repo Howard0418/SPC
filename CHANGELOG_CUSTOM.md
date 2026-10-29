@@ -2229,4 +2229,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - SPC 管制分析頁新增主檔 API 回應格式正規化，避免非陣列回應造成 `.filter()` 白屏，並補充回歸測試。
 - 修正正式前端建置環境標示與 API 連線設定，正式站改連 `PMR-SPC-SRV.pmr.com.tw:8443/api`。
 - 完成測試／正式 SPC 功能同步：正式 API 更新至 0.1.92，保留 production 設定與資料保護金鑰。
+- 修正正式 SPC 登入入口由測試 Portal 改為 `https://login.pmr.com.tw`。
 
