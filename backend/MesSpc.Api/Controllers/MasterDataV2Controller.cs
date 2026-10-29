@@ -558,8 +558,8 @@ public class PartProcessCharacteristicsController(
         req.Unit = CleanUnit(req.Unit);
         req.FormulaConfigJson = CleanFormulaConfig(req.FormulaConfigJson);
         req.ChemicalAnalysisConfigJson = CleanFormulaConfig(req.ChemicalAnalysisConfigJson);
-        var xbarCalculationMethodChanged = HasXbarCalculationMethodChanged(previousFormulaConfigJson, req.FormulaConfigJson);
-        if (xbarCalculationMethodChanged)
+        var formulaConfigChanged = HasFormulaConfigChanged(previousFormulaConfigJson, req.FormulaConfigJson);
+        if (formulaConfigChanged)
         {
             req.UCL = null;
             req.CL = null;
@@ -575,7 +575,7 @@ public class PartProcessCharacteristicsController(
 
         var useTransaction = !string.Equals(db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
         await using var transaction = useTransaction ? await db.Database.BeginTransactionAsync() : null;
-        if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase) || xbarCalculationMethodChanged)
+        if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase) || formulaConfigChanged)
         {
             var staleResults = await db.SpcCalculationResults
                 .Where(result => result.PartProcessCharacteristicId == id)
@@ -762,6 +762,23 @@ public class PartProcessCharacteristicsController(
             GetXbarCalculationMethod(previousFormulaConfigJson),
             GetXbarCalculationMethod(nextFormulaConfigJson),
             StringComparison.OrdinalIgnoreCase);
+
+    public static bool HasFormulaConfigChanged(string? previousFormulaConfigJson, string? nextFormulaConfigJson) =>
+        !string.Equals(NormalizeFormulaConfig(previousFormulaConfigJson), NormalizeFormulaConfig(nextFormulaConfigJson), StringComparison.Ordinal);
+
+    private static string? NormalizeFormulaConfig(string? formulaConfigJson)
+    {
+        if (string.IsNullOrWhiteSpace(formulaConfigJson)) return null;
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(formulaConfigJson);
+            return System.Text.Json.JsonSerializer.Serialize(document.RootElement);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return formulaConfigJson.Trim();
+        }
+    }
 
     private static string GetXbarCalculationMethod(string? formulaConfigJson)
     {

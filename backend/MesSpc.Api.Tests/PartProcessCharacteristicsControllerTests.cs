@@ -48,4 +48,20 @@ public class PartProcessCharacteristicsControllerTests
 
         Assert.False(PartProcessCharacteristicsController.HasSameBusinessKey(left, right));
     }
+
+    [Fact]
+    public void HasFormulaConfigChanged_ReturnsTrue_WhenFormulaParametersChange()
+    {
+        Assert.True(PartProcessCharacteristicsController.HasFormulaConfigChanged(
+            "{\"XbarCalculationMethod\":\"SYSTEM_STANDARD\",\"SigmaMultiplier\":3}",
+            "{\"XbarCalculationMethod\":\"SYSTEM_STANDARD\",\"SigmaMultiplier\":2}"));
+    }
+
+    [Fact]
+    public void HasFormulaConfigChanged_ReturnsFalse_ForEquivalentJsonFormatting()
+    {
+        Assert.False(PartProcessCharacteristicsController.HasFormulaConfigChanged(
+            "{ \"SigmaMultiplier\": 3, \"XbarCalculationMethod\": \"SYSTEM_STANDARD\" }",
+            "{\"SigmaMultiplier\":3,\"XbarCalculationMethod\":\"SYSTEM_STANDARD\"}"));
+    }
 }

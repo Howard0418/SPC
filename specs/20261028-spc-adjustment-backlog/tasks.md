@@ -13,7 +13,7 @@
 |8 SPC-ADJUST-1028-TASK-005|P2／SPC|各Sheet已／未處置件數（AC-005／005X），依001及004|雙類／主副圖去重，已＋未＝異常|1001點以上、月末、同組多告警、查詢後結案|缺處置紀錄列未完成；讀取失敗不當0|Overall口徑、排除、分類總和／Excel、不得回推月底狀態|
 |9 SPC-ADJUST-1028-TASK-006|P3／SPC|常態直方圖淺藍柱（AC-006）|兩種分析頁柱色一致淺藍|暗／亮、hover、手機、單柱／零資料|無量測仍顯既有空資料狀態|bins、頻數、常態曲線、界線與下載數值不變|
 
-- [ ] TASK-001 實作／驗證／測試發布／文件及進度同步。
+- [x] TASK-001 [公式設定變更會清除舊計算並於查詢重算](../20261029-control-line-formula-recalc/verification.md)；4/4 測試通過，測試站 API 套用並完成 health/version 驗收。
 - [x] TASK-002 複驗優先與保存判定：正式發布及本人登入查詢驗證完成，詳[正式紀錄](../20261028-chemical-history-refresh/formal-release.md)。
 - [ ] TASK-003 實作／驗證／測試發布／文件及進度同步。
 - [ ] TASK-004 [實作／驗證／測試發布／原Excel同步完成](../20261028-monthly-category-sheets/verification.md)；正式待授權。

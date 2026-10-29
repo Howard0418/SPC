@@ -2231,3 +2231,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 完成測試／正式 SPC 功能同步：正式 API 更新至 0.1.92，保留 production 設定與資料保護金鑰。
 - 修正正式 SPC 登入入口由測試 Portal 改為 `https://login.pmr.com.tw`。
 
+- 2026-10-29 日期公式 DB 匯入只規劃：[主規格](specs/20261029-chemical-formula-db-import-environment-history/spec.md)／[計畫](specs/20261029-chemical-formula-db-import-environment-history/plan.md)／[小工作](specs/20261029-chemical-formula-db-import-environment-history/tasks.md)。新增測試／正式環境白名單、正式確認、公式差異版本歷史與冪等驗收；未修改程式、資料庫、設定或站台。
+
+## 2026-10-29 SPC-ADJUST-1028-TASK-001
+公式設定內容變更時清除舊 SPC 計算結果，後續查詢／重繪依最新公式計算；單元測試 4/4 通過，測試站 API 已套用並完成 version/health 驗收。
