@@ -88,6 +88,15 @@ public class AuthorizationAccessTests
         Assert.True(await access.CanManageCalibrationAsync(user));
     }
 
+    [Fact]
+    public async Task CanManageCalibrationAsync_ShouldDenyUnknownEditorEvenWithValidRoleClaim()
+    {
+        await using var db = CreateDbContext();
+        var access = new AuthorizationAccess(db);
+
+        Assert.False(await access.CanManageCalibrationAsync(CreateUser("unknown", UserRoles.Editor)));
+    }
+
     private static AppDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()

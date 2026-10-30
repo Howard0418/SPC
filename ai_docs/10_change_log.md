@@ -1191,3 +1191,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：測試前端目前直接呼叫 `https://SPCTEST.pmr.com.tw:8901/api`，造成無法連到 TCP 8901 的使用者顯示「API 離線」。
 - 預計最小調整：僅在測試 IIS 的 `SpcSingleTest` 前端站台建立 `/api` 反向代理至本機測試 API，前端以同源 `/api` 呼叫；不修改正式站、資料庫、業務 API 或公式。
 - 驗證：首頁／資產 MIME、同源 `/api/health`、`/api/version`、瀏覽器 API 狀態與測試核心頁回歸；失敗則回復前端與 IIS 設定備份。
+
+## 2026-10-31 CAL-VERIFY-001 校驗未知Editor權限核對與收斂
+- 目的：確認合法簽章但 SPC 無對應 Operator 的 Editor JWT 不可取得校驗管理寫入權限，修正目前 claims-only fallback 造成的 fail-open。
+- 範圍：只調整 `AuthorizationAccess` 的未知 Operator 判定與對應測試；不修改角色目錄、Portal SSO、資料庫或正式站。

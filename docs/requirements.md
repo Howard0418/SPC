@@ -423,6 +423,9 @@ SPC進度或發布／驗收／暫緩狀態變更，當次收尾須同步原Excel
 ## 2026-10-31 SPC 測試站同源 API
 - `SPC-TEST-UNREACHABLE-20261030` 已完成：測試前端以同源 `/api` 存取既有測試 API，IIS URL Rewrite／ARR 代理至 `:8901`；首頁、SPA路由、health、version與JS MIME驗證通過。只發布SPC測試站，正式站／正式資料庫未變更；人工頁面驗收待確認。[規格](../specs/20261030-spc-test-unreachable/spec.md)／[驗證](../specs/20261030-spc-test-unreachable/verification.md)。
 
+## 2026-10-31 校驗管理未知Editor權限
+- `CAL-VERIFY-001` 已完成：校驗寫入權限除有效JWT外，必須存在且啟用的SPC Operator；未知Editor、Viewer、停用及明確撤銷權限者皆拒絕。測試API0.1.93已發布，正式站未更新。[規格與驗證](../specs/20261031-calibration-editor-fail-closed/spec.md)。
+
 
 ## 2026-10-27 REPORT-PPT-001 只規劃
 唯讀檢視6頁MES暨SPC簡報，規劃保留原背景／母片與每頁一張最新截圖，列出孤字／舊日期／截圖缺漏及裁切等修正建議。5件P2依證據A→進度圖B→封面說明C→畫面D→驗證交付E入池，均未開始；PPT／網站未修改。依既有規則只同步原Excel任務登錄，核心未完成24（原19＋新5），三語／受阻／暫緩不變。[規格](../specs/20261027-mes-spc-report-plan/spec.md)／[逐頁格式及截圖建議](../specs/20261027-mes-spc-report-plan/slide-plan.md)／[5件P2待辦](../specs/20261027-mes-spc-report-plan/tasks.md)。

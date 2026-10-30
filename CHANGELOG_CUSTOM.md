@@ -2260,3 +2260,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - API 基底測試、i18n 2,759×3及測試建置通過；測試站首頁、`/spc`、`/api/health`、`/api/version`與JS MIME均回200，API為0.1.92/test。
 - 已發布 SPC 測試站並同步原進度表；正式站與正式資料庫未變更，人工頁面驗收待使用者確認。
 
+## 2026-10-31 CAL-VERIFY-001 校驗未知Editor權限收斂
+- 校驗管理權限改為要求 SPC 資料庫存在且啟用的 Operator；合法簽章但查無帳號的 Editor JWT 不再沿用全部頁面預設，preview／commit回403。
+- AuthorizationAccess及校驗匯入權限各5項通過，API建置0警告／0錯誤；測試API0.1.93已發布，Web、health、version與SPA路由均200。
+- 正式站、Portal、schema及業務資料未修改；測試backend備份可回復。
+

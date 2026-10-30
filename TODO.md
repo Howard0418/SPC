@@ -33,7 +33,7 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成33件（以原進度表「小工作總表」目前待辦旗標為準）；本件測試站API修復已完成，不列入未完成。人工頁面驗收另註，不恢復舊暫停工作。
+- 核心未完成32件（以原進度表「小工作總表」目前待辦旗標為準）；CAL-VERIFY-001已完成，既有暫停／受阻工作不恢復。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
 - 原進度表「小工作總表」221筆登錄中205件具名工作（171完成、34未完成）；本次[轉檔規劃入池驗證](specs/20261028-transfiles-production-schedule-plan/verification.md)新增8件，父規劃不重複計數。報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。原有[藥液正式驗證](specs/20261028-chemical-history-refresh/formal-release.md)與[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)保留；舊計數只作歷史或子集合意義。
 
@@ -484,7 +484,7 @@
 - 2026-10-26 08C4A完成：86鍵／109前端、14本批API測試、本機36／發布36與build/hash/health/同源通過；校驗完整124項為122通過、2項本批前基準同樣失敗，未宣稱全綠；只測試Web0.1.98/API0.1.79，剩18件，接續08C4B 服務與欄位驗證。
 
 ## 校驗既有驗證差異（非三語化功能，2026-10-26）
-- [ ] CAL-VERIFY-001：核對未建 SPC 主檔但持合法 Editor JWT、未明示頁面權限的校驗管理業務基準。原版 4c66c77c 與本批均回 200，舊測試預期 403；不在三語化中更動權限或改掉原斷言。主系統 SPC、相依 Portal 僅 claims 基準，若需修改另立規格／權限回歸，正式另授權。
+- [x] CAL-VERIFY-001：未知 Editor JWT 改為 fail closed；AuthorizationAccess 5項及校驗匯入權限5項通過，測試API0.1.93已發布，正式未更新。[規格與驗證](specs/20261031-calibration-editor-fail-closed/spec.md)。
 - [ ] CAL-VERIFY-002：恢復既有校驗真範本驗收所需原始 Excel，檔案 docs/QA-2-003-02A 儀器設備校驗管制一覽表-2026年-品保 - 更新.xlsx 目前缺少；不偽造59列原始證據。其餘生成式範本／隔離API測試已驗證。
 - 證據與本批前重現：[08C4A 驗證](specs/20261026-i18n-task08c4a/verification.md)。兩項保留待辦，不冒稱124項全通過；三語化依連續授權接續C4B。
 

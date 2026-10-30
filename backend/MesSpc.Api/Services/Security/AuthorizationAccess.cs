@@ -24,7 +24,7 @@ public sealed class AuthorizationAccess(AppDbContext db)
             .SingleOrDefaultAsync(x => x.Username == name || x.OperatorCode == name, ct);
 
         if (op is null)
-            return new CurrentUserAccess(name, role, permissions, true, true);
+            return new CurrentUserAccess(name, role, permissions, true, false);
 
         return new CurrentUserAccess(
             name,
