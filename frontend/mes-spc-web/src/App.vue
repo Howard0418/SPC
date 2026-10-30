@@ -65,7 +65,7 @@ const stackedMobileNav = computed(() => [
   '/guide', '/portal-sso',
   '/spc/query', '/genealogy', '/etch-analysis',
   '/settings/smtp', '/settings/spc-reports', '/operators',
-  '/particle-monitoring', '/equipment-status', '/equipment-points', '/equipment-monitor',
+  '/particle-monitoring',
   '/spc', '/trend-chart', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow', '/alerts', '/spc/alerts', '/alerts-workflow',
   '/monthly-control-chart', '/process-analysis/capability', '/process-analysis/violations',
 ].includes(route.path) || route.path === '/uploads' || /^\/uploads\/[^/]+\/preview$/.test(route.path));
