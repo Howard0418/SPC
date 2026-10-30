@@ -35,6 +35,7 @@ const permissionCatalog = ref([]);
 
 const searchQuery = ref("");
 const statusFilter = ref("all");
+const removedEquipmentPermissions = new Set(["equipment.status", "equipment.points", "equipment.monitor"]);
 
 const showModal = ref(false);
 const modalMode = ref("create");
@@ -50,6 +51,7 @@ const form = ref({
   ,pagePermissions: []
 });
 const formErr = ref("");
+const visiblePermissionCatalog = computed(() => permissionCatalog.value.filter(permission => !removedEquipmentPermissions.has(permission.code)));
 
 async function load() {
   err.value = "";
@@ -490,7 +492,7 @@ onMounted(load);
           <div class="space-y-2">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{{ t('spc.settings.visiblePages') }}</label>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <label v-for="permission in permissionCatalog" :key="permission.code" class="flex items-center gap-2 text-xs">
+              <label v-for="permission in visiblePermissionCatalog" :key="permission.code" class="flex items-center gap-2 text-xs">
                 <input data-testid="settings-form.pagePermissions" v-model="form.pagePermissions" type="checkbox" :value="permission.code" class="h-4 w-4" />
                 <span>{{ permission.name }}</span>
               </label>
