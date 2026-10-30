@@ -203,6 +203,10 @@ function normalizeArrayResponse(data, label) {
   throw new Error(`${label} API 回應格式不是陣列`);
 }
 
+function normalizeSummaryResponse(data) {
+  return normalizeArrayResponse(data, "SPC摘要");
+}
+
 // Filtered mappings based on selected dimension
 const filteredMappingsByDimension = computed(() => {
   return mappings.value.filter(m => {
@@ -743,8 +747,8 @@ async function loadActiveChart() {
         params.processId = Number(selectedProcessId.value);
       }
       const res = await api.get("/v1/spc/summary", { params });
-      tableSummaryData.value = res.data;
-      cachedSummaryData.value = res.data;
+      tableSummaryData.value = normalizeSummaryResponse(res.data);
+      cachedSummaryData.value = tableSummaryData.value;
       summaryDimension.value = selectedDimension.value;
       summaryPartId.value = selectedPartId.value;
       summaryQueryMode.value = productQueryMode.value;
@@ -2692,6 +2696,12 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
               <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Target</span>
               <span class="text-slate-800 dark:text-slate-200 font-mono">
                 {{ formatLimit(chartResult.limits?.target) }}
+              </span>
+            </div>
+            <div class="space-y-1" data-testid="normality-method-result">
+              <span class="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">常態檢定方法</span>
+              <span class="text-slate-800 dark:text-slate-200 font-semibold">
+                {{ chartResult.normality?.testName || chartResult.normality?.method || '未提供' }}
               </span>
             </div>
             <div class="space-y-1">

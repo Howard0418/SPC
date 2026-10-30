@@ -16,8 +16,8 @@
 
 ## 2026-10-30 最高優先：即時互動管制圖常態檢定方法顯示
 
-- [ ] `SPC-NORMALITY-DISPLAY-20261030`：P1，僅規劃待執行。於 SPC 即時互動管制圖顯示目前常態檢定方法，沿用既有 API／計算，不改演算法或其他功能；先完成規格與驗收，再依序實作、測試及發布測試站。正式站需另行授權。
-- 規格：`specs/20261030-normality-method-display/spec.md`。
+- [x] `SPC-NORMALITY-DISPLAY-20261030`：P1，已完成測試前端顯示與建置發布；正式站未發布，瀏覽器真人驗收待執行。
+- 規格／驗證：`specs/20261030-normality-method-display/spec.md`、`verification.md`。
 
 狀態：僅顯示未完成、待規格、待執行、待確認小工作。已完成小工作不再保留於本檔，完成紀錄請查 `CHANGELOG_CUSTOM.md` 與對應 `specs/`。
 
