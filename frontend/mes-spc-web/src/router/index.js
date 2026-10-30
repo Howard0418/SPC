@@ -36,7 +36,6 @@ const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
 const pagePermissionByPath = {
   "/etch-analysis": "analysis.etch", "/spc": "analysis.spc", "/process-analysis/capability": "analysis.capability",
   "/trend-chart": "analysis.trend", "/process-analysis/violations": "analysis.violations", "/monthly-control-chart": "analysis.reports",
-  "/equipment-status": "equipment.status", "/equipment-points": "equipment.points", "/equipment-monitor": "equipment.monitor",
   "/measurements": "data.measurements", "/uploads": "data.upload", "/operators": "admin.operators",
   "/calibration-instruments": "calibration.manage"
   , "/particle-monitoring": "analysis.spc"
@@ -74,9 +73,6 @@ const routes = [
   { path: "/part-process-characteristics", component: PartProcessCharacteristicsView, meta: { editorOnly: true } },
   { path: "/chemical-analysis-overview", component: ChemicalAnalysisOverviewView, meta: { editorOnly: true } },
   { path: "/chemical-f-table", component: ChemicalFTableView, meta: { editorOnly: true } },
-  { path: "/equipment-status", component: EquipmentStatusView },
-  { path: "/equipment-points", component: EquipmentPointsView },
-  { path: "/equipment-monitor", component: EquipmentMonitorView },
   { path: "/control-chart-groups", component: ControlChartGroupsView, props: { groupsOnly: true }, meta: { editorOnly: true } },
   { path: "/control-chart-categories", redirect: "/part-process-characteristics" },
   { path: "/control-chart-types", redirect: "/part-process-characteristics" },

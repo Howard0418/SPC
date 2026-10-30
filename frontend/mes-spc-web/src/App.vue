@@ -143,14 +143,6 @@ const viewerMenuCategories = [
       { to: "/monthly-control-chart", text: "spc.navigation.periodReports", icon: CalendarClock }
     ]
   },
-  {
-    title: "spc.navigation.equipmentMonitoring",
-    items: [
-      { to: "/equipment-status", text: "spc.navigation.equipmentStatus", icon: Activity },
-      { to: "/equipment-points", text: "spc.navigation.equipmentPoints", icon: Search },
-      { to: "/equipment-monitor", text: "spc.navigation.keyPoints", icon: Activity }
-    ]
-  }
 ];
 
 const editorMenuCategories = [
