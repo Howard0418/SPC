@@ -3,6 +3,8 @@ using MesSpc.Api.Domain;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Text.Json;
 
 namespace MesSpc.Api.Services;
 
@@ -126,8 +128,51 @@ public sealed class ChemicalAnalysisFormulaVersionService(AppDbContext db)
     private static bool ConfigEquals(string? left, string? right)
         => string.Equals(NormalizeConfig(left), NormalizeConfig(right), StringComparison.Ordinal);
 
+    /// <summary>Normalizes JSON object property order without changing formula strings or array order.</summary>
     private static string NormalizeConfig(string? value)
-        => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    {
+        var trimmed = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        if (trimmed.Length == 0) return trimmed;
+        try
+        {
+            using var document = JsonDocument.Parse(trimmed);
+            using var stream = new MemoryStream();
+            using (var writer = new Utf8JsonWriter(stream))
+            {
+                WriteCanonicalJson(writer, document.RootElement);
+            }
+            return Encoding.UTF8.GetString(stream.ToArray());
+        }
+        catch (JsonException)
+        {
+            // Historical invalid settings remain comparable with their prior trim-only behavior.
+            return trimmed;
+        }
+    }
+
+    private static void WriteCanonicalJson(Utf8JsonWriter writer, JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.WriteStartObject();
+                foreach (var property in element.EnumerateObject().OrderBy(x => x.Name, StringComparer.Ordinal))
+                {
+                    writer.WritePropertyName(property.Name);
+                    WriteCanonicalJson(writer, property.Value);
+                }
+                writer.WriteEndObject();
+                break;
+            case JsonValueKind.Array:
+                writer.WriteStartArray();
+                foreach (var item in element.EnumerateArray()) WriteCanonicalJson(writer, item);
+                writer.WriteEndArray();
+                break;
+            default:
+                element.WriteTo(writer);
+                break;
+        }
+    }
 
     private static string NormalizeActor(string? value)
         => string.IsNullOrWhiteSpace(value) ? "System" : value.Trim();

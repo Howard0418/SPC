@@ -41,6 +41,43 @@ public class ChemicalAnalysisFormulaVersionServiceTests
     }
 
     [Fact]
+    public async Task RecordChangeAsync_ShouldSkip_WhenFormulaJsonIsSemanticallyEquivalent()
+    {
+        await using var db = CreateDb();
+        var original = """{"enabled":true,"concentrationFormula":"Primary*2","decimalPlaces":2}""";
+        var mapping = await AddMappingAsync(db, "CHEM", original);
+        var service = new ChemicalAnalysisFormulaVersionService(db);
+
+        var result = await service.RecordChangeAsync(
+            mapping.Id, original,
+            """{ "decimalPlaces": 2, "concentrationFormula": "Primary*2", "enabled": true }""",
+            "測試人員", null, CancellationToken.None);
+
+        result.Created.Should().BeFalse();
+        result.Version.Should().BeNull();
+        (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task RecordChangeAsync_ShouldCreateVersion_WhenFormulaJsonValueDiffers()
+    {
+        await using var db = CreateDb();
+        var original = """{"enabled":true,"concentrationFormula":"Primary*2","decimalPlaces":2}""";
+        var mapping = await AddMappingAsync(db, "CHEM", original);
+        var service = new ChemicalAnalysisFormulaVersionService(db);
+
+        var result = await service.RecordChangeAsync(
+            mapping.Id, original,
+            """{"enabled":true,"decimalPlaces":3,"concentrationFormula":"Primary*2"}""",
+            "測試人員", "精度調整", CancellationToken.None);
+
+        result.Created.Should().BeTrue();
+        result.Version!.VersionNo.Should().Be(1);
+        result.Version.ConfigJson.Should().Be("""{"concentrationFormula":"Primary*2","decimalPlaces":3,"enabled":true}""");
+        result.Version.PreviousConfigJson.Should().Be("""{"concentrationFormula":"Primary*2","decimalPlaces":2,"enabled":true}""");
+    }
+
+    [Fact]
     public async Task RecordChangeAsync_ShouldRejectNonChemicalMapping()
     {
         await using var db = CreateDb();

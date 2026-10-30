@@ -34,7 +34,7 @@
 
 - SPC Pkcs安全修補：[驗證](../specs/20261021-spc-pkcs-security/verification.md)，234項通過、8條件式略過；測試API0.1.68，正式未更新。
 
-- 日期公式 DB 匯入環境契約：[FORMULA-IMPORT-001 驗證](../specs/20261031-formula-import-contract-verification/verification.md)。TransFiles 僅接受已核准測試／正式 SPC API 根網址，正式預設禁止；來源需含時區、原始值與來源鍵。隔離測試已通過，未呼叫 API、未匯入資料；公式版本寫入待後續 TASK-002。
+- 日期公式 DB 匯入環境契約：[FORMULA-IMPORT-001 驗證](../specs/20261031-formula-import-contract-verification/verification.md)及[FORMULA-IMPORT-002 驗證](../specs/20261031-formula-import-version-idempotence/verification.md)。TransFiles 僅接受已核准測試／正式 SPC API 根網址，正式預設禁止；來源需含時區、原始值與來源鍵。SPC 公式 JSON 採語意比較，等價重送不新增版本、差異保留遞增版本與前版快照；測試 API 0.1.94 已發布，尚未實際匯入資料。
 
 - SPC正式4筆DDL已獲同意並完成[正式備份複本驗證](../specs/20261021-spc-portal-production-preflight/verification.md)：60原表指紋不變、Up重跑通過。正式尚未套用，其他發布前置仍待辦。
 

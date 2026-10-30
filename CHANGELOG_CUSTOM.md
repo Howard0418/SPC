@@ -2270,3 +2270,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - TransFiles 6 項與 SPC 日期公式排程 7 項測試通過；未呼叫測試／正式 API、未匯入 Excel、未建立版本、未寫入資料庫、未打包或發布。
 - 正式環境、Portal、IIS、schema 與既有公式均未修改；版本差異與冪等寫入仍由 FORMULA-IMPORT-002 處理。
 
+## 2026-10-31 FORMULA-IMPORT-002 日期公式版本語意冪等
+- 藥液公式版本比較改為遞迴排序的 JSON canonicalization；屬性順序或縮排不同的等價設定不再建立重複版本，公式字串與陣列順序不改寫。
+- 值有差異時仍建立遞增 VersionNo，並保存 canonical ConfigJson 與 PreviousConfigJson；日期效期選版及已發行收據不可回溯回歸維持。
+- 17 項版本／排程測試通過，Release build 0 警告／0 錯誤；測試 API 0.1.94 已發布並通過 version／health。正式站、Portal、schema、Excel 匯入與業務量測未修改。
+
