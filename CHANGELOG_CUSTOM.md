@@ -2265,3 +2265,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - AuthorizationAccess及校驗匯入權限各5項通過，API建置0警告／0錯誤；測試API0.1.93已發布，Web、health、version與SPA路由均200。
 - 正式站、Portal、schema及業務資料未修改；測試backend備份可回復。
 
+## 2026-10-31 FORMULA-IMPORT-001 日期公式匯入環境契約
+- 補足 TransFiles 白名單隔離測試：測試根網址可建立，非白名單／環境不一致及未明確開啟正式皆拒絕；來源列維持 ISO 8601 時區、原始量測值、PPC／班別與來源鍵防呆。
+- TransFiles 6 項與 SPC 日期公式排程 7 項測試通過；未呼叫測試／正式 API、未匯入 Excel、未建立版本、未寫入資料庫、未打包或發布。
+- 正式環境、Portal、IIS、schema 與既有公式均未修改；版本差異與冪等寫入仍由 FORMULA-IMPORT-002 處理。
+

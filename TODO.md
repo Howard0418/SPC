@@ -33,7 +33,7 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成32件（以原進度表「小工作總表」目前待辦旗標為準）；CAL-VERIFY-001已完成，既有暫停／受阻工作不恢復。
+- 核心未完成31件（以原進度表「小工作總表」目前待辦旗標為準）；FORMULA-IMPORT-001已完成，既有暫停／受阻工作不恢復。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
 - 原進度表「小工作總表」221筆登錄中205件具名工作（171完成、34未完成）；本次[轉檔規劃入池驗證](specs/20261028-transfiles-production-schedule-plan/verification.md)新增8件，父規劃不重複計數。報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。原有[藥液正式驗證](specs/20261028-chemical-history-refresh/formal-release.md)與[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)保留；舊計數只作歷史或子集合意義。
 
@@ -579,4 +579,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-10-27 REPORT-PPT-001 十頁擴充（只規劃）
 依最新需求規劃10頁投影片（含封面），保留背景與A～D成果；新增校正／落塵、異常／報表、近期改善及中長期方向四頁，目標15張實際證據圖。新增F採證／G現況／H規劃三件P2，原E改最後十頁交付，均未開始，不立即改PPT或開發網站。原進度表已備份同步，202登錄／核心23未完成／163完成，另人工12及待核銷4；OpenXML零錯誤、內容／圖形／重開列印驗證通過。詳 specs/20261027-mes-spc-report-plan/ten-slide-plan.md；無DB或站台發布。
-- 2026-10-29 新增 FORMULA-IMPORT-001～005：[日期公式 DB 匯入環境與版本歷史規格](specs/20261029-chemical-formula-db-import-environment-history/spec.md)。只規劃未執行；依 P1→P2 排序，測試站先行，正式匯入／發布另行授權。共新增 5 件未完成小工作。
+- 2026-10-29 新增 FORMULA-IMPORT-001～005：[日期公式 DB 匯入環境與版本歷史規格](specs/20261029-chemical-formula-db-import-environment-history/spec.md)。FORMULA-IMPORT-001 已完成隔離契約驗證，002～005依 P1→P2 排序待執行；測試站先行，正式匯入／發布另行授權。

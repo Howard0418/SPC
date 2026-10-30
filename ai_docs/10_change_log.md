@@ -1195,3 +1195,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## 2026-10-31 CAL-VERIFY-001 校驗未知Editor權限核對與收斂
 - 目的：確認合法簽章但 SPC 無對應 Operator 的 Editor JWT 不可取得校驗管理寫入權限，修正目前 claims-only fallback 造成的 fail-open。
 - 範圍：只調整 `AuthorizationAccess` 的未知 Operator 判定與對應測試；不修改角色目錄、Portal SSO、資料庫或正式站。
+
+## 2026-10-31 FORMULA-IMPORT-001 日期公式匯入契約核對
+- 目的：以隔離測試確認 TransFiles 的日期公式匯入只接受測試／正式白名單網址、正式預設禁止，且來源列必含時區、原始值與可追溯來源鍵。
+- 範圍：補足契約測試與任務級 SDD 紀錄；不變更匯入邏輯、不呼叫 preview／prepare／confirm、不寫入測試或正式資料庫、不發布站台或打包工具。
