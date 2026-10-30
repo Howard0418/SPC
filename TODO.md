@@ -21,7 +21,7 @@
 
 ## 2026-10-30 SPC 測試區無法連結（最高優先）
 
-- [ ] `SPC-TEST-UNREACHABLE-20261030`：P1，僅規劃待執行。診斷並修正 SPC 測試 Web/API/IIS 連線，不涉及正式區；依序完成唯讀盤點、最小修正、回歸驗證與測試站發布。
+- [x] `SPC-TEST-UNREACHABLE-20261030`：P1，已完成測試站同源 `/api`、Rewrite／ARR代理、前端發布與Web/API驗證；正式區未變更，人工頁面驗收待確認。
 - 規格：`specs/20261030-spc-test-unreachable/spec.md`。
 
 ## 2026-10-30 最高優先：即時互動管制圖常態檢定方法顯示
@@ -33,7 +33,7 @@
 
 
 ## 最新整併計數（2026-10-28，以此節優先於下方歷史計數）
-- 核心未完成28件：轉檔正式匯入／來源／排程剩餘7件（001已完成）＋Portal Grafana入口1件＋網站調整1件（009待F；TASK-001／003／004／005／006已完成）＋既有19件：十頁簡報F／G／H／E全數完成，剩餘三語13件暫停；SEC002掃毒受阻1；SEC004 Runtime及TransFiles005 EXE暫緩2；CAL-VERIFY-001／002與REPORT-DATA-VERIFY-001待確認3。未恢復舊暫停工作。
+- 核心未完成33件（以原進度表「小工作總表」目前待辦旗標為準）；本件測試站API修復已完成，不列入未完成。人工頁面驗收另註，不恢復舊暫停工作。
 - 另11筆待人工驗收／覆蓋限制註記（12筆歷史中LOGO已核驗1筆）、4筆來源待核銷，不當成新增具名開發小工作；未知日期不造值，不恢復執行。
 - 原進度表「小工作總表」221筆登錄中205件具名工作（171完成、34未完成）；本次[轉檔規劃入池驗證](specs/20261028-transfiles-production-schedule-plan/verification.md)新增8件，父規劃不重複計數。報告A～H全數完成，10頁15圖已交付原路徑。來源／去重與限制見[盤點](specs/20261027-all-task-progress/inventory.md)及[十頁規劃](specs/20261027-mes-spc-report-plan/ten-slide-plan.md)。原有[藥液正式驗證](specs/20261028-chemical-history-refresh/formal-release.md)與[Portal Grafana規劃驗證](../PmrPortal/specs/20261028-grafana-entry-plan/verification.md)保留；舊計數只作歷史或子集合意義。
 
