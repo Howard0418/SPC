@@ -1211,3 +1211,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## 2026-11-01 FORMULA-IMPORT-005 測試來源與回歸驗收
 - 目的：使 TransFiles 的預設藥液／咬蝕量測試來源與使用者確認的 `\\172.16.119.200\LineData` 一致，並以唯讀乾跑核對實際來源可讀與解析結果。
 - 範圍：只調整 TransFiles 預設 UNC 來源與測試；不呼叫 preview／prepare／confirm、不寫入測試或正式資料庫、不修改 SPC／Portal／IIS、不打包或發布工具。
+
+## 2026-11-01 FORMULA-IMPORT-004 Portal／SPC 權限契約核對
+- 目的：確認日期公式匯入是否真的需要 Portal 代理，避免在既有 Portal 登入／權杖發行與 SPC 直連預檢架構之外新增不必要路徑。
+- 範圍：僅核對 TransFiles 設定、登入與隔離測試；不修改程式、Portal、SPC、IIS、資料庫或任何資料，不執行真人登入、preview／prepare／confirm 或工具打包。

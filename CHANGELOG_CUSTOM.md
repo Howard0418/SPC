@@ -2285,3 +2285,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 值有差異時仍建立遞增 VersionNo，並保存 canonical ConfigJson 與 PreviousConfigJson；日期效期選版及已發行收據不可回溯回歸維持。
 - 17 項版本／排程測試通過，Release build 0 警告／0 錯誤；測試 API 0.1.94 已發布並通過 version／health。正式站、Portal、schema、Excel 匯入與業務量測未修改。
 
+## 2026-11-01 FORMULA-IMPORT-004 Portal／SPC 權限契約核對
+- 確認 TransFiles 只透過 Portal 進行登入與取得 `spc-launch` 權杖；CHEM 主檔預檢及日期公式 API 均直接呼叫所選環境的白名單 SPC `/api`。
+- 不需要新增 Portal 代理；隔離登入、環境白名單與正式預設封鎖測試通過。未修改 Portal、SPC、IIS、資料庫或正式站，真人預覽仍由 FORMULA-IMPORT-005 進行。
+
