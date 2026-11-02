@@ -1,3 +1,5 @@
+> 2026-11-02 [九月公式F／初複驗UI已驗收](specs/20261102-september-chemical-test-import/ui-followup.md)：重新登入後20筆版本關聯完整、9/3初複驗與Excel一致；GUI、來源例外及日期時區仍待辦，核心35／SPC13保持。
+
 > 2026-11-02 [九月趨勢驗收續作](specs/20261102-september-chemical-test-import/ui-followup.md)：保留來源1146筆／71複驗，另建單組趨勢驗收20筆／1複驗，21公式F及20圖表點對帳、統計20 Completed、通知0；不加算來源量測。78例外依使用者同意隔離，UI20點已顯示，登入後追溯／GUI／十月日界線仍待辦。核心35／SPC13保持。
 
 > 2026-11-02 [更槽003已依使用者要求取消](specs/20261102-cancel-tank-change/spec.md)，移出活動待辦，保留取消紀錄且不計完成；目前核心35、SPC直接13，人工11／核銷4另計。
