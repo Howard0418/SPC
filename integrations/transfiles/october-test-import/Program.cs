@@ -20,7 +20,9 @@ var rows=manifest["rows"]!.AsArray().Where(x=>(string?)x!["status"]=="validated"
 var month=(string?)manifest["summary"]!["month"];
 if(rows.Count==0 || month is not ("2026-09" or "2026-10"))throw new Exception("Reviewed month candidate guard");
 var marker=args.ElementAtOrDefault(2)??"TEST-OCTCHEM-20261102";
-if(month=="2026-10" ? marker is not ("TEST-OCTCHEM-20261102" or "TEST-OCTCHEM-20261102-SECONDARY") : marker!="TEST-SEPCHEM-20261102")throw new Exception("Month/isolated marker mismatch");
+var trendFixture=marker=="TEST-SEPCHEM-20261102-TREND";
+if(month=="2026-10" ? marker is not ("TEST-OCTCHEM-20261102" or "TEST-OCTCHEM-20261102-SECONDARY") : marker is not ("TEST-SEPCHEM-20261102" or "TEST-SEPCHEM-20261102-TREND"))throw new Exception("Month/isolated marker mismatch");
+if(trendFixture != ((string?)manifest["summary"]!["purpose"]=="trend-ui"))throw new Exception("Trend purpose/marker mismatch");
 var monthName=month=="2026-09"?"九月":"十月";
 var jsonOptions=new JsonSerializerOptions{WriteIndented=true};
 string Text(JsonNode r,string key)=>(string?)r[key]??"";
@@ -28,6 +30,7 @@ decimal Dec(JsonNode r,string key)=>decimal.Parse(Text(r,key),CultureInfo.Invari
 string Config(JsonNode r)=>JsonSerializer.Serialize(new{enabled=true,version="2",primaryInputLabel="【報表日測試】原始滴定值",concentrationFormula=Text(r,"expression"),decimalPlaces=8});
 string Cells(JsonNode r)=>JsonSerializer.Serialize(r["fCells"]!.AsObject().Select(x=>new ChemicalFTableHistoryCell("F!"+x.Key,"Excel "+x.Key,decimal.Parse((string)x.Value!,CultureInfo.InvariantCulture))));
 string GroupKey(JsonNode r)=>JsonSerializer.Serialize(new{line=Text(r,"line"),slot=Text(r,"slot"),item=Text(r,"analysisItem"),formula=Text(r,"expression"),f=Cells(r),lower=Text(r,"lower"),upper=Text(r,"upper")});
+if(trendFixture && (rows.Count>31 || rows.Select(GroupKey).Distinct().Count()!=1 || rows.Any(r=>Text(r,"line")!="DV" || Text(r,"slot")!="顯影") || !rows.Any(r=>r["recheckPrimary"] is not null)))throw new Exception("Reviewed trend group guard");
 var serverChecks=0;
 foreach(var r in rows){
  if(!Text(r,"fileDay").StartsWith(month+"-") || Text(r,"fileHash").Length!=64)throw new Exception("Source guard");
@@ -41,7 +44,8 @@ foreach(var r in rows){
 Console.WriteLine($"SPC engine/Excel checks passed: {serverChecks}; candidates={rows.Count}");
 File.WriteAllText(Path.Combine(root,"server-pure.json"),JsonSerializer.Serialize(new{serverChecks,candidates=rows.Count,month,databaseWritten=false},jsonOptions));
 if(mode=="--pure")return;
-if(mode is not ("--preflight" or "--apply" or "--verify" or "--statistics" or "--align-units"))throw new ArgumentException("Unknown mode");
+if(mode is not ("--preflight" or "--apply" or "--verify" or "--statistics" or "--align-units" or "--align-trend-statistics"))throw new ArgumentException("Unknown mode");
+if(mode=="--align-trend-statistics" && !trendFixture)throw new Exception("Trend repair scope guard");
 var cfg=new ConfigurationBuilder().AddJsonFile("D:/SPC/release/test/backend/appsettings.json").Build();
 var connection=cfg.GetConnectionString("SqlServer")??throw new Exception("Missing test config");
 var cs=new SqlConnectionStringBuilder(connection);
@@ -104,7 +108,7 @@ var process=await db.Processes.SingleOrDefaultAsync(x=>x.ProcessCode==marker);
 if(process is null){
  if(mode!="--apply")throw new Exception("Fixture absent");
  await using var tx=await db.Database.BeginTransactionAsync();
- process=new MesSpc.Api.Domain.Entities.Process{ProcessCode=marker,ProcessName="【"+monthName+"隔離測試】Excel藥液對帳",ControlScope="CHEM",Description="Report-day fixture only; not actual sampling timestamps; record-only prevents operational alerts"};db.Processes.Add(process);await db.SaveChangesAsync();
+ process=new MesSpc.Api.Domain.Entities.Process{ProcessCode=marker,ProcessName="【"+monthName+(trendFixture?"趨勢驗收測試":"隔離測試")+"】Excel藥液對帳",ControlScope="CHEM",Description="Report-day fixture only; not actual sampling timestamps; record-only prevents operational alerts"};db.Processes.Add(process);await db.SaveChangesAsync();
  var chart=await db.ControlChartTypes.AsNoTracking().FirstAsync(x=>x.IsEnabled&&x.DataCategory=="Variable");
  int index=0;
  foreach(var group in groups){
@@ -115,7 +119,7 @@ if(process is null){
   foreach(var cell in r["fCells"]!.AsObject())db.Add(new ChemicalFTableCell{VersionId=fv.Id,SheetName="F",CellAddress=cell.Key,NormalizedCellAddress=ChemicalFTableService.NormalizeCellAddress("F!"+cell.Key),StandardSolution="Excel "+cell.Key,NumericValue=decimal.Parse((string)cell.Value!,CultureInfo.InvariantCulture),RawValue=(string)cell.Value!});
   var fh=new ChemicalFTableVersionHistory{VersionNo=(await db.ChemicalFTableVersionHistories.MaxAsync(x=>(int?)x.VersionNo)??0)+1,FTableVersionId=fv.Id,VersionCode=code,DisplayName=fv.DisplayName,CellsJson=Cells(r),ChangedBy=actor,Reason="Approved isolated "+month+" report-day fixture",ChangeType="TestFixture"};db.Add(fh);await db.SaveChangesAsync();
   var line=Text(r,"line");var machine=line is "N1" or "N2"?await db.Machines.AsNoTracking().Where(x=>x.MachineCode==line).Select(x=>(int?)x.Id).SingleAsync():null;
-  var ppc=new PartProcessCharacteristic{ControlScope="CHEM",ProcessId=process.Id,MachineId=machine,CharacteristicId=ch.Id,Unit=Text(r,"unit"),LSL=(double)Dec(r,"lower"),USL=(double)Dec(r,"upper"),TargetValue=(double)((Dec(r,"lower")+Dec(r,"upper"))/2),DisplayMode="CONTROL_CHART",ChartTypeId=chart.Id,ChemicalAnalysisConfigJson=Config(r),IsEnabled=true,IsRequired=false};db.Add(ppc);await db.SaveChangesAsync();
+  var ppc=new PartProcessCharacteristic{ControlScope="CHEM",ProcessId=process.Id,MachineId=machine,CharacteristicId=ch.Id,Unit=Text(r,"unit"),LSL=(double)Dec(r,"lower"),USL=(double)Dec(r,"upper"),TargetValue=(double)((Dec(r,"lower")+Dec(r,"upper"))/2),DisplayMode=trendFixture?"TREND_CHART":"CONTROL_CHART",ChartTypeId=chart.Id,ChemicalAnalysisConfigJson=Config(r),IsEnabled=true,IsRequired=false};db.Add(ppc);await db.SaveChangesAsync();
   await new ChemicalAnalysisFormulaVersionService(db).RecordChangeAsync(ppc.Id,null,ppc.ChemicalAnalysisConfigJson,actor,month+" isolated source formula; no business policy change",default);
   var formula=await db.ChemicalAnalysisFormulaVersions.SingleAsync(x=>x.PartProcessCharacteristicId==ppc.Id);
   foreach(var cell in r["fCells"]!.AsObject())db.Add(new ChemicalFTableReference{VersionId=fv.Id,PartProcessCharacteristicId=ppc.Id,CellAddress=cell.Key,NormalizedCellAddress=ChemicalFTableService.NormalizeCellAddress("F!"+cell.Key),SourceFormula=Text(r,"formula"),SourceSheet=Text(r,"sheet"),SourceRow=(int)r["sourceRow"]!,ReferenceContext=month+" isolated fixture"});await db.SaveChangesAsync();
@@ -126,6 +130,13 @@ if(process is null){
  await tx.CommitAsync();Console.WriteLine($"Isolated definitions created: {groups.Count}");
 }
 var ppcs=await db.PartProcessCharacteristics.AsNoTracking().Where(x=>x.ProcessId==process.Id).OrderBy(x=>x.Id).ToListAsync();
+if(mode=="--align-trend-statistics"){
+ if(ppcs.Count!=1 || ppcs[0].DisplayMode!="TREND_CHART" || await db.QualityCharacteristics.AnyAsync(x=>x.Id==ppcs[0].CharacteristicId&&x.InputMode!="RECORD_ONLY"))throw new Exception("Trend fixture repair guard");
+ if(ppcs[0].ChartTypeId.HasValue)throw new Exception("Trend fixture already has statistics configuration");
+ var chartId=await db.ControlChartTypes.AsNoTracking().Where(x=>x.IsEnabled&&x.DataCategory=="Variable").Select(x=>x.Id).FirstAsync();
+ var owned=await db.PartProcessCharacteristics.SingleAsync(x=>x.Id==ppcs[0].Id&&x.ProcessId==process.Id);owned.ChartTypeId=chartId;await db.SaveChangesAsync();
+ if(before!=await Snapshot())throw new Exception("Business definition changed");Console.WriteLine("Isolated trend statistics configuration aligned; measurements unchanged");return;
+}
 if(mode=="--align-units"){
  var codes=await db.QualityCharacteristics.AsNoTracking().Where(x=>x.CharacteristicCode.StartsWith(marker+"-")).ToDictionaryAsync(x=>x.CharacteristicCode,x=>x.Id);
  var changes=0;var index=0;

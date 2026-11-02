@@ -1,3 +1,5 @@
+> 2026-11-02 [九月趨勢驗收續作](specs/20261102-september-chemical-test-import/ui-followup.md)：保留來源1146筆／71複驗，另建單組趨勢驗收20筆／1複驗，21公式F及20圖表點對帳、統計20 Completed、通知0；不加算來源量測。78例外依使用者同意隔離，UI20點已顯示，登入後追溯／GUI／十月日界線仍待辦。核心35／SPC13保持。
+
 > 2026-11-02 [更槽003已依使用者要求取消](specs/20261102-cancel-tank-change/spec.md)，移出活動待辦，保留取消紀錄且不計完成；目前核心35、SPC直接13，人工11／核銷4另計。
 
 > 2026-11-02 SPC優先核對：[實站及原進度表核銷](specs/20261102-spc-priority-status-audit/spec.md)。003測試入口、004／005正式月報已於10/29完成，移除3個過期待辦；006僅測試完成待正式。核心36、SPC直接相關14，人工11／核銷4保持。QE2以匯入Excel為準、P400移除重複已確認，更槽後續已取消（見上方最新狀態）；逐件續作。
@@ -13,7 +15,7 @@
 [規格](specs/20261102-sep-oct-production-chart-import/spec.md)／[計畫](specs/20261102-sep-oct-production-chart-import/plan.md)／[排序與測試矩陣](specs/20261102-sep-oct-production-chart-import/tasks.md)。僅完成來源解析與限定月份唯讀驗證；不讀寫測試／正式資料庫、不匯入、不發布。
 
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-001`：P1，限定月份與藥液解析已修正（59檔2,423筆 ready）；咬蝕 9 筆負值／非數值原始量測待校正，未讀寫資料庫。
-- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-002`：P1，依 001 於測試環境 preview／隔離匯入、逐筆與兩類圖表驗證；僅新增且可重跑。
+- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-002`：P1，[九月趨勢續驗](specs/20261102-september-chemical-test-import/ui-followup.md)：九月1146／71複驗及十月1211／54保持；另組趨勢20筆對帳通過，來源例外隔離。登入後追溯、GUI交付及十月日期篩選仍待辦；僅測試，不操作正式。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-003`：P0，依 002 做正式目標／主檔／衝突唯讀 preflight、備份與回復門檻；不寫入。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-004`：P0，須 003 通過及當下另行明確正式 apply 授權，才可正式僅新增匯入並驗收 9、10 月管制圖／趨勢圖與截圖。
 
