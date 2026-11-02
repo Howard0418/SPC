@@ -2338,3 +2338,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 2026-11-02 [9、10月資料來源唯讀盤點](../specs/20261102-sep-oct-production-chart-import/verification.md)：SPC-HISTORICAL-IMPORT-1102 TASK-001 修正藥液檔名日期、結果公式欄及空白／0 解析，59檔取得2,423筆可預覽資料；新增限定 9/1～10/31 範圍，25項解析／排程測試通過，203項唯讀乾跑無 API 呼叫。咬蝕135份有效日報、14份X-排除；9筆「前值－後值」負值或非數值原始量測維持隔離，待來源擁有者校正後重跑。未寫入測試／正式資料庫、未備份、未發布。
 
+## 2026-11-02 藥液匯入入口唯讀核對
+既有FORMULA-IMPORT-005補充檢查：17項測試通過，但實檔load_rows因Workbook不支援context manager而失敗；矩陣parser目前代表檔73筆可解析，直接schema合格0列。現行流程亦未自動將來源公式／F建立成伺服器有效排程，故未確認匯入。未改程式、資料庫、既有進度狀態或發布；[具體結果及格式建議](specs/20261101-formula-import-test-source-regression/import-readiness-20261102.md)。
+
