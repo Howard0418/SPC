@@ -1,3 +1,5 @@
+> 2026-11-02 SPC優先核對：[實站及原進度表核銷](specs/20261102-spc-priority-status-audit/spec.md)。003測試入口、004／005正式月報已於10/29完成，移除3個過期待辦；006僅測試完成待正式。核心36、SPC直接相關14，人工11／核銷4保持。QE2以匯入Excel為準、P400移除重複已確認，更槽仍待確認；逐件續作。
+
 > 2026-11-02 TASK-002九月藥液：[驗證](specs/20261102-september-chemical-test-import/verification.md)。32檔1227候選，1146筆／71複驗隔離測試匯入；1217計算與Excel、117組圖表1146點對帳，3重複略過／78來源例外保留。十月1211及16例外保持；正式、咬蝕未動，趨勢UI／GUI交付仍待辦。原Excel已同步，核心39、人工11／核銷4保持。
 
 > 2026-11-02 TASK-002限定十月藥液：[隔離測試匯入與驗證](specs/20261102-october-chemical-test-import/verification.md)。36檔1230候選，1211筆／54複驗匯入與公式F對帳；3重複略過、16來源例外保留；117組圖表API共1211點吻合。UTC日界線／趨勢UI／GUI交付仍待辦；9月、咬蝕及正式未啟動。原Excel已同步，核心39、人工11／核銷4保持。
@@ -92,10 +94,7 @@
 |---|---|---|---|
 |1|SPC-ADJUST-1028-TASK-009|P1／SPC，相依Portal|QE2已診斷固定F=0.995；待使用者確認核准F及有效日，保留現行公式與資料。|
 |2|SPC-ADJUST-1028-TASK-001|P1／SPC|10/29已有重算修補；11/02[續驗修正JSON等價比較](specs/20261029-control-line-formula-recalc/followup-20261102.md)，相關16、backend66／API322通過，測試API0.1.97；待正式授權，保留核心旗標。|
-|3|SPC-ADJUST-1028-TASK-003|P1／SPC|測試入口HTTPS根網址，保留Launch及正式目標。|
-|4|SPC-ADJUST-1028-TASK-004|P2／SPC|[三個獨立Sheet與趨勢查詢已測試](specs/20261028-monthly-category-sheets/verification.md)，現測試API92／Web113保留；正式待授權，保留未完成旗標。|
-|5|SPC-ADJUST-1028-TASK-005|P2／SPC|[已／未處置件數測試完成](specs/20261028-monthly-disposition/verification.md)，測試API92／Web113；正式待授權，保留未完成旗標。|
-|6|SPC-ADJUST-1028-TASK-006|P3／SPC|淺藍直方圖，不改bins／頻數／統計。|
+|6|SPC-ADJUST-1028-TASK-006|P3／SPC|淺藍直方圖已測試完成，待正式授權；不改bins／頻數／統計。|
 
 若確認003已阻擋使用／導向錯環境，依既有排序規則調整後續順序。002／008有實際實作／測試發布日期，007是現版驗證、009是唯讀診斷；其餘規劃不造日期，父批次不另重複計數。
 
