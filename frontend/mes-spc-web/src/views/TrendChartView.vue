@@ -12,6 +12,7 @@ import { captureChartPresentation, translateChartPresentation, escapeChartText }
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
+import { etchTrendPresentation } from "../utils/etchTrendPresentation";
 import { buildHistogramBins, findHistogramBinIndex } from "../utils/histogram";
 import {
   TrendingUp,
@@ -63,6 +64,7 @@ const normalityMethod = "AD";
 const loading = ref(false);
 const error = ref("");
 const chartResult = ref(null);
+const trendPresentation = computed(() => etchTrendPresentation(chartResult.value, selectedMapping.value));
 const trendChartEl = ref(null);
 const histogramChartEl = ref(null);
 let trendChartInstance = null;
@@ -409,6 +411,7 @@ function loadSummary() {
 }
 
 function selectTrendPoint(index) {
+  if (trendPresentation.value.isSubgroup) return;
   const points = chartResult.value?.rawDataPoints || [];
   if (index < 0 || index >= points.length) return;
   selectedPointIndex.value = index;
@@ -756,7 +759,7 @@ function renderTrendChart() {
   trendChartInstance = echarts.init(trendChartEl.value);
 
   const data = chartResult.value;
-  const rawPoints = data.rawDataPoints || [];
+  const rawPoints = trendPresentation.value.points;
   const limits = data.limits || {};
 
   if (rawPoints.length === 0) {
@@ -873,6 +876,7 @@ function renderTrendChart() {
           res += `<div style="font-size:10px;color:#94a3b8;margin-bottom:6px">`;
           if (meta.lotNo) res += `<div>${htmlChartLabel("批號")}: <span style="color:#e2e8f0">${escapeChartText(meta.lotNo)}</span></div>`;
           if (meta.serialNo) res += `<div>${htmlChartLabel("序號")}: <span style="color:#e2e8f0">${escapeChartText(meta.serialNo)}</span></div>`;
+          if (meta.groupSampleCount) res += `<div>${escapeChartText(t("spc.trend.subgroupSamples", { size: meta.groupSampleCount }))}</div>`;
           if (meta.operator) res += `<div>${htmlChartLabel("人員")}: <span style="color:#e2e8f0">${escapeChartText(meta.operator)}</span></div>`;
           if (meta.pointRemark) res += `<div>${htmlChartLabel("備註")}: <span style="color:#fde68a">${escapeChartText(meta.pointRemark)}</span></div>`;
           res += `</div>`;
@@ -1143,7 +1147,7 @@ watch([showSpecLimits, showControlLimits], () => {
 // Stats computed
 const trendStats = computed(() => {
   if (!chartResult.value) return null;
-  const vals = (chartResult.value.rawDataPoints || [])
+  const vals = trendPresentation.value.points
     .filter(p => !p.isExcluded && p.value != null)
     .map(p => p.value);
   if (!vals.length) return null;
@@ -1156,9 +1160,10 @@ const trendStats = computed(() => {
   const range = max - min;
 
   const limits = chartResult.value.limits || {};
-  const ucl = limits.ucl ?? (mean + 3 * std);
-  const cl = limits.cl ?? mean;
-  const lcl = limits.lcl ?? (mean - 3 * std);
+  const subgroupLimits = trendPresentation.value.isSubgroup ? chartResult.value.statControlLimits?.xbarControl : null;
+  const ucl = limits.ucl ?? subgroupLimits?.ucl ?? (mean + 3 * std);
+  const cl = limits.cl ?? subgroupLimits?.cl ?? mean;
+  const lcl = limits.lcl ?? subgroupLimits?.lcl ?? (mean - 3 * std);
 
   let cpk = "N/A";
   let cp = "N/A";
@@ -1173,6 +1178,11 @@ const trendStats = computed(() => {
     cpk = ((mean - limits.lsl) / (3 * std)).toFixed(3);
   }
 
+  if (trendPresentation.value.isSubgroup) {
+    const cap = chartResult.value.capability;
+    cp = Number.isFinite(cap?.cp) ? cap.cp.toFixed(3) : "N/A";
+    cpk = Number.isFinite(cap?.cpk) ? cap.cpk.toFixed(3) : "N/A";
+  }
   return {
     n,
     mean: mean.toFixed(4),
@@ -1199,7 +1209,7 @@ const trendStats = computed(() => {
         </div>
         <div>
           <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{{ t('spc.trend.title') }}</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ t('spc.trend.description') }}</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ t(trendPresentation.isSubgroup ? 'spc.trend.subgroupDescription' : 'spc.trend.description') }}</p>
         </div>
       </div>
     </div>
@@ -1392,17 +1402,19 @@ const trendStats = computed(() => {
           </span>
         </div>
         <div class="space-y-1">
-          <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">{{ t('spc.trend.measurementCount') }}</span>
-          <span class="text-indigo-600 dark:text-indigo-400 font-bold">{{ t('spc.chartQuery.measurementCount', { count: chartResult.rawDataPoints?.length ?? 0 }) }}</span>
+          <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">{{ t(trendPresentation.isSubgroup ? 'spc.trend.subgroupCount' : 'spc.trend.measurementCount') }}</span>
+          <span class="text-indigo-600 dark:text-indigo-400 font-bold">{{ t('spc.chartQuery.measurementCount', { count: trendPresentation.points.length }) }}</span>
         </div>
       </div>
 
+      <p v-if="trendPresentation.isSubgroup" data-testid="etch-subgroup-basis" class="text-sm text-slate-700 dark:text-slate-200">{{ t("spc.trend.subgroupBasis", { size: trendPresentation.sampleSize, groups: trendPresentation.points.length, samples: trendPresentation.rawSampleCount }) }}</p>
+      <p v-if="trendPresentation.incompleteCount" data-testid="etch-subgroup-incomplete" class="text-sm text-amber-700 dark:text-amber-300">{{ t("spc.trend.subgroupIncomplete", { count: trendPresentation.incompleteCount }) }}</p>
       <!-- Stats Summary Cards -->
       <div v-if="trendStats" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
         <div v-for="(card) in [
-          { key: 'n', label: t('spc.trend.sampleN'), value: trendStats.n, cls: 'text-slate-200' },
+          { key: 'n', label: t(trendPresentation.isSubgroup ? 'spc.trend.subgroupCount' : 'spc.trend.sampleN'), value: trendStats.n, cls: 'text-slate-200' },
           { key: 'mean', label: t('spc.trend.mean'), value: trendStats.mean, cls: 'text-blue-400' },
-          { key: 'std', label: t('spc.trend.std'), value: trendStats.std, cls: 'text-indigo-400' },
+          { key: 'std', label: t(trendPresentation.isSubgroup ? 'spc.trend.subgroupStd' : 'spc.trend.std'), value: trendStats.std, cls: 'text-indigo-400' },
           { key: 'ucl', label: 'UCL', value: trendStats.ucl, cls: 'text-amber-400' },
           { key: 'cl', label: 'CL', value: trendStats.cl, cls: 'text-sky-400' },
           { key: 'lcl', label: 'LCL', value: trendStats.lcl, cls: 'text-amber-400' },
@@ -1421,7 +1433,7 @@ const trendStats = computed(() => {
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
           <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <Sliders class="w-5 h-5 text-indigo-500" />
-            {{ t('spc.trend.rawTrend') }}
+            {{ t(trendPresentation.isSubgroup ? 'spc.trend.subgroupTrend' : 'spc.trend.rawTrend') }}
           </h2>
           <div class="flex flex-wrap items-center gap-4 text-xs font-semibold">
             <!-- Line Display Controls -->
@@ -1562,7 +1574,7 @@ const trendStats = computed(() => {
             <div>
               <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <Activity class="w-5 h-5 text-indigo-500" />
-                {{ t('spc.trend.histogram') }}
+                {{ t(trendPresentation.isSubgroup ? 'spc.trend.subgroupRawHistogram' : 'spc.trend.histogram') }}
               </h2>
               <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ t('spc.trend.histHelp') }}</p>
             </div>
