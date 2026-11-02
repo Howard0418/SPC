@@ -1,3 +1,5 @@
+> 2026-11-02 [正式僅新增部分完成](specs/20261102-production-import-insert-only/verification.md)：已獲本次明確正式授權，PT2新增21份2121筆（9月6／10月15）；原48份不重匯，後預覽0可新增／69已存在／65主檔受阻。正式兩月管制／趨勢UI及6圖服務3333點核對通過。藥液缺時間班別依使用者要求先不匯，修正Excel已交付；父003／004保持待辦，核心35／SPC13。
+
 > 2026-11-02 [9／10月咬蝕測試匯入](specs/20261102-sep-oct-etch-test-import/verification.md)：134份合格日報共10384筆（含速率）核對通過；新增25份1975筆，109份同內容保持；24圖／268子組及兩月管制／趨勢UI通過。9異常／15排除不送出，舊排除51筆保持，藥液成果保持。父TASK-002仍有GUI／日期時區及來源例外待辦，核心35／SPC13。
 
 > 2026-11-02 [九月公式F／初複驗UI已驗收](specs/20261102-september-chemical-test-import/ui-followup.md)：重新登入後20筆版本關聯完整、9/3初複驗與Excel一致；GUI、來源例外及日期時區仍待辦，核心35／SPC13保持。
@@ -20,8 +22,8 @@
 
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-001`：P1，限定月份與藥液解析已修正（59檔2,423筆 ready）；咬蝕 9 筆負值／非數值原始量測待校正，未讀寫資料庫。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-002`：P1，[咬蝕134份測試及圖表通過](specs/20261102-sep-oct-etch-test-import/verification.md)，九月藥液1146／71複驗、十月1211／54及趨勢20筆與公式F追溯驗收保持。來源例外、GUI交付及日期時區仍待辦；僅測試，不操作正式。
-- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-003`：P0，依 002 做正式目標／主檔／衝突唯讀 preflight、備份與回復門檻；不寫入。
-- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-004`：P0，須 003 通過及當下另行明確正式 apply 授權，才可正式僅新增匯入並驗收 9、10 月管制圖／趨勢圖與截圖。
+- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-003`：P0，[正式preflight已執行](specs/20261102-production-import-insert-only/verification.md)，PT2通過、其餘65份缺主檔；藥液缺時間班別先補正，整體仍未通過。
+- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-004`：P0，已獲11/02明確正式授權；[PT2正式21份2121筆完成](specs/20261102-production-import-insert-only/verification.md)，48原有略過，後預覽69已存在／0可新增；65主檔及來源／時間待補，未全DONE。
 
 ## 最新整併計數（2026-11-02）
 

@@ -14,5 +14,6 @@
     <Compile Include="../../tools/EtchTrialImport/ImportTargetOptions.cs" Link="EtchTrialImport/ImportTargetOptions.cs"/>
     <Compile Include="../../tools/EtchTrialImport/ProductionBackupProof.cs" Link="EtchTrialImport/ProductionBackupProof.cs"/>
     <Compile Include="../../tools/EtchTrialImport/EtchImportKey.cs" Link="EtchTrialImport/EtchImportKey.cs"/>
+    <Compile Include="../../tools/EtchSepOctProductionImport/ProductionGuard.cs" Link="EtchProduction/ProductionGuard.cs"/>
   </ItemGroup>
 </Project>
