@@ -1,3 +1,7 @@
+- 2026-11-02 [FORMULA-IMPORT-005隔離驗算](../specs/20261101-formula-import-test-source-regression/isolated-fixture-20261102.md)：2026-11-02 使用者允許隔離驗算後：819檔唯讀dry-run完成，68項parser／轉檔回歸通過；8筆專用PPC2637～2644的實際測試HTTP preview與Excel在1e-8內吻合、皆OK。伺服器另驗8零值、16區間邊界及16無效輸入通過。未新增量測／receipt、未prepare／confirm／匯入／打包／網站發布，正式區保持。整件待人工驗收，核心35件、人工11／核銷4另計。
+
+- 2026-11-02 [FORMULA-IMPORT-005測試預覽](../specs/20261101-formula-import-test-source-regression/preview-20261102.md)：矩陣線別修補與68測試通過；來源8筆無日期排程，DEMO成功，計算驗收待核准公式／F／有效日與隔離測試項目。未匯入／打包／發布。
+
 - 2026-11-02 [新保存規格獨立圖型](../specs/20261102-chemical-save-history/judgment-followup.md)：001-J1子項；一般藥液／非排程公式有規格即保留保存判定，不依賴圖型；日期公式原始精度、僅紀錄與歷史不回填保持。測試API0.1.96，正式待授權。
 
 - 2026-11-02 [保存後同製程／量測日查詢](../specs/20261102-chemical-save-history/verification.md)：SPC-CHEM-1102-TASK-001測試API216/Web259，保留保存成功與GET-only重試；現場／正式待辦，公式／資料不變。

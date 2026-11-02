@@ -1,3 +1,13 @@
+## 2026-11-02 FORMULA-IMPORT-005 隔離驗算結果（最新）
+2026-11-02 使用者允許隔離驗算後：819檔唯讀dry-run完成，68項parser／轉檔回歸通過；8筆專用PPC2637～2644的實際測試HTTP preview與Excel在1e-8內吻合、皆OK。伺服器另驗8零值、16區間邊界及16無效輸入通過。未新增量測／receipt、未prepare／confirm／匯入／打包／網站發布，正式區保持。整件待人工驗收，核心35件、人工11／核銷4另計。
+[隔離授權與回復](specs/20261101-formula-import-test-source-regression/isolated-fixture-20261102.md)／[驗證](specs/20261101-formula-import-test-source-regression/verification.md)。
+
+## 2026-11-02 FORMULA-IMPORT-005 T3b唯讀預覽與解析修補
+
+68項相關測試通過；代表檔111筆中51筆唯一映射且單位吻合，60筆仍人工複核。真人測試來源8筆preview均HTTP400（尚未發布公式排程），獨立DEMO控制案例成功。51個來源PPC在報表日均無有效日期排程；不可視為Excel計算對帳通過。未prepare／confirm／DB寫入／排程／EXE打包／網站發布，正式環境不變。
+- 分組A欄線別與空白量測列上下文先紅測再修；列迭代與F表快取保持111筆結果一致，最小patch已重現。
+- [驗證與待辦](specs/20261101-formula-import-test-source-regression/verification.md)／[待確認基準](specs/20261101-formula-import-test-source-regression/test-baseline-review.md)。整件仍未完成，核心35、人工11／核銷4保持。
+
 ## 2026-11-02 001-J1 新保存有規格無圖型判定修正
 - 唯讀37筆中14筆無保存計算，13筆現有規格；隔離新保存確認缺圖型也會Unknown（先紅3項）。新增交易內伺服器規格稽核快照，獨立於管制圖型；日期公式raw追溯、複驗0及歷史不重判保持，無schema／公式或F更動。
 - API322通過／8條件略過，Portal7項通過；測試backend最終API0.1.96，僅四程式檔、3設定hash保持；首頁／資產／健康／瀏覽器四線查詢通過。Portal216/259與前端保持，正式未發。

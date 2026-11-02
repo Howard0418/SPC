@@ -1,0 +1,116 @@
+--- a/chemical_daily_parser.py
++++ b/chemical_daily_parser.py
+@@ -65 +65,2 @@
+-    headers = [_normalise(formula_ws.cell(6, column).value) for column in range(1, 15)]
++    values = next(formula_ws.iter_rows(min_row=6, max_row=6, max_col=14, values_only=True), ())
++    headers = [_normalise(value) for value in values]
+@@ -69 +70 @@
+-def _f_value_from_formula(formula: Any, value_wb: Any) -> Any:
++def _f_value_from_formula(formula: Any, value_wb: Any, cached_values: dict[str, Any] | None = None) -> Any:
+@@ -74,4 +75,5 @@
+-    return value_wb["F"][f"{match.group(1).upper()}{match.group(2)}"].value
+-
+-
+-def _parse_matrix_sheet(formula_ws: Any, value_ws: Any, value_wb: Any) -> list[dict[str, Any]]:
++    coordinate = f"{match.group(1).upper()}{match.group(2)}"
++    return cached_values.get(coordinate) if cached_values is not None else value_wb["F"][coordinate].value
++
++
++def _parse_matrix_sheet(formula_ws: Any, value_ws: Any, value_wb: Any, f_values: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+@@ -79 +81,3 @@
+-    line = _text(value_ws["B3"].value) or formula_ws.title
++    sheet_line = _text(value_ws["B3"].value) or formula_ws.title
++    line = sheet_line
++    line_source_cell = "B3"
+@@ -82,9 +86,25 @@
+-    for row_number in range(7, formula_ws.max_row + 1):
+-        analysis_item = _text(value_ws.cell(row_number, 3).value)
+-        raw_value = value_ws.cell(row_number, 8).value
+-        recheck_value = value_ws.cell(row_number, 13).value
+-        formula = formula_ws.cell(row_number, 9).value
+-        formula_result = value_ws.cell(row_number, 9).value
+-        recheck_formula = formula_ws.cell(row_number, 14).value
+-        recheck_formula_result = value_ws.cell(row_number, 14).value
+-        has_measurement_definition = any((formula, recheck_formula, value_ws.cell(row_number, 4).value, value_ws.cell(row_number, 5).value, value_ws.cell(row_number, 7).value))
++    formula_rows = formula_ws.iter_rows(min_row=7, max_col=14, values_only=True)
++    value_rows = value_ws.iter_rows(min_row=7, max_col=14, values_only=True)
++    for row_number, (formulas, values) in enumerate(zip(formula_rows, value_rows), 7):
++        # Merged group headers can be on a row without measurements. Read their
++        # context before skipping that row, and never carry a tank across lines.
++        group_label = _text(values[0])
++        group = re.search(r"[（(]\s*([A-Za-z][A-Za-z0-9-]*)\s*[）)]", group_label)
++        group_code = group.group(1).upper() if group else (
++            group_label.upper() if re.fullmatch(r"[A-Za-z][A-Za-z0-9-]*", group_label) else None)
++        if group_code:
++            if group_code != line:
++                slot = ""
++            line = group_code
++            line_source_cell = f"A{row_number}"
++        current_slot = _text(values[1])
++        if current_slot:
++            slot = current_slot
++        analysis_item = _text(values[2])
++        raw_value = values[7]
++        recheck_value = values[12]
++        formula = formulas[8]
++        formula_result = values[8]
++        recheck_formula = formulas[13]
++        recheck_formula_result = values[13]
++        has_measurement_definition = any((formula, recheck_formula, values[3], values[4], values[6]))
+@@ -93,3 +112,0 @@
+-        current_slot = _text(value_ws.cell(row_number, 2).value)
+-        if current_slot:
+-            slot = current_slot
+@@ -100,0 +118,2 @@
++            "sheetLine": sheet_line,
++            "lineSourceCell": line_source_cell,
+@@ -106,4 +125,4 @@
+-            "fValue": _f_value_from_formula(formula, value_wb),
+-            "spec": value_ws.cell(row_number, 4).value,
+-            "lower": value_ws.cell(row_number, 5).value,
+-            "upper": value_ws.cell(row_number, 7).value,
++            "fValue": _f_value_from_formula(formula, value_wb, f_values),
++            "spec": values[3],
++            "lower": values[4],
++            "upper": values[6],
+@@ -134,0 +154 @@
++        f_values = {cell.coordinate: cell.value for row in value_wb["F"].iter_rows() for cell in row if cell.value is not None} if "F" in value_wb.sheetnames else None
+@@ -141 +161 @@
+-                rows.extend(_parse_matrix_sheet(formula_ws, value_ws, value_wb))
++                rows.extend(_parse_matrix_sheet(formula_ws, value_ws, value_wb, f_values))
+--- a/test_chemical_daily_parser.py
++++ b/test_chemical_daily_parser.py
+@@ -124,0 +125,33 @@
++    def test_matrix_group_line_uses_column_a_and_does_not_reuse_previous_line_tank(self):
++        with TemporaryDirectory() as temp:
++            path = Path(temp) / "grouped.xlsx"
++            wb = openpyxl.Workbook(); ws = wb.active; ws.title = "新線"
++            ws["B3"] = "新線"; ws["B4"] = "2026/10/27"
++            for col, value in enumerate(["線別", "槽別", "分析項目", "規格", "下限", "", "上限", "滴定數", "分析值"], 1):
++                ws.cell(6, col).value = value
++            ws["A7"] = "粗化線\n(PT2)"; ws["B7"] = "脫脂"  # Group header has no measured value.
++            for r in [8, 9, 10]:
++                ws.cell(r, 3).value = "硫酸"; ws.cell(r, 4).value = "10±4"
++                ws.cell(r, 8).value = 1; ws.cell(r, 9).value = f"=H{r}*F!B3"
++            ws["A9"] = "顯影線\n(DV2)"; ws["B9"] = "顯影1"
++            ws["A10"] = "粗化線\n(PT2)"  # No tank: never inherit DV2's tank.
++            wb.create_sheet("F")["B3"] = 1; wb.save(path)
++            rows = parse_chemical_daily_report(path)
++            self.assertEqual([r["line"] for r in rows], ["PT2", "DV2", "PT2"])
++            self.assertEqual([r["slot"] for r in rows], ["脫脂", "顯影1", ""])
++            self.assertIn("槽位", rows[-1]["reason"])
++
++    def test_matrix_single_line_keeps_tank_definition_from_unmeasured_row(self):
++        with TemporaryDirectory() as temp:
++            path = Path(temp) / "single.xlsx"
++            wb = openpyxl.Workbook(); ws = wb.active; ws.title = "CN"
++            ws["B3"] = "CN"; ws["B4"] = "2026/10/27"
++            for col, value in enumerate(["線別", "槽別", "分析項目", "規格", "下限", "", "上限", "滴定數", "分析值"], 1):
++                ws.cell(6, col).value = value
++            ws["B7"] = "酸洗1"
++            ws["C8"] = "硫酸"; ws["D8"] = "10±4"; ws["H8"] = 0; ws["I8"] = "=H8*F!B3"
++            wb.create_sheet("F")["B3"] = 1; wb.save(path)
++            row = parse_chemical_daily_report(path)[0]
++            self.assertEqual(row["line"], "CN"); self.assertEqual(row["slot"], "酸洗1")
++            self.assertEqual(row["value"], 0)
++
