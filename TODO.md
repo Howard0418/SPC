@@ -26,7 +26,7 @@
 - [ ] `SPC-CHEM-1102-TASK-001`：P1，Portal主責／SPC相依；[保存後同製程／量測日查詢已測試修正](specs/20261102-chemical-save-history/verification.md)，Portal API216/Web259及SPC API0.1.96新保存規格快照測試發布；四線5筆隔離實站保存／歷史／日報一致且皆OK，現僅待正式授權；測試專用項目已停用，保留未完成旗標。舊008完成紀錄保留。
 - [ ] `SPC-CHEM-1102-TASK-002`：P1，SPC主責／Portal相依；QE2主槽酸、鎳／銅網站NG與Excel OK[唯讀對帳完成](specs/20261102-qe2-excel-reconciliation/reconciliation.md)：10/27硫酸F差異跨界、鎳槽銅初複驗5倍；使用者無法確定基準，待核准F／適用日及取樣規則，不改公式／歷史。009舊硫酸／硝酸問題保留，引用不重複開單。
 - [ ] `SPC-CHEM-1102-TASK-003`：P2，SPC主責／Portal相依；更槽新量測或複驗規則待確認，建議依新槽液／同槽液區分，不先改寫。
-- [ ] `SPC-CHEM-1102-TASK-004`：P2，SPC主責／Portal相依；P400「多1個」先確認多餘或需新增、畫面與項目ID，不直接刪除或新增。
+- [ ] `SPC-CHEM-1102-TASK-004`：P2，SPC主責／Portal相依；[測試去重完成](specs/20261102-p400-duplicate/verification.md)：N1催化停用無歷史2593、保留2619及N2 2515；正式未授權，保持待辦。
 
 順序001→002→003→004；待確認不以猜測解決，阻擋性／資料風險有證據時才調整。沒有程式／DB／公式／發布變更。
 
