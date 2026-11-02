@@ -2334,3 +2334,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - Portal Layout 新增三語 JSON 資源、登入後語言選單及無刷新套用；本人偏好採 API antiforgery token 與既有 ETag 保護，失敗回復原語言。
 - 測試 API 1.0.209／Web 1.0.252 已發布；243 項自動化測試、health、登入頁及 JS／JSON MIME smoke 通過，正式站未修改。登入後人工切換仍待驗收。
 
+- 2026-11-02 [9、10月正式匯入與圖表驗證規劃](../specs/20261102-sep-oct-production-chart-import/spec.md)：建立 SPC-HISTORICAL-IMPORT-1102 四件受控小工作；來源盤點→測試 preview→正式 preflight→另行授權正式 apply。規劃不讀寫測試／正式資料庫、不修改原始檔或網站；圖表驗收要求每月管制圖與趨勢圖 API／逐點對帳及 UI 截圖。原進度表已同步四件及原生規劃里程碑，核心待辦 35→39。
+

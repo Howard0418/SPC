@@ -48,6 +48,8 @@
 
 # SPC 現行需求索引
 
+- 9、10月歷史資料受控匯入與圖表驗證：[SPC-HISTORICAL-IMPORT-1102 規格](../specs/20261102-sep-oct-production-chart-import/spec.md)。已規劃來源唯讀盤點、測試預覽、正式 preflight、及另行授權的正式僅新增匯入；每月管制圖與趨勢圖需逐組對帳並附 UI 截圖。尚未提供來源、未讀寫資料庫、未發布網站；格式不符先出具定位與調整建議。
+
 - SPC Pkcs安全修補：[驗證](../specs/20261021-spc-pkcs-security/verification.md)，234項通過、8條件式略過；測試API0.1.68，正式未更新。
 
 - 日期公式 DB 匯入環境契約：[FORMULA-IMPORT-001 驗證](../specs/20261031-formula-import-contract-verification/verification.md)及[FORMULA-IMPORT-002 驗證](../specs/20261031-formula-import-version-idempotence/verification.md)。TransFiles 僅接受已核准測試／正式 SPC API 根網址，正式預設禁止；來源需含時區、原始值與來源鍵。SPC 公式 JSON 採語意比較，等價重送不新增版本、差異保留遞增版本與前版快照；測試 API 0.1.94 已發布，尚未實際匯入資料。
