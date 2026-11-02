@@ -1,10 +1,10 @@
 > 2026-11-02 FORMULA-IMPORT-005（TransFiles第13項）：使用者允許後，819檔dry-run、68回歸及8筆隔離HTTP／Excel對帳通過；[隔離驗算](specs/20261101-formula-import-test-source-regression/isolated-fixture-20261102.md)完成，整件待人工驗收。未修改現有業務PPC／全域啟用F／量測，未實際匯入／打包。核心未完成35件，人工11／核銷4另計。
 
-## 2026-11-02 9、10月資料正式匯入與圖表驗證（僅規劃）
+## 2026-11-02 9、10月資料正式匯入與圖表驗證（執行中）
 
-[規格](specs/20261102-sep-oct-production-chart-import/spec.md)／[計畫](specs/20261102-sep-oct-production-chart-import/plan.md)／[排序與測試矩陣](specs/20261102-sep-oct-production-chart-import/tasks.md)。新增 4 件小工作，均未開始；不讀寫正式資料庫、不匯入、不發布。
+[規格](specs/20261102-sep-oct-production-chart-import/spec.md)／[計畫](specs/20261102-sep-oct-production-chart-import/plan.md)／[排序與測試矩陣](specs/20261102-sep-oct-production-chart-import/tasks.md)。僅完成來源解析與限定月份唯讀驗證；不讀寫測試／正式資料庫、不匯入、不發布。
 
-- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-001`：P1，唯讀盤點 2026 年 9、10 月來源、格式、雜湊與候選圖表矩陣；格式不符只提出列／欄修正建議。
+- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-001`：P1，限定月份與藥液解析已修正（59檔2,423筆 ready）；咬蝕 9 筆負值／非數值原始量測待校正，未讀寫資料庫。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-002`：P1，依 001 於測試環境 preview／隔離匯入、逐筆與兩類圖表驗證；僅新增且可重跑。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-003`：P0，依 002 做正式目標／主檔／衝突唯讀 preflight、備份與回復門檻；不寫入。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-004`：P0，須 003 通過及當下另行明確正式 apply 授權，才可正式僅新增匯入並驗收 9、10 月管制圖／趨勢圖與截圖。
