@@ -48,3 +48,6 @@
 - 最終Web首頁／JS／CSS／app-version與健康端點再次200、MIME正確，Portal test／SPC0.1.94 test保持；瀏覽器meta=1.0.259.0，再查10/16 N2=20／ST1=4／DP=7／DV2=6，console error0。正式未發布。
 - 原Excel再同步最終API216／Web259及23＋19測試，35圖形與核心35保持；最終副本OpenXML0錯誤／重開／渲染／11頁列印通過。備份 `C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\Voice\備份\進度表_保存001測試前_20261102-104722.xlsx`，原路徑取代後SHA256 `bbe843026bd7cff89983ef26cf8fa6b84f9a0d505a3df7b1faa691cb21d7fbd1`；未做Excel人工。首次同步hash保留為歷史，以本段為最新。
 - 最終Portal版本與部署基準紀錄已提交並推送main：87ee05c；SPC中央最終文件隨本次Develop提交上傳。
+
+## 判定續驗最新結果
+- 使用者後續要求繼續，已確認並修正「一般新保存有規格卻因無圖型而沒有判定」；[盤點／測試／部署結果](judgment-followup.md)及[子項規格](saved-spec.md)。最終SPC測試API0.1.96，Portal216/259保持；322通過8略過、Portal7項通過。舊14筆不重判，正式未發。

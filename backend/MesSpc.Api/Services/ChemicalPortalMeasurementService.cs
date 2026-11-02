@@ -112,6 +112,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
             }
             batch.FileHash=hash;
             await uploads.ConfirmAsync(batch.UploadBatchId,ct:ct,chemicalEvidence:evidence,deferVariableNotifications:true);
+            await new ChemicalSavedSpecificationService(db).CaptureAsync(batch.UploadBatchId,actor,ct);
             await tx.CommitAsync(ct); committed=true;
             logger.LogInformation("Portal chemical batch committed {BatchId}, traced items {Count}",batch.UploadBatchId,evidence.Count);
             await tx.DisposeAsync();

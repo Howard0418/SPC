@@ -13,6 +13,7 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
     public async Task<Dictionary<long,ChemicalHistoryPresentation>> GetAsync(IReadOnlyList<VariableMeasurement> rows)
     {
         if(rows.Count==0)return [];
+        var savedSpecifications=await new ChemicalSavedSpecificationService(db).ReadAsync(rows);
         var ids=rows.Select(x=>x.Id).ToList();
         var traces=await db.ChemicalCalculationTraces.AsNoTracking().Where(x=>ids.Contains(x.VariableMeasurementId))
             .GroupBy(x=>new{x.VariableMeasurementId,x.Phase}).Select(g=>g.OrderByDescending(x=>x.VersionNo).First()).ToListAsync();
@@ -54,6 +55,8 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
                     final is null?"Unavailable":"SavedTrace",final is null?"缺少有效的保存追溯，無法判定"
                     :judgment=="Unknown"?"保存紀錄缺少有效規格或判定，無法判定":rounded?"依保存的原始計算結果判定（顯示值已取位）":"");
             }
+            else if(savedSpecifications.TryGetValue(row.Id,out var specifications))
+                output[row.Id]=ChemicalSavedSpecificationService.Present(row,specifications);
             else if(saved.TryGetValue(row.Id,out var result) && result.StatisticValue==value && (result.LSL.HasValue || result.USL.HasValue))
             {
                 var initial=(result.LSL.HasValue && row.MeasuredValue<result.LSL.Value) || (result.USL.HasValue && row.MeasuredValue>result.USL.Value)?"NG":"OK";
