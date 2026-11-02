@@ -6,7 +6,7 @@
 
 [規格](specs/20261102-chemical-adjustment-plan/spec.md)／[排序與四類測試](specs/20261102-chemical-adjustment-plan/tasks.md)。新增四個獨立小工作，逐件執行；不啟動既有暫停項目。
 
-- [ ] `SPC-CHEM-1102-TASK-001`：P1，Portal主責／SPC相依；[保存後同製程／量測日查詢已測試修正](specs/20261102-chemical-save-history/verification.md)，API215/Web258測試發布；待現場保存驗收及正式授權，保留未完成旗標。舊008完成紀錄保留。
+- [ ] `SPC-CHEM-1102-TASK-001`：P1，Portal主責／SPC相依；[保存後同製程／量測日查詢已測試修正](specs/20261102-chemical-save-history/verification.md)，API216/Web259測試發布；待現場保存驗收及正式授權，保留未完成旗標。舊008完成紀錄保留。
 - [ ] `SPC-CHEM-1102-TASK-002`：P1，SPC主責／Portal相依；QE2主槽酸、鎳／銅網站NG與Excel OK對帳，待同筆Excel公式／規格／F／日期及截圖。009舊硫酸／硝酸問題保留，引用不重複開單。
 - [ ] `SPC-CHEM-1102-TASK-003`：P2，SPC主責／Portal相依；更槽新量測或複驗規則待確認，建議依新槽液／同槽液區分，不先改寫。
 - [ ] `SPC-CHEM-1102-TASK-004`：P2，SPC主責／Portal相依；P400「多1個」先確認多餘或需新增、畫面與項目ID，不直接刪除或新增。

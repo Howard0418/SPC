@@ -1,4 +1,4 @@
-- 2026-11-02 [保存後同製程／量測日查詢](../specs/20261102-chemical-save-history/verification.md)：SPC-CHEM-1102-TASK-001測試API215/Web258，保留保存成功與GET-only重試；現場／正式待辦，公式／資料不變。
+- 2026-11-02 [保存後同製程／量測日查詢](../specs/20261102-chemical-save-history/verification.md)：SPC-CHEM-1102-TASK-001測試API216/Web259，保留保存成功與GET-only重試；現場／正式待辦，公式／資料不變。
 
 - 2026-11-02 [藥液網站四件規劃](../specs/20261102-chemical-adjustment-plan/spec.md)：保存後載入回歸、QE2主槽酸／鎳銅差異、更槽規則、P400項目；只入池不實作，待證據不取代現行規則。
 
