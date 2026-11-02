@@ -1,0 +1,23 @@
+--- a/chemical_direct_writer.py
++++ b/chemical_direct_writer.py
+@@ -44 +44,2 @@
+- with openpyxl.load_workbook(path,data_only=False,read_only=True) as workbook:
++ workbook=openpyxl.load_workbook(path,data_only=False,read_only=True)
++ try:
+@@ -50,0 +52 @@
++ finally:workbook.close()
+--- a/test_chemical_direct_writer.py
++++ b/test_chemical_direct_writer.py
+@@ -1,0 +2,3 @@
++from pathlib import Path
++from tempfile import TemporaryDirectory
++import openpyxl
+@@ -3,0 +7,8 @@
++ def test_load_real_workbook(self):
++  from chemical_direct_writer import load_rows
++  with TemporaryDirectory() as temp:
++   path=Path(temp)/'raw.xlsx';wb=openpyxl.Workbook();ws=wb.active
++   data=self.row();ws.append(list(data));ws.append(list(data.values()));wb.save(path);wb.close()
++   rows,errors=load_rows(path)
++   self.assertEqual(errors,[]);self.assertEqual(len(rows),1)
++   self.assertEqual(rows[0]['input']['primary'],'1.23456789')

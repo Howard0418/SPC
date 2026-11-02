@@ -2341,3 +2341,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-02 藥液匯入入口唯讀核對
 既有FORMULA-IMPORT-005補充檢查：17項測試通過，但實檔load_rows因Workbook不支援context manager而失敗；矩陣parser目前代表檔73筆可解析，直接schema合格0列。現行流程亦未自動將來源公式／F建立成伺服器有效排程，故未確認匯入。未改程式、資料庫、既有進度狀態或發布；[具體結果及格式建議](specs/20261101-formula-import-test-source-regression/import-readiness-20261102.md)。
 
+## 2026-11-02 十月藥液隔離測試匯入
+使用者選定十月且同意報表日測試fixture；修復TransFiles實檔讀取、加入受限公式／F對帳與M/N複驗辨識，先紅後綠25測試。36檔1230候選，1211筆及54複驗受控匯入、3完全重複略過、16例外隔離；1265計算與Excel在1e-8內一致，網站trace服務逐筆與117組圖表API共1211點對帳通過。統計全Completed、通知0；既有業務定義／全域F及正式保持。午夜UTC日期篩選與趨勢頁帶入驗收尚待辦，整件未DONE。原Excel／原生里程碑已同步、核心39保持；沒有網站發布或EXE打包。[驗證、限制與回復](specs/20261102-october-chemical-test-import/verification.md)。
+
