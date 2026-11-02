@@ -7,11 +7,22 @@ import hashlib
 import json
 import re
 import sys
+import calendar
 from collections import Counter, defaultdict
 from datetime import date
 from pathlib import Path
 
-def build(tool_root,output):
+def month_bounds(month):
+ if month not in ('2026-09','2026-10'):raise ValueError('Only explicitly reviewed September/October 2026 are supported')
+ year,n=map(int,month.split('-'))
+ return date(year,n,1),date(year,n,calendar.monthrange(year,n)[1])
+
+def in_month(day,month):
+ first,last=month_bounds(month)
+ return first<=day<=last
+
+def build(tool_root,output,month='2026-10'):
+ month_bounds(month)
  sys.path.insert(0,str(tool_root))
  import openpyxl
  from chemical_daily_parser import parse_chemical_daily_report
@@ -22,7 +33,7 @@ def build(tool_root,output):
   match=re.search(r'(?<!\d)(2026)-(\d{1,2})-(\d{1,2})(?!\d)',path.stem)
   if path.name.startswith('~$') or not match:continue
   day=date(*map(int,match.groups()))
-  if not date(2026,10,1)<=day<=date(2026,10,31):continue
+  if not in_month(day,month):continue
   digest=hashlib.sha256(path.read_bytes()).hexdigest()
   parsed=parse_chemical_daily_report(path)
   formulas=openpyxl.load_workbook(path,data_only=False,read_only=True)
@@ -36,10 +47,13 @@ def build(tool_root,output):
      n=row.get('sourceRow')
      if not n:raise ValueError(row.get('reason','無量測來源列'))
      if row['measurementDatetime'][:10]!=day.isoformat():raise ValueError('表內日期與檔名報表日不一致。')
-     expression,refs=convert_formula(row['formula'],n)
+     has_secondary=month=='2026-09' and re.search(rf'(?<![A-Z0-9_])I\$?{n}(?!\d)',str(row['formula']),re.I)
+     expression,refs=convert_formula(row['formula'],n,secondary_column='I' if has_secondary else None)
+     secondary=number(cached[row['sheet']].cell(n,9).value) if has_secondary else None
+     if has_secondary:row['secondary']=str(secondary)
      raw=number(row['value']);expected=number(row['formulaResult'])
      used={ref:str(number(f_values[ref])) for ref in refs if ref in f_values}
-     calculated=calculate(expression,raw,used)
+     calculated=calculate(expression,raw,used,secondary=secondary)
      if abs(calculated-expected)>number('0.00000001'):raise ValueError('Excel快取與原公式／F獨立重算不一致。')
      lower=number(row['lower']);upper=number(row['upper'])
      if lower>upper:raise ValueError('規格上下限倒置。')
@@ -59,11 +73,14 @@ def build(tool_root,output):
        for cell in cells:
         if isinstance(cell.value,str) and cell.value.startswith('=') and re.search(rf'(?<![A-Z0-9_]){re_letter}\$?{n}(?!\d)',cell.value,re.I):candidates.append(cell)
       if len(candidates)!=1:raise ValueError('複驗公式缺漏或不唯一，不能沿用初驗結果。')
-      cell=candidates[0];re_expression,re_refs=convert_formula(cell.value,n,re_letter)
+      re_secondary_letter=openpyxl.utils.get_column_letter(re_column+1) if has_secondary else None
+      cell=candidates[0];re_expression,re_refs=convert_formula(cell.value,n,re_letter,secondary_column=re_secondary_letter)
       if formula_key(re_expression)!=formula_key(expression):raise ValueError('初複驗公式不同，需確認取樣／換算規則。')
       used.update({ref:str(number(f_values[ref])) for ref in re_refs if ref in f_values})
       re_expected=number(cached[row['sheet']][cell.coordinate].value)
-      re_calculated=calculate(re_expression,recheck_raw,used)
+      re_secondary=number(cached[row['sheet']].cell(n,re_column+1).value) if has_secondary else None
+      if has_secondary:row['recheckSecondary']=str(re_secondary)
+      re_calculated=calculate(re_expression,recheck_raw,used,secondary=re_secondary)
       if abs(re_calculated-re_expected)>number('0.00000001'):raise ValueError('複驗快取與原公式／F獨立重算不一致。')
       row.update(recheckPrimary=str(recheck_raw),recheckExcel=str(re_expected),recheckDecimalResult=str(re_calculated),recheckSourceFormula=cell.value)
      row['status']='validated'
@@ -75,16 +92,17 @@ def build(tool_root,output):
  for row in rows:
   if row['status']=='validated':groups[(row['fileDay'],row['line'],row['slot'],row['analysisItem'],row['samplingPhase'],row['samplingStage'])].append(row)
  for key,group in groups.items():
-  signatures={json.dumps({k:r.get(k) for k in ('primary','excel','expression','fCells','lower','upper','recheckPrimary','recheckExcel')},sort_keys=True) for r in group}
+  signatures={json.dumps({k:r.get(k) for k in ('primary','secondary','excel','expression','fCells','lower','upper','recheckPrimary','recheckSecondary','recheckExcel')},sort_keys=True) for r in group}
   if len(signatures)>1:
    for r in group:r.update(status='blocked',issue='同日同項目有不同來源值／公式／F／規格；缺少時段或版本優先依據。')
   else:
    for r in group[1:]:r.update(status='duplicate_identical',issue='同日同項目內容完全相同，保留全部來源但不重複匯入。')
- summary=dict(files=len(files),rows=len(rows),statuses=dict(Counter(r['status'] for r in rows)),issues=dict(Counter(r.get('issue') for r in rows if r['status']=='blocked')),rechecksValidated=sum(r['status']=='validated' and 'recheckPrimary' in r for r in rows),month='2026-10',databaseWritten=False)
+ summary=dict(files=len(files),rows=len(rows),statuses=dict(Counter(r['status'] for r in rows)),issues=dict(Counter(r.get('issue') for r in rows if r['status']=='blocked')),rechecksValidated=sum(r['status']=='validated' and 'recheckPrimary' in r for r in rows),month=month,databaseWritten=False)
  output.mkdir(parents=True,exist_ok=True)
  (output/'manifest.json').write_text(json.dumps(dict(summary=summary,files=files,rows=rows),ensure_ascii=False,indent=2),encoding='utf-8')
  print(json.dumps(summary,ensure_ascii=True))
 
 if __name__=='__main__':
  parser=argparse.ArgumentParser();parser.add_argument('--tool-root',type=Path,required=True);parser.add_argument('--output-dir',type=Path,required=True)
- args=parser.parse_args();build(args.tool_root,args.output_dir)
+ parser.add_argument('--month',default='2026-10',choices=['2026-09','2026-10'])
+ args=parser.parse_args();build(args.tool_root,args.output_dir,args.month)

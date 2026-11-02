@@ -1,5 +1,7 @@
 # 驗證紀錄
 
+> 最新測試子範圍：後續授權的[十月藥液1211筆](../20261102-october-chemical-test-import/verification.md)與[九月藥液1146筆](../20261102-september-chemical-test-import/verification.md)已實際隔離匯入及公式F／管制圖API對帳。來源例外、趨勢UI／GUI交付與其餘資料類型保持待辦，正式未開始。下列「未寫入／未執行」為原先TASK-001唯讀階段紀錄，不代表最新子項狀態。
+
 - 功能 ID：SPC-HISTORICAL-IMPORT-1102
 - 規格版本：3
 - 日期／環境：2026-11-02／來源 UNC 唯讀盤點

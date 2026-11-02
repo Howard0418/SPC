@@ -1,3 +1,5 @@
+> 2026-11-02 TASK-002九月藥液：[驗證](specs/20261102-september-chemical-test-import/verification.md)。32檔1227候選，1146筆／71複驗隔離測試匯入；1217計算與Excel、117組圖表1146點對帳，3重複略過／78來源例外保留。十月1211及16例外保持；正式、咬蝕未動，趨勢UI／GUI交付仍待辦。原Excel已同步，核心39、人工11／核銷4保持。
+
 > 2026-11-02 TASK-002限定十月藥液：[隔離測試匯入與驗證](specs/20261102-october-chemical-test-import/verification.md)。36檔1230候選，1211筆／54複驗匯入與公式F對帳；3重複略過、16來源例外保留；117組圖表API共1211點吻合。UTC日界線／趨勢UI／GUI交付仍待辦；9月、咬蝕及正式未啟動。原Excel已同步，核心39、人工11／核銷4保持。
 
 > 2026-11-02 FORMULA-IMPORT-005（TransFiles第13項）：使用者允許後，819檔dry-run、68回歸及8筆隔離HTTP／Excel對帳通過；[隔離驗算](specs/20261101-formula-import-test-source-regression/isolated-fixture-20261102.md)完成，整件待人工驗收。未修改現有業務PPC／全域啟用F／量測，未實際匯入／打包。核心未完成35件，人工11／核銷4另計。

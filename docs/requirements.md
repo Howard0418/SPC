@@ -48,6 +48,8 @@
 
 # SPC 現行需求索引
 
+- 九月藥液隔離測試匯入：[驗證與限制](../specs/20261102-september-chemical-test-import/verification.md)。1146量測／71複驗、1217計算及117組圖表／1146點與Excel對帳；78來源例外待釐清。九月明示報表日中午測試時間，十月1211及其例外保持，父TASK-002未DONE；正式／業務設定保持，未打包EXE。
+
 - 十月藥液隔離測試匯入：[驗證與限制](../specs/20261102-october-chemical-test-import/verification.md)。1211筆／54複驗、來源公式及引用F快照逐筆對帳；117組圖表API共1211點吻合。16來源例外、UTC日界線及趨勢UI仍待辦，TASK-002未DONE；正式／既有業務設定保持，既有EXE未重新交付。
 
 - 9、10月歷史資料受控匯入與圖表驗證：[SPC-HISTORICAL-IMPORT-1102 規格](../specs/20261102-sep-oct-production-chart-import/spec.md)。已規劃來源唯讀盤點、測試預覽、正式 preflight、及另行授權的正式僅新增匯入；每月管制圖與趨勢圖需逐組對帳並附 UI 截圖。尚未提供來源、未讀寫資料庫、未發布網站；格式不符先出具定位與調整建議。

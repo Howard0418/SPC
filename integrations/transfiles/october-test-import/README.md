@@ -1,5 +1,10 @@
 # 十月藥液隔離測試匯入
 
+## 後續核准九月範圍
+`build_manifest.py --month 2026-09`只讀九月，省略月份仍維持十月。runner執行九月必須使用marker `TEST-SEPCHEM-20261102`，與十月marker混用即在DB存取前拒絕；九月以報表日12:00+08:00為明示測試時間。九月支援公式明確引用的同列I→Secondary，不猜跨列或缺少值，初複驗不同仍隔離。新增月份邊界測試`python -m unittest test_month_scope test_chemical_excel_reconcile`；[九月規格及驗證](../../../specs/20261102-september-chemical-test-import/verification.md)。
+
+九月製程230／PPC2766～2882，1146量測、71複驗；不覆寫十月範圍。共用runner另在before/after比對匯入前既有量測COUNT及指定核心欄位CHECKSUM，與定義／全域F快照一起檢查。`--apply`建立真實受控匯入、`--statistics`僅處理指定marker、`--verify`使用網站追溯服務查回。其餘限制與回復措施同下；父TASK-002尚未全完成。
+
 對應 [規格](../../../specs/20261102-october-chemical-test-import/spec.md)。本次為獨立受控 runner，**不是已重新打包的 GUI／EXE**；不將完整矩陣匯入能力冒稱既有EXE已交付。
 
 ## 組成與驗證

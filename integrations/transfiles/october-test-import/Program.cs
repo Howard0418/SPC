@@ -17,9 +17,11 @@ var mode=args.ElementAtOrDefault(0)??"--pure";
 var root=args.ElementAtOrDefault(1)??throw new ArgumentException("Supply an evidence directory outside Git.");
 var manifest=JsonNode.Parse(File.ReadAllText(Path.Combine(root,"manifest.json")))!;
 var rows=manifest["rows"]!.AsArray().Where(x=>(string?)x!["status"]=="validated").Select(x=>x!).ToList();
-if(rows.Count==0 || (string?)manifest["summary"]!["month"]!="2026-10")throw new Exception("October candidate guard");
+var month=(string?)manifest["summary"]!["month"];
+if(rows.Count==0 || month is not ("2026-09" or "2026-10"))throw new Exception("Reviewed month candidate guard");
 var marker=args.ElementAtOrDefault(2)??"TEST-OCTCHEM-20261102";
-if(marker is not ("TEST-OCTCHEM-20261102" or "TEST-OCTCHEM-20261102-SECONDARY"))throw new Exception("Unknown isolated marker");
+if(month=="2026-10" ? marker is not ("TEST-OCTCHEM-20261102" or "TEST-OCTCHEM-20261102-SECONDARY") : marker!="TEST-SEPCHEM-20261102")throw new Exception("Month/isolated marker mismatch");
+var monthName=month=="2026-09"?"九月":"十月";
 var jsonOptions=new JsonSerializerOptions{WriteIndented=true};
 string Text(JsonNode r,string key)=>(string?)r[key]??"";
 decimal Dec(JsonNode r,string key)=>decimal.Parse(Text(r,key),CultureInfo.InvariantCulture);
@@ -28,16 +30,16 @@ string Cells(JsonNode r)=>JsonSerializer.Serialize(r["fCells"]!.AsObject().Selec
 string GroupKey(JsonNode r)=>JsonSerializer.Serialize(new{line=Text(r,"line"),slot=Text(r,"slot"),item=Text(r,"analysisItem"),formula=Text(r,"expression"),f=Cells(r),lower=Text(r,"lower"),upper=Text(r,"upper")});
 var serverChecks=0;
 foreach(var r in rows){
- if(!Text(r,"fileDay").StartsWith("2026-10-") || Text(r,"fileHash").Length!=64)throw new Exception("Source guard");
+ if(!Text(r,"fileDay").StartsWith(month+"-") || Text(r,"fileHash").Length!=64)throw new Exception("Source guard");
  foreach(var phase in new[]{("primary","excel"),("recheckPrimary","recheckExcel")}){
   if(r[phase.Item1] is null)continue;
-  var calc=ChemicalFormulaCalculation.Calculate(Config(r),Text(r,phase.Item1),(string?)r["secondary"],Cells(r),Dec(r,"lower"),Dec(r,"upper"),(Dec(r,"lower")+Dec(r,"upper"))/2);
+  var calc=ChemicalFormulaCalculation.Calculate(Config(r),Text(r,phase.Item1),(string?)r[phase.Item1=="primary"?"secondary":"recheckSecondary"],Cells(r),Dec(r,"lower"),Dec(r,"upper"),(Dec(r,"lower")+Dec(r,"upper"))/2);
   if(Math.Abs(decimal.Parse(calc.Raw,CultureInfo.InvariantCulture)-Dec(r,phase.Item2))>0.00000001m)throw new Exception("Server/Excel mismatch: "+Text(r,"sheet")+"/"+r["sourceRow"]);
   serverChecks++;
  }
 }
 Console.WriteLine($"SPC engine/Excel checks passed: {serverChecks}; candidates={rows.Count}");
-File.WriteAllText(Path.Combine(root,"server-pure.json"),JsonSerializer.Serialize(new{serverChecks,candidates=rows.Count,month="2026-10",databaseWritten=false},jsonOptions));
+File.WriteAllText(Path.Combine(root,"server-pure.json"),JsonSerializer.Serialize(new{serverChecks,candidates=rows.Count,month,databaseWritten=false},jsonOptions));
 if(mode=="--pure")return;
 if(mode is not ("--preflight" or "--apply" or "--verify" or "--statistics" or "--align-units"))throw new ArgumentException("Unknown mode");
 var cfg=new ConfigurationBuilder().AddJsonFile("D:/SPC/release/test/backend/appsettings.json").Build();
@@ -69,10 +71,17 @@ Console.WriteLine($"TEST target verified; real Windows integrated writer; groups
 if(mode=="--preflight")return;
 var protection=new EphemeralDataProtectionProvider();
 var svc=new ChemicalFormulaScheduleService(db,protection,TimeProvider.System,NullLogger<ChemicalFormulaScheduleService>.Instance);
+var existingMeasurementMax=await db.VariableMeasurements.MaxAsync(x=>(long?)x.Id)??0;
+async Task<object> ExistingMeasurementFingerprint(){
+ await using var check=new SqlConnection(connection);await check.OpenAsync();using var command=check.CreateCommand();
+ command.CommandText="SELECT COUNT_BIG(*) n,CHECKSUM_AGG(BINARY_CHECKSUM(Id,PartProcessCharacteristicId,MeasuredValue,RecheckValue,MeasuredAt,ChemicalReceiptId,ChemicalSourceKeyHash,IsDeleted)) c FROM VariableMeasurements WHERE Id<=@max";
+ command.Parameters.AddWithValue("@max",existingMeasurementMax);await using var reader=await command.ExecuteReaderAsync();await reader.ReadAsync();
+ return new{max=existingMeasurementMax,count=reader.GetInt64(0),checksum=reader.IsDBNull(1)?(int?)null:reader.GetInt32(1)};
+}
 async Task<string> Snapshot()=>JsonSerializer.Serialize(new{
  Ppcs=await db.PartProcessCharacteristics.AsNoTracking().Where(x=>!db.Processes.Any(p=>p.Id==x.ProcessId&&p.ProcessCode==marker)).OrderBy(x=>x.Id).ToListAsync(),
  Policies=await db.ChemicalFormulaPolicies.AsNoTracking().Where(x=>!db.PartProcessCharacteristics.Any(p=>p.Id==x.PartProcessCharacteristicId&&db.Processes.Any(y=>y.Id==p.ProcessId&&y.ProcessCode==marker))).OrderBy(x=>x.PartProcessCharacteristicId).ToListAsync(),
- ActiveF=await db.ChemicalFTableVersions.AsNoTracking().Where(x=>x.IsActive).OrderBy(x=>x.Id).ToListAsync()});
+ ActiveF=await db.ChemicalFTableVersions.AsNoTracking().Where(x=>x.IsActive).OrderBy(x=>x.Id).ToListAsync(),ExistingMeasurements=await ExistingMeasurementFingerprint()});
 var before=await Snapshot();
 var resultPath=Path.Combine(root,"import-result.json");
 if(mode=="--apply"){
@@ -85,7 +94,7 @@ if(mode=="--apply"){
   await backupConnection.OpenAsync();using var cmd=backupConnection.CreateCommand();
   cmd.CommandText="SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(4000))";
   var directory=(string?)await cmd.ExecuteScalarAsync()??throw new Exception("No server backup directory");
-  var path=directory.TrimEnd('\\','/')+"\\PMR_SPC_TEST_OCTCHEM_"+DateTime.UtcNow.ToString("yyyyMMdd_HHmmss")+".bak";
+  var path=directory.TrimEnd('\\','/')+"\\PMR_SPC_TEST_"+(month=="2026-09"?"SEPCHEM_":"OCTCHEM_")+DateTime.UtcNow.ToString("yyyyMMdd_HHmmss")+".bak";
   cmd.CommandTimeout=180;cmd.CommandText="BACKUP DATABASE [PMR_SPC_TEST] TO DISK=@p WITH COPY_ONLY,CHECKSUM,INIT";cmd.Parameters.AddWithValue("@p",path);await cmd.ExecuteNonQueryAsync();
   cmd.CommandText="RESTORE VERIFYONLY FROM DISK=@p WITH CHECKSUM";await cmd.ExecuteNonQueryAsync();
   File.WriteAllText(Path.Combine(root,"backup.json"),JsonSerializer.Serialize(new{server="172.16.110.16",database="PMR_SPC_TEST",path,verified=true},jsonOptions));
@@ -95,21 +104,21 @@ var process=await db.Processes.SingleOrDefaultAsync(x=>x.ProcessCode==marker);
 if(process is null){
  if(mode!="--apply")throw new Exception("Fixture absent");
  await using var tx=await db.Database.BeginTransactionAsync();
- process=new MesSpc.Api.Domain.Entities.Process{ProcessCode=marker,ProcessName="【十月隔離測試】Excel藥液對帳",ControlScope="CHEM",Description="Report-day fixture only; not actual sampling timestamps; record-only prevents operational alerts"};db.Processes.Add(process);await db.SaveChangesAsync();
+ process=new MesSpc.Api.Domain.Entities.Process{ProcessCode=marker,ProcessName="【"+monthName+"隔離測試】Excel藥液對帳",ControlScope="CHEM",Description="Report-day fixture only; not actual sampling timestamps; record-only prevents operational alerts"};db.Processes.Add(process);await db.SaveChangesAsync();
  var chart=await db.ControlChartTypes.AsNoTracking().FirstAsync(x=>x.IsEnabled&&x.DataCategory=="Variable");
  int index=0;
  foreach(var group in groups){
   index++;var r=group.First();var code=marker+"-"+index.ToString("D3");
   var label=Text(r,"line")+"/"+Text(r,"slot")+"/"+Text(r,"analysisItem").Replace("\n"," ");
-  var ch=new QualityCharacteristic{CharacteristicCode=code,CharacteristicName="【十月測試】"+label,ControlScope="CHEM",DecimalPlaces=8,InputMode="RECORD_ONLY",IsSpcEnabled=false};db.QualityCharacteristics.Add(ch);
-  var fv=new ChemicalFTableVersion{VersionCode=code,DisplayName="【十月測試】"+label,IsActive=false,SourceName=Path.GetFileName(Text(r,"file")),Note="Isolated Excel snapshot; not global active F"};db.ChemicalFTableVersions.Add(fv);await db.SaveChangesAsync();
+  var ch=new QualityCharacteristic{CharacteristicCode=code,CharacteristicName="【"+monthName+"測試】"+label,ControlScope="CHEM",DecimalPlaces=8,InputMode="RECORD_ONLY",IsSpcEnabled=false};db.QualityCharacteristics.Add(ch);
+  var fv=new ChemicalFTableVersion{VersionCode=code,DisplayName="【"+monthName+"測試】"+label,IsActive=false,SourceName=Path.GetFileName(Text(r,"file")),Note="Isolated Excel snapshot; not global active F"};db.ChemicalFTableVersions.Add(fv);await db.SaveChangesAsync();
   foreach(var cell in r["fCells"]!.AsObject())db.Add(new ChemicalFTableCell{VersionId=fv.Id,SheetName="F",CellAddress=cell.Key,NormalizedCellAddress=ChemicalFTableService.NormalizeCellAddress("F!"+cell.Key),StandardSolution="Excel "+cell.Key,NumericValue=decimal.Parse((string)cell.Value!,CultureInfo.InvariantCulture),RawValue=(string)cell.Value!});
-  var fh=new ChemicalFTableVersionHistory{VersionNo=(await db.ChemicalFTableVersionHistories.MaxAsync(x=>(int?)x.VersionNo)??0)+1,FTableVersionId=fv.Id,VersionCode=code,DisplayName=fv.DisplayName,CellsJson=Cells(r),ChangedBy=actor,Reason="Approved isolated October report-day fixture",ChangeType="TestFixture"};db.Add(fh);await db.SaveChangesAsync();
+  var fh=new ChemicalFTableVersionHistory{VersionNo=(await db.ChemicalFTableVersionHistories.MaxAsync(x=>(int?)x.VersionNo)??0)+1,FTableVersionId=fv.Id,VersionCode=code,DisplayName=fv.DisplayName,CellsJson=Cells(r),ChangedBy=actor,Reason="Approved isolated "+month+" report-day fixture",ChangeType="TestFixture"};db.Add(fh);await db.SaveChangesAsync();
   var line=Text(r,"line");var machine=line is "N1" or "N2"?await db.Machines.AsNoTracking().Where(x=>x.MachineCode==line).Select(x=>(int?)x.Id).SingleAsync():null;
   var ppc=new PartProcessCharacteristic{ControlScope="CHEM",ProcessId=process.Id,MachineId=machine,CharacteristicId=ch.Id,Unit=Text(r,"unit"),LSL=(double)Dec(r,"lower"),USL=(double)Dec(r,"upper"),TargetValue=(double)((Dec(r,"lower")+Dec(r,"upper"))/2),DisplayMode="CONTROL_CHART",ChartTypeId=chart.Id,ChemicalAnalysisConfigJson=Config(r),IsEnabled=true,IsRequired=false};db.Add(ppc);await db.SaveChangesAsync();
-  await new ChemicalAnalysisFormulaVersionService(db).RecordChangeAsync(ppc.Id,null,ppc.ChemicalAnalysisConfigJson,actor,"October isolated source formula; no business policy change",default);
+  await new ChemicalAnalysisFormulaVersionService(db).RecordChangeAsync(ppc.Id,null,ppc.ChemicalAnalysisConfigJson,actor,month+" isolated source formula; no business policy change",default);
   var formula=await db.ChemicalAnalysisFormulaVersions.SingleAsync(x=>x.PartProcessCharacteristicId==ppc.Id);
-  foreach(var cell in r["fCells"]!.AsObject())db.Add(new ChemicalFTableReference{VersionId=fv.Id,PartProcessCharacteristicId=ppc.Id,CellAddress=cell.Key,NormalizedCellAddress=ChemicalFTableService.NormalizeCellAddress("F!"+cell.Key),SourceFormula=Text(r,"formula"),SourceSheet=Text(r,"sheet"),SourceRow=(int)r["sourceRow"]!,ReferenceContext="October isolated fixture"});await db.SaveChangesAsync();
+  foreach(var cell in r["fCells"]!.AsObject())db.Add(new ChemicalFTableReference{VersionId=fv.Id,PartProcessCharacteristicId=ppc.Id,CellAddress=cell.Key,NormalizedCellAddress=ChemicalFTableService.NormalizeCellAddress("F!"+cell.Key),SourceFormula=Text(r,"formula"),SourceSheet=Text(r,"sheet"),SourceRow=(int)r["sourceRow"]!,ReferenceContext=month+" isolated fixture"});await db.SaveChangesAsync();
   var periods=group.Select(x=>Text(x,"fileDay")).Distinct().Order().Select(day=>new ChemicalSchedulePeriod(formula.Id,fh.Id,day,day)).ToArray();
   await svc.PublishAsync(ppc.Id,new ChemicalPublishSchedule(null,"Report-day fixture only, not business effectiveness",periods),actor,default);
  }
@@ -148,18 +157,19 @@ foreach(var group in groups){
  if(ppc.ChemicalAnalysisConfigJson!=Config(group.First()))throw new Exception("Fixture rerun definition conflict");
  foreach(var r in group){
   var sourceKey=JsonSerializer.Serialize(new{kind="TransFilesChemical-v1",fileHash=Text(r,"fileHash"),sheet=Text(r,"sheet"),row=(int)r["sourceRow"]!,samplingPhase=Text(r,"samplingPhase"),samplingStage=Text(r,"samplingStage"),fixture=marker,timeBasis="report-day test only"});
-  var input=new ChemicalPreviewInput(Text(r,"fileDay")+"T00:00:00+08:00",Text(r,"primary"),(string?)r["secondary"],sourceKey);
+  var input=new ChemicalPreviewInput(Text(r,"fileDay")+(month=="2026-09"?"T12:00:00+08:00":"T00:00:00+08:00"),Text(r,"primary"),(string?)r["secondary"],sourceKey);
   var preview=await svc.PreviewAsync(ppc.Id,input,actor,default);
   if(ppc.Unit!=Text(r,"unit"))throw new Exception("Isolated source unit mismatch");
   if(Math.Abs(decimal.Parse(preview.Result.Raw,CultureInfo.InvariantCulture)-Dec(r,"excel"))>0.00000001m)throw new Exception("DB preview mismatch");
   ChemicalPreviewResult? recheck=null;ChemicalPreviewInput? reInput=null;
-  if(r["recheckPrimary"] is not null){reInput=input with{Primary=Text(r,"recheckPrimary")};recheck=await svc.PreviewAsync(ppc.Id,reInput,actor,default);if(Math.Abs(decimal.Parse(recheck.Result.Raw,CultureInfo.InvariantCulture)-Dec(r,"recheckExcel"))>0.00000001m)throw new Exception("Recheck preview mismatch");}
+  if(r["recheckPrimary"] is not null){reInput=input with{Primary=Text(r,"recheckPrimary"),Secondary=(string?)r["recheckSecondary"]};recheck=await svc.PreviewAsync(ppc.Id,reInput,actor,default);if(Math.Abs(decimal.Parse(recheck.Result.Raw,CultureInfo.InvariantCulture)-Dec(r,"recheckExcel"))>0.00000001m)throw new Exception("Recheck preview mismatch");}
   if(mode=="--verify"){
    // Trace projection is the same service used by the website, with no writes.
    var hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(sourceKey)));
    var vm=await db.VariableMeasurements.AsNoTracking().SingleAsync(x=>x.PartProcessCharacteristicId==ppc.Id&&x.ChemicalSourceKeyHash==hash);
    var trace=await new ChemicalTraceQueryService(db).GetAsync(ppc.Id,null,vm.Id,0,0,default)??throw new Exception("Missing website trace");
    var initial=trace.Rows.Single().Calculations.Single(x=>x.Phase=="Initial"&&x.IsCurrent);
+   if(initial.Primary!=Text(r,"primary") || initial.Secondary!=(string?)r["secondary"])throw new Exception("Website original inputs mismatch");
    if(initial.RawResult!=preview.Result.Raw || !JsonNode.DeepEquals(JsonNode.Parse(initial.FormulaConfigJson!),JsonNode.Parse(ppc.ChemicalAnalysisConfigJson!)) || initial.FCells?.Count!=r["fCells"]!.AsObject().Count)throw new Exception("Website evidence mismatch: "+ppc.Id);
    foreach(var cell in r["fCells"]!.AsObject()){
     var saved=initial.FCells!.Single(x=>x.Address.Replace("F!","").Replace("$","")==cell.Key);

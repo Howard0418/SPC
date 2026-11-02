@@ -1,5 +1,7 @@
 # 功能規格：9、10 月資料受控匯入與圖表驗證
 
+> 後續授權／最新狀態：使用者已指定先十月、再九月藥液隔離測試匯入。合格十月1211／九月1146筆與公式F／管制圖API對帳通過，來源例外及趨勢UI／GUI交付未完成；正式與其他資料類型未開始。[十月](../20261102-october-chemical-test-import/verification.md)／[九月](../20261102-september-chemical-test-import/verification.md)。以下保留原規劃及來源盤點階段，不將原「不立即執行」解讀為後續已授權子範圍仍禁止。
+
 - 功能 ID：SPC-HISTORICAL-IMPORT-1102
 - 版本：3
 - 狀態：TASK-001 解析格式修正完成；9 筆咬蝕原始量測異常待來源擁有者校正
