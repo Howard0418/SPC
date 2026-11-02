@@ -1,3 +1,5 @@
+- 2026-11-02 [藥液網站四件規劃](../specs/20261102-chemical-adjustment-plan/spec.md)：保存後載入回歸、QE2主槽酸／鎳銅差異、更槽規則、P400項目；只入池不實作，待證據不取代現行規則。
+
 > 2026-10-28 [轉檔001環境與身分契約](../specs/20261028-transfiles-production-identity/spec.md)：唯讀登入先核對實際SPC環境，69隔離測試通過；待實際主機／帳號及HTTPS核對，未重包／發布／正式授權，核心34件不變。
 
 > 2026-10-28 [TransFiles正式匯入／來源與定時規劃](../specs/20261028-transfiles-production-schedule-plan/spec.md)：8件待執行，原Excel及工作池已同步；核心34件。沒有實作、建立排程、匯入或打包／發布。
