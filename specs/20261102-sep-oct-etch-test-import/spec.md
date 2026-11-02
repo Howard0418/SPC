@@ -1,0 +1,11 @@
+# 九、十月咬蝕量測試匯入
+- 隸屬SPC-HISTORICAL-IMPORT-1102-TASK-002，2026-11-02使用者明確要求納入咬蝕量，以9／10月為主；不增加核心工作計數。
+- 主系統SPC，相依TransFiles唯讀解析來源；不寫Portal、不動正式、無schema／權限／IIS或主檔修改。來源取既有轉檔設定etching_source，僅2026-09及2026-10。
+- 使用既有EtchReportSyncService.Validate／Preview／Sync(allowUpdate=false)，只新增完整配對日報。PT1／QE1每面25點，PT2／QE2每面50點；前值減後值、平均／樣本S及整體速率沿原服務規則，不把平均當原始子組點。
+- Given來源SHA256、逐點前後值及公式快取，When唯讀解析與預覽，Then負值、缺點、X排除、日期／來源衝突分開列原因；不補零、取絕對值或改原檔。既有同內容應Unchanged，不同內容隔離，禁止覆寫。
+- Given test環境及PMR_SPC_TEST／172.16.110.16，When COPY_ONLY／CHECKSUM／VERIFYONLY後受控匯入，Then逐報再預覽，重送Unchanged、ID與筆數不變，既有所有量測指紋及主檔／藥液保持。
+- Given匯入結果，When逐點及9／10月圖表API／瀏覽器查詢，Then每面原始值、子組平均／樣本S及速率與Excel來源在容差內吻合；不冒稱GUI已交付。統計呼叫封鎖對外郵件，不修改現行主檔抑制告警。
+- 計畫：限定月份選取測試先紅後綠 → 唯讀預覽盤點 → 備份 → 合格日報匯入與重送 → 逐點／圖表對帳 → 原Excel／文件／提交上傳。
+- 回復：以本次新增batch清單定位，先保留資料與追溯；需移除／還原時另依現有受控方式確認範圍，整庫還原前須比對後續其他寫入，不覆蓋藥液成果。
+- 測試矩陣：Happy完整日報；Boundary 9/1、9/30、10/1、10/31及零咬蝕；Invalid負值、缺點、月份外、重複日線；Regression既有值／主檔／藥液指紋及重跑。
+- 驗證與實際筆數待執行後記錄；網站產品未改則build／部署不適用，獨立runner需build及相關測試。

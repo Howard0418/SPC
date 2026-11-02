@@ -1,3 +1,5 @@
+> 2026-11-02 [9／10月咬蝕測試匯入](specs/20261102-sep-oct-etch-test-import/verification.md)：134份合格日報共10384筆（含速率）核對通過；新增25份1975筆，109份同內容保持；24圖／268子組及兩月管制／趨勢UI通過。9異常／15排除不送出，舊排除51筆保持，藥液成果保持。父TASK-002仍有GUI／日期時區及來源例外待辦，核心35／SPC13。
+
 > 2026-11-02 [九月公式F／初複驗UI已驗收](specs/20261102-september-chemical-test-import/ui-followup.md)：重新登入後20筆版本關聯完整、9/3初複驗與Excel一致；GUI、來源例外及日期時區仍待辦，核心35／SPC13保持。
 
 > 2026-11-02 [九月趨勢驗收續作](specs/20261102-september-chemical-test-import/ui-followup.md)：保留來源1146筆／71複驗，另建單組趨勢驗收20筆／1複驗，21公式F及20圖表點對帳、統計20 Completed、通知0；不加算來源量測。78例外依使用者同意隔離，UI20點已顯示，登入後追溯／GUI／十月日界線仍待辦。核心35／SPC13保持。
@@ -17,7 +19,7 @@
 [規格](specs/20261102-sep-oct-production-chart-import/spec.md)／[計畫](specs/20261102-sep-oct-production-chart-import/plan.md)／[排序與測試矩陣](specs/20261102-sep-oct-production-chart-import/tasks.md)。僅完成來源解析與限定月份唯讀驗證；不讀寫測試／正式資料庫、不匯入、不發布。
 
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-001`：P1，限定月份與藥液解析已修正（59檔2,423筆 ready）；咬蝕 9 筆負值／非數值原始量測待校正，未讀寫資料庫。
-- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-002`：P1，[九月趨勢續驗](specs/20261102-september-chemical-test-import/ui-followup.md)：九月1146／71複驗及十月1211／54保持；另組趨勢20筆對帳通過，來源例外隔離。登入後追溯、GUI交付及十月日期篩選仍待辦；僅測試，不操作正式。
+- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-002`：P1，[咬蝕134份測試及圖表通過](specs/20261102-sep-oct-etch-test-import/verification.md)，九月藥液1146／71複驗、十月1211／54及趨勢20筆與公式F追溯驗收保持。來源例外、GUI交付及日期時區仍待辦；僅測試，不操作正式。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-003`：P0，依 002 做正式目標／主檔／衝突唯讀 preflight、備份與回復門檻；不寫入。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-004`：P0，須 003 通過及當下另行明確正式 apply 授權，才可正式僅新增匯入並驗收 9、10 月管制圖／趨勢圖與截圖。
 
