@@ -78,7 +78,7 @@
 |順序|工作代號|優先／主系統|工作與相依|
 |---|---|---|---|
 |1|SPC-ADJUST-1028-TASK-009|P1／SPC，相依Portal|QE2已診斷固定F=0.995；待使用者確認核准F及有效日，保留現行公式與資料。|
-|2|SPC-ADJUST-1028-TASK-001|P1／SPC|已完成公式設定變更後清除舊計算與查詢重算；測試站 API 已套用並驗收。|
+|2|SPC-ADJUST-1028-TASK-001|P1／SPC|10/29已有重算修補；11/02[續驗修正JSON等價比較](specs/20261029-control-line-formula-recalc/followup-20261102.md)，相關16、backend66／API322通過，測試API0.1.97；待正式授權，保留核心旗標。|
 |3|SPC-ADJUST-1028-TASK-003|P1／SPC|測試入口HTTPS根網址，保留Launch及正式目標。|
 |4|SPC-ADJUST-1028-TASK-004|P2／SPC|[三個獨立Sheet與趨勢查詢已測試](specs/20261028-monthly-category-sheets/verification.md)，現測試API92／Web113保留；正式待授權，保留未完成旗標。|
 |5|SPC-ADJUST-1028-TASK-005|P2／SPC|[已／未處置件數測試完成](specs/20261028-monthly-disposition/verification.md)，測試API92／Web113；正式待授權，保留未完成旗標。|

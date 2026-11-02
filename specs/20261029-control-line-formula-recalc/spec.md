@@ -13,3 +13,6 @@
 ## 範圍與回復
 
 只調整 PartProcessCharacteristics 更新時的 stale calculation invalidation 與單元測試；不修改 F 值、公式資料、量測資料或資料庫結構。回復方式為還原本次提交。
+
+## 2026-11-02續驗
+使用者指定本件後補驗JSON物件鍵序無關、無效JSON保留舊資料及實際保存後圖表重算；[續驗記錄](followup-20261102.md)。狀態為測試修正完成／正式待授權，不重複列新小工作。

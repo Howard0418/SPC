@@ -763,20 +763,20 @@ public class PartProcessCharacteristicsController(
             GetXbarCalculationMethod(nextFormulaConfigJson),
             StringComparison.OrdinalIgnoreCase);
 
-    public static bool HasFormulaConfigChanged(string? previousFormulaConfigJson, string? nextFormulaConfigJson) =>
-        !string.Equals(NormalizeFormulaConfig(previousFormulaConfigJson), NormalizeFormulaConfig(nextFormulaConfigJson), StringComparison.Ordinal);
-
-    private static string? NormalizeFormulaConfig(string? formulaConfigJson)
+    /// <summary>Ignore JSON formatting and object member order while preserving meaningful formula changes.</summary>
+    public static bool HasFormulaConfigChanged(string? previousFormulaConfigJson, string? nextFormulaConfigJson)
     {
-        if (string.IsNullOrWhiteSpace(formulaConfigJson)) return null;
+        if (string.IsNullOrWhiteSpace(previousFormulaConfigJson) || string.IsNullOrWhiteSpace(nextFormulaConfigJson))
+            return !(string.IsNullOrWhiteSpace(previousFormulaConfigJson) && string.IsNullOrWhiteSpace(nextFormulaConfigJson));
         try
         {
-            using var document = System.Text.Json.JsonDocument.Parse(formulaConfigJson);
-            return System.Text.Json.JsonSerializer.Serialize(document.RootElement);
+            using var previous = System.Text.Json.JsonDocument.Parse(previousFormulaConfigJson);
+            using var next = System.Text.Json.JsonDocument.Parse(nextFormulaConfigJson);
+            return !System.Text.Json.JsonElement.DeepEquals(previous.RootElement, next.RootElement);
         }
         catch (System.Text.Json.JsonException)
         {
-            return formulaConfigJson.Trim();
+            return !string.Equals(previousFormulaConfigJson.Trim(), nextFormulaConfigJson.Trim(), StringComparison.Ordinal);
         }
     }
 
