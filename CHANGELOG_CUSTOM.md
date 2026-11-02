@@ -1,3 +1,7 @@
+## 2026-11-02 SPC-CHEM-1102-TASK-001 四線實站保存驗收
+使用者本人登入後，Portal測試頁實際保存四線共5筆隔離資料；保存批次、同日歷史及當日日報一致，判定皆OK。N2開線0／收線5分離、ST1上限10、DP5、DV2 7通過；有規格無圖型的新保存亦有稽核判定。專用PPC2645～2648、槽312～315、特性890～893已停用，量測85870～85874及追溯保留。原業務主檔／舊量測未改，原現場網路根因仍未重現。SPC測試API0.1.96／Portal216/259保持，本次沒有產品程式變更或網站發布；正式發布仍待另行授權。核心35、人工11／核銷4保持。
+[驗收案例與回復](specs/20261102-chemical-save-history/live-acceptance.md)。
+
 ## 2026-11-02 FORMULA-IMPORT-005 隔離驗算結果（最新）
 2026-11-02 使用者允許隔離驗算後：819檔唯讀dry-run完成，68項parser／轉檔回歸通過；8筆專用PPC2637～2644的實際測試HTTP preview與Excel在1e-8內吻合、皆OK。伺服器另驗8零值、16區間邊界及16無效輸入通過。未新增量測／receipt、未prepare／confirm／匯入／打包／網站發布，正式區保持。整件待人工驗收，核心35件、人工11／核銷4另計。
 [隔離授權與回復](specs/20261101-formula-import-test-source-regression/isolated-fixture-20261102.md)／[驗證](specs/20261101-formula-import-test-source-regression/verification.md)。
