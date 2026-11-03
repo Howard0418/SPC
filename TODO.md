@@ -1,10 +1,12 @@
+> 2026-11-03 [SPC-AUDIT-1103-TASK-001 技術契約候選版](specs/20261103-spc-user-activity-audit/event-contract-v1.md)：依SPC直屬優先開始001，已補齊事件欄位、31個canonical PageKey、事件代碼、Actor可信度、Details白名單、敏感排除、權限／保存／故障／截圖及BDD；四項業務／隱私政策待核准，故001仍待辦、002未開始。未改程式、DB、角色或站台，核心44／SPC直接22保持。
+
 > 2026-11-03 [SPC 使用者活動稽核僅規劃入池](specs/20261103-spc-user-activity-audit/spec.md)：登入／成功進頁／操作與結果拆9件，依安全與資料風險排序，全部待執行；不記每次按鍵／捲動，不預設自動截圖。未改程式、DB、權限或站台。原Excel同步後核心未完成44件、SPC直接22件；人工11／核銷4另計。
 
-## 2026-11-03 SPC 使用者活動稽核（僅規劃，不立即執行）
+## 2026-11-03 SPC 使用者活動稽核（001進行中，產品實作未開始）
 
-[規格](specs/20261103-spc-user-activity-audit/spec.md)／[計畫](specs/20261103-spc-user-activity-audit/plan.md)／[排序與測試矩陣](specs/20261103-spc-user-activity-audit/tasks.md)。主系統SPC；Portal／SSO只供身分來源，本案不修改Portal帳密登入。依序逐件執行，不與其他schema／SSO／權限高風險工作併行。
+[規格](specs/20261103-spc-user-activity-audit/spec.md)／[候選契約](specs/20261103-spc-user-activity-audit/event-contract-v1.md)／[計畫](specs/20261103-spc-user-activity-audit/plan.md)／[排序與測試矩陣](specs/20261103-spc-user-activity-audit/tasks.md)。主系統SPC；Portal／SSO只供身分來源，本案不修改Portal帳密登入。依序逐件執行，不與其他schema／SSO／權限高風險工作併行。
 
-- [ ] `SPC-AUDIT-1103-TASK-001`：P1，核准事件格式、代碼、敏感排除、可信actor、失敗策略、權限與保存年限；無DB／發布。
+- [ ] `SPC-AUDIT-1103-TASK-001`：P1，技術契約候選版已完成；待核准明示稽核權限、保存年限、v1不收IP／原始User-Agent及查詢值最小化。無DB／發布，未核准前不開始002。
 - [ ] `SPC-AUDIT-1103-TASK-002`：P1，append-only AuditEvents、索引、冪等與共用writer；EF migration，依001。
 - [ ] `SPC-AUDIT-1103-TASK-003`：P1，SPC SSO成功／失敗／登出及session correlation；不改Portal密碼驗證，依002。
 - [ ] `SPC-AUDIT-1103-TASK-004`：P1，操作者啟停、角色／頁面權限、設定與拒絕存取；敏感稽核權限fail closed，依003。
@@ -14,7 +16,7 @@
 - [ ] `SPC-AUDIT-1103-TASK-008`：P2，保存／封存、legal hold、清理重跑、容量監控與告警，依002／007。
 - [ ] `SPC-AUDIT-1103-TASK-009`：P2，測試站E2E、遮罩、故障、效能、環境隔離及遮罩後截圖證據；正式發布另授權，依001～008。
 
-建議「操作」限業務動作、查詢／篩選／匯出與成功進頁，不記滑鼠移動、每次按鍵或捲動。截圖預設只作Git外驗收證據；若要每次操作自動截圖，另立高風險附件工作。TASK-001待確認Portal登入範圍、查閱／匯出人員及保存年限後才可完成。
+「操作」已固定為業務動作、實際送出的查詢／篩選／匯出與成功進頁，不記滑鼠移動、每次按鍵或捲動；SPC只記自身可見的SSO交換，不擴張Portal帳密登入。截圖只作Git外測試驗收證據；正式附件另立高風險工作。TASK-001尚待四項政策明示核准。
 
 > 2026-11-02 [咬蝕趨勢子組修正已正式發布](specs/20261102-etch-trend-subgroups/verification.md)：撤回先前把raw載入當子組趨勢通過的結論；測試／正式Web114每25／50樣本一平均點，正式QE1 325→13、PT2 750→15，原始量測不重匯。正式從bfb9ef91基準僅套本次差異，設備導覽及舊配色保持；原Excel41物件同步，核心35／SPC13保持，GUI／來源例外／時區仍待辦。
 

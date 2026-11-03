@@ -1,15 +1,17 @@
 # 功能規格：SPC 使用者活動稽核
 - 功能 ID：SPC-AUDIT-20261103
-- 版本：1
-- 狀態：規劃完成／待逐件執行
+- 版本：1（TASK-001 候選契約，尚未核准升版）
+- 狀態：TASK-001 技術契約草案完成／待四項政策核准；TASK-002～009 未開始
 - 涉及專案：SPC（主系統）、Portal／SSO（身分來源相依；本案不修改 Portal 登入）
-- 授權依據：2026-11-03 使用者要求規劃「誰登入、誰進入哪個頁面、操作了什麼都要留記錄」，加入小工作但不要立即執行，並依輕重緩急排序。
+- 授權依據：2026-11-03 使用者先要求規劃「誰登入、誰進入哪個頁面、操作了什麼都要留記錄」，加入小工作但不要立即執行；同日後續要求 SPC 直屬先執行，故依安全／權限順位開始 TASK-001。此指示不等同核准保存年限、敏感權限授權者或正式發布。
 - 現行需求基準：[需求索引](../../docs/requirements.md)
 - 前案或相關規格：[共用操作者解析器](../20261012-architecture-task008-audit-operator-traceability/spec.md)
 
 ## 目的、現況與證據
 
 目的：在不改變既有登入、權限、資料寫入、公式、圖表與一般操作結果的前提下，建立可查明「經驗證的身分、進入頁面、具業務意義的操作及結果」的全站稽核能力。
+
+TASK-001 已補齊[事件契約 v1 候選版](event-contract-v1.md)，包括完整欄位、Actor 可信度、事件代碼、現有 Router 的 canonical PageKey／alias 對照、`DetailsJson` 白名單、敏感負面清單、權限、保存、失敗策略及 BDD。技術契約已可供核准，但第一節四項政策尚未取得明示同意，因此本件仍為進行中，且不得開始 TASK-002。
 
 現況盤點：
 
@@ -43,20 +45,20 @@
 
 | 欄位 | 規則 |
 |---|---|
-| `SchemaVersion`、`EventId` | 固定版本；事件 ID 唯一且支援重送冪等。 |
+| `SchemaVersion`、`EventId`、`ClientEventId` | `EventId` 由伺服器產生；前端頁面事件只可帶 `ClientEventId` 供有限重送去重。 |
 | `OccurredAtUtc`、`ReceivedAtUtc` | 資料庫存 UTC；畫面另顯示台北時間，不以本機字串當排序來源。 |
 | `Environment` | 明確為 test／production，禁止跨環境混查。 |
-| `ActorOperatorId`、`ActorAccount`、`ActorRoleSnapshot` | 一律由伺服器 JWT／SSO claim 與 Operator 主檔解析；不得相信 request body 的操作者名稱。 |
+| `ActorType`、`ActorAssurance`、`ActorOperatorId` 與 Actor 快照 | 一律由伺服器 JWT／SSO claim 與 Operator 主檔解析；未驗證登入不得把 request username 當可信 actor。 |
 | `SessionIdHash`、`CorrelationId`／`TraceId` | 只存不可反推出權杖的識別值，用來串接登入、頁面與 API 操作。 |
-| `Category`、`EventCode` | 採穩定代碼，例如 `auth.login.succeeded`、`page.entered`、`measurement.updated`。 |
+| `Category`、`EventCode` | 採 `<domain>.<object>.<action>` 穩定代碼，例如 `auth.sso.exchange`；成功／失敗只放 `Outcome`。 |
 | `PageKey`、`RouteTemplate` | 記 canonical page code 及 `/spc/control-chart/{ppcId}` 類 route template；不存完整 query／fragment。 |
-| `ActionCode`、`TargetType`、`TargetId` | 記具業務意義的動作與目標；批次操作記批次摘要，不逐列灌入相同事件。 |
+| `TargetType`、`TargetId` | 事件語意以 `EventCode` 為單一代碼；批次操作記批次摘要，不逐列灌入相同事件。 |
 | `Outcome`、`ReasonCode`、`HttpMethod`、`HttpStatus` | 區分 Succeeded／Denied／Failed；交易回復不可留下成功事件。 |
-| `SourceIpMasked`、`UserAgent` | 只有核准用途才保存，遮罩／限長並設較短保留期。 |
+| `Source` | 固定為 Api／WebRouter／PortalSso／BackgroundJob；v1 建議不收集 IP 或原始 User-Agent。 |
 | `DetailsJson` | 僅白名單欄位、含 schema 版本，建議最多 4 KB；before／after 以欄位摘要、版本 ID 或 hash 表示。 |
-| `IntegrityHash` | 需要防竄改時啟用；一般應用帳號不得 UPDATE／DELETE。 |
+| `IntegrityHash` | v1 不納入；普通 SHA 無法防竄改，如需 HMAC／hash chain、金鑰輪替與驗證工具須另案。 |
 
-格式不符時，不直接拒絕整批；先隔離並回覆欄位、原因與調整方式：自由文字改結構化代碼、本機時間改 UTC、完整 URL 改 route template、操作者改由伺服器解析、敏感內容移除或遮罩、過長內容改摘要／hash。
+格式不符依風險分流：一般前端事件回 400、丟棄原始 payload 且 4xx 不重試；關鍵伺服器事件視為程式錯誤，業務交易 rollback 並告警；不建立可能保存敏感原文的隔離區。只有離線舊稽核或正式附件匯入才可另案設計隔離、錯誤清單及修正後重送。調整原則為自由文字改結構化代碼、本機時間改 UTC、完整 URL 改 route template、操作者改由伺服器解析、敏感內容移除、過長內容改安全摘要。
 
 ## 需求與驗收
 
@@ -118,18 +120,20 @@ Scenario: 頁面稽核故障不拖垮正常查詢
 - 查詢預設 7 日、單次最多 31 日、游標分頁；大範圍另走受控匯出。
 - 暫定效能門檻：一般讀取／頁面進入 p95 相較基準增幅不超過 5%，關鍵寫入不超過 10%；超過即不得宣稱「不影響正常功能」。
 
-## 建議政策與未決問題
+## TASK-001 待核准政策
 
-以下建議不阻擋入工作池，但會阻擋 TASK-001 核准及後續實作：
+技術範圍已固定為只記 SPC 收到的 SSO、成功進頁及有業務意義的操作；不擴張至 Portal 帳密驗證，不記滑鼠／按鍵／捲動，截圖只作 Git 外測試驗收證據。以下四項仍需使用者明示同意，完整內容及理由見[事件契約第一節](event-contract-v1.md#一待核准的四項政策)：
 
-1. 登入範圍：預設只記 SPC SSO 交換；若需 Portal 帳密登入失敗，另立 Portal 工作。
-2. 操作範圍：建議記業務動作、查詢／篩選／匯出與成功進頁，不記每次點擊、捲動、輸入。
-3. 權限：建議 `admin.audit.read`、`admin.audit.export`、`admin.audit.evidence`，全部預設不授予 Viewer／Editor。
-4. 保留：建議登入／安全／寫入／刪除／權限／匯出線上 24 個月、必要時封存 5 年；頁面／查詢線上 180 日、最多封存 1 年；驗收截圖 90 日。需由資料／隱私負責人核准。
-5. 截圖：預設只作開發／驗收證據。若要求正式操作附件，另立 `AuditEvidence` 高風險工作，確認告知、遮罩、EXIF 移除、惡意檔掃描、加密、容量及保存期。
+1. 三項稽核權限全部明示授權、禁止一般 Editor 預設取得及自我授權。
+2. 關鍵事件總保存 5 年、頁面／一般查詢總保存 1 年、測試截圖 90 日，legal hold 優先。
+3. v1 不收集 IP 或原始 User-Agent。
+4. 一般查詢只記已送出的欄位名稱、日期範圍與結果筆數，不記查詢值。
+
+在上述政策核准前，TASK-001 不標完成；TASK-002 不得開始。
 
 ## 規格版本紀錄
 
 | 版本 | 日期 | 修改原因 |
 |---|---|---|
 | 1 | 2026-11-03 | 初版規劃；只入工作池，不實作。 |
+| 1 候選補充 | 2026-11-03 | 依 SPC 直屬優先指示開始 TASK-001，補齊 v1 技術契約；四項政策待核准，未升為可實作版本。 |

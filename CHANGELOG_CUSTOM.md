@@ -1,3 +1,9 @@
+## 2026-11-03 SPC-AUDIT-1103-TASK-001 技術契約候選版／待政策核准
+- 依使用者「SPC直屬先執行」指示，按安全與權限順位開始001；受原始Excel／業務範圍阻擋的既有工作未誤啟動，正式待發布工作也未視為已授權。
+- 補齊伺服器EventId／ClientEventId、可信Actor、事件／結果分離、31個canonical PageKey與alias、事件代碼、Details白名單、敏感負面清單、關鍵／一般事件故障矩陣、最小權限、保存／legal hold、截圖及BDD候選契約。
+- 保存年限、敏感稽核權限授權模式、v1不收IP／原始User-Agent及查詢值最小化仍待明示核准；001保持待辦，002未開始，核心44／SPC直接22不變。
+- 無程式、DB、角色、資料或站台變更；build／發布不適用。文件：[契約](specs/20261103-spc-user-activity-audit/event-contract-v1.md)／[驗證](specs/20261103-spc-user-activity-audit/verification.md)。
+
 ## 2026-11-03 SPC-AUDIT-20261103 使用者活動稽核僅規劃入池
 - 唯讀盤點確認目前只有校驗、點位及部分量測等模組追溯，沒有全站登入／成功進頁／操作事件、稽核查詢、保存或容量政策；本機登入已停用，SPC 可追的是 Portal SSO 交換，Portal 帳密登入不在本案。
 - 建立 append-only 事件格式、伺服器可信 actor、敏感資料排除、最小權限、保存／封存、故障與效能門檻、截圖證據規則，並依安全、資料正確性、高頻操作排序拆成9件。一般 Editor 不預設取得稽核查閱權限；每次點擊／按鍵／捲動不列入建議範圍。

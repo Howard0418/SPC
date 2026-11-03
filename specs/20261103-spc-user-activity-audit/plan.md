@@ -1,8 +1,9 @@
 # 技術計畫
 - 功能 ID：SPC-AUDIT-20261103
-- 規格版本：1
+- 規格版本：1（TASK-001 候選契約）
 - 規格：[spec.md](spec.md)
-- 狀態：僅規劃，不執行
+- 狀態：TASK-001 技術契約草案完成／待政策核准；產品實作未開始
+- 事件契約：[event-contract-v1.md](event-contract-v1.md)
 
 ## 系統責任與受影響範圍
 
@@ -25,7 +26,7 @@
 
 一次只執行一件，上一件驗證完成後才開始下一件：
 
-1. 核准事件契約、代碼、遮罩、權限、保存與失敗策略（R-001）。
+1. 核准事件契約、代碼、遮罩、權限、保存與失敗策略（R-001）。技術候選版已完成；四項政策尚待核准。
 2. 建立 append-only schema、索引、事件服務及冪等（R-002、R-003、R-011）。
 3. SPC SSO／登出事件（R-004）。
 4. 安全、操作者、角色、頁面權限、設定與拒絕存取事件（R-005、R-008）。
@@ -39,7 +40,7 @@ schema migration、角色權限、SSO 與正式資料均屬高風險，不與其
 
 ## API 與資料模型提案
 
-`AuditEvents` 建議使用 `uniqueidentifier` EventId、UTC 時間、環境、actor snapshot、session hash、事件分類／代碼、頁面／操作／目標、結果、HTTP／Trace、遮罩來源、限長 user-agent／details JSON 及完整性 hash。索引至少包含：
+`AuditEvents` 應依[event-contract-v1.md](event-contract-v1.md)使用伺服器 EventId、可空 ClientEventId、UTC 時間、環境、結構化 actor、session hash、事件分類／代碼、頁面／目標、結果、HTTP／Trace、來源及白名單 details JSON。v1 不收集 IP／原始 User-Agent，也不實作無金鑰治理的普通 IntegrityHash。索引至少包含：
 
 - `(OccurredAtUtc, Id)`
 - `(ActorOperatorId, OccurredAtUtc)`
@@ -84,7 +85,7 @@ schema migration、角色權限、SSO 與正式資料均屬高風險，不與其
 
 ## 發布、備份及回復
 
-- 本次：規劃文件與工作池更新；build／測試站／正式站發布不適用。
+- 本次：補齊 TASK-001 候選契約、BDD、工作池與進度狀態；build／測試站／正式站發布不適用。政策未核准，TASK-001 不標完成且不開始 TASK-002。
 - 未來各工作：測試通過後依規則直接發布測試站，並驗首頁、主 JS／CSS MIME、API health/version 及瀏覽器實際 API 基底。
 - 正式發布：另行授權並核對實際環境；不因本規格自動發布。
 - 回復：前端／API 以 feature flag 與前一版套件回復；新增表屬加法 migration。正式已有稽核後保留表與資料，以停用收集／查詢功能回復，不能直接 Down 刪表。
