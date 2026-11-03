@@ -104,8 +104,9 @@ namespace MesSpc.Api.Migrations
             {
                 migrationBuilder.Sql("IF DATABASE_PRINCIPAL_ID(N'SpcAuditWriter') IS NULL CREATE ROLE SpcAuditWriter; IF DATABASE_PRINCIPAL_ID(N'SpcAuditMaintenance') IS NULL CREATE ROLE SpcAuditMaintenance;");
                 migrationBuilder.Sql("GRANT SELECT, INSERT ON dbo.AuditEvents TO SpcAuditWriter; DENY UPDATE, DELETE, ALTER ON dbo.AuditEvents TO SpcAuditWriter;");
-                migrationBuilder.Sql("CREATE TRIGGER dbo.TR_AuditEvents_NoUpdate ON dbo.AuditEvents INSTEAD OF UPDATE AS BEGIN SET NOCOUNT ON; THROW 51301, 'Audit events are append-only', 1; END;");
-                migrationBuilder.Sql("CREATE TRIGGER dbo.TR_AuditEvents_ControlledDelete ON dbo.AuditEvents INSTEAD OF DELETE AS BEGIN SET NOCOUNT ON; IF IS_ROLEMEMBER(N'SpcAuditMaintenance')<>1 BEGIN THROW 51302, 'Audit maintenance role required', 1; END; DELETE a FROM dbo.AuditEvents a INNER JOIN deleted d ON a.Id=d.Id; END;");
+                // Dynamic DDL also works inside the IF blocks of EF idempotent deployment scripts.
+                migrationBuilder.Sql("EXEC(N'CREATE TRIGGER dbo.TR_AuditEvents_NoUpdate ON dbo.AuditEvents INSTEAD OF UPDATE AS BEGIN SET NOCOUNT ON; THROW 51301, ''Audit events are append-only'', 1; END;');");
+                migrationBuilder.Sql("EXEC(N'CREATE TRIGGER dbo.TR_AuditEvents_ControlledDelete ON dbo.AuditEvents INSTEAD OF DELETE AS BEGIN SET NOCOUNT ON; IF IS_ROLEMEMBER(N''SpcAuditMaintenance'')<>1 BEGIN THROW 51302, ''Audit maintenance role required'', 1; END; DELETE a FROM dbo.AuditEvents a INNER JOIN deleted d ON a.Id=d.Id; END;');");
             }
         }
 

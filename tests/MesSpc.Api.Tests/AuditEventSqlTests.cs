@@ -62,7 +62,12 @@ public class AuditEventSqlTests
             var user = new Operator { OperatorCode = "AUDIT-QA", OperatorName = "Audit QA", Username = "audit-qa", Role = "Viewer" };
             db.Add(user); await db.SaveChangesAsync();
             var before = await FingerprintAsync(db);
-            await db.Database.MigrateAsync();
+            // Exercise the exact idempotent SQL form used by the release engine, including a second replay.
+            var script = migrator.GenerateScript(previousId, "20261103012224_AddAuditEvents", MigrationsSqlGenerationOptions.Idempotent);
+            var batches = System.Text.RegularExpressions.Regex.Split(script, @"^\s*GO\s*$", System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            for (var replay = 0; replay < 2; replay++)
+                foreach (var batch in batches.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    await db.Database.ExecuteSqlRawAsync(batch);
             Assert.Equal(before, await FingerprintAsync(db));
             await migrator.MigrateAsync("20261020052530_AddChemicalDirectWriterProtocol");
             Assert.Equal(before, await FingerprintAsync(db));

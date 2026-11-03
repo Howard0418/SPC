@@ -14,6 +14,8 @@
 
 本件只建立SpcAuditWriter（SELECT／INSERT，DENY UPDATE／DELETE／ALTER）與SpcAuditMaintenance空角色，不自動變更既有帳號成員。既有高權限runtime仍可透過管理DDL繞過trigger，不能宣稱已防DBA竄改；003啟用收集前須再核對分離runtime與migration身分，不能以本件角色定義取代實際principal驗證。兩個安全trigger仍會阻擋一般直接UPDATE／DELETE，包含高權限連線。
 
+測試站現行Auth:Enabled=false，本件儲存服務尚未掛到任何請求，不改既有登入／權限行為。TASK-003啟用登入或頁面收集前，必須先處理驗證啟用與受限runtime身分的相依條件；未完成不能宣稱具備可信「誰登入」稽核。
+
 ## BDD與測試
 
 - Happy：Given合法伺服器actor與事件，When追加，Then持久化server EventId／UTC／正確環境，白名單Details有效。
@@ -34,3 +36,5 @@
 既有歷史migration無法從空庫直接建立（ControlScope歷史落差）；不擴張修舊migration。隔離測試用前一筆migration的精確TargetModel建立基準並記錄歷史，再跑本件Up／Down／Up；實際測試站另核對現有history與僅待本件migration。schema或writer完成不代表全站登入／進頁已開始留痕。
 
 完整回歸：主測試342通過／8略過（含明示啟用的SQL隔離測試）；另一後端測試66通過／1略過，既有nullable警告2處。Release API0.1.98產包成功。實際測試DB盤點PMR_SPC_TEST／test，68個既有user table，59筆已套migration，本件為唯一待遷移ID。
+
+發布SQL另外在隔離庫執行實際EF idempotent script兩次成功，再跑Down／Up；trigger使用動態DDL以符合idempotent IF區塊限制。最後本件20項（含SQL）通過。
