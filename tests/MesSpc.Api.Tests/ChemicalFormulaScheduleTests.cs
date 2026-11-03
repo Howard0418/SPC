@@ -10,6 +10,32 @@ namespace MesSpc.Api.Tests;
 
 public sealed class ChemicalFormulaScheduleTests
 {
+    [Fact]
+    public async Task OldTransFilesClientMustNotSilentlyCalculateRecheckAsInitial()
+    {
+        await using var db=Db();await Seed(db);var service=Service(db);
+        await service.PublishAsync(1,Request(),"editor",default);
+        var legacy=Input() with {SourceKey="{\"kind\":\"TransFilesChemical-v1\"}"};
+        Func<Task> act=()=>service.PreviewAsync(1,legacy,"editor",default);
+        await act.Should().ThrowAsync<ArgumentException>();
+        var upgraded=System.Text.Json.JsonSerializer.Deserialize<ChemicalPreviewInput>(
+            "{\"MeasuredAt\":\"2026-11-03T12:00:00+08:00\",\"Primary\":\"10\",\"SourceKey\":\"{\\\"kind\\\":\\\"TransFilesChemical-v1\\\"}\",\"Phase\":\"Initial\"}")!;
+        (await service.PreviewAsync(1,upgraded,"editor",default)).Result.Raw.Should().Be("30");
+        (await db.ChemicalCalculationReceipts.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task RecheckOnlyFReferenceCannotBePublishedWithoutSnapshot()
+    {
+        await using var db=Db();await Seed(db);
+        (await db.ChemicalAnalysisFormulaVersions.SingleAsync(x=>x.Id==1)).ConfigJson=
+            "{\"enabled\":true,\"concentrationFormula\":\"Primary\",\"recheckConcentrationFormula\":\"Primary*F!B3\"}";
+        await db.SaveChangesAsync();
+        Func<Task> act=()=>Service(db).PublishAsync(1,new(null,"missing recheck F",[new(1,null,"2026-11-03",null)]),"editor",default);
+        await act.Should().ThrowAsync<ArgumentException>();
+        (await db.ChemicalFormulaScheduleRevisions.CountAsync()).Should().Be(0);
+    }
+
     private static AppDbContext Db() => new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
     private static ChemicalFormulaScheduleService Service(AppDbContext db) => new(db, new EphemeralDataProtectionProvider(), TimeProvider.System, NullLogger<ChemicalFormulaScheduleService>.Instance);
     private static async Task Seed(AppDbContext db)

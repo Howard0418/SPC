@@ -1,6 +1,17 @@
 import unittest
 from chemical_direct_writer import parse_row, preview_rows, confirm_rows
 class Tests(unittest.TestCase):
+ def test_recheck_uses_distinct_formula_phase_for_preview_and_prepare(self):
+  seen=[]
+  def api(path,body):
+   seen.append((path,body))
+   return dict(token='token',receiptId='receipt')
+  rows=[parse_row(self.row(RecheckPrimary='0'),"a"*64,"Raw",2)]
+  previews=preview_rows(rows,api)
+  self.assertEqual(seen[0][1].get('phase'),'Initial')
+  self.assertEqual(seen[1][1].get('phase'),'Recheck')
+  confirm_rows(previews,api,lambda a,b:dict(ok=True))
+  self.assertEqual(seen[-1][1]['input']['phase'],'Recheck')
  def row(self,**changes):
   x=dict(PpcId="1",MeasuredAt="2026-10-18T23:59:00+08:00",Primary="1.23456789",SamplingPhase="OPEN",SamplingStage="GENERAL");x.update(changes);return x
  def test_original_and_date(self):

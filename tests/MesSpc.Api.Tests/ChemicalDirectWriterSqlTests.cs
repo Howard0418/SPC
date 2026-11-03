@@ -46,9 +46,9 @@ public class ChemicalDirectWriterSqlTests
         await seed.Database.ExecuteSqlInterpolatedAsync($"UPDATE ChemicalFormulaPolicies SET IsEnabled=1 WHERE PartProcessCharacteristicId={ppc.Id}");
 
         async Task<(Guid a,Guid b)> Receipts(string primary,string key,string at="2026-10-20T12:00:00+08:00"){
-            var input=new ChemicalPreviewInput(at,primary,null,key);
+            var input=new ChemicalPreviewInput(at,primary,null,key,"Initial");
             var a=await Schedule(seed).PreviewAsync(ppc.Id,input,"Task005Writer",default);
-            var b=await Schedule(seed).PreviewAsync(ppc.Id,input with{Primary="2.3456"},"Task005Writer",default);
+            var b=await Schedule(seed).PreviewAsync(ppc.Id,input with{Primary="2.3456",Phase="Recheck"},"Task005Writer",default);
             return ((await Schedule(seed).PrepareAsync(ppc.Id,new(input,a.Token),"Task005Writer",default)).Id,
                 (await Schedule(seed).PrepareAsync(ppc.Id,new(input with{Primary="2.3456"},b.Token),"Task005Writer",default)).Id);
         }

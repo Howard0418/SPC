@@ -12,7 +12,7 @@ public sealed record ChemicalCalculatedValue(string Raw, string Stored, string A
 /// <summary>Explicit-offset dates, mandatory inputs and versioned Portal-compatible chemical calculation.</summary>
 public static class ChemicalFormulaCalculation
 {
-    public const string EngineVersion = "portal-excel8-v1";
+    public const string EngineVersion = "portal-excel8-v3-lazy";
     public const string PrecisionPolicy = "decimal-excel8-away-from-zero-v1";
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private static readonly Regex Identifiers = new("[A-Za-z_$][A-Za-z0-9_$!.]*", RegexOptions.Compiled);
@@ -42,8 +42,10 @@ public static class ChemicalFormulaCalculation
     }
 
     public static ChemicalCalculatedValue Calculate(string configJson, string primary, string? secondary, string fCellsJson,
-        decimal? lsl, decimal? usl, decimal? target)
+        decimal? lsl, decimal? usl, decimal? target, string phase = "Initial")
     {
+        if (phase is not ("Initial" or "Recheck"))
+            throw new ArgumentException("量測階段須為 Initial 或 Recheck。", nameof(phase));
         var config = JsonSerializer.Deserialize<ChemicalCalculationConfig>(configJson, JsonOptions)
             ?? throw ApiUiException.Attach(new ArgumentException("公式配置無效。"), "spc.api.chemicalConfigInvalid");
         if (!config.Enabled || string.IsNullOrWhiteSpace(config.ConcentrationFormula) || config.DecimalPlaces is < 0 or > 8)
@@ -72,7 +74,9 @@ public static class ChemicalFormulaCalculation
         }
         try
         {
-            raw = ReadDecimal(Evaluate(config.ConcentrationFormula, true), "計算結果");
+            var concentrationFormula = phase == "Recheck" && !string.IsNullOrWhiteSpace(config.RecheckConcentrationFormula)
+                ? config.RecheckConcentrationFormula : config.ConcentrationFormula;
+            raw = ReadDecimal(Evaluate(concentrationFormula, true), "計算結果");
             cells["CONCENTRATION"] = raw.Value;
             var adjustment = Evaluate(config.AdjustmentFormula, false);
             var amount = Evaluate(config.AdjustmentAmountFormula, false);
@@ -103,4 +107,4 @@ public static class ChemicalFormulaCalculation
 }
 
 public sealed record ChemicalCalculationConfig(bool Enabled = false, string ConcentrationFormula = "", string? AdjustmentFormula = null,
-    string? AdjustmentAmountFormula = null, int DecimalPlaces = 2);
+    string? AdjustmentAmountFormula = null, int DecimalPlaces = 2, string? RecheckConcentrationFormula = null);

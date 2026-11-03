@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MesSpc.Api.Services;
 
-public sealed record ChemicalPortalPreviewRequest(int PpcId,string MeasuredAt,string Primary,string? Secondary,string SamplingPhase,string SamplingStage);
+public sealed record ChemicalPortalPreviewRequest(int PpcId,string MeasuredAt,string Primary,string? Secondary,string SamplingPhase,string SamplingStage,string Phase="Initial");
 public sealed record ChemicalPortalConfirmRequest(Guid RequestId,List<Dictionary<string,string?>> Rows);
 public sealed record ChemicalPortalEvidence(ChemicalCalculationReceipt Initial,ChemicalCalculationReceipt? Recheck);
 public sealed record ChemicalPortalConfirmed(Guid UploadBatchId,bool AlreadyProcessed);
@@ -33,7 +33,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
         var at=ChemicalFormulaCalculation.ParseMeasuredAt(request.MeasuredAt);
         if(request.SamplingPhase is not ("OPEN" or "MIDDLE"))throw ApiUiException.Attach(new ArgumentException("請選早班或中班。"), "spc.api.chemicalShiftRequired");
         if(!ChemicalSamplingStage.TryNormalize(mapping.Machine?.MachineCode,request.SamplingStage,out var stage))throw ApiUiException.Attach(new ArgumentException(ChemicalSamplingStage.Error), "spc.api.chemicalSamplingStageInvalid");
-        return new(request.MeasuredAt,request.Primary,request.Secondary,$"PortalDaily|{request.PpcId}|{at.AddHours(8):yyyyMMdd}|{request.SamplingPhase}|{stage}");
+        return new(request.MeasuredAt,request.Primary,request.Secondary,$"PortalDaily|{request.PpcId}|{at.AddHours(8):yyyyMMdd}|{request.SamplingPhase}|{stage}",request.Phase);
     }
 
     /// <summary>Dates and original decimal strings are resolved by SPC; no custom expression from the browser is trusted.</summary>
@@ -86,7 +86,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 if(hasRecheck)
                 {
                     if(string.IsNullOrWhiteSpace(Get(row,"ChemicalRecheckPreviewToken")))throw ApiUiException.Attach(new ChemicalPreviewConflictException("複驗尚未預覽，請重新計算。"), "spc.api.chemicalRecheckPreviewRequired");
-                    recheck=await schedule.PrepareAsync(id,new(input with{Primary=Get(row,"RecheckTitrationValue")!,Secondary=Get(row,"RecheckSecondaryTitrationValue")},Get(row,"ChemicalRecheckPreviewToken")!),actor,ct);
+                    recheck=await schedule.PrepareAsync(id,new(input with{Primary=Get(row,"RecheckTitrationValue")!,Secondary=Get(row,"RecheckSecondaryTitrationValue"),Phase="Recheck"},Get(row,"ChemicalRecheckPreviewToken")!),actor,ct);
                 }
                 evidence[id]=new(initial,recheck);
                 var value=Result(initial);var final=recheck is null?value:Result(recheck);

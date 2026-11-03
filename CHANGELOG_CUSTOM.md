@@ -1,3 +1,8 @@
+## 2026-11-03 藥液濃度／F一致性測試修正（未DONE）
+- 修正一般預覽缺F／必要輸入變0；SPC依初複驗選原Excel係數及固定F，Portal憑證綁定階段。管理編輯保留複驗配置，TransFiles初複驗都傳Phase，舊工具缺階段拒絕。實站零值再驗定位IF急算分支，先紅後修IF／IFERROR，採v3引擎；舊EXE未重包。
+- 107來源／214濃度式、3008數值與602拒絕驗證通過；最終主要API366／略10、Portal214、畫面9及轉檔15／交付6通過。測試87主檔濃度補正、83日期政策與F247，166服務預覽；登入畫面C5=86.13／有效0=0.00、PT1=31.77、QE2初6.35／複31.77及F參照通過。4項NA及另兩式保持待辦。
+- 測試API105／Web119、Portal API219／Web260；公開與登入後實際同源API／代理連線、MIME、版本及環境通過。正式9表及測試量測／全域F等7表保持，不改歷史、不重匯。原Excel49物件／核心43／SPC21已同步。[驗證與回復](specs/20261103-chemical-f-consistency/verification.md)。
+
 ## 2026-11-03 SPC-AUDIT-1103-TASK-003 登入登出測試發布完成
 - 串接SSO成功／拒絕／失敗、本機停用登入及登出請求；jti/session hash與可信actor，成功稽核及身分同交易，失敗不發JWT。未驗證帳號只環境HMAC；敏感原文不入事件，前端登出回報有1.5秒上限及finally清除。
 - 測試Auth啟用、獨立強隨機JWT key、runtime非管理者／無DDL且AuditEvents只SELECT／INSERT；startup DDL關閉，私有金鑰／設定不入repo。Portal及正式未變更。

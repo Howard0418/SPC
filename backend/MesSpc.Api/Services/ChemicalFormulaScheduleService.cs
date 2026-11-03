@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace MesSpc.Api.Services;
 
 public sealed record ChemicalPublishSchedule(long? BaseRevisionId, string Reason, IReadOnlyList<ChemicalSchedulePeriod> Periods);
-public sealed record ChemicalPreviewInput(string MeasuredAt, string Primary, string? Secondary, string SourceKey);
+public sealed record ChemicalPreviewInput(string MeasuredAt, string Primary, string? Secondary, string SourceKey, string? Phase = null);
 public sealed record ChemicalPrepareRequest(ChemicalPreviewInput Input, string Token);
 public sealed record ChemicalPreviewResult(long RevisionId, long FormulaVersionId, int FormulaVersionNo, long? FTableHistoryId,
     DateTime MeasuredAtUtc, ChemicalCalculatedValue Result, string EngineVersion, string PrecisionPolicy, string Token, DateTime ExpiresAtUtc);
@@ -94,7 +94,7 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
             catch (JsonException) { throw ApiUiException.Attach(new ArgumentException("公式歷史配置不是有效JSON，請先在公式維護建立有效版本。"), "spc.api.scheduleFormulaJsonInvalid"); }
             if (config is not { Enabled:true } || string.IsNullOrWhiteSpace(config.ConcentrationFormula) || config.DecimalPlaces is <0 or >8)
                 throw ApiUiException.Attach(new ArgumentException("公式版本必須啟用，具有濃度公式及有效精度。"), "spc.api.scheduleFormulaInvalid");
-            var refs = ChemicalFTableService.ExtractCellReferences(string.Join(" ", config.ConcentrationFormula, config.AdjustmentFormula, config.AdjustmentAmountFormula));
+            var refs = ChemicalFTableService.ExtractCellReferences(string.Join(" ", config.ConcentrationFormula, config.RecheckConcentrationFormula, config.AdjustmentFormula, config.AdjustmentAmountFormula));
             ChemicalFTableVersionHistory? f = null;
             if (period.FTableHistoryId.HasValue)
                 f = await db.ChemicalFTableVersionHistories.AsNoTracking().SingleOrDefaultAsync(x => x.Id == period.FTableHistoryId, ct)
@@ -135,6 +135,14 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         var mapping = await MappingAsync(id, ct);
         var at = ChemicalFormulaCalculation.ParseMeasuredAt(input.MeasuredAt);
         if (string.IsNullOrWhiteSpace(input.SourceKey) || input.SourceKey.Length > 1000) throw ApiUiException.Attach(new ArgumentException("請提供1000字內來源唯一鍵。"), "spc.api.chemicalSourceKeyRequired");
+        var transFiles=false;
+        try {
+            using var source=JsonDocument.Parse(input.SourceKey);
+            transFiles=source.RootElement.ValueKind==JsonValueKind.Object && source.RootElement.TryGetProperty("kind",out var kind)
+                && kind.ValueKind==JsonValueKind.String && kind.GetString()=="TransFilesChemical-v1";
+        } catch(JsonException) { /* Generic legacy source keys may be plain text. */ }
+        if(transFiles && input.Phase is not ("Initial" or "Recheck"))
+            throw new ArgumentException("轉檔工具須明確傳送 Initial／Recheck；請更新工具並重新預覽，避免複驗套用初驗公式。");
         var policy = await db.ChemicalFormulaPolicies.AsNoTracking().SingleOrDefaultAsync(x => x.PartProcessCharacteristicId == id, ct);
         if (policy?.ActiveScheduleRevisionId is not long revisionId) throw ApiUiException.Attach(new ArgumentException("尚未發布公式排程，請先設定適用期間。"), "spc.api.scheduleNotConfigured");
         if (!await db.ChemicalFormulaScheduleRevisions.AsNoTracking().AnyAsync(x => x.Id==revisionId && x.PublishedAtUtc!=null, ct))
@@ -152,7 +160,7 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         var segment=segments.FirstOrDefault();
         decimal? ConvertLimit(double? value) => value.HasValue ? Convert.ToDecimal(value.Value, System.Globalization.CultureInfo.InvariantCulture) : null;
         var lsl=ConvertLimit(segment?.LSL ?? mapping.LSL); var usl=ConvertLimit(segment?.USL ?? mapping.USL); var target=ConvertLimit(segment?.TargetValue ?? mapping.TargetValue);
-        var result=ChemicalFormulaCalculation.Calculate(formula.ConfigJson,input.Primary,input.Secondary,f?.CellsJson ?? "[]",lsl,usl,target);
+        var result=ChemicalFormulaCalculation.Calculate(formula.ConfigJson,input.Primary,input.Secondary,f?.CellsJson ?? "[]",lsl,usl,target,input.Phase??"Initial");
         var payload=JsonSerializer.Serialize(new { ppcId=id, revisionId, effectivityId=period.Id, formulaVersionId=formula.Id, formulaVersionNo=formula.VersionNo,
             formulaConfigJson=formula.ConfigJson, fTableHistoryId=f?.Id, fCellsJson=f?.CellsJson, measuredAtUtc=at, originalInput=input,
             primaryCanonical=ChemicalFormulaCalculation.Canonical(ChemicalFormulaCalculation.ReadDecimal(input.Primary,"Primary")),

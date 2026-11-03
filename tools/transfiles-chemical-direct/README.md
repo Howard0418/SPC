@@ -1,5 +1,7 @@
 # TransFiles日期公式DB直寫來源交付
-此目錄保存TASK-005新增模組及最小GUI patch的版本化來源；TransFiles既有工作區不是Git repo，不建立新repo，也不將無關檔案／資料提交。現場模組與本目錄hash一致。
+此目錄保存TASK-005新增模組及最小GUI patch的版本化來源；TransFiles既有工作區不是Git repo，不建立新repo，也不將無關檔案／資料提交。
+
+2026-11-03 [F一致性修正](../../specs/20261103-chemical-f-consistency/spec.md)：此處及現場來源初驗明確傳 `phase=Initial`、複驗preview／prepare傳 `phase=Recheck`，保留原始零值；不再將初驗係數用於複驗。測試API105會拒絕TransFiles缺階段請求，避免舊EXE靜默算錯。此件只同步此差異及測試；現場既有環境防護／讀檔差異保持，不宣稱整檔hash一致。EXE本次未重包，舊EXE不能作為本件驗收版本。
 
 - 將兩個chemical_direct_*檔案放至既有TransFiles來源根；以`git apply --check --unidiff-zero gui-integration.patch`核對，再用`git apply --unidiff-zero gui-integration.patch`套用至`batch_convert_gui.py`（已整合的工作區不要重複套用）。Python測試依既有環境的openpyxl與tls_context，無新套件。
 - 打包沿用既有BatchConvertTool.spec，datas加入`('chemical_direct_write.ps1', '.')`；不把SQL連線字串或密碼放入spec或EXE。GUI會用內建腳本，PowerShell執行原則僅對該子程序設定，不修改系統原則。

@@ -34,7 +34,7 @@ def parse_row(row,file_hash,sheet,row_number):
  if not re.fullmatch(r"[a-fA-F0-9]{64}",file_hash) or row_number<2:raise ValueError("缺來源檔案SHA256或Excel列號。")
  key=json.dumps(dict(kind="TransFilesChemical-v1",fileHash=file_hash,sheet=sheet,row=row_number,samplingPhase=shift,samplingStage=stage),ensure_ascii=False,separators=(",",":"))
  if len(key)>1000:raise ValueError("工作表名稱過長。")
- return dict(ppcId=ppc,input=dict(measuredAt=at,primary=raw("Primary",True),secondary=raw("Secondary"),sourceKey=key),
+ return dict(ppcId=ppc,input=dict(measuredAt=at,primary=raw("Primary",True),secondary=raw("Secondary"),sourceKey=key,phase="Initial"),
              recheckPrimary=raw("RecheckPrimary"),recheckSecondary=raw("RecheckSecondary"),sheet=sheet,row=row_number)
 
 
@@ -59,7 +59,7 @@ def preview_rows(rows,api):
    base=f"/v1/part-process-characteristics/{row['ppcId']}/chemical-formula-schedule"
    row["initialPreview"]=api(base+"/preview",row["input"])
    if row["recheckPrimary"]:
-    inp={**row["input"],"primary":row["recheckPrimary"],"secondary":row["recheckSecondary"]}
+    inp={**row["input"],"primary":row["recheckPrimary"],"secondary":row["recheckSecondary"],"phase":"Recheck"}
     row["recheckInput"]=inp;row["recheckPreview"]=api(base+"/preview",inp)
   except (ValueError,RuntimeError) as error:row["error"]=str(error)[:500]
   except Exception:row["error"]="無法預覽此列；請核對權限、日期排程、PpcId與原始值後重新預覽。"

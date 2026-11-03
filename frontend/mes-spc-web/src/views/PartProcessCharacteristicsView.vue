@@ -157,6 +157,7 @@ function buildChemicalAnalysisConfigJson() {
   }
   if (form.value.controlScope === CONTROL_SCOPE.CHEM && chemical?.enabled) {
     return JSON.stringify({
+      ...chemical,
       enabled: true, version: String(chemical.version || "1").trim(),
       primaryInputLabel: String(chemical.primaryInputLabel || "滴定值").trim(),
       secondaryInputLabel: String(chemical.secondaryInputLabel || "").trim(),

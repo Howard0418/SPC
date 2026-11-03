@@ -114,17 +114,16 @@ internal static class ChemicalExcelFormulaEvaluator
             name = name.ToUpperInvariant();
             if (name == "IF")
             {
-                var condition = ParseComparison().AsBoolean(); Expect(',');
-                var whenTrue = ParseComparison(); Expect(',');
-                var whenFalse = ParseComparison(); Expect(')');
-                return condition ? whenTrue : whenFalse;
+                var args = ReadArguments(3);
+                var condition = new Parser(args[0], cells).Parse().AsBoolean();
+                return new Parser(args[condition ? 1 : 2], cells).Parse();
             }
             if (name == "IFERROR")
             {
-                Value value;
-                try { value = ParseComparison(); } catch { SkipArgument(); value = default; }
-                Expect(','); var fallback = ParseComparison(); Expect(')');
-                return value.Number.HasValue || value.Text is not null || value.Boolean.HasValue ? value : fallback;
+                var args = ReadArguments(2);
+                try { return new Parser(args[0], cells).Parse(); }
+                catch (Exception ex) when (ex is FormatException or OverflowException or DivideByZeroException or InvalidOperationException or NotSupportedException)
+                { return new Parser(args[1], cells).Parse(); }
             }
             if (name == "ROUND")
             {
@@ -135,16 +134,35 @@ internal static class ChemicalExcelFormulaEvaluator
             throw ApiUiException.Attach(new NotSupportedException($"不支援函數 {name}。"), "spc.api.excelFunctionUnsupported", new Dictionary<string,string> { ["name"] = name });
         }
 
-        private void SkipArgument()
+        // Split complete arguments before evaluation so a skipped branch cannot divide by zero,
+        // and an error inside nested functions cannot lose the outer IFERROR fallback position.
+        private string[] ReadArguments(int count)
         {
-            var depth = 0; var quoted = false;
+            var depth = 0; var quoted = false; var start = _position;
+            var args = new List<string>();
             while (_position < source.Length)
             {
                 var ch = source[_position];
-                if (ch == '"') quoted = !quoted;
-                if (!quoted) { if (ch == '(') depth++; else if (ch == ')') depth--; else if (ch == ',' && depth == 0) return; }
+                if (ch == '"')
+                {
+                    if (quoted && _position + 1 < source.Length && source[_position + 1] == '"') { _position += 2; continue; }
+                    quoted = !quoted;
+                }
+                else if (!quoted)
+                {
+                    if (ch == '(') depth++;
+                    else if (ch == ')' && depth == 0)
+                    {
+                        args.Add(source[start.._position]); _position++;
+                        if (args.Count != count) throw new FormatException("函數參數數量不符。");
+                        return args.ToArray();
+                    }
+                    else if (ch == ')') depth--;
+                    else if (ch == ',' && depth == 0) { args.Add(source[start.._position]); start = _position + 1; }
+                }
                 _position++;
             }
+            throw new FormatException("函數缺少結束括號。");
         }
 
         private string ReadIdentifier()

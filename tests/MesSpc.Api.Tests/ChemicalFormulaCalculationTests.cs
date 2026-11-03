@@ -6,6 +6,48 @@ namespace MesSpc.Api.Tests;
 public class ChemicalFormulaCalculationTests
 {
     [Theory]
+    [InlineData("IF(Primary=0,7,1/Primary)","0","7")]
+    [InlineData("IF(Primary=0,1/(Primary-1),7)","1","7")]
+    [InlineData("IFERROR(IF(Primary=0,1/Primary,9),7)","0","7")]
+    public void ExcelConditionalBranchesAreLazy(string formula,string primary,string expected)
+    {
+        var config=System.Text.Json.JsonSerializer.Serialize(new{enabled=true,concentrationFormula=formula});
+        ChemicalFormulaCalculation.Calculate(config,primary,null,"[]",null,null,null).Raw.Should().Be(expected);
+    }
+
+    [Fact]
+    public void ActualC5ZeroDoesNotEvaluateUnselectedDilutionDivision()
+    {
+        var config=System.Text.Json.JsonSerializer.Serialize(new{enabled=true,concentrationFormula="Primary*8.7*F!B3",
+            adjustmentAmountFormula="IFERROR(IF(Concentration>USL,\"排液：\"&ROUND(1100*(1-Target/Concentration),0)&\" L\",IF(Concentration<LSL,\"DP333：\"&ROUND((Target-Concentration)*1100/1000,1)&\" L\",\"\")),\"\")"});
+        var result=ChemicalFormulaCalculation.Calculate(config,"0",null,"[{\"CellAddress\":\"B3\",\"NumericValue\":0.99}]",80,120,100);
+        result.Raw.Should().Be("0");result.AdjustmentAmount.Should().Be("DP333：110 L");
+        Action missing=()=>ChemicalFormulaCalculation.Calculate(config,"0",null,"[]",80,120,100);
+        missing.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData("Initial", "6.29046")]
+    [InlineData("Recheck", "31.4523")]
+    public void ExcelPhaseKeepsOriginalCoefficientAndFSnapshot(string phase, string expected)
+    {
+        const string config = "{\"enabled\":true,\"concentrationFormula\":\"Primary*0.6354*F!B6\",\"recheckConcentrationFormula\":\"Primary*3.177*F!B6\"}";
+        const string cells = "[{\"CellAddress\":\"B6\",\"NumericValue\":0.99}]";
+        ChemicalFormulaCalculation.Calculate(config,"10",null,cells,null,null,null,phase).Raw.Should().Be(expected);
+    }
+
+    [Fact]
+    public void LegacyRecheckUsesInitialFormulaButInvalidPhaseIsRejected()
+    {
+        const string config = "{\"enabled\":true,\"concentrationFormula\":\"Primary*8.7*F!B3\"}";
+        const string cells = "[{\"CellAddress\":\"B3\",\"NumericValue\":0.99}]";
+        ChemicalFormulaCalculation.Calculate(config,"10",null,cells,null,null,null,"Recheck").Raw.Should().Be("86.13");
+        Action act=()=>ChemicalFormulaCalculation.Calculate(config,"10",null,cells,null,null,null,"typo");
+        act.Should().Throw<ArgumentException>();
+        ChemicalFormulaCalculation.Calculate(config,"0",null,cells,null,null,null).Raw.Should().Be("0");
+    }
+
+    [Theory]
     [InlineData("2026-11-01T00:00:00+08:00", "2026-10-31T16:00:00Z")]
     [InlineData("2026-11-01T08:00:00Z", "2026-11-01T16:00:00+08:00")]
     public void OffsetDatesRepresentSameInstant(string a, string b) => ChemicalFormulaCalculation.ParseMeasuredAt(a).Should().Be(ChemicalFormulaCalculation.ParseMeasuredAt(b));

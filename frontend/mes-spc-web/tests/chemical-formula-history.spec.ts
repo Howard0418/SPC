@@ -1,6 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 async function setup(page: Page, reject = false) {
- const config = JSON.stringify({enabled:true,concentrationFormula:'Primary',decimalPlaces:2});
+ const config = JSON.stringify({enabled:true,concentrationFormula:'Primary',decimalPlaces:2,recheckConcentrationFormula:'Primary*3.177*F!B6'});
  let rows:any[] = [1,2].map(id=>({id,controlScope:'CHEM',processId:1,machineId:1,tankId:id,characteristicId:id,displayMode:'TREND_CHART',sampleSize:1,isEnabled:true,machine:{machineCode:'N1'},tank:{tankName:`槽${id}`},characteristic:{characteristicName:`濃度${id}`},chemicalAnalysisConfigJson:config}));
  const histories:any = {1:[{id:1,versionNo:1,reason:'WI-OLD',configJson:config,changedAt:'2026-10-01T00:00:00Z',changedBy:'測試人員',changeType:'Update'}],2:[]};
  const puts:any[]=[];
@@ -46,6 +46,7 @@ test('settings saves reference into the same PPC history',async({page})=>{
  await expect(page.getByText('參照文件／修改依據：WI-OLD')).toBeVisible();
  await page.getByRole('button',{name:'確認儲存',exact:true}).click();
  await expect.poll(()=>puts.length).toBe(1);expect(puts[0].chemicalAnalysisFormulaVersionReason).toBe('WI-SETTINGS');
+ expect(JSON.parse(puts[0].chemicalAnalysisConfigJson).recheckConcentrationFormula).toBe('Primary*3.177*F!B6');
  await page.goto('/chemical-analysis-overview');await page.getByRole('button',{name:'版本歷史',exact:true}).first().click();await expect(page.getByText('參照文件／修改依據：WI-SETTINGS')).toBeVisible();
 });
 
@@ -56,7 +57,7 @@ test('history loading error supports retry without losing context',async({page})
 });
 
 test('settings reference-only save preserves original formula JSON',async({page})=>{
- const puts=await setup(page);await page.goto('/part-process-characteristics?editId=1');await page.getByRole('button',{name:'藥液公式',exact:true}).click();await page.getByLabel('參照文件／修改依據',{exact:true}).fill('僅備註');await page.getByRole('button',{name:'確認儲存',exact:true}).click();await expect.poll(()=>puts.length).toBe(1);expect(puts[0].chemicalAnalysisConfigJson).toBe(JSON.stringify({enabled:true,concentrationFormula:'Primary',decimalPlaces:2}));
+ const puts=await setup(page);await page.goto('/part-process-characteristics?editId=1');await page.getByRole('button',{name:'藥液公式',exact:true}).click();await page.getByLabel('參照文件／修改依據',{exact:true}).fill('僅備註');await page.getByRole('button',{name:'確認儲存',exact:true}).click();await expect.poll(()=>puts.length).toBe(1);expect(puts[0].chemicalAnalysisConfigJson).toBe(JSON.stringify({enabled:true,concentrationFormula:'Primary',decimalPlaces:2,recheckConcentrationFormula:'Primary*3.177*F!B6'}));
 });
 
 test('overview date range validates, paginates, and clears without writes',async({page})=>{

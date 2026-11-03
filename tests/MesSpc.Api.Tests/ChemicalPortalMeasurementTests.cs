@@ -13,6 +13,23 @@ namespace MesSpc.Api.Tests;
 public class ChemicalPortalMeasurementTests
 {
     [Fact]
+    public async Task DistinctExcelRecheckFormulaAndTokenPhaseArePreserved()
+    {
+        await using var f=await Fixture.Create();
+        var version=await f.Db.ChemicalAnalysisFormulaVersions.SingleAsync();
+        version.ConfigJson="{\"enabled\":true,\"concentrationFormula\":\"Primary*0.6354\",\"recheckConcentrationFormula\":\"Primary*3.177\",\"decimalPlaces\":4}";
+        await f.Db.SaveChangesAsync();
+        var row=await f.Row("10","10");
+        // A valid initial preview cannot authorize the recheck expression.
+        var bad=new Dictionary<string,string?>(row){["ChemicalRecheckPreviewToken"]=row["ChemicalPreviewToken"]};
+        Func<Task> reject=()=>f.Service.ConfirmAsync(new(Guid.NewGuid(),[bad]),"editor",default);
+        await reject.Should().ThrowAsync<ChemicalPreviewConflictException>();
+        await f.Service.ConfirmAsync(new(Guid.NewGuid(),[row]),"editor",default);
+        var vm=await f.Db.VariableMeasurements.SingleAsync();
+        vm.MeasuredValue.Should().Be(6.354);vm.RecheckValue.Should().Be(31.77);
+    }
+
+    [Fact]
     public async Task InitialAndRecheckAreAtomicTrustedAndIdempotent()
     {
         await using var f=await Fixture.Create();
@@ -133,7 +150,7 @@ public class ChemicalPortalMeasurementTests
             var preview=await Service.PreviewAsync(input,"editor",default);
             var row=new Dictionary<string,string?> { ["PpcId"]="1",["ControlScope"]="CHEM",["ProcessCode"]="C1",["MachineCode"]="C1",["TankCode"]="T1",["CharacteristicCode"]="CONC",
                 ["MeasuredAt"]=input.MeasuredAt,["TitrationValue"]=primary,["MeasuredValue"]="0",["SampleNo"]="1",["SamplingPhase"]="OPEN",["SamplingStage"]="GENERAL",["Operator"]="editor",["ChemicalPreviewToken"]=preview.Token };
-            if(recheck is not null){var p=await Service.PreviewAsync(input with{Primary=recheck},"editor",default);row["RecheckTitrationValue"]=recheck;row["RecheckValue"]="0";row["ChemicalRecheckPreviewToken"]=p.Token;}
+            if(recheck is not null){var p=await Service.PreviewAsync(input with{Primary=recheck,Phase="Recheck"},"editor",default);row["RecheckTitrationValue"]=recheck;row["RecheckValue"]="0";row["ChemicalRecheckPreviewToken"]=p.Token;}
             return row;
         }
         public async ValueTask DisposeAsync(){await Db.DisposeAsync();await connection.DisposeAsync();}
