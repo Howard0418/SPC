@@ -15,6 +15,7 @@ using MesSpc.Api.Services.Localization;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
+MesSpc.Api.Services.Auditing.AuthenticationAuditStartup.ValidateConfiguration(builder.Configuration);
 
 var authEnabled = builder.Configuration.GetValue("Auth:Enabled", false);
 var jwtKey = builder.Configuration["Auth:JwtKey"];
@@ -101,6 +102,8 @@ builder.Services.AddScoped<SpcReportScheduleProcessor>();
 builder.Services.AddScoped<MesSyncMessageBatchProcessor>();
 builder.Services.AddScoped<AuthorizationAccess>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuditEventWriter>();
+builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuthenticationAudit>();
+builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuthenticationAuditResultFilter>();
 builder.Services.AddSingleton<UserPasswordHasher>();
 builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddHostedService<SpcReportSchedulerService>();
@@ -213,6 +216,7 @@ if (Directory.Exists(frontendRoot) && File.Exists(Path.Combine(frontendRoot, "in
     });
 }
 
+if (builder.Configuration.GetValue("Database:InitializeOnStartup", true))
 using (var scope = app.Services.CreateScope())
 {
     var startupPlan = DatabaseStartupPlanner.CreatePlan(builder.Configuration["DatabaseProvider"]);
@@ -427,6 +431,11 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+if (builder.Configuration.GetValue<bool>("Audit:AuthenticationEnabled"))
+{
+    using var auditScope = app.Services.CreateScope();
+    await MesSpc.Api.Services.Auditing.AuthenticationAuditStartup.ValidateDatabaseAsync(auditScope.ServiceProvider.GetRequiredService<AppDbContext>());
+}
 app.Run();
 
 static void EnsureSqlServerMigrationBaseline(AppDbContext db)

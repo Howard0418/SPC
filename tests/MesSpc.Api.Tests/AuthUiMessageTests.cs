@@ -21,7 +21,7 @@ public class AuthUiMessageTests
         var config=new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>{["Auth:PortalSsoKey"]=scenario=="notConfigured"?null:new string('x',40)}).Build();
         var controller=new AuthController(config,db);
         var request=new AuthController.PortalSsoRequest("fixture",null,scenario=="expired"?0:DateTimeOffset.UtcNow.ToUnixTimeSeconds(),Guid.NewGuid().ToString(),"bad-signature");
-        var result=Assert.IsAssignableFrom<ObjectResult>(scenario=="login"?controller.Login():await controller.PortalSso(request));
+        var result=Assert.IsAssignableFrom<ObjectResult>(scenario=="login"?await controller.Login():await controller.PortalSso(request));
         Assert.Equal(status,result.StatusCode);var json=JsonSerializer.SerializeToElement(result.Value,new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.Equal(message,json.GetProperty("message").GetString());Assert.Equal(code,json.GetProperty("code").GetString());Assert.Equal(key,json.GetProperty("messageKey").GetString());Assert.Empty(json.GetProperty("args").EnumerateObject());Assert.Empty(db.Operators);
     }

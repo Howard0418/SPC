@@ -10,7 +10,8 @@ public sealed class ViewerWriteGuardMiddleware(RequestDelegate next)
         var isReadRequest = HttpMethods.IsGet(context.Request.Method)
             || HttpMethods.IsHead(context.Request.Method)
             || HttpMethods.IsOptions(context.Request.Method);
-        var isAnonymousAuthEndpoint = context.Request.Path.StartsWithSegments("/api/v1/auth/login");
+        var isAnonymousAuthEndpoint = context.Request.Path == "/api/v1/auth/login"
+            || context.Request.Path == "/api/v1/auth/portal-sso" || context.Request.Path == "/api/v1/auth/logout";
 
         if (!isReadRequest
             && !isAnonymousAuthEndpoint

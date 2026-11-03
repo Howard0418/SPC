@@ -14,6 +14,7 @@
       "requestFailed": "請求失敗",
       "environmentMismatch": "安全性阻擋：WEB 為 {webEnvironment}，API 為 {apiEnvironment}，環境不一致，禁止寫入。",
       "ssoNotConfigured": "Portal SSO 尚未設定。",
+      "authAuditUnavailable": "登入稽核暫時無法使用，請稍後重試。",
       "ssoExpired": "Portal SSO 請求已失效。",
       "ssoSignature": "Portal SSO 簽章不正確。",
       "ssoReplayed": "Portal SSO 請求已使用。",

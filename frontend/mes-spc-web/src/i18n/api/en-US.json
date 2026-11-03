@@ -14,6 +14,7 @@
       "requestFailed": "Request failed",
       "environmentMismatch": "Safety check blocked the request: WEB is {webEnvironment} and API is {apiEnvironment}. Writes are prohibited because the environments differ.",
       "ssoNotConfigured": "Portal SSO is not configured.",
+      "authAuditUnavailable": "Sign-in auditing is temporarily unavailable. Please try again.",
       "ssoExpired": "The Portal SSO request has expired.",
       "ssoSignature": "The Portal SSO signature is invalid.",
       "ssoReplayed": "The Portal SSO request has already been used.",

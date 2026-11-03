@@ -92,8 +92,8 @@ public sealed class AuditEventWriter(AppDbContext db, DbContextOptions<AppDbCont
         if (actor.Type == "User")
         {
             AuditEventContract.Require(actor.OperatorId > 0 && actor.Assurance is "Jwt" or "PortalAssertion" && actor.ServiceCode is null && actor.AttemptedAccountHash is null);
-            var user = await store.Operators.AsNoTracking().SingleOrDefaultAsync(x => x.Id == actor.OperatorId, ct);
-            AuditEventContract.Require(user is not null && (user.IsActive || actor.Assurance == "PortalAssertion" && draft.Outcome == "Denied"));
+            var user = await store.Operators.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == actor.OperatorId, ct);
+            AuditEventContract.Require(user is not null && (user.IsActive && !user.IsDeleted || actor.Assurance == "PortalAssertion" && draft.Outcome == "Denied"));
             entry.ActorOperatorId = user!.Id;
             entry.ActorAccountSnapshot = Snapshot(user.Username);
             entry.ActorOperatorCodeSnapshot = Snapshot(user.OperatorCode);

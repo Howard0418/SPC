@@ -28,6 +28,7 @@ import {
   ,FlaskConical, Wind
 } from "lucide-vue-next";
 import { clearAuthSession, getCurrentUser } from "./utils/auth";
+import { createLogoutHandler } from "./utils/logout";
 import { api, setApiEnvironment } from "./api/client";
 import { useI18n } from "vue-i18n";
 import { readLocale, saveLocale, supportedLocales } from "./i18n/preferences";
@@ -190,10 +191,11 @@ const editorMenuCategories = [
 
 const menuCategories = computed(() => canEdit.value ? editorMenuCategories : viewerMenuCategories);
 
-function logout() {
-  clearAuthSession();
-  window.location.assign(portalLogoutUrl);
-}
+const logout = createLogoutHandler({
+  report: () => api.post("/v1/auth/logout", null, { timeout: 1500 }),
+  clear: clearAuthSession,
+  redirect: () => window.location.assign(portalLogoutUrl)
+});
 
 function returnToPortal() {
   window.location.assign(portalHomeUrl);
