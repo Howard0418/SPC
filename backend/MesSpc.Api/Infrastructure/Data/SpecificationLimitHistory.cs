@@ -8,6 +8,7 @@ public partial class AppDbContext
     private sealed record SpecChange(EntityEntry Entry,string Kind,string Action,string? Previous,string? Current);
     private List<SpecChange> PendingSpecificationChanges()
     {
+        ValidateAuditImmutableEntries();
         ValidateChemicalImmutableEntries();
         ChangeTracker.DetectChanges();
         if(ChangeTracker.Entries<SpecificationLimitVersion>().Any(e=>e.State is EntityState.Modified or EntityState.Deleted))

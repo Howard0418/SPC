@@ -100,6 +100,7 @@ builder.Services.AddScoped<ISpcOverviewReportBuilder>(sp => sp.GetRequiredServic
 builder.Services.AddScoped<SpcReportScheduleProcessor>();
 builder.Services.AddScoped<MesSyncMessageBatchProcessor>();
 builder.Services.AddScoped<AuthorizationAccess>();
+builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuditEventWriter>();
 builder.Services.AddSingleton<UserPasswordHasher>();
 builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddHostedService<SpcReportSchedulerService>();

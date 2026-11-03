@@ -227,6 +227,214 @@ namespace MesSpc.Api.Migrations
                     b.ToTable("AttributeMeasurements");
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.AuditEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasComment("Audit v1: Id. Append-only; no raw request or secret values.");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ActorAccountSnapshot")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasComment("Audit v1: ActorAccountSnapshot. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("ActorAssurance")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasComment("Audit v1: ActorAssurance. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("ActorDisplayNameSnapshot")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasComment("Audit v1: ActorDisplayNameSnapshot. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("ActorOperatorCodeSnapshot")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasComment("Audit v1: ActorOperatorCodeSnapshot. Append-only; no raw request or secret values.");
+
+                    b.Property<int?>("ActorOperatorId")
+                        .HasColumnType("int")
+                        .HasComment("Audit v1: ActorOperatorId. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("ActorRoleSnapshot")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasComment("Audit v1: ActorRoleSnapshot. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("ActorServiceCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("Audit v1: ActorServiceCode. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("ActorType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasComment("Audit v1: ActorType. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("AttemptedAccountHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasComment("Audit v1: AttemptedAccountHash. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasComment("Audit v1: Category. Append-only; no raw request or secret values.");
+
+                    b.Property<Guid?>("ClientEventId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("Audit v1: ClientEventId. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("Audit v1: CorrelationId. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("DeduplicationHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasComment("Audit v1: DeduplicationHash. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("DetailsJson")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("Audit v1: DetailsJson. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("Environment")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasComment("Audit v1: Environment. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("EventCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("Audit v1: EventCode. Append-only; no raw request or secret values.");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasComment("Audit v1: EventId. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("HttpMethod")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)")
+                        .HasComment("Audit v1: HttpMethod. Append-only; no raw request or secret values.");
+
+                    b.Property<int?>("HttpStatus")
+                        .HasColumnType("int")
+                        .HasComment("Audit v1: HttpStatus. Append-only; no raw request or secret values.");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasComment("Audit v1: OccurredAtUtc. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasComment("Audit v1: Outcome. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("PageKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("Audit v1: PageKey. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("ReasonCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("Audit v1: ReasonCode. Append-only; no raw request or secret values.");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasComment("Audit v1: ReceivedAtUtc. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("RouteTemplate")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasComment("Audit v1: RouteTemplate. Append-only; no raw request or secret values.");
+
+                    b.Property<int>("SchemaVersion")
+                        .HasColumnType("int")
+                        .HasComment("Audit v1: SchemaVersion. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("SessionIdHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasComment("Audit v1: SessionIdHash. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasComment("Audit v1: Source. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("TargetId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasComment("Audit v1: TargetId. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("TargetType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("Audit v1: TargetType. Append-only; no raw request or secret values.");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasComment("Audit v1: TraceId. Append-only; no raw request or secret values.");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId")
+                        .IsUnique();
+
+                    b.HasIndex("Environment", "CorrelationId");
+
+                    b.HasIndex("Environment", "ActorOperatorId", "OccurredAtUtc");
+
+                    b.HasIndex("Environment", "EventCode", "OccurredAtUtc");
+
+                    b.HasIndex("Environment", "OccurredAtUtc", "Id");
+
+                    b.HasIndex("Environment", "ActorOperatorId", "SessionIdHash", "ClientEventId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AuditEvents_ClientRetry")
+                        .HasFilter("[ClientEventId] IS NOT NULL");
+
+                    b.HasIndex("Environment", "TargetType", "TargetId", "OccurredAtUtc");
+
+                    b.ToTable("AuditEvents", null, t =>
+                        {
+                            t.HasComment("SPC append-only activity events. Runtime must not update or delete evidence.");
+
+                            t.HasCheckConstraint("CK_AuditEvents_Actor", "([ActorType]='User' AND [ActorOperatorId] IS NOT NULL AND [ActorOperatorId]>0 AND [ActorAssurance] IN ('Jwt','PortalAssertion')) OR ([ActorType]='Anonymous' AND [ActorOperatorId] IS NULL AND [ActorAssurance]='None' AND [ActorAccountSnapshot] IS NULL AND [ActorOperatorCodeSnapshot] IS NULL AND [ActorDisplayNameSnapshot] IS NULL AND [ActorRoleSnapshot] IS NULL AND [ActorServiceCode] IS NULL) OR ([ActorType]='Service' AND [ActorOperatorId] IS NULL AND [ActorAssurance]='Service' AND [ActorServiceCode] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_AuditEvents_ClientEvent", "[ClientEventId] IS NULL OR ([EventCode]='navigation.page.enter' AND [ActorType]='User' AND [SessionIdHash] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_AuditEvents_DetailsJson", "ISJSON([DetailsJson])=1 AND DATALENGTH([DetailsJson])<=8192");
+
+                            t.HasCheckConstraint("CK_AuditEvents_Environment", "[Environment] IN ('Test','Production')");
+
+                            t.HasCheckConstraint("CK_AuditEvents_HttpStatus", "[HttpStatus] IS NULL OR [HttpStatus] BETWEEN 100 AND 599");
+
+                            t.HasCheckConstraint("CK_AuditEvents_Outcome", "[Outcome] IN ('Succeeded','Denied','Failed')");
+
+                            t.HasCheckConstraint("CK_AuditEvents_SchemaVersion", "[SchemaVersion] = 1");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationAuditLog", b =>
                 {
                     b.Property<int>("Id")
