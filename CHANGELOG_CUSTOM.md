@@ -2434,3 +2434,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 依本輪明示授權，SPC102／Portal218及專用旗標已部署。SPC來源1cb8f8e9與候選bfb9 backend差異0；Portal實際204／b022c576比原200候選新，已改用實際基準重建，標準publish-all新增ApiOnly（預設All保持）且隔離測試通過。保留正式Web115／Portal247、認證／SSO與其餘設定。
 - 正式SPC69／Portal74表及migration history全部保持，38／570保護檔除核准旗標外相同；134份10384筆再唯讀對帳吻合，未重匯／新增量測／schema／排程。Web／主資產MIME、實際8443 API基底health/version、Portal等效版本／DB production、匿名拒絕與CORS通過；登入後瀏覽器及EXE工具人工仍待驗。
 - 原進度表增加119～122事件與原生里程碑47、總表263同步人工待驗；OpenXML0／重開渲染／12頁列印通過，核心43／SPC21保持。[正式部署、備份、回復及限制](specs/20261103-etch-import-completeness/formal-release.md)。日期前端正式118仍需另行授權。
+## 2026-11-03 SPC-UI-1103-TASK-002 日期前端正式發布／驗收完成
+- 使用者明示同意後，沿已驗證正式隔離候選發布Web118，僅入口／主JS／CSS三檔；API102 DLL、設定與前端web.config hash保持。首頁／主資產MIME、實際8443 APIhealth/version、CORS及使用者本人登入後兩頁驗收通過。
+- 9/29正式QE1軸與tooltip為09/29、實際量測2026/9/29，Xbar0.9404／n25；趨勢32組／800原樣本保持，無資料重匯或計算修改。14單元／28畫面回歸及隔離build既有驗證保持；正式API登入後待驗亦結清，EXE人工待辦保留。
+- 原進度表123～126完成事件、總表264 DONE及第48原生綠色里程碑同步；原47物件保持，OpenXML0／重開渲染／13頁列印通過，僅新增118列後分頁防止事件切頁。核心42／SPC20、完成188。[規格、備份與回復](specs/20261103-chart-date-only-midnight/spec.md)。
