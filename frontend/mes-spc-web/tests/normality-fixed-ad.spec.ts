@@ -63,7 +63,7 @@ for(const path of ['/spc','/trend-chart'])for(const scenario of ['normal','tiny'
   const p=scenario==='tiny'?0.000001:scenario==='constant'?null:0.4;
   normalityFixture=scenario==='insufficient'?null:{testName:'Anderson-Darling',pValue:p,isNormal:p===null?true:p>=.05,skewness:123,kurtosis:456,methodNote:'本系統採 Anderson-Darling 常態檢定。',note:scenario==='constant'?'數據無變異，無法進行常態性檢定。':null};
   const {writes,errors,chartMethods}=await setup(page,false,true,'I_MR',path);
-  await expect(page.getByTestId('normality-method')).toHaveText('Anderson-Darling');
+  await expect(page.getByTestId('normality-method')).toHaveCount(0);
   expect(chartMethods.length).toBeGreaterThan(0);expect(chartMethods.every(x=>x==='AD')).toBeTruthy();
   await expect(page.locator('option[value="AD"]')).toHaveCount(0);
   await expect(page.getByText(/Skewness|Kurtosis|Adjusted Jarque-Bera/)).toHaveCount(0);

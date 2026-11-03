@@ -489,3 +489,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-02 [正式僅新增授權及部分完成](../specs/20261102-production-import-insert-only/verification.md)：使用者明確授權正式區且禁止重匯；PT2新增21份2121筆，48原有略過、65主檔受阻。藥液缺時間／班別先不匯入的後續要求已套用，清單逐列交付；不改正式主檔或既有量測，父003／004未DONE。
 
 - 2026-11-02 [咬蝕趨勢完整子組修正](../specs/20261102-etch-trend-subgroups/verification.md)：每面25／50樣本一平均點，不逐raw樣本畫折線；子組數與原始樣本直方圖明確分開。測試及獲另行授權的正式Web114已發布，API／DB不變，設備導覽保留；補足前次錯誤驗收，既有TASK-002其餘待辦保持。
+
+- 2026-11-03 [兩頁查詢列常態檢定方法區塊移除](../specs/20261103-remove-normality-query-field/spec.md)：`/spc`與`/trend-chart`不再顯示「常態檢定方法／Anderson-Darling」靜態區塊；API仍固定送AD，常態結果、圖表、後端及資料不變。測試／正式Web115均已發布並實站驗證，API97／92保持。[驗證](../specs/20261103-remove-normality-query-field/verification.md)。

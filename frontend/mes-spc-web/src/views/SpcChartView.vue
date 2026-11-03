@@ -2267,11 +2267,6 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
             </select>
           </div>
 
-          <div v-if="!isMonthlyChartPage" class="w-full">
-            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">{{ t('spc.chartQuery.normalityMethod') }}</label>
-            <p data-testid="normality-method" class="px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white">Anderson-Darling</p>
-          </div>
-
         </div>
 
         <button data-testid="chart-query-submit" @click="loadActiveChart" :disabled="loading" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all text-sm h-[38px] min-w-32">

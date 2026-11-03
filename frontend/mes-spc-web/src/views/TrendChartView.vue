@@ -1262,11 +1262,6 @@ const trendStats = computed(() => {
         </select>
       </div>
 
-      <div class="w-48">
-        <label class="block text-[11px] font-bold text-slate-400 mb-1">{{ t('spc.chartQuery.normalityMethod') }}</label>
-        <p data-testid="normality-method" class="px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white">Anderson-Darling</p>
-      </div>
-
       <button
         data-testid="trend-loadSummary" @click="loadSummary"
         :disabled="loading || !selectedProcessId"
