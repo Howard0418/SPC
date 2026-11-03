@@ -11,3 +11,5 @@
 Happy：四線全樣本／新資料確認查回；Boundary：日期起迄、25／50、重送／舊hash；Invalid：錯線、來源變動、缺點、NaN、回應不完整、環境錯置；Regression：藥液／落塵、既有保存PUT、原始檔、歷史主檔及正式資料保持。
 
 回復：TransFiles回用舊EXE及必要原碼備份；測試API還原備份payload、不變runtime設定。無schema rollback；正式候選未獲發布授權不部署、不開開關。單元測試／preview／inspect不寫入；必要隔離測試新增依具名batch追溯，不刪業務資料。
+
+正式授權後實際preflight：SPC正式API92／PMR_SPC_2026；Portal正式API204／Web247，ProductVersion來源b022c576，DB為既有正式白名單PMR_PORTAL_UAT，不能沿最初API200候選降版。改從b022c576套本件三檔。Portal標準publish-all新增可選ApiOnly，預設All保持，API-only不遞增／碰觸Web；先以隔離mock-publish測試API-only及預設行為，再由隔離根執行標準腳本直接發布實際正式UNC目錄（非手動複製發布包），保留正式Web247。僅啟用兩站EtchImport:AllowProduction，其他設定語意保持；預先備份／比對schema migration與業務資料，正式不植入合成量測。

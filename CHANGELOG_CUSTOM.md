@@ -2430,3 +2430,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 共用量測日期顯示：午夜圖軸09/29、完整量測2026/9/29；非零時間仍保留，原時區／資料／分組／25或50樣本計算／下載不改。操作與稽核時間不屬本件。
 - 單元14及Playwright28通過，隔離建置排除既有未提交修改，測試Web117已發布；首頁／主JS及CSS MIME／同源API101 health/version及登入後實站9/29 tooltip、Xbar0.9404、n25正常。正式Web118僅候選未發布。
 - 原進度表同步事件115～118、總表264及原生里程碑46，原45物件保持；OpenXML0／重開渲染／12頁列印通過，核心43／SPC21。[規格、驗證與回復](specs/20261103-chart-date-only-midnight/spec.md)。前件正式咬蝕API已獲另行授權，將依序執行。
+## 2026-11-03 TRANSFILES-ETCH-1103-TASK-001 正式API已授權部署
+- 依本輪明示授權，SPC102／Portal218及專用旗標已部署。SPC來源1cb8f8e9與候選bfb9 backend差異0；Portal實際204／b022c576比原200候選新，已改用實際基準重建，標準publish-all新增ApiOnly（預設All保持）且隔離測試通過。保留正式Web115／Portal247、認證／SSO與其餘設定。
+- 正式SPC69／Portal74表及migration history全部保持，38／570保護檔除核准旗標外相同；134份10384筆再唯讀對帳吻合，未重匯／新增量測／schema／排程。Web／主資產MIME、實際8443 API基底health/version、Portal等效版本／DB production、匿名拒絕與CORS通過；登入後瀏覽器及EXE工具人工仍待驗。
+- 原進度表增加119～122事件與原生里程碑47、總表263同步人工待驗；OpenXML0／重開渲染／12頁列印通過，核心43／SPC21保持。[正式部署、備份、回復及限制](specs/20261103-etch-import-completeness/formal-release.md)。日期前端正式118仍需另行授權。
