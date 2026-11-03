@@ -1,0 +1,743 @@
+--- a/etch_reports.py
++++ b/etch_reports.py
+@@ -1,13 +1,15 @@
+ """Complete PD-3-581-06B report conversion; no network or database access."""
+ from pathlib import Path
++import copy
+ import hashlib, json, sys
+ import re, math, statistics, uuid
++import unicodedata
+ from datetime import datetime, date
+ import openpyxl
+ from openpyxl.utils import get_column_letter
+ 
+ LAYOUT = {"PT1": (2,5,5), "PT2": (8,10,11), "QE1": (19,5,22), "QE2": (25,10,28)}
+-VERSION = '2026.10.13.1'
++VERSION = '2026.11.03.1'
+ EXCLUDED_REASON = 'X-線別不匯入SPC'
+ 
+ def line_label_cell(line):
+@@ -15,7 +17,17 @@
+     return f'{get_column_letter(start-1)}2'
+ 
+ def is_excluded_line_label(value):
+-    return isinstance(value, str) and value.strip().upper().startswith('X-')
++    return isinstance(value, str) and unicodedata.normalize('NFKC',value).strip().upper().startswith('X-')
++
++def normalized_line_label(value):
++    text=re.sub(r'\s','',unicodedata.normalize('NFKC',str(value or '')).upper())
++    # User approved -2 as the second measurement; all other unapproved suffixes stay quarantined.
++    match=re.fullmatch(r'(PT|QE)-?0?([12])(?:-([12]))?(?:\(-?\d+(?:\.\d+)?(?:度|°C)\))?',text)
++    return match[1]+match[2] if match else None
++
++def measurement_number(value):
++    text=re.sub(r'\s','',unicodedata.normalize('NFKC',str(value or '')).upper())
++    return 2 if re.fullmatch(r'(?:PT|QE)-?0?[12]-2(?:\(-?\d+(?:\.\d+)?(?:度|°C)\))?',text) else 1
+ 
+ def parse_line(values, formulas, line, sha):
+     start, ops, speedcol = LAYOUT[line]
+@@ -31,10 +43,12 @@
+                 if not all(math.isfinite(x) for x in (before,after)): raise ValueError(f'{line}: non-finite {b}/{a}')
+                 if before<after or min(before,after)<0: raise ValueError(f"{line}: negative {e}")
+                 if formulas.get(e)!=f"={b}-{a}": raise ValueError(f"{line}: unexpected formula {e}")
+-                if not isinstance(values.get(e),(int,float)) or abs(values[e]-(before-after))>1e-8:
++                if not isinstance(values.get(e),(int,float)) or isinstance(values[e],bool) or not math.isfinite(values[e]) or abs(values[e]-(before-after))>1e-8:
+                     raise ValueError(f"{line}: stale cache {e}")
+-                points.append(dict(side=side,repeatNo=repeat+1,opNo=op+1,beforeValue=round(before,6),afterValue=round(after,6)))
+-                sources.append(dict(beforeCell=b,afterCell=a,amountCell=e,formula=formulas[e],cachedAmount=values[e]))
++                # Remove only floating-point representation noise; do not round a real seventh-or-later decimal.
++                clean=lambda x:round(x,6) if abs(x-round(x,6))<1e-12 else x
++                points.append(dict(side=side,repeatNo=repeat+1,opNo=op+1,beforeValue=clean(before),afterValue=clean(after)))
++                sources.append(dict(beforeCell=b,afterCell=a,amountCell=e,formula=formulas[e],cachedAmount=values[e],sourceBeforeValue=before,sourceAfterValue=after))
+     speedcell=f"{get_column_letter(speedcol)}27";speed=values.get(speedcell)
+     if not isinstance(speed,(int,float)) or isinstance(speed,bool) or not math.isfinite(speed) or speed<=0: raise ValueError(f"{line}: invalid actual speed")
+     return dict(reportDate="2026-09-01",lineCode=line,lineSpeed=speed,operatorName="歷史匯入（原量測人員未記錄）",points=points,
+@@ -55,17 +69,78 @@
+     for r in reports:
+         key=(r['reportDate'],r['lineCode'])
+         if key in unique:
+-            if any(unique[key].get(k)!=r.get(k) for k in ('points','lineSpeed','operatorName')):
++            old=unique[key];a,b=old.get('measurementNo',1),r.get('measurementNo',1)
++            if a not in (1,2) or b not in (1,2):raise ValueError('只允許第一次或第二次量測')
++            if a!=b:
++                winner,prior=(r,old) if b==2 else (old,r)
++                winner=copy.deepcopy(winner);winner.setdefault('provenance',{}).setdefault('supersededReports',[]).append(copy.deepcopy(prior))
++                unique[key]=winner
++            elif any(old.get(k)!=r.get(k) for k in ('points','lineSpeed','operatorName')):
+                 raise ValueError(f'同日同線內容衝突：{key}')
+         else:unique[key]=r
+     return [unique[k] for k in sorted(unique)]
+ 
+-def extract_reports(path, today=None):
++def parse_scope_date(value):
++    if value in (None,''): return None
++    if isinstance(value,date) and not isinstance(value,datetime): return value
++    if not isinstance(value,str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',value): raise ValueError('咬蝕日期範圍請填YYYY-MM-DD')
++    return date.fromisoformat(value)
++
++def summary_warnings(report):
++    start,ops,_=LAYOUT[report['lineCode']];stats=report_stats(report);warnings=[]
++    for side,first,last,row in [('A',33,37,43),('B',38,42,44)]:
++        cell=f'{get_column_letter(start)}{row}'
++        expected=f'=AVERAGE({get_column_letter(start)}{first}:{get_column_letter(start+ops-1)}{last})'
++        actual=report['provenance']['summary'][cell];cached=actual['cached']
++        if actual['formula']!=expected or not isinstance(cached,(int,float)) or isinstance(cached,bool) or not math.isfinite(cached) or abs(cached-stats[side]['mean'])>1e-8:
++            warnings.append(dict(source=report['provenance']['source'],sheet=report['provenance']['sheet'],lineCode=report['lineCode'],
++                reportDate=report['reportDate'],cell=cell,formula=actual['formula'],cached=cached,suggestedFormula=expected,
++                expectedMean=stats[side]['mean'],sampleCount=ops*5,reason='摘要平均公式或快取與完整樣本不符；匯入依完整原始樣本，請核對公式後以Excel重算保存'))
++    return warnings
++
++def coverage(inventory):
++    counts={}
++    for item in inventory: counts[item['status']]=counts.get(item['status'],0)+1
++    return dict(totalBlocks=len(inventory),byStatus=counts,accountedBlocks=sum(counts.values()))
++
++def audit_manifests(manifests):
++    for manifest in manifests:
++        if 'inventory' not in manifest:continue # Legacy export only; verified GUI import rejects this manifest.
++        inventory=manifest['inventory'];groups={}
++        allowed={'READY','EMPTY','EXCLUDED','QUARANTINED','FUTURE','OUT_OF_SCOPE'}
++        for row in inventory:
++            if row.get('status') not in allowed or row.get('lineCode') not in LAYOUT:raise ValueError('來源清冊狀態／線別無效')
++            groups.setdefault(row['sheet'],[]).append(row['lineCode'])
++        if any(len(lines)!=4 or set(lines)!=set(LAYOUT) for lines in groups.values()):raise ValueError('來源清冊有缺漏或重複區塊，請重新解析')
++        ready={(r.get('reportDate'),r['lineCode']) for r in inventory if r['status']=='READY'}
++        reports={(r['reportDate'],r['lineCode']) for r in manifest['reports']}
++        if ready!=reports or len(reports)!=len(manifest['reports']):raise ValueError('來源清冊與合格日報不一致，可能漏列，停止匯入')
++        for status,key in [('EXCLUDED','excluded'),('QUARANTINED','quarantined')]:
++            ledger={(r['sheet'],r['lineCode']) for r in inventory if r['status']==status}
++            records={(r['sheet'],r['lineCode']) for r in manifest.get(key,[]) if r.get('lineCode') in LAYOUT}
++            if ledger!=records:raise ValueError('來源清冊與排除／隔離清單不一致，停止匯入')
++    reports=merge_reports([r for m in manifests for r in m['reports']]);seen={};duplicates=[]
++    retained={(r['reportDate'],r['lineCode']):r for r in reports}
++    for m in manifests:
++        for r in m['reports']:
++            key=f"ETCH:{r['reportDate']}:{r['lineCode']}"
++            if key in seen:
++                final=retained[(r['reportDate'],r['lineCode'])]
++                superseded=final.get('measurementNo',1)!=r.get('measurementNo',1) or seen[key][1]!=final.get('measurementNo',1)
++                duplicates.append(dict(businessKey=key,source=m.get('source',''),retainedSource=final.get('provenance',{}).get('source',seen[key][0]),kind='SUPERSEDED_FIRST' if superseded else 'DUPLICATE',reason='第二次為主，保留第一次來源原值' if superseded else '同日線相同內容，只保留一份'))
++            else: seen[key]=(m.get('source',''),r.get('measurementNo',1))
++    inventory=[r for m in manifests for r in m.get('inventory',[])]
++    return dict(reports=reports,duplicates=duplicates,inventory=inventory,coverage=coverage(inventory),
++        coverageVerified=all('inventory' in m for m in manifests),warnings=[r for m in manifests for r in m.get('warnings',[])])
++
++def extract_reports(path, today=None, start_date=None, end_date=None):
+     path=Path(path);today=today or date.today()
++    first,last=parse_scope_date(start_date),parse_scope_date(end_date)
++    if first and last and first>last:raise ValueError('咬蝕起日不可晚於迄日')
+     years=re.findall(r'(?<!\d)(20\d{2})(?!\d)',path.stem)
+     if len(set(years))!=1:raise ValueError('來源檔名必須包含唯一年份，如 _2026.xlsx')
+     year=int(years[0]);sha=hashlib.sha256(path.read_bytes()).hexdigest()
+-    reports=[];quarantined=[];skipped=[];excluded=[]
++    reports=[];quarantined=[];skipped=[];excluded=[];inventory=[];warnings=[]
+     def cells(ws):return {f'{get_column_letter(c)}{r}':v for r,row in enumerate(ws.iter_rows(min_row=1,max_row=44,max_col=34,values_only=True),1) for c,v in enumerate(row,1)}
+     f=openpyxl.load_workbook(path,read_only=True,data_only=False)
+     v=openpyxl.load_workbook(path,read_only=True,data_only=True)
+@@ -74,30 +149,45 @@
+             if not re.fullmatch(r'\d{4}',sheet):skipped.append(dict(sheet=sheet,reason='非MMDD日期工作表'));continue
+             try:day=datetime.strptime(str(year)+sheet,'%Y%m%d').date()
+             except ValueError:quarantined.append(dict(sheet=sheet,lineCode='',reason='無效日期'));continue
+-            if day>today:skipped.append(dict(sheet=sheet,reason='未來日期'));continue
++            outside=day>today or first and day<first or last and day>last
++            if outside:
++                status='FUTURE' if day>today else 'OUT_OF_SCOPE';reason='未來日期' if status=='FUTURE' else '不在指定日期範圍'
++                skipped.append(dict(sheet=sheet,reason=reason))
++                inventory.extend(dict(source=str(path.resolve()),sheet=sheet,reportDate=day.isoformat(),lineCode=line,status=status,reason=reason) for line in LAYOUT)
++                continue
+             formulas,values=cells(f[sheet]),cells(v[sheet])
+             for line,(start,ops,speedcol) in LAYOUT.items():
+                 raw=[values.get(f'{get_column_letter(c)}{r}') for c in range(start,start+ops) for r in range(4,24)]
+-                if all(x in (None,'') for x in raw):continue
++                item=dict(source=str(path.resolve()),sheet=sheet,reportDate=day.isoformat(),lineCode=line)
++                inventory.append(item)
++                amounts=[values.get(f'{get_column_letter(c)}{r}') for c in range(start,start+ops) for r in range(33,43)]
++                if all(x in (None,'') for x in raw) and all(x in (None,'',0) for x in amounts):item.update(status='EMPTY',reason='原始前後值區塊全部空白，不製造量測');continue
+                 label_cell=line_label_cell(line)
+                 line_label=values.get(label_cell)
+                 if is_excluded_line_label(line_label):
+                     excluded.append(dict(sheet=sheet,lineCode=line,sourceLine=str(line_label).strip(),labelCell=label_cell,reason=EXCLUDED_REASON,source=str(path)))
++                    item.update(status='EXCLUDED',reason=EXCLUDED_REASON)
+                     continue
+                 try:
++                    if normalized_line_label(line_label)!=line:raise ValueError(f'{line}: {label_cell}線別標題不符或有未核准後綴（{line_label}），應為{line[:2]}-0{line[2:]}，請核對區塊位置')
+                     report=parse_line(values,formulas,line,sha)
+-                    report['reportDate']=day.isoformat();report['provenance'].update(sheet=sheet,source=str(path.resolve()),datePolicy='filename-year+sheet-MMDD')
++                    report['measurementNo']=measurement_number(line_label);item['measurementNo']=report['measurementNo']
++                    report['reportDate']=day.isoformat();report['provenance'].update(sheet=sheet,source=str(path.resolve()),datePolicy='filename-year+sheet-MMDD',sourceLine=str(line_label),lineLabelCell=label_cell)
+                     cached=values.get(f'{get_column_letter(speedcol)}28')
+-                    if not isinstance(cached,(int,float)) or not math.isfinite(cached) or abs(cached-report_stats(report)['rate'])>1e-6:raise ValueError('整體速率快取不符')
++                    if not isinstance(cached,(int,float)) or isinstance(cached,bool) or not math.isfinite(cached) or abs(cached-report_stats(report)['rate'])>1e-6:raise ValueError('整體速率快取不符')
+                     reports.append(report)
+-                except ValueError as error:quarantined.append(dict(sheet=sheet,lineCode=line,reason=str(error),source=str(path)))
++                    warnings.extend(summary_warnings(report));item.update(status='READY',reason='完整原始樣本與速率核對通過',pointCount=len(report['points']))
++                except ValueError as error:
++                    quarantined.append(dict(sheet=sheet,lineCode=line,reason=str(error),source=str(path)))
++                    item.update(status='QUARANTINED',reason=str(error))
+     finally:f.close();v.close()
+     if hashlib.sha256(path.read_bytes()).hexdigest()!=sha:raise ValueError('來源檔案在解析期間變更，請重試')
+-    return dict(source=str(path.resolve()),sha256=sha,reports=merge_reports(reports),quarantined=quarantined,skipped=skipped,excluded=excluded)
++    return dict(source=str(path.resolve()),sha256=sha,reports=merge_reports(reports),quarantined=quarantined,skipped=skipped,excluded=excluded,
++        inventory=inventory,coverage=coverage(inventory),warnings=warnings,scope=dict(startDate=first.isoformat() if first else '',endDate=last.isoformat() if last else '',asOf=today.isoformat()))
+ 
+ def export_reports(manifests,output_dir,monthly=True):
+     """Write new batch files; preserve previous outputs and original workbooks."""
+-    reports=merge_reports([r for m in manifests for r in m['reports']])
++    audit=audit_manifests(manifests);reports=audit['reports']
+     batch=uuid.uuid4().hex;out=Path(output_dir);out.mkdir(parents=True,exist_ok=True)
+     quarantine=[q for m in manifests for q in m['quarantined']]
+     excluded=[q for m in manifests for q in m.get('excluded',[])]
+@@ -107,19 +197,20 @@
+     paths=[]
+     for month,items in groups.items():
+         stem=f'咬蝕日報_{month}_{batch[:8]}'
+-        payload=dict(version=VERSION,batchId=batch,sources=[{k:m[k] for k in ('source','sha256')} for m in manifests],reports=items,quarantined=quarantine,skipped=[q for m in manifests for q in m['skipped']],excluded=excluded)
++        payload=dict(version=VERSION,batchId=batch,sources=[{k:m[k] for k in ('source','sha256')} for m in manifests],reports=items,quarantined=quarantine,skipped=[q for m in manifests for q in m['skipped']],excluded=excluded,
++            inventory=audit['inventory'],coverage=audit['coverage'],coverageVerified=audit['coverageVerified'],duplicates=audit['duplicates'],warnings=audit['warnings'])
+         if len(manifests)==1:payload.update(source=manifests[0]['source'],sha256=manifests[0]['sha256'])
+         jp=out/(stem+'.json');jp.write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding='utf-8');paths.append(jp)
+         wb=openpyxl.Workbook();wb.remove(wb.active)
+         for line,(_,ops,_) in LAYOUT.items():
+             ws=wb.create_sheet(line);n=ops*5
+-            headers=['日期','線別','來源sheet','整體速率','實際線速','正面平均','正面S','背面平均','背面S']
++            headers=['日期','線別','來源sheet','量測次數','整體速率','實際線速','正面平均','正面S','背面平均','背面S']
+             for side in ['A','B']:
+                 for field in ['BEFORE','AFTER','咬蝕量']:headers.extend(f'{side}_{field}_{i:02d}' for i in range(1,n+1))
+             ws.append(headers)
+             for r in items:
+                 if r['lineCode']!=line:continue
+-                s=report_stats(r);row=[r['reportDate'],line,r['provenance']['sheet'],s['rate'],r['lineSpeed'],s['A']['mean'],s['A']['s'],s['B']['mean'],s['B']['s']]
++                s=report_stats(r);row=[r['reportDate'],line,r['provenance']['sheet'],r.get('measurementNo',1),s['rate'],r['lineSpeed'],s['A']['mean'],s['A']['s'],s['B']['mean'],s['B']['s']]
+                 for side in ['A','B']:
+                     points=[p for p in r['points'] if p['side']==side]
+                     row.extend(p['beforeValue'] for p in points);row.extend(p['afterValue'] for p in points);row.extend(round(p['beforeValue']-p['afterValue'],6) for p in points)
+@@ -130,8 +221,15 @@
+         for q in quarantine:ws.append([q.get('source',''),q['sheet'],q['lineCode'],q['reason']])
+         ws=wb.create_sheet('排除清單');ws.append(['來源','工作表','SPC線別','原始線別','儲存格','原因'])
+         for q in excluded:ws.append([q.get('source',''),q['sheet'],q['lineCode'],q.get('sourceLine',''),q.get('labelCell',''),q['reason']])
++        ws=wb.create_sheet('來源完整清冊');ws.append(['來源','工作表','日期','線別','量測次數','狀態','原始點數','原因'])
++        for q in audit['inventory']:ws.append([q.get('source',''),q['sheet'],q.get('reportDate',''),q['lineCode'],q.get('measurementNo',''),q['status'],q.get('pointCount',''),q.get('reason','')])
++        ws=wb.create_sheet('公式警告');ws.append(['來源','工作表','日期','線別','儲存格','原公式','建議公式','原快取','完整樣本平均','樣本數','說明'])
++        for q in audit['warnings']:ws.append([q['source'],q['sheet'],q['reportDate'],q['lineCode'],q['cell'],"'"+str(q['formula']),"'"+q['suggestedFormula'],q['cached'],q['expectedMean'],q['sampleCount'],q['reason']])
++        ws=wb.create_sheet('跨檔重複');ws.append(['業務鍵','重複來源','保留來源','原因'])
++        for q in audit['duplicates']:ws.append([q['businessKey'],q['source'],q['retainedSource'],q['reason']])
+         ws=wb.create_sheet('說明');ws.append(['版本',VERSION]);ws.append(['批次',batch]);ws.append(['用途','完整日報轉檔；JSON需經受控日報匯入，不可當藥液Excel上傳。'])
+         ws.append(['點位順序','每面依repeatNo 1～5、opNo 1～5或10；S為樣本標準差。'])
++        ws.append(['來源清冊',json.dumps(audit['coverage'],ensure_ascii=False)]);ws.append(['匯入完成條件','逐日線核對資料庫25／50樣本及速率；僅已檢查或已輸出檔案不算已匯入。'])
+         xp=out/(stem+'.xlsx');wb.save(xp);wb.close();paths.append(xp)
+     return paths,len(reports),len(quarantine)
+ 
+--- a/etch_upload.py
++++ b/etch_upload.py
+@@ -1,5 +1,7 @@
+-"""Portal authenticated, test-only import; credentials/cookies stay in memory."""
++"""Complete etch import: Portal authentication/dual import, SPC read-back, insert-only business-key reconciliation."""
+ import copy
++import csv
++import hashlib
+ import http.cookiejar
+ import json
+ import socket
+@@ -11,12 +13,16 @@
+ from pathlib import Path
+ import re
+ from tls_context import create_pmr_ssl_context
++from connection_settings import normalize_api_url
++from etch_reports import LAYOUT, merge_reports, parse_scope_date
+ 
+ PORTAL_TEST='https://portaltest.pmr.com.tw/api'
+ 
+ def safe_error_text(message):
+     """Keep an actionable error while excluding common credential/token fragments."""
+     text=str(message or '')[:1000]
++    text=re.sub(r'(?i)\bBearer\s+[A-Za-z0-9._~-]+','Bearer [REDACTED]',text)
++    text=re.sub(r'\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b','[REDACTED]',text)
+     text=re.sub(r'(?i)(authorization|bearer|token|password|cookie)\s*[:=]\s*[^\s,;]+',r'\1=[REDACTED]',text)
+     return text
+ 
+@@ -54,16 +60,60 @@
+     def redirect_request(self,req,fp,code,msg,headers,newurl):
+         raise RuntimeError('測試API發生重新導向，請重新登入；未轉送帳密或日報。')
+ 
++def validate_report(report):
++    day=parse_scope_date(report.get('reportDate'));line=report.get('lineCode')
++    if day is None or day>datetime.now().date() or line not in LAYOUT or type(report.get('measurementNo',1)) is not int or report.get('measurementNo',1) not in (1,2):raise ValueError('咬蝕日期、線別或量測次數無效，請重新解析來源。')
++    points=report.get('points',[]);ops=LAYOUT[line][1]
++    if len(points)!=ops*10 or len({(p.get('side'),p.get('repeatNo'),p.get('opNo')) for p in points})!=ops*10:
++        raise ValueError('咬蝕樣本數缺漏或重複；必須完整25／50樣本。')
++    import math
++    for p in points:
++        if p.get('side') not in ('A','B') or type(p.get('repeatNo')) is not int or not 1<=p['repeatNo']<=5 or type(p.get('opNo')) is not int or not 1<=p['opNo']<=ops:
++            raise ValueError('咬蝕點位座標無效。')
++        b,a=p.get('beforeValue'),p.get('afterValue')
++        if any(not isinstance(x,(int,float)) or isinstance(x,bool) or not math.isfinite(x) or x<0 for x in (b,a)) or b<a:
++            raise ValueError('原始點位缺漏、非數值或負咬蝕量，不匯入。')
++    speed=report.get('lineSpeed')
++    if not isinstance(speed,(int,float)) or isinstance(speed,bool) or not math.isfinite(speed) or not 0<speed<=10000 or not str(report.get('operatorName','')).strip():
++        raise ValueError('線速或來源量測人員欄位無效。')
++
++def summarize_results(reports,results):
++    expected={(r['reportDate'],r['lineCode']) for r in reports};actual={(r.get('reportDate'),r.get('lineCode')) for r in results}
++    if len(expected)!=len(reports) or len(actual)!=len(results) or not actual<=expected:raise ValueError('匯入回報日期／線別重複或不在來源清單。')
++    counts={s:sum(r.get('status')==s for r in results) for s in ('SUCCESS','REPLACED_FIRST','SKIPPED_EXISTS','FAILED','VERIFY_FAILED','NOT_PROCESSED')}
++    counts['NOT_PROCESSED']+=len(expected-actual)
++    complete=expected==actual and all(r.get('status') in ('SUCCESS','REPLACED_FIRST','SKIPPED_EXISTS') and r.get('verified') is True for r in results)
++    return dict(expected=len(expected),accounted=len(actual),counts=counts,eligibleComplete=complete)
++
++def write_import_journal(path,reports,results,audit=None):
++    path=Path(path);path.parent.mkdir(parents=True,exist_ok=True);audit=audit or {}
++    summary=summarize_results(reports,results)
++    payload=dict(version=1,checkedAt=datetime.now().astimezone().isoformat(),**summary,results=results,
++        sourceCoverage=audit.get('coverage',{}),sourceInventory=audit.get('inventory',[]),formulaWarnings=audit.get('warnings',[]),duplicates=audit.get('duplicates',[]))
++    path.write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding='utf-8')
++    fields=['reportDate','lineCode','measurementNo','status','verified','error'];csv_path=path.with_suffix('.csv')
++    by_key={(r['reportDate'],r['lineCode']):r for r in results}
++    with csv_path.open('w',encoding='utf-8-sig',newline='') as stream:
++        writer=csv.DictWriter(stream,fieldnames=fields,extrasaction='ignore');writer.writeheader()
++        for r in reports:writer.writerow(by_key.get((r['reportDate'],r['lineCode']),dict(reportDate=r['reportDate'],lineCode=r['lineCode'],measurementNo=r.get('measurementNo',1),status='NOT_PROCESSED',verified=False,error='尚未取得完整確認與查回結果')))
++    return summary
++
+ class EtchImportClient:
+-    def __init__(self, portal_api_url=PORTAL_TEST):
+-        self.portal_api_url=str(portal_api_url or PORTAL_TEST).rstrip('/')
++    def __init__(self, portal_api_url=PORTAL_TEST, spc_api_url='https://spctest.pmr.com.tw/api', environment='test'):
++        if environment not in ('test','production'):raise ValueError('咬蝕匯入環境無效。')
++        self.portal_api_url=normalize_api_url(portal_api_url or PORTAL_TEST,'Portal API')
++        self.spc_api_url=normalize_api_url(spc_api_url,'SPC API');self.environment=environment
++        expected=('portaltest.pmr.com.tw','spctest.pmr.com.tw') if environment=='test' else ('login.pmr.com.tw','pmr-spc-srv.pmr.com.tw')
++        if (urllib.parse.urlparse(self.portal_api_url).hostname,urllib.parse.urlparse(self.spc_api_url).hostname)!=expected:
++            raise ValueError('Portal／SPC網址與所選測試／正式環境不符，未登入或送出資料。')
+         self.cookies=http.cookiejar.CookieJar()
+         self.opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),urllib.request.HTTPCookieProcessor(self.cookies),urllib.request.HTTPSHandler(context=create_pmr_ssl_context()),NoRedirect())
+-        self._preview=None
+-    def request(self,path,payload):
+-        if path not in ('/api/auth/login','/api/spc-launch','/api/etch-import-test/preview','/api/etch-import-test/confirm'):raise ValueError('不允許的API')
+-        endpoint=path.removeprefix('/api')
+-        req=urllib.request.Request(self.portal_api_url+endpoint,data=json.dumps(payload,ensure_ascii=False).encode('utf-8'),headers={'Content-Type':'application/json'},method='POST')
++        self._preview=None;self._spc_access_token=None;self._sources=[]
++    def _ensure_environment(self):
++        version=self._spc_request('/version')
++        if not isinstance(version,dict) or version.get('environment')!=self.environment:
++            raise RuntimeError('SPC實際環境與所選目標不同，已停止，未匯入。')
++    def _open_json(self,req):
+         try:
+             with self.opener.open(req,timeout=60) as response:return json.loads(response.read().decode('utf-8'))
+         except urllib.error.HTTPError as e:
+@@ -73,47 +123,106 @@
+                     try:detail=json.loads(detail).get('message',detail)
+                     except (ValueError,TypeError):pass
+                 message=f'{message} {detail}'
+-            except (ValueError,UnicodeError):message='API拒絕請求，請重新登入或核對測試站設定。'
+-            raise RuntimeError(f'HTTP {e.code}: {message[:500]}') from None
++            except (ValueError,UnicodeError,AttributeError):message='API拒絕請求，請重新登入或核對目標站設定。'
++            raise RuntimeError(f'HTTP {e.code}: {safe_error_text(message)[:500]}') from None
+         except (urllib.error.URLError,TimeoutError) as e:raise RuntimeError(describe_network_failure(e)) from None
++        except (ValueError,UnicodeError):raise RuntimeError('伺服器未回傳有效JSON，無法確認匯入結果。') from None
++    def _spc_request(self,path,payload=None):
++        if path not in ('/version','/v1/etch-import/inspect'):raise ValueError('不允許的SPC API')
++        headers={'Content-Type':'application/json'}
++        if path!='/version':
++            if not self._spc_access_token:self._spc_access_token=self.spc_token()
++            headers['Authorization']='Bearer '+self._spc_access_token
++        req=urllib.request.Request(self.spc_api_url+path,data=None if path=='/version' else json.dumps(payload,ensure_ascii=False).encode('utf-8'),headers=headers,method='GET' if path=='/version' else 'POST')
++        try:return self._open_json(req)
++        except RuntimeError as error:
++            if path.endswith('/inspect') and 'HTTP 404' in str(error):raise RuntimeError('SPC尚未更新咬蝕完整性核對介面，請更新目標站API；不可改用可覆寫的一般保存介面。') from None
++            raise
++    def request(self,path,payload):
++        if path not in ('/api/auth/login','/api/spc-launch','/api/etch-import-test/preview','/api/etch-import-test/confirm'):raise ValueError('不允許的API')
++        endpoint=path.removeprefix('/api')
++        req=urllib.request.Request(self.portal_api_url+endpoint,data=json.dumps(payload,ensure_ascii=False).encode('utf-8'),headers={'Content-Type':'application/json'},method='POST')
++        return self._open_json(req)
+     def login(self,account,password):
+-        self.cookies.clear();self._preview=None
++        self.cookies.clear();self._preview=None;self._spc_access_token=None
++        self._ensure_environment() # Before sending credentials to the configured target.
+         return self.request('/api/auth/login',{'account':account,'password':password})
+     def spc_token(self):
+         launch=self.request('/api/spc-launch',{})
+         url=str(launch.get('launchUrl',''))
+-        fragment=urllib.parse.urlparse(url).fragment
++        parsed=urllib.parse.urlparse(url);expected=urllib.parse.urlparse(self.spc_api_url)
++        if parsed.scheme!='https' or parsed.hostname!=expected.hostname or parsed.path!='/portal-sso':raise RuntimeError('Portal回傳SPC入口與所選目標不符，未轉送權杖。')
++        fragment=parsed.fragment
+         values=urllib.parse.parse_qs(fragment,keep_blank_values=True)
+         token=(values.get('token') or [''])[0]
+         if not token:raise RuntimeError('Portal未回傳SPC權杖，請確認帳號有品保與SPC權限。')
+         return token
+-    def preview(self,reports,progress=None):
+-        entries=[]
+-        for report in copy.deepcopy(reports):
+-            try:entry={'report':report,'preview':self.request('/api/etch-import-test/preview',report)}
+-            except RuntimeError as e:entry={'report':report,'error':str(e)}
++    def _inspect(self,report):
++        response=self._spc_request('/v1/etch-import/inspect',report)
++        if not isinstance(response,dict) or not isinstance(response.get('data'),dict):raise RuntimeError('SPC核對回應不完整，未確認匯入。')
++        data=response['data']
++        expected=f"ETCH:{report['reportDate']}:{report['lineCode']}";n=LAYOUT[report['lineCode']][1]*5
++        if response.get('success') is not True or response.get('contractVersion')!=1 or response.get('environment')!=self.environment or data.get('businessKey')!=expected or data.get('lineCode')!=report['lineCode'] or str(data.get('reportDate','')).split('T')[0]!=report['reportDate'] or data.get('sampleCountPerSide')!=n or data.get('pointCount')!=n*2+1:
++            raise RuntimeError('SPC核對回應的環境、日期、線別或樣本數不符，未確認匯入。')
++        state=data.get('state')
++        if state not in ('NEW','REPLACE_FIRST','ALREADY_EXISTS','CONFLICT'):raise RuntimeError('SPC核對狀態無效，請更新目標站API。')
++        if data.get('measurementNo',1)!=report.get('measurementNo',1) or state=='REPLACE_FIRST' and (report.get('measurementNo')!=2 or data.get('storedMeasurementNo')!=1 or data.get('storedPointCount')!=n*2+1):raise RuntimeError('量測次數或第一次取代條件不符，未確認。')
++        if state=='ALREADY_EXISTS' and (data.get('verified') is not True or data.get('storedPointCount')!=n*2+1):raise RuntimeError('SPC查回筆數或原值驗證未通過。')
++        if state=='ALREADY_EXISTS' and report.get('measurementNo',1)==2 and data.get('storedMeasurementNo')!=2:raise RuntimeError('第二次量測尚未成為資料庫有效結果，未通過查回。')
++        allowed=('state','businessKey','lineCode','reportDate','sampleCountPerSide','pointCount','storedPointCount','verified','batchId','additionalExistingRowCount','measurementNo','storedMeasurementNo')
++        clean={k:data.get(k) for k in allowed};clean['message']=safe_error_text(data.get('message',''))
++        return clean
++    def _check_sources(self):
++        for source in self._sources:
++            try:actual=hashlib.sha256(Path(source['source']).read_bytes()).hexdigest()
++            except OSError:raise ValueError('來源檔無法讀取，請重新解析／預覽，未繼續確認。') from None
++            if actual.lower()!=str(source['sha256']).lower():raise ValueError('來源檔在預覽後變更，請重新解析／預覽，未繼續確認。')
++    def preview(self,reports,progress=None,sources=None):
++        self._preview=None
++        reports=copy.deepcopy(reports);merge_reports(reports)
++        if len({(r.get('reportDate'),r.get('lineCode')) for r in reports})!=len(reports):raise ValueError('日線重複，請先合併來源並保留重複清單。')
++        candidates=sources if sources is not None else [dict(source=r['provenance']['source'],sha256=r['provenance']['fileSha256']) for r in reports if r.get('provenance',{}).get('source')]
++        self._sources=[dict(source=s['source'],sha256=s['sha256']) for s in candidates]
++        entries=[];stopped=False
++        for report in reports:
++            entry={'report':report,'state':'NOT_PROCESSED'}
++            if stopped:entry['error']='前一份預覽失敗，尚未處理；未匯入。'
++            else:
++                try:
++                    if not entries:self._ensure_environment();self._check_sources()
++                    validate_report(report);inspection=self._inspect(report);entry['inspection']=inspection
++                    if inspection['state']=='CONFLICT':raise RuntimeError(inspection['message'] or '同日線資料衝突，不重新匯入。')
++                    if inspection['state']=='ALREADY_EXISTS':entry.update(state='SKIPPED_EXISTS',preview=dict(portal='not-requested',spc='unchanged'))
++                    else:
++                        preview=self.request('/api/etch-import-test/preview',report)
++                        if preview.get('conflict') or preview.get('portal')=='conflict' or preview.get('spc')=='conflict':raise RuntimeError('Portal／SPC預覽衝突，請核對，未確認。')
++                        if preview.get('portal') not in ('new','unchanged') or preview.get('spc') not in ('new','unchanged'):raise RuntimeError('雙站預覽回應不完整，未確認。')
++                        entry.update(state='REPLACE_FIRST' if inspection['state']=='REPLACE_FIRST' else 'READY',preview={k:preview[k] for k in ('portal','spc')})
++                except (RuntimeError,ValueError,OSError) as e:entry.update(state='FAILED',error=safe_error_text(e));stopped=True
+             entries.append(entry)
+             if progress:progress(len(entries),len(reports))
+-            if 'error' in entry:break
+         self._preview=entries
+         self._snapshot=copy.deepcopy(entries)
+         return entries
+     def confirm(self,preview,progress=None):
+         if not preview or preview is not self._preview or preview!=self._snapshot or any('error' in x for x in preview):raise ValueError('必須重新預覽且無格式錯誤後才可確認。')
+-        self._preview=None
++        self._check_sources();self._ensure_environment();self._preview=None
+         results=[]
+         for item in preview:
+-            r=item['report'];entry={'reportDate':r.get('reportDate'),'lineCode':r.get('lineCode')}
+-            if item.get('preview',{}).get('conflict'):
+-                entry.update(status='CONFLICT',error=item['preview'].get('detail','SPC預覽衝突，略過'))
+-                results.append(entry)
+-                if progress:progress(copy.deepcopy(results))
+-                continue
++            r=item['report'];entry={'reportDate':r.get('reportDate'),'lineCode':r.get('lineCode'),'measurementNo':r.get('measurementNo',1)}
+             try:
+-                result=self.request('/api/etch-import-test/confirm',r)
+-                if result.get('status')!='SUCCESS':raise RuntimeError('伺服器未確認成功，請重新預覽再試。')
+-                entry.update(status='SUCCESS',result=result)
+-            except RuntimeError as e:entry.update(status='FAILED',error=str(e))
++                self._check_sources()
++                if item['state']!='SKIPPED_EXISTS':
++                    result=self.request('/api/etch-import-test/confirm',r)
++                    if result.get('status')!='SUCCESS':raise RuntimeError('伺服器未確認成功，請重新預覽再試。')
++                else:result=dict(unchanged=True)
++                try:
++                    check=self._inspect(r)
++                    if check['state']!='ALREADY_EXISTS' or check['verified'] is not True:raise RuntimeError('確認後仍缺資料或原值不符。')
++                    entry.update(status='SKIPPED_EXISTS' if item['state']=='SKIPPED_EXISTS' or result.get('unchanged') else 'REPLACED_FIRST' if item['state']=='REPLACE_FIRST' else 'SUCCESS',verified=True,inspection=check,
++                        result={'unchanged':bool(result.get('unchanged'))})
++                except (RuntimeError,ValueError,OSError) as e:entry.update(status='VERIFY_FAILED',verified=False,error=safe_error_text(e))
++            except (RuntimeError,ValueError,OSError) as e:entry.update(status='FAILED',verified=False,error=safe_error_text(e))
+             results.append(entry)
+             if progress:progress(copy.deepcopy(results))
+         return results
+--- a/scheduled_import.py
++++ b/scheduled_import.py
+@@ -384,18 +384,16 @@
+         return [source_item(source, "etching", "invalid_format", "咬蝕量來源必須是單一 Excel 檔")]
+     try:
+         stable_file_snapshot(source)
+-        manifest = extract_reports(source)
++        manifest = extract_reports(source,start_date=config.start_date,end_date=config.end_date)
+         items: list[dict[str, Any]] = []
+         source_sha = manifest["sha256"]
+         for report in manifest["reports"]:
+             if not in_scope(etching_item_date(report, config), config):
+                 continue
+             key = f"{source.resolve()}|{report['reportDate']}|{report['lineCode']}"
+-            if state["sources"].get(key, {}).get("sha256") == source_sha:
+-                items.append(source_item(source, "etching", "skipped", "該日期線別已檢查過且來源未更新", sha256=source_sha, reportDate=report["reportDate"], lineCode=report["lineCode"]))
+-            else:
+-                items.append(source_item(source, "etching", "ready_for_preview", "咬蝕量格式檢核通過", sha256=source_sha, reportDate=report["reportDate"], lineCode=report["lineCode"], pointCount=len(report.get("points", [])), report=report))
+-                state["sources"][key] = {"sha256": source_sha}
++            # A prior scan/hash is not a database receipt. The strict client must inspect every day/line again.
++            items.append(source_item(source, "etching", "ready_for_preview", "咬蝕量格式檢核通過，待資料庫完整性核對", sha256=source_sha, reportDate=report["reportDate"], lineCode=report["lineCode"], pointCount=len(report.get("points", [])), report=report))
++            state["sources"][key] = {"sha256": source_sha, "scanOnly": True}
+         for row in manifest.get("excluded", []):
+             if not in_scope(etching_item_date(row, config), config):
+                 continue
+@@ -410,6 +408,7 @@
+             items.append(source_item(source, "etching", "skipped", row.get("reason", "略過"), sha256=source_sha, sheet=row.get("sheet")))
+         if not items:
+             items.append(source_item(source, "etching", "skipped", "咬蝕量無可檢查資料", sha256=source_sha))
++        items[0].update(sourceInventory=manifest.get('inventory',[]),sourceCoverage=manifest.get('coverage',{}),formulaWarnings=manifest.get('warnings',[]))
+         return items
+     except Exception as exc:
+         return [source_item(source, "etching", "invalid_format", str(exc))]
+--- a/batch_convert_gui.py
++++ b/batch_convert_gui.py
+@@ -15,8 +15,8 @@
+ import openpyxl
+ from convert_etching_to_import import OUTPUT_HEADERS as ETCHING_HEADERS, extract_sheet_rows
+ from etching_detail_export import extract_detail_records, write_detail_workbook
+-from etch_reports import VERSION, extract_reports, export_reports, merge_reports
+-from etch_upload import EtchImportClient, write_preview_failure_log
++from etch_reports import VERSION, extract_reports, export_reports, merge_reports, audit_manifests, parse_scope_date
++from etch_upload import EtchImportClient, write_preview_failure_log, write_import_journal, summarize_results
+ from connection_settings import (
+     ConnectionSettingsError,
+     connection_profile,
+@@ -128,6 +128,9 @@
+         self.export_scope_var = tk.StringVar(value="全部")
+         self.data_type_var = tk.StringVar(value="藥液")
+         self.etching_export_var = tk.StringVar(value="日報")
++        self.etch_start_var = tk.StringVar(value="")
++        self.etch_end_var = tk.StringVar(value="")
++        self.etch_scope_snapshot = ("", "")
+         self.spc_master_snapshot = None
+         self.spc_auth_token = ""
+         self.spc_username = ""
+@@ -442,11 +445,18 @@
+ 
+         self.etching_mode_frame = ttk.Frame(bottom_frame, style="TFrame")
+         self.etching_mode_frame.pack(anchor=tk.CENTER, pady=(0, 6))
+-        ttk.Label(self.etching_mode_frame, text="咬蝕量輸出:", font=("Microsoft JhengHei", 10), background="#f5f6f8").pack(side=tk.LEFT, padx=(0, 8))
+-        ttk.Radiobutton(self.etching_mode_frame, text="日報25／50點（含隔離清單）", variable=self.etching_export_var, value="日報").pack(side=tk.LEFT, padx=4)
+-        ttk.Radiobutton(self.etching_mode_frame, text="舊版25點明細", variable=self.etching_export_var, value="完整").pack(side=tk.LEFT, padx=4)
+-        ttk.Radiobutton(self.etching_mode_frame, text="舊版不含前後值", variable=self.etching_export_var, value="不含前後").pack(side=tk.LEFT, padx=4)
+-        ttk.Radiobutton(self.etching_mode_frame, text="舊版SPC格式", variable=self.etching_export_var, value="SPC").pack(side=tk.LEFT, padx=4)
++        etch_options=ttk.Frame(self.etching_mode_frame);etch_options.pack(anchor=tk.CENTER)
++        ttk.Label(etch_options, text="咬蝕量輸出:", font=("Microsoft JhengHei", 10), background="#f5f6f8").pack(side=tk.LEFT, padx=(0, 8))
++        ttk.Radiobutton(etch_options, text="日報25／50點（含完整清冊）", variable=self.etching_export_var, value="日報").pack(side=tk.LEFT, padx=4)
++        ttk.Radiobutton(etch_options, text="舊版25點明細（僅匯出）", variable=self.etching_export_var, value="完整").pack(side=tk.LEFT, padx=4)
++        ttk.Radiobutton(etch_options, text="舊版不含前後值", variable=self.etching_export_var, value="不含前後").pack(side=tk.LEFT, padx=4)
++        ttk.Radiobutton(etch_options, text="舊版SPC格式", variable=self.etching_export_var, value="SPC").pack(side=tk.LEFT, padx=4)
++        etch_dates=ttk.Frame(self.etching_mode_frame);etch_dates.pack(anchor=tk.CENTER,pady=(4,0))
++        ttk.Label(etch_dates,text="完整日報日期（YYYY-MM-DD）：起日").pack(side=tk.LEFT)
++        ttk.Entry(etch_dates,textvariable=self.etch_start_var,width=12).pack(side=tk.LEFT,padx=4)
++        ttk.Label(etch_dates,text="迄日").pack(side=tk.LEFT)
++        ttk.Entry(etch_dates,textvariable=self.etch_end_var,width=12).pack(side=tk.LEFT,padx=4)
++        ttk.Label(etch_dates,text="留白＝來源全部已到日期；不以檔案月份勾選代替").pack(side=tk.LEFT)
+         self.etching_mode_frame.pack_forget()
+         
+         self.run_btn = ttk.Button(btn_action_frame, text="🚀 開始轉換", command=self.start_conversion, style="Action.TButton", width=18)
+@@ -1050,7 +1060,7 @@
+         current_type = self.data_type_var.get()
+         is_etching = current_type == "咬蝕量"
+         is_dust = current_type == "落塵監控"
+-        self.upload_btn.configure(text="轉換並匯入測試站" if is_etching else "轉換並上傳 SPC 預覽")
++        self.upload_btn.configure(text="核對並匯入咬蝕資料" if is_etching else "轉換並上傳 SPC 預覽")
+         self.output_format_var.set("匯入格式1")
+         state = tk.DISABLED if is_etching or is_dust else tk.NORMAL
+         self.unified_format_radio.configure(state=state)
+@@ -1178,15 +1188,16 @@
+     def start_conversion_and_upload(self):
+         if self.data_type_var.get() == "咬蝕量":
+             self.etching_export_var.set("日報")
+-            account=simpledialog.askstring("登入Portal測試站", "AD帳號或工號（需品保與SPC寫入權限）：",parent=self.root)
++            target="正式" if self.spc_environment_var.get()=="production" else "測試"
++            account=simpledialog.askstring(f"登入Portal{target}站", "AD帳號或工號（需品保與SPC寫入權限）：",parent=self.root)
+             if not account:return
+-            password=simpledialog.askstring("登入Portal測試站", "密碼：",show="*",parent=self.root)
++            password=simpledialog.askstring(f"登入Portal{target}站", "密碼：",show="*",parent=self.root)
+             if not password:return
+             try:
+-                self.etch_import_client=EtchImportClient(self.portal_target())
++                self.etch_import_client=EtchImportClient(self.portal_target(),self.spc_target()[0],self.spc_environment_var.get())
+                 self.etch_import_client.login(account,password)
+             except Exception as exc:
+-                messagebox.showerror("測試站登入失敗",str(exc));return
++                messagebox.showerror(f"{target}站登入失敗",str(exc));return
+             finally:password=None
+             self.upload_after_conversion=True
+             self._start_conversion()
+@@ -1215,6 +1226,15 @@
+         if not files_to_convert:
+             messagebox.showwarning("未選取檔案", "請至少勾選一個日報表檔案進行轉換！")
+             return
++        if self.data_type_var.get()=="咬蝕量":
++            try:
++                first,last=self.etch_start_var.get().strip(),self.etch_end_var.get().strip()
++                a,b=parse_scope_date(first),parse_scope_date(last)
++                if a and b and a>b:raise ValueError("咬蝕起日不可晚於迄日。")
++                if (first or last) and self.etching_export_var.get()!="日報":raise ValueError("日期範圍請使用『日報25／50點』模式；舊版僅供匯出。")
++                self.etch_scope_snapshot=(first,last)
++            except ValueError as exc:
++                messagebox.showerror("咬蝕日期範圍無效",str(exc));return
+             
+         # Disable controls during run
+         self.run_btn.configure(state=tk.DISABLED)
+@@ -1407,11 +1427,13 @@
+             manifests=[]
+             for file in files:
+                 self.log(f"解析完整日報：{file.name}")
+-                manifests.append(extract_reports(file))
++                first,last=getattr(self,"etch_scope_snapshot",("",""))
++                manifests.append(extract_reports(file,start_date=first,end_date=last))
+             paths,count,quarantined=export_reports(manifests,self.selected_output_dir,self.export_scope_var.get()=="月份")
+             self.output_file_paths=paths
+             self.output_file_path=next((p for p in paths if p.suffix==".xlsx"),paths[0])
+-            self.log(f"完成 {count} 份日報，隔離 {quarantined} 份；未上傳資料庫。")
++            audit=audit_manifests(manifests)
++            self.log(f"轉檔合格 {count} 份，隔離 {quarantined} 份；來源四線清冊 {audit['coverage']['totalBlocks']} 區塊，公式警告 {len(audit['warnings'])} 筆。未上傳資料庫。")
+             for path in paths:self.log(str(path))
+             self.update_status(f"日報轉檔完成：{count} 份，隔離 {quarantined} 份",len(files))
+             if self.upload_after_conversion:
+@@ -1425,12 +1447,18 @@
+         finally:self.enable_controls()
+ 
+     def import_complete_reports(self,manifests,quarantined):
+-        reports=merge_reports([r for m in manifests for r in m['reports']])
++        audit=audit_manifests(manifests);reports=audit['reports']
++        if not audit['coverageVerified']:raise ValueError("來源缺少完整清冊，請以新版工具重新解析，不匯入舊JSON。")
+         if not reports:raise ValueError("沒有有效日報可匯入。")
++        journal=self.selected_output_dir/f"咬蝕匯入結果_{uuid.uuid4().hex[:12]}.json"
++        write_import_journal(journal,reports,[],audit)
++        self.output_file_paths.extend([journal,journal.with_suffix('.csv')])
+         client=self.etch_import_client
+-        preview=client.preview(reports,lambda done,total:self.update_status(f"兩站預覽 {done}/{total}",done))
++        preview=client.preview(reports,lambda done,total:self.update_status(f"逐日線核對 {done}/{total}",done),sources=manifests)
+         failures=[x for x in preview if 'error' in x]
+         if failures:
++            pending=[dict(reportDate=x['report']['reportDate'],lineCode=x['report']['lineCode'],status='FAILED' if x['state']=='FAILED' else 'NOT_PROCESSED',verified=False,error=x.get('error','尚未進行最後查回')) for x in preview]
++            write_import_journal(journal,reports,pending,audit)
+             first=failures[0]
+             report=first['report']
+             log_path,record=write_preview_failure_log(self.selected_output_dir,report,first['error'],self.spc_environment_var.get())
+@@ -1439,28 +1467,24 @@
+             self.log(f"[預覽 LOG] {log_path}")
+             self.root.after(0,lambda:messagebox.showerror("日報預覽失敗",f"第一筆無法預覽：\n{record['error']}\n\n未繼續送出後續日報，未匯入資料。\nLOG：\n{log_path}"))
+             raise ValueError(f"第一筆日報預覽未通過，已停止後續預覽。LOG：{log_path}")
+-        portal_unchanged=sum(x['preview'].get('portal')=='unchanged' for x in preview)
+-        spc_unchanged=sum(x['preview'].get('spc')=='unchanged' for x in preview)
+-        conflicts=sum(x['preview'].get('portal')=='conflict' or x['preview'].get('spc')=='conflict' for x in preview)
+-        unchanged=sum(x['preview'].get('portal')=='unchanged' and x['preview'].get('spc')=='unchanged' for x in preview)
+-        importable=len(reports)-unchanged-conflicts
+-        message=(f"僅Portal/SPC測試庫\n共 {len(reports)} 份：新增／需補同步 {importable} 份。\n"
+-                 f"完全相同 {unchanged} 份（Portal 相同 {portal_unchanged}、SPC 相同 {spc_unchanged}）。\n"
+-                 f"衝突 {conflicts} 份；已隔離 {quarantined} 份，均不匯入。\n\n"
+-                 "確認開始？失敗可重新預覽重試，不覆寫不同內容。")
+-        if not self.ask_on_ui_thread("確認匯入測試站",message):
++        unchanged=sum(x['state']=='SKIPPED_EXISTS' for x in preview);replacements=sum(x['state']=='REPLACE_FIRST' for x in preview);importable=len(reports)-unchanged-replacements
++        target='正式' if self.spc_environment_var.get()=='production' else '測試'
++        excluded=sum(len(m.get('excluded',[])) for m in manifests)
++        message=(f"目標：Portal／SPC {target}環境\n合格 {len(reports)} 份：待新增 {importable}；第二次取代已確認第一次 {replacements}（保留原值追溯）；已存在核對通過 {unchanged}（不重匯）。\n"
++                 f"來源隔離 {quarantined}、X排除 {excluded}；摘要公式警告 {len(audit['warnings'])}，均有來源清單。\n\n"
++                 "確認後逐份查回25／50樣本與速率；任何未處理／衝突／查回失敗都列待辦，不視為完整成功。")
++        if not self.ask_on_ui_thread(f"確認核對／匯入{target}站",message):
+             self.log("已取消確認，轉檔已保留，未匯入。");return
+-        journal=self.selected_output_dir/f"咬蝕匯入結果_{uuid.uuid4().hex[:12]}.json"
+         def progress(rows):
+-            journal.write_text(json.dumps(rows,ensure_ascii=False,indent=2),encoding='utf-8')
++            write_import_journal(journal,reports,rows,audit)
+             last=rows[-1];self.log(f"{last['reportDate']} {last['lineCode']}: {last['status']} {last.get('error','')}")
+             self.update_status(f"匯入確認 {len(rows)}/{len(reports)}",len(rows))
+         results=client.confirm(preview,progress)
+-        failed=sum(x['status'] not in ('SUCCESS','CONFLICT') for x in results)
+-        conflict_count=sum(x['status']=='CONFLICT' for x in results)
+-        self.output_file_paths.append(journal)
+-        self.update_status(f"測試站匯入完成：成功 {len(results)-failed}，待重試 {failed}",len(reports))
+-        self.root.after(0,lambda:messagebox.showinfo("測試站匯入結果",f"成功 {len(results)-failed-conflict_count} 份，衝突略過 {conflict_count} 份，待重試 {failed} 份。\n紀錄：{journal}\n衝突資料未覆寫；修正後可重新預覽。"))
++        summary=write_import_journal(journal,reports,results,audit);counts=summary['counts']
++        state="合格範圍核對完成" if summary['eligibleComplete'] else "匯入未完整通過，請處理待辦"
++        message=f"{target}：{state}\n新增並驗證 {counts['SUCCESS']}、第二次取代第一次並驗證 {counts['REPLACED_FIRST']}、既有核對略過 {counts['SKIPPED_EXISTS']}。\n失敗 {counts['FAILED']}、查回失敗 {counts['VERIFY_FAILED']}、尚未處理 {counts['NOT_PROCESSED']}。\n來源隔離 {quarantined}、X排除 {excluded}另列，不能當全來源已匯入。\n紀錄與CSV：{journal}"
++        self.update_status(f"{target}：{state}",len(results))
++        self.root.after(0,lambda:messagebox.showinfo("咬蝕核對／匯入結果",message))
+ 
+     def parse_etching_file(self, file_path: Path) -> list[list[Any]]:
+         self.log(f"正在解析咬蝕量: {file_path.name}")
+--- a/test_etch_upload.py
++++ b/test_etch_upload.py
+@@ -7,18 +7,26 @@
+ from tempfile import TemporaryDirectory
+ from unittest.mock import Mock, patch
+ from etch_upload import EtchImportClient,describe_network_failure,write_preview_failure_log
++from test_etch_completeness import report, receipt
+ class EtchUploadTests(unittest.TestCase):
++    def setUp(self):
++        counts={}
++        def inspect(client,path,payload=None):
++            if path=='/version':return {'environment':'test'}
++            key=(id(client),payload['reportDate'],payload['lineCode']);counts[key]=counts.get(key,0)+1
++            return receipt(payload,'NEW' if counts[key]==1 else 'ALREADY_EXISTS',counts[key]>1)
++        self.patch=patch.object(EtchImportClient,'_spc_request',autospec=True,side_effect=inspect);self.patch.start();self.addCleanup(self.patch.stop)
+     def test_preview_does_not_confirm_and_snapshot_is_stable(self):
+         c=EtchImportClient();c.request=Mock(return_value={'portal':'new','spc':'new'})
+-        reports=[{'reportDate':'2026-09-01','lineCode':'PT1','points':[]}]
++        reports=[report()]
+         preview=c.preview(reports);reports[0]['lineCode']='BAD'
+         self.assertEqual('PT1',preview[0]['report']['lineCode'])
+         self.assertEqual('/api/etch-import-test/preview',c.request.call_args.args[0])
+ 
+     def test_preview_stops_at_first_failure(self):
+         c=EtchImportClient();c.request=Mock(side_effect=RuntimeError('HTTP 500: safe error'))
+-        preview=c.preview([{'reportDate':'2026-10-14','lineCode':'QE1'},{'reportDate':'2026-10-14','lineCode':'QE2'}])
+-        self.assertEqual(1,len(preview))
++        preview=c.preview([report('QE1'),report('QE2')])
++        self.assertEqual(2,len(preview));self.assertEqual('NOT_PROCESSED',preview[1]['state'])
+         self.assertIn('HTTP 500',preview[0]['error'])
+         c.request.assert_called_once()
+ 
+@@ -33,23 +41,23 @@
+         self.assertFalse(saved['writtenToDatabase'])
+     def test_conflict_blocks_all_confirmation(self):
+         c=EtchImportClient();c.request=Mock(side_effect=RuntimeError('conflict'))
+-        preview=c.preview([{'lineCode':'PT1'}]);c.request.reset_mock()
++        preview=c.preview([report()]);c.request.reset_mock()
+         with self.assertRaises(ValueError):c.confirm(preview)
+         c.request.assert_not_called()
+     def test_partial_failure_is_reported_and_retry_can_skip(self):
+         c=EtchImportClient();c.request=Mock(return_value={'portal':'new','spc':'new'})
+-        p=c.preview([{'lineCode':'PT1'},{'lineCode':'PT2'}])
++        p=c.preview([report('PT1'),report('PT2')])
+         c.request=Mock(side_effect=[{'status':'SUCCESS','unchanged':False},RuntimeError('timeout')])
+         r=c.confirm(p);self.assertEqual(['SUCCESS','FAILED'],[x['status'] for x in r])
+         c.request=Mock(return_value={'portal':'unchanged','spc':'unchanged'})
+-        p=c.preview([{'lineCode':'PT1'}]);c.request=Mock(return_value={'status':'SUCCESS','unchanged':True})
++        p=c.preview([report('PT1')]);c.request=Mock(return_value={'status':'SUCCESS','unchanged':True})
+         self.assertTrue(c.confirm(p)[0]['result']['unchanged'])
+     def test_confirm_requires_own_preview(self):
+         c=EtchImportClient();c.request=Mock()
+         with self.assertRaises(ValueError):c.confirm([])
+         c.request.assert_not_called()
+     def test_spc_token_uses_portal_launch_fragment(self):
+-        c=EtchImportClient();c.request=Mock(return_value={'launchUrl':'http://spc/portal-sso#token=abc.def.ghi&target=%2Fspc'})
++        c=EtchImportClient();c.request=Mock(return_value={'launchUrl':'https://spctest.pmr.com.tw/portal-sso#token=abc.def.ghi&target=%2Fspc'})
+         self.assertEqual('abc.def.ghi',c.spc_token())
+         c.request.assert_called_once_with('/api/spc-launch',{})
+     def test_spc_token_requires_launch_token(self):
+--- a/咬蝕量轉檔規則.md
++++ b/咬蝕量轉檔規則.md
+@@ -1,4 +1,22 @@
+ # 咬蝕量轉檔規則
++
++## 現行資料庫匯入規則（2026.11.03.1，使用者已確認）
++
++本節是咬蝕匯入權威規則；後面的舊版欄位排列與兩位小數說明保留供舊版匯出參考。完整日報匯入不先把原始值取兩位小數，不使用舊版平鋪量測格式。
++
++1. **四條線與日期**：固定區塊PT1=`A2:F44`、PT2=`G2:Q44`、QE1=`R2:W44`、QE2=`X2:AH44`；區塊標題必須吻合。報表日為檔名唯一年份＋工作表MMDD，不採TODAY／列印日期或檔案修改日。可填YYYY-MM-DD起迄日，含邊界；年度檔案的月份勾選不代表已篩選內部工作表。未來／範圍外日期列明原因。
++2. **完整樣本**：PT1、QE1每面25；PT2、QE2每面50。每面5列×5／10點，BEFORE與AFTER一一對應，點位序號不可缺／重複。咬蝕量=BEFORE−AFTER；前後任一缺值、負值、非數值、錯公式或快取不符，隔離整份，不補零或取絕對值。
++3. **平均與速率**：A/B依完整25／50樣本各計一個子組平均與樣本標準差。整體速率=兩面全部點的平均×實際線速／有效長度（PT1/PT2=.975，QE1=1.944，QE2=2.268）；每份速率一值，原始點完整保存。只移除小於1e-12的二進位浮點表示尾差，真實第7位以後原值仍保留並依目標欄位精度檢查，不暗中四捨五入。
++4. **第二次量測優先**：使用者2026-11-03確認`PT-01-2`的`-2`代表第二次量測，第二次取代第一次。四線均依相同標記，未標或`-1`為第一次，`-2`為第二次；不自行接受第三次或不明後綴。明確溫度註記如`PT-01(27度)`不改線別，原文保存。跨檔第一／二次同批出現，以第二次為主並保留第一份來源與原值。
++5. **受控取代與防重**：日期＋線別為業務鍵，改檔名／hash不能重複匯入。同次同內容已存在→查回核對後略過；同次異值、部分／封存／結構不符→阻擋。不以「來源檢查過」或dry-run hash當資料庫已匯入。唯有完整第二次且資料庫可確認為第一次，才在同日線交易鎖內取代並保留原ID、第一批與Before原值；第二次重送略過，第一次不得反蓋第二次。舊版次數不明且內容不同須先核對，不當任意覆寫。
++6. **主檔對應**：完整機台專屬三項優先；沒有專屬項目時，限同名製程、唯一啟用機台的完整空機台PROCESS三項，樣本數須25／50／1。不新增重複主檔、不擅改MachineId、不混搭不完整設定。
++7. **完整清冊**：每張日期頁四區塊均列READY、EMPTY、EXCLUDED、QUARANTINED、FUTURE或OUT_OF_SCOPE。X-資料不送出，空白不製造量測；無效日期／非日期頁另列。跨檔重複、第一次被第二次取代、摘要公式警告均保留來源。READY清冊與日報清單不一致即阻擋。
++8. **成功必須查回**：先核對實際環境與來源hash，既有資料先核對，不重送confirm；新資料／核准二次取代沿Portal／SPC受控流程。確認後逐份查回日期、線別、SampleNo、25／50樣本與速率；少一點、未處理、衝突、逾時或查回失敗都列待辦，不宣稱完整成功。只可說「合格範圍核對完成」，來源隔離與X排除另計。JSON與CSV保留逐日線結果，不記帳密、Cookie或權杖。
++9. **摘要公式修正建議**：PT1 B44應`=AVERAGE(B38:F42)`，PT2 H44應`=AVERAGE(H38:Q42)`；舊公式從第39列起算，分別只20／40點，會漏一列。A面及QE1/QE2仍按各自完整範圍核對。摘要不符列警告，匯入計算以完整原始樣本為主；請核對後以Excel重算保存，不直接改資料庫值來配合錯誤摘要。
++
++主規格與驗證：`D:/SPC/specs/20261103-etch-import-completeness/`。正式相依API未更新或正式開關未核准時，工具必須明確阻擋，不切到可覆寫的一般保存介面。
++
++## 舊版匯出格式參考
+ 
+ ## 1. 資料來源
+ 
