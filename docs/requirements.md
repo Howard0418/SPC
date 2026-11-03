@@ -494,3 +494,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 2026-11-03 SPC 使用者活動稽核（僅規劃）：[規格](../specs/20261103-spc-user-activity-audit/spec.md)／[排序](../specs/20261103-spc-user-activity-audit/tasks.md)。目標留存 SPC SSO、成功進頁及已定義業務操作與結果，採伺服器可信身分、append-only事件、敏感排除與獨立最小權限；不記每次按鍵／捲動，不預設自動截圖。拆9件依序執行，本次未改程式、DB、權限或站台。
 - 2026-11-03 `SPC-AUDIT-1103-TASK-001` 已開始並完成[事件契約候選版](../specs/20261103-spc-user-activity-audit/event-contract-v1.md)：欄位、Actor、EventCode、現有路由PageKey、Details白名單、敏感排除、故障、權限、保存、截圖及BDD已具體化；四項業務／隱私政策待明示核准，故001未DONE、002未開始。既有網站、DB、權限與兩站均未修改。
+- 2026-11-03 `SPC-AUDIT-1103-TASK-001` 四項政策已由使用者明示同意，[事件契約v1](../specs/20261103-spc-user-activity-audit/event-contract-v1.md)核准完成；前述候選及待核准狀態已結清。TASK-002～009尚未開始，無程式／DB／網站發布。
