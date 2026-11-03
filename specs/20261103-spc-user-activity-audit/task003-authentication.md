@@ -1,6 +1,6 @@
 # TASK-003：SPC登入與登出稽核
 
-- 狀態：進行中；2026-11-03使用者「執行下一項」。
+- 狀態：DONE；2026-11-03測試API0.1.99／Web0.1.116發布及Portal重登驗收完成，正式未發布。
 - 需求R-003、R-004、R-010、R-011；基準[契約v1](event-contract-v1.md)，依002儲存基礎。
 - 主系統SPC；Portal只提供既有簽章assertion，本件不改其帳密驗證。無新增業務schema；測試API／前端登出呼叫及必要測試環境設定。正式另授權。
 
@@ -24,8 +24,12 @@
 
 ## 驗證、發布與回復
 
-待測試；必要build/test通過後直接發測試API／Web，核對實際兩站／共用SPC pool、PMR_SPC_TEST、test標籤及瀏覽器實際API基底。使用隔離來源避免夾帶既有TrendChartView修改。備份API98、Web115、私有設定及SQL；回復舊檔／設定並保留新增事件，必要時停用AuthenticationEnabled，不刪證據。003完成不代表頁面／其他業務操作已串接；004～009保留。
+必要build/test通過後已發布測試API99／Web116，核對實際兩站／共用SPC pool、PMR_SPC_TEST、test標籤及瀏覽器實際同源 `/api`。使用獨立worktree b897dc5c建置，未夾帶既有TrendChartView修改。API98、Web115、原私有設定及SQL COPY_ONLY／CHECKSUM／VERIFYONLY備份均保留於受ACL控制的本機發布證據區；回復舊檔／設定並保留事件，JWT切換可能需測試Portal重登。003完成不代表頁面／其他業務操作已串接；004～009保留。
 
 先紅測試確認缺少AuthenticationAudit／logout helper，再實作。主回歸358通過／8略過、另一後端66通過／1略過、身分相容性12通過、前端登出3通過、原驗證啟動2通過；三語2768 keys檢查通過。隔離SQL實際受限principal通過啟動檢查、SSO交易與失敗回復，拒絕audit修改及CREATE TABLE；建立的隔離DB僅合成資料並於finally移除。
 
-實際測試環境核對發現JWT仍是預設值，已告知需要更換及一次測試Portal重登。已準備專用test runtime login與受控私有候選設定，實際權限檢查通過；尚未套用到站台。環境principal／金鑰配置屬部署身分管理，不新增或手動改業務schema。Portal既有呼叫帶Bearer；本件不修改其權杖快取／帳密驗證。切換後原測試Portal session需重新登入取得新JWT。
+實際測試環境核對發現JWT仍是預設值，已告知並更換為測試環境獨立強隨機key；專用runtime login SpcAuditApiTest003與私有設定已套用，實際權限及啟動檢查通過，Auth啟用、startup DDL停用。環境principal／金鑰配置屬部署身分管理，不新增或手動改業務schema；migration仍60筆、pending0。Portal既有呼叫帶Bearer，本件未修改其權杖快取／帳密驗證。使用者已明示「測試站已重新登入」，實際PortalAssertion成功事件與session持久化確認。
+
+實站13項檢查通過：匿名拒絕、簽章登入、重播／錯誤簽章／極端timestamp拒絕、本機410、無效JSON400且留痕、既有legacy相容、已驗證catalog讀取、Viewer寫入403、登出204與session吻合、舊key拒絕。合成QA operator已依事件ID／精確ID與帳號代碼核對後清除；8筆append-only測試事件保留，使用者重登後查核時共9筆。68個既有表逐表排序JSON的SHA-256於部署後、QA清理後及實際重登後皆一致。
+
+完整Web/API／瀏覽器／截圖、進度表驗證與回復紀錄見[verification.md](verification.md#task-003-登入登出驗證與發布)。無正式站或正式DB變更；後續發布須使用獨立管理身分，不可升權runtime來執行DDL／備份。

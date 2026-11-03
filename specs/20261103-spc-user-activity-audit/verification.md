@@ -2,7 +2,22 @@
 - 功能 ID：SPC-AUDIT-20261103
 - 規格版本：2
 - 日期：2026-11-03
-- 結果：TASK-001、002完成；儲存基礎已發布測試API98，003～009未開始，正式未發布。
+- 結果：TASK-001～003完成；測試API99／Web116及使用者Portal重登驗收通過，004～009未開始，正式未發布。
+
+## TASK-003 登入登出驗證與發布
+
+- [003規格／BDD](task003-authentication.md)：主回歸358通過／8略過、另一後端66通過／1略過、身分相容性12通過、既有啟動2通過、前端登出3通過；本件最後16項（含隔離SQL）通過。API99 Release及獨立worktree b897dc5c的Web116 build通過，三語2768 keys通過；未夾帶既有TrendChartView工作區修改。
+- AC-003／004：登入actor由已驗證SSO及Operator建立，失敗只留環境HMAC帳號與固定原因；JWT新增jti，事件只存session hash。新建／既有身分更新與成功事件同交易；稽核insert故障回復資料、回安全503且無JWT。重播、停用／刪除、legacy及long極值測試通過。JSON/model-binding失敗400由result filter補記，不讀原文。
+- 狹義POST logout需有效JWT，Viewer只豁免確切auth端點；其他Viewer寫入維持403。登出只表示請求、不宣稱撤銷JWT；前端1.5秒上限及finally清除／原Portal轉址已測，失敗不阻擋離站。
+- 啟用前核對現行測試JWT為預設值；已告知並更換，SSO共享key不變。Auth=true、startup DDL=false；實際runtime SpcAuditApiTest003通過非sysadmin／非db_owner／無DDL及AuditEvents SELECT、INSERT可用而UPDATE、DELETE、ALTER拒絕的啟動檢查。既有業務表CRUD及現有procedure執行保留；不新增schema，migration60／pending0。
+- 測試站PC-PA16560048、SpcApiTest／SpcSingleTest、共用SPC專用pool與PMR_SPC_TEST／test已核對；先備份IIS、API98／Web115、私有設定與SQL COPY_ONLY／CHECKSUM／VERIFYONLY，再發API99／Web116及啟用候選設定。runtime憑證／HMAC／JWT key只在本機ACL設定；網站設定ACL只供SYSTEM／Administrators管理及SPC app pool讀取，未提交repo。
+- 實站13項檢查通過：匿名讀取／logout401、簽章SSO200、重播／錯誤簽章／long.MinValue401、本機login410、無效JSON400且留痕、legacy200、已驗證catalog200、Viewer寫入403、logout204且session吻合、舊簽章key401。8筆合成QA事件保留，QA operator依精確事件ID／ID／帳號／代碼核對後移除；沒有清除任何實際使用者或稽核證據。
+- 使用者回覆「測試站已重新登入」。其實際PortalAssertion成功事件、session hash及TraceId持久化已核對；查核時AuditEvents共9筆。68個既有表逐表排序JSON的SHA-256在部署後、QA清理後及實際重登後皆一致。未變更正式站／正式DB／Portal程式。
+- Web首頁、實際主JS `index-BEPAWGgw.js`、CSS `index-BFEI4qhU.css`皆200，MIME為text/html、application/javascript、text/css；health/version為API0.1.99／test。瀏覽器實際載入該JS，其API resolver固定同源 `/api`，同基底重驗通過。實際登入後總覽385／OOC230／OOS22正常載入，顯示Web116／API99且無API離線。直接API JSON分頁曾被瀏覽器client阻擋，已改由實際SPA驗證，不以該分頁宣稱通過；無非標準port的用戶端路徑。
+- 私有發布／備份／smoke／實際Portal證據：`C:/ProgramData/PMR-Releases/Test/SPC-AUDIT-003-20261103-API99/`。回復用該批API／Web／原設定備份與hash，保留新增事件；不還原整庫，不刪證據。實站rollback未演練；隔離交易回復已驗證。未來部署須用獨立管理身分執行DDL／備份，不可升權runtime。
+- 截圖`test-version.png`只含測試環境與版本，SHA-256 `F6E90973FE9969B39765FBA736D6B3DFA8DB217E80A36C512DBE01083B9C4B34`，來源事件ID在同目錄smoke及real-portal-verification證據，無帳號／量測／權杖；90日到期2027-02-01，僅留Git外受ACL區。
+- 原Excel已同步第256列完成／待辦否、11/03綠色原生里程碑43更新001～003，保留43個物件及其他專案。核心未完成41、SPC直屬19、完成187，人工11／核銷4另計。備份`C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/Voice/備份/進度表_SPC稽核003登入登出完成前_20261103-111115.xlsx`；輸出SHA-256 `b27ed08edcd53221c416cd66645db5bc7fc40fd676736acdb74c957b83086107`。
+- ZIP正常、OpenXML候選及原路徑0錯誤、Artifact重開／公式錯誤0／變更範圍渲染通過、LibreOffice列印通過；未做Microsoft Excel人工開啟。004～009未開始，頁面及其他業務操作仍未串接。
 
 ## TASK-002 當前驗證與發布
 

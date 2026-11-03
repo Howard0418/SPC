@@ -1,3 +1,9 @@
+## 2026-11-03 SPC-AUDIT-1103-TASK-003 登入登出測試發布完成
+- 串接SSO成功／拒絕／失敗、本機停用登入及登出請求；jti/session hash與可信actor，成功稽核及身分同交易，失敗不發JWT。未驗證帳號只環境HMAC；敏感原文不入事件，前端登出回報有1.5秒上限及finally清除。
+- 測試Auth啟用、獨立強隨機JWT key、runtime非管理者／無DDL且AuditEvents只SELECT／INSERT；startup DDL關閉，私有金鑰／設定不入repo。Portal及正式未變更。
+- 主358、後端66、身分12、既有啟動2、前端3通過；實站13項及使用者實際Portal重登驗收通過。測試API99／Web116，68個既有表指紋一致；合成QA帳號已清除，append-only測試證據保留。
+- Web／JS／CSS MIME、health/version及瀏覽器實際同源API／總覽通過；原Excel與原生里程碑同步，核心41／SPC直屬19。004～009未開始，頁面／其他操作仍未串接；正式未發布。[驗證](specs/20261103-spc-user-activity-audit/verification.md)。
+
 ## 2026-11-03 SPC-AUDIT-1103-TASK-002 儲存基礎測試完成
 - 新增EF AuditEvents、7個索引、append-only防護、受控角色、伺服器actor快照／UTC／環境、白名單Details、同交易Stage及獨立Append與併發重送去重；未串接003～009。
 - 本件20項、主回歸342及另一後端66通過；隔離SQL idempotent重播／UpDownUp／交易回復與權限驗證通過。測試API98已發布、Web115雜湊保持；68個既有表指紋相同、新表0列，正式未發布。

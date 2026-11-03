@@ -2,7 +2,7 @@
 - 功能 ID：SPC-AUDIT-20261103
 - 規格版本：2
 - 規格：[spec.md](spec.md)
-- 狀態：TASK-001、002 DONE；測試API98，003～009未開始
+- 狀態：TASK-001～003 DONE；測試API99／Web116，004～009未開始
 - 事件契約：[event-contract-v1.md](event-contract-v1.md)
 
 ## 系統責任與受影響範圍
@@ -28,7 +28,7 @@
 
 1. 核准事件契約、代碼、遮罩、權限、保存與失敗策略（R-001）。四項政策已核准，DONE。
 2. 建立 append-only schema、索引、事件服務及冪等（R-002、R-003、R-011）。[002儲存工作](task002-storage.md)已測試發布，DONE。
-3. SPC SSO／登出事件（R-004）。
+3. SPC SSO／登出事件（R-004）。[003](task003-authentication.md)測試發布及使用者重登驗收完成，DONE。
 4. 安全、操作者、角色、頁面權限、設定與拒絕存取事件（R-005、R-008）。
 5. 量測、匯入、公式／F／版本、主檔、停用／刪除事件（R-006）。
 6. 成功進頁、查詢／篩選／匯出與允許清單純前端事件（R-007、R-010）。
@@ -52,7 +52,7 @@ schema migration、角色權限、SSO 與正式資料均屬高風險，不與其
 
 - 登入與安全事件由伺服器直接寫入。
 - 關鍵資料寫入與稽核同交易；不得資料成功但稽核遺失。
-- 頁面事件由前端送 EventId、PageKey 與 route key，後端重建 actor、environment、received time 並驗證 allowlist。
+- 頁面事件由前端送 ClientEventId 與 PageKey，後端產生 EventId、重建 route／actor／environment／received time 並驗證allowlist。
 - 一般頁面事件失敗採有限重試與監控，不阻斷原頁；關鍵事件依 TASK-001 核准策略 fail closed 或可靠 outbox，不可靜默丟失。
 
 讀取面：
@@ -85,8 +85,8 @@ schema migration、角色權限、SSO 與正式資料均屬高風險，不與其
 
 ## 發布、備份及回復
 
-- 本次：002完成必要build/test與隔離SQL驗證，測試API0.1.98已發布；正式未授權。
+- 本次：003完成必要build/test、隔離SQL與實站驗證，測試API0.1.99／Web0.1.116已發布；正式未授權。
 - 未來各工作：測試通過後依規則直接發布測試站，並驗首頁、主 JS／CSS MIME、API health/version 及瀏覽器實際 API 基底。
 - 正式發布：另行授權並核對實際環境；不因本規格自動發布。
 - 回復：前端／API 以 feature flag 與前一版套件回復；新增表屬加法 migration。正式已有稽核後保留表與資料，以停用收集／查詢功能回復，不能直接 Down 刪表。
-測試站實際為SpcSingleTest前端、SpcApiTest後端，共用SPC專用pool；舊發布工具的過時拓撲預檢已阻擋且未變更站台，後以本件限定流程核對兩站／pool／路徑、備份SQL及API後發布。未修改共用工具或IIS binding。003前須先核對Auth啟用與runtime分權，詳002紀錄。
+測試站實際為SpcSingleTest前端、SpcApiTest後端，共用SPC專用pool；沿用已核對的本件限定流程備份後發布，未修改共用工具或IIS binding。003已完成Auth啟用／強隨機JWT key／runtime分權／停用startup DDL；正式未變更。後續部署以獨立管理身分執行migration／備份，不可回升runtime權限。
