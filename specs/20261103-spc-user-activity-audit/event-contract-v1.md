@@ -4,7 +4,7 @@
 - 日期：2026-11-03
 - 狀態：2026-11-03 使用者回覆「同意」，四項政策已核准；TASK-001完成
 - 適用系統：SPC；Portal 只提供既有 SSO assertion，本契約不修改 Portal 帳密驗證
-- 後續限制：`TASK-002` 維持待執行；核准契約不等於已開始migration或產品實作
+- 後續限制：各工作依[tasks.md](tasks.md)目前狀態逐件執行；正式發布須另行授權
 
 <a id="一待核准的四項政策"></a>
 
@@ -43,6 +43,8 @@
 | 明細 | `DetailsJson` | 固定 schema、白名單先遮罩再序列化，上限 4 KB；不可保存任意 request／response／exception。 |
 
 v1 不包含 `IntegrityHash`。一般 SHA hash 不能防竄改；若需要 HMAC／hash chain，須另案定義金鑰輪替與驗證工具。
+
+TASK-002儲存補充：`ActorServiceCode`保存明確的背景服務代碼；`DeduplicationHash`只用於同client retry key的語意衝突比較，不作防竄改或來源認證，也不存每次會改變的transport trace。`ClientEventId`去重以環境、OperatorId、SessionIdHash與client id共同限定，皆由server重建可保存欄位；前端不可提供EventId或環境。
 
 ## 四、Actor 可信度
 

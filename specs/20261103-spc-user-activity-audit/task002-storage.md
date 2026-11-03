@@ -1,6 +1,6 @@
 # TASK-002：稽核儲存與共用writer
 
-- 狀態：進行中；2026-11-03使用者授權「執行」。
+- 狀態：DONE／2026-11-03測試API0.1.98發布完成；正式未授權。
 - 基準：[已核准契約v1](event-contract-v1.md)；需求R-002、R-003（儲存邊界）、R-010、R-011。
 - 主系統SPC；相依SQL Server，新增AuditEvents與角色／防修改trigger；無Portal、SSO、前端變更。正式發布另授權。
 
@@ -38,3 +38,5 @@
 完整回歸：主測試342通過／8略過（含明示啟用的SQL隔離測試）；另一後端測試66通過／1略過，既有nullable警告2處。Release API0.1.98產包成功。實際測試DB盤點PMR_SPC_TEST／test，68個既有user table，59筆已套migration，本件為唯一待遷移ID。
 
 發布SQL另外在隔離庫執行實際EF idempotent script兩次成功，再跑Down／Up；trigger使用動態DDL以符合idempotent IF區塊限制。最後本件20項（含SQL）通過。
+
+測試發布及原進度表同步已完成，完整備份／Web/API／瀏覽器／截圖／Excel證據見[verification.md的當前002紀錄](verification.md#task-002-當前驗證與發布)。正式未發布；實際AuditEvents=0，003～009未開始。

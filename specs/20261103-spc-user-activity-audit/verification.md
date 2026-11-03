@@ -1,8 +1,24 @@
-# 規劃驗證
+# SPC活動稽核驗證
 - 功能 ID：SPC-AUDIT-20261103
-- 規格版本：1（TASK-001 候選契約）
+- 規格版本：2
 - 日期：2026-11-03
-- 結果：TASK-001文件驗收完成、四項政策已核准；產品實作與驗收未執行
+- 結果：TASK-001、002完成；儲存基礎已發布測試API98，003～009未開始，正式未發布。
+
+## TASK-002 當前驗證與發布
+
+- [002規格與BDD](task002-storage.md)：核心先紅測試再實作；本件20項通過（含隔離SQL），完整回歸主342／另一後端66通過，8＋1略過；Release build成功。
+- AC-002儲存／去重及R-010交易基礎通過；AC-003只驗共用writer從Operator讀快照，完整JWT／SSO事件屬003；量測等實際串接屬005，進頁端點屬006，查詢／保留／效能屬007～009，未冒稱全站驗收。
+- 隔離SQL：8併發同key只1列；不同key獨立、內容衝突拒絕；EF／SQL append-only、writer role SELECT／INSERT及拒絕UPDATE／DELETE／ALTER；實際EF idempotent SQL兩次與Up／Down／Up通過；業務回復／事件insert失敗不留成功資料。
+- 測試實際目標PC-PA16560048、PMR_SPC_TEST／test；migration59→60且無其他pending。68個既有表全量排序JSON的逐表SHA-256在migration後及服務啟動後再次核對均一致，AuditEvents=0；未寫正式DB或變更既有帳號成員／驗證設定。
+- 舊工具在iis-preflight因過時站台配置停止，未開始寫入；本件限定流程核對SpcSingleTest前端／SpcApiTest後端／SPC專用共用池，先IIS、API及SQL COPY_ONLY／CHECKSUM備份與VERIFYONLY，再只套新增migration與API98。前端全部檔案雜湊保持Web115。
+- 實站https://spctest.pmr.com.tw：Web、主JS `index-D8IBkhbb.js`、CSS `index-BFEI4qhU.css`皆200且MIME分別text/html、application/javascript、text/css；health/version皆API0.1.98／test。實際瀏覽器載入的JS其tJ()固定返回 `/api`，同源再次驗證成功；瀏覽器總覽已載入，顯示Web115／API98且無API離線。無非標準port的用戶端路徑。
+- 私有備份／部署證據：`C:/ProgramData/PMR-Releases/Test/SPC-AUDIT-002-20261103-API98-topology-verified/`。必要時用該目錄原API檔與雜湊回復API97，保留新表與證據；未演練實站rollback，已驗證隔離DBrollback。
+- 版本截圖僅含測試環境與版本，無姓名／量測資料；存上述私有目錄`test-version.png`，SHA-256 `1943DEAE8522BC23BC6629B4D6D49BEFB7C583A588F2DF91C3CD27CE2C3886D8`，90日到期2027-02-01，無實際事件ID（本件只驗儲存，未建立使用者事件）。截圖／輸出／備份均不提交Git。
+- 原進度表已同步第255列完成／待辦否與11/03綠色原生里程碑43，保留43個圖形；核心未完成42、SPC直屬20、完成186，人工11／核銷4另計。備份`C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/Voice/備份/進度表_SPC稽核002儲存完成前_20261103-093102.xlsx`；原檔輸出SHA-256 `608f329aa81291964804f15709c66d6dfdcdc03b1f8684b7964cb1511e68f182`。
+- ZIP及OpenXML候選／原路徑0錯誤，Artifact重開／公式錯誤0／範圍渲染通過、LibreOffice列印通過；未做Microsoft Excel人工開啟。原檔更新前再次核對雜湊，其他專案及未變更part保留。
+- 相依待辦：測試站Auth:Enabled=false，實際runtime尚未配置新writer role；003啟用收集前需處理驗證與runtime分權，不能宣稱目前已完整記錄誰登入／進頁。本次不開始003。
+
+## 以下為001及原規劃歷史紀錄
 
 ## 已完成的唯讀盤點
 

@@ -1,3 +1,8 @@
+## 2026-11-03 SPC-AUDIT-1103-TASK-002 儲存基礎測試完成
+- 新增EF AuditEvents、7個索引、append-only防護、受控角色、伺服器actor快照／UTC／環境、白名單Details、同交易Stage及獨立Append與併發重送去重；未串接003～009。
+- 本件20項、主回歸342及另一後端66通過；隔離SQL idempotent重播／UpDownUp／交易回復與權限驗證通過。測試API98已發布、Web115雜湊保持；68個既有表指紋相同、新表0列，正式未發布。
+- Web／主JS／CSS MIME、health/version、瀏覽器實際同源API及總覽載入驗證通過；原Excel／里程碑同步，核心42／SPC直屬20。003啟用前需核對Auth與runtime分權。詳[驗證](specs/20261103-spc-user-activity-audit/verification.md)。
+
 ## 2026-11-03 SPC-AUDIT-1103-TASK-001 技術契約候選版／待政策核准
 - 依使用者「SPC直屬先執行」指示，按安全與權限順位開始001；受原始Excel／業務範圍阻擋的既有工作未誤啟動，正式待發布工作也未視為已授權。
 - 補齊伺服器EventId／ClientEventId、可信Actor、事件／結果分離、31個canonical PageKey與alias、事件代碼、Details白名單、敏感負面清單、關鍵／一般事件故障矩陣、最小權限、保存／legal hold、截圖及BDD候選契約。

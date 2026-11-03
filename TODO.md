@@ -2,12 +2,14 @@
 
 > 2026-11-03 [SPC 使用者活動稽核僅規劃入池](specs/20261103-spc-user-activity-audit/spec.md)：登入／成功進頁／操作與結果拆9件，依安全與資料風險排序，全部待執行；不記每次按鍵／捲動，不預設自動截圖。未改程式、DB、權限或站台。原Excel同步後核心未完成44件、SPC直接22件；人工11／核銷4另計。
 
-## 2026-11-03 SPC 使用者活動稽核（001已完成，002～009未開始）
+## 2026-11-03 SPC 使用者活動稽核（001、002已完成，003～009未開始；核心42／SPC20）
 
-[規格](specs/20261103-spc-user-activity-audit/spec.md)／[候選契約](specs/20261103-spc-user-activity-audit/event-contract-v1.md)／[計畫](specs/20261103-spc-user-activity-audit/plan.md)／[排序與測試矩陣](specs/20261103-spc-user-activity-audit/tasks.md)。主系統SPC；Portal／SSO只供身分來源，本案不修改Portal帳密登入。依序逐件執行，不與其他schema／SSO／權限高風險工作併行。
+> 最新進度：002已測試發布API98，核心未完成42件、SPC直屬20件、完成186件；人工11／核銷4另計。先前候選與43／21、44／22記錄保留為歷史。003未開始。
 
-- [x] `SPC-AUDIT-1103-TASK-001`：P1，2026-11-03使用者明示同意四項政策，事件契約v1核准完成。無DB／發布，002維持待執行。
-- [ ] `SPC-AUDIT-1103-TASK-002`：P1，append-only AuditEvents、索引、冪等與共用writer；EF migration，依001。
+[規格](specs/20261103-spc-user-activity-audit/spec.md)／[已核准契約](specs/20261103-spc-user-activity-audit/event-contract-v1.md)／[計畫](specs/20261103-spc-user-activity-audit/plan.md)／[排序與測試矩陣](specs/20261103-spc-user-activity-audit/tasks.md)。主系統SPC；Portal／SSO只供身分來源，本案不修改Portal帳密登入。依序逐件執行，不與其他schema／SSO／權限高風險工作併行。
+
+- [x] `SPC-AUDIT-1103-TASK-001`：P1，2026-11-03使用者明示同意四項政策，事件契約v1核准完成。001無DB／發布，後續002已測試完成。
+- [x] `SPC-AUDIT-1103-TASK-002`：P1，AuditEvents、索引、重送去重與共用writer測試完成；測試API98／Web115，68個既有表指紋不變，正式未發布。詳[驗證](specs/20261103-spc-user-activity-audit/task002-storage.md)。003前核對Auth啟用與runtime分權。
 - [ ] `SPC-AUDIT-1103-TASK-003`：P1，SPC SSO成功／失敗／登出及session correlation；不改Portal密碼驗證，依002。
 - [ ] `SPC-AUDIT-1103-TASK-004`：P1，操作者啟停、角色／頁面權限、設定與拒絕存取；敏感稽核權限fail closed，依003。
 - [ ] `SPC-AUDIT-1103-TASK-005`：P1，量測、匯入、公式／F／版本、主檔與刪除／停用等高風險操作；交易一致，依004。
