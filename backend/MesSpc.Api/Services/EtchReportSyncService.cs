@@ -47,6 +47,32 @@ public sealed class EtchReportSyncService(AppDbContext db)
     public Task<EtchSyncResult> PreviewAsync(EtchReportRequest request, CancellationToken ct = default)
         => ExecuteAsync(request, "preview", false, true, ct);
 
+    /// <summary>Prefer line-specific mappings; accept optional-machine mappings only for a uniquely owned line process.</summary>
+    public async Task<(Machine Machine, List<PartProcessCharacteristic> Mappings)> ResolveMappingsAsync(string line, CancellationToken ct = default)
+    {
+        var (ops, _) = Rule(line);
+        var machine = await db.Machines.AsNoTracking().SingleOrDefaultAsync(x => x.MachineCode == line && x.IsEnabled, ct)
+            ?? throw ApiUiException.Attach(new InvalidOperationException($"找不到已啟用的咬蝕線別主檔：{line}。"), "spc.api.etchLineMissing", new Dictionary<string,string> { ["line"] = line });
+        var query = db.PartProcessCharacteristics.AsNoTracking().Include(x => x.Characteristic)
+            .Where(x => x.ControlScope == "PROCESS" && x.IsEnabled && Codes.Contains(x.Characteristic!.CharacteristicCode));
+        var mappings = await query.Where(x => x.MachineId == machine.Id).ToListAsync(ct);
+        if (mappings.Count == 0)
+        {
+            var processMatches = await db.Processes.AnyAsync(x => x.Id == machine.ProcessId && x.ProcessCode == line && x.IsEnabled, ct);
+            var machineCount = await db.Machines.CountAsync(x => x.ProcessId == machine.ProcessId && x.IsEnabled, ct);
+            if (!processMatches || machineCount != 1)
+                throw ApiUiException.Attach(new InvalidOperationException("咬蝕量／速率管制項目未完整設定。"), "spc.api.etchMappingsIncomplete");
+            mappings = await query.Where(x => x.MachineId == null && x.ProcessId == machine.ProcessId).ToListAsync(ct);
+        }
+        if (mappings.Count != 3 || mappings.Select(x => x.Characteristic!.CharacteristicCode).Distinct().Count() != 3
+            || mappings.Any(x => x.ProcessId != machine.ProcessId))
+            throw ApiUiException.Attach(new InvalidOperationException("咬蝕量／速率管制項目未完整設定。"), "spc.api.etchMappingsIncomplete");
+        foreach (var m in mappings)
+            if (m.SampleSize != (m.Characteristic!.CharacteristicCode is "ETCH_A_AVG" or "ETCH_B_AVG" ? ops * 5 : 1))
+                throw ApiUiException.Attach(new InvalidOperationException("管制項目樣本數與完整子組不一致。"), "spc.api.etchSampleCountMismatch");
+        return (machine, mappings);
+    }
+
     private async Task<EtchSyncResult> ExecuteAsync(EtchReportRequest request, string actor, bool allowUpdate, bool preview, CancellationToken ct)
     {
         Validate(request);
@@ -63,16 +89,11 @@ public sealed class EtchReportSyncService(AppDbContext db)
             // Transaction-owned lock also serializes first insertion, when no measurement rows exist yet.
             await db.Database.ExecuteSqlInterpolatedAsync($"DECLARE @r int; EXEC @r=sys.sp_getapplock @Resource={key}, @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=15000; IF @r<0 THROW 51000, 'Etch report lock unavailable', 1;", ct);
         }
-        var machine = await db.Machines.SingleOrDefaultAsync(x => x.MachineCode == request.LineCode && x.IsEnabled, ct)
-            ?? throw ApiUiException.Attach(new InvalidOperationException($"找不到已啟用的咬蝕線別主檔：{request.LineCode}。"), "spc.api.etchLineMissing", new Dictionary<string,string> { ["line"] = request.LineCode });
-        var mappings = await db.PartProcessCharacteristics.Include(x => x.Characteristic)
-            .Where(x => x.MachineId == machine.Id && x.ControlScope == "PROCESS" && x.IsEnabled && Codes.Contains(x.Characteristic!.CharacteristicCode)).ToListAsync(ct);
-        if (mappings.Count != 3 || mappings.Select(x => x.Characteristic!.CharacteristicCode).Distinct().Count() != 3)
-            throw ApiUiException.Attach(new InvalidOperationException("咬蝕量／速率管制項目未完整設定。"), "spc.api.etchMappingsIncomplete");
-        foreach (var m in mappings)
-            if (m.SampleSize != (m.Characteristic!.CharacteristicCode is "ETCH_A_AVG" or "ETCH_B_AVG" ? ops * 5 : 1))
-                throw ApiUiException.Attach(new InvalidOperationException("管制項目樣本數與完整子組不一致。"), "spc.api.etchSampleCountMismatch");
+        var (machine, mappings) = await ResolveMappingsAsync(request.LineCode, ct);
         var ids = mappings.Select(x => x.Id).ToList(); var next = request.ReportDate.AddDays(1);
+        if (!allowUpdate && await db.VariableMeasurements.IgnoreQueryFilters().AnyAsync(x => x.SourceReference == key
+            && (x.IsDeleted || !ids.Contains(x.PartProcessCharacteristicId) || x.MeasuredAt < request.ReportDate || x.MeasuredAt >= next), ct))
+            throw ApiUiException.Attach(new InvalidOperationException("同日同線已有其他結構或封存紀錄，嚴格匯入拒絕重複。"), "spc.api.etchOverwriteDenied");
         var existing = await db.VariableMeasurements.Where(x => ids.Contains(x.PartProcessCharacteristicId) && x.MeasuredAt >= request.ReportDate && x.MeasuredAt < next).ToListAsync(ct);
         if (existing.Any(x => x.SourceReference != key)) throw ApiUiException.Attach(new InvalidOperationException("同日已有其他來源資料，請先核對，未覆寫。"), "spc.api.etchSourceConflict");
         if (existing.GroupBy(x => (x.PartProcessCharacteristicId, x.SampleNo)).Any(g => g.Count() != 1)) throw ApiUiException.Attach(new InvalidOperationException("既有子組點位重複，未覆寫。"), "spc.api.etchExistingDuplicate");

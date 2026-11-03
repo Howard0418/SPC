@@ -33,7 +33,7 @@ if(!OperatingSystem.IsWindows())throw new Exception("Actual Windows operator req
 var actor=WindowsIdentity.GetCurrent().Name;
 await using var db=new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(connection).Options);
 var svc=new EtchReportSyncService(db);
-var max=await db.VariableMeasurements.MaxAsync(x=>(long?)x.Id)??0;
+var max=await db.VariableMeasurements.IgnoreQueryFilters().MaxAsync(x=>(long?)x.Id)??0;
 async Task<string> Fingerprint(){
  await using var c=new SqlConnection(connection);await c.OpenAsync();using var cmd=c.CreateCommand();
  cmd.CommandText="SELECT COUNT_BIG(*),CHECKSUM_AGG(BINARY_CHECKSUM(Id,PartProcessCharacteristicId,MeasuredValue,RecheckValue,MeasuredAt,ChemicalReceiptId,ChemicalSourceKeyHash,IsDeleted,UploadBatchId,SourceReference,SampleNo)) FROM VariableMeasurements WHERE Id<=@max";cmd.Parameters.AddWithValue("@max",max);
@@ -45,8 +45,11 @@ var skippedExisting=new List<object>();
 var ready=new List<EtchReportRequest>();var preview=new List<object>();var blocked=new List<object>();
 foreach(var r in reports){
  var reportKey=Key(r);
- if(mode!="--verify" && await db.VariableMeasurements.AsNoTracking().AnyAsync(x=>x.SourceReference==reportKey)){skippedExisting.Add(new{key=Key(r),reason="Already exists; never reimport or overwrite",count=await db.VariableMeasurements.CountAsync(x=>x.SourceReference==reportKey)});continue;}
- try{var p=await svc.PreviewAsync(r);ready.Add(r);preview.Add(new{key=Key(r),r.ReportDate,r.LineCode,p.Unchanged,p.PointCount});}
+ if(mode!="--verify" && await db.VariableMeasurements.IgnoreQueryFilters().AsNoTracking().AnyAsync(x=>x.SourceReference==reportKey)){skippedExisting.Add(new{key=Key(r),reason="Already exists (including archived); never reimport or overwrite",count=await db.VariableMeasurements.IgnoreQueryFilters().CountAsync(x=>x.SourceReference==reportKey)});continue;}
+ try{
+  if(mode=="--verify"){await svc.ResolveMappingsAsync(r.LineCode);ready.Add(r);preview.Add(new{key=Key(r),verificationOnly=true});}
+  else {var p=await svc.PreviewAsync(r);ready.Add(r);preview.Add(new{key=Key(r),r.ReportDate,r.LineCode,p.Unchanged,p.PointCount});}
+ }
  catch(InvalidOperationException e){db.ChangeTracker.Clear();blocked.Add(new{key=Key(r),reason=e.Message});}
 }
 File.WriteAllText(Path.Combine(root,"preview.json"),JsonSerializer.Serialize(new{environment="production",sourceHash,reports=reports.Count,ready=ready.Count,skippedExisting,blocked,preview,existingFingerprint=before},json));
@@ -65,11 +68,11 @@ foreach(var r in ready){
   saved=await svc.SyncAsync(r,actor,false);if(saved.Unchanged)unchanged++;else created++;
   var retry=await svc.SyncAsync(r,actor,false);if(!retry.Unchanged||retry.BatchId!=saved.BatchId)throw new Exception("Idempotence failed");
  }
- var machine=await db.Machines.AsNoTracking().SingleAsync(x=>x.MachineCode==r.LineCode&&x.IsEnabled);
- var maps=await db.PartProcessCharacteristics.AsNoTracking().Include(x=>x.Characteristic).Where(x=>x.MachineId==machine.Id&&x.ControlScope=="PROCESS"&&EtchReportSyncService.Codes.Contains(x.Characteristic!.CharacteristicCode)&&x.IsEnabled).ToListAsync();
+ var (machine,maps)=await svc.ResolveMappingsAsync(r.LineCode);
  var mapIds=maps.Select(x=>x.Id).ToArray();var key=Key(r);
  var rows=await db.VariableMeasurements.AsNoTracking().Where(x=>mapIds.Contains(x.PartProcessCharacteristicId)&&x.SourceReference==key).ToListAsync();
  if(rows.Count!=r.Points.Count+1)throw new Exception("Stored subgroup count mismatch: "+key);
+ if(rows.Any(x=>x.MeasuredAt.Date!=r.ReportDate || x.MachineId!=machine.Id || x.ProcessId!=machine.ProcessId))throw new Exception("Stored line/date mismatch: "+key);
  var (ops,length)=EtchReportSyncService.Rule(r.LineCode);
  foreach(var m in maps){
   var code=m.Characteristic!.CharacteristicCode;

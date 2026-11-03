@@ -60,8 +60,7 @@ foreach(var r in ready){
   saved=await svc.SyncAsync(r,actor,false);if(saved.Unchanged)unchanged++;else created++;
   var retry=await svc.SyncAsync(r,actor,false);if(!retry.Unchanged||retry.BatchId!=saved.BatchId)throw new Exception("Idempotence failed");
  }
- var machine=await db.Machines.AsNoTracking().SingleAsync(x=>x.MachineCode==r.LineCode&&x.IsEnabled);
- var maps=await db.PartProcessCharacteristics.AsNoTracking().Include(x=>x.Characteristic).Where(x=>x.MachineId==machine.Id&&x.ControlScope=="PROCESS"&&EtchReportSyncService.Codes.Contains(x.Characteristic!.CharacteristicCode)&&x.IsEnabled).ToListAsync();
+ var (_,maps)=await svc.ResolveMappingsAsync(r.LineCode);
  var mapIds=maps.Select(x=>x.Id).ToArray();var key=Key(r);
  var rows=await db.VariableMeasurements.AsNoTracking().Where(x=>mapIds.Contains(x.PartProcessCharacteristicId)&&x.SourceReference==key).ToListAsync();
  if(rows.Count!=r.Points.Count+1)throw new Exception("Stored subgroup count mismatch: "+key);
