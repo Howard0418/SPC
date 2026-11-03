@@ -12,6 +12,7 @@ import { captureChartPresentation, translateChartPresentation, escapeChartText }
 import { createChartLabelTranslator } from "../i18n/chartLabels";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
+import { formatChartMeasurementDate } from "../utils/chartMeasurementDate";
 import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { normalizeControlScope } from "../utils/controlScope";
 import { resolveActiveRawDataPpcId } from "../utils/spcRawDataDownload";
@@ -1423,9 +1424,7 @@ function renderECharts() {
     }
     if (singleChemicalLine) return `${chemicalDateKey(p).slice(5).replace("-", "/")} ${stageLabel(p.samplingStage)}`;
     if (p.measuredAt) {
-      return new Date(p.measuredAt).toLocaleString('zh-TW', { 
-        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false 
-      });
+      return formatChartMeasurementDate(p.measuredAt, true);
     }
     return `P#${i + 1}`;
   });
@@ -1655,7 +1654,7 @@ function renderECharts() {
           const phaseColors = { OPEN: "text-blue-300", MIDDLE: "text-emerald-300", CLOSE: "text-orange-300" };
           res += `<div>${htmlChartLabel("班別")}: <span class="font-bold ${phaseColors[phase]}">${htmlChartLabel(chartStageShiftLabel(meta.samplingPhase, meta.samplingStage, singleChemicalLine))}</span></div>`;
           if (singleChemicalLine) res += `<div>${htmlChartLabel("取樣階段")}: ${htmlChartLabel(stageLabel(meta.samplingStage))}</div>`;
-          if (meta.measuredAt) res += `<div>${htmlChartLabel("實際量測")}: <span class="text-slate-200">${new Date(meta.measuredAt).toLocaleString("zh-TW", { hour12: false })}</span></div>`;
+          if (meta.measuredAt) res += `<div>${htmlChartLabel("實際量測")}: <span class="text-slate-200">${formatChartMeasurementDate(meta.measuredAt)}</span></div>`;
           res += `</div>`;
         }
         params.forEach(p => {
@@ -1806,9 +1805,7 @@ function renderTrendChart() {
 
   const labels = rawPoints.map((p, i) => {
     if (p.measuredAt) {
-      return new Date(p.measuredAt).toLocaleString('zh-TW', { 
-        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false 
-      });
+      return formatChartMeasurementDate(p.measuredAt, true);
     }
     return `P#${i + 1}`;
   });
@@ -2629,7 +2626,7 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
               <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-200">
                 <tr v-for="row in violationRows" :key="`${row.pointNo}-${row.measuredAt}`">
                   <td class="py-2 pr-3 font-bold">#{{ row.pointNo }}</td>
-                  <td class="py-2 pr-3 whitespace-nowrap">{{ row.measuredAt ? new Date(row.measuredAt).toLocaleString('zh-TW', { hour12: false }) : '-' }}</td>
+                  <td class="py-2 pr-3 whitespace-nowrap">{{ formatChartMeasurementDate(row.measuredAt) }}</td>
                   <td class="py-2 pr-3 font-mono">{{ formatNumber(row.value ?? row.xbar, 4) }}</td>
                   <td class="py-2 pr-3">
                     <span v-if="row.outOfSpec" class="px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 font-bold">OOS</span>
@@ -2796,7 +2793,7 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
               <div>
                 <p class="text-[10px] font-bold text-slate-400 uppercase">{{ t('spc.chartActions.measuredAt') }}</p>
                 <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
-                  {{ selectedPoint.measuredAt ? new Date(selectedPoint.measuredAt).toLocaleString('zh-TW', { hour12: false }) : t('spc.chartActions.noTime') }}
+                  {{ selectedPoint.measuredAt ? formatChartMeasurementDate(selectedPoint.measuredAt) : t('spc.chartActions.noTime') }}
                 </p>
               </div>
             </div>

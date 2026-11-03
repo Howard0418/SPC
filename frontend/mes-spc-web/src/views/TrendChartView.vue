@@ -11,6 +11,7 @@ import { createChartLabelTranslator } from "../i18n/chartLabels";
 import { captureChartPresentation, translateChartPresentation, escapeChartText } from "../i18n/chartPresentation";
 import { useRoute, useRouter } from "vue-router";
 import * as echarts from "echarts";
+import { formatChartMeasurementDate } from "../utils/chartMeasurementDate";
 import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { etchTrendPresentation } from "../utils/etchTrendPresentation";
 import { buildHistogramBins, findHistogramBinIndex } from "../utils/histogram";
@@ -696,8 +697,7 @@ async function restoreExcludedPoint(row) {
 
 function formatPointTime(value) {
   if (!value) return t('spc.chartQuery.notProvided');
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("zh-TW", { hour12: false });
+  return formatChartMeasurementDate(value);
 }
 
 function formatPointValue(value) {
@@ -778,9 +778,7 @@ function renderTrendChart() {
 
   const labels = rawPoints.map((p, i) => {
     if (p.measuredAt) {
-      return new Date(p.measuredAt).toLocaleString("zh-TW", {
-        month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
-      });
+      return formatChartMeasurementDate(p.measuredAt, true);
     }
     return `P#${i + 1}`;
   });
