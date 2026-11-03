@@ -48,6 +48,8 @@
 
 # SPC 現行需求索引
 
+- 2026-11-03 [目前F!B3=.99核對](../specs/20261103-chemical-f-consistency/f-b3-alignment.md)：使用者確認最新.99並要求執行；處理前啟用F239／歷史248已符合，dry-run 0格、兩種F參照及C5=86.13通過，未重複建立版本。各12張保護表及完整F資料不變；同父工作不加計數，核心43／SPC21，其他待辦保持。
+
 - 2026-11-03 [藥液F／濃度一致性修正](../specs/20261103-chemical-f-consistency/verification.md)：F引用保留、缺值拒絕、初複驗分式與原係數；測試API105／Web119／Portal219，87濃度配置、83日期政策及F247、166服務預覽及登入UI通過。IF分支與Excel一致，舊工具缺Phase拒絕；缺歷史適用日期不能套最新F。正式及舊資料保持，4項NA、其他兩式、EXE及正式待辦，原Excel核心43／SPC21。
 
 - 2026-11-03 [濃度公式相同性續驗](../specs/20261103-chemical-all-formula-reconciliation/concentration-validation.md)：107項／214條來源候選可等價，3008數值與602缺F／無效輸入拒絕通過；Portal測試一般量測C5滴定10卻顯示0.00，定位預覽未帶F且係數不同，不能只改公式文字。初複驗5項差異分列；未改公式／資料／網站，不核銷既有待辦。

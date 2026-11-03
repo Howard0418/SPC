@@ -4,6 +4,8 @@
 
 ## 2026-11-03 藥液 F、缺值及係數一致性（執行中）
 
+> 目前F值續驗：F239／歷史248在本輪開始時已是B3=.99，dry-run 0異動，兩種參照及C5=86.13通過；NoChange未重複寫入。原進度表同父工作續註，核心43／SPC21不變。[紀錄](specs/20261103-chemical-f-consistency/f-b3-alignment.md)。
+
 - [ ] `SPC-CHEM-F-CONSISTENCY-1103-TASK-001`：P0，測試API105／Web119、Portal API219／Web260；87濃度設定補正、83項F247日期政策、166服務預覽、3008數值／602拒絕、366核心與登入畫面通過。C5=86.13／有效0=0.00、PT1=31.77、QE2初6.35／複31.77；舊工具缺Phase拒絕。4項NA、其他兩式、EXE與正式待辦，不改舊量測。[驗證](specs/20261103-chemical-f-consistency/verification.md)。原Excel232登錄／核心43／SPC21、49原生物件已同步；未DONE，其他工作不開始。
 
 ## 2026-11-03 圖表日期顯示（測試／正式完成）
