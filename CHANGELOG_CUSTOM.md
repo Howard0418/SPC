@@ -1,3 +1,9 @@
+## 2026-11-03 SPC-AUDIT-20261103 使用者活動稽核僅規劃入池
+- 唯讀盤點確認目前只有校驗、點位及部分量測等模組追溯，沒有全站登入／成功進頁／操作事件、稽核查詢、保存或容量政策；本機登入已停用，SPC 可追的是 Portal SSO 交換，Portal 帳密登入不在本案。
+- 建立 append-only 事件格式、伺服器可信 actor、敏感資料排除、最小權限、保存／封存、故障與效能門檻、截圖證據規則，並依安全、資料正確性、高頻操作排序拆成9件。一般 Editor 不預設取得稽核查閱權限；每次點擊／按鍵／捲動不列入建議範圍。
+- 原進度表新增9列與11/03原生橙色規劃里程碑，42個既有圖形保持並新增1個；OpenXML 0錯誤、候選及原路徑重開／渲染、公式錯誤0與LibreOffice 12頁列印通過（未做Microsoft Excel人工）。核心35→44、SPC直接13→22，人工11／核銷4另計。
+- 本次未修改程式、DB、權限、Portal、IIS或網站，build與發布不適用；9件均待執行，正式站仍須另行授權。規格：[spec](specs/20261103-spc-user-activity-audit/spec.md)／[tasks](specs/20261103-spc-user-activity-audit/tasks.md)／[verification](specs/20261103-spc-user-activity-audit/verification.md)。
+
 ## 2026-11-03 SPC-UI-1103-TASK-001 兩頁查詢列常態檢定欄位移除
 - 即時互動管制圖與量測值趨勢圖移除「常態檢定方法／Anderson-Darling」查詢列靜態區塊；固定AD查詢參數、常態結果、圖表與其他篩選保持。
 - 26項Playwright、三語檢查及測試／正式隔離建置通過；測試與正式Web0.1.115已發布，API0.1.97／0.1.92、DB、公式、F值與Portal均未變更。
