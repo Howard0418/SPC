@@ -66,7 +66,7 @@ TASK-002儲存補充：`ActorServiceCode`保存明確的背景服務代碼；`De
 | Category | EventCode |
 |---|---|
 | Authentication | `auth.sso.exchange`、`auth.logout.request`、`auth.local_login.request` |
-| Security | `security.access.check`、`security.operator.create`、`security.operator.update`、`security.operator.change_status`、`security.operator.change_role`、`security.operator.change_permissions`、`security.setting.change` |
+| Security | `security.access.check`、`security.operator.create`、`security.operator.update`、`security.operator.change_status`、`security.operator.change_role`、`security.operator.change_permissions`、`security.setting.prepare`、`security.setting.change` |
 | Navigation | `navigation.page.enter` |
 | Read | `read.query.execute`、`read.filter.apply`、`read.export.generate`、`read.download.authorize` |
 | Measurement | `measurement.record.create`、`measurement.record.update`、`measurement.record.delete`、`measurement.record.recheck`、`measurement.batch.exclude` |
@@ -76,6 +76,8 @@ TASK-002儲存補充：`ActorServiceCode`保存明確的背景服務代碼；`De
 | Audit | `audit.events.query`、`audit.events.export`、`audit.evidence.access`、`audit.retention.execute`、`audit.legal_hold.change` |
 
 `ReasonCode` 優先沿用既有固定 API 代碼，例如 `AUTH_SSO_EXPIRED`、`AUTH_SSO_SIGNATURE`、`AUTH_SSO_REPLAYED`、`AUTH_ACCOUNT_DISABLED`。不得保存 exception、stack trace、SQL 或設定原文。後續自動化測試須列舉非唯讀 Controller action；未對應已註冊 EventCode 時失敗。
+
+TASK-004補充：`security.setting.prepare`只表示SMTP設定寫檔前的安全意圖已保存，不表示設定已套用；以同一CorrelationId的`security.setting.change`結果核對。只沿用Security欄位白名單，不保存設定或秘密。未結清意圖須核對後處理，不以SQL交易涵蓋檔案或自動重送郵件。
 
 ## 六、canonical PageKey／Route 對照
 

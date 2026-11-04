@@ -4,7 +4,7 @@ namespace MesSpc.Api.Services.Security;
 
 public static class SpcPagePermissions
 {
-    public sealed record Item(string Code, string Name, string Route, bool ViewerDefault = false);
+    public sealed record Item(string Code, string Name, string Route, bool ViewerDefault = false, bool ExplicitOnly = false);
     public static readonly Item[] Catalog =
     [
         new("analysis.etch", "咬蝕量分析", "/etch-analysis", true),
@@ -20,7 +20,10 @@ public static class SpcPagePermissions
         new("master.spc", "SPC 管制項目設定", "/part-process-characteristics"), new("master.process", "工站製程主檔", "/processes"),
         new("master.parts", "產品料號主檔", "/parts"), new("master.characteristics", "品質特性項目", "/characteristics"),
         new("admin.operators", "系統使用者管理", "/operators"), new("admin.settings", "系統與通報設定", "/settings"),
-        new("calibration.manage", "儀器校正管理", "/calibration-instruments")
+        new("calibration.manage", "儀器校正管理", "/calibration-instruments"),
+        new(AuditPermissions.Read, "稽核紀錄查閱（明示授權）", "/audit-events", ExplicitOnly: true),
+        new(AuditPermissions.Export, "稽核紀錄匯出（需查閱權）", "/audit-events", ExplicitOnly: true),
+        new(AuditPermissions.Evidence, "稽核證據查閱（需查閱權）", "/audit-events", ExplicitOnly: true)
     ];
 
     public static string[] Resolve(string? role, string? json)
@@ -29,7 +32,7 @@ public static class SpcPagePermissions
         {
             try { return JsonSerializer.Deserialize<string[]>(json) ?? []; } catch { }
         }
-        return UserRoles.Normalize(role) == UserRoles.Editor ? Catalog.Select(x => x.Code).ToArray()
+        return UserRoles.Normalize(role) == UserRoles.Editor ? Catalog.Where(x => !x.ExplicitOnly).Select(x => x.Code).ToArray()
             : Catalog.Where(x => x.ViewerDefault).Select(x => x.Code).ToArray();
     }
 }

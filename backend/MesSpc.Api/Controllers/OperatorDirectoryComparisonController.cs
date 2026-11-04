@@ -69,7 +69,7 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
         if (portalResult.Error is not null) return portalResult.Error;
         var portalUsers = portalResult.Users!;
         var results = new List<object>();
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(cancellationToken) : null;
 
         foreach (var item in request.Items.DistinctBy(x => x.PortalUserId))
         {
@@ -91,7 +91,6 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
                 (x.OperatorCode == code || x.Username == account) && (op == null || x.Id != op.Id), cancellationToken);
             if (collision) { results.Add(new { item.PortalUserId, success = false, message = "AD 帳號或工號已被其他 SPC 人員使用。", code="DIRECTORY_ACCOUNT_USED", messageKey="spc.api.directoryAccountUsed", args=ApiUiMessageCatalog.EmptyArguments }); continue; }
 
-            var before = op is null ? null : JsonSerializer.Serialize(new { op.Id, op.OperatorCode, op.OperatorName, op.Department, op.Email, op.Username, op.Role, op.IsActive });
             var action = op is null ? "Created" : "Updated";
             if (op is null)
             {
@@ -107,12 +106,10 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
                 op.UpdatedAt = DateTime.UtcNow; op.UpdatedBy = User.Identity?.Name ?? "DirectorySync";
             }
             await db.SaveChangesAsync(cancellationToken);
-            var after = JsonSerializer.Serialize(new { op.Id, op.OperatorCode, op.OperatorName, op.Department, op.Email, op.Username, op.Role, op.IsActive });
-            logger.LogInformation("Portal SPC operator sync. Action={Action}, PortalUserId={PortalUserId}, OperatorId={OperatorId}, ExecutedBy={ExecutedBy}, Before={Before}, After={After}",
-                action, portal.PortalUserId, op.Id, User.Identity?.Name, before, after);
+            logger.LogInformation("Portal SPC operator sync. Action={Action}, OperatorId={OperatorId}", action, op.Id);
             results.Add(new { item.PortalUserId, spcOperatorId = op.Id, success = true, action });
         }
-        await transaction.CommitAsync(cancellationToken);
+        if (transaction is not null) await transaction.CommitAsync(cancellationToken);
         return Ok(new { results, succeeded = results.Count(x => (bool)x.GetType().GetProperty("success")!.GetValue(x)!) });
     }
 

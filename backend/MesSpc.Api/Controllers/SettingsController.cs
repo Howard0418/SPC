@@ -94,10 +94,10 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
             logger.LogInformation("SMTP 設定已更新至 appsettings.json");
             return Ok(new { success = true, message = "SMTP 設定已成功更新並生效。", code="SMTP_SETTINGS_UPDATED", messageKey="spc.api.smtpSettingsUpdated", args=ApiUiMessageCatalog.EmptyArguments });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            logger.LogError(ex, "更新 appsettings.json 時發生錯誤");
-            return StatusCode(500, new { success = false, messageKey = "spc.api.settingsUpdateFailed", args = ApiUiMessageCatalog.EmptyArguments, message = $"更新設定失敗: {ex.Message}" });
+            logger.LogError("SMTP_SETTINGS_UPDATE_FAILED");
+            return StatusCode(500, new { success = false, messageKey = "spc.api.settingsUpdateFailed", args = ApiUiMessageCatalog.EmptyArguments, message = "更新設定失敗，請稍後重試。" });
         }
     }
 

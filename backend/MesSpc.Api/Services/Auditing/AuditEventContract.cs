@@ -54,7 +54,7 @@ internal static partial class AuditEventContract
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
         void Add(string category, string codes) { foreach (var code in codes.Split(' ')) result.Add(code, category); }
         Add("Authentication", "auth.sso.exchange auth.logout.request auth.local_login.request");
-        Add("Security", "security.access.check security.operator.create security.operator.update security.operator.change_status security.operator.change_role security.operator.change_permissions security.setting.change");
+        Add("Security", "security.access.check security.operator.create security.operator.update security.operator.change_status security.operator.change_role security.operator.change_permissions security.setting.prepare security.setting.change");
         Add("Navigation", "navigation.page.enter");
         Add("Read", "read.query.execute read.filter.apply read.export.generate read.download.authorize");
         Add("Measurement", "measurement.record.create measurement.record.update measurement.record.delete measurement.record.recheck measurement.batch.exclude");
