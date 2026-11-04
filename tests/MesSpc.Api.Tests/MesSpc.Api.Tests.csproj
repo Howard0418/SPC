@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\backend\MesSpc.Api\MesSpc.Api.csproj" />
     <ProjectReference Include="..\..\tools\OctoberProductionFormulaF\OctoberProductionFormulaF.csproj" />
     <ProjectReference Include="..\..\tools\OctoberProductionChemicalImport\OctoberProductionChemicalImport.csproj" />
+    <ProjectReference Include="..\..\tools\ProductionChemicalMasterFormulaSync\ProductionChemicalMasterFormulaSync.csproj" />
   </ItemGroup>
 
   <!-- Explicit local cross-repository baseline; no copied implementation or machine-specific path. -->
