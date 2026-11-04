@@ -2518,3 +2518,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [續驗結果](specs/20261103-chemical-all-formula-reconciliation/concentration-validation.md)：107項、214條初複驗候選式精確轉寫證明與3008數值一致、602缺F／無效輸入拒絕；F改變時結果隨來源算式變動，5項初複驗不同保持。
 - 實測Portal測試C5清潔硫酸滴定10回0.00：一般preview-custom沒有載入F、舊parser把未知F當空白再視為0；測試主檔係數8.47亦與Excel8.7不同。SPC嚴格日期Calculate與一般Portal路徑分開，前輪隔離1265計算通過不擴張為一般量測通過。
 - 僅驗證及截圖，未儲存／prepare／confirm、未改主檔／F／歷史或發布；原核對Excel保持。尚未修正產品，核心42與原進度表保持。
+# 2026-11-04 十月藥液量測正式僅新增
+
+- 依使用者授權，以報表日12:00+08:00作歷史匯入時間，檔名中班／OPEN及N1／N2開收線規則固定；正式`PMR_SPC_2026`先做COPY_ONLY/CHECKSUM備份與RESTORE VERIFYONLY，再新增335筆量測（23筆複驗），864筆既有資料略過，12筆F衝突持續隔離。
+- 358次候選公式試算、335筆Receipt／Trace查回及75項圖表查詢通過；相同清單重送為0新增／1199已存在／12衝突，寫入前舊量測、PPC、啟用F及公式排程指紋保持。正式API0.1.102／production健康與版本成功，無網站程式或IIS發布。
+- 統計後處理240筆完成；95筆集中24項既有PPC且全為`ChartTypeId`空值，量測不可重匯，須確認型別後只重跑統計。整件因此未標DONE，核心45／涉及SPC22不變。[驗證與回復](specs/20261104-october-production-chemical-measurements/verification.md)。
