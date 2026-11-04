@@ -1,3 +1,10 @@
+## 2026-11-04 藥液歷史「無法判定」T-004固定原因顯示完成
+
+- SPC歷史查詢新增向後相容的固定原因碼、補正資格與修正建議；Portal在Unknown列直接顯示原因與建議並支援舊API安全降級，既有OK／NG、初複驗、分頁與日期篩選保持。
+- 實際測試庫6,155筆中1,611筆Unknown全部回傳`HISTORICAL_EVIDENCE_MISSING／SourceEvidenceRequired`，前後VariableMeasurements 18,108、UploadDetails 17,872與連結指紋一致，寫入0；不以目前主檔回判歷史。
+- SPC API414／11略過、藥液96、Portal API261及UI39通過；測試SPC API0.1.109／Portal API1.0.221／Web1.0.261的首頁、資產MIME、health／version及實際Web API基底通過。正式未發布；登入後畫面與遮罩截圖列T-005。
+- 原進度表已同步11/04原生里程碑59及第267列，原58個圖形保持；輸出雜湊`120f526b...e3a2c`，OpenXML 0錯誤、artifact重開／公式錯誤0及LibreOffice 14頁列印通過。核心45／涉及SPC22、完成189、人工11／核銷4不變。
+
 ## 2026-11-04 分析項目規格／管制界限總覽規劃入池
 
 - 新增`SPC-LIMITS-BULK-1104-TASK-001`／P1，規劃以表格顯示與批次編輯規格LSL／Target／USL及管制LCL／CL／UCL；UI參考藥液公式總覽，支援跨頁異動、預檢與一次儲存。

@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 namespace MesSpc.Api.Services;
 
 public sealed record ChemicalHistoryPresentation(double EffectiveValue, bool HasRecheck, string InitialJudgment,
-    string Judgment, string JudgmentSource, string PrecisionNote);
+    string Judgment, string JudgmentSource, string PrecisionNote, string? JudgmentReasonCode = null,
+    string RepairEligibility = "NotRequired", string? RepairSuggestion = null);
 
 /// <summary>Read saved judgment evidence in bounded batches; never recalculate formulas or use current master limits.</summary>
 public sealed class ChemicalHistoryQueryService(AppDbContext db)
@@ -51,9 +52,16 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
                 var judgment=Normalize(final?.Judgment);
                 var rounded=final is not null && decimal.TryParse(final.RawResult,NumberStyles.Float,CultureInfo.InvariantCulture,out var raw)
                     && decimal.TryParse(final.StoredResult,NumberStyles.Float,CultureInfo.InvariantCulture,out var stored) && raw!=stored;
-                output[row.Id]=new(value,row.RecheckValue.HasValue,Normalize(initial?.Judgment),judgment,
-                    final is null?"Unavailable":"SavedTrace",final is null?"缺少有效的保存追溯，無法判定"
-                    :judgment=="Unknown"?"保存紀錄缺少有效規格或判定，無法判定":rounded?"依保存的原始計算結果判定（顯示值已取位）":"");
+                output[row.Id]=final is null
+                    ? new(value,row.RecheckValue.HasValue,Normalize(initial?.Judgment),judgment,"Unavailable",
+                        "缺少有效的保存追溯，無法判定","TRACE_EVIDENCE_INVALID","SourceEvidenceRequired",
+                        "補回量測當時的Receipt／Trace、公式F與規格版本後重新核對；不可套用目前主檔。")
+                    : judgment=="Unknown"
+                        ? new(value,row.RecheckValue.HasValue,Normalize(initial?.Judgment),judgment,"SavedTrace",
+                            "保存紀錄缺少有效規格或判定，無法判定","TRACE_JUDGMENT_MISSING","SourceEvidenceRequired",
+                            "補齊保存追溯中的當時規格與判定證據後重新核對；不可套用目前主檔。")
+                        : new(value,row.RecheckValue.HasValue,Normalize(initial?.Judgment),judgment,"SavedTrace",
+                            rounded?"依保存的原始計算結果判定（顯示值已取位）":"");
             }
             else if(savedSpecifications.TryGetValue(row.Id,out var specifications))
                 output[row.Id]=ChemicalSavedSpecificationService.Present(row,specifications);
@@ -62,7 +70,9 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
                 var initial=(result.LSL.HasValue && row.MeasuredValue<result.LSL.Value) || (result.USL.HasValue && row.MeasuredValue>result.USL.Value)?"NG":"OK";
                 output[row.Id]=new(value,row.RecheckValue.HasValue,initial,result.IsOutOfSpec?"NG":"OK","SavedCalculation","舊資料：依保存量測值及SPC計算紀錄的規格判定");
             }
-            else output[row.Id]=new(value,row.RecheckValue.HasValue,"Unknown","Unknown","Unavailable","缺少相符的歷史判定或規格紀錄，無法判定");
+            else output[row.Id]=new(value,row.RecheckValue.HasValue,"Unknown","Unknown","Unavailable",
+                "缺少相符的歷史判定或規格紀錄，無法判定","HISTORICAL_EVIDENCE_MISSING","SourceEvidenceRequired",
+                "補回量測當時的Receipt／Trace、公式F與規格版本後重新核對；不可套用目前主檔。");
         }
         return output;
     }

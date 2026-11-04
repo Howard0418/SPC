@@ -74,14 +74,16 @@ public class ChemicalSavedSpecificationTests
     }
 
     [Theory]
-    [InlineData(true,true,"僅紀錄")]
-    [InlineData(false,false,"未設定規格")]
-    public async Task RecordOnlyAndMissingSpecificationNeverBecomeOk(bool recordOnly,bool spec,string reason)
+    [InlineData(true,true,"僅紀錄","SAVED_SPEC_RECORD_ONLY","NotApplicable")]
+    [InlineData(false,false,"未設定規格","SAVED_SPEC_LIMITS_MISSING","SourceEvidenceRequired")]
+    public async Task RecordOnlyAndMissingSpecificationNeverBecomeOk(bool recordOnly,bool spec,string reason,string reasonCode,string eligibility)
     {
         await using var f=await DirectAsync(recordOnly,spec);
         await f.Service.ConfirmAsync(new(Guid.NewGuid(),[DirectRow("5")]),"editor",default);
         var result=(await new ChemicalHistoryQueryService(f.Db).GetAsync(await f.Db.VariableMeasurements.AsNoTracking().ToListAsync())).Single().Value;
         result.Judgment.Should().Be("Unknown");result.PrecisionNote.Should().Contain(reason);
+        result.JudgmentReasonCode.Should().Be(reasonCode);result.RepairEligibility.Should().Be(eligibility);
+        result.RepairSuggestion.Should().NotBeNullOrWhiteSpace();
     }
 
     [Fact]
@@ -96,6 +98,8 @@ public class ChemicalSavedSpecificationTests
         row.MeasuredValue=7;
         var mismatch=(await query.GetAsync([row]))[row.Id];
         mismatch.Judgment.Should().Be("Unknown");mismatch.PrecisionNote.Should().Contain("不一致");
+        mismatch.JudgmentReasonCode.Should().Be("SAVED_SPEC_VALUE_MISMATCH");
+        mismatch.RepairEligibility.Should().Be("EvidenceConflict");
     }
 
     [Fact]

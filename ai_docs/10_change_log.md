@@ -1335,3 +1335,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：對測試資料庫中「已有唯一完整Receipt／Trace，但量測列遺失連結」的CHEM資料建立可重跑、可回復補正；無證據列只輸出修正清單。
 - 限制：不使用目前主檔重判，不建立新Receipt／Trace，不改量測值、公式、F值、規格、Portal／TransFiles或正式資料。
 - 驗證：先建立Happy Path、無證據、衝突證據、manifest過期、整批rollback與重跑NoChange自動化測試，再實作服務與測試庫dry-run。
+
+# 2026-11-04 藥液歷史Unknown T-004固定原因顯示
+
+- 目的：讓Portal藥液歷史的「無法判定」列直接顯示SPC權威固定原因與修正建議，不再只藏在滑鼠提示。
+- 相容：保留既有判定、初複驗、分頁、日期篩選及舊API回應；Portal不以目前主檔重算或推測OK／NG。
+- 範圍：SPC唯讀查詢DTO與Portal顯示／搜尋；不改schema、量測、公式F、正式資料或TransFiles。

@@ -158,6 +158,9 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 judgment = presentation[x.Id].Judgment,
                 judgmentSource = presentation[x.Id].JudgmentSource,
                 precisionNote = presentation[x.Id].PrecisionNote,
+                judgmentReasonCode = presentation[x.Id].JudgmentReasonCode,
+                repairEligibility = presentation[x.Id].RepairEligibility,
+                repairSuggestion = presentation[x.Id].RepairSuggestion,
                 x.AdjustAction,
                 x.AdjustAmount
             })

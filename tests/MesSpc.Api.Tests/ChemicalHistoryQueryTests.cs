@@ -23,6 +23,9 @@ public class ChemicalHistoryQueryTests
         row.GetProperty("value").GetDouble().Should().Be(2);row.GetProperty("RecheckValue").GetDouble().Should().Be(0);
         row.GetProperty("effectiveValue").GetDouble().Should().Be(0);row.GetProperty("initialJudgment").GetString().Should().Be("NG");
         row.GetProperty("judgment").GetString().Should().Be("OK");
+        row.GetProperty("judgmentReasonCode").ValueKind.Should().Be(JsonValueKind.Null);
+        row.GetProperty("repairEligibility").GetString().Should().Be("NotRequired");
+        row.GetProperty("repairSuggestion").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     [Fact]
@@ -83,6 +86,23 @@ public class ChemicalHistoryQueryTests
         row.RecheckValue=5;(await service.GetAsync([row]))[1].Judgment.Should().Be("Unknown");
         var none=new VariableMeasurement{Id=2,MeasuredValue=0};(await service.GetAsync([none]))[2].Judgment.Should().Be("Unknown");
         db.ChangeTracker.Entries().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task MissingHistoricalEvidenceReturnsFixedReasonAndActionWithoutUsingCurrentLimits()
+    {
+        await using var db=new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var row=new VariableMeasurement{Id=1,PartProcessCharacteristicId=1,ProcessId=1,MeasuredValue=7};
+        db.AddRange(row,new Process{Id=1,ProcessCode="C5",ProcessName="C5"},new PartProcessCharacteristic{Id=1,ProcessId=1,LSL=0,USL=10,ControlScope="CHEM"});
+        await db.SaveChangesAsync();
+
+        var result=(await new ChemicalHistoryQueryService(db).GetAsync([row]))[1];
+
+        result.Judgment.Should().Be("Unknown");
+        result.JudgmentReasonCode.Should().Be("HISTORICAL_EVIDENCE_MISSING");
+        result.RepairEligibility.Should().Be("SourceEvidenceRequired");
+        result.RepairSuggestion.Should().Contain("Receipt").And.Contain("公式F").And.Contain("規格");
+        result.PrecisionNote.Should().Contain("無法判定");
     }
 
     [Theory]

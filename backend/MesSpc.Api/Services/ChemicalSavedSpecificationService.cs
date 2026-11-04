@@ -74,23 +74,29 @@ public sealed class ChemicalSavedSpecificationService(AppDbContext db)
     public static ChemicalHistoryPresentation Present(VariableMeasurement row, IReadOnlyList<PortalSavedSpecificationSnapshot> snapshots)
     {
         var value = row.RecheckValue ?? row.MeasuredValue;
-        if (snapshots.Count != 1) return Unavailable("保存規格快照重複或不完整，無法判定");
+        if (snapshots.Count != 1) return Unavailable("保存規格快照重複或不完整，無法判定",
+            "SAVED_SPEC_NOT_UNIQUE", "EvidenceConflict", "請先釐清重複或缺漏的保存規格快照，再重新核對。");
         var saved = snapshots[0];
         if (saved.Version != 1 || saved.MeasurementId != row.Id || saved.PpcId != row.PartProcessCharacteristicId
             || saved.BatchId != row.UploadBatchId || saved.MeasuredAt != row.MeasuredAt
             || saved.InitialValue != row.MeasuredValue || saved.RecheckValue != row.RecheckValue)
-            return Unavailable("保存規格快照與量測資料不一致，無法判定");
-        if (saved.RecordOnly) return Unavailable("此項目儲存時為僅紀錄模式，不作規格判定");
-        if (!saved.Lsl.HasValue && !saved.Usl.HasValue) return Unavailable("此筆資料儲存時未設定規格上下限，無法判定");
+            return Unavailable("保存規格快照與量測資料不一致，無法判定", "SAVED_SPEC_VALUE_MISMATCH",
+                "EvidenceConflict", "請核對量測值、PPC、量測時間及保存規格版本；不可用其中一方覆蓋另一方。");
+        if (saved.RecordOnly) return Unavailable("此項目儲存時為僅紀錄模式，不作規格判定", "SAVED_SPEC_RECORD_ONLY",
+            "NotApplicable", "若此筆原本應作規格判定，請先確認當時的項目模式與核准依據；不可套用目前主檔。");
+        if (!saved.Lsl.HasValue && !saved.Usl.HasValue) return Unavailable("此筆資料儲存時未設定規格上下限，無法判定",
+            "SAVED_SPEC_LIMITS_MISSING", "SourceEvidenceRequired", "補回量測當時核准的規格上下限版本後重新核對；不可套用目前主檔。");
         if ((saved.Lsl.HasValue && !double.IsFinite(saved.Lsl.Value))
             || (saved.Usl.HasValue && !double.IsFinite(saved.Usl.Value)) || saved.Lsl > saved.Usl)
-            return Unavailable("保存的規格上下限無效，無法判定");
+            return Unavailable("保存的規格上下限無效，無法判定", "SAVED_SPEC_LIMITS_INVALID",
+                "EvidenceConflict", "請先修正來源中無效或顛倒的當時規格證據，再重新核對。");
         string Judge(double input) => (saved.Lsl.HasValue && input < saved.Lsl.Value)
             || (saved.Usl.HasValue && input > saved.Usl.Value) ? "NG" : "OK";
         return new(value, row.RecheckValue.HasValue, Judge(row.MeasuredValue), Judge(value), "SavedSpecification",
             "依本次儲存時的規格快照判定，不受管制圖型或後續主檔變更影響");
 
-        ChemicalHistoryPresentation Unavailable(string reason) => new(value, row.RecheckValue.HasValue,
-            "Unknown", "Unknown", "Unavailable", reason);
+        ChemicalHistoryPresentation Unavailable(string reason, string reasonCode, string eligibility, string suggestion) =>
+            new(value, row.RecheckValue.HasValue, "Unknown", "Unknown", "Unavailable", reason,
+                reasonCode, eligibility, suggestion);
     }
 }

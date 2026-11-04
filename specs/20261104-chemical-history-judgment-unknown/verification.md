@@ -1,11 +1,11 @@
 # 驗證紀錄
 
 - 功能 ID：SPC-CHEM-HISTORY-JUDGMENT-1104
-- 規格版本：5
+- 規格版本：6
 - 日期／環境：2026-11-04／測試`PMR_SPC_TEST`、正式`PMR_SPC_2026`唯讀盤點
-- 實作狀態：T-001～T-003完成；T-004～T-006未執行
-- 驗證狀態：T-001～T-003通過；Portal原因畫面尚未開始
-- 發布狀態：SPC測試API 0.1.108／Web 0.1.120已發布；正式未發布
+- 實作狀態：T-001～T-004完成；T-005～T-006未執行
+- 驗證狀態：T-004自動化、測試DB唯讀與測試站連線通過；登入後實際畫面／截圖留T-005
+- 發布狀態：SPC測試API 0.1.109／Web 0.1.120、Portal測試API 1.0.221／Web 1.0.261已發布；正式未發布
 
 | 驗收 ID | 命令或操作 | 預期結果 | 實際結果及證據 | 狀態 |
 |---|---|---|---|---|
@@ -13,9 +13,9 @@
 | AC-002 | 以查詢API底層同一`ChemicalHistoryQueryService`、NoTracking及Rollback唯讀盤點正式／測試資料 | 分類總數與查詢一致 | 正式4,199總數＝90 Known＋4,109 Unknown；測試6,155＝4,544＋1,611。Unknown全部為`NO_HISTORICAL_EVIDENCE`；逐筆含MeasurementId、PPC、線別、槽位、項目、日期、批次與原因。JSON雜湊正式`78d622...1988`、測試`2bb29b...96e`。[完整盤點](inventory-20261104.md) | 通過（HTTP畫面留T-005） |
 | AC-003 | 匯入格式與preview測試 | 格式缺漏在寫入前被拒絕／隔離 | 新增6項自動測試：Api／File／TransFiles／偽PortalDaily四種通用來源均以`CHEMICAL_EVIDENCE_REQUIRED`隔離並保留來源座標；部署前有效CHEM批次在狀態／量測寫入前拒絕；通用範本僅含PROCESS示例並引導Portal／TransFiles | 通過 |
 | AC-004 | confirm防繞過及受控流程回歸 | 只有證據受控流程可寫入，舊批次不能繞過 | Portal內部服務才傳入信任旗標；T-003再以既有不可變追溯產生SHA-256 manifest。唯一證據補連／重跑NoChange、無證據、衝突、過期manifest及交易晚期失敗5項測試通過；重跑前仍重驗全部證據 | T-002／T-003通過 |
-| AC-005 | API／回歸 | 既有OK／NG與功能不變 | `MesSpc.Api.Tests` 413通過／11項隔離SQL或外部基準明確略過；`MesSpc.Chemical.Tests` 96通過；API Release建置0錯誤（NuGet弱點來源離線警告1）。前端沿用T-002已通過的2770鍵×3語系與testhost建置，未改歷史查詢判定邏輯 | T-003回歸通過 |
-| AC-006 | 測試站畫面與截圖 | 顯示固定原因及調整建議 | 未執行 | 未執行 |
-| AC-007 | 備份／指紋／環境 | 測試先行，正式另授權 | 最終dry-run與網站同歷史判定對上：1,611 Unknown／eligible 0／blocked 1,611，全為`NO_TRACE_EVIDENCE`。前後VariableMeasurement 18,108、Receipt 2,527、Trace 2,527、UploadDetail 17,872、repair audit 0，連結指紋均為`1cdd47e2...b81f31`，寫入0。測試API0.1.108備份發布，health/version、首頁、JS/CSS MIME、保護hash及無頭瀏覽器同源`/api/health`通過；Web0.1.120不變。Windows桌面工具native pipe失敗，故改用Playwright實際瀏覽器取證。正式未發布 | T-003通過 |
+| AC-005 | API／回歸 | 既有OK／NG與功能不變 | `MesSpc.Api.Tests` 414通過／11項隔離SQL或外部基準明確略過；`MesSpc.Chemical.Tests` 96通過；Portal API 261及藥液UI 39通過。SPC／Portal API與Portal Web Release建置0錯誤；已判定列原因空白且`NotRequired`，Unknown語意、初複驗、分頁及舊API回退測試通過 | T-004通過 |
+| AC-006 | 測試站畫面與截圖 | 顯示固定原因及調整建議 | Portal自動化確認Unknown直接顯示原因／建議、固定代碼可搜尋、已判定列保持精簡；登入後實際畫面與遮罩截圖尚未執行，保留T-005 | T-004自動化通過；截圖待T-005 |
+| AC-007 | 備份／指紋／環境 | 測試先行，正式另授權 | 測試庫6,155筆中4,544 Known＋1,611 Unknown；所有Unknown為`HISTORICAL_EVIDENCE_MISSING／SourceEvidenceRequired`。前後VariableMeasurements 18,108、UploadDetails 17,872及連結指紋`1ee27e67...b5f`一致，寫入0。測試SPC API0.1.109／Portal API1.0.221／Web1.0.261的首頁、主資產MIME、health／version及Portal實際API基底皆成功；正式未發布 | T-004通過 |
 
 ## 截圖證據摘要
 
@@ -25,7 +25,16 @@
 
 ## 未執行項目、限制及後續
 
-使用者要求繼續後，T-003受控補正機制與測試庫dry-run已完成；實際沒有任何資料符合補正門檻，故寫入0、無schema migration。T-004原因畫面、T-005截圖驗收與T-006整案收尾仍未執行；正式站與正式資料未變。
+使用者要求下一項後，T-004固定原因與建議顯示已完成；實際沒有資料寫入、無schema migration。瀏覽器操作工具本輪無法建立可控制的登入頁面，因此不宣稱登入後畫面或人工截圖通過；T-005與T-006仍未執行，正式站與正式資料未變。
+
+### T-004測試、唯讀核對、發布與回復
+
+- 自動化：SPC API 414通過／11略過、藥液96通過；Portal API 261及藥液UI 39通過。SPC API、Portal API與Portal Web Release建置0錯誤，僅SPC出現既有NuGet弱點來源離線警告1。
+- 實際測試庫唯讀：總數6,155＝4,544 Known＋1,611 Unknown；1,611筆全部為`HISTORICAL_EVIDENCE_MISSING／SourceEvidenceRequired`。前後VariableMeasurements 18,108、UploadDetails 17,872及連結指紋`1ee27e6754f9dfd45c37a93dfe5fd508a3649ec508b205b4a66b8e056bdc3f5b`一致，寫入0。
+- 測試發布：SPC API 0.1.109／Web 0.1.120；Portal API 1.0.221／Web 1.0.261。SPC備份`D:/SPC/.chem-unknown-t004-20261104/backup-spc-api-20261104-152143`；Portal備份`D:/SPC/.chem-unknown-t004-20261104/backup-portal-20261104-152553`。Portal四個保護設定發布前後雜湊皆為`B1851801...CE767`；本件不發布正式站。
+- 連線驗證：SPC與Portal測試首頁成功；SPC主JS／CSS、Portal公開CSS／JS MIME正確；SPC `/api/health`、`/api/version`及Portal Web實際使用的API基底`/health`成功且環境為test。未登入Portal藥液頁302至Login、代理API 401，拒絕路徑正常。
+- 回復：SPC停測試集區後還原上述備份四個API主檔；Portal依備份還原API／Web發佈目錄。無DB或schema變更需回復。
+- 進度表：已同步2026-11-04單日原生里程碑59、專案摘要及「小工作總表」第267列；原58個圖形保留，核心45／涉及SPC22／完成189／人工11／核銷4不變。輸出SHA-256 `120f526b3d4955a2865c75b899583329bf90f85c211c267a45379ccfc76e3a2c`；ZIP、OpenXML SDK 0錯誤、artifact重新開啟與公式錯誤0、LibreOffice 14頁列印檢查通過。更新前備份為`進度表_藥液Unknown_T004前_20261104-153516.xlsx`；Microsoft Excel人工開啟未執行。
 
 ### T-003測試、dry-run、發布與回復
 

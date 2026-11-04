@@ -1,8 +1,8 @@
 # 技術計畫
 
 - 功能 ID：SPC-CHEM-HISTORY-JUDGMENT-1104
-- 規格版本：5
-- 狀態：執行中／P0-A～P0-C完成，P1顯示待執行
+- 規格版本：6
+- 狀態：執行中／P0-A～P0-C及P1顯示完成，測試站登入畫面／截圖待執行
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響範圍
@@ -36,6 +36,15 @@
 - 測試庫實際執行將輸出前後指紋、eligible／blocked數量與修正清單；清單為本機驗證產物，不提交量測明細。
 - 無schema migration、無對外API、無Portal／TransFiles變更。
 - 測試庫實際結果為eligible 0／blocked 1,611，因此沒有業務資料可套用或回復；rollback與NoChange由SQLite交易fixture驗證。
+
+## T-004實作方式
+
+- SPC `ChemicalHistoryPresentation`新增向後相容的固定原因碼、補正資格與修正建議；各證據分支直接指定分類，不由Portal解析中文判定。
+- `GET /api/processes/{id}/measurements`將三欄原樣加入列資料；既有欄位、排序、skip／take與total不變。
+- Portal查詢列在Unknown徽章下方顯示原因及建議，且可被現有關鍵字搜尋；OK／NG列不增加提示。
+- Portal收到舊API回應時以`precisionNote`及保守預設建議安全降級；不推測判定。
+- 先以SPC服務／端點測試及Portal Playwright畫面測試建立紅燈，再實作；無schema、資料寫入、公式F或TransFiles修改。
+- T-004已依本節完成並發布測試站；T-005另以登入後實際畫面核對原因、建議、搜尋及遮罩截圖，不在本輪啟動。
 
 ## T-002完成範圍
 

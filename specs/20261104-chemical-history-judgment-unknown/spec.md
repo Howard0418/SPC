@@ -2,8 +2,8 @@
 
 - 功能 ID：SPC-CHEM-HISTORY-JUDGMENT-1104
 - 小工作：`SPC-CHEM-HISTORY-JUDGMENT-1104-TASK-001`
-- 版本：5
-- 狀態：執行中／T-001～T-003完成，T-004待執行
+- 版本：6
+- 狀態：執行中／T-001～T-004完成，T-005待執行
 - 優先級：P0（資料正確性與可回復）
 - 涉及專案：SPC（主系統、權威判定與歷史證據）、Portal（查詢顯示相依）、TransFiles（後續匯入格式相依）
 - 授權依據：2026-11-04使用者要求說明藥液輸入查詢為何存在「無法判定」，配合截圖、提出格式建議，規劃後加入小工作且不要立即執行。
@@ -144,6 +144,41 @@ Scenario: 套用前證據改變時整批回復
   Then 整批失敗且不留下部分連結或稽核資料
 ```
 
+## T-004固定原因與畫面BDD
+
+SPC查詢回應保留既有`judgment`、`judgmentSource`及`precisionNote`，向後相容新增`judgmentReasonCode`、`repairEligibility`與`repairSuggestion`。固定分類如下：
+
+- 已有OK／NG判定：原因碼空白、`NotRequired`，Portal不顯示修正提示。
+- 完全缺少可驗證歷史證據：`HISTORICAL_EVIDENCE_MISSING`／`SourceEvidenceRequired`，提示補回量測當時Receipt／Trace、公式F及規格版本。
+- 保存追溯缺漏或判定缺失：`TRACE_EVIDENCE_INVALID`或`TRACE_JUDGMENT_MISSING`，依證據缺漏提示補正，不以目前主檔重判。
+- 保存規格為僅紀錄：`SAVED_SPEC_RECORD_ONLY`／`NotApplicable`，說明該筆原本不作規格判定。
+- 保存規格重複、值不符或界限無效：固定`SAVED_SPEC_*`原因碼／`EvidenceConflict`，提示先釐清衝突證據。
+
+Portal在「無法判定」徽章下方直接顯示「原因：…」與「建議：…」，同時納入關鍵字篩選；舊SPC回應缺新欄位時仍使用既有`precisionNote`作原因，並給保守的補歷史證據建議。OK／NG列、初複驗、日期篩選、完整分頁及刪除權限保持不變。
+
+2026-11-04已完成T-004：SPC查詢與Portal均依上述固定契約實作，實際測試庫6,155筆中1,611筆Unknown全部回傳`HISTORICAL_EVIDENCE_MISSING／SourceEvidenceRequired`，前後資料筆數與連結指紋一致、寫入0。自動化與測試站連線驗證已通過；登入後實際畫面與遮罩截圖保留T-005，不以自動化測試冒充人工畫面驗收。
+
+```gherkin
+Scenario: 缺歷史證據時可直接看見原因與修正建議
+  Given 歷史藥液量測缺少可驗證的Receipt、Trace、公式F或當時規格
+  When 使用者查詢藥液歷史
+  Then 判定仍為無法判定
+  And 畫面直接顯示固定原因與補回來源證據的建議
+  And 不以目前主檔推測OK或NG
+
+Scenario: 已有判定不出現修正提示
+  Given 歷史量測已有SavedTrace、SavedSpecification或SavedCalculation的OK或NG
+  When 使用者查詢藥液歷史
+  Then 原判定與初複驗值保持
+  And 畫面不顯示無法判定的原因或修正建議
+
+Scenario: 舊API回應仍安全顯示
+  Given Portal收到沒有新原因欄位的舊SPC回應
+  When 該列判定為Unknown
+  Then Portal使用既有precisionNote或保守預設原因
+  And 不顯示OK或NG
+```
+
 ## 規格版本紀錄
 
 | 版本 | 日期 | 修改原因 |
@@ -153,3 +188,4 @@ Scenario: 套用前證據改變時整批回復
 | 3 | 2026-11-04 | 明確T-002邊界：一般計量匯入隔離CHEM，確認端防繞過；Portal／TransFiles專用證據流程保持 |
 | 4 | 2026-11-04 | 完成T-002實作、回歸與測試站發布；一般匯入CHEM fail closed，T-003未開始 |
 | 5 | 2026-11-04 | 錨定T-003只修復唯一完整的既有Trace連結；manifest、NoChange與整批rollback納入BDD |
+| 6 | 2026-11-04 | 錨定T-004固定原因碼、補正資格、修正建議及Portal可見呈現與舊API相容行為 |
