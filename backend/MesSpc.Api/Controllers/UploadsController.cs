@@ -366,7 +366,7 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         var samples = new object[][]
         {
             new object[] { "PROCESS", "PART-A001", "ST-01", "ST-01-M01", "", "LENGTH", 100.12, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
-            new object[] { "CHEM", "", "CHEM-PROC", "N2", "C1", "H2SO4", 3.25, 3.10, "添加", 0.5, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "", 1, "" },
+            new object[] { "PROCESS", "PART-A001", "ST-01", "ST-01-M01", "", "HEIGHT", 10.02, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-01", "L20260518-1", 1, "WO-101" },
             new object[] { "PROCESS", "PART-A001", "ST-01", "ST-01-M01", "", "WIDTH", 50.05, "", "", "", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "OP-02", "L20260518-2", 1, "WO-102" }
         };
 
@@ -381,6 +381,10 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
         }
 
         ws.Columns().AdjustToContents();
+        ws.Cell(6, 1).Value = "藥液（CHEM）不可使用本範本；請改用 Portal 藥液日報或 TransFiles 受控公式／F 憑證流程。";
+        ws.Range(6, 1, 6, headers.Length).Merge();
+        ws.Cell(6, 1).Style.Font.FontColor = XLColor.DarkRed;
+        ws.Cell(6, 1).Style.Font.Bold = true;
 
         using var stream = new MemoryStream();
         wb.SaveAs(stream);

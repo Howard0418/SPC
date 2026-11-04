@@ -1,8 +1,8 @@
 # 技術計畫
 
 - 功能 ID：SPC-CHEM-HISTORY-JUDGMENT-1104
-- 規格版本：1
-- 狀態：執行中／P0-A唯讀盤點完成，P0-B未開始
+- 規格版本：4
+- 狀態：執行中／P0-A、P0-B完成，P0-C待執行
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響範圍
@@ -16,7 +16,7 @@
 ## 實作順序與需求對應
 
 1. P0-A 唯讀盤點（已完成）：沿用查詢API底層同一`ChemicalHistoryQueryService`列出全部Unknown，核對量測、PPC、來源批次、保存追溯、規格快照及SPC計算；正式4,109筆、測試1,611筆全部為`NO_HISTORICAL_EVIDENCE`，目前不可補判（R-001、R-002）。
-2. P0-B 防止新增：先建測試，再補preview格式驗證與不可重複receipt；不符合格式的列在寫入前隔離（R-003、R-004）。
+2. P0-B 防止新增：先建測試；一般計量型API／Excel／CSV遇CHEM列在preview固定隔離，確認端防止舊批次繞過。Portal專用服務以內部信任旗標在受控交易通行；TransFiles沿用receipt／SourceKey防重協定。一般範本移除可直接匯入的CHEM示例（R-003、R-004）。
 3. P0-C 受控補正：只對dry-run證據唯一且一致者，在測試資料庫建立可重跑補正；保存來源、當時規格及判定證據，不改量測值（R-004、R-007）。
 4. P1 顯示改善：Portal顯示SPC固定原因與調整建議；保留Unknown語意、分頁及初複驗（R-005、R-006）。
 5. 測試站驗收與截圖：逐類核對API、DB、畫面、主檔／版本、前後指紋及重跑0新增；整理正式候選但不執行（R-005～R-007）。
@@ -27,6 +27,16 @@
 - 盤點／dry-run不可直接寫入；輸出至少包含measurementId、ppcId、sourceBatch、measuredAt、phase、storedValue、evidenceSource、reasonCode及建議。
 - 補正輸入採伺服器產生的manifest與內容hash，不接受前端直接提交OK／NG；同一receipt重跑須NoChange。
 - 若既有UploadDetails／CalculationResult可保存不可變證據，就不新增schema；只有現有資料模型無法唯一追溯時才另提migration規格，不在實作時順手加表。
+
+## T-002完成範圍
+
+- `UploadService`：預檢接收受信任藥液流程旗標；一般CHEM列新增固定錯誤碼與修正建議；`ConfirmAsync`在變更批次狀態前再檢查所有明細。
+- `ChemicalPortalMeasurementService`：只有此伺服器內部受控交易傳入信任旗標，外部`portalDaily=true`不能自行取得豁免。
+- `UploadsController`一般計量範本：移除CHEM可直接匯入示例，加入專用流程提示。
+- 自動化測試：一般Api／File／偽PortalDaily預檢、舊有效批次確認拒絕、Portal專用公式與直接值回歸、既有TransFiles憑證測試。
+- 無EF migration、無新表；本階段不處理舊Unknown補正。
+
+測試站發布為API 0.1.107／Web 0.1.120；回復時以本件完整備份還原backend四個主檔及frontend入口，既有資料不需回復。正式站與正式資料保持不變。
 
 ## 相容性與風險
 

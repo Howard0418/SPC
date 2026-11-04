@@ -11,7 +11,7 @@ namespace MesSpc.Api.Services;
 
 public class UploadService(AppDbContext db, SpcService spcService)
 {
-    public async Task<UploadBatch> CreateVariableBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, string? fileHash = null, CancellationToken ct = default, Guid? uploadBatchId = null)
+    public async Task<UploadBatch> CreateVariableBatchAsync(IEnumerable<Dictionary<string, string?>> rows, string sourceType, string? createdBy, string? fileName, string? fileHash = null, CancellationToken ct = default, Guid? uploadBatchId = null, bool trustedChemicalWorkflow = false)
     {
         if (!string.IsNullOrEmpty(fileHash))
         {
@@ -43,7 +43,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         db.UploadBatches.Add(batch);
         await db.SaveChangesAsync(ct);
 
-        await BuildStagingAsync(batch, rows, "Variable", ct);
+        await BuildStagingAsync(batch, rows, "Variable", trustedChemicalWorkflow, ct);
         return batch;
     }
 
@@ -79,7 +79,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         db.UploadBatches.Add(batch);
         await db.SaveChangesAsync(ct);
 
-        await BuildStagingAsync(batch, rows, "Attribute", ct);
+        await BuildStagingAsync(batch, rows, "Attribute", false, ct);
         return batch;
     }
 
@@ -484,7 +484,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         foreach (var detail in allDetails)
         {
             var row = JsonSerializer.Deserialize<Dictionary<string, string?>>(detail.PayloadJson) ?? [];
-            var validationErrors = await ValidateRowAsync(row, batch.UploadType, ct);
+            var validationErrors = await ValidateRowAsync(row, batch.UploadType, false, ct);
             detail.PayloadJson = JsonSerializer.Serialize(row);
             detail.IsValid = validationErrors.Count == 0;
             if (detail.IsValid)
@@ -520,7 +520,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
     }
 
     public async Task<object?> ConfirmAsync(Guid uploadBatchId, string mode = "upsert", CancellationToken ct = default,
-        IReadOnlyDictionary<int, ChemicalPortalEvidence>? chemicalEvidence = null, bool deferVariableNotifications = false)
+        IReadOnlyDictionary<int, ChemicalPortalEvidence>? chemicalEvidence = null, bool deferVariableNotifications = false,
+        bool trustedChemicalWorkflow = false)
     {
         var batch = await db.UploadBatches.FirstOrDefaultAsync(x => x.UploadBatchId == uploadBatchId, ct);
         if (batch is null) return null;
@@ -528,16 +529,22 @@ public class UploadService(AppDbContext db, SpcService spcService)
             throw new InvalidOperationException("公式追溯確認須在日報交易中執行。");
         if (batch.ImportStatus == "Imported") return new { batch, message = "Batch already processed.", messageKey = "spc.api.importAlreadyProcessed", args = ApiUiMessageCatalog.EmptyArguments };
 
+        var batchDetails = await db.UploadDetails
+            .Where(x => x.UploadBatchId == uploadBatchId)
+            .OrderBy(x => x.RowNo)
+            .ToListAsync(ct);
+        if (!trustedChemicalWorkflow && ContainsChemicalRows(batchDetails))
+            throw ApiUiException.Attach(new ArgumentException(
+                "一般計量型匯入不得寫入藥液資料；請改用藥液日報 Portal 專用交易或 TransFiles 受控公式／F 憑證流程。"),
+                "spc.api.chemicalEvidenceRequired");
+
         if (batch.ImportStatus != "Importing")
         {
             batch.ImportStatus = "Importing";
             await db.SaveChangesAsync(ct);
         }
 
-        var validDetails = await db.UploadDetails
-            .Where(x => x.UploadBatchId == uploadBatchId && x.IsValid)
-            .OrderBy(x => x.RowNo)
-            .ToListAsync(ct);
+        var validDetails = batchDetails.Where(x => x.IsValid).ToList();
 
         await EnsureImportedOperatorsAsync(validDetails, ct);
 
@@ -1012,7 +1019,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
         }
     }
 
-    private async Task BuildStagingAsync(UploadBatch batch, IEnumerable<Dictionary<string, string?>> rows, string expectedDataCategory, CancellationToken ct)
+    private async Task BuildStagingAsync(UploadBatch batch, IEnumerable<Dictionary<string, string?>> rows, string expectedDataCategory,
+        bool trustedChemicalWorkflow, CancellationToken ct)
     {
         var rowList = rows.ToList();
         batch.TotalRows = rowList.Count;
@@ -1030,7 +1038,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
             db.UploadDetails.Add(detail);
             await db.SaveChangesAsync(ct);
 
-            var errors = await ValidateRowAsync(row, expectedDataCategory, ct);
+            var errors = await ValidateRowAsync(row, expectedDataCategory, trustedChemicalWorkflow, ct);
             detail.PayloadJson = JsonSerializer.Serialize(row);
             if (errors.Count > 0)
             {
@@ -1097,10 +1105,16 @@ public class UploadService(AppDbContext db, SpcService spcService)
         await db.SaveChangesAsync(ct);
     }
 
-    private async Task<List<(string Field, string Code, string Message)>> ValidateRowAsync(Dictionary<string, string?> row, string expectedDataCategory, CancellationToken ct)
+    private async Task<List<(string Field, string Code, string Message)>> ValidateRowAsync(Dictionary<string, string?> row,
+        string expectedDataCategory, bool trustedChemicalWorkflow, CancellationToken ct)
     {
         var errors = new List<(string Field, string Code, string Message)>();
         var scope = ResolveScope(row);
+        if (string.Equals(expectedDataCategory, "Variable", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(scope, ControlScopeCodes.Chemical, StringComparison.OrdinalIgnoreCase)
+            && !trustedChemicalWorkflow)
+            errors.Add(("ChemicalEvidence", "CHEMICAL_EVIDENCE_REQUIRED",
+                "一般計量型匯入無法保存藥液公式、F值及當時規格證據，此列已隔離。"));
         var scopeGroup = await FindScopeGroupAsync(scope, ct);
         if (scopeGroup is null)
             errors.Add(("ControlScope", "SCOPE_NOT_CONFIGURED", "ControlScope has no enabled control-chart group configuration."));
@@ -1462,6 +1476,7 @@ public class UploadService(AppDbContext db, SpcService spcService)
         "UNIT_MISMATCH" => "請將 Excel 單位調整為主檔單位，或在 SPC 管制項目建立此單位的設定。",
         "MAPPING_NOT_FOUND" => "請先建立此線別、槽位、管制項目與單位的 SPC 管制項目。",
         "MAPPING_AMBIGUOUS" => "請整理重複的 SPC 管制項目，保留唯一啟用設定後再匯入。",
+        "CHEMICAL_EVIDENCE_REQUIRED" => "請改用藥液日報 Portal 專用交易，或 TransFiles 受控流程；須提供唯一PPC、含時區量測時間、Initial／Recheck原始輸入及穩定SourceKey，由伺服器保存公式、F值與當時規格憑證。",
         _ => string.IsNullOrWhiteSpace(fieldName)
             ? errorMessage
             : $"請檢查 {fieldName} 欄位內容是否符合 SPC 主檔與匯入格式。"
@@ -1491,6 +1506,23 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
     private static bool NearlyEqual(double? actual, double? expected)
         => actual.HasValue && expected.HasValue && Math.Abs(actual.Value - expected.Value) < 0.000001;
+    private static bool ContainsChemicalRows(IEnumerable<UploadDetail> details)
+    {
+        foreach (var detail in details)
+        {
+            try
+            {
+                var row = JsonSerializer.Deserialize<Dictionary<string, string?>>(detail.PayloadJson);
+                if (row is not null && string.Equals(ResolveScope(row), ControlScopeCodes.Chemical,
+                        StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            catch (JsonException)
+            {
+                // Existing validation owns malformed payload reporting; this guard only detects CHEM bypasses.
+            }
+        }
+        return false;
+    }
     private static int TryInt(string? raw, int fallback) => int.TryParse(raw, out var value) ? value : fallback;
     private static int? TryNullableInt(string? raw) => int.TryParse(raw, out var value) ? value : null;
     private static bool TryParseMeasurementDate(string? raw, out DateTime value)

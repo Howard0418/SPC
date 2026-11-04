@@ -16,9 +16,9 @@ public class ChemicalStageTests
         await using var f=await Fixture.Create("N2");
         var payload=f.Payload("MIDDLE","CLOSE",10.004);
         payload["RecheckValue"]="9.999";
-        var batch=await f.Upload.CreateVariableBatchAsync([payload],"PortalDaily","compatibility",null);
+        var batch=await f.Upload.CreateVariableBatchAsync([payload],"PortalDaily","compatibility",null, trustedChemicalWorkflow:true);
         Assert.Equal(0,batch.ErrorRows);
-        await f.Upload.ConfirmAsync(batch.UploadBatchId);
+        await f.Upload.ConfirmAsync(batch.UploadBatchId, trustedChemicalWorkflow:true);
         var row=await f.Db.VariableMeasurements.SingleAsync();
         Assert.Equal(10.004,row.MeasuredValue,8);Assert.Equal(9.999,row.RecheckValue!.Value,8);
         Assert.Equal("MIDDLE",row.SamplingPhase);Assert.Equal("CLOSE",row.SamplingStage);
@@ -26,8 +26,8 @@ public class ChemicalStageTests
         var json=JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(await f.Controller.GetDaily(1,new DateOnly(2026,9,17),"MIDDLE",samplingStage:"CLOSE")).Value);
         Assert.Contains("10.004",json);Assert.Contains("9.999",json);
         payload["MeasuredValue"]="10.003";
-        batch=await f.Upload.CreateVariableBatchAsync([payload],"PortalDaily","compatibility",null);
-        await f.Upload.ConfirmAsync(batch.UploadBatchId);
+        batch=await f.Upload.CreateVariableBatchAsync([payload],"PortalDaily","compatibility",null, trustedChemicalWorkflow:true);
+        await f.Upload.ConfirmAsync(batch.UploadBatchId, trustedChemicalWorkflow:true);
         var updated=await f.Db.VariableMeasurements.SingleAsync();
         Assert.Equal(id,updated.Id);Assert.Equal(10.003,updated.MeasuredValue,8);
     }
@@ -47,11 +47,11 @@ public class ChemicalStageTests
         var calendar=Assert.IsType<OkObjectResult>(await f.Controller.GetCalendar(1,2026,9,"OPEN","GENERAL"));
         Assert.Contains("\"hasData\":true",JsonSerializer.Serialize(calendar.Value));
         Assert.Contains("\"hasHistory\":false",JsonSerializer.Serialize(calendar.Value));
-        var preview=await f.Upload.CreateVariableBatchAsync([f.Payload("OPEN","GENERAL",25)],"PortalDaily","test",null);
+        var preview=await f.Upload.CreateVariableBatchAsync([f.Payload("OPEN","GENERAL",25)],"PortalDaily","test",null, trustedChemicalWorkflow:true);
         var detail=await f.Db.UploadDetails.SingleAsync(x=>x.UploadBatchId==preview.UploadBatchId);
         using var payload=JsonDocument.Parse(detail.PayloadJson);
         Assert.Equal("正式資料已存在",payload.RootElement.GetProperty("DuplicateStatus").GetString());
-        await f.Upload.ConfirmAsync(preview.UploadBatchId);
+        await f.Upload.ConfirmAsync(preview.UploadBatchId, trustedChemicalWorkflow:true);
         var saved=await f.Db.VariableMeasurements.SingleAsync();Assert.Equal(id,saved.Id);Assert.Equal(25,saved.MeasuredValue);
         Assert.Equal(new DateTime(2026,9,17),saved.PortalDailyDate);
     }
@@ -63,8 +63,8 @@ public class ChemicalStageTests
         var row=await f.Db.VariableMeasurements.AsNoTracking().SingleAsync();row.Id=0;row.PortalDailyDate=null;
         row.MeasuredAt=new DateTime(2026,9,17,12,0,0);f.Db.VariableMeasurements.Add(row);await f.Db.SaveChangesAsync();
         Assert.IsType<ConflictObjectResult>(await f.Controller.GetDaily(1,new DateOnly(2026,9,17),"OPEN"));
-        var batch=await f.Upload.CreateVariableBatchAsync([f.Payload("OPEN","GENERAL",30)],"PortalDaily","test",null);
-        await Assert.ThrowsAsync<InvalidOperationException>(()=>f.Upload.ConfirmAsync(batch.UploadBatchId));
+        var batch=await f.Upload.CreateVariableBatchAsync([f.Payload("OPEN","GENERAL",30)],"PortalDaily","test",null, trustedChemicalWorkflow:true);
+        await Assert.ThrowsAsync<InvalidOperationException>(()=>f.Upload.ConfirmAsync(batch.UploadBatchId, trustedChemicalWorkflow:true));
         Assert.Equal(2,await f.Db.VariableMeasurements.CountAsync());Assert.All(await f.Db.VariableMeasurements.ToListAsync(),x=>Assert.Equal(20,x.MeasuredValue));
     }
 
@@ -109,8 +109,8 @@ public class ChemicalStageTests
         await using var f=await Fixture.Create("C1");await f.Save("OPEN","GENERAL",20);
         var row=await f.Db.VariableMeasurements.AsNoTracking().SingleAsync();row.Id=0;row.SamplingPhase="GENERAL";f.Db.VariableMeasurements.Add(row);await f.Db.SaveChangesAsync();
         Assert.IsType<ConflictObjectResult>(await f.Controller.GetDaily(1,new DateOnly(2026,9,17),"OPEN"));
-        var batch=await f.Upload.CreateVariableBatchAsync([f.Payload("OPEN","GENERAL",30)],"PortalDaily","test",null);
-        await Assert.ThrowsAsync<InvalidOperationException>(()=>f.Upload.ConfirmAsync(batch.UploadBatchId));
+        var batch=await f.Upload.CreateVariableBatchAsync([f.Payload("OPEN","GENERAL",30)],"PortalDaily","test",null, trustedChemicalWorkflow:true);
+        await Assert.ThrowsAsync<InvalidOperationException>(()=>f.Upload.ConfirmAsync(batch.UploadBatchId, trustedChemicalWorkflow:true));
         Assert.Equal(2,await f.Db.VariableMeasurements.CountAsync());
         Assert.All(await f.Db.VariableMeasurements.ToListAsync(),x=>Assert.Equal(20,x.MeasuredValue));
     }
@@ -156,7 +156,7 @@ public class ChemicalStageTests
         await f.Save("OPEN","GENERAL",20);await f.Save("MIDDLE","GENERAL",30);
         Assert.Equal(2,await f.Db.VariableMeasurements.CountAsync());
         Assert.IsType<BadRequestObjectResult>(await f.Controller.GetDaily(1,new DateOnly(2026,9,17),"OPEN",samplingStage:"OPEN"));
-        var invalid=await f.Upload.CreateVariableBatchAsync([f.Payload("OPEN","CLOSE",1)],"PortalDaily","test",null);
+        var invalid=await f.Upload.CreateVariableBatchAsync([f.Payload("OPEN","CLOSE",1)],"PortalDaily","test",null, trustedChemicalWorkflow:true);
         Assert.Equal(1,invalid.ErrorRows);
         Assert.Contains(await f.Db.UploadErrors.ToListAsync(),x=>x.FieldName=="SamplingStage");
     }
@@ -170,7 +170,7 @@ public class ChemicalStageTests
         payload["__SourceSheet"]="工作表1";
         payload["__SourceRow"]="27";
 
-        var batch=await f.Upload.CreateVariableBatchAsync([payload],"PortalDaily","test","oct.xlsx");
+        var batch=await f.Upload.CreateVariableBatchAsync([payload],"PortalDaily","test","oct.xlsx", trustedChemicalWorkflow:true);
 
         Assert.Equal(1,batch.ErrorRows);
         var preview=await f.Upload.GetPreviewAsync(batch.UploadBatchId);
@@ -191,7 +191,7 @@ public class ChemicalStageTests
         await using var f=await Fixture.Create("N2");
         var invalidPayload=f.Payload("OPEN","GENERAL",25);
         invalidPayload["TankCode"]="MissingTank";
-        var invalid=await f.Upload.CreateVariableBatchAsync([invalidPayload],"TransFiles","tool","bad.xlsx");
+        var invalid=await f.Upload.CreateVariableBatchAsync([invalidPayload],"TransFiles","tool","bad.xlsx", trustedChemicalWorkflow:true);
 
         await f.Save("OPEN","GENERAL",30);
 
@@ -246,8 +246,8 @@ public class ChemicalStageTests
             ["SamplingPhase"]=shift,["SamplingStage"]=stage,["SampleNo"]="1",["Operator"]="test"};
         public async Task Save(string shift,string? stage,double value)
         {
-            var batch=await Upload.CreateVariableBatchAsync([Payload(shift,stage,value)],"PortalDaily","test",null);
-            Assert.Equal(0,batch.ErrorRows);await Upload.ConfirmAsync(batch.UploadBatchId);
+            var batch=await Upload.CreateVariableBatchAsync([Payload(shift,stage,value)],"PortalDaily","test",null, trustedChemicalWorkflow:true);
+            Assert.Equal(0,batch.ErrorRows);await Upload.ConfirmAsync(batch.UploadBatchId, trustedChemicalWorkflow:true);
         }
         public async ValueTask DisposeAsync(){await Db.DisposeAsync();await connection.DisposeAsync();}
     }

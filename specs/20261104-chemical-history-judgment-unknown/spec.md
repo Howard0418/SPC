@@ -2,8 +2,8 @@
 
 - 功能 ID：SPC-CHEM-HISTORY-JUDGMENT-1104
 - 小工作：`SPC-CHEM-HISTORY-JUDGMENT-1104-TASK-001`
-- 版本：1
-- 狀態：執行中／T-001唯讀盤點完成
+- 版本：4
+- 狀態：執行中／T-001、T-002完成，T-003待執行
 - 優先級：P0（資料正確性與可回復）
 - 涉及專案：SPC（主系統、權威判定與歷史證據）、Portal（查詢顯示相依）、TransFiles（後續匯入格式相依）
 - 授權依據：2026-11-04使用者要求說明藥液輸入查詢為何存在「無法判定」，配合截圖、提出格式建議，規劃後加入小工作且不要立即執行。
@@ -73,6 +73,38 @@
 
 2026-11-04已依現行判定服務唯讀盤點：正式4,199筆藥液量測中4,109筆Unknown，測試6,155筆中1,611筆Unknown；兩環境全部分類為`NO_HISTORICAL_EVIDENCE`，均無保存追溯／Receipt、保存規格快照或相符歷史計算。正式Unknown中4,076筆目前主檔雖至少有一個界限，仍不能證明量測當日版本。逐筆欄位、月份／線別分布、10/30共76筆及證據雜湊見[盤點報告](inventory-20261104.md)。本階段沒有資料寫入或補判。
 
+## T-002匯入邊界與BDD
+
+一般計量型API／Excel／CSV匯入不具備建立不可變藥液公式／F／規格證據的交易契約，因此不得接受`ControlScope=CHEM`。這類列在preview以`CHEMICAL_EVIDENCE_REQUIRED`隔離，並顯示來源檔、工作表、列號、欄位及調整建議；確認端須再次拒絕，避免部署前已建立的舊PreviewReady批次繞過新規則。
+
+允許的CHEM寫入只有：
+
+- Portal藥液日報專用服務在同一交易中驗證PPC、含時區量測時間、Initial／Recheck原始輸入與preview token，保存公式、F與規格證據。
+- TransFiles使用既有受控公式試算／receipt及資料庫程序，提供穩定SourceKey並驗證重跑防重。
+
+一般匯入範本不得再放可直接送出的CHEM示例，改為明示上述專用流程。
+
+2026-11-04已完成T-002：一般匯入preview與confirm均以`CHEMICAL_EVIDENCE_REQUIRED`關閉CHEM繞過路徑，外部即使傳入`portalDaily=true`也不能取得信任；只有伺服器內部`ChemicalPortalMeasurementService`能在同一受控交易傳遞信任旗標。一般範本已移除CHEM範例，測試站API 0.1.107／Web 0.1.120完成連線驗證。未修改資料庫schema、既有量測、公式、F或正式站。
+
+```gherkin
+Scenario: 一般匯入隔離藥液列
+  Given 使用者從一般計量型API、Excel或CSV提交ControlScope為CHEM的列
+  When 系統建立預覽
+  Then 該列為無效且原因碼為CHEMICAL_EVIDENCE_REQUIRED
+  And 顯示來源位置與改用Portal或TransFiles受控流程的建議
+  And 確認批次不會建立任何量測
+
+Scenario: 舊預覽批次不能繞過新規則
+  Given 部署前已有一個被標為有效的CHEM一般匯入批次
+  When 使用者確認該批次
+  Then 系統在任何量測或批次狀態寫入前拒絕
+
+Scenario: Portal專用交易保持正常
+  Given Portal專用服務已驗證公式試算憑證或保存當時規格
+  When 伺服器在受控交易內建立並確認批次
+  Then 量測與歷史證據原子保存且既有初複驗行為不變
+```
+
 ## 假設與未決問題
 
 - 不阻擋規劃：截圖未提供量測ID／PPC，實作第一階段以唯讀盤點確定具體缺口。
@@ -85,3 +117,5 @@
 |---|---|---|
 | 1 | 2026-11-04 | 依兩張截圖與現行判定服務建立盤點、格式與受控補正規格 |
 | 2 | 2026-11-04 | 完成T-001測試／正式唯讀盤點；全部Unknown皆缺歷史判定證據，不以目前主檔補判 |
+| 3 | 2026-11-04 | 明確T-002邊界：一般計量匯入隔離CHEM，確認端防繞過；Portal／TransFiles專用證據流程保持 |
+| 4 | 2026-11-04 | 完成T-002實作、回歸與測試站發布；一般匯入CHEM fail closed，T-003未開始 |

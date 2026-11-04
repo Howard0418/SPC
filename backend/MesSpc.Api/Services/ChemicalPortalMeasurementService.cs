@@ -95,7 +95,8 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
 
             }
             foreach(var row in rows){row.Remove("ChemicalPreviewToken");row.Remove("ChemicalRecheckPreviewToken");}
-            var batch=await uploads.CreateVariableBatchAsync(rows,"PortalDaily",actor,Marker,ct:ct,uploadBatchId:request.RequestId);
+            var batch=await uploads.CreateVariableBatchAsync(rows,"PortalDaily",actor,Marker,ct:ct,
+                uploadBatchId:request.RequestId,trustedChemicalWorkflow:true);
             if(batch.ErrorRows>0)
             {
                 var sourceErrors=await db.UploadErrors.AsNoTracking().Where(x=>x.UploadBatchId==batch.UploadBatchId).OrderBy(x=>x.RowNo).Take(5)
@@ -111,7 +112,8 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 throw failure;
             }
             batch.FileHash=hash;
-            await uploads.ConfirmAsync(batch.UploadBatchId,ct:ct,chemicalEvidence:evidence,deferVariableNotifications:true);
+            await uploads.ConfirmAsync(batch.UploadBatchId,ct:ct,chemicalEvidence:evidence,
+                deferVariableNotifications:true,trustedChemicalWorkflow:true);
             await new ChemicalSavedSpecificationService(db).CaptureAsync(batch.UploadBatchId,actor,ct);
             await tx.CommitAsync(ct); committed=true;
             logger.LogInformation("Portal chemical batch committed {BatchId}, traced items {Count}",batch.UploadBatchId,evidence.Count);

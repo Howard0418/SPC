@@ -1,6 +1,6 @@
 - 2026-11-04 [分析項目規格／管制界限總覽與批次編輯規劃](../specs/20261104-analysis-limit-overview-batch/spec.md)：新增P1小工作，表格集中顯示LSL／Target／USL及LCL／CL／UCL，沿用藥液公式總覽的篩選、跨頁異動與一次儲存體驗；寫入採界限專用preview／apply、過期拒絕及原子rollback，不以完整PPC PUT覆蓋公式等其他欄位。只規劃未執行，測試／正式皆未發布。
 
-- 2026-11-04 [藥液歷史「無法判定」T-001盤點](../specs/20261104-chemical-history-judgment-unknown/inventory-20261104.md)：主檔目前有上下限不代表舊量測當時適用相同規格；正式4,109、測試1,611筆Unknown全部缺SavedTrace、SavedSpecification及相符SavedCalculation，正式4,076筆雖有目前主檔界限仍不可回判。T-001唯讀完成、資料寫入0；T-002匯入防呆及後續階段未開始，核心45／涉及SPC22。
+- 2026-11-04 [藥液歷史「無法判定」T-001盤點與T-002匯入防呆](../specs/20261104-chemical-history-judgment-unknown/verification.md)：主檔目前有上下限不代表舊量測當時適用相同規格；正式4,109、測試1,611筆Unknown全部缺SavedTrace、SavedSpecification及相符SavedCalculation。通用計量API／Excel／CSV不得匯入CHEM，preview以`CHEMICAL_EVIDENCE_REQUIRED`隔離、confirm防舊批次繞過；只有Portal專用交易／TransFiles受控證據流程可寫入。測試API0.1.107／Web0.1.120已發布，T-003～T-006未開始，正式與既有資料不變；核心45／涉及SPC22。
 
 - 2026-11-04 [SPC-AUDIT-1103-TASK-004安全與權限稽核完成](../specs/20261103-spc-user-activity-audit/task004-security.md)：明示敏感權限、現行DB角色／頁面權限、操作者與設定成功同交易、SMTP意圖／故障回復及401／403／400安全紀錄完成。主402／另一後端66、本件36及隔離SQL通過；測試API106已發布、Web119保持，同源與實際拒絕事件通過，68業務表保持。無schema／實際授權／正式變更。原Excel與11/04原生里程碑53同步，核心43／涉及SPC20、人工11／核銷4另計；005～009未執行。
 

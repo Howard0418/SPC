@@ -13,6 +13,7 @@ public static class UploadErrorUi
         ["TANK_NOT_FOUND"]="importTankMissing", ["CHAR_NOT_FOUND"]="importCharacteristicMissing",
         ["INVALID_DATA_CATEGORY"]="importDataCategoryMismatch", ["UNIT_MISMATCH"]="importUnitMismatch",
         ["MAPPING_NOT_FOUND"]="importMappingMissing", ["MAPPING_AMBIGUOUS"]="importMappingAmbiguous",
+        ["CHEMICAL_EVIDENCE_REQUIRED"]="chemicalEvidenceRequired",
         ["INSPECTED_QTY_REQUIRED"]="importIntegerField", ["INVALID_DEFECT_QTY"]="importIntegerField",
         ["INVALID_DEFECT_COUNT"]="importIntegerField", ["INVALID_UNIT_COUNT"]="importIntegerField",
         ["MEASUREMENT_TIME_INVALID"]="importParticleTimeInvalid", ["LOCATION_UNSUPPORTED"]="importLocationInvalid",
@@ -29,7 +30,8 @@ public static class UploadErrorUi
         ["INVALID_SAMPLING_STAGE"]="chemicalSamplingStageInvalid", ["TANK_REQUIRED"]="importFixTankRequired",
         ["TANK_NOT_FOUND"]="importFixTank", ["CHAR_NOT_FOUND"]="importFixCharacteristic",
         ["INVALID_DATA_CATEGORY"]="importFixDataCategory", ["UNIT_MISMATCH"]="importFixUnit",
-        ["MAPPING_NOT_FOUND"]="importFixMapping", ["MAPPING_AMBIGUOUS"]="importFixAmbiguous"
+        ["MAPPING_NOT_FOUND"]="importFixMapping", ["MAPPING_AMBIGUOUS"]="importFixAmbiguous",
+        ["CHEMICAL_EVIDENCE_REQUIRED"]="chemicalEvidenceRequiredFix"
     };
 
     /// <summary>Returns a safe summary for a known code, keeping the original message as legacy evidence.</summary>
