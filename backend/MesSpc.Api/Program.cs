@@ -79,6 +79,7 @@ builder.Services.AddScoped<ChemicalFormulaScheduleService>();
 builder.Services.AddScoped<ChemicalPortalMeasurementService>();
 builder.Services.AddScoped<ChemicalStatisticsProcessor>();
 builder.Services.AddScoped<ChemicalTraceQueryService>();
+builder.Services.AddScoped<ChemicalHistoryRepairService>();
 builder.Services.AddHostedService<ChemicalStatisticsWorker>();
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<SpcService>();

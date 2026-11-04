@@ -1,21 +1,21 @@
 # 驗證紀錄
 
 - 功能 ID：SPC-CHEM-HISTORY-JUDGMENT-1104
-- 規格版本：4
+- 規格版本：5
 - 日期／環境：2026-11-04／測試`PMR_SPC_TEST`、正式`PMR_SPC_2026`唯讀盤點
-- 實作狀態：T-001、T-002完成；T-003～T-006未執行
-- 驗證狀態：T-001、T-002通過；歷史補正與Portal原因畫面尚未開始
-- 發布狀態：SPC測試API 0.1.107／Web 0.1.120已發布；正式未發布
+- 實作狀態：T-001～T-003完成；T-004～T-006未執行
+- 驗證狀態：T-001～T-003通過；Portal原因畫面尚未開始
+- 發布狀態：SPC測試API 0.1.108／Web 0.1.120已發布；正式未發布
 
 | 驗收 ID | 命令或操作 | 預期結果 | 實際結果及證據 | 狀態 |
 |---|---|---|---|---|
 | AC-001 | 核對現行`ChemicalHistoryQueryService`與兩張使用者截圖 | 不以目前主檔重判舊資料 | 已確認現行順序為SavedTrace→SavedSpecification→相符SavedCalculation；缺證據回Unknown。截圖顯示目前主檔有界限，但歷史匯入列仍缺權威判定。尚未逐筆查實際資料 | 規劃依據確認 |
 | AC-002 | 以查詢API底層同一`ChemicalHistoryQueryService`、NoTracking及Rollback唯讀盤點正式／測試資料 | 分類總數與查詢一致 | 正式4,199總數＝90 Known＋4,109 Unknown；測試6,155＝4,544＋1,611。Unknown全部為`NO_HISTORICAL_EVIDENCE`；逐筆含MeasurementId、PPC、線別、槽位、項目、日期、批次與原因。JSON雜湊正式`78d622...1988`、測試`2bb29b...96e`。[完整盤點](inventory-20261104.md) | 通過（HTTP畫面留T-005） |
 | AC-003 | 匯入格式與preview測試 | 格式缺漏在寫入前被拒絕／隔離 | 新增6項自動測試：Api／File／TransFiles／偽PortalDaily四種通用來源均以`CHEMICAL_EVIDENCE_REQUIRED`隔離並保留來源座標；部署前有效CHEM批次在狀態／量測寫入前拒絕；通用範本僅含PROCESS示例並引導Portal／TransFiles | 通過 |
-| AC-004 | confirm防繞過及受控流程回歸 | 只有證據受控流程可寫入，舊批次不能繞過 | Portal內部服務才傳入信任旗標，外部controller沒有此入口。`MesSpc.Chemical.Tests` 96通過；舊PreviewReady CHEM批次拒絕且維持PreviewReady、量測0筆。歷史補正／重跑NoChange屬T-003，未開始 | T-002範圍通過 |
-| AC-005 | API／回歸 | 既有OK／NG與功能不變 | `MesSpc.Api.Tests` 408通過／11項隔離SQL或外部基準明確略過；API Release建置0警告0錯誤；前端2770鍵×3語系與testhost建置通過。未改歷史查詢判定邏輯 | T-002回歸通過 |
+| AC-004 | confirm防繞過及受控流程回歸 | 只有證據受控流程可寫入，舊批次不能繞過 | Portal內部服務才傳入信任旗標；T-003再以既有不可變追溯產生SHA-256 manifest。唯一證據補連／重跑NoChange、無證據、衝突、過期manifest及交易晚期失敗5項測試通過；重跑前仍重驗全部證據 | T-002／T-003通過 |
+| AC-005 | API／回歸 | 既有OK／NG與功能不變 | `MesSpc.Api.Tests` 413通過／11項隔離SQL或外部基準明確略過；`MesSpc.Chemical.Tests` 96通過；API Release建置0錯誤（NuGet弱點來源離線警告1）。前端沿用T-002已通過的2770鍵×3語系與testhost建置，未改歷史查詢判定邏輯 | T-003回歸通過 |
 | AC-006 | 測試站畫面與截圖 | 顯示固定原因及調整建議 | 未執行 | 未執行 |
-| AC-007 | 備份／指紋／環境 | 測試先行，正式另授權 | 從Git HEAD加本件檔建立隔離候選，未帶工作區TrendChart變更。備份`D:/SPC/.chemical-history-t002-20261104/backup-test-20261104-115208`；測試health/version均200、test／0.1.107，首頁及主JS/CSS 200且MIME正確，保護設定hash保持。自動瀏覽器確認頁面與`/api/health`皆同源`https://spctest.pmr.com.tw`。正式未發布 | T-002通過 |
+| AC-007 | 備份／指紋／環境 | 測試先行，正式另授權 | 最終dry-run與網站同歷史判定對上：1,611 Unknown／eligible 0／blocked 1,611，全為`NO_TRACE_EVIDENCE`。前後VariableMeasurement 18,108、Receipt 2,527、Trace 2,527、UploadDetail 17,872、repair audit 0，連結指紋均為`1cdd47e2...b81f31`，寫入0。測試API0.1.108備份發布，health/version、首頁、JS/CSS MIME、保護hash及無頭瀏覽器同源`/api/health`通過；Web0.1.120不變。Windows桌面工具native pipe失敗，故改用Playwright實際瀏覽器取證。正式未發布 | T-003通過 |
 
 ## 截圖證據摘要
 
@@ -25,7 +25,15 @@
 
 ## 未執行項目、限制及後續
 
-使用者要求繼續後，T-002匯入防呆已完成並發布測試站；沒有匯入、補正或修改任何既有量測，無schema migration。T-003測試資料補正、T-004原因畫面、T-005截圖驗收與T-006整案收尾仍未執行；正式站與正式資料未變。
+使用者要求繼續後，T-003受控補正機制與測試庫dry-run已完成；實際沒有任何資料符合補正門檻，故寫入0、無schema migration。T-004原因畫面、T-005截圖驗收與T-006整案收尾仍未執行；正式站與正式資料未變。
+
+### T-003測試、dry-run、發布與回復
+
+- 自動化：`ChemicalHistoryRepairTests` 5通過；`MesSpc.Api.Tests` 413通過／11項明示略過；`MesSpc.Chemical.Tests` 96通過；Release build 0錯誤（NuGet弱點來源離線警告1）。
+- 前置偵錯：第一次唯讀檢查曾把所有Receipt未連結CHEM納入，得到3,766筆；因與網站Unknown 1,611不符而停止、寫入0。修正為先呼叫同一`ChemicalHistoryQueryService`後，最終數量完全對上。
+- 修正清單：測試庫1,611筆皆須補來源當時的Receipt／Trace、公式F與規格證據；明細CSV只留本機，不提交。
+- 測試發布備份：`D:/SPC/.chemical-history-t003-20261104/backup-test-api-20261104-131801`；API DLL SHA-256 `BAA8A7DA...B49573`。回復時停測試集區，還原備份中4個API主檔後啟動；本件無DB寫入需回復。
+- 進度表：已同步2026-11-04單日原生里程碑、專案摘要及「小工作總表」第267列；原57個圖形保留並新增第58個，核心45／涉及SPC22／完成189／人工11／核銷4不變。輸出SHA-256 `453dfb06...f3f4d65`；ZIP、OpenXML SDK 0錯誤、artifact重新開啟與公式錯誤0、LibreOffice 14頁列印檢查通過。更新前備份為`進度表_藥液Unknown_T003前_20261104-132451.xlsx`；Microsoft Excel人工開啟未執行，需回復時以該備份取代原檔。
 
 ### T-002發布與回復
 

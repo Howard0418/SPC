@@ -2,8 +2,8 @@
 
 - 功能 ID：SPC-CHEM-HISTORY-JUDGMENT-1104
 - 小工作：`SPC-CHEM-HISTORY-JUDGMENT-1104-TASK-001`
-- 版本：4
-- 狀態：執行中／T-001、T-002完成，T-003待執行
+- 版本：5
+- 狀態：執行中／T-001～T-003完成，T-004待執行
 - 優先級：P0（資料正確性與可回復）
 - 涉及專案：SPC（主系統、權威判定與歷史證據）、Portal（查詢顯示相依）、TransFiles（後續匯入格式相依）
 - 授權依據：2026-11-04使用者要求說明藥液輸入查詢為何存在「無法判定」，配合截圖、提出格式建議，規劃後加入小工作且不要立即執行。
@@ -111,6 +111,39 @@ Scenario: Portal專用交易保持正常
 - 阻擋資料補正：若2026/10/30沒有可確認的規格／公式F適用版本，該批只能留在待補證據清單，不能自行套用目前主檔。
 - 本工作排在資料正確性P0；規劃完成後保持未執行，待使用者另行要求開始。
 
+## T-003受控補正規則與BDD
+
+T-003只修復量測列遺失的初驗Receipt連結與SourceKeyHash，不新增、修改或猜測Receipt、Trace、公式、F值、規格、測量值或判定。只有同時符合下列條件才能進入伺服器產生的manifest：
+
+- 量測是CHEM且`ChemicalReceiptId`為空；Initial只有一筆Trace，有複驗時Recheck也只有一筆，且沒有多餘階段或版本。
+- Receipt、Effectivity、Formula及Payload可由`ChemicalTraceQueryService.Read`完整驗證，PPC、量測時間、SourceKeyHash與公式證據一致。
+- Initial／Recheck的Stored canonical值與現存測量值完全一致，且伺服器追溯判定為OK或NG。
+
+manifest內容以SHA-256鎖定。Apply在Serializable交易內先逐筆重驗；任一列被改動或證據不一致時整批rollback。已連結至相同Receipt／SourceKey者回報NoChange，不重複寫入稽核記錄。
+
+2026-11-04實際測試庫dry-run沿用網站同一歷史判定後，1,611筆Unknown中可補正0筆，1,611筆皆為`NO_TRACE_EVIDENCE`。因manifest為空，系統不允許寫入；前後量測連結指紋與各追溯表筆數一致。這些列必須由來源補回當時Receipt／Trace、公式F與規格證據，仍不可以目前主檔補判。
+
+```gherkin
+Scenario: 只補上唯一且完整的既有追溯連結
+  Given 測試資料已有唯一且完整的Receipt與Initial/Recheck Trace
+  And 測量值、PPC、時間與SourceKey全部一致
+  When 管理者套用伺服器產生的manifest
+  Then 只補上ChemicalReceiptId與ChemicalSourceKeyHash
+  And 查詢改為SavedTrace來源
+  And 重跑回報NoChange
+
+Scenario: 無證據或證據衝突不得補正
+  Given 歷史列沒有Trace或存在多筆衝突Trace
+  When 系統執行dry-run
+  Then 該列不在manifest
+  And 修正清單提供固定原因碼與補件建議
+
+Scenario: 套用前證據改變時整批回復
+  Given manifest建立後其中一筆量測或追溯已改變
+  When 系統套用該manifest
+  Then 整批失敗且不留下部分連結或稽核資料
+```
+
 ## 規格版本紀錄
 
 | 版本 | 日期 | 修改原因 |
@@ -119,3 +152,4 @@ Scenario: Portal專用交易保持正常
 | 2 | 2026-11-04 | 完成T-001測試／正式唯讀盤點；全部Unknown皆缺歷史判定證據，不以目前主檔補判 |
 | 3 | 2026-11-04 | 明確T-002邊界：一般計量匯入隔離CHEM，確認端防繞過；Portal／TransFiles專用證據流程保持 |
 | 4 | 2026-11-04 | 完成T-002實作、回歸與測試站發布；一般匯入CHEM fail closed，T-003未開始 |
+| 5 | 2026-11-04 | 錨定T-003只修復唯一完整的既有Trace連結；manifest、NoChange與整批rollback納入BDD |

@@ -1,8 +1,8 @@
 # 技術計畫
 
 - 功能 ID：SPC-CHEM-HISTORY-JUDGMENT-1104
-- 規格版本：4
-- 狀態：執行中／P0-A、P0-B完成，P0-C待執行
+- 規格版本：5
+- 狀態：執行中／P0-A～P0-C完成，P1顯示待執行
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響範圍
@@ -27,6 +27,15 @@
 - 盤點／dry-run不可直接寫入；輸出至少包含measurementId、ppcId、sourceBatch、measuredAt、phase、storedValue、evidenceSource、reasonCode及建議。
 - 補正輸入採伺服器產生的manifest與內容hash，不接受前端直接提交OK／NG；同一receipt重跑須NoChange。
 - 若既有UploadDetails／CalculationResult可保存不可變證據，就不新增schema；只有現有資料模型無法唯一追溯時才另提migration規格，不在實作時順手加表。
+
+## T-003實作方式
+
+- 新增內部`ChemicalHistoryRepairService`，dry-run只讀取CHEM且Receipt連結缺失的量測；使用現有Trace讀取器重驗Receipt、Effectivity、Formula、F快照與Payload。
+- 伺服器將唯一候選依MeasurementId排序後產生SHA-256 manifest；Apply不接受OK／NG、新規格或新公式。
+- Apply在Serializable交易中先完成整批重驗，再只寫`ChemicalReceiptId`、`ChemicalSourceKeyHash`及伺服器稽核UploadDetail；任一失敗整批rollback。
+- 測試庫實際執行將輸出前後指紋、eligible／blocked數量與修正清單；清單為本機驗證產物，不提交量測明細。
+- 無schema migration、無對外API、無Portal／TransFiles變更。
+- 測試庫實際結果為eligible 0／blocked 1,611，因此沒有業務資料可套用或回復；rollback與NoChange由SQLite交易fixture驗證。
 
 ## T-002完成範圍
 
