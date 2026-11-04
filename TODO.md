@@ -1,3 +1,5 @@
+> 2026-11-04 [藥液歷史「無法判定」規劃入池](specs/20261104-chemical-history-judgment-unknown/spec.md)：現行服務只採量測當時的SavedTrace／SavedSpecification／相符SavedCalculation，不以目前主檔上下限重判舊資料。新增`SPC-CHEM-HISTORY-JUDGMENT-1104-TASK-001`／P0，依序唯讀盤點、匯入防呆、測試受控補正、原因顯示與截圖驗收；本次不查寫DB、不改程式／公式F／資料或網站、不發布。核心待辦44件、涉及SPC21件，完成189、人工11／核銷4另計。
+
 > 2026-11-04 [SPC-AUDIT-1103-TASK-004安全與權限稽核完成](specs/20261103-spc-user-activity-audit/task004-security.md)：明示敏感權限、現行DB角色／頁面權限、操作者與設定成功同交易、SMTP意圖／故障回復及401／403／400安全紀錄完成。主402／另一後端66、本件36及隔離SQL通過；測試API106已發布、Web119保持，同源與實際拒絕事件通過，68業務表保持。無schema／實際授權／正式變更。原Excel與11/04原生里程碑53同步，核心43／涉及SPC20、人工11／核銷4另計；005～009未執行。
 
 > 2026-11-04 [驗收續作與資料重核](specs/20261104-acceptance-automation-check/spec.md)：既有PPC2883的20量測／21次初複驗經實際測試資料庫與追溯服務重核通過，公式252／F歷史246／B5=.983一致，20統計Completed、前後指紋保持。瀏覽器操作仍故障，沒有新畫面、不核銷人工。原Excel同表明細與11/04原生里程碑52已同步、OpenXML0錯誤／13頁列印通過；核心44／人工11／核銷4保持，無產品／DB寫入或發布。
@@ -15,6 +17,10 @@
 > 目前F值續驗：F239／歷史248在本輪開始時已是B3=.99，dry-run 0異動，兩種參照及C5=86.13通過；NoChange未重複寫入。原進度表同父工作續註，核心43／SPC21不變。[紀錄](specs/20261103-chemical-f-consistency/f-b3-alignment.md)。
 
 - [ ] `SPC-CHEM-F-CONSISTENCY-1103-TASK-001`：P0，測試API105／Web119、Portal API219／Web260；87濃度設定補正、83項F247日期政策、166服務預覽、3008數值／602拒絕、366核心與登入畫面通過。C5=86.13／有效0=0.00、PT1=31.77、QE2初6.35／複31.77；舊工具缺Phase拒絕。4項NA、其他兩式、EXE與正式待辦，不改舊量測。[驗證](specs/20261103-chemical-f-consistency/verification.md)。原Excel232登錄／核心43／SPC21、49原生物件已同步；未DONE，其他工作不開始。
+
+## 2026-11-04 藥液歷史「無法判定」（P0／只規劃）
+
+- [ ] `SPC-CHEM-HISTORY-JUDGMENT-1104-TASK-001`：P0，SPC主責、Portal／TransFiles相依；先逐筆分類缺追溯、缺當時規格、保存值不符及僅紀錄模式，再修匯入格式、防止新增，只有證據唯一且一致者才可在測試區受控補正。不得套目前主檔直接回判舊資料；正式資料與正式發布另行授權。[規格與格式建議](specs/20261104-chemical-history-judgment-unknown/spec.md)。本次未執行任何功能或資料工作。
 
 ## 2026-11-03 圖表日期顯示（測試／正式完成）
 
