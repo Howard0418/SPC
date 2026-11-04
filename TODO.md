@@ -688,3 +688,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 > 同日[濃度續驗](specs/20261103-chemical-all-formula-reconciliation/concentration-validation.md)：候選214條原式、3008數值／602拒絕案例通過；Portal測試一般量測C5滴定10卻回0.00，F預覽未帶入且8.47係數不同。這是查核發現，未修正產品、未把公式文字改成F就當通過；5項初複驗差異保持，不新增／核銷中央工作，42件保持。
 > 2026-11-04 [正式藥液目前主檔87項公式同步](specs/20261104-production-chemical-master-formula-sync/verification.md)：正式備份／VERIFYONLY後，只同步兩區共同113項中的87項初驗／複驗濃度公式並新增87版本；174次正式F試算、寫後差異0及重驗新增0通過。使用者已確認正式公式畫面正確；量測／Receipt／Trace／啟用F／排程／界限保持，無網站發布。父工作仍未DONE，核心45／涉及SPC22不變。
 > 2026-11-04 [正式目前啟用F表一致性](specs/20261104-production-chemical-current-f-alignment/verification.md)：測試／正式八格完整內容雜湊一致，B3=.99、其餘七格1.00；版本名稱／日期差異不構成內容差異，依防重規則0新增、0修改、0發布。正式F表畫面待確認，父工作計數不變。
+> 2026-11-04 [十月藥液35檔正式資料逐筆核對](specs/20261104-october-chemical-source-production-reconciliation/verification.md)：固定來源1,211列中，335列具匯入來源鍵／Receipt／Trace精確追溯、262列既有正式值相符；602列待確認（493值不同、109身分無法唯一配對），12列F衝突維持隔離。公式／F排程1,199列可解析，但不等於舊量測內容相符；本件未寫入或重匯正式資料。父工作仍未DONE，核心45／SPC直屬22不變。
