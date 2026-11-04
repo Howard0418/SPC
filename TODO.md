@@ -1,3 +1,5 @@
+> 2026-11-04 [十月藥液公式／F正式歷史完成](specs/20261104-october-production-formula-f/verification.md)：正式建立1199列／80項、81公式歷史、3完整F快照（重用1、新增2）、80個未啟用排程修訂及1039日別區間；1211計算吻合，相同清單重送0新增。ST2三項於10/01、10/14共12列因OPEN／MIDDLE完整F衝突維持隔離；現行PPC／啟用F及量測等保持，無網站發布。父工作仍有4項NA、其他兩式、EXE、目前87項正式主檔及量測待辦；核心45／涉及SPC22不變。
+
 > 2026-11-04 [分析項目規格／管制界限總覽規劃入池](specs/20261104-analysis-limit-overview-batch/spec.md)：新增`SPC-LIMITS-BULK-1104-TASK-001`／P1，表格集中顯示及批次編輯LSL／Target／USL與LCL／CL／UCL；操作沿用藥液公式總覽，寫入限定六欄並具preview／apply、過期拒絕、原子rollback、版本／稽核及格式提示。本次不改程式／DB／資料或網站、不發布。核心待辦45件、涉及SPC22件，完成189、人工11／核銷4另計。
 
 > 2026-11-04 [藥液歷史「無法判定」T-004固定原因顯示完成](specs/20261104-chemical-history-judgment-unknown/verification.md)：測試庫1,611筆Unknown均固定回傳缺歷史證據原因與補件建議，Portal直接顯示並支援舊API安全降級；SPC API414／11略過、藥液96、Portal API261及UI39通過。測試SPC API0.1.109／Portal API1.0.221／Web1.0.261已驗證，寫入0，正式未變。T-005登入畫面／截圖及T-006整案收尾仍待執行；父工作未完成。核心待辦45件、涉及SPC22件，完成189、人工11／核銷4另計。
@@ -18,7 +20,7 @@
 
 > 目前F值續驗：F239／歷史248在本輪開始時已是B3=.99，dry-run 0異動，兩種參照及C5=86.13通過；NoChange未重複寫入。原進度表同父工作續註，核心43／SPC21不變。[紀錄](specs/20261103-chemical-f-consistency/f-b3-alignment.md)。
 
-- [ ] `SPC-CHEM-F-CONSISTENCY-1103-TASK-001`：P0，測試API105／Web119、Portal API219／Web260；87濃度設定補正、83項F247日期政策、166服務預覽、3008數值／602拒絕、366核心與登入畫面通過。C5=86.13／有效0=0.00、PT1=31.77、QE2初6.35／複31.77；舊工具缺Phase拒絕。4項NA、其他兩式、EXE與正式待辦，不改舊量測。[驗證](specs/20261103-chemical-f-consistency/verification.md)。原Excel232登錄／核心43／SPC21、49原生物件已同步；未DONE，其他工作不開始。
+- [ ] `SPC-CHEM-F-CONSISTENCY-1103-TASK-001`：P0，測試API105／Web119、Portal API219／Web260；87濃度設定補正、83項F247日期政策、166服務預覽、3008數值／602拒絕、366核心與登入畫面通過。十月正式歷史已完成1199列／80項、81公式版、3完整F快照及1039區間，重送0新增；12列ST2同日F衝突隔離。4項NA、其他兩式、EXE、目前87項正式主檔與量測仍待辦，不改舊量測。[測試驗證](specs/20261103-chemical-f-consistency/verification.md)／[正式歷史](specs/20261104-october-production-formula-f/verification.md)。原Excel第265列與第60原生里程碑已同步；核心45／涉及SPC22，未DONE。
 
 ## 2026-11-04 藥液歷史「無法判定」（P0／執行中）
 

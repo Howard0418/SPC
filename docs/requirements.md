@@ -1,3 +1,5 @@
+- 2026-11-04 [十月藥液公式／F正式歷史受控匯入](../specs/20261104-october-production-formula-f/verification.md)：正式`PMR_SPC_2026`依自然鍵建立1199列／80項、81個公式歷史、3個完整F快照（重用1、新增2）、80個未啟用排程修訂及1039個日別區間；1211次計算吻合。相同清單重送0新增，現行PPC／啟用F及量測等保護資料不變，API仍0.1.102且無網站發布。ST2三項於10/01、10/14共12列因OPEN／MIDDLE完整F衝突隔離；父工作其他公式、EXE、目前主檔與量測仍待辦，核心45／涉及SPC22不變。
+
 - 2026-11-04 [分析項目規格／管制界限總覽與批次編輯規劃](../specs/20261104-analysis-limit-overview-batch/spec.md)：新增P1小工作，表格集中顯示LSL／Target／USL及LCL／CL／UCL，沿用藥液公式總覽的篩選、跨頁異動與一次儲存體驗；寫入採界限專用preview／apply、過期拒絕及原子rollback，不以完整PPC PUT覆蓋公式等其他欄位。只規劃未執行，測試／正式皆未發布。
 
 - 2026-11-04 [藥液歷史「無法判定」T-001～T-004](../specs/20261104-chemical-history-judgment-unknown/verification.md)：主檔目前有上下限不代表舊量測當時適用相同規格；測試1,611筆Unknown均固定回傳`HISTORICAL_EVIDENCE_MISSING／SourceEvidenceRequired`，Portal直接顯示原因與修正建議，舊API安全降級。SPC API414／11略過、藥液96、Portal API261及UI39通過；測試SPC API0.1.109／Portal API1.0.221／Web1.0.261已驗證，資料寫入0。T-005登入畫面／截圖及T-006整案收尾待執行，正式與既有資料不變；核心45／涉及SPC22。
