@@ -2546,3 +2546,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 初複驗值均依歷史公式與F排程驗證；517份Receipt／Trace、493份before／after批次明細及64項圖表查詢通過。
 - 333筆統計完成；160筆因25項既有PPC缺`ChartTypeId`待確認後只重跑統計，不得重匯量測。109筆身分不符與12筆F衝突維持隔離。
 - 正式完整備份已通過CHECKSUM及RESTORE VERIFYONLY；未修改或發布Web／API／IIS。[驗證與回復](specs/20261105-october-chemical-production-value-correction/verification.md)。
+
+## 2026-11-05 空白濃度公式保留未設定
+
+- 舊轉換器對來源空白／直接量測值回傳空公式並跳過寫入，不再補`ROUND((0)+(1*Primary)+(0*Secondary),8)`；明確來源的真公式保持。
+- 測試區7項可證明自動補式已清理、增加7版且重送0異動；44後端及10畫面回歸通過，量測／F／歷史排程保持。
+- 正式相同7項已唯讀列清單，待另行授權。沒有API／Web產品異動或站台發布；原進度表已備份同步。[驗證與正式清單](specs/20261105-chemical-unset-concentration/verification.md)。

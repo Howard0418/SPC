@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\tools\OctoberProductionFormulaF\OctoberProductionFormulaF.csproj" />
     <ProjectReference Include="..\..\tools\OctoberProductionChemicalImport\OctoberProductionChemicalImport.csproj" />
     <ProjectReference Include="..\..\tools\OctoberProductionChemicalCorrection\OctoberProductionChemicalCorrection.csproj" />
+    <ProjectReference Include="..\..\tools\ChemicalFormulaMigration\ChemicalFormulaMigration.csproj" />
     <ProjectReference Include="..\..\tools\ProductionChemicalMasterFormulaSync\ProductionChemicalMasterFormulaSync.csproj" />
   </ItemGroup>
 

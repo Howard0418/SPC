@@ -4,8 +4,14 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using ChemicalFormulaMigration;
 
 Console.OutputEncoding = Encoding.UTF8;
+if (args.Contains("--clear-unset-formulas", StringComparer.Ordinal))
+{
+    await UnsetFormulaCleanup.RunAsync(args);
+    return;
+}
 var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 var apply = args.Contains("--apply", StringComparer.OrdinalIgnoreCase);
 var patchC5Cleaner = args.Contains("--patch-c5-cleaner", StringComparer.OrdinalIgnoreCase);
@@ -118,7 +124,8 @@ var results = new List<Result>();
 foreach (var rule in rules)
 {
     var converted = ConvertRule(rule);
-    var validation = Validate(rule, converted);
+    var validation = ConcentrationSourcePolicy.IsUnset(rule.SourceFormula)
+        ? new Validation(true, 0, "未設定濃度公式；直接量測值") : Validate(rule, converted);
     var matches = candidates.Where(x => MatchLine(rule.Line, x) && MatchName(rule.Tank, x.TankCode, x.TankName)
         && MatchChemical(rule.Characteristic, x.CharacteristicCode, x.CharacteristicName)
         && MatchUnit(rule.Unit, x.Unit)).ToList();
@@ -126,7 +133,8 @@ foreach (var rule in rules)
     var isPh = Canon(rule.Characteristic) is "PH" or "酸鹼值";
     var existing = !string.IsNullOrWhiteSpace(match?.ExistingConfig);
     var existingValidation = existing ? ValidateExisting(rule, match!.ExistingConfig!) : new Validation(false, 0, "尚未設定");
-    var status = converted.Error is not null ? "CONVERSION_FAILED"
+    var status = ConcentrationSourcePolicy.IsUnset(rule.SourceFormula) ? "SOURCE_FORMULA_UNSET"
+        : converted.Error is not null ? "CONVERSION_FAILED"
         : !validation.Ok ? "VALIDATION_FAILED"
         : matches.Count == 0 ? "UNMATCHED"
         : matches.Count > 1 ? "AMBIGUOUS"
@@ -178,7 +186,7 @@ foreach (var group in results.GroupBy(x => x.Status).OrderBy(x => x.Key)) Consol
 
 static Converted ConvertRule(LegacyRule rule)
 {
-    var concentration = $"ROUND(({Fmt(rule.Constant)})+({Fmt(rule.PrimaryCoefficient)}*Primary)+({Fmt(rule.SecondaryCoefficient)}*Secondary),8)";
+    var concentration = ConcentrationSourcePolicy.Convert(rule.SourceFormula, rule.Constant, rule.PrimaryCoefficient, rule.SecondaryCoefficient);
     try
     {
         string? Translate(string? formula)

@@ -1,6 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
-async function setup(page: Page, reject = false) {
- const config = JSON.stringify({enabled:true,concentrationFormula:'Primary',decimalPlaces:2,recheckConcentrationFormula:'Primary*3.177*F!B6'});
+async function setup(page: Page, reject = false, configOverride?: string) {
+ const config = configOverride ?? JSON.stringify({enabled:true,concentrationFormula:'Primary',decimalPlaces:2,recheckConcentrationFormula:'Primary*3.177*F!B6'});
  let rows:any[] = [1,2].map(id=>({id,controlScope:'CHEM',processId:1,machineId:1,tankId:id,characteristicId:id,displayMode:'TREND_CHART',sampleSize:1,isEnabled:true,machine:{machineCode:'N1'},tank:{tankName:`槽${id}`},characteristic:{characteristicName:`濃度${id}`},chemicalAnalysisConfigJson:config}));
  const histories:any = {1:[{id:1,versionNo:1,reason:'WI-OLD',configJson:config,changedAt:'2026-10-01T00:00:00Z',changedBy:'測試人員',changeType:'Update'}],2:[]};
  const puts:any[]=[];
@@ -24,6 +24,18 @@ async function setup(page: Page, reject = false) {
   return route.fulfill({json});
  });page.on('dialog',d=>d.accept());return puts;
 }
+test('unset concentration remains unset and does not invent a formula',async({page})=>{
+ const puts=await setup(page,false,JSON.stringify({enabled:false,concentrationFormula:'',decimalPlaces:2,migratedFrom:'C5:12'}));
+ await page.goto('/chemical-analysis-overview');
+ const row=page.getByTestId('overview-row-1');
+ await expect(row.locator('pre').first()).toHaveText('未設定');
+ await expect(row).not.toContainText('ROUND((0)+(1*Primary)+(0*Secondary),8)');
+ await row.getByTestId('overview-edit').click();
+ await expect(row.getByTestId('overview-concentrationFormula')).toHaveValue('');
+ await expect(page.getByRole('button',{name:/儲存變更/})).toBeDisabled();
+ expect(puts).toHaveLength(0);
+});
+
 test('shared history and reference survive overview save',async({page})=>{
  const puts=await setup(page);await page.goto('/chemical-analysis-overview');await page.getByRole('button',{name:'版本歷史',exact:true}).first().click();await expect(page.getByText('參照文件／修改依據：WI-OLD')).toBeVisible();
  await page.getByRole('button',{name:'編輯',exact:true}).first().click();await page.locator('textarea').first().fill('Primary * 2');await page.getByLabel('參照文件／修改依據',{exact:true}).fill('WI-CA-001｜Rev.03');await page.getByRole('button',{name:/儲存變更/}).click();

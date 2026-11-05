@@ -690,3 +690,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 > 2026-11-04 [正式目前啟用F表一致性](specs/20261104-production-chemical-current-f-alignment/verification.md)：測試／正式八格完整內容雜湊一致，B3=.99、其餘七格1.00；版本名稱／日期差異不構成內容差異，依防重規則0新增、0修改、0發布。正式F表畫面待確認，父工作計數不變。
 > 2026-11-04 [十月藥液35檔正式資料逐筆核對](specs/20261104-october-chemical-source-production-reconciliation/verification.md)：固定來源1,211列中，335列具匯入來源鍵／Receipt／Trace精確追溯、262列既有正式值相符；602列待確認（493值不同、109身分無法唯一配對），12列F衝突維持隔離。公式／F排程1,199列可解析，但不等於舊量測內容相符；本件未寫入或重匯正式資料。父工作仍未DONE，核心45／SPC直屬22不變。
 > 2026-11-05 [十月藥液493筆正式值更正](specs/20261105-october-chemical-production-value-correction/verification.md)：依固定Excel來源原地更正493個既有量測ID，0新增、0待更正，正式量測總數14,993保持；517份Receipt／Trace及64項圖表查詢通過。160筆統計因25項`ChartTypeId`空值待確認後只重跑統計，不重匯量測；109筆身分不符與12筆F衝突仍隔離。父工作未DONE，核心45／SPC22不變。
+> 2026-11-05 [空白濃度公式未設定](specs/20261105-chemical-unset-concentration/verification.md)：轉換器已修正，測試7項自動補式清理及7版留痕、重送0異動完成；44後端／10畫面通過。正式同7項待另行授權，既有公式一致性父件未DONE，中央45／SPC22保持。
