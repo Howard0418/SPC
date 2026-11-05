@@ -19,9 +19,13 @@ var manifest=JsonNode.Parse(File.ReadAllText(Path.Combine(root,"manifest.json"))
 var rows=manifest["rows"]!.AsArray().Where(x=>(string?)x!["status"]=="validated").Select(x=>x!).ToList();
 var month=(string?)manifest["summary"]!["month"];
 if(rows.Count==0 || month is not ("2026-09" or "2026-10"))throw new Exception("Reviewed month candidate guard");
-var marker=args.ElementAtOrDefault(2)??"TEST-OCTCHEM-20261102";
+var reimportVersion=(int?)manifest["summary"]!["reimportVersion"];
+var approvedWorkbookHash=(string?)manifest["summary"]!["approvedWorkbookSha256"];
+var marker=args.ElementAtOrDefault(2)??(reimportVersion==2?(month=="2026-09"?"TEST-SEPCHEM-20261105-R2":"TEST-OCTCHEM-20261105-R2"):"TEST-OCTCHEM-20261102");
 var trendFixture=marker=="TEST-SEPCHEM-20261102-TREND";
-if(month=="2026-10" ? marker is not ("TEST-OCTCHEM-20261102" or "TEST-OCTCHEM-20261102-SECONDARY") : marker is not ("TEST-SEPCHEM-20261102" or "TEST-SEPCHEM-20261102-TREND"))throw new Exception("Month/isolated marker mismatch");
+var reimportMarker=month=="2026-09"?"TEST-SEPCHEM-20261105-R2":"TEST-OCTCHEM-20261105-R2";
+if(reimportVersion==2 && (approvedWorkbookHash?.Length!=64 || marker!=reimportMarker))throw new Exception("Approved reimport marker/hash mismatch");
+if(reimportVersion!=2 && (month=="2026-10" ? marker is not ("TEST-OCTCHEM-20261102" or "TEST-OCTCHEM-20261102-SECONDARY") : marker is not ("TEST-SEPCHEM-20261102" or "TEST-SEPCHEM-20261102-TREND")))throw new Exception("Month/isolated marker mismatch");
 if(trendFixture != ((string?)manifest["summary"]!["purpose"]=="trend-ui"))throw new Exception("Trend purpose/marker mismatch");
 var monthName=month=="2026-09"?"九月":"十月";
 var jsonOptions=new JsonSerializerOptions{WriteIndented=true};
