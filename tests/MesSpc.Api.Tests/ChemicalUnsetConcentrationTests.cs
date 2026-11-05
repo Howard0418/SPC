@@ -45,4 +45,25 @@ public sealed class ChemicalUnsetConcentrationTests
     [Fact]
     public void Cleanup_RejectsDifferentRecheckFormula() => Assert.Throws<InvalidOperationException>(() =>
         UnsetConcentrationPlanner.Build([new("x", "直接量測值")], [new(1, """{"migratedFrom":"x","concentrationFormula":"ROUND((0)+(1*Primary)+(0*Secondary),8)","recheckConcentrationFormula":"Primary*2"}""")]));
+
+    [Theory]
+    [InlineData("production", "172.16.110.16", "PMR_SPC_2026", true, false)]
+    [InlineData("test", "172.16.110.16", "PMR_SPC_2026", true, true)]
+    [InlineData("production", "other", "PMR_SPC_2026", true, true)]
+    public void ProductionTarget_RejectsUnreviewedOrWrongEnvironment(string env, string server, string database, bool apply, bool reviewed) =>
+        Assert.Throws<InvalidOperationException>(() => UnsetProductionGuard.ValidateTarget(env, server, database, apply, reviewed));
+
+    [Fact]
+    public void ProductionTarget_AllowsApprovedTarget() =>
+        UnsetProductionGuard.ValidateTarget("production", "172.16.110.16", "PMR_SPC_2026", true, true);
+
+    [Fact]
+    public void ReviewedRows_AllowBeforeAndAfter_ButRejectDrift()
+    {
+        var review = new[] { new UnsetFormulaChange(1, "source", "before", "after") };
+        UnsetProductionGuard.ValidateRows(review, [new(1, "before")]);
+        UnsetProductionGuard.ValidateRows(review, [new(1, "after")]);
+        Assert.Throws<InvalidOperationException>(() => UnsetProductionGuard.ValidateRows(review, [new(1, "changed")]));
+        Assert.Throws<InvalidOperationException>(() => UnsetProductionGuard.ValidateRows(review, []));
+    }
 }

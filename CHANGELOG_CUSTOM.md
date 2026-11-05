@@ -2552,3 +2552,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 舊轉換器對來源空白／直接量測值回傳空公式並跳過寫入，不再補`ROUND((0)+(1*Primary)+(0*Secondary),8)`；明確來源的真公式保持。
 - 測試區7項可證明自動補式已清理、增加7版且重送0異動；44後端及10畫面回歸通過，量測／F／歷史排程保持。
 - 正式相同7項已唯讀列清單，待另行授權。沒有API／Web產品異動或站台發布；原進度表已備份同步。[驗證與正式清單](specs/20261105-chemical-unset-concentration/verification.md)。
+
+### 正式授權續行完成
+
+- 使用者同意已審查7項後，備份CHECKSUM／VERIFYONLY成功並清理7項、增加7版；相同來源重送0變更／0新增版本。
+- 49後端通過，production API102健康與版本成功；正式14,993筆量測、Receipt／Trace、F、排程及界限指紋保持。原進度表及正式里程碑已同步，無網站發布。[正式驗證](specs/20261105-chemical-unset-concentration/verification.md)。
