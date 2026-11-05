@@ -24,6 +24,8 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length >= 1 && args[0] is "--cleanup-inventory" or "--cleanup-apply")
+            return await RunCleanupAsync(args);
         if (args.Length is not (4 or 5) || args[3] is not ("--plan" or "--apply" or "--verify"))
             throw new ArgumentException("PREVIEW_JSON TEST_APPSETTINGS EVIDENCE_DIR --plan|--apply|--verify [PRODUCTION_APPSETTINGS_FOR_TEST_BACKUP_ONLY]");
         Directory.CreateDirectory(args[2]);
@@ -121,6 +123,56 @@ internal static class Program
         var verified = await VerifyMeasurementsAsync(db, rows, default);
         File.WriteAllText(Path.Combine(args[2], "verify-result.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", verified, productionWritten = false }, JsonOptions));
         Console.WriteLine($"VERIFIED: rows={verified.Measurements}; traces={verified.FormulaTraces}"); return 0;
+    }
+
+    private static async Task<int> RunCleanupAsync(string[] args)
+    {
+        var apply = args[0] == "--cleanup-apply";
+        if (args.Length != (apply ? 4 : 3)) throw new ArgumentException("--cleanup-inventory TEST_APPSETTINGS EVIDENCE_DIR | --cleanup-apply TEST_APPSETTINGS EVIDENCE_DIR PRODUCTION_APPSETTINGS_FOR_TEST_BACKUP_ONLY");
+        Directory.CreateDirectory(args[2]);
+        var cfg = new ConfigurationBuilder().AddJsonFile(Path.GetFullPath(args[1])).Build();
+        var raw = cfg.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("Test SQL connection missing.");
+        var cs = new SqlConnectionStringBuilder(raw.Replace("Trust Server Certificate=", "TrustServerCertificate=", StringComparison.OrdinalIgnoreCase));
+        if (cfg["AppEnvironment"] != "test" || cs.InitialCatalog != "PMR_SPC_TEST") throw new InvalidOperationException("Only PMR_SPC_TEST is permitted.");
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(cs.ConnectionString).Options);
+        await db.Database.OpenConnectionAsync(); await VerifyDatabaseAsync(db);
+        var before = await CleanupInventoryAsync(db);
+        File.WriteAllText(Path.Combine(args[2], "cleanup-inventory-before.json"), JsonSerializer.Serialize(before, JsonOptions));
+        if (!apply) { Console.WriteLine($"CLEANUP INVENTORY: september={before.SeptemberActive}; isolatedPpcs={before.IsolatedPpcs.Count}; isolatedMeasurements={before.IsolatedActiveMeasurements}"); return 0; }
+        var maintenanceCfg = new ConfigurationBuilder().AddJsonFile(Path.GetFullPath(args[3])).Build();
+        var maintenance = new SqlConnectionStringBuilder((maintenanceCfg.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("Maintenance SQL connection missing.")).Replace("Trust Server Certificate=", "TrustServerCertificate=", StringComparison.OrdinalIgnoreCase));
+        if (maintenanceCfg["AppEnvironment"] != "production" || maintenance.InitialCatalog != "PMR_SPC_2026" || maintenance.DataSource != "172.16.110.16") throw new InvalidOperationException("Maintenance source guard failed.");
+        maintenance.InitialCatalog = "PMR_SPC_TEST";
+        var backup = await BackupAsync(maintenance.ConnectionString, args[2]);
+        var targetPpcs = before.IsolatedPpcs.Select(x => x.Id).ToArray();
+        var start = new DateTime(2026, 9, 1); var end = new DateTime(2026, 10, 1); var now = DateTime.UtcNow; var actor = CurrentActor();
+        await using var tx = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+        var archivedMeasurements = await db.VariableMeasurements.Where(x => !x.IsDeleted &&
+            (((x.PortalDailyDate ?? x.MeasuredAt) >= start && (x.PortalDailyDate ?? x.MeasuredAt) < end) || targetPpcs.Contains(x.PartProcessCharacteristicId)))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDeleted, true));
+        var archivedPpcs = targetPpcs.Length == 0 ? 0 : await db.PartProcessCharacteristics.Where(x => targetPpcs.Contains(x.Id) && !x.IsDeleted)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDeleted, true).SetProperty(x => x.IsEnabled, false).SetProperty(x => x.UpdatedAt, now).SetProperty(x => x.UpdatedBy, actor));
+        await tx.CommitAsync(); db.ChangeTracker.Clear();
+        var after = await CleanupInventoryAsync(db);
+        if (after.SeptemberActive != 0 || after.IsolatedPpcs.Count != 0 || after.IsolatedActiveMeasurements != 0) throw new InvalidOperationException("Cleanup verification failed.");
+        if (before.OctoberNormalCount != after.OctoberNormalCount || before.OctoberNormalHash != after.OctoberNormalHash) throw new InvalidOperationException("October normal measurement baseline changed.");
+        File.WriteAllText(Path.Combine(args[2], "cleanup-result.json"), JsonSerializer.Serialize(new { database="PMR_SPC_TEST", backup, archivedMeasurements, archivedPpcs, before, after, productionConnected=false }, JsonOptions));
+        Console.WriteLine($"CLEANUP APPLIED: september={before.SeptemberActive}; isolatedPpcs={archivedPpcs}; measurements={archivedMeasurements}; octoberNormal={after.OctoberNormalCount}"); return 0;
+    }
+
+    private static async Task<CleanupInventory> CleanupInventoryAsync(AppDbContext db)
+    {
+        var ppcs = await db.PartProcessCharacteristics.AsNoTracking().Include(x => x.Part).Include(x => x.Process).Include(x => x.Machine).Include(x => x.Tank).Include(x => x.Characteristic)
+            .Where(x => x.ControlScope == "CHEM").ToListAsync();
+        var isolated = ppcs.Where(x => TestChemicalReimportPlanner.IsIsolatedReconciliationTarget(x.Part?.PartNo, x.Part?.PartName, x.Process?.ProcessCode, x.Process?.ProcessName, x.Machine?.MachineCode, x.Machine?.MachineName, x.Tank?.TankCode, x.Tank?.TankName, x.Characteristic?.CharacteristicCode, x.Characteristic?.CharacteristicName))
+            .Select(x => new CleanupPpc(x.Id, x.Part?.PartName ?? "", x.Process?.ProcessName ?? "", x.Machine?.MachineName ?? "", x.Tank?.TankName ?? "", x.Characteristic?.CharacteristicName ?? "")).OrderBy(x => x.Id).ToList();
+        var ids = isolated.Select(x => x.Id).ToArray(); var sep = new DateTime(2026,9,1); var oct = new DateTime(2026,10,1); var nov = new DateTime(2026,11,1);
+        var september = await db.VariableMeasurements.AsNoTracking().CountAsync(x => (x.PortalDailyDate ?? x.MeasuredAt) >= sep && (x.PortalDailyDate ?? x.MeasuredAt) < oct);
+        var isolatedMeasurements = ids.Length == 0 ? 0 : await db.VariableMeasurements.AsNoTracking().CountAsync(x => ids.Contains(x.PartProcessCharacteristicId));
+        var octoberRows = await db.VariableMeasurements.AsNoTracking().Where(x => !ids.Contains(x.PartProcessCharacteristicId) && (x.PortalDailyDate ?? x.MeasuredAt) >= oct && (x.PortalDailyDate ?? x.MeasuredAt) < nov)
+            .OrderBy(x => x.Id).Select(x => new { x.Id, x.PartProcessCharacteristicId, x.PortalDailyDate, x.SamplingPhase, x.SamplingStage, x.MeasuredValue, x.RecheckValue }).ToListAsync();
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(octoberRows))));
+        return new(september, isolatedMeasurements, isolated, octoberRows.Count, hash);
     }
 
     private static List<SourceRow> Load(string path)
@@ -407,6 +459,8 @@ internal static class Program
     private sealed record State(long ActiveMeasurements, long Receipts, long Traces, long EnabledChemicalMasters, long ActiveFTables);
     private sealed record Verification(int Measurements, int FormulaTraces);
     private sealed record Reactivation(int Changed, int AlreadyActive, int Receipts, int Traces);
+    private sealed record CleanupPpc(int Id, string Part, string Process, string Machine, string Tank, string Characteristic);
+    private sealed record CleanupInventory(int SeptemberActive, int IsolatedActiveMeasurements, IReadOnlyList<CleanupPpc> IsolatedPpcs, int OctoberNormalCount, string OctoberNormalHash);
 
     private sealed class SuppressedEmail : IEmailNotificationService
     {

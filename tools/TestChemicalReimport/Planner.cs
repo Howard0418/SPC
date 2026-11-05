@@ -72,4 +72,15 @@ public static partial class TestChemicalReimportPlanner
         => controlledReimportBatchId == Guid.Empty
             ? throw new InvalidOperationException("受控重匯批次不得為空。")
             : controlledReimportBatchId;
+
+    public static bool IsSeptember2026(DateTime? portalDailyDate, DateTime measuredAt)
+    {
+        var day = portalDailyDate ?? measuredAt;
+        return day >= new DateTime(2026, 9, 1) && day < new DateTime(2026, 10, 1);
+    }
+
+    public static bool IsIsolatedReconciliationTarget(params string?[] labels)
+        => labels.Any(x => !string.IsNullOrWhiteSpace(x) &&
+            (x.Contains("十月隔離測試", StringComparison.OrdinalIgnoreCase) ||
+             x.Contains("Excel藥液對帳", StringComparison.OrdinalIgnoreCase)));
 }

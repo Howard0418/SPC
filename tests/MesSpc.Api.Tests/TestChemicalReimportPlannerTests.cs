@@ -63,4 +63,19 @@ public sealed class TestChemicalReimportPlannerTests
     [Fact]
     public void NormalizeUploadBatch_rejects_empty_controlled_batch()
         => Assert.Throws<InvalidOperationException>(() => TestChemicalReimportPlanner.NormalizeUploadBatch(Guid.NewGuid(), Guid.Empty));
+
+    [Theory]
+    [InlineData("2026-09-01", true)]
+    [InlineData("2026-09-30", true)]
+    [InlineData("2026-08-31", false)]
+    [InlineData("2026-10-01", false)]
+    public void IsSeptember2026_uses_half_open_month_boundary(string date, bool expected)
+        => Assert.Equal(expected, TestChemicalReimportPlanner.IsSeptember2026(DateTime.Parse(date), DateTime.MinValue));
+
+    [Theory]
+    [InlineData("[十月隔離測試] Excel藥液對帳", true)]
+    [InlineData("Excel藥液對帳", true)]
+    [InlineData("正常鍍銅線", false)]
+    public void IsIsolatedReconciliationTarget_matches_only_explicit_test_labels(string label, bool expected)
+        => Assert.Equal(expected, TestChemicalReimportPlanner.IsIsolatedReconciliationTarget(label));
 }
