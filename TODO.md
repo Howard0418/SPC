@@ -703,4 +703,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：Portal主責／P2，賀卡彈窗及圖片過小的可讀性改善，只規劃未執行。桌面900px候選、等比例／長圖捲動及放大檢視，預覽與首頁一致，圖片格式／2MB與通知規則保持。排在阻擋使用、安全與資料正確性之後、純配色文案之前。[Portal規格](../PmrPortal/specs/20261105-birthday-card-readable-size/spec.md)。中央核心45→46、SPC22不變，完成190／人工11／核銷4保持；不啟動實作或發布。
 # 2026-11-05 測試區九／十月資料重匯（來源阻擋）
 
-- [ ] `SPC-TEST-REIMPORT-20261105`（P1，來源阻擋；主系統SPC／相依TransFiles；DB：只寫測試PMR_SPC_TEST；發布：無網站發布；rollback：依本批ID受控封存）依修正版核准線別重匯9～10月藥液及咬蝕量。第一輪9項來源規則測試及runner build通過，但最新藥液來源路徑不可讀，已在DB寫入前停止；測試／正式均未寫入。待TransFiles重新設定可讀來源後續行防重、逐筆／公式F／圖表及正式唯讀驗證。[規格與阻擋](specs/20261105-test-sep-oct-reimport/verification.md)
+- [ ] `SPC-TEST-REIMPORT-20261105`（P0，待規則確認；主系統SPC／相依TransFiles與Portal顯示；DB：只寫測試PMR_SPC_TEST；發布：尚無；rollback：依本批ID受控封存）依最新藥液日報規則重新匯入測試區：排除補液位／更槽，辨識早／中班、Sheet線別、N1／N2開收線、初複驗、公式F與直接濃度，並提供逐檔對帳及錯誤追溯。本輪只完成規劃，待確認08:00／16:00班別顯示時間後才實作；測試／正式均未寫入。[規格與規劃](specs/20261105-test-sep-oct-reimport/spec.md)
