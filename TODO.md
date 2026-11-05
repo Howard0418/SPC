@@ -700,3 +700,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] `SPC-TEST-DATA-CLEANUP-20261105`：P1，依授權清除全部測試量測／匯入，保留主檔、公式、F及稽核；正式保持。[驗證](specs/20261105-test-measurement-cleanup/verification.md)：53081列封存、12表查詢0／336圖表空；SQL10、Chemical117、Python15通過，測試純封存trigger追加授權已套用，正式69表SHA256保持。指定Excel48格以G核准線別為準，日期／同鍵值另核，不重匯正式。原進度表70原生物件／總表已同步，核心45／SPC22、人工11／核銷4保持；無網站發布。
 - PT1正式日期排程缺口（P0，既有`SPC-CHEM-F-CONSISTENCY-1103-TASK-001`子範圍，不重複父子計數）：使用者另授權2440／2441／2443／2444，保留十月、補11/03起目前公式／F。[驗證](specs/20261105-pt1-current-formula-schedule/verification.md)：正式備份VERIFYONLY後4份revision81～84／80區間，重用既有公式99～102及F歷史1；96組初複驗相符、4邊界拒絕、實際重送0新增，量測與主檔保持。126單元通過，原進度71物件／265列已同步；無網站發布，瀏覽器timeoutMs未驗畫面。其餘76項缺當日排程另待授權，父件仍未DONE，核心45／SPC22保持。
+- [ ] `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：Portal主責／P2，賀卡彈窗及圖片過小的可讀性改善，只規劃未執行。桌面900px候選、等比例／長圖捲動及放大檢視，預覽與首頁一致，圖片格式／2MB與通知規則保持。排在阻擋使用、安全與資料正確性之後、純配色文案之前。[Portal規格](../PmrPortal/specs/20261105-birthday-card-readable-size/spec.md)。中央核心45→46、SPC22不變，完成190／人工11／核銷4保持；不啟動實作或發布。
