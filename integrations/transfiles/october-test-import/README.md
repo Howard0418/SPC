@@ -8,6 +8,7 @@
 對應 [規格](../../../specs/20261102-october-chemical-test-import/spec.md)。本次為獨立受控 runner，**不是已重新打包的 GUI／EXE**；不將完整矩陣匯入能力冒稱既有EXE已交付。
 
 ## 組成與驗證
+- 2026-11-05：來源搬移時可加 `--source-root '<實際來源資料夾>'`，只覆寫此次唯讀讀取路徑，不修改轉檔工具設定、不啟用排程。未指定仍使用原設定，來源不存在立即拒絕；驗證 `python -m unittest test_source_root test_month_scope`。詳 [正式對齊與逐檔核對](../../../specs/20261105-production-align-test-excel/spec.md)。
 - `tool-fixes.patch`：TransFiles實檔讀取改為try/finally關閉，及先紅後綠實檔測試。零上下文patch需`git apply --unidiff-zero`，套用前先確認目標基準原碼，不覆蓋其他修改。
 - `chemical_excel_reconcile.py`／`test_chemical_excel_reconcile.py`：複製至TransFiles同層；僅同列原始值、明確F引用與四則運算，使用受限AST與Decimal；不使用eval，不寫API／DB。
 - `build_manifest.py`：由TransFiles設定讀來源，只讀2026年10月，保留SHA256、初複驗及逐列阻擋；依滴定表頭識別M／N複驗，排除加藥欄。相同內容去重、衝突不選勝者。

@@ -21,14 +21,21 @@ def in_month(day,month):
  first,last=month_bounds(month)
  return first<=day<=last
 
-def build(tool_root,output,month='2026-10'):
+def resolve_source(tool_root,source_root):
+ if source_root is None:
+  cfg=json.loads((tool_root/'scheduled_import_config.json').read_text(encoding='utf-8-sig'))
+  source_root=Path(cfg['chemical_source'])
+ source=Path(source_root)
+ if not source.is_dir():raise FileNotFoundError(f'Chemical source folder does not exist: {source}')
+ return source
+
+def build(tool_root,output,month='2026-10',source_root=None):
  month_bounds(month)
  sys.path.insert(0,str(tool_root))
  import openpyxl
  from chemical_daily_parser import parse_chemical_daily_report
  from chemical_excel_reconcile import convert_formula,calculate,number,formula_key,recheck_column
- cfg=json.loads((tool_root/'scheduled_import_config.json').read_text(encoding='utf-8-sig'))
- source=Path(cfg['chemical_source']);rows=[];files=[]
+ source=resolve_source(tool_root,source_root);rows=[];files=[]
  for path in sorted(source.rglob('*.xlsx')):
   match=re.search(r'(?<!\d)(2026)-(\d{1,2})-(\d{1,2})(?!\d)',path.stem)
   if path.name.startswith('~$') or not match:continue
@@ -105,4 +112,5 @@ def build(tool_root,output,month='2026-10'):
 if __name__=='__main__':
  parser=argparse.ArgumentParser();parser.add_argument('--tool-root',type=Path,required=True);parser.add_argument('--output-dir',type=Path,required=True)
  parser.add_argument('--month',default='2026-10',choices=['2026-09','2026-10'])
- args=parser.parse_args();build(args.tool_root,args.output_dir,args.month)
+ parser.add_argument('--source-root',type=Path,help='Explicit relocated source folder; does not change tool configuration')
+ args=parser.parse_args();build(args.tool_root,args.output_dir,args.month,args.source_root)
