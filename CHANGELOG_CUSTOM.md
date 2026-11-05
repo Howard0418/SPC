@@ -2539,3 +2539,10 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 唯讀核對匯入時固定的35份來源檔、1,211列與目前正式資料；335列具本次匯入完整追溯、262列既有值相符。
 - 602列需處理：493列既有值與來源不同、109列班別／階段身分無法唯一配對；12列已知來源F衝突維持隔離。
 - 產出逐檔／逐列Excel報告並完成重開、公式錯誤、視覺、OpenXML與PDF相容驗證；正式資料、公式、F、排程及網站皆未修改或發布。[驗證](specs/20261104-october-chemical-source-production-reconciliation/verification.md)。
+
+## 2026-11-05 十月藥液493筆正式值更正
+
+- 依使用者明示授權，以固定Excel來源原地更正493個既有正式量測ID；0新增、0待更正，正式量測總數14,993不變。
+- 初複驗值均依歷史公式與F排程驗證；517份Receipt／Trace、493份before／after批次明細及64項圖表查詢通過。
+- 333筆統計完成；160筆因25項既有PPC缺`ChartTypeId`待確認後只重跑統計，不得重匯量測。109筆身分不符與12筆F衝突維持隔離。
+- 正式完整備份已通過CHECKSUM及RESTORE VERIFYONLY；未修改或發布Web／API／IIS。[驗證與回復](specs/20261105-october-chemical-production-value-correction/verification.md)。
