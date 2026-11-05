@@ -81,7 +81,8 @@ def build_preview(source_root: Path, manifest: dict[str, Any], progress=None, wo
                         item=_error(source,item["code"],item["reason"],sheet=row["sheet"],sourceRow=row["sourceRow"],cell=item.get("cell"))
                     errors.append(item)
                 if row_errors: row["status"]="ERROR"
-                elif (row["reportDate"],row["shift"]) in conflict_keys: row["status"]="SOURCE_CONFLICT"
+                elif (row["reportDate"],row["shift"]) in conflict_keys:
+                    row["status"]="EXCLUDED_PRE_SEP_CONFLICT" if row["reportDate"]<"2026-09-01" else "SOURCE_CONFLICT"
                 else: row["status"]="READY"
                 rows.append(row)
             file_rows=rows[before:]
@@ -93,8 +94,9 @@ def build_preview(source_root: Path, manifest: dict[str, Any], progress=None, wo
             files.append({"fileName":source["fileName"],"relativePath":source["relativePath"],"reportDate":source["reportDate"],"shift":source["shift"],"sha256":source["sha256"],"status":"FILE_ERROR","rowCount":0,"readyRows":0,"conflictRows":0,"errorRows":1,"sheetErrors":0})
         if progress and (index % 25 == 0 or index == len(included)):progress(index,len(included))
     if executor:executor.shutdown()
-    summary={"sourceFiles":len(included),"parsedFiles":sum(f["status"] in {"PARSED","PARSED_WITH_ERRORS"} for f in files),"parsedWithErrors":sum(f["status"]=="PARSED_WITH_ERRORS" for f in files),"fileErrors":sum(f["status"]=="FILE_ERROR" for f in files),"rows":len(rows),"readyRows":sum(r["status"]=="READY" for r in rows),"conflictRows":sum(r["status"]=="SOURCE_CONFLICT" for r in rows),"errorRows":sum(r["status"]=="ERROR" for r in rows),"errorEntries":len(errors),"excludedFiles":len(manifest.get("excluded",[])),"conflictGroups":len(manifest.get("conflicts",[])),"databaseWritten":False}
-    return {"schemaVersion":"chemical-preview-v2","summary":summary,"files":files,"rows":rows,"errors":errors,"excluded":manifest.get("excluded",[]),"conflicts":manifest.get("conflicts",[])}
+    conflicts=[{**item,"policyAction":"EXCLUDE_NO_IMPORT" if item["reportDate"]<"2026-09-01" else "REQUIRES_APPROVAL"} for item in manifest.get("conflicts",[])]
+    summary={"sourceFiles":len(included),"parsedFiles":sum(f["status"] in {"PARSED","PARSED_WITH_ERRORS"} for f in files),"parsedWithErrors":sum(f["status"]=="PARSED_WITH_ERRORS" for f in files),"fileErrors":sum(f["status"]=="FILE_ERROR" for f in files),"rows":len(rows),"readyRows":sum(r["status"]=="READY" for r in rows),"conflictRows":sum(r["status"]=="SOURCE_CONFLICT" for r in rows),"preSeptemberConflictExcludedRows":sum(r["status"]=="EXCLUDED_PRE_SEP_CONFLICT" for r in rows),"errorRows":sum(r["status"]=="ERROR" for r in rows),"errorEntries":len(errors),"excludedFiles":len(manifest.get("excluded",[])),"conflictGroups":len(conflicts),"preSeptemberConflictExcludedGroups":sum(x["policyAction"]=="EXCLUDE_NO_IMPORT" for x in conflicts),"approvalConflictGroups":sum(x["policyAction"]=="REQUIRES_APPROVAL" for x in conflicts),"databaseWritten":False}
+    return {"schemaVersion":"chemical-preview-v2","summary":summary,"files":files,"rows":rows,"errors":errors,"excluded":manifest.get("excluded",[]),"conflicts":conflicts}
 
 
 class SourceHashMismatch(ValueError):

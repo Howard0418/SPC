@@ -43,6 +43,17 @@ class ChemicalPreviewBuilderTests(unittest.TestCase):
             self.assertEqual(preview["summary"]["readyRows"],0)
             self.assertTrue(all(row["status"]=="SOURCE_CONFLICT" for row in preview["rows"]))
 
+    def test_conflicts_before_september_are_excluded_not_approved(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);(root/"a").mkdir();(root/"b").mkdir()
+            first=self.workbook(root/"a","2026-08-28.xlsx",direct=1);second=self.workbook(root/"b","2026-08-28.xlsx",direct=2)
+            for path in (first,second):
+                wb=openpyxl.load_workbook(path);wb.active["B4"]="2026/8/28";wb.save(path)
+            preview=build_preview(root,scan_source(root))
+            self.assertEqual(preview["summary"]["preSeptemberConflictExcludedRows"],2)
+            self.assertEqual(preview["summary"]["conflictRows"],0)
+            self.assertTrue(all(row["status"]=="EXCLUDED_PRE_SEP_CONFLICT" for row in preview["rows"]))
+
     def test_every_included_file_has_reconciliation_row(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);self.workbook(root,"2026-10-28.xlsx",direct=1);(root/"2026-10-29.xlsx").write_bytes(b"bad-xlsx")
