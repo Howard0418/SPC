@@ -83,4 +83,7 @@ public static partial class TestChemicalReimportPlanner
         => labels.Any(x => !string.IsNullOrWhiteSpace(x) &&
             (x.Contains("十月隔離測試", StringComparison.OrdinalIgnoreCase) ||
              x.Contains("Excel藥液對帳", StringComparison.OrdinalIgnoreCase)));
+
+    public static bool IsExplicitTestMasterLabel(params string?[] labels)
+        => labels.Any(x => !string.IsNullOrWhiteSpace(x) && x.Contains("測試", StringComparison.OrdinalIgnoreCase));
 }

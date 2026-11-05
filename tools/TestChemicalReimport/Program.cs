@@ -138,7 +138,7 @@ internal static class Program
         await db.Database.OpenConnectionAsync(); await VerifyDatabaseAsync(db);
         var before = await CleanupInventoryAsync(db);
         File.WriteAllText(Path.Combine(args[2], "cleanup-inventory-before.json"), JsonSerializer.Serialize(before, JsonOptions));
-        if (!apply) { Console.WriteLine($"CLEANUP INVENTORY: september={before.SeptemberActive}; isolatedPpcs={before.IsolatedPpcs.Count}; isolatedMeasurements={before.IsolatedActiveMeasurements}"); return 0; }
+        if (!apply) { Console.WriteLine($"CLEANUP INVENTORY: september={before.SeptemberActive}; isolatedPpcs={before.IsolatedPpcs.Count}; isolatedMeasurements={before.IsolatedActiveMeasurements}; testProcesses={before.TestProcesses.Count}; testCharacteristics={before.TestCharacteristics.Count}"); return 0; }
         var maintenanceCfg = new ConfigurationBuilder().AddJsonFile(Path.GetFullPath(args[3])).Build();
         var maintenance = new SqlConnectionStringBuilder((maintenanceCfg.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("Maintenance SQL connection missing.")).Replace("Trust Server Certificate=", "TrustServerCertificate=", StringComparison.OrdinalIgnoreCase));
         if (maintenanceCfg["AppEnvironment"] != "production" || maintenance.InitialCatalog != "PMR_SPC_2026" || maintenance.DataSource != "172.16.110.16") throw new InvalidOperationException("Maintenance source guard failed.");
@@ -152,19 +152,26 @@ internal static class Program
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDeleted, true));
         var archivedPpcs = targetPpcs.Length == 0 ? 0 : await db.PartProcessCharacteristics.Where(x => targetPpcs.Contains(x.Id) && !x.IsDeleted)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDeleted, true).SetProperty(x => x.IsEnabled, false).SetProperty(x => x.UpdatedAt, now).SetProperty(x => x.UpdatedBy, actor));
+        var blocked = before.TestProcesses.Concat(before.TestCharacteristics).Where(x => x.ActiveReferences != 0).ToList();
+        if (blocked.Count != 0) throw new InvalidOperationException("Explicit test master is still referenced by active PPC: " + JsonSerializer.Serialize(blocked));
+        var testProcessIds = before.TestProcesses.Select(x => x.Id).ToArray();
+        var testCharacteristicIds = before.TestCharacteristics.Select(x => x.Id).ToArray();
+        var archivedProcesses = testProcessIds.Length == 0 ? 0 : await db.Processes.Where(x => testProcessIds.Contains(x.Id)).ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDeleted,true).SetProperty(x => x.IsEnabled,false).SetProperty(x => x.UpdatedAt,now).SetProperty(x => x.UpdatedBy,actor));
+        var archivedCharacteristics = testCharacteristicIds.Length == 0 ? 0 : await db.QualityCharacteristics.Where(x => testCharacteristicIds.Contains(x.Id)).ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDeleted,true).SetProperty(x => x.IsEnabled,false).SetProperty(x => x.UpdatedAt,now).SetProperty(x => x.UpdatedBy,actor));
         await tx.CommitAsync(); db.ChangeTracker.Clear();
         var after = await CleanupInventoryAsync(db);
-        if (after.SeptemberActive != 0 || after.IsolatedPpcs.Count != 0 || after.IsolatedActiveMeasurements != 0) throw new InvalidOperationException("Cleanup verification failed.");
+        if (after.SeptemberActive != 0 || after.IsolatedPpcs.Count != 0 || after.IsolatedActiveMeasurements != 0 || after.TestProcesses.Count != 0 || after.TestCharacteristics.Count != 0) throw new InvalidOperationException("Cleanup verification failed.");
         if (before.OctoberNormalCount != after.OctoberNormalCount || before.OctoberNormalHash != after.OctoberNormalHash) throw new InvalidOperationException("October normal measurement baseline changed.");
-        File.WriteAllText(Path.Combine(args[2], "cleanup-result.json"), JsonSerializer.Serialize(new { database="PMR_SPC_TEST", backup, archivedMeasurements, archivedPpcs, before, after, productionConnected=false }, JsonOptions));
-        Console.WriteLine($"CLEANUP APPLIED: september={before.SeptemberActive}; isolatedPpcs={archivedPpcs}; measurements={archivedMeasurements}; octoberNormal={after.OctoberNormalCount}"); return 0;
+        File.WriteAllText(Path.Combine(args[2], "cleanup-result.json"), JsonSerializer.Serialize(new { database="PMR_SPC_TEST", backup, archivedMeasurements, archivedPpcs, archivedProcesses, archivedCharacteristics, before, after, productionConnected=false }, JsonOptions));
+        Console.WriteLine($"CLEANUP APPLIED: september={before.SeptemberActive}; isolatedPpcs={archivedPpcs}; measurements={archivedMeasurements}; processes={archivedProcesses}; characteristics={archivedCharacteristics}; octoberNormal={after.OctoberNormalCount}"); return 0;
     }
 
     private static async Task<CleanupInventory> CleanupInventoryAsync(AppDbContext db)
     {
         var ppcs = await db.PartProcessCharacteristics.AsNoTracking().Include(x => x.Part).Include(x => x.Process).Include(x => x.Machine).Include(x => x.Tank).Include(x => x.Characteristic)
             .Where(x => x.ControlScope == "CHEM").ToListAsync();
-        var isolated = ppcs.Where(x => TestChemicalReimportPlanner.IsIsolatedReconciliationTarget(x.Part?.PartNo, x.Part?.PartName, x.Process?.ProcessCode, x.Process?.ProcessName, x.Machine?.MachineCode, x.Machine?.MachineName, x.Tank?.TankCode, x.Tank?.TankName, x.Characteristic?.CharacteristicCode, x.Characteristic?.CharacteristicName))
+        var isolated = ppcs.Where(x => TestChemicalReimportPlanner.IsIsolatedReconciliationTarget(x.Part?.PartNo, x.Part?.PartName, x.Process?.ProcessCode, x.Process?.ProcessName, x.Machine?.MachineCode, x.Machine?.MachineName, x.Tank?.TankCode, x.Tank?.TankName, x.Characteristic?.CharacteristicCode, x.Characteristic?.CharacteristicName) ||
+            TestChemicalReimportPlanner.IsExplicitTestMasterLabel(x.Part?.PartNo, x.Part?.PartName, x.Process?.ProcessCode, x.Process?.ProcessName, x.Machine?.MachineCode, x.Machine?.MachineName, x.Tank?.TankCode, x.Tank?.TankName, x.Characteristic?.CharacteristicCode, x.Characteristic?.CharacteristicName))
             .Select(x => new CleanupPpc(x.Id, x.Part?.PartName ?? "", x.Process?.ProcessName ?? "", x.Machine?.MachineName ?? "", x.Tank?.TankName ?? "", x.Characteristic?.CharacteristicName ?? "")).OrderBy(x => x.Id).ToList();
         var ids = isolated.Select(x => x.Id).ToArray(); var sep = new DateTime(2026,9,1); var oct = new DateTime(2026,10,1); var nov = new DateTime(2026,11,1);
         var september = await db.VariableMeasurements.AsNoTracking().CountAsync(x => (x.PortalDailyDate ?? x.MeasuredAt) >= sep && (x.PortalDailyDate ?? x.MeasuredAt) < oct);
@@ -172,7 +179,13 @@ internal static class Program
         var octoberRows = await db.VariableMeasurements.AsNoTracking().Where(x => !ids.Contains(x.PartProcessCharacteristicId) && (x.PortalDailyDate ?? x.MeasuredAt) >= oct && (x.PortalDailyDate ?? x.MeasuredAt) < nov)
             .OrderBy(x => x.Id).Select(x => new { x.Id, x.PartProcessCharacteristicId, x.PortalDailyDate, x.SamplingPhase, x.SamplingStage, x.MeasuredValue, x.RecheckValue }).ToListAsync();
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(octoberRows))));
-        return new(september, isolatedMeasurements, isolated, octoberRows.Count, hash);
+        var isolatedIds = isolated.Select(x => x.Id).ToHashSet();
+        var activeRefs = ppcs.Where(x => !isolatedIds.Contains(x.Id)).Select(x => new { x.ProcessId, x.CharacteristicId }).ToList();
+        var testProcesses = (await db.Processes.AsNoTracking().Where(x => x.ProcessCode.Contains("測試") || x.ProcessName.Contains("測試")).ToListAsync())
+            .Where(x => TestChemicalReimportPlanner.IsExplicitTestMasterLabel(x.ProcessCode,x.ProcessName)).Select(x => new CleanupMaster(x.Id,x.ProcessCode,x.ProcessName,activeRefs.Count(r => r.ProcessId==x.Id))).OrderBy(x=>x.Id).ToList();
+        var testCharacteristics = (await db.QualityCharacteristics.AsNoTracking().Where(x => x.CharacteristicCode.Contains("測試") || x.CharacteristicName.Contains("測試")).ToListAsync())
+            .Where(x => TestChemicalReimportPlanner.IsExplicitTestMasterLabel(x.CharacteristicCode,x.CharacteristicName)).Select(x => new CleanupMaster(x.Id,x.CharacteristicCode,x.CharacteristicName,activeRefs.Count(r => r.CharacteristicId==x.Id))).OrderBy(x=>x.Id).ToList();
+        return new(september, isolatedMeasurements, isolated, octoberRows.Count, hash, testProcesses, testCharacteristics);
     }
 
     private static List<SourceRow> Load(string path)
@@ -460,7 +473,8 @@ internal static class Program
     private sealed record Verification(int Measurements, int FormulaTraces);
     private sealed record Reactivation(int Changed, int AlreadyActive, int Receipts, int Traces);
     private sealed record CleanupPpc(int Id, string Part, string Process, string Machine, string Tank, string Characteristic);
-    private sealed record CleanupInventory(int SeptemberActive, int IsolatedActiveMeasurements, IReadOnlyList<CleanupPpc> IsolatedPpcs, int OctoberNormalCount, string OctoberNormalHash);
+    private sealed record CleanupMaster(int Id,string Code,string Name,int ActiveReferences);
+    private sealed record CleanupInventory(int SeptemberActive, int IsolatedActiveMeasurements, IReadOnlyList<CleanupPpc> IsolatedPpcs, int OctoberNormalCount, string OctoberNormalHash, IReadOnlyList<CleanupMaster> TestProcesses, IReadOnlyList<CleanupMaster> TestCharacteristics);
 
     private sealed class SuppressedEmail : IEmailNotificationService
     {

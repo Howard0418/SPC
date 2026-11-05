@@ -2600,3 +2600,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 依使用者只看9月起5筆續核，確認皆為合法Primary／Secondary雙滴定公式；補Secondary解析後40項測試及808檔重跑通過。9月起3,215列全READY、錯誤0、衝突0，5筆精簡核對表已交付；DB寫入0。
 - 使用者授權僅借用既有正式維護身分並強制改接測試庫；`PMR_SPC_TEST` COPY_ONLY/CHECKSUM備份及RESTORE VERIFYONLY通過後，9月起3,215筆全部匯入，2,746份公式／複驗追蹤完整。相同來源重送0變更／3,215已存在，逐筆值與Excel一致；正式`PMR_SPC_2026`未連線、未讀寫，無網站程式發布。[驗證與回復](specs/20261105-test-sep-oct-reimport/verification.md)。
 - 依使用者後續要求，測試區九月有效量測1,462筆及「十月／九月隔離測試、九月趨勢驗收」Excel對帳PPC 235項已受控封存；重查皆0。十月正常量測1,494筆與值雜湊完全保持，不可變稽核證據保留；正式DB未連線，無網站發布。[驗證](specs/20261105-test-september-isolated-cleanup/spec.md)。
+- 續依畫面清除上層下拉殘留：封存13項測試PPC、6個明確測試製程與248個明確測試分析項目；有效正常PPC引用為0，清理後測試名稱查詢0。十月正常1,494筆及雜湊保持，24項測試通過。[驗證](specs/20261105-test-september-isolated-cleanup/spec.md)。

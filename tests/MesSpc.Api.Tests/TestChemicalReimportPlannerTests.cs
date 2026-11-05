@@ -78,4 +78,11 @@ public sealed class TestChemicalReimportPlannerTests
     [InlineData("正常鍍銅線", false)]
     public void IsIsolatedReconciliationTarget_matches_only_explicit_test_labels(string label, bool expected)
         => Assert.Equal(expected, TestChemicalReimportPlanner.IsIsolatedReconciliationTarget(label));
+
+    [Theory]
+    [InlineData("【十月隔離測試】Excel藥液對帳", true)]
+    [InlineData("【測試可清除】日期公式示範", true)]
+    [InlineData("化鎳線(N1)", false)]
+    public void IsExplicitTestMasterLabel_requires_explicit_test_text(string label, bool expected)
+        => Assert.Equal(expected, TestChemicalReimportPlanner.IsExplicitTestMasterLabel(label));
 }
