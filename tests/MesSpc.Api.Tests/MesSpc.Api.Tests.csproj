@@ -29,6 +29,7 @@
     <ProjectReference Include="..\..\tools\ChemicalFormulaMigration\ChemicalFormulaMigration.csproj" />
     <ProjectReference Include="..\..\tools\ProductionTestBusinessAlign\ProductionTestBusinessAlign.csproj" />
     <ProjectReference Include="..\..\tools\ProductionChemicalMasterFormulaSync\ProductionChemicalMasterFormulaSync.csproj" />
+    <ProjectReference Include="..\..\tools\TestChemicalReimport\TestChemicalReimport.csproj" />
   </ItemGroup>
 
   <!-- Explicit local cross-repository baseline; no copied implementation or machine-specific path. -->

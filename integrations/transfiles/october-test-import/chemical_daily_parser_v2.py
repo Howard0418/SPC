@@ -48,6 +48,17 @@ def _stage(title: str, line: str) -> str | None:
     return None
 
 
+def _section_line(value: Any, sheet_line: str) -> str:
+    """舊線／新線工作表內含 PT、DV、ST、QE 四條實際線別，依 A 欄區段標題解析。"""
+    if sheet_line not in {"舊線", "新線"}:
+        return sheet_line
+    match = re.search(r"[（(]\s*(PT|DV|ST|QE)\s*(\d?)\s*[）)]", _text(value), re.IGNORECASE)
+    if not match:
+        return ""
+    suffix = match.group(2) or ("1" if sheet_line == "舊線" else "2")
+    return match.group(1).upper() + suffix
+
+
 def _date_value(value: Any) -> str | None:
     if isinstance(value, datetime):
         return value.date().isoformat()
@@ -154,7 +165,13 @@ def parse_report(path: Path, source: dict[str, Any]) -> dict[str, Any]:
                 continue
             header_row, item_col, titration_cols, concentration_cols = contract
             slot = ""
+            section_line = ""
             for row_number in range(header_row + 1, formula_ws.max_row + 1):
+                current_section = _text(value_ws.cell(row_number, 1).value)
+                if current_section:
+                    parsed_section = _section_line(current_section, line)
+                    if parsed_section:
+                        section_line = parsed_section
                 current_slot = _text(value_ws.cell(row_number, 2).value)
                 if current_slot:
                     slot = current_slot
@@ -168,10 +185,13 @@ def parse_report(path: Path, source: dict[str, Any]) -> dict[str, Any]:
                     errors.append({"code": "ANALYSIS_ITEM_MISSING", "cell": f"{get_column_letter(item_col)}{row_number}", "reason": "有量測值但分析項目空白"})
                 if not slot:
                     errors.append({"code": "SLOT_MISSING", "cell": f"B{row_number}", "reason": "有量測值但槽位空白"})
+                row_line = section_line if line in {"舊線", "新線"} else line
+                if not row_line:
+                    errors.append({"code": "SECTION_LINE_MISSING", "cell": f"A{row_number}", "reason": "舊線／新線資料缺少PT／DV／ST／QE區段線別"})
                 rows.append({
                     "sourceFile": source["relativePath"], "sourceHash": source["sha256"], "sheet": title, "sourceRow": row_number,
                     "reportDate": source["reportDate"], "shift": source["shift"], "reportDateTime": source["reportDateTime"],
-                    "line": line, "samplingStage": sampling_stage, "slot": slot, "analysisItem": analysis_item,
+                    "line": row_line, "samplingStage": sampling_stage, "slot": slot, "analysisItem": analysis_item,
                     "initial": initial, "recheck": recheck, "status": "ERROR" if errors else "CANDIDATE", "errors": errors,
                 })
         return {"source": source, "fValues": f_values, "rows": rows, "sheetErrors": sheet_errors,

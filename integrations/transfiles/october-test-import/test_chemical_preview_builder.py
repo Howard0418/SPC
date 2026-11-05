@@ -25,6 +25,7 @@ class ChemicalPreviewBuilderTests(unittest.TestCase):
             self.assertEqual(preview["summary"]["readyRows"],1)
             phase=preview["rows"][0]["initial"]
             self.assertEqual((phase["mode"],phase["concentration"]),("DIRECT",9.78))
+            self.assertEqual(preview["rows"][0]["sourceFValues"],{"F!B3":0.99})
 
     def test_missing_cached_formula_result_is_actionable_error(self):
         with tempfile.TemporaryDirectory() as temp:

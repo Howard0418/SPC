@@ -108,6 +108,24 @@ class ChemicalDailyParserV2Tests(unittest.TestCase):
             self.assertEqual(phase["sourceCells"]["secondary"],"I7")
         finally: temp.cleanup()
 
+    def test_legacy_sheet_carries_actual_section_line_from_column_a(self):
+        temp,path=self.fixture(sheet="舊線",line="舊線")
+        try:
+            wb=openpyxl.load_workbook(path);ws=wb["舊線"]
+            ws["A7"]="活化線\n(PT)";ws["B7"]="抗氧化";ws["C7"]="PH";ws["H7"]="-";ws["I7"]=5.5
+            ws["B8"]="酸洗";ws["C8"]="硫酸";ws["H8"]="-";ws["I8"]=4.8;wb.save(path)
+            rows=parse_report(path,self.metadata())["rows"]
+            self.assertEqual([row["line"] for row in rows],["PT1","PT1"])
+        finally: temp.cleanup()
+
+    def test_new_sheet_reads_explicit_qe2_section_line(self):
+        temp,path=self.fixture(sheet="新線",line="新線")
+        try:
+            wb=openpyxl.load_workbook(path);ws=wb["新線"]
+            ws["A7"]="蝕刻線\n(QE2)";ws["B7"]="蝕刻(銅)";ws["C7"]="銅離子";ws["H7"]="-";ws["I7"]=2.1;wb.save(path)
+            self.assertEqual(parse_report(path,self.metadata())["rows"][0]["line"],"QE2")
+        finally: temp.cleanup()
+
 
 if __name__ == "__main__":
     unittest.main()

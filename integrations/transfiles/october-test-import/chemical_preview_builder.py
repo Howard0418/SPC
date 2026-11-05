@@ -74,6 +74,8 @@ def build_preview(source_root: Path, manifest: dict[str, Any], progress=None, wo
             for sheet_error in report["sheetErrors"]:
                 errors.append(_error(source,sheet_error["code"],sheet_error["reason"],sheet=sheet_error.get("sheet"),cell=sheet_error.get("cell")))
             for row in report["rows"]:
+                # 保存來源檔完整F快照，供測試DB日期排程建立與後續逐筆追溯；不以目前啟用F代替歷史值。
+                row["sourceFValues"] = {key:value for key,value in sorted(report["fValues"].items())}
                 row_errors=list(row.pop("errors",[]))
                 row_errors += _validate_phase(row,"Initial",row["initial"],report["fValues"])
                 row_errors += _validate_phase(row,"Recheck",row["recheck"],report["fValues"])
