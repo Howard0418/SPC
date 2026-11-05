@@ -16,5 +16,7 @@
     <Compile Include="../../tools/EtchTrialImport/EtchImportKey.cs" Link="EtchTrialImport/EtchImportKey.cs"/>
     <Compile Include="../../tools/EtchSepOctProductionImport/ProductionGuard.cs" Link="EtchProduction/ProductionGuard.cs"/>
     <Compile Include="../../tools/ChemicalSourceRevision/RevisionGuard.cs" Link="ChemicalSourceRevision/RevisionGuard.cs"/>
+    <Compile Include="../../tools/TestMeasurementCleanup/CleanupService.cs" Link="TestMeasurementCleanup/CleanupService.cs"/>
+    <Compile Include="../../tools/TestMeasurementCleanup/LegacyArchiveGate.cs" Link="TestMeasurementCleanup/LegacyArchiveGate.cs"/>
   </ItemGroup>
 </Project>
