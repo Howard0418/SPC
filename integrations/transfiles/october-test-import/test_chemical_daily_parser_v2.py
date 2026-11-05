@@ -33,7 +33,7 @@ class ChemicalDailyParserV2Tests(unittest.TestCase):
             self.assertEqual(row["initial"]["titration"],8.2)
             self.assertEqual(row["initial"]["formula"],"=H7*8.7*F!$B$3")
             self.assertEqual(row["initial"]["fReferences"],["F!B3"])
-            self.assertEqual(row["initial"]["sourceCells"],{"titration":"H7","concentration":"J7"})
+            self.assertEqual(row["initial"]["sourceCells"],{"titration":"H7","secondary":None,"concentration":"J7"})
         finally: temp.cleanup()
 
     def test_parses_recheck_independently_and_close_stage(self):
@@ -97,6 +97,15 @@ class ChemicalDailyParserV2Tests(unittest.TestCase):
             self.assertEqual(result["sheetErrors"],[])
             self.assertEqual(result["rows"][0]["initial"]["fReferences"],["F!B3"])
             self.assertEqual(result["fValues"]["F!B3"],0.99)
+        finally: temp.cleanup()
+
+    def test_formula_with_middle_secondary_input_is_captured(self):
+        temp,path=self.fixture(concentration_col=10)
+        try:
+            wb=openpyxl.load_workbook(path);ws=wb["N1（開）"];ws["B7"]="化鎳";ws["C7"]="次磷酸鈉";ws["H7"]=19.9;ws["I7"]=12.9;ws["J7"]='=IF(I7="","",(H7-I7)*2.65)';wb.save(path)
+            phase=parse_report(path,self.metadata())["rows"][0]["initial"]
+            self.assertEqual(phase["secondary"],12.9)
+            self.assertEqual(phase["sourceCells"]["secondary"],"I7")
         finally: temp.cleanup()
 
 

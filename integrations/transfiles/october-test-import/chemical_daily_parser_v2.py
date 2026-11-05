@@ -86,6 +86,9 @@ def _phase(formula_ws: Any, value_ws: Any, row: int, titration_col: int, concent
     has_titration = titration_number is not None
     has_concentration = concentration is not None
     formula = formula_or_value if isinstance(formula_or_value, str) and formula_or_value.startswith("=") else None
+    secondary_col = titration_col + 1 if concentration_col == titration_col + 2 else None
+    secondary_cell = f"{get_column_letter(secondary_col)}{row}" if secondary_col else None
+    secondary = _number(formula_ws.cell(row, secondary_col).value) if secondary_col and formula and re.search(rf"(?<![A-Z0-9_])\$?{get_column_letter(secondary_col)}\$?{row}(?!\d)", formula, re.IGNORECASE) else None
     if not has_titration and not has_concentration:
         return None, []
 
@@ -106,10 +109,11 @@ def _phase(formula_ws: Any, value_ws: Any, row: int, titration_col: int, concent
     return {
         "mode": mode,
         "titration": titration_number,
+        "secondary": secondary,
         "concentration": concentration,
         "formula": formula,
         "fReferences": references,
-        "sourceCells": {"titration": titration_cell, "concentration": concentration_cell},
+        "sourceCells": {"titration": titration_cell, "secondary": secondary_cell if secondary is not None else None, "concentration": concentration_cell},
     }, errors
 
 

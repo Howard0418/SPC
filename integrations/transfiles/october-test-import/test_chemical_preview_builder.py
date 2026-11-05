@@ -70,5 +70,14 @@ class ChemicalPreviewBuilderTests(unittest.TestCase):
             self.assertEqual(preview["files"][0]["status"],"FILE_ERROR")
             self.assertEqual(preview["errors"][0]["code"],"SOURCE_HASH_MISMATCH")
 
+    def test_secondary_formula_is_calculated_not_formula_invalid(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);path=self.workbook(root,"2026-10-28.xlsx",formula='=IF(I7="","",(H7-I7)*2.65)')
+            wb=openpyxl.load_workbook(path);ws=wb.active;ws["I6"]="";ws["J6"]="濃度";ws["H7"]=19.9;ws["I7"]=12.9;ws["J7"]='=IF(I7="","",(H7-I7)*2.65)';wb.save(path)
+            preview=build_preview(root,scan_source(root))
+            codes=[error["code"] for error in preview["errors"]]
+            self.assertNotIn("FORMULA_INVALID",codes)
+            self.assertEqual(preview["rows"][0]["initial"]["calculatedConcentration"],"18.550")
+
 
 if __name__=="__main__":unittest.main()

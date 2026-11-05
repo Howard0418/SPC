@@ -38,12 +38,13 @@ def _validate_phase(row: dict[str, Any], phase_name: str, phase: dict[str, Any] 
     if not phase.get("formula"):
         return [_error(source,"FORMULA_MISSING","滴定數有值但濃度公式缺少",sheet=row["sheet"],sourceRow=row["sourceRow"],phase=phase_name,cell=phase["sourceCells"]["concentration"])]
     column = ''.join(filter(str.isalpha, phase["sourceCells"]["titration"]))
+    secondary_column = ''.join(filter(str.isalpha, phase["sourceCells"].get("secondary") or "")) or None
     try:
-        expression, references = convert_formula(phase["formula"], row["sourceRow"], column=column)
+        expression, references = convert_formula(phase["formula"], row["sourceRow"], column=column, secondary_column=secondary_column)
         missing = [reference for reference in references if f"F!{reference}" not in f_values]
         if missing:
             return [_error(source,"F_VALUE_MISSING","來源F表缺少："+'、'.join(missing),sheet=row["sheet"],sourceRow=row["sourceRow"],phase=phase_name)]
-        calculated = calculate(expression, phase["titration"], {reference:f_values[f"F!{reference}"] for reference in references})
+        calculated = calculate(expression, phase["titration"], {reference:f_values[f"F!{reference}"] for reference in references}, secondary=phase.get("secondary"))
         phase["normalizedFormula"] = expression
         phase["calculatedConcentration"] = str(calculated)
         if phase.get("concentration") is None:
