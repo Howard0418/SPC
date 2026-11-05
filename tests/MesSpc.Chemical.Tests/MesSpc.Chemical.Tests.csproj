@@ -18,5 +18,6 @@
     <Compile Include="../../tools/ChemicalSourceRevision/RevisionGuard.cs" Link="ChemicalSourceRevision/RevisionGuard.cs"/>
     <Compile Include="../../tools/TestMeasurementCleanup/CleanupService.cs" Link="TestMeasurementCleanup/CleanupService.cs"/>
     <Compile Include="../../tools/TestMeasurementCleanup/LegacyArchiveGate.cs" Link="TestMeasurementCleanup/LegacyArchiveGate.cs"/>
+    <Compile Include="../../tools/Pt1CurrentSchedule/SchedulePlan.cs" Link="Pt1CurrentSchedule/SchedulePlan.cs"/>
   </ItemGroup>
 </Project>
