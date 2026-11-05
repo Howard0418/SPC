@@ -7,7 +7,7 @@ import ast
 import re
 from decimal import Decimal, InvalidOperation, localcontext
 
-F_REF=re.compile(r"(?:'F'|F)!\$?([A-Z]{1,3})\$?(\d+)",re.I)
+F_REF=re.compile(r"(?:'?(?:F值|F)'?)!\$?([A-Z]{1,3})\$?(\d+)",re.I)
 
 def number(value):
  try:

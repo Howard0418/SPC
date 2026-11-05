@@ -11,7 +11,7 @@ from openpyxl.utils import get_column_letter
 
 
 PLACEHOLDERS = {"", "-", "－", "—", ".", "。"}
-F_REFERENCE = re.compile(r"(?:'F'|F)!\$?([A-Z]{1,3})\$?(\d+)", re.IGNORECASE)
+F_REFERENCE = re.compile(r"(?:'?(?:F值|F)'?)!\$?([A-Z]{1,3})\$?(\d+)", re.IGNORECASE)
 
 
 def _text(value: Any) -> str:
@@ -121,13 +121,14 @@ def parse_report(path: Path, source: dict[str, Any]) -> dict[str, Any]:
     sheet_errors: list[dict[str, Any]] = []
     try:
         f_values = {}
-        if "F" in value_wb.sheetnames:
-            for row in value_wb["F"].iter_rows():
+        f_sheet = next((name for name in value_wb.sheetnames if _normal(name) in {"F","F值"}), None)
+        if f_sheet:
+            for row in value_wb[f_sheet].iter_rows():
                 for cell in row:
                     if _number(cell.value) is not None:
                         f_values[f"F!{cell.coordinate}"] = cell.value
         for title in formula_wb.sheetnames:
-            if title.upper() == "F":
+            if _normal(title) in {"F", "F值"}:
                 continue
             formula_ws, value_ws = formula_wb[title], value_wb[title]
             line = _line_from_sheet(title)

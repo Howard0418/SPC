@@ -89,6 +89,16 @@ class ChemicalDailyParserV2Tests(unittest.TestCase):
             self.assertEqual(result["rows"],[])
         finally: temp.cleanup()
 
+    def test_legacy_f_value_sheet_is_not_parsed_as_line_and_is_resolved(self):
+        temp,path=self.fixture()
+        try:
+            wb=openpyxl.load_workbook(path);wb["F"].title="F值";ws=wb["N1（開）"];ws["B7"]="表處";ws["C7"]="硫酸";ws["H7"]=1;ws["I7"]="=H7*F值!$B$3";wb.save(path)
+            result=parse_report(path,self.metadata())
+            self.assertEqual(result["sheetErrors"],[])
+            self.assertEqual(result["rows"][0]["initial"]["fReferences"],["F!B3"])
+            self.assertEqual(result["fValues"]["F!B3"],0.99)
+        finally: temp.cleanup()
+
 
 if __name__ == "__main__":
     unittest.main()

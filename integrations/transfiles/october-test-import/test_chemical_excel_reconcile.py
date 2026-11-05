@@ -32,5 +32,9 @@ class Tests(unittest.TestCase):
   expression,refs=convert_formula('=H7*(F!B3+F!B4)/3',7)
   self.assertEqual(refs,['B3','B4'])
   self.assertEqual(calculate(expression,'0.3',{'B3':'0.1','B4':'0.2'}),Decimal('0.03'))
+ def test_legacy_f_value_sheet_is_normalized(self):
+  expression,refs=convert_formula('=IF(H13="","",0.0212*4*H13*F值!$B$5)',13)
+  self.assertEqual(expression,'0.0212*4*Primary*F!$B$5')
+  self.assertEqual(refs,['B5'])
 
 if __name__=='__main__':unittest.main()

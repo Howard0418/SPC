@@ -703,4 +703,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：Portal主責／P2，賀卡彈窗及圖片過小的可讀性改善，只規劃未執行。桌面900px候選、等比例／長圖捲動及放大檢視，預覽與首頁一致，圖片格式／2MB與通知規則保持。排在阻擋使用、安全與資料正確性之後、純配色文案之前。[Portal規格](../PmrPortal/specs/20261105-birthday-card-readable-size/spec.md)。中央核心45→46、SPC22不變，完成190／人工11／核銷4保持；不啟動實作或發布。
 # 2026-11-05 測試區九／十月資料重匯（來源阻擋）
 
-- [ ] `SPC-TEST-REIMPORT-20261105`（P0，T2～T4完成；主系統SPC／相依TransFiles與Portal顯示；DB：只寫測試PMR_SPC_TEST；發布：尚無；rollback：依本批ID受控封存）唯讀掃描828檔並完成表頭導向解析器；30項測試通過，11/03早班54筆與10/30中班3筆實檔解析0錯誤。下一項T5產生全來源preview、逐檔筆數對帳及待修正Excel；測試／正式DB均未寫入。[驗證](specs/20261105-test-sep-oct-reimport/verification.md)
+- [ ] `SPC-TEST-REIMPORT-20261105`（P0，T2～T5完成；主系統SPC／相依TransFiles與Portal顯示；DB：只寫測試PMR_SPC_TEST；發布：尚無；rollback：依本批ID受控封存）全來源preview完成：808檔全數可讀，9,678列中可匯入8,719、衝突933、錯誤26；另有2,558筆錯誤明細及89組來源衝突。待使用者在交付Excel核准來源／補正後才執行T6測試DB備份與apply；目前資料庫寫入0。[驗證](specs/20261105-test-sep-oct-reimport/verification.md)
