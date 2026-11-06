@@ -10,7 +10,7 @@
 | 2 | `SPC-AUDIT-1103-TASK-002` | P1 | SPC／SQL Server；依001 | 新增 append-only `AuditEvents`、索引、冪等、共用寫入服務與環境隔離。 | EF migration；測試API98；回復API97並保留新增表。 | [x] DONE：儲存基礎測試完成，正式未發布；[驗證](task002-storage.md) |
 | 3 | `SPC-AUDIT-1103-TASK-003` | P1 | SPC SSO；依002 | 記SSO成功／拒絕／失敗、停用本機登入及登出請求與session；Auth啟用／runtime分權，不改Portal帳密驗證。 | 無新增schema；測試API99／Web116；回復舊包／私有設定，保留事件。 | [x] DONE：實站13項及使用者Portal重登通過；[驗證](task003-authentication.md) |
 | 4 | `SPC-AUDIT-1103-TASK-004` | P1 | SPC；依003 | 操作者／角色／頁面權限、設定與拒絕事件；明示敏感權限、成功同交易、SMTP意圖與回復。 | 無schema／實際授權變更；測試API106、Web119保持；回復API105與原旗標，保留事件。 | [x] DONE：測試完成／正式未發；[驗證](task004-security.md) |
-| 5 | `SPC-AUDIT-1103-TASK-005` | P1 | SPC；依004 | 記量測、匯入確認、公式／F／版本、主檔、刪除／停用等高風險操作；批次採摘要，驗證交易一致。 | 不改業務 schema；測試站 API；舊版 API 回復並保留事件。 | [ ] 待執行 |
+| 5 | `SPC-AUDIT-1103-TASK-005` | P1 | SPC；依004 | 記量測、匯入確認、公式／F／版本、主檔、刪除／停用等高風險操作；批次採摘要，驗證交易一致。 | 不改業務 schema；測試站 API；舊版 API 回復並保留事件。 | [ ] 測試 API 已發布／待登入後實際操作驗收；[驗證](../20261106-audit-business-operations/verification.md) |
 | 6 | `SPC-AUDIT-1103-TASK-006` | P1 | SPC Web／API；依005 | 記成功進頁、查詢／篩選／匯出及允許清單純前端操作；canonical route、去重、有限重試與丟棄監控。 | 無額外 schema；測試站 Web／API；前端／API feature flag 回復。 | [ ] 待執行 |
 | 7 | `SPC-AUDIT-1103-TASK-007` | P2 | SPC；依006 | 建稽核查詢／匯出 API 與頁面，含游標分頁、時間／人員／頁面／操作／目標／結果篩選及獨立最小權限。 | 無額外 schema；測試站 Web／API；隱藏入口／回復舊包並保留資料。 | [ ] 待執行 |
 | 8 | `SPC-AUDIT-1103-TASK-008` | P2 | SPC／SQL Server；依002、007 | 保存／封存、legal hold、清理重跑、容量監控與告警；先以測試站7日流量決定索引／分割。 | 可能新增保留欄位／作業 migration；測試環境先行；停用排程回復，資料不刪。 | [ ] 待執行 |

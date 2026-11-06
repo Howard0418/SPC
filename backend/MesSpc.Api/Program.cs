@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 var builder = WebApplication.CreateBuilder(args);
 MesSpc.Api.Services.Auditing.AuthenticationAuditStartup.ValidateConfiguration(builder.Configuration);
 MesSpc.Api.Services.Auditing.SecurityAudit.ValidateConfiguration(builder.Configuration);
+MesSpc.Api.Services.Auditing.BusinessDataAuditFilter.ValidateConfiguration(builder.Configuration);
 
 var authEnabled = builder.Configuration.GetValue("Auth:Enabled", false);
 var jwtKey = builder.Configuration["Auth:JwtKey"];
@@ -46,7 +47,11 @@ if (jwtConfigured)
 builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllers(options => options.Filters.AddService<MesSpc.Api.Services.Auditing.SecurityAuditFilter>());
+builder.Services.AddControllers(options =>
+{
+    options.Filters.AddService<MesSpc.Api.Services.Auditing.SecurityAuditFilter>();
+    options.Filters.AddService<MesSpc.Api.Services.Auditing.BusinessDataAuditFilter>();
+});
 builder.Services.Configure<ApiBehaviorOptions>(ApiUiValidation.ConfigureOptions);
 builder.Services.AddOpenApi();
 builder.Services.AddMemoryCache();
@@ -109,6 +114,7 @@ builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuthenticationAuditResul
 builder.Services.AddScoped<AuditPermissions>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.SecurityAudit>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.SecurityAuditFilter>();
+builder.Services.AddScoped<MesSpc.Api.Services.Auditing.BusinessDataAuditFilter>();
 builder.Services.AddSingleton<UserPasswordHasher>();
 builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddHostedService<SpcReportSchedulerService>();
