@@ -102,7 +102,7 @@
     },
     "audit": {
       "title": "使用者活動紀錄", "subtitle": "查詢誰在何時進入頁面及執行的操作；僅顯示安全摘要。",
-      "from": "起始日期", "to": "結束日期", "actor": "人員", "page": "頁面", "event": "操作事件", "target": "目標", "outcome": "結果", "source": "來源",
+      "from": "起始日期", "to": "結束日期", "actor": "人員", "page": "頁面", "event": "操作事件", "target": "目標", "outcome": "結果", "source": "來源", "summary": "異動摘要", "changedFields": "異動欄位", "permissionsSet": "權限設為", "statusChange": "狀態變更", "recordCount": "筆數",
       "query": "查詢", "export": "匯出 Excel", "all": "全部", "time": "時間", "empty": "此條件沒有稽核紀錄。", "more": "載入下一頁",
       "rangeHint": "預設查詢 7 日，單次最多 31 日；完整查詢值與敏感資料不會顯示。",
       "labels": {

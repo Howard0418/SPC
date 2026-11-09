@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using ClosedXML.Excel;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,12 @@ public sealed record AuditEventListItem(long Id, Guid EventId, DateTime Occurred
     string Category, string EventCode, string Outcome, string? ReasonCode, string ActorType,
     int? ActorOperatorId, string? ActorAccount, string? ActorOperatorCode, string? ActorDisplayName,
     string? ActorRole, string? ActorServiceCode, string? PageKey, string? RouteTemplate,
-    string? TargetType, string? TargetId, string? HttpMethod, int? HttpStatus, string Source);
+    string? TargetType, string? TargetId, string? HttpMethod, int? HttpStatus, string Source,
+    [property: JsonIgnore] string DetailsJson = "{}", string? TargetDisplayName = null, AuditEventSafeSummary? Summary = null);
+
+public sealed record AuditEventSafeSummary(string[] ChangedFields, string[] PermissionCodes,
+    string? PreviousStatus, string? NewStatus, long? RecordCount, long? SucceededCount,
+    long? SkippedCount, long? FailedCount, long? Revision, long? VersionId);
 
 public sealed record AuditEventPage(IReadOnlyList<AuditEventListItem> Items, string? NextCursor,
     DateTime FromUtc, DateTime ToUtc, int PageSize);
@@ -42,7 +48,8 @@ public sealed class AuditEventQueryService(AppDbContext db, TimeProvider clock)
                 x.Environment, x.Category, x.EventCode, x.Outcome, x.ReasonCode, x.ActorType,
                 x.ActorOperatorId, x.ActorAccountSnapshot, x.ActorOperatorCodeSnapshot, x.ActorDisplayNameSnapshot,
                 x.ActorRoleSnapshot, x.ActorServiceCode, x.PageKey, x.RouteTemplate, x.TargetType, x.TargetId,
-                x.HttpMethod, x.HttpStatus, x.Source)).ToListAsync(ct);
+                x.HttpMethod, x.HttpStatus, x.Source, x.DetailsJson)).ToListAsync(ct);
+        rows = await EnrichAsync(rows, ct);
         var hasMore = rows.Count > input.PageSize;
         if (hasMore) rows.RemoveAt(rows.Count - 1);
         return new(rows, hasMore && rows.Count > 0 ? EncodeCursor(rows[^1].OccurredAtUtc, rows[^1].Id) : null, from, to, input.PageSize);
@@ -56,7 +63,8 @@ public sealed class AuditEventQueryService(AppDbContext db, TimeProvider clock)
                 x.Environment, x.Category, x.EventCode, x.Outcome, x.ReasonCode, x.ActorType,
                 x.ActorOperatorId, x.ActorAccountSnapshot, x.ActorOperatorCodeSnapshot, x.ActorDisplayNameSnapshot,
                 x.ActorRoleSnapshot, x.ActorServiceCode, x.PageKey, x.RouteTemplate, x.TargetType, x.TargetId,
-                x.HttpMethod, x.HttpStatus, x.Source)).ToListAsync(ct);
+                x.HttpMethod, x.HttpStatus, x.Source, x.DetailsJson)).ToListAsync(ct);
+        rows = await EnrichAsync(rows, ct);
         if (rows.Count > MaxExportRows) throw new AuditQueryValidationException("AUDIT_EXPORT_LIMIT_EXCEEDED");
         return (BuildWorkbook(rows), rows.Count, from, to);
     }
@@ -65,7 +73,7 @@ public sealed class AuditEventQueryService(AppDbContext db, TimeProvider clock)
     {
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("稽核紀錄");
-        var headers = new[] { "ID", "事件時間(UTC)", "環境", "分類", "事件", "結果", "原因", "人員帳號", "人員代碼", "人員姓名", "角色", "頁面", "路由", "目標類型", "目標ID", "方法", "狀態碼", "來源" };
+        var headers = new[] { "ID", "事件時間(UTC)", "環境", "分類", "事件", "結果", "原因", "人員帳號", "人員代碼", "人員姓名", "角色", "頁面", "路由", "目標類型", "目標ID", "目標名稱", "異動摘要", "方法", "狀態碼", "來源" };
         for (var column = 1; column <= headers.Length; column++) sheet.Cell(1, column).SetValue(headers[column - 1]);
         for (var index = 0; index < rows.Count; index++)
         {
@@ -73,7 +81,7 @@ public sealed class AuditEventQueryService(AppDbContext db, TimeProvider clock)
             var values = new object?[] { row.Id, row.OccurredAtUtc.ToString("O", CultureInfo.InvariantCulture), row.Environment,
                 row.Category, row.EventCode, row.Outcome, row.ReasonCode, row.ActorAccount, row.ActorOperatorCode,
                 row.ActorDisplayName, row.ActorRole, row.PageKey, row.RouteTemplate, row.TargetType, row.TargetId,
-                row.HttpMethod, row.HttpStatus, row.Source };
+                row.TargetDisplayName, SummaryText(row.Summary), row.HttpMethod, row.HttpStatus, row.Source };
             for (var column = 1; column <= values.Length; column++)
             {
                 var cell = sheet.Cell(index + 2, column);
@@ -94,6 +102,46 @@ public sealed class AuditEventQueryService(AppDbContext db, TimeProvider clock)
 
     internal static string SafeSpreadsheetText(string value) => value.Length > 0 && value[0] is '=' or '+' or '-' or '@'
         ? "'" + value : value;
+
+    private async Task<List<AuditEventListItem>> EnrichAsync(List<AuditEventListItem> rows, CancellationToken ct)
+    {
+        var ids = rows.Where(x => x.TargetType == "Operator" && int.TryParse(x.TargetId, out _))
+            .Select(x => int.Parse(x.TargetId!, CultureInfo.InvariantCulture)).Distinct().ToArray();
+        var targets = ids.Length == 0 ? new Dictionary<int, string>() : await db.Operators.IgnoreQueryFilters()
+            .Where(x => ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.OperatorName + "（" + x.OperatorCode + "）", ct);
+        return rows.Select(row => row with {
+            TargetDisplayName = row.TargetType == "Operator" && int.TryParse(row.TargetId, out var id) && targets.TryGetValue(id, out var name) ? name : null,
+            Summary = ParseSafeSummary(row.DetailsJson)
+        }).ToList();
+    }
+
+    public static AuditEventSafeSummary? ParseSafeSummary(string? json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json ?? "{}"); var root = document.RootElement;
+            string[] Strings(string name) => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Array
+                ? value.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).Where(x => x.Length <= 64).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Take(64).ToArray() : [];
+            string? Text(string name) => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString()!.Length <= 64 ? value.GetString() : null;
+            long? Number(string name) => root.TryGetProperty(name, out var value) && value.TryGetInt64(out var number) && number >= 0 ? number : null;
+            var result = new AuditEventSafeSummary(Strings("ChangedFields"), Strings("PermissionCodes"), Text("PreviousStatus"), Text("NewStatus"),
+                Number("RecordCount"), Number("SucceededCount"), Number("SkippedCount"), Number("FailedCount"), Number("Revision"), Number("VersionId"));
+            return result.ChangedFields.Length == 0 && result.PermissionCodes.Length == 0 && result.PreviousStatus is null && result.NewStatus is null
+                && result.RecordCount is null && result.SucceededCount is null && result.SkippedCount is null && result.FailedCount is null && result.Revision is null && result.VersionId is null ? null : result;
+        }
+        catch (JsonException) { return null; }
+    }
+
+    private static string? SummaryText(AuditEventSafeSummary? value)
+    {
+        if (value is null) return null;
+        var parts = new List<string>();
+        if (value.ChangedFields.Length > 0) parts.Add("異動欄位：" + string.Join("、", value.ChangedFields));
+        if (value.PermissionCodes.Length > 0) parts.Add("權限設為：" + string.Join("、", value.PermissionCodes));
+        if (value.PreviousStatus is not null || value.NewStatus is not null) parts.Add($"狀態：{value.PreviousStatus ?? "-"} → {value.NewStatus ?? "-"}");
+        if (value.RecordCount is not null) parts.Add("筆數：" + value.RecordCount);
+        return string.Join("；", parts);
+    }
 
     public static string[] FilterFields(AuditEventQuery input)
     {

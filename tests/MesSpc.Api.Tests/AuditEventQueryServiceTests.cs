@@ -78,6 +78,33 @@ public sealed class AuditEventQueryServiceTests
         Assert.DoesNotContain("secret-user", fields); Assert.DoesNotContain("secret-lot", fields);
     }
 
+    [Fact]
+    public async Task QueryReturnsTargetIdentityAndOnlyAllowlistedChangeSummary()
+    {
+        var now = new DateTime(2026, 11, 9, 12, 0, 0, DateTimeKind.Utc);
+        var f = Fixture(now); await using var db = f.Db;
+        db.Operators.Add(new() { Id = 27, OperatorCode = "0027", OperatorName = "目標人員", Username = "target", Role = "Editor", IsActive = true });
+        var row = Row(1, now, code: "security.operator.change_permissions", target: "Operator");
+        row.Category = "Security"; row.TargetId = "27";
+        row.DetailsJson = "{\"SchemaVersion\":1,\"ChangedFields\":[\"PagePermissions\"],\"PermissionCodes\":[\"admin.audit.read\",\"admin.audit.export\"]}";
+        db.AuditEvents.Add(row); await db.SaveChangesAsync();
+
+        var item = Assert.Single((await f.Service.QueryAsync(new())).Items);
+        Assert.Equal("目標人員（0027）", item.TargetDisplayName);
+        Assert.Equal(["PagePermissions"], item.Summary!.ChangedFields);
+        Assert.Equal(["admin.audit.export", "admin.audit.read"], item.Summary.PermissionCodes);
+        Assert.DoesNotContain("DetailsJson", System.Text.Json.JsonSerializer.Serialize(item));
+    }
+
+    [Fact]
+    public void MalformedOrUnknownDetailFieldsAreNotExposed()
+    {
+        var summary = AuditEventQueryService.ParseSafeSummary("{\"SchemaVersion\":1,\"ChangedFields\":[\"Role\"],\"secret\":\"do-not-return\"}");
+        Assert.Equal(["Role"], summary!.ChangedFields);
+        Assert.DoesNotContain("secret", System.Text.Json.JsonSerializer.Serialize(summary));
+        Assert.Null(AuditEventQueryService.ParseSafeSummary("not-json"));
+    }
+
     private sealed class FixedTime(DateTime utc) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => new(utc);

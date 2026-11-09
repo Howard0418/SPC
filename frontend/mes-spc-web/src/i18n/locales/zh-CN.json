@@ -102,7 +102,7 @@
     },
     "audit": {
       "title": "用户活动记录", "subtitle": "查询谁在何时进入页面及执行的操作；仅显示安全摘要。",
-      "from": "开始日期", "to": "结束日期", "actor": "人员", "page": "页面", "event": "操作事件", "target": "目标", "outcome": "结果", "source": "来源",
+      "from": "开始日期", "to": "结束日期", "actor": "人员", "page": "页面", "event": "操作事件", "target": "目标", "outcome": "结果", "source": "来源", "summary": "异动摘要", "changedFields": "异动字段", "permissionsSet": "权限设为", "statusChange": "状态变更", "recordCount": "笔数",
       "query": "查询", "export": "导出 Excel", "all": "全部", "time": "时间", "empty": "此条件没有审计记录。", "more": "加载下一页",
       "rangeHint": "默认查询 7 天，单次最多 31 天；完整查询值与敏感数据不会显示。",
       "labels": {

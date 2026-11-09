@@ -1473,3 +1473,5 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 追加：使用者表示無法登入`admin`並指定`Administrator`；唯讀核對為測試Operator ID1079、Editor且啟用。依最小權限以1079取代26，白名單精確設為27、1079；不重設密碼、不改PagePermissions或正式設定。
 ## [2026-11-09] SPC-AUDIT-1103-TASK-009-LABELS 執行目的
 依使用者實際查看稽核紀錄後的回饋，修正內部 PageKey／EventCode／Outcome／Source／TargetType 難以辨識的問題。只在前端以目前語系顯示可讀名稱，並保留原始代碼供追查；未知代碼原樣顯示。先建立顯示測試，不修改稽核資料、API、權限、資料庫、正式站或其他功能。
+## [2026-11-09] SPC-AUDIT-1103-TASK-009-SUMMARY 執行目的
+依使用者實際驗收，補齊稽核查詢「目標是誰、調整哪些權限／欄位」的可讀性。API只從既有allowlist DetailsJson產生安全摘要，Operator目標補目前姓名／代碼；不回傳原始JSON、密碼、權杖、完整表單、查詢值或敏感原值。先建立核心測試，只發布測試站，正式不動。

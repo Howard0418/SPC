@@ -47,6 +47,14 @@ async function exportXlsx() {
 const actor = row => row.actorDisplayName || row.actorAccount || row.actorServiceCode || row.actorType;
 const display = (kind, value) => describeAuditCode(kind, value, t);
 const target = row => describeAuditTarget(row.targetType, row.targetId, t);
+const summary = row => {
+  const value = row.summary; if (!value) return "-"; const parts = [];
+  if (value.changedFields?.length) parts.push(`${t('spc.audit.changedFields')}：${value.changedFields.join('、')}`);
+  if (value.permissionCodes?.length) parts.push(`${t('spc.audit.permissionsSet')}：${value.permissionCodes.join('、')}`);
+  if (value.previousStatus || value.newStatus) parts.push(`${t('spc.audit.statusChange')}：${value.previousStatus || '-'} → ${value.newStatus || '-'}`);
+  if (value.recordCount != null) parts.push(`${t('spc.audit.recordCount')}：${value.recordCount}`);
+  return parts.join('；') || "-";
+};
 onMounted(() => load());
 </script>
 
@@ -71,8 +79,8 @@ onMounted(() => load());
       <p v-if="error" class="mt-3 text-red-600">{{ error }}</p>
     </section>
     <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-auto shadow-sm">
-      <table class="min-w-[1200px] w-full text-sm"><thead class="bg-slate-100 dark:bg-slate-800"><tr><th>{{ t('spc.audit.time') }}</th><th>{{ t('spc.audit.actor') }}</th><th>{{ t('spc.audit.event') }}</th><th>{{ t('spc.audit.outcome') }}</th><th>{{ t('spc.audit.page') }}</th><th>{{ t('spc.audit.target') }}</th><th>HTTP</th><th>{{ t('spc.audit.source') }}</th></tr></thead>
-        <tbody><tr v-for="row in rows" :key="row.id" class="border-t border-slate-200 dark:border-slate-700"><td>{{ new Date(row.occurredAtUtc).toLocaleString() }}</td><td>{{ actor(row) }}</td><td><span class="audit-label">{{ display('events', row.eventCode).label }}</span><span v-if="display('events', row.eventCode).code" class="audit-code">{{ display('events', row.eventCode).code }}</span></td><td><span class="audit-label">{{ display('outcomes', row.outcome).label }}</span><span v-if="display('outcomes', row.outcome).code" class="audit-code">{{ display('outcomes', row.outcome).code }}</span></td><td><span class="audit-label">{{ display('pages', row.pageKey).label }}</span><span v-if="display('pages', row.pageKey).code" class="audit-code">{{ display('pages', row.pageKey).code }}</span></td><td><span class="audit-label">{{ target(row).label }}</span><span v-if="target(row).code" class="audit-code">{{ target(row).code }}</span></td><td>{{ [row.httpMethod,row.httpStatus].filter(Boolean).join(' ') || '-' }}</td><td><span class="audit-label">{{ display('sources', row.source).label }}</span><span v-if="display('sources', row.source).code" class="audit-code">{{ display('sources', row.source).code }}</span></td></tr><tr v-if="!loading && !rows.length"><td colspan="8" class="text-center p-8 text-slate-500">{{ t('spc.audit.empty') }}</td></tr></tbody>
+      <table class="min-w-[1450px] w-full text-sm"><thead class="bg-slate-100 dark:bg-slate-800"><tr><th>{{ t('spc.audit.time') }}</th><th>{{ t('spc.audit.actor') }}</th><th>{{ t('spc.audit.event') }}</th><th>{{ t('spc.audit.outcome') }}</th><th>{{ t('spc.audit.page') }}</th><th>{{ t('spc.audit.target') }}</th><th>{{ t('spc.audit.summary') }}</th><th>HTTP</th><th>{{ t('spc.audit.source') }}</th></tr></thead>
+        <tbody><tr v-for="row in rows" :key="row.id" class="border-t border-slate-200 dark:border-slate-700"><td>{{ new Date(row.occurredAtUtc).toLocaleString() }}</td><td>{{ actor(row) }}</td><td><span class="audit-label">{{ display('events', row.eventCode).label }}</span><span v-if="display('events', row.eventCode).code" class="audit-code">{{ display('events', row.eventCode).code }}</span></td><td><span class="audit-label">{{ display('outcomes', row.outcome).label }}</span><span v-if="display('outcomes', row.outcome).code" class="audit-code">{{ display('outcomes', row.outcome).code }}</span></td><td><span class="audit-label">{{ display('pages', row.pageKey).label }}</span><span v-if="display('pages', row.pageKey).code" class="audit-code">{{ display('pages', row.pageKey).code }}</span></td><td><span class="audit-label">{{ row.targetDisplayName || target(row).label }}</span><span v-if="target(row).code" class="audit-code">{{ target(row).code }} / {{ row.targetId }}</span></td><td class="max-w-[360px]">{{ summary(row) }}</td><td>{{ [row.httpMethod,row.httpStatus].filter(Boolean).join(' ') || '-' }}</td><td><span class="audit-label">{{ display('sources', row.source).label }}</span><span v-if="display('sources', row.source).code" class="audit-code">{{ display('sources', row.source).code }}</span></td></tr><tr v-if="!loading && !rows.length"><td colspan="9" class="text-center p-8 text-slate-500">{{ t('spc.audit.empty') }}</td></tr></tbody>
       </table>
       <div class="p-4 text-center"><button v-if="nextCursor" class="px-4 py-2 rounded-lg border border-slate-300" :disabled="loading" @click="load(true)">{{ t('spc.audit.more') }}</button></div>
     </section>

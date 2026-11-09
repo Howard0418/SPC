@@ -555,3 +555,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-09 [SPC高風險資料操作稽核實際驗收完成](../specs/20261106-audit-business-operations/verification.md)：測試站產品料號主檔實際新增／刪除產生AuditEvents 85／86，actor由伺服器解析為Operator 27／丁義豪，事件碼、PageKey、HTTP結果及安全摘要正確；測試料號已刪除、兩筆稽核保留、原始業務值洩漏0。TASK-005測試階段DONE；後續TASK-006亦已完成，007～009未開始，正式未發布。
 - 2026-11-09 [稽核保存、封存與legal hold](../specs/20261109-audit-retention-archive/verification.md)：一般事件180／365日、關鍵事件730／1825日、加密封存、hold優先、失敗回復與容量摘要已完成測試；API0.1.111，執行開關停用，正式未發布。TASK-009未開始。核心未完成42／SPC相關18、完成196。
 - [稽核紀錄可讀頁面／操作標籤](../specs/20261109-audit-readable-labels/spec.md)：稽核頁以可讀名稱優先顯示並保留原始追溯代碼；未知代碼不得錯譯。測試站實站畫面驗證仍待連線恢復。
+- [稽核目標與安全異動摘要](../specs/20261109-audit-change-summary/spec.md)：顯示目標使用者姓名／代碼／ID及既有allowlist的權限清單、異動欄位、狀態與筆數；不交付原始JSON或敏感原值。測試站已發布，正式未發布。

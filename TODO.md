@@ -56,7 +56,7 @@
 - [x] `SPC-AUDIT-1103-TASK-006`：P1，測試站成功進頁、查詢／篩選與Xlsx匯出事件95～106完成實際驗收；12筆可信actor、Test環境、canonical route、允許清單與敏感遮罩正確，重複ClientEventId 0。正式未發布；截圖整案驗收依009。[驗證](specs/20261109-audit-navigation-read-activity/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-007`：P2，稽核查詢／匯出API與頁面、游標分頁、六類篩選及獨立明示權限已完成；測試API0.1.110／Web0.1.121，522後端與本件前端2項、三語系build及Web／資產／health／version通過。正式未發布；登入畫面與截圖依009。[驗證](specs/20261109-audit-query-export/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-008`：P2，180／365日及730／1825日政策、加密封存、legal hold、容量摘要與受控維護API完成；531通過／11既有隔離略過。PMR_SPC_TEST備份VERIFYONLY、migration與既有199筆指紋保持，API0.1.111；執行開關停用，正式未發布。核心未完成42、SPC18、完成196；下一件009未開始。[驗證](specs/20261109-audit-retention-archive/verification.md)。
-- [ ] `SPC-AUDIT-1103-TASK-009`：P2，531後端、DB遮罩／冪等／隔離已通過；稽核頁可讀標籤新增顯示／權限回歸5項與三語系2,817鍵build通過，Web0.1.122已更新測試站檔案並保留原代碼。命令列TLS／連線與Windows瀏覽器控制管線失敗，故首頁／資產／API實站驗證、登入畫面／截圖及同機效能基準仍未完成；正式發布另授權。[本次規格](specs/20261109-audit-readable-labels/spec.md)／[整案驗證](specs/20261109-audit-e2e-acceptance/verification.md)。
+- [ ] `SPC-AUDIT-1103-TASK-009`：P2，稽核頁已顯示可讀頁面／操作，並新增目標使用者姓名／代碼／ID與安全異動摘要；權限顯示最終清單，其他事件顯示欄位／狀態／筆數，不交付敏感原值。後端6項、前端5項、三語系2,822鍵通過；測試API0.1.112／Web0.1.123及Web／資產／health／version通過。待登入畫面／截圖與同機效能基準；正式發布另授權。[摘要規格](specs/20261109-audit-change-summary/spec.md)／[整案驗證](specs/20261109-audit-e2e-acceptance/verification.md)。
 
 「操作」已固定為業務動作、實際送出的查詢／篩選／匯出與成功進頁，不記滑鼠移動、每次按鍵或捲動；SPC只記自身可見的SSO交換，不擴張Portal帳密登入。截圖只作Git外測試驗收證據；正式附件另立高風險工作。TASK-001四項政策已明示核准。
 
