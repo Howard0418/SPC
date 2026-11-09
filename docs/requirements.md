@@ -561,3 +561,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 > 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：1440px／96vw單一尺寸與首次上傳立即預覽已由使用者確認。正式R4完成，API1.0.218原檔與SHA256保持、Web1.0.248；DB備份驗證、首頁／site.css MIME、API health／production及401通過。正式畫面列人工確認，核心41／SPC18。[Portal驗證](D:/PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)。
 - 2026-11-09 [管制項目設定漸進式載入](../specs/20261109-ppc-progressive-loading/verification.md)：主清單回應後立即顯示，12組輔助主檔與初始製程篩選維持背景並行；輔助失敗不清空主清單。2項行為測試、2822×3語系、test build與測試站Web／資產／同源API驗證通過；Web0.1.124，正式未發布。核心未完成41／SPC相關18保持。
 - 2026-11-09 [CPK 匯出月份資料範圍](../specs/20261109-cpk-export-month-scope/spec.md)：品質履歷頁選擇的月份現在限定台北月初（含）至次月月初（不含）的量測、警報、違規與能力計算；錯誤月份格式拒絕。測試 API 0.1.114 已發布，自動化與連線通過，待登入後實際下載驗收；正式未授權。
+- 2026-11-09 [9、10月來源唯讀盤點核銷](../specs/20261109-historical-import-task001-closeout/verification.md)：`SPC-HISTORICAL-IMPORT-1102-TASK-001` 已由後續全年824份藥液／1份咬蝕來源清冊、17649格分類及166份咬蝕完整性證據覆蓋；異常與排除保留且未修改來源。只核銷001，002～004保持待辦；無程式、DB或網站變更。
