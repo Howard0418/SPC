@@ -73,14 +73,16 @@ def _date_value(value: Any) -> str | None:
     return None
 
 
-def _header_contract(ws: Any) -> tuple[int, int, list[int], list[int]] | None:
+def _header_contract(ws: Any) -> tuple[int, int, list[int], list[int], int | None, int | None] | None:
     for row_number in range(1, min(ws.max_row, 20) + 1):
         values = [_text(ws.cell(row_number, column).value) for column in range(1, min(ws.max_column, 40) + 1)]
         item_columns = [index + 1 for index, value in enumerate(values) if "分析項目" in value]
         titration_columns = [index + 1 for index, value in enumerate(values) if "滴定" in value]
         concentration_columns = [index + 1 for index, value in enumerate(values) if "濃度" in value]
         if item_columns and len(titration_columns) >= 2 and len(concentration_columns) >= 2:
-            return row_number, item_columns[0], titration_columns[:2], concentration_columns[:2]
+            adjustment = next((index + 1 for index, value in enumerate(values) if _normal(value) == "調整"), None)
+            amount = next((index + 1 for index, value in enumerate(values) if _normal(value) == "調整量"), None)
+            return row_number, item_columns[0], titration_columns[:2], concentration_columns[:2], adjustment, amount
     return None
 
 
@@ -163,7 +165,7 @@ def parse_report(path: Path, source: dict[str, Any]) -> dict[str, Any]:
             if contract is None:
                 sheet_errors.append({"sheet": title, "code": "HEADER_CONTRACT_MISSING", "reason": "找不到兩組滴定數與濃度表頭"})
                 continue
-            header_row, item_col, titration_cols, concentration_cols = contract
+            header_row, item_col, titration_cols, concentration_cols, adjustment_col, amount_col = contract
             slot = ""
             section_line = ""
             for row_number in range(header_row + 1, formula_ws.max_row + 1):
@@ -188,10 +190,18 @@ def parse_report(path: Path, source: dict[str, Any]) -> dict[str, Any]:
                 row_line = section_line if line in {"舊線", "新線"} else line
                 if not row_line:
                     errors.append({"code": "SECTION_LINE_MISSING", "cell": f"A{row_number}", "reason": "舊線／新線資料缺少PT／DV／ST／QE區段線別"})
+                def raw_formula(column: int | None) -> str | None:
+                    value = formula_ws.cell(row_number, column).value if column else None
+                    return value if isinstance(value, str) and value.startswith("=") else None
+                context = {f"{get_column_letter(column)}{row_number}": formula_ws.cell(row_number, column).value
+                           for column in range(1, formula_ws.max_column + 1)
+                           if formula_ws.cell(row_number, column).value is not None}
                 rows.append({
                     "sourceFile": source["relativePath"], "sourceHash": source["sha256"], "sheet": title, "sourceRow": row_number,
                     "reportDate": source["reportDate"], "shift": source["shift"], "reportDateTime": source["reportDateTime"],
                     "line": row_line, "samplingStage": sampling_stage, "slot": slot, "analysisItem": analysis_item,
+                    "adjustmentFormulaRaw": raw_formula(adjustment_col), "adjustmentAmountFormulaRaw": raw_formula(amount_col),
+                    "formulaContext": context,
                     "initial": initial, "recheck": recheck, "status": "ERROR" if errors else "CANDIDATE", "errors": errors,
                 })
         return {"source": source, "fValues": f_values, "rows": rows, "sheetErrors": sheet_errors,

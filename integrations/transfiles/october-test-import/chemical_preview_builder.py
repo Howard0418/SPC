@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from concurrent.futures import ProcessPoolExecutor
 from decimal import Decimal
 from pathlib import Path
@@ -14,6 +15,7 @@ from chemical_excel_reconcile import calculate, convert_formula, number
 
 
 TOLERANCE = Decimal("0.00000001")
+CELL_REFERENCE = re.compile(r"(?<![A-Z0-9_])(?:(?:'?(?P<sheet>[^'!]+)'?)!)?\$?(?P<column>[A-Z]{1,3})\$?(?P<row>\d+)", re.IGNORECASE)
 
 
 def _read_report(task):
@@ -56,6 +58,74 @@ def _validate_phase(row: dict[str, Any], phase_name: str, phase: dict[str, Any] 
     return errors
 
 
+def _normalize_adjustment_formula(formula: str | None, row: dict[str, Any]) -> str | None:
+    if not formula:
+        return None
+    concentration_cell = row["initial"]["sourceCells"]["concentration"].upper()
+    context = {key.upper(): value for key, value in row.get("formulaContext", {}).items()}
+    na_cells={key for key,value in context.items() if str(value).strip().upper() in {"NA","N/A"}}
+
+    def split_args(body: str) -> list[str]:
+        result=[];start=0;depth=0;quoted=False;index=0
+        while index<len(body):
+            char=body[index]
+            if char=='"':
+                if quoted and index+1<len(body) and body[index+1]=='"':index+=2;continue
+                quoted=not quoted
+            elif not quoted:
+                if char=='(':depth+=1
+                elif char==')':depth-=1
+                elif char==',' and depth==0:result.append(body[start:index]);start=index+1
+            index+=1
+        result.append(body[start:]);return result
+
+    def simplify(expression: str) -> str:
+        stripped=expression.strip()
+        upper=stripped.upper()
+        for name,count in (("IF",3),("IFERROR",2)):
+            prefix=name+"("
+            if upper.startswith(prefix) and stripped.endswith(")"):
+                args=split_args(stripped[len(prefix):-1])
+                if len(args)!=count:raise ValueError(f"{name}參數數量不正確")
+                if name=="IF" and any(re.search(rf'(?<![A-Z0-9_])\$?{re.escape(cell[:-len(str(row["sourceRow"]))])}\$?{row["sourceRow"]}(?!\d)',args[0],re.I) for cell in na_cells):
+                    return simplify(args[2])
+                simplified_args=[simplify(arg) for arg in args]
+                if name=="IF" and simplified_args[1]==simplified_args[2]:return simplified_args[1]
+                return name+"("+",".join(simplified_args)+")"
+        return stripped
+
+    simplified=simplify(formula[1:])
+    if simplified in {'""',""}:return None
+    pieces = re.split(r'("(?:""|[^"])*")', simplified)
+    for index in range(0, len(pieces), 2):
+        def replace(match: re.Match[str]) -> str:
+            sheet = (match.group("sheet") or "").upper()
+            address = f'{match.group("column").upper()}{match.group("row")}'
+            if sheet in {"F", "F值"}:
+                return f"F!{address}"
+            if sheet:
+                raise ValueError(f"不允許跨表參照：{match.group(0)}")
+            if address == concentration_cell:
+                return "Concentration"
+            if address in context:
+                if address in na_cells:raise ValueError(f"NA格位未從條件移除：{address}")
+                return str(number(context[address]))
+            raise ValueError(f"無法證明的格位參照：{address}")
+        pieces[index] = CELL_REFERENCE.sub(replace, pieces[index])
+    return "".join(pieces)
+
+
+def _validate_adjustments(row: dict[str, Any]) -> list[dict[str, Any]]:
+    errors=[]
+    for raw, output, code in (("adjustmentFormulaRaw","adjustmentFormula","ADJUSTMENT_FORMULA_INVALID"),
+                              ("adjustmentAmountFormulaRaw","adjustmentAmountFormula","ADJUSTMENT_AMOUNT_FORMULA_INVALID")):
+        try:
+            row[output]=_normalize_adjustment_formula(row.get(raw),row)
+        except ValueError as exc:
+            row[output]=None;errors.append({"code":code,"reason":str(exc)})
+    return errors
+
+
 def build_preview(source_root: Path, manifest: dict[str, Any], progress=None, workers: int = 1) -> dict[str, Any]:
     root=Path(source_root); rows=[]; errors=[]; files=[]
     conflict_keys={(item["reportDate"],item["shift"]) for item in manifest.get("conflicts",[])}
@@ -79,6 +149,7 @@ def build_preview(source_root: Path, manifest: dict[str, Any], progress=None, wo
                 row_errors=list(row.pop("errors",[]))
                 row_errors += _validate_phase(row,"Initial",row["initial"],report["fValues"])
                 row_errors += _validate_phase(row,"Recheck",row["recheck"],report["fValues"])
+                row_errors += _validate_adjustments(row)
                 for item in row_errors:
                     if "sourceFile" not in item:
                         item=_error(source,item["code"],item["reason"],sheet=row["sheet"],sourceRow=row["sourceRow"],cell=item.get("cell"))

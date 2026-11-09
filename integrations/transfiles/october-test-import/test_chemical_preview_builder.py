@@ -18,6 +18,44 @@ class ChemicalPreviewBuilderTests(unittest.TestCase):
         else:ws["H7"]="-";ws["I7"]=direct
         wb.create_sheet("F")["B3"]=0.99;wb.save(path);return path
 
+    def test_adjustment_formulas_are_normalized_from_same_row(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);path=self.workbook(root,"2026-10-28.xlsx",direct=9.78)
+            wb=openpyxl.load_workbook(path);ws=wb.active
+            ws["K6"]="調整";ws["L6"]="調整量";ws["R7"]=10;ws["S7"]=12
+            ws["K7"]='=IF(I7="","",IF(I7<R7,"添加",IF(I7>S7,"稀釋","")))'
+            ws["L7"]='=IF(I7<R7,"藥液："&ROUND((R7-I7)*100,1)&" L","")'
+            wb.save(path)
+            preview=build_preview(root,scan_source(root));row=preview["rows"][0]
+            self.assertEqual(row["adjustmentFormula"],'IF(Concentration="","",IF(Concentration<10,"添加",IF(Concentration>12,"稀釋","")))')
+            self.assertEqual(row["adjustmentAmountFormula"],'IF(Concentration<10,"藥液："&ROUND((10-Concentration)*100,1)&" L","")')
+
+    def test_unknown_adjustment_reference_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);path=self.workbook(root,"2026-10-28.xlsx",direct=9.78)
+            wb=openpyxl.load_workbook(path);ws=wb.active;ws["K6"]="調整";ws["L6"]="調整量";ws["K7"]='=IF(I7<T2,"添加","")';wb.save(path)
+            preview=build_preview(root,scan_source(root))
+            self.assertEqual(preview["summary"]["errorRows"],1)
+            self.assertIn("ADJUSTMENT_FORMULA_INVALID",[e["code"] for e in preview["errors"]])
+
+    def test_na_limit_removes_only_unsupported_branch(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);path=self.workbook(root,"2026-10-28.xlsx",direct=9.78)
+            wb=openpyxl.load_workbook(path);ws=wb.active;ws["K6"]="調整";ws["L6"]="調整量"
+            ws["T7"]=10;ws["U7"]="NA";ws["K7"]='=IF(I7="","",IF(I7<T7,"添加",IF(I7>U7,"更槽","")))'
+            ws["L7"]='=IFERROR(IF(I7<T7,"藥液：1 L",IF(I7>U7,"排藥","")),"")';wb.save(path)
+            row=build_preview(root,scan_source(root))["rows"][0]
+            self.assertEqual(row["adjustmentFormula"],'IF(Concentration="","",IF(Concentration<10,"添加",""))')
+            self.assertEqual(row["adjustmentAmountFormula"],'IFERROR(IF(Concentration<10,"藥液：1 L",""),"")')
+
+    def test_na_only_tank_change_becomes_unset(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);path=self.workbook(root,"2026-10-28.xlsx",direct=9.78)
+            wb=openpyxl.load_workbook(path);ws=wb.active;ws["K6"]="調整";ws["L6"]="調整量";ws["U7"]="NA"
+            ws["K7"]='=IF(I7="","",IF(I7>U7,"更槽",""))';wb.save(path)
+            row=build_preview(root,scan_source(root))["rows"][0]
+            self.assertIsNone(row["adjustmentFormula"])
+
     def test_direct_concentration_is_ready_without_formula_or_f(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);self.workbook(root,"2026-10-28.xlsx",direct=9.78)

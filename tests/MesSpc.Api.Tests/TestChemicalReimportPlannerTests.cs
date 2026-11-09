@@ -1,9 +1,27 @@
 using TestChemicalReimport;
+using System.Text.Json.Nodes;
 
 namespace MesSpc.Api.Tests;
 
 public sealed class TestChemicalReimportPlannerTests
 {
+    [Fact]
+    public void FormulaConfig_preserves_excel_adjustment_formulas()
+    {
+        var json = TestChemicalReimportPlanner.FormulaConfig("{}", "Primary*8.7*F!B3", "Primary*8.7*F!B3",
+            "IF(Concentration<90,\"添加\",\"\")", "IF(Concentration<90,\"藥液：1 L\",\"\")");
+        var node = JsonNode.Parse(json)!.AsObject();
+        Assert.Equal("IF(Concentration<90,\"添加\",\"\")", node["adjustmentFormula"]!.GetValue<string>());
+        Assert.Equal("IF(Concentration<90,\"藥液：1 L\",\"\")", node["adjustmentAmountFormula"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void FormulaConfig_keeps_blank_adjustments_unset()
+    {
+        var node = JsonNode.Parse(TestChemicalReimportPlanner.FormulaConfig("{}", "Primary", "Primary", null, null))!.AsObject();
+        Assert.Null(node["adjustmentFormula"]);
+        Assert.Null(node["adjustmentAmountFormula"]);
+    }
     [Fact]
     public void Canon_matches_excel_multiline_item_to_master_name()
         => Assert.Equal("氫氧化鉀", TestChemicalReimportPlanner.CanonItem("氫氧化鉀 (g/L)\nKOH"));

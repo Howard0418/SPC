@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 namespace TestChemicalReimport;
@@ -9,6 +10,16 @@ public sealed record MasterIdentity(int PpcId, string MachineCode, string TankNa
 
 public static partial class TestChemicalReimportPlanner
 {
+    public static string FormulaConfig(string currentJson, string initial, string recheck, string? adjustment, string? amount)
+    {
+        var node = JsonNode.Parse(string.IsNullOrWhiteSpace(currentJson) ? "{}" : currentJson)?.AsObject() ?? new JsonObject();
+        node["enabled"] = true; node["version"] = "TEST-REIMPORT-2026";
+        node["concentrationFormula"] = initial; node["recheckConcentrationFormula"] = recheck; node["decimalPlaces"] = 8;
+        node["adjustmentFormula"] = string.IsNullOrWhiteSpace(adjustment) ? null : adjustment;
+        node["adjustmentAmountFormula"] = string.IsNullOrWhiteSpace(amount) ? null : amount;
+        return node.ToJsonString();
+    }
+
     [GeneratedRegex(@"\([^)]*\)|（[^）]*）|\[[^]]*\]", RegexOptions.CultureInvariant)]
     private static partial Regex Parenthetical();
 

@@ -20,14 +20,17 @@ namespace TestChemicalReimport;
 internal static class Program
 {
     private const string ApiRoot = "https://spctest.pmr.com.tw/api";
+    private const string AdjustmentRepairReason = "2026-11-09 藥液日別調整公式補齊";
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     public static async Task<int> Main(string[] args)
     {
         if (args.Length >= 1 && args[0] is "--cleanup-inventory" or "--cleanup-apply")
             return await RunCleanupAsync(args);
-        if (args.Length is not (4 or 5) || args[3] is not ("--plan" or "--apply" or "--verify"))
-            throw new ArgumentException("PREVIEW_JSON TEST_APPSETTINGS EVIDENCE_DIR --plan|--apply|--verify [PRODUCTION_APPSETTINGS_FOR_TEST_BACKUP_ONLY]");
+        if (args.Length is not (4 or 5) || args[3] is not ("--plan" or "--apply" or "--verify" or "--repair-adjustment-plan" or "--repair-adjustment-apply" or "--repair-adjustment-verify"))
+            throw new ArgumentException("PREVIEW_JSON TEST_APPSETTINGS EVIDENCE_DIR --plan|--apply|--verify|--repair-adjustment-plan|--repair-adjustment-apply|--repair-adjustment-verify [PRODUCTION_APPSETTINGS_FOR_TEST_BACKUP_ONLY]");
+        var repairAdjustment = args[3].StartsWith("--repair-adjustment-", StringComparison.Ordinal);
+        var operation = repairAdjustment ? args[3]["--repair-adjustment-".Length..] : args[3][2..];
         Directory.CreateDirectory(args[2]);
         var cfg = new ConfigurationBuilder().AddJsonFile(Path.GetFullPath(args[1])).Build();
         var connection = cfg.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("Test SQL connection missing.");
@@ -74,7 +77,8 @@ internal static class Program
 
         var schedule = new ChemicalFormulaScheduleService(db, new EphemeralDataProtectionProvider(), TimeProvider.System, NullLogger<ChemicalFormulaScheduleService>.Instance);
         await using var rehearsal = await db.Database.BeginTransactionAsync();
-        var scheduleResult = await EnsureSchedulesAsync(db, rows, actor: CurrentActor(), default);
+        var scheduleResult = await EnsureSchedulesAsync(db, rows, actor: CurrentActor(), default,
+            repairAdjustment ? AdjustmentRepairReason : "2026-11-05 九月起測試區藥液日報重匯");
         var actor = CurrentActor(); var previewChecks = 0; var previewErrors = new List<object>();
         foreach (var row in rows)
         {
@@ -96,19 +100,44 @@ internal static class Program
         var state = await CaptureStateAsync(db);
         File.WriteAllText(Path.Combine(args[2], "preflight.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", sourceRows = rows.Count, mappings = rows.Select(x => x.PpcId).Distinct().Count(), previewChecks, previewErrorCount = previewErrors.Count, previewErrors, scheduleResult, rehearsalRolledBack = true, state, apiVersion = JsonSerializer.Deserialize<object>(versionText) }, JsonOptions));
         if (previewErrors.Count > 0) throw new InvalidOperationException($"公式／F日期預覽失敗 {previewErrors.Count} 筆；禁止寫入，詳見preflight.json。");
-        if (args[3] == "--plan") { Console.WriteLine($"PLAN: rows={rows.Count}; mappings={rows.Select(x => x.PpcId).Distinct().Count()}; previews={previewChecks}; active={state.ActiveMeasurements}"); return 0; }
+        if (operation == "plan") { Console.WriteLine($"PLAN: rows={rows.Count}; mappings={rows.Select(x => x.PpcId).Distinct().Count()}; previews={previewChecks}; active={state.ActiveMeasurements}"); return 0; }
         object? backup = null;
-        if (args[3] == "--apply")
+        if (operation == "apply")
         {
             var backupConnection = cs.ConnectionString;
             if (args.Length == 5)
             {
                 var maintenanceCfg = new ConfigurationBuilder().AddJsonFile(Path.GetFullPath(args[4])).Build();
                 var maintenance = new SqlConnectionStringBuilder((maintenanceCfg.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("Maintenance SQL connection missing.")).Replace("Trust Server Certificate=", "TrustServerCertificate=", StringComparison.OrdinalIgnoreCase));
-                if (maintenanceCfg["AppEnvironment"] != "production" || maintenance.InitialCatalog != "PMR_SPC_2026" || maintenance.DataSource != "172.16.110.16") throw new InvalidOperationException("Maintenance source guard failed.");
-                maintenance.InitialCatalog = "PMR_SPC_TEST"; backupConnection = maintenance.ConnectionString;
+                if (maintenance.DataSource != "172.16.110.16") throw new InvalidOperationException("Maintenance server guard failed.");
+                if (maintenanceCfg["AppEnvironment"] == "production" && maintenance.InitialCatalog == "PMR_SPC_2026")
+                    maintenance.InitialCatalog = "PMR_SPC_TEST";
+                else if (maintenanceCfg["AppEnvironment"] != "test" || maintenance.InitialCatalog != "PMR_SPC_TEST")
+                    throw new InvalidOperationException("Maintenance target guard failed.");
+                backupConnection = maintenance.ConnectionString;
             }
             backup = await BackupAsync(backupConnection, args[2]);
+            if (repairAdjustment)
+            {
+                var before = await CaptureStateAsync(db);
+                var existingRepairs = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == AdjustmentRepairReason);
+                object repairedSchedules = new { reusedExisting = existingRepairs };
+                if (existingRepairs == 0)
+                {
+                    await using var repairTx = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                    repairedSchedules = await EnsureSchedulesAsync(db, rows, actor, default, AdjustmentRepairReason);
+                    await repairTx.CommitAsync();
+                    db.ChangeTracker.Clear();
+                }
+                else if (existingRepairs != 82) throw new InvalidOperationException("Adjustment schedule repair revision count is incomplete.");
+                var after = await CaptureStateAsync(db);
+                if (before != after) throw new InvalidOperationException("Adjustment schedule repair changed protected measurement/F/master counts.");
+                var repairRevisionCount = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == AdjustmentRepairReason);
+                if (repairRevisionCount != 82) throw new InvalidOperationException("Adjustment schedule repair idempotence failed.");
+                File.WriteAllText(Path.Combine(args[2], "adjustment-repair-result.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", backup, repairedSchedules, protectedStateBefore = before, protectedStateAfter = after, idempotenceRevisionCount = repairRevisionCount, productionWritten = false }, JsonOptions));
+                Console.WriteLine($"ADJUSTMENT REPAIR APPLIED: schedules=82; protectedMeasurements={after.ActiveMeasurements}");
+                return 0;
+            }
             var existingTaskRevisions = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == "2026-11-05 九月起測試區藥液日報重匯");
             object appliedSchedules = new { reusedExisting = existingTaskRevisions };
             if (existingTaskRevisions == 0) { await using var scheduleTx = await db.Database.BeginTransactionAsync(); appliedSchedules = await EnsureSchedulesAsync(db, rows, actor, default); await scheduleTx.CommitAsync(); db.ChangeTracker.Clear(); }
@@ -119,6 +148,14 @@ internal static class Program
             if (second.Changed != 0 || second.AlreadyActive != rows.Count) throw new InvalidOperationException("Reactivation idempotence failed.");
             File.WriteAllText(Path.Combine(args[2], "apply-result.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", backup, appliedSchedules, sourceRows = rows.Count, reactivated, idempotence = second, verification, productionWritten = false }, JsonOptions));
             Console.WriteLine($"APPLIED: rows={verification.Measurements}; traces={verification.FormulaTraces}; reactivated={reactivated.Changed}; retryNew=0"); return 0;
+        }
+        if (repairAdjustment)
+        {
+            var repairRevisionCount = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == AdjustmentRepairReason);
+            if (repairRevisionCount != 82) throw new InvalidOperationException("Adjustment schedule repair verification failed.");
+            File.WriteAllText(Path.Combine(args[2], "adjustment-repair-verify.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", sourceRows = rows.Count, previewChecks, previewErrorCount = previewErrors.Count, repairRevisionCount, protectedState = state, productionWritten = false }, JsonOptions));
+            Console.WriteLine($"ADJUSTMENT REPAIR VERIFIED: schedules={repairRevisionCount}; previews={previewChecks}; errors=0");
+            return 0;
         }
         var verified = await VerifyMeasurementsAsync(db, rows, default);
         File.WriteAllText(Path.Combine(args[2], "verify-result.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", verified, productionWritten = false }, JsonOptions));
@@ -196,7 +233,9 @@ internal static class Program
             var day = DateOnly.Parse(row.GetProperty("reportDate").GetString()!, CultureInfo.InvariantCulture);
             if (day < new DateOnly(2026, 9, 1) || row.GetProperty("status").GetString() != "READY") continue;
             var fValues = row.GetProperty("sourceFValues").EnumerateObject().ToDictionary(x => x.Name.Replace("F!", "", StringComparison.OrdinalIgnoreCase), x => x.Value.GetDecimal(), StringComparer.OrdinalIgnoreCase);
-            result.Add(new(day, row.GetProperty("reportDateTime").GetString()!, row.GetProperty("shift").GetString()!, row.GetProperty("line").GetString()!, row.GetProperty("samplingStage").GetString()!, row.GetProperty("slot").GetString()!, row.GetProperty("analysisItem").GetString()!, row.GetProperty("sourceFile").GetString()!, row.GetProperty("sourceHash").GetString()!, row.GetProperty("sheet").GetString()!, row.GetProperty("sourceRow").GetInt32(), ReadPhase(row.GetProperty("initial")), row.TryGetProperty("recheck", out var re) && re.ValueKind == JsonValueKind.Object ? ReadPhase(re) : null, fValues));
+            result.Add(new(day, row.GetProperty("reportDateTime").GetString()!, row.GetProperty("shift").GetString()!, row.GetProperty("line").GetString()!, row.GetProperty("samplingStage").GetString()!, row.GetProperty("slot").GetString()!, row.GetProperty("analysisItem").GetString()!, row.GetProperty("sourceFile").GetString()!, row.GetProperty("sourceHash").GetString()!, row.GetProperty("sheet").GetString()!, row.GetProperty("sourceRow").GetInt32(), ReadPhase(row.GetProperty("initial")), row.TryGetProperty("recheck", out var re) && re.ValueKind == JsonValueKind.Object ? ReadPhase(re) : null,
+                row.TryGetProperty("adjustmentFormula", out var adjustment) && adjustment.ValueKind == JsonValueKind.String ? adjustment.GetString() : null,
+                row.TryGetProperty("adjustmentAmountFormula", out var amount) && amount.ValueKind == JsonValueKind.String ? amount.GetString() : null, fValues));
         }
         return result;
     }
@@ -222,11 +261,13 @@ internal static class Program
     {
         var initial = (row.Source.Initial.Formula ?? "").Replace("$", "", StringComparison.Ordinal).Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
         var recheck = (row.Source.Recheck?.Formula ?? initial).Replace("$", "", StringComparison.Ordinal).Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
+        var adjustment = (row.Source.AdjustmentFormula ?? "").Replace("$", "", StringComparison.Ordinal).Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
+        var amount = (row.Source.AdjustmentAmountFormula ?? "").Replace("$", "", StringComparison.Ordinal).Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
         var f = string.Join(";", row.Source.FValues.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase).Select(x => x.Key.ToUpperInvariant() + "=" + x.Value.ToString("0.############################", CultureInfo.InvariantCulture)));
-        return initial + "|" + recheck + "|" + f;
+        return initial + "|" + recheck + "|" + adjustment + "|" + amount + "|" + f;
     }
 
-    private static async Task<object> EnsureSchedulesAsync(AppDbContext db, IReadOnlyList<PlannedRow> rows, string actor, CancellationToken ct)
+    private static async Task<object> EnsureSchedulesAsync(AppDbContext db, IReadOnlyList<PlannedRow> rows, string actor, CancellationToken ct, string reason = "2026-11-05 九月起測試區藥液日報重匯")
     {
         var formulaRows = rows.Where(x => x.Source.Initial.Mode == "FORMULA").ToList();
         var histories = await db.ChemicalFTableVersionHistories.ToListAsync(ct);
@@ -246,7 +287,7 @@ internal static class Program
         {
             var signature = FSignature(row.Source.FValues);
             if (historyBySignature.ContainsKey(signature)) continue;
-            var history = new ChemicalFTableVersionHistory { VersionNo = nextF++, VersionCode = "TEST-REIMPORT-" + ShortHash(signature), DisplayName = "測試區日報F歷史快照", CellsJson = FCellsJson(row.Source.FValues), ChangeType = "HistoricalExcelSnapshot", ChangedBy = actor, Reason = "2026-11-05 九月起測試區藥液日報重匯", ChangedAt = DateTime.UtcNow };
+            var history = new ChemicalFTableVersionHistory { VersionNo = nextF++, VersionCode = "TEST-REIMPORT-" + ShortHash(signature), DisplayName = "測試區日報F歷史快照", CellsJson = FCellsJson(row.Source.FValues), ChangeType = "HistoricalExcelSnapshot", ChangedBy = actor, Reason = reason, ChangedAt = DateTime.UtcNow };
             db.Add(history); historyBySignature[signature] = history; fCreated++;
         }
         await db.SaveChangesAsync(ct);
@@ -261,7 +302,7 @@ internal static class Program
                 var found = existingVersions.LastOrDefault(x => JsonNode.DeepEquals(JsonNode.Parse(x.ConfigJson), JsonNode.Parse(config)));
                 if (found is null)
                 {
-                    found = new ChemicalAnalysisFormulaVersion { PartProcessCharacteristicId = group.Key, VersionNo = nextVersion++, ConfigJson = config, ChangeType = "HistoricalSnapshot", ChangedBy = actor, Reason = "2026-11-05 九月起測試區藥液日報重匯", ChangedAt = DateTime.UtcNow };
+                    found = new ChemicalAnalysisFormulaVersion { PartProcessCharacteristicId = group.Key, VersionNo = nextVersion++, ConfigJson = config, ChangeType = "HistoricalSnapshot", ChangedBy = actor, Reason = reason, ChangedAt = DateTime.UtcNow };
                     db.Add(found); existingVersions.Add(found); formulaCreated++;
                 }
                 versionBySignature[variant.Key] = found;
@@ -292,7 +333,7 @@ internal static class Program
             }
             var all = preserved.Concat(desired).OrderBy(x => x.EffectiveFromUtc).ToList();
             for (var i = 1; i < all.Count; i++) if (all[i - 1].EffectiveUntilUtcExclusive is null || all[i - 1].EffectiveUntilUtcExclusive > all[i].EffectiveFromUtc) throw new InvalidOperationException("歷史公式排程重疊：" + group.Key);
-            var revision = new ChemicalFormulaScheduleRevision { PartProcessCharacteristicId = group.Key, RevisionNo = (await db.ChemicalFormulaScheduleRevisions.Where(x => x.PartProcessCharacteristicId == group.Key).MaxAsync(x => (int?)x.RevisionNo, ct) ?? 0) + 1, Actor = actor, Reason = "2026-11-05 九月起測試區藥液日報重匯", CreatedAtUtc = DateTime.UtcNow };
+            var revision = new ChemicalFormulaScheduleRevision { PartProcessCharacteristicId = group.Key, RevisionNo = (await db.ChemicalFormulaScheduleRevisions.Where(x => x.PartProcessCharacteristicId == group.Key).MaxAsync(x => (int?)x.RevisionNo, ct) ?? 0) + 1, Actor = actor, Reason = reason, CreatedAtUtc = DateTime.UtcNow };
             db.Add(revision); await db.SaveChangesAsync(ct); foreach (var item in all) item.ScheduleRevisionId = revision.Id; db.AddRange(all);
             await db.SaveChangesAsync(ct); revision.PublishedAtUtc = DateTime.UtcNow; await db.SaveChangesAsync(ct);
             if (policy is null) { policy = new() { PartProcessCharacteristicId = group.Key }; db.Add(policy); } policy.ActiveScheduleRevisionId = revision.Id;
@@ -303,12 +344,8 @@ internal static class Program
 
     private static string FormulaConfig(PlannedRow row)
     {
-        var node = JsonNode.Parse(row.Master.ConfigJson)?.AsObject() ?? new JsonObject();
-        node["enabled"] = true; node["version"] = "TEST-REIMPORT-2026"; node["concentrationFormula"] = row.Source.Initial.Formula;
-        node["recheckConcentrationFormula"] = row.Source.Recheck?.Formula ?? row.Source.Initial.Formula; node["decimalPlaces"] = 8;
-        // 本件來源只核准濃度公式；不可把目前主檔中仍含Excel儲存格代號的調整式冒充歷史來源式。
-        node["adjustmentFormula"] = null; node["adjustmentAmountFormula"] = null;
-        return node.ToJsonString();
+        return TestChemicalReimportPlanner.FormulaConfig(row.Master.ConfigJson, row.Source.Initial.Formula!,
+            row.Source.Recheck?.Formula ?? row.Source.Initial.Formula!, row.Source.AdjustmentFormula, row.Source.AdjustmentAmountFormula);
     }
 
     private static string FSignature(IReadOnlyDictionary<string, decimal> cells) => string.Join(";", cells.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase).Select(x => x.Key.ToUpperInvariant() + "=" + x.Value.ToString("0.############################", CultureInfo.InvariantCulture)));
@@ -464,7 +501,7 @@ internal static class Program
         if (string.IsNullOrWhiteSpace(value) || value.Length > 100) throw new InvalidOperationException("Invalid actor."); return value;
     }
 
-    private sealed record SourceRow(DateOnly Day, string MeasuredAt, string Shift, string Line, string SamplingStage, string Slot, string AnalysisItem, string SourceFile, string SourceHash, string Sheet, int SourceExcelRow, PhaseRow Initial, PhaseRow? Recheck, IReadOnlyDictionary<string, decimal> FValues)
+    private sealed record SourceRow(DateOnly Day, string MeasuredAt, string Shift, string Line, string SamplingStage, string Slot, string AnalysisItem, string SourceFile, string SourceHash, string Sheet, int SourceExcelRow, PhaseRow Initial, PhaseRow? Recheck, string? AdjustmentFormula, string? AdjustmentAmountFormula, IReadOnlyDictionary<string, decimal> FValues)
     { public string SourceId => $"{SourceHash}|{Sheet}|{SourceExcelRow}|{Shift}|{SamplingStage}"; }
     private sealed record PhaseRow(string Mode, string? Primary, string? Secondary, decimal Concentration, string? Formula = null);
     private sealed record MasterRow(int PpcId, string MachineCode, string TankCode, string TankName, string CharacteristicCode, string CharacteristicName, string Unit, bool IsEnabled, string ProcessCode, string ConfigJson);
