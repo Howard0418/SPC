@@ -556,3 +556,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-09 [稽核保存、封存與legal hold](../specs/20261109-audit-retention-archive/verification.md)：一般事件180／365日、關鍵事件730／1825日、加密封存、hold優先、失敗回復與容量摘要已完成測試；API0.1.111，執行開關停用，正式未發布。TASK-009未開始。核心未完成42／SPC相關18、完成196。
 - [稽核紀錄可讀頁面／操作標籤](../specs/20261109-audit-readable-labels/spec.md)：稽核頁以可讀名稱優先顯示並保留原始追溯代碼；未知代碼不得錯譯。測試站實站畫面驗證仍待連線恢復。
 - [稽核目標與安全異動摘要](../specs/20261109-audit-change-summary/spec.md)：顯示目標使用者姓名／代碼／ID及既有allowlist的權限清單、異動欄位、狀態與筆數；不交付原始JSON或敏感原值。測試站已發布，正式未發布。
+- 2026-11-09 [控制線公式儲存後重算重繪](../specs/20261029-control-line-formula-recalc/verification.md)：正式API103已依授權發布；首頁／JS／CSS、實際API基底、health／version、CORS、COPY_ONLY備份與五個資料指紋驗證通過，公式與量測未異動。指定PPC登入後實際儲存／重繪仍待驗收，本件不標DONE。

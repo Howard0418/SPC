@@ -28,4 +28,4 @@
 
 新增三件及截圖測試矩陣見[補充任務](../20261028-chemical-screenshot-followup/tasks.md)。執行順序以本表與補充規格v1為準，原v1排序留在Git歷史。
 
-- 2026-11-02 TASK-001續驗：新增SQLite儲存→圖表界限及等價／無效JSON整合測試；修正物件欄位順序誤清快取，測試API0.1.97，正式待授權。詳[續驗](../20261029-control-line-formula-recalc/followup-20261102.md)，不以實作勾選核銷正式待辦。
+- 2026-11-02 TASK-001續驗：新增SQLite儲存→圖表界限及等價／無效JSON整合測試；修正物件欄位順序誤清快取，測試API0.1.97。2026-11-09正式API103已依授權發布，Web／API／備份／指紋驗證通過；指定PPC登入後實際儲存／重繪仍待驗收，不以技術發布核銷整件。詳[續驗](../20261029-control-line-formula-recalc/followup-20261102.md)。
