@@ -21,6 +21,9 @@
 - 更新前私有設定備份為`release/test/backend/appsettings.backup-security-admin-20261109.json`；只回收`SpcSingleTest`，API 0.1.111、health ok、環境test。正式設定與正式站未操作。
 - 既有禁止自我升權保持：指定27為安全管理者不等於授予`admin.audit.read`／`admin.audit.export`，仍須另一位白名單安全管理者替27授權，故稽核頁面驗收仍阻擋。
 - 原進度表已更新，備份為`備份/進度表_20261109_ihao安全管理者指定前.xlsx`；更新後SHA-256為`B0F89BB37C58CD1A3CBF2938CC27515A5E918F411E71A3850AE9EBA169EB942A`，OpenXML 0錯誤、原生drawing 1保持、重開與兩處渲染通過。Microsoft Excel人工開啟未執行。
+- 依使用者「執行」追加`ID 26/admin`為第二安全管理者。首次工具將27與26誤作數字加總成53；API未重啟、錯誤未生效，立即由`appsettings.backup-security-admin-26-20261109.json`恢復原雜湊與ID27。修正陣列合併及整數驗證後，回歸確認`26,27`，只回收SpcSingleTest，API 0.1.111／health ok／test。
+- 白名單完成仍不直接改PagePermissions：後續須由27登入替26授予read／export，再由26登入替27授予read／export；其後重新登入27完成稽核頁面E2E。
+- 原進度表同步雙安全管理者狀態，更新前備份`備份/進度表_20261109_雙安全管理者前.xlsx`，更新後SHA-256為`781A48B94580E8A0CCE9BF51665CF5AD5280F05E0BAF1E6258C1FC4372AC64B6`；OpenXML 0錯誤、原生drawing 1保持、重開與兩處渲染通過。
 
 ## 發布與回復
 
