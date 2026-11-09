@@ -55,7 +55,7 @@
 - [x] `SPC-AUDIT-1103-TASK-005`：P1，測試API已發布；2026-11-09產品料號主檔實際新增／刪除產生事件85／86，actor、固定事件碼、刪除後稽核留存與原值遮罩皆通過，正式未發布。詳[驗證](specs/20261106-audit-business-operations/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-006`：P1，測試站成功進頁、查詢／篩選與Xlsx匯出事件95～106完成實際驗收；12筆可信actor、Test環境、canonical route、允許清單與敏感遮罩正確，重複ClientEventId 0。正式未發布；截圖整案驗收依009。[驗證](specs/20261109-audit-navigation-read-activity/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-007`：P2，稽核查詢／匯出API與頁面、游標分頁、六類篩選及獨立明示權限已完成；測試API0.1.110／Web0.1.121，522後端與本件前端2項、三語系build及Web／資產／health／version通過。正式未發布；登入畫面與截圖依009。[驗證](specs/20261109-audit-query-export/verification.md)。
-- [ ] `SPC-AUDIT-1103-TASK-008`：P2，保存／封存、legal hold、清理重跑、容量監控與告警，依002／007。
+- [x] `SPC-AUDIT-1103-TASK-008`：P2，180／365日及730／1825日政策、加密封存、legal hold、容量摘要與受控維護API完成；531通過／11既有隔離略過。PMR_SPC_TEST備份VERIFYONLY、migration與既有199筆指紋保持，API0.1.111；執行開關停用，正式未發布。核心未完成42、SPC18、完成196；下一件009未開始。[驗證](specs/20261109-audit-retention-archive/verification.md)。
 - [ ] `SPC-AUDIT-1103-TASK-009`：P2，測試站E2E、遮罩、故障、效能、環境隔離及遮罩後截圖證據；正式發布另授權，依001～008。
 
 「操作」已固定為業務動作、實際送出的查詢／篩選／匯出與成功進頁，不記滑鼠移動、每次按鍵或捲動；SPC只記自身可見的SSO交換，不擴張Portal帳密登入。截圖只作Git外測試驗收證據；正式附件另立高風險工作。TASK-001四項政策已明示核准。

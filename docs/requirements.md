@@ -553,3 +553,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-05 [Portal生日賀卡可讀性僅規劃](../../PmrPortal/specs/20261105-birthday-card-readable-size/spec.md)：新P2小工作已入中央工作池，主責Portal；保留原格式／通知規則，未實作或發布。原進度表同步Portal區與小工作總表，核心46／SPC22保持。
 - [測試區九／十月藥液與咬蝕量受控重匯](../specs/20261105-test-sep-oct-reimport/spec.md)：只寫測試庫，依修正版核准線別及後檔優先，正式區唯讀不變。
 - 2026-11-09 [SPC高風險資料操作稽核實際驗收完成](../specs/20261106-audit-business-operations/verification.md)：測試站產品料號主檔實際新增／刪除產生AuditEvents 85／86，actor由伺服器解析為Operator 27／丁義豪，事件碼、PageKey、HTTP結果及安全摘要正確；測試料號已刪除、兩筆稽核保留、原始業務值洩漏0。TASK-005測試階段DONE；後續TASK-006亦已完成，007～009未開始，正式未發布。
+- 2026-11-09 [稽核保存、封存與legal hold](../specs/20261109-audit-retention-archive/verification.md)：一般事件180／365日、關鍵事件730／1825日、加密封存、hold優先、失敗回復與容量摘要已完成測試；API0.1.111，執行開關停用，正式未發布。TASK-009未開始。核心未完成42／SPC相關18、完成196。

@@ -2628,3 +2628,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 新增受 `admin.audit.read`／`admin.audit.export` 明示權限保護的稽核查詢頁與 API，含六類篩選、7／31日限制、游標分頁及安全 Xlsx。
 - 查詢／匯出本身先寫稽核再交付；遮罩 session、嘗試帳號、Details 與雜湊，匯出阻擋 Excel 公式注入，保存失敗封閉為503。
 - 後端522通過（11既有隔離略過）、本件前端2項與三語系build通過；測試API0.1.110／Web0.1.121發布，首頁／JS／CSS／health／version驗證完成。正式未發布。
+
+## 2026-11-09 SPC-AUDIT-1103-TASK-008 稽核保存／封存（測試）
+
+- 新增180／365日及730／1825日保存政策、AES-256-GCM封存、逐筆與批次SHA-256、legal hold、容量摘要與安全管理者維護API；執行開關預設停用且限Test。
+- 測試DB先完成COPY_ONLY／CHECKSUM備份及VERIFYONLY，再新增三表與保護trigger；既有AuditEvents 199筆及指紋保持，新表0筆。完整531通過／11既有隔離略過。
+- 測試API0.1.111與Web／JS／CSS／health／version驗證通過；正式站與正式資料庫未連線、未發布、未異動。TASK-009未開始。

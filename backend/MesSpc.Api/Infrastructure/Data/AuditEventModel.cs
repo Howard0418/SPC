@@ -6,6 +6,9 @@ namespace MesSpc.Api.Infrastructure.Data;
 public partial class AppDbContext
 {
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+    public DbSet<AuditArchiveBatch> AuditArchiveBatches => Set<AuditArchiveBatch>();
+    public DbSet<AuditEventArchive> AuditEventArchives => Set<AuditEventArchive>();
+    public DbSet<AuditLegalHold> AuditLegalHolds => Set<AuditLegalHold>();
 
     private void ConfigureAuditEvents(ModelBuilder builder)
     {
@@ -49,6 +52,36 @@ public partial class AppDbContext
         entity.Property(x => x.DetailsJson).HasMaxLength(4096);
         foreach (var property in entity.Metadata.GetProperties())
             property.SetComment("Audit v1: " + property.Name + ". Append-only; no raw request or secret values.");
+
+        var batch = builder.Entity<AuditArchiveBatch>();
+        batch.ToTable("AuditArchiveBatches", t => t.HasComment("Verified audit archive batches; maintenance identity only."));
+        batch.HasKey(x => x.Id); batch.HasIndex(x => x.BatchId).IsUnique();
+        batch.Property(x => x.Environment).HasMaxLength(32); batch.Property(x => x.Checksum).HasMaxLength(64);
+        batch.Property(x => x.EncryptionKeyId).HasMaxLength(100); batch.Property(x => x.Status).HasMaxLength(32);
+        foreach (var property in new[] { nameof(AuditArchiveBatch.StartedAtUtc), nameof(AuditArchiveBatch.CompletedAtUtc), nameof(AuditArchiveBatch.RangeFromUtc), nameof(AuditArchiveBatch.RangeToUtc) })
+            batch.Property<DateTime>(property).HasConversion(value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
+
+        var archive = builder.Entity<AuditEventArchive>();
+        archive.ToTable("AuditEventArchives", t => t.HasComment("Encrypted audit event archive; controlled maintenance deletion only."));
+        archive.HasKey(x => x.Id); archive.HasIndex(x => x.OriginalEventId).IsUnique(); archive.HasIndex(x => x.EventId).IsUnique();
+        archive.HasIndex(x => new { x.Environment, x.OccurredAtUtc, x.Id });
+        archive.Property(x => x.Environment).HasMaxLength(32); archive.Property(x => x.Category).HasMaxLength(32);
+        archive.Property(x => x.EventCode).HasMaxLength(100); archive.Property(x => x.PageKey).HasMaxLength(100);
+        archive.Property(x => x.TargetType).HasMaxLength(100); archive.Property(x => x.TargetId).HasMaxLength(200);
+        archive.Property(x => x.PayloadHash).HasMaxLength(64);
+        archive.Property(x => x.OccurredAtUtc).HasConversion(value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
+        archive.HasOne<AuditArchiveBatch>().WithMany().HasForeignKey(x => x.ArchiveBatchId).OnDelete(DeleteBehavior.Restrict);
+
+        var hold = builder.Entity<AuditLegalHold>();
+        hold.ToTable("AuditLegalHolds", t => t.HasComment("Legal holds override audit retention and purge."));
+        hold.HasKey(x => x.Id); hold.HasIndex(x => x.HoldId).IsUnique(); hold.HasIndex(x => new { x.Environment, x.ReleasedAtUtc, x.DateFromUtc, x.DateToUtc });
+        hold.Property(x => x.Environment).HasMaxLength(32); hold.Property(x => x.EventCode).HasMaxLength(100);
+        hold.Property(x => x.PageKey).HasMaxLength(100); hold.Property(x => x.TargetType).HasMaxLength(100);
+        hold.Property(x => x.TargetId).HasMaxLength(200); hold.Property(x => x.ReasonCode).HasMaxLength(100);
+        foreach (var property in new[] { nameof(AuditLegalHold.DateFromUtc), nameof(AuditLegalHold.DateToUtc), nameof(AuditLegalHold.CreatedAtUtc) })
+            hold.Property<DateTime>(property).HasConversion(value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
+        hold.Property(x => x.ReleasedAtUtc).HasConversion(value => value,
+            value => value == null ? null : DateTime.SpecifyKind(value.Value, DateTimeKind.Utc));
     }
 
     private void ValidateAuditImmutableEntries()
@@ -56,5 +89,7 @@ public partial class AppDbContext
         ChangeTracker.DetectChanges();
         if (ChangeTracker.Entries<AuditEvent>().Any(x => x.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Audit events are append-only.");
+        if (ChangeTracker.Entries<AuditEventArchive>().Any(x => x.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Audit archives are immutable.");
     }
 }

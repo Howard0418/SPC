@@ -73,6 +73,7 @@ public class AuditEventSqlTests
             Assert.Equal(before, await FingerprintAsync(db));
             await db.Database.MigrateAsync();
             Assert.Equal(before, await FingerprintAsync(db));
+            Assert.True(await db.Database.SqlQueryRaw<int>("SELECT COUNT(*) AS [Value] FROM sys.tables WHERE name IN ('AuditArchiveBatches','AuditEventArchives','AuditLegalHolds')").SingleAsync() == 3);
 
             var actor = AuditActor.User(user.Id, "Jwt", new string('a', 64));
             var draft = new AuditEventDraft("navigation.page.enter", "Succeeded") { PageKey = "analysis.spc.overall", ClientEventId = Guid.NewGuid() };
@@ -151,7 +152,7 @@ public class AuditEventSqlTests
         var tables = new List<string>();
         await using (var command = connection.CreateCommand())
         {
-            command.CommandText = "SELECT name FROM sys.tables WHERE is_ms_shipped=0 AND name NOT IN ('AuditEvents','__EFMigrationsHistory') ORDER BY name";
+            command.CommandText = "SELECT name FROM sys.tables WHERE is_ms_shipped=0 AND name NOT IN ('AuditEvents','AuditArchiveBatches','AuditEventArchives','AuditLegalHolds','__EFMigrationsHistory') ORDER BY name";
             await using var reader = await command.ExecuteReaderAsync(); while (await reader.ReadAsync()) tables.Add(reader.GetString(0));
         }
         var result = new StringBuilder();

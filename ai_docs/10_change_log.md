@@ -1455,3 +1455,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## [2026-11-09] SPC-AUDIT-1103-TASK-007 測試完成
 
 查詢／Xlsx匯出API與`/audit-events`頁面完成，明示read／export權限、7／31日、六類篩選、游標分頁、敏感遮罩、公式注入與稽核失敗503通過。後端522通過／11既有隔離略過，本件前端2項與三語系build通過；測試API0.1.110／Web0.1.121已發布，Web／資產／health／version可達。Chrome連接工具仍回timeoutMs，登入畫面與遮罩截圖留TASK-009；正式未發布，TASK-008未開始。
+
+## [2026-11-09] SPC-AUDIT-1103-TASK-008 執行目的
+
+依已核准保存政策建立稽核線上保存／資料庫封存、legal hold、dry-run／受控清理、可重跑回復與容量告警。先盤點PMR_SPC_TEST七日事件量；核心測試先行，schema採EF migration，runtime仍不可UPDATE／DELETE，維護操作使用分離身分。排程預設停用，只發布測試站，正式區不異動；TASK-009不開始。
+
+完成：新增三張封存／hold表、加密與checksum驗證、容量／維護API及保護trigger；531通過、11既有隔離略過。測試DB備份VERIFYONLY及199筆既有稽核指紋保持，測試API0.1.111已發布；執行開關停用，正式未發布。

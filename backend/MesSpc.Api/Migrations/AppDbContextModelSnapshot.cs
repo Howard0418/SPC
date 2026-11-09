@@ -227,6 +227,63 @@ namespace MesSpc.Api.Migrations
                     b.ToTable("AttributeMeasurements");
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.AuditArchiveBatch", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Checksum")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EncryptionKeyId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Environment")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime>("RangeFromUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("RangeToUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId")
+                        .IsUnique();
+
+                    b.ToTable("AuditArchiveBatches", null, t =>
+                        {
+                            t.HasComment("Verified audit archive batches; maintenance identity only.");
+                        });
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.AuditEvent", b =>
                 {
                     b.Property<long>("Id")
@@ -433,6 +490,156 @@ namespace MesSpc.Api.Migrations
                         });
 
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.AuditEventArchive", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ArchiveBatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<byte[]>("Ciphertext")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("Environment")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("EventCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("Nonce")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("OriginalEventId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PageKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PayloadHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("Tag")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("TargetId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TargetType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArchiveBatchId");
+
+                    b.HasIndex("EventId")
+                        .IsUnique();
+
+                    b.HasIndex("OriginalEventId")
+                        .IsUnique();
+
+                    b.HasIndex("Environment", "OccurredAtUtc", "Id");
+
+                    b.ToTable("AuditEventArchives", null, t =>
+                        {
+                            t.HasComment("Encrypted audit event archive; controlled maintenance deletion only.");
+                        });
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.AuditLegalHold", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedByOperatorId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DateFromUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateToUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Environment")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("EventCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("HoldId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PageKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ReasonCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ReleasedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReleasedByOperatorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TargetType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HoldId")
+                        .IsUnique();
+
+                    b.HasIndex("Environment", "ReleasedAtUtc", "DateFromUtc", "DateToUtc");
+
+                    b.ToTable("AuditLegalHolds", null, t =>
+                        {
+                            t.HasComment("Legal holds override audit retention and purge.");
+                        });
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationAuditLog", b =>
@@ -4728,6 +4935,15 @@ namespace MesSpc.Api.Migrations
                     b.Navigation("Slot");
 
                     b.Navigation("Tank");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.AuditEventArchive", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.AuditArchiveBatch", null)
+                        .WithMany()
+                        .HasForeignKey("ArchiveBatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.CalibrationCertificate", b =>
