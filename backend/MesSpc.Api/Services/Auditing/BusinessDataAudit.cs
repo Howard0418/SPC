@@ -17,6 +17,9 @@ public static class BusinessDataAuditPolicy
 {
     public sealed record Operation(string EventCode, string PageKey, string TargetType, string ChangedField);
 
+    public static bool ShouldAudit(Type controller, string action, string method)
+        => Resolve(controller, action, method) is not null;
+
     public static Operation? Resolve(Type controller, string action, string method) => (controller, action, method.ToUpperInvariant()) switch
     {
         (var c, "Create", "POST") when c == typeof(MeasurementBatchesController) => new("measurement.record.create", "measurement.entry", "MeasurementBatch", "Create"),
@@ -67,37 +70,50 @@ public sealed class BusinessDataAuditFilter(AppDbContext db, AuditEventWriter wr
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        if (!Enabled || !db.Database.IsRelational()) { await next(); return; }
+        if (!Enabled) { await next(); return; }
         var descriptor = (ControllerActionDescriptor)context.ActionDescriptor;
         var operation = BusinessDataAuditPolicy.Resolve(context.Controller.GetType(), descriptor.ActionName, context.HttpContext.Request.Method);
-        if (operation is null || !BusinessDataAuditPolicy.HasWriteIntent(descriptor, context.ActionArguments)) { await next(); return; }
+        // Reads and unlisted actions must not touch the audit database path. This
+        // filter runs globally, so resolving the fixed policy before provider or
+        // transaction work keeps normal queries equivalent when auditing is on.
+        if (operation is null || !BusinessDataAuditPolicy.HasWriteIntent(descriptor, context.ActionArguments)
+            || !db.Database.IsRelational()) { await next(); return; }
 
         var http = context.HttpContext;
-        var actor = await permissions.CurrentAsync(http.User, http.RequestAborted);
-        if (actor is null) { context.Result = Unavailable(); return; }
         await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, http.RequestAborted);
         try
         {
+            var actor = await permissions.CurrentAsync(http.User, http.RequestAborted);
+            if (actor is null) { await transaction.RollbackAsync(http.RequestAborted); context.Result = Unavailable(); return; }
+            // Stage evidence before the controller SaveChanges call so EF sends
+            // the business row and its audit row in the same unit of work. This
+            // keeps fail-closed atomicity without a second SaveChanges roundtrip.
+            var evidence = await writer.StageAsync(new AuditEventDraft(operation.EventCode, "Succeeded")
+            {
+                PageKey = operation.PageKey,
+                TargetType = operation.TargetType,
+                TargetId = TargetId(http, descriptor.ActionName),
+                HttpMethod = http.Request.Method.ToUpperInvariant(),
+                HttpStatus = ExpectedSuccessStatus(context.Controller.GetType(), descriptor.ActionName, http.Request.Method),
+                CorrelationId = http.TraceIdentifier,
+                TraceId = System.Diagnostics.Activity.Current?.TraceId.ToString(),
+                Details = new Dictionary<string, object?> { ["ChangedFields"] = new[] { operation.ChangedField } }
+            }, actor, "Jwt", authentication.SessionHash(http.User.FindFirstValue("jti")), http.RequestAborted);
             var executed = await next();
+            if (executed.Exception is not null && !executed.ExceptionHandled) throw executed.Exception;
             var status = Status(executed.Result);
             if (status is < 200 or >= 300)
             {
                 await transaction.RollbackAsync(http.RequestAborted);
                 return;
             }
-
-            await writer.StageAsync(new AuditEventDraft(operation.EventCode, "Succeeded")
+            if (evidence.HttpStatus != status)
             {
-                PageKey = operation.PageKey,
-                TargetType = operation.TargetType,
-                TargetId = TargetId(http, descriptor.ActionName),
-                HttpMethod = http.Request.Method.ToUpperInvariant(),
-                HttpStatus = status,
-                CorrelationId = http.TraceIdentifier,
-                TraceId = System.Diagnostics.Activity.Current?.TraceId.ToString(),
-                Details = new Dictionary<string, object?> { ["ChangedFields"] = new[] { operation.ChangedField } }
-            }, AuditActor.User(actor.Id, "Jwt", authentication.SessionHash(http.User.FindFirstValue("jti"))), http.RequestAborted);
-            await db.SaveChangesAsync(http.RequestAborted);
+                evidence.HttpStatus = status;
+                db.Entry(evidence).Property(x => x.HttpStatus).IsModified = true;
+            }
+            if (db.Entry(evidence).State is EntityState.Added or EntityState.Modified)
+                await db.SaveChangesAsync(http.RequestAborted);
             await transaction.CommitAsync(http.RequestAborted);
         }
         catch (Exception ex) when (ex is AuditEventValidationException or DbUpdateException or InvalidOperationException)
@@ -109,6 +125,9 @@ public sealed class BusinessDataAuditFilter(AppDbContext db, AuditEventWriter wr
     }
 
     private static int Status(IActionResult? result) => result is IStatusCodeActionResult { StatusCode: { } status } ? status : 200;
+    internal static int ExpectedSuccessStatus(Type controller, string action, string method)
+        => controller == typeof(ManualMeasurementsV1Controller) && action == "DeleteItem" ? 200
+            : string.Equals(method, "DELETE", StringComparison.OrdinalIgnoreCase) ? 204 : 200;
     private static string TargetId(HttpContext http, string action) => http.Request.RouteValues.TryGetValue("id", out var id) ? $"{action}:{id}" :
         http.Request.RouteValues.TryGetValue("ppcId", out var ppc) ? $"{action}:{ppc}" :
         http.Request.RouteValues.TryGetValue("uploadBatchId", out var batch) ? $"{action}:{batch}" : action;

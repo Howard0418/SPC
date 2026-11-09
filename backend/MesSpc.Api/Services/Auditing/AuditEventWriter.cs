@@ -15,7 +15,18 @@ public sealed class AuditEventWriter(AppDbContext db, DbContextOptions<AppDbCont
     public async Task<AuditEvent> StageAsync(AuditEventDraft draft, AuditActor actor, CancellationToken ct = default)
     {
         AuditEventContract.Require(draft.ClientEventId is null);
-        var entry = await BuildAsync(db, draft, actor, ct);
+        var entry = await BuildAsync(db, draft, actor, null, ct);
+        db.AuditEvents.Add(entry);
+        return entry;
+    }
+
+    /// <summary>Stages evidence using an active operator already loaded by the current transaction.</summary>
+    public async Task<AuditEvent> StageAsync(AuditEventDraft draft, Operator trustedUser, string assurance,
+        string? sessionHash, CancellationToken ct = default)
+    {
+        AuditEventContract.Require(draft.ClientEventId is null);
+        var actor = AuditActor.User(trustedUser.Id, assurance, sessionHash);
+        var entry = await BuildAsync(db, draft, actor, trustedUser, ct);
         db.AuditEvents.Add(entry);
         return entry;
     }
@@ -24,7 +35,7 @@ public sealed class AuditEventWriter(AppDbContext db, DbContextOptions<AppDbCont
     public async Task<AuditEvent> AppendAsync(AuditEventDraft draft, AuditActor actor, CancellationToken ct = default)
     {
         await using var store = new AppDbContext(options);
-        var entry = await BuildAsync(store, draft, actor, ct);
+        var entry = await BuildAsync(store, draft, actor, null, ct);
         await using var transaction = await store.Database.BeginTransactionAsync(ct);
         try
         {
@@ -58,7 +69,8 @@ public sealed class AuditEventWriter(AppDbContext db, DbContextOptions<AppDbCont
         }
     }
 
-    private async Task<AuditEvent> BuildAsync(AppDbContext store, AuditEventDraft draft, AuditActor actor, CancellationToken ct)
+    private async Task<AuditEvent> BuildAsync(AppDbContext store, AuditEventDraft draft, AuditActor actor,
+        Operator? trustedUser, CancellationToken ct)
     {
         var category = AuditEventContract.Category(draft.EventCode);
         var environment = configuration["AppEnvironment"]?.ToLowerInvariant() switch
@@ -92,7 +104,11 @@ public sealed class AuditEventWriter(AppDbContext db, DbContextOptions<AppDbCont
         if (actor.Type == "User")
         {
             AuditEventContract.Require(actor.OperatorId > 0 && actor.Assurance is "Jwt" or "PortalAssertion" && actor.ServiceCode is null && actor.AttemptedAccountHash is null);
-            var user = await store.Operators.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == actor.OperatorId, ct);
+            var user = trustedUser;
+            if (user is null)
+                user = await store.Operators.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == actor.OperatorId, ct);
+            else
+                AuditEventContract.Require(user.Id == actor.OperatorId && user.IsActive && !user.IsDeleted);
             AuditEventContract.Require(user is not null && (user.IsActive && !user.IsDeleted || draft.Outcome == "Denied"));
             entry.ActorOperatorId = user!.Id;
             entry.ActorAccountSnapshot = Snapshot(user.Username);

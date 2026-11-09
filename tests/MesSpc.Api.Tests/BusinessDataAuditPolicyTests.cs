@@ -31,4 +31,16 @@ public sealed class BusinessDataAuditPolicyTests
         Assert.Null(BusinessDataAuditPolicy.Resolve(typeof(ChemicalFormulaScheduleController), "Preview", "POST"));
         Assert.Null(BusinessDataAuditPolicy.Resolve(typeof(UploadsController), "Calculate", "POST"));
     }
+
+    [Fact]
+    public void ReadRequestIsRejectedBeforeAnyDatabaseAuditWork()
+        => Assert.False(BusinessDataAuditPolicy.ShouldAudit(typeof(PartsController), "Get", "GET"));
+
+    [Theory]
+    [InlineData(typeof(PartsController), "Delete", "DELETE", 204)]
+    [InlineData(typeof(UploadsController), "Delete", "DELETE", 204)]
+    [InlineData(typeof(ManualMeasurementsV1Controller), "DeleteItem", "DELETE", 200)]
+    [InlineData(typeof(PartsController), "Create", "POST", 200)]
+    public void ExpectedSuccessStatusMatchesMappedControllerContract(Type controller, string action, string method, int expected)
+        => Assert.Equal(expected, BusinessDataAuditFilter.ExpectedSuccessStatus(controller, action, method));
 }
