@@ -1,3 +1,5 @@
+> 2026-11-09 [SPC-AUDIT-1103-TASK-005實際操作驗收完成](specs/20261106-audit-business-operations/verification.md)：測試站產品料號主檔實際新增／刪除產生AuditEvents 85／86，actor「丁義豪」、固定事件碼、PageKey與成功結果正確；測試料號刪除後不存在、稽核仍保留2筆、原始業務值洩漏0。正式未發布；下一件006未開始。核心未完成45件、涉及SPC21件、完成193件，人工11／核銷4另計。
+
 > 2026-11-04 [十月藥液量測正式僅新增](specs/20261104-october-production-chemical-measurements/verification.md)：正式備份驗證後新增335筆／23複驗，864筆既有略過、12筆F衝突隔離；335筆追溯、75項圖表與相同清單重送0新增通過，既有量測／PPC／啟用F／公式排程保持。240筆統計完成；另95筆集中24項既有PPC因`ChartTypeId`空值待補型別後只重跑統計，不可重匯量測。父工作保持未完成，核心45／涉及SPC22不變；無網站發布。
 
 > 2026-11-04 [十月藥液公式／F正式歷史完成](specs/20261104-october-production-formula-f/verification.md)：正式建立1199列／80項、81公式歷史、3完整F快照（重用1、新增2）、80個未啟用排程修訂及1039日別區間；1211計算吻合，相同清單重送0新增。ST2三項於10/01、10/14共12列因OPEN／MIDDLE完整F衝突維持隔離；現行PPC／啟用F及量測等保持，無網站發布。父工作仍有4項NA、其他兩式、EXE、目前87項正式主檔及量測待辦；核心45／涉及SPC22不變。
@@ -40,9 +42,9 @@
 
 - [ ] `TRANSFILES-ETCH-1103-TASK-001`：P0，工具109／SPC96及主要356／Portal12通過，第二次受控取代與防重查回已實作。正式API102／Portal218及兩站專用開關已部署，69／74表及134份10384筆唯讀吻合／未重匯；本輪使用者正式登入後API102與32子組載入通過。日期前端另獲授權完成Web118，Portal247保持。原生EXE及正式工具登入／preview仍待人工，[正式紀錄](specs/20261103-etch-import-completeness/formal-release.md)。核心42／SPC20，無schema／正式量測寫入／排程，其他待辦保持。
 
-## 2026-11-03 SPC 使用者活動稽核（001～004測試完成，005～009未開始；現核心43／涉及SPC20）
+## 2026-11-03 SPC 使用者活動稽核（001～005測試完成，006～009未開始；現核心45／涉及SPC21）
 
-> 最新進度（11/04）：001～004測試階段完成，現行API106／Web119，正式未發布；核心未完成43件、涉及SPC20件、完成189件，人工11／核銷4另計。005相依解除但尚未執行；完整E2E依009待驗。003的API99／Web116及41／19等保留在各件歷史驗證，不作目前計數。
+> 最新進度（11/09）：001～005測試階段完成，現行測試API0.1.109／Web119，正式未發布；核心未完成45件、涉及SPC21件、完成193件，人工11／核銷4另計。006相依解除但尚未執行；完整E2E依009待驗。舊版號與舊計數保留在各件歷史驗證，不作目前計數。
 
 [規格](specs/20261103-spc-user-activity-audit/spec.md)／[已核准契約](specs/20261103-spc-user-activity-audit/event-contract-v1.md)／[計畫](specs/20261103-spc-user-activity-audit/plan.md)／[排序與測試矩陣](specs/20261103-spc-user-activity-audit/tasks.md)。主系統SPC；Portal／SSO只供身分來源，本案不修改Portal帳密登入。依序逐件執行，不與其他schema／SSO／權限高風險工作併行。
 
@@ -50,7 +52,7 @@
 - [x] `SPC-AUDIT-1103-TASK-002`：P1，AuditEvents、索引、重送去重與共用writer測試完成；當時測試API98／Web115、68個既有表指紋不變，正式未發布。詳[驗證](specs/20261103-spc-user-activity-audit/task002-storage.md)。Auth啟用與runtime分權已於003完成。
 - [x] `SPC-AUDIT-1103-TASK-003`：P1，SSO成功／拒絕／失敗、停用本機登入、登出及session關聯完成；Auth與runtime分權已驗，API99／Web116及使用者Portal重登通過，正式未發布。詳[003驗證](specs/20261103-spc-user-activity-audit/task003-authentication.md)。
 - [x] `SPC-AUDIT-1103-TASK-004`：P1，安全／角色／頁面權限／設定與拒絕事件測試完成，API106／Web119、68業務表保持；無schema或實際授權變更，正式未發。詳[004驗證](specs/20261103-spc-user-activity-audit/task004-security.md)。
-- [ ] `SPC-AUDIT-1103-TASK-005`：P1，量測、匯入、公式／F／版本、主檔與刪除／停用等高風險操作；交易一致，依004。
+- [x] `SPC-AUDIT-1103-TASK-005`：P1，測試API已發布；2026-11-09產品料號主檔實際新增／刪除產生事件85／86，actor、固定事件碼、刪除後稽核留存與原值遮罩皆通過，正式未發布。詳[驗證](specs/20261106-audit-business-operations/verification.md)。
 - [ ] `SPC-AUDIT-1103-TASK-006`：P1，成功進頁、查詢／篩選／匯出及允許清單純前端操作；canonical route、去重與故障不白屏，依005。
 - [ ] `SPC-AUDIT-1103-TASK-007`：P2，稽核查詢／匯出API與頁面、游標分頁、篩選及獨立最小權限，依006。
 - [ ] `SPC-AUDIT-1103-TASK-008`：P2，保存／封存、legal hold、清理重跑、容量監控與告警，依002／007。
