@@ -566,3 +566,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-09 [歷史匯入正式preflight核銷](../specs/20261109-historical-import-task003-closeout/verification.md)：`TASK-003`的正式環境guard、來源SHA、主檔相容、防重／衝突分類、COPY_ONLY／CHECKSUM／VERIFYONLY、補正清單與批次回復門檻均已有權威證據；不合格資料正確停止。TASK-004及缺時間／來源異常補正保持；本核銷無程式、DB或網站變更。
 - 2026-11-09 [P400重複項目處理完成](../specs/20261102-p400-duplicate/verification.md)：正式與測試均停用無量測重複P400 2593，保留有效N1 2619及N2 2515；正式備份、重驗與保護指紋通過，本次未再次異動資料。
 - 2026-11-09 [QE2 Excel差異對帳結案](../specs/20261109-qe2-task002-closeout/verification.md)：正式87項初複驗公式、493筆十月值及114項目前公式／F已依Excel基準對齊，重送0新增；不偽造舊量測快照，歷史缺證據另案持續管理。
+- 2026-11-09 [QE2舊診斷009後續覆蓋結案](../specs/20261109-qe2-task009-closeout/verification.md)：十月日別公式／F、正式87項公式與493筆Excel值已覆蓋原待辦；舊歷史缺快照另由專責工作管理，本次無資料或網站異動。
