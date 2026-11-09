@@ -10,7 +10,9 @@ Check 'four allowlisted targets' {
  Assert ($s.HostName -eq 'PC-PA16560048.pmr.com.tw');Assert ($s.Database -eq 'PMR_SPC_TEST')
  Assert ($p.Database -eq 'PMR_PORTAL_TEST');Assert ($p.Targets[0].Pool -eq 'PmrPortal')
  Assert ((Get-ReleaseProfile SPC Production).HostName -eq 'PMR-SPC-SRV.pmr.com.tw')
- Assert ((Get-ReleaseProfile Portal Production).HostName -eq 'PMR-WEB.pmr.com.tw')
+ $portalProduction=Get-ReleaseProfile Portal Production
+ Assert ($portalProduction.HostName -eq 'PMR-WEB.pmr.com.tw')
+ Assert ($portalProduction.ApiBase -eq 'https://login.pmr.com.tw:8443')
 }
 Check 'single-site SPC has two paths and one pool' {
  $p=Get-ReleaseProfile SPC Test
@@ -38,6 +40,13 @@ foreach($systemName in @('SPC','Portal')){
   Reject {Test-ReleaseManifest $m $out 'PC-PA16560048' Production}
  }
  Check ($systemName+' test smoke hosts') {Assert (@($m.smoke|Where-Object {$_.url -match '172\.16\.119\.|login\.pmr\.com'}).Count -eq 0)}
+ if($systemName -eq 'Portal'){
+  Check 'Portal smoke uses a Portal-owned read-only authorization endpoint' {
+   Assert (@($m.smoke|Where-Object {$_.url -match '/api/etch-import-test/preview$'}).Count -eq 0)
+   $auth=@($m.smoke|Where-Object {$_.url -match '/api/PortalLinks$'})
+   Assert ($auth.Count -eq 1);Assert ($auth[0].method -eq 'GET');Assert ([int]$auth[0].status -eq 401)
+  }
+ }
 }
 $manifest=Join-Path $root 'bundle-SPC/manifest.json'
 Check 'dispatch rejects environment and system mismatch before transport' {

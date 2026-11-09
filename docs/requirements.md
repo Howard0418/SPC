@@ -558,4 +558,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [稽核目標與安全異動摘要](../specs/20261109-audit-change-summary/spec.md)：顯示目標使用者姓名／代碼／ID及既有allowlist的權限清單、異動欄位、狀態與筆數；不交付原始JSON或敏感原值。測試站已發布，正式未發布。
 - 2026-11-09 [控制線公式儲存後重算重繪](../specs/20261029-control-line-formula-recalc/verification.md)：正式API103已依授權發布；首頁／JS／CSS、實際API基底、health／version、CORS、COPY_ONLY備份與五個資料指紋驗證通過，公式與量測未異動。指定PPC登入後實際儲存／重繪仍待驗收，本件不標DONE。
 - 2026-11-09 [常態分析直方圖與Minitab對齊規劃](../specs/20261109-normality-minitab-alignment/spec.md)：新增P1小工作。現行網站採自訂箱數與padding，柱狀類別軸、曲線連續軸及界線箱格定位造成視覺／數值位置差異；規劃由單一統計契約回傳edges／counts、柱曲線界線共用連續X軸，並以相同原始值、排除資料、Minitab版本與分箱設定建立golden fixture。本次未實作、測試或發布。
-> 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：首次上傳破圖確認為成功回應相對圖片網址未正規化，已修正為同一次提交立即顯示；1440px／96vw單一尺寸保持。測試API1.0.226／Web1.0.266、4項契約、39項回歸與整體建置通過；直連API Test健康通過，首次上傳畫面待確認，正式未發布，核心42／SPC18保持。[Portal驗證](D:/PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)。
+> 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：1440px／96vw單一尺寸與首次上傳立即預覽已由使用者確認。正式R4完成，API1.0.218原檔與SHA256保持、Web1.0.248；DB備份驗證、首頁／site.css MIME、API health／production及401通過。正式畫面列人工確認，核心41／SPC18。[Portal驗證](D:/PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)。

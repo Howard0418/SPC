@@ -17,7 +17,7 @@ function Get-ReleaseProfile([ValidateSet('SPC','Portal')][string]$System,[Valida
             @{Site='SpcApi';Pool='SpcApi';Path='C:\inetpub\wwwroot\production\backend';IisPath='C:\inetpub\wwwroot\production\backend';Role='Api'},
             @{Site='SpcWeb';Pool='SpcWeb';Path='C:\inetpub\wwwroot\production\frontend';IisPath='C:\inetpub\wwwroot\production\frontend';Role='Web'})}
     }else{
-        $p=@{HostName='PMR-WEB.pmr.com.tw'; Machine='PMR-WEB'; Database='PMR_PORTAL_UAT'; Hosts=@('PMR-WEB.pmr.com.tw','172.16.119.130','login.pmr.com.tw');ApiBase='http://172.16.119.130:81';WebBase='https://login.pmr.com.tw'; Targets=@(
+        $p=@{HostName='PMR-WEB.pmr.com.tw'; Machine='PMR-WEB'; Database='PMR_PORTAL_UAT'; Hosts=@('PMR-WEB.pmr.com.tw','172.16.119.130','login.pmr.com.tw');ApiBase='https://login.pmr.com.tw:8443';WebBase='https://login.pmr.com.tw'; Targets=@(
             @{Site='PmrPortalApi';Pool='PmrPortalApi';Path='C:\inetpub\wwwroot\publish\portal-api';IisPath='C:\inetpub\wwwroot\publish\portal-api';Role='Api'},
             @{Site='PmrPortalWeb';Pool='PmrPortalWeb';Path='C:\inetpub\wwwroot\publish\portal-web';IisPath='C:\inetpub\wwwroot\publish\portal-web';Role='Web'})}
     }

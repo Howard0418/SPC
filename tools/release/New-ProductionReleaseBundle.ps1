@@ -63,7 +63,7 @@ function New-SmokeChecks($apiVersion,$webVersion){
   @{url=($profile.ApiBase+'/health');method='GET';status=200;bodyPattern='"status"\s*:\s*"ok"'},
   @{url=($profile.WebBase+'/app-version');method='GET';status=200;bodyPattern=('"version"\s*:\s*"'+[regex]::Escape($webVersion)+'(\.0)?"')},
   @{url=($profile.WebBase+'/Login');method='GET';status=200;bodyPattern='<html'},
-  @{url=($profile.ApiBase+'/api/etch-import-test/preview');method='POST';status=401;bodyPattern=''})
+  @{url=($profile.ApiBase+'/api/PortalLinks');method='GET';status=401;bodyPattern=''})
 }
 $catalog=Get-Content -LiteralPath $MigrationCatalog -Raw -Encoding UTF8|ConvertFrom-Json
 $catalog=@($catalog)
