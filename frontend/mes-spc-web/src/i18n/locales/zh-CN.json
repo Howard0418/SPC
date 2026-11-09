@@ -104,7 +104,14 @@
       "title": "用户活动记录", "subtitle": "查询谁在何时进入页面及执行的操作；仅显示安全摘要。",
       "from": "开始日期", "to": "结束日期", "actor": "人员", "page": "页面", "event": "操作事件", "target": "目标", "outcome": "结果", "source": "来源",
       "query": "查询", "export": "导出 Excel", "all": "全部", "time": "时间", "empty": "此条件没有审计记录。", "more": "加载下一页",
-      "rangeHint": "默认查询 7 天，单次最多 31 天；完整查询值与敏感数据不会显示。"
+      "rangeHint": "默认查询 7 天，单次最多 31 天；完整查询值与敏感数据不会显示。",
+      "labels": {
+        "pages": { "auditEvents": "用户活动记录", "operators": "系统用户管理", "spcOverall": "SPC 即时互动管制图", "spcControlChart": "SPC 管制图", "trendOverall": "量测趋势分析", "trendPpc": "分析项目趋势图", "measurementEntry": "量测输入", "chemicalOverview": "线别分析项目总览", "chemicalFTable": "药液 F 表维护", "dataUpload": "导入批次查询" },
+        "events": { "pageEnter": "进入页面", "queryExecute": "执行查询", "filterApply": "套用筛选", "exportGenerate": "产生导出", "ssoExchange": "Portal 单一登入", "logoutRequest": "登出", "changePermissions": "变更用户权限", "auditQuery": "查询审计记录", "auditExport": "导出审计记录" },
+        "outcomes": { "succeeded": "成功", "denied": "拒绝", "failed": "失败" },
+        "sources": { "webRouter": "网页导览", "api": "系统 API", "portalSso": "Portal 单一登入", "system": "系统" },
+        "targets": { "operator": "用户", "auditEvent": "审计记录", "export": "导出文件" }
+      }
     },
     "parts": {
       "title": "产品料号主档维护",

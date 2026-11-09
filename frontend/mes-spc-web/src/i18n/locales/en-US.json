@@ -104,7 +104,14 @@
       "title": "User Activity Log", "subtitle": "Review who entered a page and what they did; only safe summaries are shown.",
       "from": "From", "to": "To", "actor": "Actor", "page": "Page", "event": "Event", "target": "Target", "outcome": "Outcome", "source": "Source",
       "query": "Query", "export": "Export Excel", "all": "All", "time": "Time", "empty": "No audit events match these filters.", "more": "Load next page",
-      "rangeHint": "The default range is 7 days and each query is limited to 31 days. Full query values and sensitive data are not displayed."
+      "rangeHint": "The default range is 7 days and each query is limited to 31 days. Full query values and sensitive data are not displayed.",
+      "labels": {
+        "pages": { "auditEvents": "User Activity Log", "operators": "System Users", "spcOverall": "SPC Interactive Control Chart", "spcControlChart": "SPC Control Chart", "trendOverall": "Measurement Trend Analysis", "trendPpc": "Analysis Item Trend", "measurementEntry": "Measurement Entry", "chemicalOverview": "Line Analysis Item Overview", "chemicalFTable": "Chemical F Table", "dataUpload": "Import Batch Query" },
+        "events": { "pageEnter": "Enter Page", "queryExecute": "Run Query", "filterApply": "Apply Filter", "exportGenerate": "Generate Export", "ssoExchange": "Portal Single Sign-On", "logoutRequest": "Sign Out", "changePermissions": "Change User Permissions", "auditQuery": "Query Audit Log", "auditExport": "Export Audit Log" },
+        "outcomes": { "succeeded": "Succeeded", "denied": "Denied", "failed": "Failed" },
+        "sources": { "webRouter": "Web Navigation", "api": "System API", "portalSso": "Portal Single Sign-On", "system": "System" },
+        "targets": { "operator": "User", "auditEvent": "Audit Event", "export": "Export File" }
+      }
     },
     "parts": {
       "title": "Product part master",

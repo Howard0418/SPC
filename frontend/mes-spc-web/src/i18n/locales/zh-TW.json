@@ -104,7 +104,14 @@
       "title": "使用者活動紀錄", "subtitle": "查詢誰在何時進入頁面及執行的操作；僅顯示安全摘要。",
       "from": "起始日期", "to": "結束日期", "actor": "人員", "page": "頁面", "event": "操作事件", "target": "目標", "outcome": "結果", "source": "來源",
       "query": "查詢", "export": "匯出 Excel", "all": "全部", "time": "時間", "empty": "此條件沒有稽核紀錄。", "more": "載入下一頁",
-      "rangeHint": "預設查詢 7 日，單次最多 31 日；完整查詢值與敏感資料不會顯示。"
+      "rangeHint": "預設查詢 7 日，單次最多 31 日；完整查詢值與敏感資料不會顯示。",
+      "labels": {
+        "pages": { "auditEvents": "使用者活動紀錄", "operators": "系統使用者管理", "spcOverall": "SPC 即時互動管制圖", "spcControlChart": "SPC 管制圖", "trendOverall": "量測趨勢分析", "trendPpc": "分析項目趨勢圖", "measurementEntry": "量測輸入", "chemicalOverview": "線別分析項目總覽", "chemicalFTable": "藥液 F 表維護", "dataUpload": "匯入批次查詢" },
+        "events": { "pageEnter": "進入頁面", "queryExecute": "執行查詢", "filterApply": "套用篩選", "exportGenerate": "產生匯出", "ssoExchange": "Portal 單一登入", "logoutRequest": "登出", "changePermissions": "變更使用者權限", "auditQuery": "查詢稽核紀錄", "auditExport": "匯出稽核紀錄" },
+        "outcomes": { "succeeded": "成功", "denied": "拒絕", "failed": "失敗" },
+        "sources": { "webRouter": "網頁導覽", "api": "系統 API", "portalSso": "Portal 單一登入", "system": "系統" },
+        "targets": { "operator": "使用者", "auditEvent": "稽核紀錄", "export": "匯出檔案" }
+      }
     },
     "parts": {
       "title": "產品料號主檔維護",
