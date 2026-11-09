@@ -564,3 +564,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-09 [9、10月來源唯讀盤點核銷](../specs/20261109-historical-import-task001-closeout/verification.md)：`SPC-HISTORICAL-IMPORT-1102-TASK-001` 已由後續全年824份藥液／1份咬蝕來源清冊、17649格分類及166份咬蝕完整性證據覆蓋；異常與排除保留且未修改來源。只核銷001，002～004保持待辦；無程式、DB或網站變更。
 - 2026-11-09 [歷史匯入測試隔離TASK-002被取代](../specs/20261109-historical-import-task002-superseded/verification.md)：原9／10月隔離測試要求與後續「清除九月量測及隔離測試主檔、保留十月正常資料」明確衝突，故取消舊TASK-002且不重灌九月。既有咬蝕趨勢成果保留，TASK-003／004保持；無程式、DB或網站變更。
 - 2026-11-09 [歷史匯入正式preflight核銷](../specs/20261109-historical-import-task003-closeout/verification.md)：`TASK-003`的正式環境guard、來源SHA、主檔相容、防重／衝突分類、COPY_ONLY／CHECKSUM／VERIFYONLY、補正清單與批次回復門檻均已有權威證據；不合格資料正確停止。TASK-004及缺時間／來源異常補正保持；本核銷無程式、DB或網站變更。
+- 2026-11-09 [P400重複項目處理完成](../specs/20261102-p400-duplicate/verification.md)：正式與測試均停用無量測重複P400 2593，保留有效N1 2619及N2 2515；正式備份、重驗與保護指紋通過，本次未再次異動資料。
