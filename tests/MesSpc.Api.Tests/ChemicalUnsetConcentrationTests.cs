@@ -6,6 +6,46 @@ namespace MesSpc.Api.Tests;
 public sealed class ChemicalUnsetConcentrationTests
 {
     [Theory]
+    [InlineData(2515, "U13", "IF(Concentration=\"\",\"\",IF(Concentration<31,\"添加\",IF(Concentration>U13,\"稀釋\",\"\")))", "IF(Concentration=\"\",\"\",IF(Concentration<31,\"添加\",\"\"))")]
+    [InlineData(2516, "U14", "IF(Concentration=\"\",\"\",IF(Concentration<5,\"添加\",IF(Concentration>U14,\"稀釋\",\"\")))", "IF(Concentration=\"\",\"\",IF(Concentration<5,\"添加\",\"\"))")]
+    public void NaUpperLimit_RemovesOnlyUnsupportedUpperBranch(int ppcId, string token, string formula, string expected)
+    {
+        var json = new JsonObject
+        {
+            ["enabled"] = true,
+            ["concentrationFormula"] = "Primary*2",
+            ["adjustmentFormula"] = formula,
+            ["adjustmentAmountFormula"] = $"IFERROR(IF(Concentration<1,\"ADD\",IF(Concentration>{token},\"DILUTE\",\"\")),\"\")",
+            ["decimalPlaces"] = 2
+        }.ToJsonString();
+        var change = Assert.Single(NaAdjustmentPlanner.Build([new(ppcId, token, json)]));
+        var result = JsonNode.Parse(change.AfterJson)!;
+        Assert.Equal(expected, result["adjustmentFormula"]!.GetValue<string>());
+        Assert.DoesNotContain(token, result["adjustmentAmountFormula"]!.GetValue<string>());
+        Assert.Contains("ADD", result["adjustmentAmountFormula"]!.GetValue<string>());
+        Assert.Equal("Primary*2", result["concentrationFormula"]!.GetValue<string>());
+        Assert.Empty(NaAdjustmentPlanner.Build([new(ppcId, token, change.AfterJson)]));
+    }
+
+    [Fact]
+    public void NaOnlyTankChange_BecomesUnset()
+    {
+        const string json = """{"enabled":true,"concentrationFormula":"Primary*2","adjustmentFormula":"IF(Concentration=\"\",\"\",IF(Concentration>U16,\"更槽\",\"\"))","adjustmentAmountFormula":"","decimalPlaces":2}""";
+        var change = Assert.Single(NaAdjustmentPlanner.Build([new(2518, "U16", json)]));
+        var result = JsonNode.Parse(change.AfterJson)!;
+        Assert.Equal("", result["adjustmentFormula"]!.GetValue<string>());
+        Assert.Equal("", result["adjustmentAmountFormula"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void NaAdjustment_RejectsUnknownPpcOrUnexpectedFormula()
+    {
+        const string json = """{"adjustmentFormula":"Concentration>U13","adjustmentAmountFormula":""}""";
+        Assert.Throws<InvalidOperationException>(() => NaAdjustmentPlanner.Build([new(9999, "U13", json)]));
+        Assert.Throws<InvalidOperationException>(() => NaAdjustmentPlanner.Build([new(2515, "U13", json)]));
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("  \r\n ")]

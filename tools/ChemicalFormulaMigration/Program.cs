@@ -12,6 +12,11 @@ if (args.Contains("--clear-unset-formulas", StringComparer.Ordinal))
     await UnsetFormulaCleanup.RunAsync(args);
     return;
 }
+if (args.Contains("--cleanup-na-adjustments", StringComparer.Ordinal))
+{
+    await NaAdjustmentCleanup.RunAsync(args);
+    return;
+}
 var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 var apply = args.Contains("--apply", StringComparer.OrdinalIgnoreCase);
 var patchC5Cleaner = args.Contains("--patch-c5-cleaner", StringComparer.OrdinalIgnoreCase);
