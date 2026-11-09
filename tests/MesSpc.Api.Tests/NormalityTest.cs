@@ -11,6 +11,45 @@ namespace MesSpc.Api.Tests;
 public class NormalityTest
 {
     [Fact]
+    public void ScreenshotReferenceDataset_ReturnsAuthoritativeHistogramContract()
+    {
+        var values = new[] { 19.488, 18.368, 20.608, 20.16, 19.264, 17.472, 18.368, 20.16 };
+        var points = values.Select(value => new SpcDataPoint { Value = value }).ToList();
+
+        var result = SpcService.PopulateNormalityAndCurve(new(), points, new() { LSL = 18, Target = 20, USL = 22 }, "AD");
+
+        result.Histogram.Should().NotBeNull();
+        result.Histogram!.Rule.Should().Be("SPC_EQUAL_WIDTH_V1");
+        result.Histogram.SampleSize.Should().Be(8);
+        result.Histogram.Mean.Should().BeApproximately(19.236, 0.000000001);
+        result.Histogram.SampleStandardDeviation.Should().BeApproximately(1.0871172889803566, 0.000000001);
+        result.Histogram.Minimum.Should().Be(17.472);
+        result.Histogram.Maximum.Should().Be(20.608);
+        result.Histogram.Bins.Select(bin => bin.Count).Should().Equal(1, 2, 0, 2, 2, 1);
+        result.Histogram.Bins.First().Lower.Should().BeApproximately(17.22112, 0.000000001);
+        result.Histogram.Bins.Last().Upper.Should().BeApproximately(20.85888, 0.000000001);
+        result.Histogram.Bins.Sum(bin => bin.Count).Should().Be(values.Length);
+    }
+
+    [Fact]
+    public void HistogramContract_ExcludesFlaggedValuesAndIncludesMaximumExactlyOnce()
+    {
+        var points = new List<SpcDataPoint>
+        {
+            new() { Value = 0 }, new() { Value = 1 }, new() { Value = 2 },
+            new() { Value = 3 }, new() { Value = 4 }, new() { Value = 999, IsExcluded = true }
+        };
+
+        var result = SpcService.PopulateNormalityAndCurve(new(), points, new(), "AD");
+
+        result.Histogram.Should().NotBeNull();
+        result.Histogram!.SampleSize.Should().Be(5);
+        result.Histogram.Bins.Sum(bin => bin.Count).Should().Be(5);
+        result.Histogram.Bins.Last().Count.Should().BeGreaterThan(0);
+        result.Histogram.Maximum.Should().Be(4);
+    }
+
+    [Fact]
     public void TestNormalDataset_SucceedsAndPassesNormality()
     {
         // GIVEN: A standard normally distributed dataset

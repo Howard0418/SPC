@@ -1301,6 +1301,7 @@
       "zoom": "放大",
       "resetZoom": "重設縮放",
       "histogram": "量測值分布直方圖 (Raw Measurements Histogram)",
+      "histogramContract": "分箱規則：{rule}，{bins} 箱，N={sampleSize}",
       "specRange": "規格上下線",
       "controlRange": "管制上下線",
       "excludedNotice": "已剔除資料不納入統計",

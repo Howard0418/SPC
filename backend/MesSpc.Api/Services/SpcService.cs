@@ -879,9 +879,11 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             .Select(x => x.Value)
             .ToList();
 
+        var histogram = BuildHistogram(nonExcludedValues);
+
         if (nonExcludedValues.Count < 3)
         {
-            return result;
+            return result with { Histogram = histogram };
         }
 
         // 1. Calculate selected normality test
@@ -964,18 +966,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
         {
             // Keep normal curve scaling aligned with the frontend histogram bins:
             // bins use measured values only so distant spec/control lines do not flatten the distribution.
-            double domainMin = nonExcludedValues.Min();
-            double domainMax = nonExcludedValues.Max();
-            double binWidth = 0;
-            if (domainMax > domainMin)
-            {
-                var valueRange = domainMax - domainMin;
-                domainMin -= valueRange * 0.08;
-                domainMax += valueRange * 0.08;
-                int preferredBins = 12;
-                int binCount = Math.Max(5, Math.Min(preferredBins, (int)Math.Ceiling(Math.Sqrt(n)) + 3));
-                binWidth = (domainMax - domainMin) / binCount;
-            }
+            double binWidth = histogram?.BinWidth ?? 0;
 
             // Generate 100 points for ECharts line series
             double minVal = nonExcludedValues.Min();
@@ -1003,7 +994,67 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             }
         }
 
-        return result with { Normality = normality, NormalCurve = curvePoints };
+        return result with { Normality = normality, NormalCurve = curvePoints, Histogram = histogram };
+    }
+
+    internal static HistogramResult? BuildHistogram(IReadOnlyList<double> values)
+    {
+        if (values.Count == 0) return null;
+
+        var minimum = values.Min();
+        var maximum = values.Max();
+        var mean = values.Average();
+        double? sampleStandardDeviation = values.Count > 1
+            ? Math.Sqrt(values.Sum(value => Math.Pow(value - mean, 2)) / (values.Count - 1))
+            : null;
+
+        if (minimum == maximum)
+        {
+            var pad = Math.Abs(minimum) > 0 ? Math.Abs(minimum) * 0.05 : 0.5;
+            return new HistogramResult
+            {
+                SampleSize = values.Count,
+                Mean = mean,
+                SampleStandardDeviation = sampleStandardDeviation,
+                Minimum = minimum,
+                Maximum = maximum,
+                BinWidth = pad * 2,
+                Bins = [new HistogramBin { Lower = minimum - pad, Upper = maximum + pad, Count = values.Count }]
+            };
+        }
+
+        var valueRange = maximum - minimum;
+        var padRange = valueRange * 0.08;
+        var domainMinimum = minimum - padRange;
+        var domainMaximum = maximum + padRange;
+        var binCount = Math.Max(5, Math.Min(12, (int)Math.Ceiling(Math.Sqrt(values.Count)) + 3));
+        var binWidth = (domainMaximum - domainMinimum) / binCount;
+        var counts = new int[binCount];
+        foreach (var value in values)
+        {
+            var rawIndex = (int)Math.Floor((value - domainMinimum) / binWidth);
+            counts[Math.Clamp(rawIndex, 0, binCount - 1)]++;
+        }
+
+        var bins = Enumerable.Range(0, binCount)
+            .Select(index => new HistogramBin
+            {
+                Lower = domainMinimum + index * binWidth,
+                Upper = index == binCount - 1 ? domainMaximum : domainMinimum + (index + 1) * binWidth,
+                Count = counts[index]
+            })
+            .ToList();
+
+        return new HistogramResult
+        {
+            SampleSize = values.Count,
+            Mean = mean,
+            SampleStandardDeviation = sampleStandardDeviation,
+            Minimum = minimum,
+            Maximum = maximum,
+            BinWidth = binWidth,
+            Bins = bins
+        };
     }
 
     private static double CalculateAdjustedJarqueBeraStatistic(int n, double skewness, double kurtosis)

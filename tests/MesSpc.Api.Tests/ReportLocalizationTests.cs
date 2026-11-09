@@ -53,7 +53,7 @@ public class ReportLocalizationTests
             var id=index+1;db.Parts.Add(new Part {Id=id,PartNo="RAW"+id,PartName=Raw});
             db.PartProcessCharacteristics.Add(new PartProcessCharacteristic {Id=id,PartId=id,ProcessId=1,CharacteristicId=1,IsEnabled=true,SampleSize=3,
                 USL=index==0?null:index==3?4:index==4?3.9:5,LSL=index==0?null:index==3?-2:index==4?-1.9:-3});
-            foreach(var value in sets[index])db.VariableMeasurements.Add(new VariableMeasurement {PartProcessCharacteristicId=id,MeasuredValue=value,MeasuredAt=new DateTime(2020,1,1)});
+            foreach(var value in sets[index])db.VariableMeasurements.Add(new VariableMeasurement {PartProcessCharacteristicId=id,MeasuredValue=value,MeasuredAt=new DateTime(2026,10,15,0,0,0,DateTimeKind.Utc)});
         }
         await db.SaveChangesAsync();var controller=new ReportsController(db) {ControllerContext=Context(locale)};
         var result=Assert.IsType<FileContentResult>(await controller.ExportCpkSummary("2026-10"));
@@ -62,7 +62,7 @@ public class ReportLocalizationTests
         var executive=workbook.Worksheets.Worksheet(1);var cpk=workbook.Worksheets.Worksheet(2);
         Assert.Equal(T("reportExecutiveSheet",locale),executive.Name);Assert.Equal(T("reportCpkSheet",locale),cpk.Name);
         Assert.Equal("2026-10",executive.Cell("C4").GetString());Assert.Equal(13,executive.Cell("C8").GetValue<int>());
-        Assert.Equal("100%",executive.Cell("C11").GetString()); // Characterizes the existing all-data scope; month filtering is a separate task.
+        Assert.Equal("100%",executive.Cell("C11").GetString());
         var keys=new[]{"reportUntested","reportSingleSample","reportGradeA","reportGradeB","reportGradeC","reportGradeC"};
         var cpks=new[]{0d,0d,1.33,1d,.97,0d};
         for(var index=0;index<sets.Length;index++) {

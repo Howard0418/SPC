@@ -16,7 +16,7 @@ import { formatChartMeasurementDate } from "../utils/chartMeasurementDate";
 import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { normalizeControlScope } from "../utils/controlScope";
 import { resolveActiveRawDataPpcId } from "../utils/spcRawDataDownload";
-import { buildHistogramBins, findHistogramBinIndex } from "../utils/histogram";
+import { buildHistogramGeometry, renderHistogramBar, resolveHistogram } from "../utils/histogramPresentation";
 import {
   useSingleChemicalLine,
   stageLabel,
@@ -1927,7 +1927,8 @@ function renderHistogramChart() {
     .filter(p => !p.isExcluded && p.value !== null && p.value !== undefined && !Number.isNaN(Number(p.value)))
     .map(p => Number(p.value));
 
-  if (values.length === 0) {
+  const histogram = resolveHistogram(data.histogram, values);
+  if (!histogram) {
     histogramChartInstance.setOption({
       backgroundColor: "transparent",
       graphic: [{
@@ -1941,86 +1942,21 @@ function renderHistogramChart() {
     return;
   }
 
-  const bins = buildHistogramBins(values, 12);
-  const min = bins.length > 0 ? bins[0].min : 0;
-  const max = bins.length > 0 ? bins[bins.length - 1].max : 100;
-  const labels = bins.map(bin => `${formatNumber(bin.min, 3)} - ${formatNumber(bin.max, 3)}`);
-  const maxCount = Math.max(...bins.map(bin => bin.count));
-  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
-  const variance = values.length > 1
-    ? values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (values.length - 1)
-    : 0;
-  const std = Math.sqrt(variance);
-
-  const markLines = [];
-  const labelSlotsByBin = new Map();
-  const addXAxisLine = (value, name, color, style = "dashed") => {
-    const idx = findHistogramBinIndex(bins, value);
-    if (idx === null) return;
-    const slot = labelSlotsByBin.get(idx) || 0;
-    labelSlotsByBin.set(idx, slot + 1);
-    markLines.push({
-      name,
-      xAxis: idx,
-      lineStyle: { color, width: 2, type: style },
-      label: {
-        formatter: `${name}: ${formatNumber(value, 3)}`,
-        color,
-        position: slot % 2 === 0 ? "end" : "start",
-        offset: [Math.floor(slot / 2) * 18, 0],
-        fontSize: 10,
-        fontWeight: "bold",
-        backgroundColor: "rgba(255, 255, 255, 0.88)",
-        borderRadius: 4,
-        padding: [2, 4]
-      }
-    });
-  };
-
-  addXAxisLine(limits.lsl, "LSL", "#ef4444", "dashed");
-  addXAxisLine(limits.usl, "USL", "#ef4444", "dashed");
-  addXAxisLine(controlLimits.lcl ?? limits.lcl, "LCL", "#f59e0b", "solid");
-  addXAxisLine(controlLimits.ucl ?? limits.ucl, "UCL", "#f59e0b", "solid");
-  addXAxisLine(controlLimits.cl ?? limits.cl, "CL", "#3b82f6", "dotted");
-  addXAxisLine(limits.target, "Target", "#10b981", "solid");
-  addXAxisLine(mean, "Mean", "#0ea5e9", "dotted");
+  const bins = histogram.bins;
+  const mean = histogram.mean;
+  const std = histogram.sampleStandardDeviation ?? 0;
+  const geometry = buildHistogramGeometry(histogram, { limits, controlLimits });
 
   const hasNormality = data.normality && data.normalCurve && data.normalCurve.length > 0;
-
-  const xAxisList = [
-    {
-      type: "category",
-      data: labels,
-      axisLine: { lineStyle: { color: "#64748b" } },
-      axisTick: { alignWithLabel: true, lineStyle: { color: "#334155" } },
-      axisLabel: { color: "#94a3b8", fontSize: 10, rotate: labels.length > 8 ? 28 : 0 }
-    }
-  ];
-
-  if (hasNormality) {
-    xAxisList.push({
-      type: "value",
-      min: min,
-      max: max,
-      show: false,
-      axisLine: { show: false }
-    });
-  }
 
   const seriesList = [
     {
       name: "量測值分布",
-      type: "bar",
-      xAxisIndex: 0,
-      data: bins.map(bin => ({
-        value: bin.count,
-        itemStyle: {
-          color: "rgba(125, 211, 252, 0.82)",
-          borderRadius: [4, 4, 0, 0]
-        }
-      })),
-      barMaxWidth: 42,
-      markLine: markLines.length > 0 ? { symbol: "none", data: markLines, animation: false } : undefined
+      type: "custom",
+      renderItem: (params, api) => renderHistogramBar(params, api, echarts.graphic),
+      encode: { x: [0, 1], y: 2 },
+      data: geometry.barData,
+      markLine: geometry.markLines.length > 0 ? { symbol: "none", data: geometry.markLines, animation: false } : undefined
     }
   ];
 
@@ -2028,7 +1964,7 @@ function renderHistogramChart() {
     seriesList.push({
       name: "常態分佈曲線",
       type: "line",
-      xAxisIndex: 1,
+      xAxisIndex: 0,
       yAxisIndex: 0,
       data: data.normalCurve.map(pt => [pt.x, pt.scaledPdf]),
       showSymbol: false,
@@ -2066,9 +2002,9 @@ function renderHistogramChart() {
 
         return [
           `<div style="font-weight:700;border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px">${htmlChartLabel("量測值區間")}</div>`,
-          `<div>${formatNumber(bin.min, 4)} &lt;= X ${point.dataIndex === bins.length - 1 ? "&lt;=" : "&lt;"} ${formatNumber(bin.max, 4)}</div>`,
+          `<div>${formatNumber(bin.lower, 4)} &lt;= X ${point.dataIndex === bins.length - 1 ? "&lt;=" : "&lt;"} ${formatNumber(bin.upper, 4)}</div>`,
           `<div style="margin-top:4px">${htmlChartLabel("區間筆數")}: <strong style="color:#fbbf24">${bin.count}</strong></div>`,
-          `<div style="margin-top:4px;color:#94a3b8;font-size:11px">${htmlChartLabel("總樣本數 N")}=${values.length}, ${htmlChartLabel("平均值")}=${formatNumber(mean, 4)}, ${htmlChartLabel("標準差")}=${formatNumber(std, 4)}</div>`,
+          `<div style="margin-top:4px;color:#94a3b8;font-size:11px">${htmlChartLabel("總樣本數 N")}=${histogram.sampleSize}, ${htmlChartLabel("平均值")}=${formatNumber(mean, 4)}, ${htmlChartLabel("標準差")}=${formatNumber(std, 4)}</div>`,
           normalityInfo
         ].join("");
       }
@@ -2081,7 +2017,7 @@ function renderHistogramChart() {
       iconStyle: { borderColor: "#64748b" }
     },
     grid: { left: 58, right: 80, top: 48, bottom: 74 },
-    xAxis: xAxisList,
+    xAxis: geometry.xAxis,
     yAxis: {
       type: "value",
       name: "筆數",
@@ -2723,6 +2659,9 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
           </p>
           <p v-if="chartResult.normality?.methodNote" class="text-xs text-slate-500 dark:text-slate-400">
             {{ dtoText(chartResult.normality.methodNoteMessage, chartResult.normality.methodNote) }}
+          </p>
+          <p v-if="chartResult.histogram" data-testid="histogram-contract" class="text-xs text-slate-500 dark:text-slate-400">
+            {{ t('spc.chartLabels.histogramContract', { rule: chartResult.histogram.rule, bins: chartResult.histogram.bins?.length || 0, sampleSize: chartResult.histogram.sampleSize }) }}
           </p>
           <div ref="histogramChartEl" data-testid="normality-histogram" class="h-[300px] w-full min-h-[240px]"></div>
         </div>

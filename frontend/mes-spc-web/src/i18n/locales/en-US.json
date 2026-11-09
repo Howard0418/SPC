@@ -1301,6 +1301,7 @@
       "zoom": "Zoom in",
       "resetZoom": "Reset zoom",
       "histogram": "Raw measurements histogram",
+      "histogramContract": "Binning rule: {rule}, {bins} bins, N={sampleSize}",
       "specRange": "Specification limits",
       "controlRange": "Control limits",
       "excludedNotice": "Excluded data is omitted from statistics",

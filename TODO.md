@@ -1,6 +1,6 @@
 > 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001` 使用者確認測試正常後完成正式R4：API1.0.218原檔保持、Web1.0.248；備份、Web／CSS MIME、API health／production及401通過。正式畫面列人工確認；核心41／SPC18。[驗證](../PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)
 
-> 2026-11-09 新增 `SPC-NORMALITY-MINITAB-1109-TASK-001`（P1／SPC）：依使用者兩張截圖規劃常態分析直方圖與Minitab對齊。現況為前端類別箱格與後端連續曲線雙軸、網站自訂`√n+3`箱數及8% padding；規劃改為單一權威histogram payload、連續X軸、可追溯bin edges／counts及golden dataset逐格驗收。本次只規劃，不改程式／資料／網站；核心未完成41→42、SPC相關17→18、完成197保持。[規格](specs/20261109-normality-minitab-alignment/spec.md)
+> 2026-11-09 `SPC-NORMALITY-MINITAB-1109-TASK-001`（P1／SPC）第一階段已發布測試站：API0.1.115提供單一histogram契約，管制圖與趨勢圖共用連續X軸、相鄰箱格、曲線及實際界線；540後端、7前端、2862×3語系、test build與實站Web／資產MIME／同源及8901 API通過。Minitab原始值、版本、分箱設定與登入畫面逐格對帳仍待驗，故保持未完成；核心41、SPC18，正式未發布。[驗證](specs/20261109-normality-minitab-alignment/verification.md)
 
 > 2026-11-09 [SPC-AUDIT-1103-TASK-006實際操作驗收完成](specs/20261109-audit-navigation-read-activity/verification.md)：測試站進頁、查詢／篩選與Xlsx匯出產生AuditEvents 95～106；12筆可信actor、Test環境、PageKey、成功結果、允許清單、敏感遮罩與冪等查核通過。正式未發布；下一件007尚未開始。核心未完成44件、涉及SPC20件、完成194件，人工11／核銷4另計。
 

@@ -47,6 +47,25 @@ public record NormalCurvePoint
     public double ScaledPdf { get; init; }
 }
 
+public record HistogramBin
+{
+    public double Lower { get; init; }
+    public double Upper { get; init; }
+    public int Count { get; init; }
+}
+
+public record HistogramResult
+{
+    public string Rule { get; init; } = "SPC_EQUAL_WIDTH_V1";
+    public int SampleSize { get; init; }
+    public double Mean { get; init; }
+    public double? SampleStandardDeviation { get; init; }
+    public double Minimum { get; init; }
+    public double Maximum { get; init; }
+    public double BinWidth { get; init; }
+    public List<HistogramBin> Bins { get; init; } = [];
+}
+
 public record ControlChartResult
 {
     public string ChartType { get; init; } = string.Empty;
@@ -63,6 +82,7 @@ public record ControlChartResult
     public object? SpecLimitSegments { get; init; }
     public NormalityTestResult? Normality { get; init; }
     public List<NormalCurvePoint>? NormalCurve { get; init; }
+    public HistogramResult? Histogram { get; init; }
     public ChartMonitorContext? MonitorContext { get; init; }
 }
 
