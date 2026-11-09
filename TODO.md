@@ -56,7 +56,7 @@
 - [x] `SPC-AUDIT-1103-TASK-006`：P1，測試站成功進頁、查詢／篩選與Xlsx匯出事件95～106完成實際驗收；12筆可信actor、Test環境、canonical route、允許清單與敏感遮罩正確，重複ClientEventId 0。正式未發布；截圖整案驗收依009。[驗證](specs/20261109-audit-navigation-read-activity/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-007`：P2，稽核查詢／匯出API與頁面、游標分頁、六類篩選及獨立明示權限已完成；測試API0.1.110／Web0.1.121，522後端與本件前端2項、三語系build及Web／資產／health／version通過。正式未發布；登入畫面與截圖依009。[驗證](specs/20261109-audit-query-export/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-008`：P2，180／365日及730／1825日政策、加密封存、legal hold、容量摘要與受控維護API完成；531通過／11既有隔離略過。PMR_SPC_TEST備份VERIFYONLY、migration與既有199筆指紋保持，API0.1.111；執行開關停用，正式未發布。核心未完成42、SPC18、完成196；下一件009未開始。[驗證](specs/20261109-audit-retention-archive/verification.md)。
-- [ ] `SPC-AUDIT-1103-TASK-009`：P2，531後端／2前端／三語系build、測試站連線、DB遮罩／冪等／隔離已通過；缺同機關閉稽核效能基準，且瀏覽器操作工具無法讀取已登入頁面，故登入後查詢／匯出及遮罩截圖未完成。正式發布另授權，依001～008。[驗證](specs/20261109-audit-e2e-acceptance/verification.md)。
+- [ ] `SPC-AUDIT-1103-TASK-009`：P2，531後端／2前端／三語系build、測試站連線、DB遮罩／冪等／隔離已通過；測試安全管理者已指定`ihao_ting`／ID27，API0.1.111 test正常。禁止自我升權保持，仍須第二安全管理者授予read／export；同機效能基準、瀏覽器E2E及遮罩截圖未完成。正式發布另授權。[驗證](specs/20261109-audit-e2e-acceptance/verification.md)。
 
 「操作」已固定為業務動作、實際送出的查詢／篩選／匯出與成功進頁，不記滑鼠移動、每次按鍵或捲動；SPC只記自身可見的SSO交換，不擴張Portal帳密登入。截圖只作Git外測試驗收證據；正式附件另立高風險工作。TASK-001四項政策已明示核准。
 

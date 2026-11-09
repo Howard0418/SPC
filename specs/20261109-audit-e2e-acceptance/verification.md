@@ -15,9 +15,16 @@
 - T4：Chrome已登入並停留`https://spctest.pmr.com.tw/spc`，操作工具可列出頁籤但重設後仍無法讀取DOM或截圖；因此未執行登入後稽核頁查詢／匯出畫面驗收，亦未產生遮罩截圖。資料庫對應的`audit.events.query`／`audit.events.export`為0，不能以自動化結果冒充實際畫面操作。
 - 因T3、T4未通過，TASK-009不標DONE，核心未完成42、SPC相關18、完成196維持不變。
 
+## 測試安全管理者指定
+
+- 使用者指定`ihao_ting`；唯讀核對為Operator ID 27、Editor、啟用且未刪除。測試API私有設定原本沒有安全管理者屬性，首次更新安全失敗且設定SHA-256保持；工具補上缺值處理後，`Audit:SecurityAdministratorOperatorIds=[27]`驗證通過。
+- 更新前私有設定備份為`release/test/backend/appsettings.backup-security-admin-20261109.json`；只回收`SpcSingleTest`，API 0.1.111、health ok、環境test。正式設定與正式站未操作。
+- 既有禁止自我升權保持：指定27為安全管理者不等於授予`admin.audit.read`／`admin.audit.export`，仍須另一位白名單安全管理者替27授權，故稽核頁面驗收仍阻擋。
+- 原進度表已更新，備份為`備份/進度表_20261109_ihao安全管理者指定前.xlsx`；更新後SHA-256為`B0F89BB37C58CD1A3CBF2938CC27515A5E918F411E71A3850AE9EBA169EB942A`，OpenXML 0錯誤、原生drawing 1保持、重開與兩處渲染通過。Microsoft Excel人工開啟未執行。
+
 ## 發布與回復
 
-- 本件沒有產品程式或資料庫變更，不需重新發布測試站；正式站／正式資料庫未連線、未發布、未異動。
+- 本件沒有產品程式、schema或業務資料變更；只更新測試API私有安全管理者設定並回收測試集區。正式站／正式資料庫未連線、未發布、未異動。
 - 原進度表只更新TASK-009為「部分完成／外部阻擋」，不核銷待辦。更新前備份為`備份/進度表_20261109_TASK009部分完成前.xlsx`，原檔取代後SHA-256為`75883DCE7DFAAF84A1CFE11C9E972F170B112245AF731742498C62DD98386180`；OpenXML 0錯誤、ZIP必要part及原生drawing 1保持，重開與兩處渲染通過。Microsoft Excel人工開啟未執行。
 
 正式站／正式資料庫：未授權，不操作。

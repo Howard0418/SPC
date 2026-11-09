@@ -1465,3 +1465,5 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## [2026-11-09] SPC-AUDIT-1103-TASK-009 執行目的
 
 完成001～008的測試站整體E2E、遮罩、故障、效能、環境隔離與Git外截圖驗收。只讀取／操作測試站與PMR_SPC_TEST，retention執行開關保持停用；正式站、正式DB與正式發布包不在本次授權範圍。
+
+追加：使用者明示指定`ihao_ting`為測試站安全管理者；唯讀確認其Operator ID 27、Editor且啟用。只更新測試API私有`Audit:SecurityAdministratorOperatorIds`並備份／驗證／重啟，不更動正式設定或直接授予敏感權限；既有禁止自我升權規則保持。

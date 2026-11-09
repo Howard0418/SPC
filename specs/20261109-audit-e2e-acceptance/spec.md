@@ -37,3 +37,9 @@
 
 - 自動化回歸、實站HTTP／API基底、測試DB唯讀查核與瀏覽器實際畫面均有結果。
 - 必要驗收未完成時標示阻擋或待人工，不得將TASK-009標為DONE。
+
+## 測試安全管理者指定
+
+- 使用者於2026-11-09明示指定`ihao_ting`；資料庫唯讀核對為Operator ID 27、Editor、啟用且未刪除。
+- 只將27加入測試API私有`Audit:SecurityAdministratorOperatorIds`，正式設定、角色、PagePermissions及稽核資料不變。
+- 保留禁止安全管理者替自己新增敏感權限；本次指定不等於授予`admin.audit.read`或`admin.audit.export`。
