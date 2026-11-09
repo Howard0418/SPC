@@ -537,7 +537,8 @@
       "reportMailSubjectScheduled": "[SPC control item overview {period}] {date}",
       "reportMailBodyScheduled": "Hello {name}, attached is the SPC control item overview {period} for {date}.",
       "reportMailSender": "MES+SPC Report Center",
-      "reportUnnamedCharacteristic": "Unnamed characteristic"
+      "reportUnnamedCharacteristic": "Unnamed characteristic",
+      "reportMonthInvalid": "Invalid month format. Use yyyy-MM, for example 2026-10."
     }
   }
 }

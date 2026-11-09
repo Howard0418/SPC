@@ -1,4 +1,5 @@
 using MesSpc.Api.Services.Localization;
+using MesSpc.Api.Services;
 using ClosedXML.Excel;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -17,10 +18,10 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
         if (Request.Path.StartsWithSegments("/api/v2", StringComparison.OrdinalIgnoreCase))
             return LegacyV2Api.Gone("/api/v1/reports/cpk-summary");
 
-        // This optional query is a display preference for the existing popup download, never a data filter.
         var locale = uiLocale is null ? ApiUiMessageCatalog.RequestLocale(Request) : ApiUiMessageCatalog.NormalizeLocale(uiLocale);
         string T(string key) => SpcReportPresentation.Text(key, locale);
-        var targetMonth = string.IsNullOrEmpty(month) ? DateTime.UtcNow.ToString("yyyy-MM") : month;
+        var reportRange = CpkReportMonthRange.Parse(month, DateTime.UtcNow);
+        var targetMonth = reportRange.Label;
         
         var characteristics = await dbContext.PartProcessCharacteristics
             .Include(x => x.Part)
@@ -29,9 +30,17 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
             .Where(x => x.IsEnabled)
             .ToListAsync();
 
-        var alertCount = await dbContext.AlertEvents.CountAsync(x => x.Status != "Closed");
-        var totalMeasurements = await dbContext.VariableMeasurements.CountAsync();
-        var oocMeasurements = await dbContext.SpcCalculationResults.CountAsync(x => x.IsOutOfControl || x.IsOutOfSpec);
+        var alertCount = await dbContext.AlertEvents.CountAsync(x =>
+            x.Status != "Closed" && x.OccurredAt >= reportRange.FromUtc && x.OccurredAt < reportRange.UntilUtc);
+        var totalMeasurements = await dbContext.VariableMeasurements.CountAsync(x =>
+            x.MeasuredAt >= reportRange.FromUtc && x.MeasuredAt < reportRange.UntilUtc);
+        var oocMeasurements = await dbContext.SpcCalculationResults.CountAsync(x =>
+            (x.IsOutOfControl || x.IsOutOfSpec)
+            && x.VariableMeasurementId.HasValue
+            && dbContext.VariableMeasurements.Any(measurement =>
+                measurement.Id == x.VariableMeasurementId.Value
+                && measurement.MeasuredAt >= reportRange.FromUtc
+                && measurement.MeasuredAt < reportRange.UntilUtc));
         double passRate = totalMeasurements > 0 ? Math.Round((1.0 - ((double)oocMeasurements / totalMeasurements)) * 100.0, 2) : 100.0;
 
         using var wb = new XLWorkbook();
@@ -85,7 +94,9 @@ public class ReportsController(AppDbContext dbContext) : ControllerBase
         foreach (var ppc in characteristics)
         {
             var measurements = await dbContext.VariableMeasurements
-                .Where(x => x.PartProcessCharacteristicId == ppc.Id)
+                .Where(x => x.PartProcessCharacteristicId == ppc.Id
+                    && x.MeasuredAt >= reportRange.FromUtc
+                    && x.MeasuredAt < reportRange.UntilUtc)
                 .Select(x => x.MeasuredValue)
                 .ToListAsync();
 

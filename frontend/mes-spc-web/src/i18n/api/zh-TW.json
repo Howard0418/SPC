@@ -537,7 +537,8 @@
       "reportMailSubjectScheduled": "【SPC 項目管制總覽{period}】{date}",
       "reportMailBodyScheduled": "{name} 您好，附件為 {date} 的 SPC 項目管制總覽{period}。",
       "reportMailSender": "MES+SPC 報表中心",
-      "reportUnnamedCharacteristic": "未命名特性"
+      "reportUnnamedCharacteristic": "未命名特性",
+      "reportMonthInvalid": "月份格式不正確，請使用 yyyy-MM，例如 2026-10。"
     }
   }
 }
