@@ -18,7 +18,7 @@ const exactPages = new Map([
   ["/part-process-characteristics", "master.ppc"], ["/chemical-analysis-overview", "chemical.analysis.overview"],
   ["/chemical-f-table", "chemical.ftable"], ["/control-chart-groups", "spc.control_chart.groups"], ["/spc-rule-groups", "spc.rule.groups"],
   ["/uploads", "data.upload"], ["/spc/query", "traceability.query"], ["/spc/alerts", "spc.alerts"],
-  ["/settings/smtp", "settings.smtp"], ["/settings/spc-reports", "settings.spc_reports"], ["/operators", "admin.operators"],
+  ["/settings/smtp", "settings.smtp"], ["/settings/spc-reports", "settings.spc_reports"], ["/operators", "admin.operators"], ["/audit-events", "admin.audit.events"],
   ["/genealogy", "genealogy.overview"], ["/traceability-master", "traceability.master"], ["/guide", "help.guide"]
 ]);
 

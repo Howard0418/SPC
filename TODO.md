@@ -54,7 +54,7 @@
 - [x] `SPC-AUDIT-1103-TASK-004`：P1，安全／角色／頁面權限／設定與拒絕事件測試完成，API106／Web119、68業務表保持；無schema或實際授權變更，正式未發。詳[004驗證](specs/20261103-spc-user-activity-audit/task004-security.md)。
 - [x] `SPC-AUDIT-1103-TASK-005`：P1，測試API已發布；2026-11-09產品料號主檔實際新增／刪除產生事件85／86，actor、固定事件碼、刪除後稽核留存與原值遮罩皆通過，正式未發布。詳[驗證](specs/20261106-audit-business-operations/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-006`：P1，測試站成功進頁、查詢／篩選與Xlsx匯出事件95～106完成實際驗收；12筆可信actor、Test環境、canonical route、允許清單與敏感遮罩正確，重複ClientEventId 0。正式未發布；截圖整案驗收依009。[驗證](specs/20261109-audit-navigation-read-activity/verification.md)。
-- [ ] `SPC-AUDIT-1103-TASK-007`：P2，稽核查詢／匯出API與頁面、游標分頁、篩選及獨立最小權限，依006。
+- [x] `SPC-AUDIT-1103-TASK-007`：P2，稽核查詢／匯出API與頁面、游標分頁、六類篩選及獨立明示權限已完成；測試API0.1.110／Web0.1.121，522後端與本件前端2項、三語系build及Web／資產／health／version通過。正式未發布；登入畫面與截圖依009。[驗證](specs/20261109-audit-query-export/verification.md)。
 - [ ] `SPC-AUDIT-1103-TASK-008`：P2，保存／封存、legal hold、清理重跑、容量監控與告警，依002／007。
 - [ ] `SPC-AUDIT-1103-TASK-009`：P2，測試站E2E、遮罩、故障、效能、環境隔離及遮罩後截圖證據；正式發布另授權，依001～008。
 

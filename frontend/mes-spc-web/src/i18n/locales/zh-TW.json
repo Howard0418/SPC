@@ -97,7 +97,14 @@
       "calibration": "儀器校正管理",
       "smtp": "SMTP 郵件與預警設定",
       "reportSettings": "SPC 週報月報設定",
-      "users": "系統使用者管理"
+      "users": "系統使用者管理",
+      "auditEvents": "使用者活動紀錄"
+    },
+    "audit": {
+      "title": "使用者活動紀錄", "subtitle": "查詢誰在何時進入頁面及執行的操作；僅顯示安全摘要。",
+      "from": "起始日期", "to": "結束日期", "actor": "人員", "page": "頁面", "event": "操作事件", "target": "目標", "outcome": "結果", "source": "來源",
+      "query": "查詢", "export": "匯出 Excel", "all": "全部", "time": "時間", "empty": "此條件沒有稽核紀錄。", "more": "載入下一頁",
+      "rangeHint": "預設查詢 7 日，單次最多 31 日；完整查詢值與敏感資料不會顯示。"
     },
     "parts": {
       "title": "產品料號主檔維護",

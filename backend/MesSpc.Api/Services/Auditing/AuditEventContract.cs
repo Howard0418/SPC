@@ -46,7 +46,7 @@ internal static partial class AuditEventContract
         ["chemical.ftable"] = "/chemical-f-table", ["spc.control_chart.groups"] = "/control-chart-groups", ["spc.rule.groups"] = "/spc-rule-groups",
         ["data.upload"] = "/uploads", ["data.upload.preview"] = "/uploads/{batchId}/preview", ["traceability.query"] = "/spc/query",
         ["spc.alerts"] = "/spc/alerts", ["settings.smtp"] = "/settings/smtp", ["settings.spc_reports"] = "/settings/spc-reports",
-        ["admin.operators"] = "/operators", ["genealogy.overview"] = "/genealogy", ["traceability.master"] = "/traceability-master", ["help.guide"] = "/guide"
+        ["admin.operators"] = "/operators", ["admin.audit.events"] = "/audit-events", ["genealogy.overview"] = "/genealogy", ["traceability.master"] = "/traceability-master", ["help.guide"] = "/guide"
     };
     private static readonly Dictionary<string, string> Categories = BuildCategories();
     private static Dictionary<string, string> BuildCategories()

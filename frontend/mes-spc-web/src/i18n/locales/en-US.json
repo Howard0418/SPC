@@ -97,7 +97,14 @@
       "calibration": "Instrument calibration",
       "smtp": "SMTP and alert settings",
       "reportSettings": "SPC report settings",
-      "users": "System users"
+      "users": "System users",
+      "auditEvents": "User Activity Log"
+    },
+    "audit": {
+      "title": "User Activity Log", "subtitle": "Review who entered a page and what they did; only safe summaries are shown.",
+      "from": "From", "to": "To", "actor": "Actor", "page": "Page", "event": "Event", "target": "Target", "outcome": "Outcome", "source": "Source",
+      "query": "Query", "export": "Export Excel", "all": "All", "time": "Time", "empty": "No audit events match these filters.", "more": "Load next page",
+      "rangeHint": "The default range is 7 days and each query is limited to 31 days. Full query values and sensitive data are not displayed."
     },
     "parts": {
       "title": "Product part master",

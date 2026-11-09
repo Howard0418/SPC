@@ -2622,3 +2622,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 使用者於測試站完成進頁、查詢／篩選及Xlsx匯出；事件95～106共12筆，進頁2、查詢2、篩選7、匯出1，皆為Operator 27／丁義豪、Test、Succeeded。
 - 12筆可信actor／session／頁面／環境一致；允許清單外Details欄位0、敏感內容洩漏0、重複ClientEventId 0。TASK-006測試階段DONE，正式未發布；截圖與整案E2E保留TASK-009。
+
+## 2026-11-09 SPC-AUDIT-1103-TASK-007 稽核查詢／匯出（測試）
+
+- 新增受 `admin.audit.read`／`admin.audit.export` 明示權限保護的稽核查詢頁與 API，含六類篩選、7／31日限制、游標分頁及安全 Xlsx。
+- 查詢／匯出本身先寫稽核再交付；遮罩 session、嘗試帳號、Details 與雜湊，匯出阻擋 Excel 公式注入，保存失敗封閉為503。
+- 後端522通過（11既有隔離略過）、本件前端2項與三語系build通過；測試API0.1.110／Web0.1.121發布，首頁／JS／CSS／health／version驗證完成。正式未發布。

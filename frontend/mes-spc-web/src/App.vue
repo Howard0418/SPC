@@ -25,7 +25,7 @@ import {
   Users,
   Map,
   CalendarClock
-  ,FlaskConical, Wind
+  ,FlaskConical, Wind, ShieldCheck
 } from "lucide-vue-next";
 import { clearAuthSession, getCurrentUser } from "./utils/auth";
 import { createLogoutHandler } from "./utils/logout";
@@ -184,12 +184,20 @@ const editorMenuCategories = [
       { to: "/calibration-instruments", text: "spc.navigation.calibration", icon: CalendarClock },
       { to: "/settings/smtp", text: "spc.navigation.smtp", icon: Sliders },
       { to: "/settings/spc-reports", text: "spc.navigation.reportSettings", icon: CalendarClock },
-      { to: "/operators", text: "spc.navigation.users", icon: Users }
+      { to: "/operators", text: "spc.navigation.users", icon: Users },
+      { to: "/audit-events", text: "spc.navigation.auditEvents", icon: ShieldCheck, permission: "admin.audit.read" }
     ]
   }
 ];
 
-const menuCategories = computed(() => canEdit.value ? editorMenuCategories : viewerMenuCategories);
+const auditMenuItem = { to: "/audit-events", text: "spc.navigation.auditEvents", icon: ShieldCheck, permission: "admin.audit.read" };
+const menuCategories = computed(() => {
+  const base = canEdit.value ? editorMenuCategories : currentUser.value?.permissions?.includes("admin.audit.read")
+    ? [...viewerMenuCategories, { title: "spc.navigation.administration", items: [auditMenuItem] }]
+    : viewerMenuCategories;
+  return base.map(category => ({ ...category, items: category.items.filter(item => !item.permission || currentUser.value?.permissions?.includes(item.permission)) }))
+    .filter(category => category.items.length);
+});
 
 const logout = createLogoutHandler({
   report: () => api.post("/v1/auth/logout", null, { timeout: 1500 }),

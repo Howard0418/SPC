@@ -24,6 +24,7 @@ import ChemicalFTableView from "../views/ChemicalFTableView.vue";
 import EtchAnalysisView from "../views/EtchAnalysisView.vue";
 import InstrumentCalibrationsView from "../views/InstrumentCalibrationsView.vue";
 import ParticleMonitoringView from "../views/ParticleMonitoringView.vue";
+import AuditEventsView from "../views/AuditEventsView.vue";
 
 import GenealogyView from "../views/GenealogyView.vue";
 import TraceabilityMasterView from "../views/TraceabilityMasterView.vue";
@@ -36,7 +37,7 @@ const pagePermissionByPath = {
   "/trend-chart": "analysis.trend", "/process-analysis/violations": "analysis.violations", "/monthly-control-chart": "analysis.reports",
   "/measurements": "data.measurements", "/uploads": "data.upload", "/operators": "admin.operators",
   "/calibration-instruments": "calibration.manage"
-  , "/particle-monitoring": "analysis.spc"
+  , "/particle-monitoring": "analysis.spc", "/audit-events": "admin.audit.read"
 };
 
 const routes = [
@@ -84,6 +85,7 @@ const routes = [
   { path: "/settings/smtp", component: SmtpSettingsView, meta: { editorOnly: true } },
   { path: "/settings/spc-reports", component: SpcReportSettingsView, meta: { editorOnly: true } },
   { path: "/operators", component: OperatorsView, meta: { editorOnly: true } },
+  { path: "/audit-events", component: AuditEventsView, meta: { explicitPermission: "admin.audit.read" } },
   { path: "/chemicals", redirect: "/spc" },
   { path: "/genealogy", component: GenealogyView, meta: { editorOnly: true } },
   { path: "/traceability-master", component: TraceabilityMasterView, meta: { editorOnly: true } },
@@ -102,6 +104,8 @@ router.beforeEach((to) => {
     return { path: "/login", query: { redirect: to.fullPath } };
   }
   const user = getCurrentUser();
+  if (to.meta.explicitPermission && !user?.permissions?.includes(to.meta.explicitPermission))
+    return { path: "/", query: { access: "audit" } };
   const requiredPermission = pagePermissionByPath[to.path];
   if (requiredPermission && Array.isArray(user?.permissions) && user.permissions.length && !user.permissions.includes(requiredPermission))
     return { path: "/", query: { access: "page" } };

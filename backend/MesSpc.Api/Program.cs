@@ -117,6 +117,7 @@ builder.Services.AddScoped<MesSpc.Api.Services.Auditing.SecurityAudit>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.SecurityAuditFilter>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.BusinessDataAuditFilter>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.NavigationReadAudit>();
+builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuditEventQueryService>();
 builder.Services.AddSingleton<UserPasswordHasher>();
 builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddHostedService<SpcReportSchedulerService>();

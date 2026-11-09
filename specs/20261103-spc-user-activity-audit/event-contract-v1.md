@@ -113,6 +113,7 @@ TASK-004補充：`security.setting.prepare`只表示SMTP設定寫檔前的安全
 | `settings.smtp` | `/settings/smtp` |
 | `settings.spc_reports` | `/settings/spc-reports` |
 | `admin.operators` | `/operators` |
+| `admin.audit.events` | `/audit-events` |
 | `genealogy.overview` | `/genealogy` |
 | `traceability.master` | `/traceability-master` |
 | `help.guide` | `/guide` |
