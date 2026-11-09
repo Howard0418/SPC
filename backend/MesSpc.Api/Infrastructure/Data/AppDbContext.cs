@@ -6,6 +6,8 @@ namespace MesSpc.Api.Infrastructure.Data;
 public partial class AppDbContext(DbContextOptions<AppDbContext> options, Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContextAccessor = null) : DbContext(options)
 {
     public DbSet<SpecificationLimitVersion> SpecificationLimitVersions => Set<SpecificationLimitVersion>();
+    public DbSet<LimitChangeBatch> LimitChangeBatches => Set<LimitChangeBatch>();
+    public DbSet<LimitChangeItem> LimitChangeItems => Set<LimitChangeItem>();
 
     // Existing DB Sets
     public DbSet<Product> Products => Set<Product>();
@@ -68,6 +70,7 @@ public partial class AppDbContext(DbContextOptions<AppDbContext> options, Micros
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ConfigureAuditEvents(modelBuilder);
+        ConfigureLimitChangeHistory(modelBuilder);
         modelBuilder.ConfigureCalibration();
         ConfigureChemicalTrace(modelBuilder);
         modelBuilder.Entity<Product>().HasIndex(x => x.ProductCode).IsUnique();

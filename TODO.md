@@ -36,7 +36,7 @@
 
 ## 2026-11-04 分析項目規格／管制界限總覽（P1／只規劃）
 
-- [ ] `SPC-LIMITS-BULK-1104-TASK-001`：P1，SPC主責；表格集中顯示與跨頁編輯規格LSL／Target／USL及管制LCL／CL／UCL。先盤點圖型規則，再建立六欄限定的preview／apply、格式提示、過期拒絕、原子rollback、版本／稽核及測試站截圖；不以完整PPC PUT覆蓋其他欄位。排在P0資料正確性工作之後，本次未執行。[規格](specs/20261104-analysis-limit-overview-batch/spec.md)。
+- [ ] `SPC-LIMITS-BULK-1104-TASK-001`：P1，SPC主責；核心實作、自動化、測試DB備份／migration及測試站發布已完成，六欄限定preview／apply、格式提示、過期拒絕、原子rollback、版本／不可變批次歷程均通過。瀏覽器工具離線，尚缺登入後總覽、預檢、成功／錯誤與歷程截圖，完成AC-008後才可標DONE；正式未授權。[規格](specs/20261104-analysis-limit-overview-batch/spec.md)／[驗證](specs/20261104-analysis-limit-overview-batch/verification.md)。
 
 ## 2026-11-03 圖表日期顯示（測試／正式完成）
 

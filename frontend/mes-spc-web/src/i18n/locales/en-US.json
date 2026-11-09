@@ -81,6 +81,7 @@
       "keyPoints": "Key point monitoring",
       "importBatches": "Import batches",
       "controlItems": "SPC control items",
+      "analysisLimits": "Analysis limit overview",
       "lineAnalysis": "Line analysis overview",
       "chemicalTables": "Chemical F tables",
       "processes": "Processes",
@@ -509,6 +510,13 @@
       "confirmSave": "Save chemical formula changes for {count} records:\n{preview}{more}\n\nVersion reference / reason: {reason}\n\nContinue?",
       "saveSummary": "Save complete. Succeeded: {saved}; failed: {failed}.",
       "partialFailure": "Some chemical formulas could not be saved. Check the errors in the table."
+    },
+    "analysisLimits": {
+      "title": "Analysis Limit Overview", "subtitle": "Review and batch-edit specification and control limits. Changes are previewed first and only the six limit fields are updated.",
+      "export": "Export current results", "preview": "Preview changes", "allScopes": "All scopes", "allProcesses": "All processes / lines", "allSlots": "All slots / tanks", "allStatuses": "All statuses", "enabled": "Enabled", "disabled": "Disabled",
+      "allConfigurations": "All limit states", "missingSpec": "Missing specification", "autoControl": "Automatic limits", "manualControl": "Manual limits", "formatIssue": "Format / relationship issue",
+      "scope": "Scope", "processLine": "Process / line", "slotTank": "Slot / tank", "item": "Analysis item", "unit": "Unit", "mode": "Control limit source", "segmented": "Date segments configured", "reset": "Reset", "empty": "No analysis items match the filters.",
+      "pagination": "Page {page} / {pages}, {total} items", "previous": "Previous", "next": "Next", "noChanges": "There are no limit changes.", "previewResult": "Batch preview result", "previewPassed": "All changed rows passed and can be saved atomically.", "previewFailed": "Preview failed. If any row has an error, the entire batch remains unchanged.", "rowPassed": "This row passed.", "close": "Close", "apply": "Confirm save", "applying": "Saving…", "applied": "Successfully saved {count} limit changes.", "notSet": "Not set"
     },
     "fTable": {
       "title": "Chemical F table",

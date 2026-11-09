@@ -79,6 +79,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 });
 builder.Services.AddScoped<FormulaEngineService>();
+builder.Services.AddScoped<LimitBatchService>();
 builder.Services.AddScoped<ChemicalFTableService>();
 builder.Services.AddScoped<ChemicalAnalysisFormulaVersionService>();
 builder.Services.AddScoped<ChemicalFormulaScheduleService>();

@@ -484,6 +484,12 @@ public class PartProcessCharacteristicsController(
             .GroupBy(x => x.PartProcessCharacteristicId)
             .Select(g => new { PartProcessCharacteristicId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.PartProcessCharacteristicId, x => x.Count);
+        var segmentedIds = await db.ControlLimitSegments
+            .AsNoTracking()
+            .Where(x => ids.Contains(x.PartProcessCharacteristicId))
+            .Select(x => x.PartProcessCharacteristicId)
+            .Distinct()
+            .ToHashSetAsync();
 
         return Ok(items.Select(x =>
         {
@@ -523,7 +529,8 @@ public class PartProcessCharacteristicsController(
                 x.Characteristic,
                 VariableMeasurementCount = variableCount,
                 AttributeMeasurementCount = attributeCount,
-                MeasurementCount = variableCount + attributeCount
+                MeasurementCount = variableCount + attributeCount,
+                HasLimitSegments = segmentedIds.Contains(x.Id)
             };
         }));
     }

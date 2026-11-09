@@ -2410,6 +2410,98 @@ namespace MesSpc.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LimitChangeBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ChangedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("ItemCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedAt");
+
+                    b.ToTable("LimitChangeBatches", null, t =>
+                        {
+                            t.HasComment("Immutable header for atomic specification/control limit batch edits.");
+
+                            t.HasCheckConstraint("CK_LimitChangeBatches_ItemCount", "[ItemCount] BETWEEN 1 AND 500");
+                        });
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LimitChangeItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("LimitChangeBatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<double?>("NewCl")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("NewLcl")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("NewLsl")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("NewTarget")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("NewUcl")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("NewUsl")
+                        .HasColumnType("float");
+
+                    b.Property<int>("PartProcessCharacteristicId")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("PreviousCl")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("PreviousLcl")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("PreviousLsl")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("PreviousTarget")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("PreviousUcl")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("PreviousUsl")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartProcessCharacteristicId");
+
+                    b.HasIndex("LimitChangeBatchId", "PartProcessCharacteristicId")
+                        .IsUnique();
+
+                    b.ToTable("LimitChangeItems", null, t =>
+                        {
+                            t.HasComment("Immutable per-PPC before/after values for a limit change batch.");
+                        });
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotMaster", b =>
                 {
                     b.Property<long>("Id")
@@ -5172,6 +5264,17 @@ namespace MesSpc.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LimitChangeItem", b =>
+                {
+                    b.HasOne("MesSpc.Api.Domain.Entities.LimitChangeBatch", "LimitChangeBatch")
+                        .WithMany("Items")
+                        .HasForeignKey("LimitChangeBatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LimitChangeBatch");
+                });
+
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.LotMaster", b =>
                 {
                     b.HasOne("MesSpc.Api.Domain.Entities.LotMaster", "ParentLot")
@@ -5502,6 +5605,11 @@ namespace MesSpc.Api.Migrations
                     b.Navigation("Slot");
 
                     b.Navigation("Tank");
+                });
+
+            modelBuilder.Entity("MesSpc.Api.Domain.Entities.LimitChangeBatch", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("MesSpc.Api.Domain.Entities.MeasurementBatch", b =>

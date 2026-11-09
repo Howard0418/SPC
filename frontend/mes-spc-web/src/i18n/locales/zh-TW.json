@@ -81,6 +81,7 @@
       "keyPoints": "重點點位監控",
       "importBatches": "匯入批次查詢",
       "controlItems": "SPC 管制項目設定",
+      "analysisLimits": "分析項目界限總覽",
       "lineAnalysis": "線別分析項目總覽",
       "chemicalTables": "藥液 F 表維護",
       "processes": "工站製程主檔",
@@ -509,6 +510,13 @@
       "confirmSave": "即將儲存 {count} 筆藥液公式變更：\n{preview}{more}\n\n版本參照/依據：{reason}\n\n是否繼續？",
       "saveSummary": "儲存完成：成功 {saved} 筆，失敗 {failed} 筆。",
       "partialFailure": "部分藥液公式儲存失敗，請查看表格中的錯誤訊息。"
+    },
+    "analysisLimits": {
+      "title": "分析項目界限總覽", "subtitle": "集中查看與批次編輯規格及管制界限；儲存前會先預檢，且只更新六個界限欄位。",
+      "export": "匯出目前結果", "preview": "預檢變更", "allScopes": "全部範圍", "allProcesses": "全部製程／線別", "allSlots": "全部槽位／槽體", "allStatuses": "全部狀態", "enabled": "已啟用", "disabled": "已停用",
+      "allConfigurations": "全部界限狀態", "missingSpec": "缺少規格", "autoControl": "自動管制線", "manualControl": "手動管制線", "formatIssue": "格式／關係問題",
+      "scope": "範圍", "processLine": "製程／線別", "slotTank": "槽位／槽體", "item": "分析項目", "unit": "單位", "mode": "管制線來源", "segmented": "另有日期分段", "reset": "還原", "empty": "沒有符合條件的分析項目。",
+      "pagination": "第 {page} / {pages} 頁，共 {total} 筆", "previous": "上一頁", "next": "下一頁", "noChanges": "目前沒有界限異動。", "previewResult": "批次預檢結果", "previewPassed": "全部異動列均通過，可執行原子儲存。", "previewFailed": "預檢未通過；任何一列有錯時整批都不會寫入。", "rowPassed": "此列通過。", "close": "關閉", "apply": "確認儲存", "applying": "儲存中…", "applied": "已成功儲存 {count} 筆界限異動。", "notSet": "未設定"
     },
     "fTable": {
       "title": "藥液 F 表維護",

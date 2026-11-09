@@ -15,7 +15,7 @@ const exactPages = new Map([
   ["/process-analysis/violations", "analysis.violations"], ["/trend-chart", "analysis.trend.overall"],
   ["/monthly-control-chart", "report.monthly_control_chart"], ["/alerts", "alert.overview"], ["/alerts-workflow", "alert.workflow"],
   ["/parts", "master.parts"], ["/processes", "master.processes"], ["/characteristics", "master.characteristics"],
-  ["/part-process-characteristics", "master.ppc"], ["/chemical-analysis-overview", "chemical.analysis.overview"],
+  ["/part-process-characteristics", "master.ppc"], ["/analysis-limit-overview", "master.analysis.limits"], ["/chemical-analysis-overview", "chemical.analysis.overview"],
   ["/chemical-f-table", "chemical.ftable"], ["/control-chart-groups", "spc.control_chart.groups"], ["/spc-rule-groups", "spc.rule.groups"],
   ["/uploads", "data.upload"], ["/spc/query", "traceability.query"], ["/spc/alerts", "spc.alerts"],
   ["/settings/smtp", "settings.smtp"], ["/settings/spc-reports", "settings.spc_reports"], ["/operators", "admin.operators"], ["/audit-events", "admin.audit.events"],

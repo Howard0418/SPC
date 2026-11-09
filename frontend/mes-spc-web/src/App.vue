@@ -62,7 +62,7 @@ const route = useRoute();
 const stackedMobileNav = computed(() => [
   '/calibration-instruments', '/processes', '/traceability-master',
   '/control-chart-groups', '/spc-rule-groups',
-  '/chemical-analysis-overview', '/chemical-f-table', '/part-process-characteristics', '/measurements',
+  '/chemical-analysis-overview', '/analysis-limit-overview', '/chemical-f-table', '/part-process-characteristics', '/measurements',
   '/guide', '/portal-sso',
   '/spc/query', '/genealogy', '/etch-analysis',
   '/settings/smtp', '/settings/spc-reports', '/operators',
@@ -158,6 +158,7 @@ const editorMenuCategories = [
     title: "spc.navigation.qualityMaster",
     items: [
       { to: "/part-process-characteristics", text: "spc.navigation.controlItems", icon: FolderTree },
+      { to: "/analysis-limit-overview", text: "spc.navigation.analysisLimits", icon: Sliders },
       { to: "/chemical-analysis-overview", text: "spc.navigation.lineAnalysis", icon: FlaskConical },
       { to: "/chemical-f-table", text: "spc.navigation.chemicalTables", icon: FlaskConical },
       { to: "/processes", text: "spc.navigation.processes", icon: Layers },

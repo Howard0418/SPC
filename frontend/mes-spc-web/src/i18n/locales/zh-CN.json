@@ -81,6 +81,7 @@
       "keyPoints": "重点点位监控",
       "importBatches": "导入批次查询",
       "controlItems": "SPC 管制项目设置",
+      "analysisLimits": "分析项目界限总览",
       "lineAnalysis": "线别分析项目总览",
       "chemicalTables": "药液 F 表维护",
       "processes": "工站制程主档",
@@ -509,6 +510,13 @@
       "confirmSave": "即将储存 {count} 笔药液公式变更：\n{preview}{more}\n\n版本参照/依据：{reason}\n\n是否继续？",
       "saveSummary": "储存完成：成功 {saved} 笔，失败 {failed} 笔。",
       "partialFailure": "部分药液公式储存失败，请查看表格中的错误讯息。"
+    },
+    "analysisLimits": {
+      "title": "分析项目界限总览", "subtitle": "集中查看与批次编辑规格及管制界限；保存前会先预检，且只更新六个界限字段。",
+      "export": "导出当前结果", "preview": "预检变更", "allScopes": "全部范围", "allProcesses": "全部制程／线别", "allSlots": "全部槽位／槽体", "allStatuses": "全部状态", "enabled": "已启用", "disabled": "已停用",
+      "allConfigurations": "全部界限状态", "missingSpec": "缺少规格", "autoControl": "自动管制线", "manualControl": "手动管制线", "formatIssue": "格式／关系问题",
+      "scope": "范围", "processLine": "制程／线别", "slotTank": "槽位／槽体", "item": "分析项目", "unit": "单位", "mode": "管制线来源", "segmented": "另有日期分段", "reset": "还原", "empty": "没有符合条件的分析项目。",
+      "pagination": "第 {page} / {pages} 页，共 {total} 笔", "previous": "上一页", "next": "下一页", "noChanges": "当前没有界限变更。", "previewResult": "批次预检结果", "previewPassed": "全部变更行均通过，可执行原子保存。", "previewFailed": "预检未通过；任何一行有错时整批都不会写入。", "rowPassed": "此行通过。", "close": "关闭", "apply": "确认保存", "applying": "保存中…", "applied": "已成功保存 {count} 笔界限变更。", "notSet": "未设置"
     },
     "fTable": {
       "title": "药液 F 表维护",

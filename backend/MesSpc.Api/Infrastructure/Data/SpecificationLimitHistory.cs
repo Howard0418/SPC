@@ -10,6 +10,7 @@ public partial class AppDbContext
     {
         ValidateAuditImmutableEntries();
         ValidateChemicalImmutableEntries();
+        ValidateLimitChangeHistoryImmutableEntries();
         ChangeTracker.DetectChanges();
         if(ChangeTracker.Entries<SpecificationLimitVersion>().Any(e=>e.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("規格版本歷史不可修改或刪除。");
