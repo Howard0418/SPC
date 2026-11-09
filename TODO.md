@@ -1,3 +1,5 @@
+> 2026-11-09 新增 `SPC-NORMALITY-MINITAB-1109-TASK-001`（P1／SPC）：依使用者兩張截圖規劃常態分析直方圖與Minitab對齊。現況為前端類別箱格與後端連續曲線雙軸、網站自訂`√n+3`箱數及8% padding；規劃改為單一權威histogram payload、連續X軸、可追溯bin edges／counts及golden dataset逐格驗收。本次只規劃，不改程式／資料／網站；核心未完成41→42、SPC相關17→18、完成197保持。[規格](specs/20261109-normality-minitab-alignment/spec.md)
+
 > 2026-11-09 [SPC-AUDIT-1103-TASK-006實際操作驗收完成](specs/20261109-audit-navigation-read-activity/verification.md)：測試站進頁、查詢／篩選與Xlsx匯出產生AuditEvents 95～106；12筆可信actor、Test環境、PageKey、成功結果、允許清單、敏感遮罩與冪等查核通過。正式未發布；下一件007尚未開始。核心未完成44件、涉及SPC20件、完成194件，人工11／核銷4另計。
 
 > 2026-11-04 [十月藥液量測正式僅新增](specs/20261104-october-production-chemical-measurements/verification.md)：正式備份驗證後新增335筆／23複驗，864筆既有略過、12筆F衝突隔離；335筆追溯、75項圖表與相同清單重送0新增通過，既有量測／PPC／啟用F／公式排程保持。240筆統計完成；另95筆集中24項既有PPC因`ChartTypeId`空值待補型別後只重跑統計，不可重匯量測。父工作保持未完成，核心45／涉及SPC22不變；無網站發布。
