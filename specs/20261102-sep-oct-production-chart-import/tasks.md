@@ -3,18 +3,18 @@
 - 功能 ID：SPC-HISTORICAL-IMPORT-1102
 - 規格版本：3
 - [規格](spec.md)｜[計畫](plan.md)
-- 使用者後續已授權TASK-002的[十月藥液](../20261102-october-chemical-test-import/verification.md)及[九月藥液](../20261102-september-chemical-test-import/verification.md)隔離測試匯入，合格部分完成、來源例外／趨勢UI／GUI交付仍待辦；依排序一次只執行一件。TASK-003／004正式工作仍未開始。
+- 使用者後續已授權TASK-002的[十月藥液](../20261102-october-chemical-test-import/verification.md)及[九月藥液](../20261102-september-chemical-test-import/verification.md)隔離測試匯入；TASK-003正式preflight及TASK-004合格咬蝕正式僅新增均已由後續證據完成。來源異常、藥液與工具人工事項分屬其他待辦，不再阻擋TASK-004核銷。
 
 | 順序／代號 | 優先／主系統與相依 | 工作與依賴 | Happy Path | Boundary／Invalid Input | Regression／回復 |
 |---|---|---|---|---|---|
 | 1 `SPC-HISTORICAL-IMPORT-1102-TASK-001` | P1／SPC；相依 TransFiles | 唯讀盤點 9、10 月來源、格式與候選圖表矩陣 | 藥液解析及月份範圍已修正；待校正 9 筆咬蝕原始量測 | 空值/0、缺欄、錯日期、鎖檔、重複來源鍵 | 不改原檔、DB、主檔；異常維持隔離 |
 | 2 `SPC-HISTORICAL-IMPORT-1102-TASK-002` | P1／SPC；相依 001 | **已取消／被取代**：後續規則要求清除九月量測與隔離測試主檔，禁止為舊驗收重灌 | 既有咬蝕趨勢成果保留 | 九月與測試主檔重查0；十月正常資料保持 | 日後若重新需要九月測試，另立新任務 |
 | 3 `SPC-HISTORICAL-IMPORT-1102-TASK-003` | P0／SPC；相依 002 | **已完成**：正式preflight、備份與驗收矩陣定稿 | 正式環境、主檔、來源、差異與備份均有證據 | 不合格資料已停止並列補正 | 保留preflight及批次回復證據 |
-| 4 `SPC-HISTORICAL-IMPORT-1102-TASK-004` | P0／SPC；相依 003＋另行 apply 授權 | 正式僅新增匯入、管制圖／趨勢圖驗收 | 逐筆、每月兩類圖表、重跑均通過 | 部分失敗、同鍵異值、圖表不一致即停止 | 依 batch/來源鍵受控回復；不動既有資料 |
+| 4 `SPC-HISTORICAL-IMPORT-1102-TASK-004` | P0／SPC；相依 003＋另行 apply 授權 | **已完成**：正式僅新增匯入、管制圖／趨勢圖驗收 | 134份10,384筆、四線圖表、重跑0新增均通過 | 9異常整份隔離、15X排除，不繞過來源規則 | 既有batch／來源鍵與回復證據保持；本次核銷不動資料 |
 
 ## 相依與授權
 
-- TASK-001 已由後續完整清冊核銷；TASK-002 因後續清理規則取消；TASK-003正式preflight與回復門檻已完成；TASK-004及來源補正保持。
+- TASK-001 已由後續完整清冊核銷；TASK-002 因後續清理規則取消；TASK-003正式preflight與回復門檻已完成；TASK-004已於2026-11-10依既有正式證據核銷，來源異常清單仍保留但不視為合格資料缺漏。
 - TASK-001、002 的資料寫入範圍僅能是隔離測試；TASK-003 是正式唯讀／備份前置；TASK-004 必須在執行當下再次取得使用者對「正式 apply」的明確授權。
 - 若來源格式不符，先完成 TASK-001 的格式報告並由使用者確認調整後，才可進 TASK-002。
 

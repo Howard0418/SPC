@@ -569,3 +569,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-09 [QE2舊診斷009後續覆蓋結案](../specs/20261109-qe2-task009-closeout/verification.md)：十月日別公式／F、正式87項公式與493筆Excel值已覆蓋原待辦；舊歷史缺快照另由專責工作管理，本次無資料或網站異動。
 - 2026-11-10 [測試區藥液日別調整兩式補齊](../specs/20261109-chemical-adjustment-schedule-repair/spec.md)：68份九月起核准來源共3,215列完成解析，新增89個日別公式版本、82組排程及2,420區間；2,746次初／複驗試算0錯誤。測試庫備份通過CHECKSUM／VERIFYONLY，量測、Receipt、Trace、F及主檔數量前後不變；正式區未異動，父工作仍待EXE與正式兩式／畫面驗收。
 - 2026-11-10 [TransFiles 藥液日別調整公式 EXE](../specs/20261109-chemical-adjustment-schedule-repair/spec.md)：現場 parser 與獨立測試 EXE 已同步調整兩式，68份來源2,606筆對應差異0、72測試及啟動通過；既有11/03交付包、資料庫與網站保持。父工作仍待正式兩式與正式F表畫面授權／驗收。
+- 2026-11-10 [九／十月合格咬蝕正式匯入核銷](../specs/20261110-historical-import-task004-closeout/verification.md)：`SPC-HISTORICAL-IMPORT-1102-TASK-004`的134份合格日報10,384筆、正式僅新增、防重、25／50樣本與四線圖表證據完整；9異常與15X依規則隔離／排除，不當成合格缺漏。本次不讀寫資料庫、不發布網站；藥液與TransFiles人工驗收另案，SPC未完成11→10。
