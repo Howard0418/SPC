@@ -89,7 +89,7 @@
 [規格](specs/20261102-sep-oct-production-chart-import/spec.md)／[計畫](specs/20261102-sep-oct-production-chart-import/plan.md)／[排序與測試矩陣](specs/20261102-sep-oct-production-chart-import/tasks.md)。僅完成來源解析與限定月份唯讀驗證；不讀寫測試／正式資料庫、不匯入、不發布。
 
 - [x] `SPC-HISTORICAL-IMPORT-1102-TASK-001`：P1，唯讀來源盤點已由後續全年824份藥液／1份咬蝕來源清冊、17649格逐格分類及166份咬蝕完整性核對覆蓋；原異常、X排除與警告均保留，未偽造或代改Excel。只核銷001，002～004保持待辦。[核銷驗證](specs/20261109-historical-import-task001-closeout/verification.md)
-- [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-002`：P1，[咬蝕134份測試及圖表通過](specs/20261102-sep-oct-etch-test-import/verification.md)，九月藥液1146／71複驗、十月1211／54及趨勢20筆與公式F追溯驗收保持。來源例外、GUI交付及日期時區仍待辦；僅測試，不操作正式。
+- [x] `SPC-HISTORICAL-IMPORT-1102-TASK-002`：已取消／被後續測試清理規則取代。原任務要求測試區保留9／10月隔離匯入；後續使用者明確要求九月量測及隔離測試主檔移除，實際九月與測試主檔重查皆0、十月正常1494筆保持，因此不重新灌回舊隔離資料。既有咬蝕趨勢成果保留，003／004不受影響。[驗證](specs/20261109-historical-import-task002-superseded/verification.md)
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-003`：P0，[11/03續核通過](specs/20261103-etch-missing-line-reconciliation/verification.md)：原65份「缺主檔」更正並修正合法空機台對應；134份合格線別／日期及原值核對通過。藥液時間班別與來源異常仍待補，父項未全DONE。
 - [ ] `SPC-HISTORICAL-IMPORT-1102-TASK-004`：P0，11/03再次明確授權正式補漏；[新增65份4565筆](specs/20261103-etch-missing-line-reconciliation/verification.md)，既有69份保持，四線合格134份10384筆齊備，重送134略過／0新增；正式十月A面16／15／12／18點。9異常／15X、藥液時間與其他驗收仍待辦。
 
