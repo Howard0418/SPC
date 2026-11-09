@@ -16,6 +16,7 @@ import { useRoute, useRouter } from "vue-router";
 import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { isEditor } from "../utils/auth";
 import { CONTROL_SCOPE, normalizeControlScope } from "../utils/controlScope";
+import { loadPrimaryAndSupporting } from "../utils/progressiveLoad";
 import {
   FolderTree,
   Plus,
@@ -65,6 +66,7 @@ const router = useRouter();
 const err = ref("");
 const successMsg = ref("");
 const loading = ref(false);
+const lookupsLoading = ref(false);
 
 const searchQuery = ref("");
 const statusFilter = ref("all");
@@ -407,9 +409,15 @@ function setTableScrollFromSlider() {
 async function load() {
   err.value = "";
   loading.value = true;
-  try {
-    const [resMain, resParts, resProc, resChar, resTypes, resRules, resRuleLibrary, resCats, resGroups, resMachines, resLines, resTanks] = await Promise.all([
-      api.get("/part-process-characteristics"),
+  lookupsLoading.value = true;
+
+  await loadPrimaryAndSupporting({
+    loadPrimary: async () => {
+      const response = await api.get("/part-process-characteristics");
+      return response.data || [];
+    },
+    loadSupporting: async () => {
+      const [resParts, resProc, resChar, resTypes, resRules, resRuleLibrary, resCats, resGroups, resMachines, resLines, resTanks, resFilterProc] = await Promise.all([
       api.get("/parts"),
       api.get("/processes"),
       api.get("/characteristics"),
@@ -420,37 +428,58 @@ async function load() {
       api.get("/control-chart-groups"),
       api.get("/machines"),
       api.get("/v1/traceability-master/lines"),
-      api.get("/v1/traceability-master/tanks")
-    ]);
-    rows.value = resMain.data || [];
-    parts.value = resParts.data || [];
-    processes.value = resProc.data || [];
-    formProcesses.value = processes.value;
-    characteristics.value = resChar.data || [];
-    chartTypes.value = resTypes.data || [];
-    ruleGroups.value = resRules.data || [];
-    ruleLibrary.value = resRuleLibrary.data || [];
-    categories.value = resCats.data || [];
-    groups.value = resGroups.data || [];
-    machines.value = resMachines.data || [];
-    lines.value = resLines.data || [];
-    tanks.value = resTanks.data || [];
-    
-    // Load filtered processes based on initial scopeFilter
-    try {
-      const resFilterProc = await api.get("/processes", { params: { controlScope: scopeFilter.value, configuredOnly: true } });
-      filterProcesses.value = resFilterProc.data || [];
-    } catch (e) {
-      filterProcesses.value = resProc.data || [];
-    }
+      api.get("/v1/traceability-master/tanks"),
+      api.get("/processes", { params: { controlScope: scopeFilter.value, configuredOnly: true } }).catch(() => null)
+      ]);
 
-    await nextTick();
-    updateTableScrollMax();
-  } catch (e) {
-    err.value = getApiErrorDisplay(e);
-  } finally {
-    loading.value = false;
-  }
+      return {
+        parts: resParts.data || [],
+        processes: resProc.data || [],
+        characteristics: resChar.data || [],
+        chartTypes: resTypes.data || [],
+        ruleGroups: resRules.data || [],
+        ruleLibrary: resRuleLibrary.data || [],
+        categories: resCats.data || [],
+        groups: resGroups.data || [],
+        machines: resMachines.data || [],
+        lines: resLines.data || [],
+        tanks: resTanks.data || [],
+        filterProcesses: resFilterProc?.data || resProc.data || []
+      };
+    },
+    onPrimaryLoaded: async data => {
+      rows.value = data;
+      await nextTick();
+      updateTableScrollMax();
+    },
+    onSupportingLoaded: data => {
+      parts.value = data.parts;
+      processes.value = data.processes;
+      formProcesses.value = data.processes;
+      characteristics.value = data.characteristics;
+      chartTypes.value = data.chartTypes;
+      ruleGroups.value = data.ruleGroups;
+      ruleLibrary.value = data.ruleLibrary;
+      categories.value = data.categories;
+      groups.value = data.groups;
+      machines.value = data.machines;
+      lines.value = data.lines;
+      tanks.value = data.tanks;
+      filterProcesses.value = data.filterProcesses;
+    },
+    onPrimaryError: error => {
+      err.value = getApiErrorDisplay(error);
+    },
+    onSupportingError: error => {
+      if (!err.value) err.value = getApiErrorDisplay(error);
+    },
+    onPrimarySettled: () => {
+      loading.value = false;
+    },
+    onSupportingSettled: () => {
+      lookupsLoading.value = false;
+    }
+  });
 }
 
 const chartTypeMap = computed(() => {
@@ -1324,10 +1353,10 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
         <button
           @click="load"
           type="button"
-          :disabled="loading"
+          :disabled="loading || lookupsLoading"
           class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all border border-slate-200 dark:border-slate-700"
         >
-          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin' : '']" /> {{ t('spc.ppc.refresh') }}
+          <RefreshCw :class="['w-4 h-4', (loading || lookupsLoading) ? 'animate-spin' : '']" /> {{ t('spc.ppc.refresh') }}
         </button>
         <button
           data-testid="ppc-add" @click="openCreateModal"
