@@ -512,6 +512,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 依最新需求規劃10頁投影片（含封面），保留背景與A～D成果；新增校正／落塵、異常／報表、近期改善及中長期方向四頁，目標15張實際證據圖。新增F採證／G現況／H規劃三件P2，原E改最後十頁交付，均未開始，不立即改PPT或開發網站。原進度表已備份同步，202登錄／核心23未完成／163完成，另人工12及待核銷4；OpenXML零錯誤、內容／圖形／重開列印驗證通過。詳 specs/20261027-mes-spc-report-plan/ten-slide-plan.md；無DB或站台發布。
 - 藥液來源資料／公式／F完整測試匯入前置：[實際入口核對](../specs/20261101-formula-import-test-source-regression/import-readiness-20261102.md)。現有實檔讀取與矩陣／原始值契約不相容，且來源公式／F不會自動建立有效排程；未確認匯入，既有業務基準保持。
 
+- SPC 使用者活動稽核：[TASK-006 導航與讀取活動](../specs/20261109-audit-navigation-read-activity/verification.md)測試階段完成；實際事件95～106涵蓋成功進頁、查詢／篩選及Xlsx匯出，可信actor、允許清單、敏感遮罩與冪等查核通過。正式未發布，截圖與整案E2E保留於TASK-009。
+
 - 2026-11-02 [P400測試去重](../specs/20261102-p400-duplicate/verification.md)：停用N1無歷史重複2593，保留2619及N2 2515；公式F與量測保持。測試完成待正式授權，核心36／SPC14保持。
 
 - 2026-11-02 [取消更槽003](../specs/20261102-cancel-tank-change/spec.md)：依使用者要求移出活動待辦，保留取消追溯，不計完成；核心35／SPC直接13，現行功能及資料保持。
@@ -548,4 +550,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-05 [PT1正式目前公式日期排程修復](../specs/20261105-pt1-current-formula-schedule/verification.md)：使用者提供正式11/05缺適用公式截圖並另授權四項；正式備份驗證後新增4份revision／80區間，保留原76段十月及量測，重用既有公式／F、只追加11/03起無截止目前段。96組Portal同一服務初複驗與測試相符、4前界限拒絕及重送0新增通過；126單元、原進度71物件／265列同步，無網站發布。瀏覽器工具timeoutMs畫面未驗；其餘76項不在本次授權，父件與45／SPC22保持。
 - 2026-11-05 [Portal生日賀卡可讀性僅規劃](../../PmrPortal/specs/20261105-birthday-card-readable-size/spec.md)：新P2小工作已入中央工作池，主責Portal；保留原格式／通知規則，未實作或發布。原進度表同步Portal區與小工作總表，核心46／SPC22保持。
 - [測試區九／十月藥液與咬蝕量受控重匯](../specs/20261105-test-sep-oct-reimport/spec.md)：只寫測試庫，依修正版核准線別及後檔優先，正式區唯讀不變。
-- 2026-11-09 [SPC高風險資料操作稽核實際驗收完成](../specs/20261106-audit-business-operations/verification.md)：測試站產品料號主檔實際新增／刪除產生AuditEvents 85／86，actor由伺服器解析為Operator 27／丁義豪，事件碼、PageKey、HTTP結果及安全摘要正確；測試料號已刪除、兩筆稽核保留、原始業務值洩漏0。TASK-005測試階段DONE，正式未發布；006～009未開始。
+- 2026-11-09 [SPC高風險資料操作稽核實際驗收完成](../specs/20261106-audit-business-operations/verification.md)：測試站產品料號主檔實際新增／刪除產生AuditEvents 85／86，actor由伺服器解析為Operator 27／丁義豪，事件碼、PageKey、HTTP結果及安全摘要正確；測試料號已刪除、兩筆稽核保留、原始業務值洩漏0。TASK-005測試階段DONE；後續TASK-006亦已完成，007～009未開始，正式未發布。

@@ -18,6 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 MesSpc.Api.Services.Auditing.AuthenticationAuditStartup.ValidateConfiguration(builder.Configuration);
 MesSpc.Api.Services.Auditing.SecurityAudit.ValidateConfiguration(builder.Configuration);
 MesSpc.Api.Services.Auditing.BusinessDataAuditFilter.ValidateConfiguration(builder.Configuration);
+MesSpc.Api.Services.Auditing.NavigationReadAudit.ValidateConfiguration(builder.Configuration);
 
 var authEnabled = builder.Configuration.GetValue("Auth:Enabled", false);
 var jwtKey = builder.Configuration["Auth:JwtKey"];
@@ -115,6 +116,7 @@ builder.Services.AddScoped<AuditPermissions>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.SecurityAudit>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.SecurityAuditFilter>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.BusinessDataAuditFilter>();
+builder.Services.AddScoped<MesSpc.Api.Services.Auditing.NavigationReadAudit>();
 builder.Services.AddSingleton<UserPasswordHasher>();
 builder.Services.AddHostedService<MesSyncProcessorService>();
 builder.Services.AddHostedService<SpcReportSchedulerService>();

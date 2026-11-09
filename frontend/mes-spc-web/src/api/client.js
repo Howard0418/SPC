@@ -5,12 +5,14 @@ import { i18n, apiMessageSource } from "../i18n";
 import { displayUiMessage, snapshotApiDisplay } from "../i18n/uiMessage";
 import { normalizeLocale } from "../i18n/preferences";
 import { captureApiErrorDisplay, captureIndexedApiDisplay, resolveLegacyApiDescriptor } from "../i18n/apiMessages";
+import { configureActivityAudit, recordSuccessfulRead } from "../utils/activityAudit";
 
 const webEnvironment = import.meta.env.VITE_APP_ENV || "unknown";
 const baseURL = resolveApiBase(webEnvironment, import.meta.env.VITE_PRODUCTION_API_BASE);
 let apiEnvironment = "unknown";
 
 export const api = axios.create({ baseURL });
+configureActivityAudit(api);
 
 const tokenKey = "mes_spc_token";
 const redirectGuardKey = "mes_spc_auth_redirecting_until";
@@ -48,7 +50,7 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (r) => r,
+  (r) => { recordSuccessfulRead(r); return r; },
   (err) => {
     if (err?.response?.status === 401 && typeof window !== "undefined") {
       if (isWithinSessionWindow(ssoGraceUntilKey) || isWithinSessionWindow(redirectGuardKey)) {

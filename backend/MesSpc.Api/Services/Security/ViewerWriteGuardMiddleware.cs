@@ -12,9 +12,11 @@ public sealed class ViewerWriteGuardMiddleware(RequestDelegate next)
             || HttpMethods.IsOptions(context.Request.Method);
         var isAnonymousAuthEndpoint = context.Request.Path == "/api/v1/auth/login"
             || context.Request.Path == "/api/v1/auth/portal-sso" || context.Request.Path == "/api/v1/auth/logout";
+        var isOwnActivityEndpoint = context.Request.Path == "/api/v1/audit/activity";
 
         if (!isReadRequest
             && !isAnonymousAuthEndpoint
+            && !isOwnActivityEndpoint
             && context.User.Identity?.IsAuthenticated == true
             && context.User.IsInRole(UserRoles.Viewer))
         {

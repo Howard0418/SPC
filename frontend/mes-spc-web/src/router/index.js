@@ -28,6 +28,7 @@ import ParticleMonitoringView from "../views/ParticleMonitoringView.vue";
 import GenealogyView from "../views/GenealogyView.vue";
 import TraceabilityMasterView from "../views/TraceabilityMasterView.vue";
 import { getCurrentUser } from "../utils/auth";
+import { recordPageEnter } from "../utils/activityAudit";
 
 const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
 const pagePermissionByPath = {
@@ -109,5 +110,7 @@ router.beforeEach((to) => {
   }
   return true;
 });
+
+router.afterEach((to, from, failure) => recordPageEnter(to, from, failure));
 
 export default router;
