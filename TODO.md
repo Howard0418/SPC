@@ -1,3 +1,5 @@
+> 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001` 已完成900px、等比例、長圖捲動與放大／縮小，測試API1.0.222／Web1.0.262及連線驗證通過；待登入畫面確認，正式未發布。核心42／SPC18保持。[驗證](../PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)
+
 > 2026-11-09 新增 `SPC-NORMALITY-MINITAB-1109-TASK-001`（P1／SPC）：依使用者兩張截圖規劃常態分析直方圖與Minitab對齊。現況為前端類別箱格與後端連續曲線雙軸、網站自訂`√n+3`箱數及8% padding；規劃改為單一權威histogram payload、連續X軸、可追溯bin edges／counts及golden dataset逐格驗收。本次只規劃，不改程式／資料／網站；核心未完成41→42、SPC相關17→18、完成197保持。[規格](specs/20261109-normality-minitab-alignment/spec.md)
 
 > 2026-11-09 [SPC-AUDIT-1103-TASK-006實際操作驗收完成](specs/20261109-audit-navigation-read-activity/verification.md)：測試站進頁、查詢／篩選與Xlsx匯出產生AuditEvents 95～106；12筆可信actor、Test環境、PageKey、成功結果、允許清單、敏感遮罩與冪等查核通過。正式未發布；下一件007尚未開始。核心未完成44件、涉及SPC20件、完成194件，人工11／核銷4另計。
@@ -704,7 +706,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] `SPC-TEST-DATA-CLEANUP-20261105`：P1，依授權清除全部測試量測／匯入，保留主檔、公式、F及稽核；正式保持。[驗證](specs/20261105-test-measurement-cleanup/verification.md)：53081列封存、12表查詢0／336圖表空；SQL10、Chemical117、Python15通過，測試純封存trigger追加授權已套用，正式69表SHA256保持。指定Excel48格以G核准線別為準，日期／同鍵值另核，不重匯正式。原進度表70原生物件／總表已同步，核心45／SPC22、人工11／核銷4保持；無網站發布。
 - PT1正式日期排程缺口（P0，既有`SPC-CHEM-F-CONSISTENCY-1103-TASK-001`子範圍，不重複父子計數）：使用者另授權2440／2441／2443／2444，保留十月、補11/03起目前公式／F。[驗證](specs/20261105-pt1-current-formula-schedule/verification.md)：正式備份VERIFYONLY後4份revision81～84／80區間，重用既有公式99～102及F歷史1；96組初複驗相符、4邊界拒絕、實際重送0新增，量測與主檔保持。126單元通過，原進度71物件／265列已同步；無網站發布，瀏覽器timeoutMs未驗畫面。其餘76項缺當日排程另待授權，父件仍未DONE，核心45／SPC22保持。
-- [ ] `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：Portal主責／P2，賀卡彈窗及圖片過小的可讀性改善，只規劃未執行。桌面900px候選、等比例／長圖捲動及放大檢視，預覽與首頁一致，圖片格式／2MB與通知規則保持。排在阻擋使用、安全與資料正確性之後、純配色文案之前。[Portal規格](../PmrPortal/specs/20261105-birthday-card-readable-size/spec.md)。中央核心45→46、SPC22不變，完成190／人工11／核銷4保持；不啟動實作或發布。
+- [ ] `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：Portal主責／P2，900px、圖片等比例、長圖捲動及放大／縮小已完成；3項契約、38項Web回歸、建置及測試站連線驗證通過，測試API1.0.222／Web1.0.262。待使用者登入畫面確認；正式未發布。[Portal驗證](../PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)。核心42／SPC18保持。
 # 2026-11-05 測試區九／十月資料重匯（來源阻擋）
 
 - [ ] `SPC-TEST-REIMPORT-20261105`（P0，T2～T5完成；主系統SPC／相依TransFiles與Portal顯示；DB：只寫測試PMR_SPC_TEST；發布：尚無；rollback：依本批ID受控封存）9月前資料不看，89組／933列衝突固定排除。原9月起5筆誤報已修正Secondary解析，40項測試及808檔重跑後，9月起3,215列全READY、錯誤0、衝突0；精簡5筆核對表已交付。T6測試DB備份與apply尚未執行，DB寫入0。[驗證](specs/20261105-test-sep-oct-reimport/verification.md)

@@ -1483,3 +1483,5 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 
 ## [2026-11-09] SPC-NORMALITY-MINITAB-1109-TASK-001 規劃目的
 依使用者提供的Minitab／網站截圖規劃常態分析對齊。現行網站分箱採自訂`√n+3`、8% padding，柱使用類別軸、曲線使用連續軸，界線又落到箱格索引；規格要求單一權威histogram payload、柱曲線界線同一連續X軸及Minitab golden dataset逐格驗收。本次只規劃入池，不修改程式、資料或網站，不建置／發布。
+# 2026-11-09 PORTAL-BIRTHDAY-SIZE-1105-TASK-001測試發布同步
+- 目的：同步Portal生日賀卡可讀性實作、測試站版本與待畫面確認狀態；不修改SPC程式、資料或發布狀態。
