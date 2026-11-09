@@ -1469,3 +1469,5 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 追加：使用者明示指定`ihao_ting`為測試站安全管理者；唯讀確認其Operator ID 27、Editor且啟用。只更新測試API私有`Audit:SecurityAdministratorOperatorIds`並備份／驗證／重啟，不更動正式設定或直接授予敏感權限；既有禁止自我升權規則保持。
 
 追加：使用者回覆「執行」，依前一則明示建議將測試`ID 26/admin`加入第二安全管理者；保留ID27，正式設定與業務權限不變，資料庫憑證輪替不併入本件。
+
+追加：使用者表示無法登入`admin`並指定`Administrator`；唯讀核對為測試Operator ID1079、Editor且啟用。依最小權限以1079取代26，白名單精確設為27、1079；不重設密碼、不改PagePermissions或正式設定。

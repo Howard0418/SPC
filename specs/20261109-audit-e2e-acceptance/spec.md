@@ -44,3 +44,4 @@
 - 只將27加入測試API私有`Audit:SecurityAdministratorOperatorIds`，正式設定、角色、PagePermissions及稽核資料不變。
 - 保留禁止安全管理者替自己新增敏感權限；本次指定不等於授予`admin.audit.read`或`admin.audit.export`。
 - 第二安全管理者採既有有效Editor `ID 26/admin`；白名單保留27並追加26，後續由26透過正常網站授權27，不直接更新PagePermissionsJson。
+- 因使用者無法登入`admin`，改採其指定且可登入的`ID 1079/Administrator`取代26；最終白名單只保留27、1079，避免保留不可用的額外敏感管理身分。

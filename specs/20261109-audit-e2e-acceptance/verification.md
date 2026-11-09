@@ -24,6 +24,8 @@
 - 依使用者「執行」追加`ID 26/admin`為第二安全管理者。首次工具將27與26誤作數字加總成53；API未重啟、錯誤未生效，立即由`appsettings.backup-security-admin-26-20261109.json`恢復原雜湊與ID27。修正陣列合併及整數驗證後，回歸確認`26,27`，只回收SpcSingleTest，API 0.1.111／health ok／test。
 - 白名單完成仍不直接改PagePermissions：後續須由27登入替26授予read／export，再由26登入替27授予read／export；其後重新登入27完成稽核頁面E2E。
 - 原進度表同步雙安全管理者狀態，更新前備份`備份/進度表_20261109_雙安全管理者前.xlsx`，更新後SHA-256為`781A48B94580E8A0CCE9BF51665CF5AD5280F05E0BAF1E6258C1FC4372AC64B6`；OpenXML 0錯誤、原生drawing 1保持、重開與兩處渲染通過。
+- 使用者指定可登入的`Administrator`取代無法登入的`admin`；唯讀確認為ID1079、Editor、啟用。精確白名單工具首次因比較語法在寫入前失敗，設定雜湊保持；修正後白名單為27、1079並移除26，只回收SpcSingleTest，API 0.1.111／health ok／test。
+- 原進度表同步替換結果，更新前備份`備份/進度表_20261109_Administrator替換前.xlsx`，更新後SHA-256為`FE23FC621B3AFB01CE230BB62059939E91F07A27EAD663BFB44414246DF81A02`；OpenXML 0錯誤、原生drawing 1保持、重開與兩處渲染通過。
 
 ## 發布與回復
 
