@@ -166,6 +166,8 @@
 
 > 2026-11-10 `TRANSFILES-NOV-DAILY-1110-TASK-002` 測試庫唯讀防重對帳完成：69項通過；藥液368筆為已存在204、可新增160、同鍵異值4，映射錯誤0；咬蝕21份1,750點均可新增。4筆差異保留待複驗來源規則修正，未寫入DB；TASK-003測試庫匯入尚未執行。
 
+> 2026-11-10 `TRANSFILES-NOV-DAILY-1110-TASK-003` 測試庫匯入完成：兩庫COPY_ONLY／CHECKSUM／VERIFYONLY後，藥液新增160筆並保存160 Receipt／Trace，咬蝕新增21份／1,750點；相同來源重送兩類皆0新增。匯入後藥液364相同／4同鍵複驗差異隔離、咬蝕21相同、映射錯誤0。117筆統計完成，43筆因PPC未設ChartTypeId待補主檔後只重跑統計；正式補匯及09:00排程未執行。本切片沿既有TransFiles父工作，不增加核心未完成計數。
+
 ## 2026-10-28 SPC 網站調整（藥液3件完成，009待F）
 
 主規格：[SPC-ADJUST-20261028](specs/20261028-spc-adjustment-backlog/spec.md)；[測試矩陣](specs/20261028-spc-adjustment-backlog/tasks.md)。已依5張截圖補充[異常規格與三件新增](specs/20261028-chemical-screenshot-followup/spec.md)；原月報004／005不重複入池。使用者後續授權優先處理藥液四件，007驗證與002／008正式完成，009待F確認；詳[正式驗證](specs/20261028-chemical-history-refresh/formal-release.md)。其他暫停／受阻及其餘規劃保持。

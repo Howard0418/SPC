@@ -23,3 +23,13 @@
 - 4筆同鍵異值的初驗值均相同，差異為測試庫已有複驗值而目前來源解析結果未帶複驗：11/02 PPC 2440、2459，11/04 PPC 2450，11/05 PPC 2426。未自動覆蓋或新增。
 - 咬蝕量21份／1,750點在Portal測試庫均無相同業務鍵，列為可新增；11/10 QE1缺S4/S14仍維持隔離，不計入21份。
 - 防重與浮點語意比較共69項回歸通過；對帳Excel已輸出，摘要與兩張明細表完成渲染及公式錯誤掃描0。
+
+## TASK-003 測試庫匯入與重送
+- 寫入前以既有維護身分只連到 `PMR_SPC_TEST`／`PMR_PORTAL_TEST`，各完成 `COPY_ONLY`、`CHECKSUM` 與 `RESTORE VERIFYONLY`；工具結果明示 `productionOpened=false`／`productionConnected=false`。
+- 藥液只新增TASK-002核准的160筆；每筆均由日期公式與F快照試算，保存160份Receipt與160份Trace，逐筆與Excel在1e-8內相符。204筆既有資料未重匯，4筆同鍵複驗差異保持隔離。
+- 來源日期缺少排程的5個PPC／日期組合以最近的前一版公式與F快照建立4份不可變排程修訂；預演先rollback，套用後再逐筆試算驗證，未改公式或F內容。
+- 咬蝕新增21份Portal報表、1,750個原始點，SPC保存1,771筆PROCESS量測（每份原始點加1筆速率）；11/10 QE1缺S4／S14仍隔離。
+- 相同來源重送：藥液新增0、略過160；咬蝕新增0、21份均Unchanged。匯入後唯讀對帳為藥液364筆相同、4筆同鍵異值，咬蝕21份相同，主檔映射錯誤0。
+- 統計工作117筆完成；另43筆因對應PPC未設定 `ChartTypeId` 而失敗。量測、Receipt與Trace均完整，不重匯；須先補主檔圖型後只重跑統計。
+- 驗證：NovemberTestImport Release build 0警告／0錯誤；原生TransFiles 69項、版控對帳2項通過。測試站首頁、`/api/health`、`/api/version` 均HTTP 200，API版本0.1.117、environment=test。
+- 未執行：正式資料庫寫入、正式發布、每日09:00排程。
