@@ -11,3 +11,5 @@
 5. 對應的parser與scheduled import測試已加入原生工具；四組62項通過。
 
 本件沒有呼叫API、寫入DB或建立Windows排程。
+
+TASK-002新增 `inventory_reconciliation.py`：以業務鍵及8位小數語意內容雜湊分類 `insert_candidate`、`existing_same`、`same_key_different_content`、`duplicate_existing_key`。測試資料庫快照腳本只允許 `PMR_SPC_TEST`／`PMR_PORTAL_TEST` 且只執行SELECT；對帳及Excel輸出腳本位於主規格目錄。
