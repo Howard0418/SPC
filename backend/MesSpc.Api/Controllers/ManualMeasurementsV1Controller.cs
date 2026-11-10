@@ -128,7 +128,9 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 judgment = judgment?.Judgment ?? "Unknown",
                 judgmentSource = judgment?.JudgmentSource ?? "Unavailable",
                 judgmentReason = judgment?.PrecisionNote ?? "缺少相符的歷史判定或規格紀錄，無法判定",
-                judgmentReasonCode = judgment?.JudgmentReasonCode ?? "HISTORICAL_EVIDENCE_MISSING"
+                judgmentReasonCode = judgment?.JudgmentReasonCode ?? "HISTORICAL_EVIDENCE_MISSING",
+                specificationVersionNo = judgment?.SpecificationVersionNo,
+                specificationVersionAt = judgment?.SpecificationVersionAt
             };
         }).ToList();
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });

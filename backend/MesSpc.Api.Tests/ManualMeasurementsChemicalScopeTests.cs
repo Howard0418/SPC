@@ -71,6 +71,25 @@ public class ManualMeasurementsChemicalScopeTests
         Assert.Contains("\"judgmentSource\":\"SavedSpecification\"", json);
     }
 
+    [Fact]
+    public async Task Daily_UsesNearestSpecificationVersion_WhenSavedEvidenceIsMissing()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        fixture.AddMeasurements(ppcId: 1, count: 1, measuredAt: new DateTime(2026, 11, 10, 8, 0, 0));
+        fixture.Db.SpecificationLimitVersions.AddRange(
+            new SpecificationLimitVersion { PartProcessCharacteristicId=1, VersionNo=7, SourceKind="Base",
+                SnapshotJson="{\"LSL\":0,\"USL\":0.5,\"TargetValue\":0.25}", ChangedAt=new DateTime(2026,11,9,0,0,0,DateTimeKind.Utc) },
+            new SpecificationLimitVersion { PartProcessCharacteristicId=1, VersionNo=8, SourceKind="Base",
+                SnapshotJson="{\"LSL\":0,\"USL\":2,\"TargetValue\":1}", ChangedAt=new DateTime(2026,11,11,0,0,0,DateTimeKind.Utc) });
+        await fixture.Db.SaveChangesAsync();
+
+        var result = await fixture.Controller.GetDaily(1, new DateOnly(2026, 11, 10), "OPEN", samplingStage: "GENERAL");
+        var json = JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(result).Value);
+        Assert.Contains("\"initialJudgment\":\"NG\"", json);
+        Assert.Contains("\"judgmentSource\":\"NearestSpecificationVersion\"", json);
+        Assert.Contains("\"specificationVersionNo\":7", json);
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         private readonly SqliteConnection connection;
@@ -102,7 +121,7 @@ public class ManualMeasurementsChemicalScopeTests
             return new Fixture(connection, db);
         }
 
-        public void AddMeasurements(int ppcId, int count)
+        public void AddMeasurements(int ppcId, int count, DateTime? measuredAt = null)
         {
             Db.VariableMeasurements.AddRange(Enumerable.Range(1, count).Select(i => new VariableMeasurement
             {
@@ -114,7 +133,7 @@ public class ManualMeasurementsChemicalScopeTests
                 PartProcessCharacteristicId = ppcId,
                 SampleNo = i,
                 MeasuredValue = i,
-                MeasuredAt = new DateTime(2026, 11, 5).AddSeconds(i),
+                MeasuredAt = (measuredAt ?? new DateTime(2026, 11, 5)).AddSeconds(i),
                 PortalDailyDate = null,
                 SamplingPhase = "OPEN",
                 SamplingStage = "GENERAL",
