@@ -15,3 +15,5 @@
 TASK-002新增 `inventory_reconciliation.py`：以業務鍵及8位小數語意內容雜湊分類 `insert_candidate`、`existing_same`、`same_key_different_content`、`duplicate_existing_key`。測試資料庫快照腳本只允許 `PMR_SPC_TEST`／`PMR_PORTAL_TEST` 且只執行SELECT；對帳及Excel輸出腳本位於主規格目錄。
 
 TASK-003新增 `tools/NovemberTestImport`：只允許測試資料庫，寫入前備份驗證；藥液依核准清單建立日期公式Receipt／Trace，咬蝕同步Portal報表／點位及SPC PROCESS量測。相同來源重送必須0新增；正式補匯與09:00排程不在本工具本次執行範圍。
+
+TASK-004擴充同工具的正式守衛：正式套用必須精確確認 `PMR_SPC_2026`、`PMR_PORTAL_UAT` 與本次正式對帳SHA-256。正式庫重新分類全部來源，只新增缺少者；同鍵異值隔離，不沿用測試庫清單。排程仍不在TASK-004範圍。

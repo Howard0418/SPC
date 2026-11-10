@@ -27,7 +27,7 @@ def source_line(row):
 
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('source');ap.add_argument('spc');ap.add_argument('portal');ap.add_argument('output');a=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('source');ap.add_argument('spc');ap.add_argument('portal');ap.add_argument('output');ap.add_argument('--environment',choices=('test','production'),default='test');a=ap.parse_args()
     source=json.loads(Path(a.source).read_text(encoding='utf-8'))
     spc=json.loads(Path(a.spc).read_text(encoding='utf-8'));portal=json.loads(Path(a.portal).read_text(encoding='utf-8'))
     masters=spc.get('masters') or [];measurements=spc.get('measurements') or []
@@ -60,7 +60,8 @@ def main():
         points=[{k:p.get(k) for k in ('side','repeatNo','opNo','beforeValue','afterValue')} for p in (r.get('points') or [])]
         existing_etch.append({'key':f"{r['reportDate']}|{r['lineCode']}",'lineSpeed':r.get('lineSpeed'),'operatorName':r.get('operatorName'),'points':points,'source':{'id':r.get('id')}})
     etch_result=reconcile_records(etch,existing_etch)
-    result={'environment':'test','databases':['PMR_SPC_TEST','PMR_PORTAL_TEST'],'readOnly':True,
+    databases=['PMR_SPC_TEST','PMR_PORTAL_TEST'] if a.environment=='test' else ['PMR_SPC_2026','PMR_PORTAL_UAT']
+    result={'environment':a.environment,'databases':databases,'readOnly':True,
       'chemical':{'sourceRows':len(chemical),'mappingErrors':mapping_errors,'counts':dict(Counter(x['classification'] for x in chemical_result)),'rows':chemical_result},
       'etching':{'sourceReports':len(etch),'sourcePoints':sum(len(x['points']) for x in etch),'counts':dict(Counter(x['classification'] for x in etch_result)),'rows':etch_result}}
     Path(a.output).write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')

@@ -33,3 +33,13 @@
 - 統計工作117筆完成；另43筆因對應PPC未設定 `ChartTypeId` 而失敗。量測、Receipt與Trace均完整，不重匯；須先補主檔圖型後只重跑統計。
 - 驗證：NovemberTestImport Release build 0警告／0錯誤；原生TransFiles 69項、版控對帳2項通過。測試站首頁、`/api/health`、`/api/version` 均HTTP 200，API版本0.1.117、environment=test。
 - 未執行：正式資料庫寫入、正式發布、每日09:00排程。
+
+## TASK-004 正式僅新增補匯
+- 正式兩庫重新對帳全部來源，不沿用測試新增清單：藥液41筆相同、207筆可新增、120筆同鍵異值；咬蝕21份可補Portal。映射錯誤0。
+- 正式試算207筆全部使用正式既有公式／F快照，與Excel差異均小於等於1e-8；補173個來源日期區間，共64份不可變排程修訂，未修改公式或F內容。
+- 寫入前 `PMR_SPC_2026` 與 `PMR_PORTAL_UAT` 均完成COPY_ONLY／CHECKSUM及RESTORE VERIFYONLY；正式目標與environment守衛通過。
+- 藥液新增207筆、Receipt／Trace各207；120筆同鍵異值未覆蓋。統計144筆完成，63筆因既有PPC未設定ChartTypeId失敗，量測與追溯均完整，後續只可補圖型後重跑統計。
+- 咬蝕正式SPC原已有12份，新增9份；Portal補齊21份／1,750點。SPC最終21份共1,771筆PROCESS量測；11/10 QE1缺S4／S14仍隔離。
+- 相同來源第二次套用：藥液新增0／略過207，咬蝕新增0／21份Unchanged。正式後重新快照：藥液248筆相同、120筆同鍵異值，咬蝕21份相同，映射錯誤0。
+- 測試：正式守衛3項、TransFiles 69項及對帳2項通過，Release build通過。正式Web首頁HTTP 200；實際API基底`:8443` health/version HTTP 200、版本0.1.104、environment=production。
+- 未執行：網站程式發布、來源Excel修改、120筆衝突覆蓋、QE1缺值補造、每日09:00排程。

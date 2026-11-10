@@ -1,7 +1,7 @@
 # 功能規格：11月藥液／咬蝕防重補匯與每日排程
 - 功能 ID：`TRANSFILES-NOV-DAILY-1110`
 - 版本：1
-- 狀態：TASK-001～003完成；TASK-004～005待執行
+- 狀態：TASK-001～004完成；TASK-005待執行
 - 主系統：TransFiles；相依 SPC API／Portal／測試及正式資料庫
 
 ## 需求
@@ -20,7 +20,10 @@
 - Given TASK-003獲准執行，When 寫入測試庫，Then 先完成兩庫COPY_ONLY／CHECKSUM備份及RESTORE VERIFYONLY，只新增對帳為可新增者，並以相同來源重送確認0新增。
 - Given 藥液為公式項目，When 匯入，Then 必須由SPC日期公式與F排程試算、Prepare Receipt並保存Trace；試算與Excel差逾0.00000001即整批拒絕。
 - Given 咬蝕量可新增，When 匯入，Then Portal報表／樣本點與SPC PROCESS量測皆保存，錯置到CHEM類別或點數不完整即拒絕。
+- Given TASK-004獲准執行，When 對正式庫預檢，Then 必須以正式庫當下狀態重新分類全部來源，不得沿用測試庫的160／21新增清單。
+- Given 正式庫已有相同業務鍵，When 內容相同或不同，Then 分別略過或隔離；不得覆蓋正式既有量測。
+- Given 正式套用清單確認無阻擋，When 寫入，Then 先備份 `PMR_SPC_2026` 與 `PMR_PORTAL_UAT` 並通過CHECKSUM／VERIFYONLY，交易後重送必須0新增。
 
 ## 非範圍
 - 不修改來源 Excel、公式、F 值、現有量測或主檔。
-- TASK-001～002 不寫入測試／正式資料庫；TASK-003只允許寫入測試資料庫；不建立Windows排程。
+- TASK-001～002 不寫入測試／正式資料庫；TASK-003只允許寫入測試資料庫；TASK-004只允許核准清單正式僅新增；不建立Windows排程。

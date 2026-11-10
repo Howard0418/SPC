@@ -574,3 +574,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-10 [九／十月合格咬蝕正式匯入核銷](../specs/20261110-historical-import-task004-closeout/verification.md)：`SPC-HISTORICAL-IMPORT-1102-TASK-004`的134份合格日報10,384筆、正式僅新增、防重、25／50樣本與四線圖表證據完整；9異常與15X依規則隔離／排除，不當成合格缺漏。本次不讀寫資料庫、不發布網站；藥液與TransFiles人工驗收另案，SPC未完成11→10。
 - `SPC-CHEM-DAILY-SCOPE-1110-TASK-001`：藥液日報、月曆與PortalDaily只處理啟用中的`CHEM`；`PROCESS`咬蝕子組不得參與藥液重複判定，真正CHEM同鍵重複仍須阻擋。詳[規格](../specs/20261110-chemical-daily-scope-isolation/spec.md)與[驗證](../specs/20261110-chemical-daily-scope-isolation/verification.md)。
 - 2026-11-10 [11月藥液／咬蝕測試庫防重匯入](../specs/20261110-transfiles-november-daily-import/verification.md)：測試庫新增藥液160筆與咬蝕21份／1,750點，Receipt／Trace完整，相同來源重送0新增；4筆複驗衝突及QE1缺點維持隔離。正式補匯與09:00排程待另行授權。
+- 2026-11-10 [11月藥液／咬蝕正式僅新增補匯](../specs/20261110-transfiles-november-daily-import/verification.md)：正式新增藥液207筆及咬蝕9份，保留既有咬蝕12份，Portal 21份／1,750點齊備；120筆藥液同鍵異值未覆蓋。重送0新增，正式後248筆藥液及21份咬蝕與來源相同；09:00排程仍待執行。
