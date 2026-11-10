@@ -105,6 +105,23 @@ public class ManualMeasurementsChemicalScopeTests
         Assert.Contains("\"judgmentSource\":\"CurrentSpecificationFallback\"", json);
     }
 
+    [Fact]
+    public async Task Daily_UsesCurrentPpcRange_WhenLegacyTraceIsInvalid()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        await fixture.Db.Database.ExecuteSqlRawAsync(
+            "UPDATE PartProcessCharacteristics SET LSL=0, USL=2 WHERE Id=1");
+        fixture.AddMeasurements(ppcId: 1, count: 1, measuredAt: new DateTime(2026, 11, 10));
+        var row = fixture.Db.VariableMeasurements.Local.Single();
+        row.ChemicalReceiptId = Guid.NewGuid();
+        await fixture.Db.SaveChangesAsync();
+
+        var result = await fixture.Controller.GetDaily(1, new DateOnly(2026, 11, 10), "OPEN", samplingStage: "GENERAL");
+        var json = JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(result).Value);
+        Assert.Contains("\"initialJudgment\":\"OK\"", json);
+        Assert.Contains("\"judgmentSource\":\"CurrentSpecificationFallback\"", json);
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         private readonly SqliteConnection connection;
