@@ -1596,3 +1596,6 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## 2026-11-10 TRANSFILES-IMPORT-SWITCH-1110-TASK-001
 - 依使用者需求新增每日匯入總開關與藥液／咬蝕量獨立選擇；使用ProgramData JSON與Windows排程狀態，不保存密碼，不修改網站或資料庫。
 
+## 2026-11-10 SPC-CHEM-DAILY-JUDGMENT-1110-TASK-001
+- 修正既有日報只載入分析值卻遺失保存判定，造成日期公式項目顯示待預覽；API須回傳保存證據判定，Portal不得用目前主檔臆造歷史結果。
+

@@ -98,6 +98,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             try { return (x.UploadBatchId, Payload: JsonSerializer.Deserialize<Dictionary<string, string?>>(x.PayloadJson)); }
             catch { return (x.UploadBatchId, Payload: (Dictionary<string, string?>?)null); }
         }).Where(x => x.Payload is not null).ToList();
+        var judgments = await new ChemicalHistoryQueryService(db).GetAsync(rows);
 
         var result = rows.Select(row =>
         {
@@ -107,6 +108,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             var payload = detailPayloads.FirstOrDefault(x => x.UploadBatchId == row.UploadBatchId
                 && string.Equals(x.Payload!.GetValueOrDefault("CharacteristicCode"), characteristicCode, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(x.Payload!.GetValueOrDefault("TankCode"), tankCode, StringComparison.OrdinalIgnoreCase)).Payload;
+            judgments.TryGetValue(row.Id, out var judgment);
             return new
             {
                 row.Id,
@@ -121,7 +123,12 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 titrationValue = payload?.GetValueOrDefault("TitrationValue"),
                 secondaryTitrationValue = payload?.GetValueOrDefault("SecondaryTitrationValue"),
                 recheckTitrationValue = payload?.GetValueOrDefault("RecheckTitrationValue"),
-                recheckSecondaryTitrationValue = payload?.GetValueOrDefault("RecheckSecondaryTitrationValue")
+                recheckSecondaryTitrationValue = payload?.GetValueOrDefault("RecheckSecondaryTitrationValue"),
+                initialJudgment = judgment?.InitialJudgment ?? "Unknown",
+                judgment = judgment?.Judgment ?? "Unknown",
+                judgmentSource = judgment?.JudgmentSource ?? "Unavailable",
+                judgmentReason = judgment?.PrecisionNote ?? "缺少相符的歷史判定或規格紀錄，無法判定",
+                judgmentReasonCode = judgment?.JudgmentReasonCode ?? "HISTORICAL_EVIDENCE_MISSING"
             };
         }).ToList();
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });

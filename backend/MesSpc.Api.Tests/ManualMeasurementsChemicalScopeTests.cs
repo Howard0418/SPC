@@ -53,6 +53,24 @@ public class ManualMeasurementsChemicalScopeTests
         Assert.Contains("\"days\":[]", json);
     }
 
+    [Fact]
+    public async Task Daily_ReturnsSavedJudgmentWithExistingValue()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        fixture.AddMeasurements(ppcId: 1, count: 1);
+        await fixture.Db.SaveChangesAsync();
+        var row = await fixture.Db.VariableMeasurements.SingleAsync();
+        fixture.Db.UploadDetails.Add(new UploadDetail { UploadBatchId=row.UploadBatchId, RowNo=1, IsValid=false, CreatedBy="test",
+            PayloadJson=JsonSerializer.Serialize(new { action="PortalChemicalSpecificationSavedV1", actor="test", recordedAt=DateTime.UtcNow,
+                details=new[]{new PortalSavedSpecificationSnapshot(1,row.Id,row.PartProcessCharacteristicId,row.UploadBatchId,row.MeasuredAt,row.MeasuredValue,null,0d,2d,false,(long?)null)}})});
+        await fixture.Db.SaveChangesAsync();
+
+        var result = await fixture.Controller.GetDaily(1, new DateOnly(2026, 11, 5), "OPEN", samplingStage: "GENERAL");
+        var json = JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(result).Value);
+        Assert.Contains("\"initialJudgment\":\"OK\"", json);
+        Assert.Contains("\"judgmentSource\":\"SavedSpecification\"", json);
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         private readonly SqliteConnection connection;

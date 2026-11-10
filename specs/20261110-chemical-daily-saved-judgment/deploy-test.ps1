@@ -1,0 +1,7 @@
+$ErrorActionPreference='Stop';$target='D:\SPC\release\test\backend';$stage='D:\SPC\release-staging\chemical-daily-judgment-20261110';$stamp=Get-Date -Format 'yyyyMMdd-HHmmss';$backup=$target+".backup-chemical-daily-judgment-$stamp";$appcmd="$env:windir\system32\inetsrv\appcmd.exe"
+if((& $appcmd list vdir 'SpcApiTest/' /text:physicalPath).Trim()-ne$target){throw 'Unexpected test IIS target'}
+$cfg=Get-Content "$target\appsettings.json" -Raw|ConvertFrom-Json;if($cfg.AppEnvironment-ne'test'-or$cfg.ConnectionStrings.SqlServer-notmatch'PMR_SPC_TEST'){throw 'Unexpected test environment'}
+if(Test-Path $stage){Remove-Item $stage -Recurse -Force};dotnet publish 'D:\SPC\backend\MesSpc.Api\MesSpc.Api.csproj' -c Release -o $stage --no-restore;if($LASTEXITCODE){throw 'publish failed'}
+Copy-Item $target $backup -Recurse;Set-Content "$target\app_offline.htm" '<html><body>Updating test API</body></html>';Start-Sleep 2
+try{Get-ChildItem $stage -File -Recurse|Where-Object{$_.Name-notlike'appsettings*.json'-and$_.Name-ne'web.config'}|ForEach-Object{$rel=[IO.Path]::GetRelativePath($stage,$_.FullName);$dst=Join-Path $target $rel;New-Item (Split-Path $dst) -ItemType Directory -Force|Out-Null;Copy-Item $_.FullName $dst -Force}}catch{Copy-Item "$backup\*" $target -Recurse -Force;throw}finally{Remove-Item "$target\app_offline.htm" -Force -ErrorAction SilentlyContinue}
+[pscustomobject]@{Target=$target;Backup=$backup;Version=(Get-Item "$target\MesSpc.Api.dll").VersionInfo.ProductVersion;Environment=$cfg.AppEnvironment}|ConvertTo-Json

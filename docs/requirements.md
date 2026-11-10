@@ -576,3 +576,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - `SPC-CHEM-DAILY-SCOPE-1110-TASK-001`：藥液日報、月曆與PortalDaily只處理啟用中的`CHEM`；`PROCESS`咬蝕子組不得參與藥液重複判定，真正CHEM同鍵重複仍須阻擋。詳[規格](../specs/20261110-chemical-daily-scope-isolation/spec.md)與[驗證](../specs/20261110-chemical-daily-scope-isolation/verification.md)。
 - 2026-11-10 [11月藥液／咬蝕測試庫防重匯入](../specs/20261110-transfiles-november-daily-import/verification.md)：測試庫新增藥液160筆與咬蝕21份／1,750點，Receipt／Trace完整，相同來源重送0新增；4筆複驗衝突及QE1缺點維持隔離。正式補匯與09:00排程待另行授權。
 - 2026-11-10 [11月藥液／咬蝕正式僅新增補匯](../specs/20261110-transfiles-november-daily-import/verification.md)：正式新增藥液207筆及咬蝕9份，保留既有咬蝕12份，Portal 21份／1,750點齊備；120筆藥液同鍵異值未覆蓋。重送0新增，正式後248筆藥液及21份咬蝕與來源相同；09:00排程仍待執行。
+- 2026-11-10 [既有藥液日報載入保存判定](../specs/20261110-chemical-daily-saved-judgment/spec.md)：daily API回傳量測當時保存的初驗／最終判定及證據來源；Portal載入已有分析值時還原OK／NG，缺證據顯示無法判定與原因，不用目前主檔臆造。測試站完成，待登入畫面驗收，正式未發布。
