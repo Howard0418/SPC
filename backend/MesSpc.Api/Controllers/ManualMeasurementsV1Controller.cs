@@ -49,6 +49,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         var end = start.AddMonths(1);
         var rows = await db.VariableMeasurements.AsNoTracking()
             .Where(x => x.MachineId == machineId && (x.PortalDailyDate ?? x.MeasuredAt) >= start && (x.PortalDailyDate ?? x.MeasuredAt) < end
+                && db.PartProcessCharacteristics.Any(p => p.Id == x.PartProcessCharacteristicId && p.ControlScope == "CHEM" && p.IsEnabled)
                 && (x.SamplingPhase == samplingPhase || (samplingPhase == "OPEN" && (x.SamplingPhase == "GENERAL" || x.SamplingPhase.Trim() == "" || x.SamplingPhase == null)))
                 && (x.SamplingStage == samplingStage || x.SamplingStage == "GENERAL"))
             .Select(x => new { date = x.PortalDailyDate ?? x.MeasuredAt, x.PortalDailyDate, x.SourceType, x.SamplingPhase, x.SamplingStage })
@@ -77,6 +78,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         samplingPhase = NormalizeSamplingPhase(samplingPhase);
         var rows = await db.VariableMeasurements.AsNoTracking()
             .Where(x => x.MachineId == machineId && (x.PortalDailyDate == dailyDate || (x.PortalDailyDate == null && x.MeasuredAt >= dailyDate && x.MeasuredAt < nextDate))
+                && db.PartProcessCharacteristics.Any(p => p.Id == x.PartProcessCharacteristicId && p.ControlScope == "CHEM" && p.IsEnabled)
                 && (x.SamplingPhase == samplingPhase || (samplingPhase == "OPEN" && (x.SamplingPhase == "GENERAL" || x.SamplingPhase.Trim() == "" || x.SamplingPhase == null))) && x.SamplingStage == samplingStage && x.SourceType == SourceType.Manual)
             .OrderBy(x => x.PartProcessCharacteristicId).ThenBy(x => x.SampleNo).ToListAsync(ct);
         if (rows.Count == 0) return Ok(new { date, machineId, exists = false, rows = Array.Empty<object>() });

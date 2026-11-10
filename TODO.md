@@ -711,3 +711,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] `SPC-TEST-REIMPORT-20261105`（P0，T2～T5完成；主系統SPC／相依TransFiles與Portal顯示；DB：只寫測試PMR_SPC_TEST；發布：尚無；rollback：依本批ID受控封存）9月前資料不看，89組／933列衝突固定排除。原9月起5筆誤報已修正Secondary解析，40項測試及808檔重跑後，9月起3,215列全READY、錯誤0、衝突0；精簡5筆核對表已交付。T6測試DB備份與apply尚未執行，DB寫入0。[驗證](specs/20261105-test-sep-oct-reimport/verification.md)
 
 > 2026-11-09 `SPC-PPC-LOAD-1109-TASK-001`完成：管制項目設定頁主清單改為完成即顯示，12組輔助主檔與初始製程篩選背景並行；輔助失敗保留主清單並顯示錯誤。2項行為測試、2822×3語系及test build通過；測試Web0.1.124、首頁／JS/CSS MIME／同源API test及匿名401通過，正式未發布。登入後速度畫面因操作管道不可用列人工觀察；核心未完成41／SPC相關18保持。[驗證](specs/20261109-ppc-progressive-loading/verification.md)
+
+# 2026-11-10 藥液日報管制範圍隔離
+
+- [x] `SPC-CHEM-DAILY-SCOPE-1110-TASK-001`（P0；主系統 SPC API／相依 Portal；DB：無 schema 或資料異動；發布：測試及正式完成；rollback：回復 API／Web 前版）藥液日報、月曆與 PortalDaily 防重只處理 `CHEM`；測試驗收正常，正式API0.1.104／Portal1.0.249完成，資料／公式／F／schema保持。

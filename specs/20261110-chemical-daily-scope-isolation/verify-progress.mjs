@@ -1,0 +1,11 @@
+import {FileBlob,SpreadsheetFile} from 'file:///C:/Users/ihao_ting.PMR.000/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/@oai/artifact-tool/dist/artifact_tool.mjs';
+const workbook=await SpreadsheetFile.importXlsx(await FileBlob.load(process.argv[2]));
+const summary=await workbook.inspect({kind:'table',range:'小工作總表!A1:K3',include:'values,formulas',tableMaxRows:3,tableMaxCols:11,maxChars:7000});
+const task=await workbook.inspect({kind:'table',range:'小工作總表!A275:K275',include:'values,formulas',tableMaxRows:1,tableMaxCols:11,maxChars:5000});
+const drawings=await workbook.inspect({kind:'drawing',sheetId:'專案進度表',maxChars:60000});
+const errors=await workbook.inspect({kind:'match',searchTerm:'#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A|#NUM!|#NULL!|#SPILL!|#CALC!',options:{useRegex:true,maxResults:100},maxChars:3000});
+if(!summary.ndjson.includes('核心未完成34件，SPC相關10件')||!summary.ndjson.includes('242')||!summary.ndjson.includes('206'))throw new Error('summary failed');
+if(!task.ndjson.includes('SPC-CHEM-DAILY-SCOPE-1110-TASK-001')||!task.ndjson.includes('正式發布完成'))throw new Error('task failed');
+if(!drawings.ndjson.includes('SPC-CHEM-DAILY-SCOPE-1110-TASK-001 2026-11-10 正式發布完成'))throw new Error('milestone failed');
+if(!errors.ndjson.includes('matched 0'))throw new Error('formula errors');
+console.log(JSON.stringify({summary:'ok',task:'ok',milestone:'ok',formulaErrors:0}));

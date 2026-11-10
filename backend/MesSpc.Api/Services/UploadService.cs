@@ -585,6 +585,8 @@ public class UploadService(AppDbContext db, SpcService spcService)
                 var measuredAt = TryDateTime(Get(payload, "MeasuredAt"), DateTime.UtcNow);
                 var sampleNo = TryInt(Get(payload, "SampleNo"), 1);
                 var isPortalDaily = string.Equals(batch.SourceType, "PortalDaily", StringComparison.OrdinalIgnoreCase);
+                if (isPortalDaily && (!string.Equals(ctx.Mapping.ControlScope, "CHEM", StringComparison.OrdinalIgnoreCase) || !ctx.Mapping.IsEnabled))
+                    throw new InvalidOperationException("PortalDaily 僅允許寫入啟用中的藥液（CHEM）管制項目。");
                 var portalDailyDate = isPortalDaily ? ToTaipeiDate(measuredAt) : (DateTime?)null;
                 var nextDailyDate = portalDailyDate?.AddDays(1);
                 var samplingPhase = NormalizeSamplingPhase(Get(payload, "SamplingPhase"));
@@ -1071,6 +1073,11 @@ public class UploadService(AppDbContext db, SpcService spcService)
                     var sampleNo = TryInt(Get(row, "SampleNo"), 1);
                     var lotNo = Get(row, "LotNo") ?? "";
                     var isDaily=expectedDataCategory=="Variable" && string.Equals(batch.SourceType,"PortalDaily",StringComparison.OrdinalIgnoreCase);
+                    if (isDaily && (!string.Equals(ctx.Mapping.ControlScope,"CHEM",StringComparison.OrdinalIgnoreCase) || !ctx.Mapping.IsEnabled))
+                    {
+                        detail.IsValid=false;
+                        db.UploadErrors.Add(new UploadError { UploadBatchId=batch.UploadBatchId, UploadDetailId=detail.Id, RowNo=rowNo, FieldName="PartProcessCharacteristicId", ErrorCode="PORTAL_DAILY_SCOPE_INVALID", ErrorMessage="PortalDaily 僅允許啟用中的藥液（CHEM）管制項目。" });
+                    }
                     var dailyDate=ToTaipeiDate(measuredAt);
                     var nextDailyDate=dailyDate.AddDays(1);
                     var shift=NormalizeSamplingPhase(Get(row,"SamplingPhase"));
