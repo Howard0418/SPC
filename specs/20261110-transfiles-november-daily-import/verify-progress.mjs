@@ -1,0 +1,14 @@
+import fs from 'node:fs/promises';
+import {FileBlob,SpreadsheetFile} from 'file:///C:/Users/ihao_ting.PMR.000/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/@oai/artifact-tool/dist/artifact_tool.mjs';
+const workbook=await SpreadsheetFile.importXlsx(await FileBlob.load(process.argv[2]));
+const summary=(await workbook.inspect({kind:'table',range:'小工作總表!A1:K3',include:'values,formulas',tableMaxRows:3,tableMaxCols:11,maxChars:7000})).ndjson;
+const task=(await workbook.inspect({kind:'table',range:'小工作總表!A276:K276',include:'values,formulas',tableMaxRows:1,tableMaxCols:11,maxChars:5000})).ndjson;
+const drawings=(await workbook.inspect({kind:'drawing',sheetId:'專案進度表',maxChars:60000})).ndjson;
+const errors=(await workbook.inspect({kind:'match',searchTerm:'#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A|#NUM!|#NULL!|#SPILL!|#CALC!',options:{useRegex:true,maxResults:100},maxChars:3000})).ndjson;
+if(!summary.includes('243')||!summary.includes('核心未完成34件'))throw new Error('summary failed');
+if(!task.includes('TRANSFILES-NOV-DAILY-1110-TASK-001')||!task.includes('唯讀預檢完成'))throw new Error('task failed');
+if(!drawings.includes('TRANSFILES-NOV-DAILY-1110-TASK-001 2026-11-10 唯讀預檢完成'))throw new Error('milestone failed');
+if(!errors.includes('matched 0'))throw new Error('formula errors');
+const preview=await workbook.render({sheetName:'專案進度表',range:'A247:AK250',scale:1.2,format:'png'});
+await fs.writeFile('D:/SPC/.november-daily-import-1110/progress-reopen.png',new Uint8Array(await preview.arrayBuffer()));
+console.log(JSON.stringify({summary:'ok',task:'ok',milestone:'ok',formulaErrors:0}));
