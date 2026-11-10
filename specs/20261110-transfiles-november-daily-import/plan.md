@@ -5,4 +5,6 @@
 4. TASK-004：產生正式補匯計畫、備份與回復方案；取得授權後才寫入。
 5. TASK-005：建立預設停用的每日 09:00 前一日 runner，驗收後另行授權啟用。
 
+TASK-005實作：`daily-production-import.ps1` 以台北昨天建立隔離工作目錄及dry-run設定，依序執行來源掃描、正式快照、對帳、正式預覽、必要時備份／apply與最終verify；任何阻擋皆非零退出。Windows工作固定09:00、StartWhenAvailable、IgnoreNew，使用目前核准操作者的互動登入權杖存取UNC，不保存密碼。
+
 回復：TASK-001 只變更本機非機密來源路徑，可還原設定；無資料庫回復需求。

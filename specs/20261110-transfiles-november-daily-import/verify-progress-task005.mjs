@@ -1,0 +1,11 @@
+import fs from 'node:fs/promises';import {FileBlob,SpreadsheetFile} from 'file:///C:/Users/ihao_ting.PMR.000/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/@oai/artifact-tool/dist/artifact_tool.mjs';
+const wb=await SpreadsheetFile.importXlsx(await FileBlob.load(process.argv[2]));
+const summary=(await wb.inspect({kind:'table',range:'小工作總表!A1:K3',include:'values,formulas',tableMaxRows:3,tableMaxCols:11,maxChars:7000})).ndjson;
+const task=(await wb.inspect({kind:'table',range:'小工作總表!A280:K280',include:'values,formulas',tableMaxRows:1,tableMaxCols:11,maxChars:6000})).ndjson;
+const drawings=(await wb.inspect({kind:'drawing',sheetId:'專案進度表',maxChars:100000})).ndjson;
+const errors=(await wb.inspect({kind:'match',searchTerm:'#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A|#NUM!|#NULL!|#SPILL!|#CALC!',options:{useRegex:true,maxResults:100},maxChars:3000})).ndjson;
+if(!summary.includes('核心未完成34件')||!summary.includes('SPC相關10件'))throw new Error('summary failed');
+if(!task.includes('TRANSFILES-NOV-DAILY-1110-TASK-005')||!task.includes('正式主機排程待啟用'))throw new Error('task failed');
+if(!drawings.includes('TRANSFILES-NOV-DAILY-1110-TASK-005 2026-11-10 工具完成排程待啟用'))throw new Error('milestone failed');
+if(!errors.includes('matched 0'))throw new Error('formula errors');
+const p=await wb.render({sheetName:'專案進度表',range:'A263:AK266',scale:1.2,format:'png'});await fs.writeFile(process.argv[3],new Uint8Array(await p.arrayBuffer()));console.log(JSON.stringify({summary:'ok',task:'ok',milestone:'ok',formulaErrors:0}));

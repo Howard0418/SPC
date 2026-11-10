@@ -20,4 +20,10 @@ public sealed class NovemberImportTargetTests
   Assert.Throws<InvalidOperationException>(()=>NovemberImportTarget.Parse(new[]{"--prod-apply","--confirm-spc=pmr_spc_2026","--confirm-portal=PMR_PORTAL_UAT","--confirm-reconciliation-sha256=ABC"},"ABC"));
   Assert.Throws<InvalidOperationException>(()=>NovemberImportTarget.Parse(new[]{"--prod-apply","--confirm-spc=PMR_SPC_2026","--confirm-portal=PMR_PORTAL_UAT","--confirm-reconciliation-sha256=OLD"},"ABC"));
  }
+ [Fact] public void DailyProductionModeRequiresOneIsoDate()
+ {
+  Assert.Throws<InvalidOperationException>(()=>NovemberImportTarget.Parse(new[]{"--prod-plan","--daily-date=2026/11/10"},"ABC"));
+  var target=NovemberImportTarget.Parse(new[]{"--prod-plan","--daily-date=2026-11-10"},"ABC");
+  Assert.Equal(new DateOnly(2026,11,10),target.DailyDate);
+ }
 }
