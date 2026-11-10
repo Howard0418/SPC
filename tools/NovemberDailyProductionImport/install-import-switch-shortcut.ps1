@@ -1,0 +1,3 @@
+[CmdletBinding()]param([string]$ShortcutPath=(Join-Path ([Environment]::GetFolderPath('Desktop')) 'PMR 每日匯入開關.lnk') )
+$pwsh=(Get-Command pwsh.exe -ErrorAction Stop).Source;$script=(Resolve-Path (Join-Path $PSScriptRoot 'import-switch-control.ps1')).Path
+$shell=New-Object -ComObject WScript.Shell;$shortcut=$shell.CreateShortcut($ShortcutPath);$shortcut.TargetPath=$pwsh;$shortcut.Arguments="-NoProfile -ExecutionPolicy Bypass -File `"$script`"";$shortcut.WorkingDirectory=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path;$shortcut.Description='啟用或停用每日排程，選擇藥液與咬蝕量';$shortcut.Save();Get-Item $ShortcutPath

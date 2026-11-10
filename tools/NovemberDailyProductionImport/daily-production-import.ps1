@@ -12,8 +12,11 @@ $date = $ForDate.ToString('yyyy-MM-dd')
 $runId = '{0}-{1}' -f $date,(Get-Date -Format 'yyyyMMdd-HHmmss')
 $runDir = Join-Path $RunRoot $runId
 $lockPath = Join-Path $RunRoot 'daily-production-import.lock'
+$settingsPath = Join-Path $RunRoot 'settings.json'
 $summaryPath = Join-Path $runDir 'summary.json'
 $lock = $null
+Import-Module (Join-Path $PSScriptRoot 'ImportSwitchSettings.psm1') -Force
+$switches = Get-ImportSwitchSettings -Path $settingsPath
 
 function Write-Summary([string]$Status,[string]$Message,[hashtable]$Extra = @{}) {
     $summary = [ordered]@{
@@ -33,6 +36,7 @@ function Write-Summary([string]$Status,[string]$Message,[hashtable]$Extra = @{})
 
 try {
     New-Item -ItemType Directory -Path $RunRoot -Force | Out-Null
+    if(-not $switches.MasterEnabled){Write-Summary 'Disabled' '每日匯入總開關已關閉；未掃描來源、未連線資料庫。' @{enableChemical=$switches.EnableChemical;enableEtching=$switches.EnableEtching};exit 0}
     try { $lock = [IO.File]::Open($lockPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None) }
     catch [IO.IOException] { throw "另一個每日匯入仍在執行：$lockPath" }
     New-Item -ItemType Directory -Path $runDir -Force | Out-Null
@@ -63,6 +67,9 @@ try {
     $sourceReport = Get-ChildItem -LiteralPath $sourceDir -Filter 'scheduled_import_*.json' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if (-not $sourceReport) { throw '來源掃描未產生報告。' }
     $source = Get-Content -LiteralPath $sourceReport.FullName -Raw | ConvertFrom-Json
+    $source.items=@(Select-EnabledImportItems -Items $source.items -Settings $switches)
+    $source.errors=@()
+    $source | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $sourceReport.FullName -Encoding utf8
     $blockedStatuses = @('error','invalid_format','manual_review','quarantined')
     $blocked = @($source.items | Where-Object { $_.status -in $blockedStatuses })
     if ($source.errors.Count -gt 0 -or $blocked.Count -gt 0) {
@@ -81,7 +88,7 @@ try {
     $chemicalCandidates = @($recon.chemical.rows | Where-Object classification -eq 'insert_candidate').Count
     $etchCandidates = @($recon.etching.rows | Where-Object classification -eq 'insert_candidate').Count
     if (($chemicalCandidates + $etchCandidates) -eq 0) {
-        Write-Summary 'NoChange' '來源皆已存在或當日沒有可匯入資料；未備份、未寫入。' @{ sourceReport=$sourceReport.FullName; reconciliation=$reconciliation; chemicalCandidates=0; etchCandidates=0 }
+        Write-Summary 'NoChange' '啟用類型的來源皆已存在或當日沒有可匯入資料；未備份、未寫入。' @{ sourceReport=$sourceReport.FullName; reconciliation=$reconciliation; chemicalCandidates=0; etchCandidates=0;enableChemical=$switches.EnableChemical;enableEtching=$switches.EnableEtching }
         exit 0
     }
 
