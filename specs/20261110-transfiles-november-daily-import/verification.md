@@ -52,3 +52,6 @@
 - 未完成：目前操作主機為 `PC-PA16560048`，不是核准排程主機，故未將正式排程錯裝到個人電腦；須於 `PMR-SPC-SRV` 以可讀UNC且已核准的維護身分執行安裝器，再確認09:00觸發與首份summary。
 - 回復：排程尚未建立，無需回復正式資料；工具回復可移除本次兩支腳本。工具未修改網站、正式資料或來源Excel。
 - 進度表：備份 `Voice/備份/進度表-20261110-141701-TRANSFILES-NOV-DAILY-1110-TASK-005.xlsx` 後更新原檔；中央列維持核心未完成34／SPC相關10，並標記工具完成、正式主機排程待啟用。Artifact重讀／公式掃描、甘特里程碑、ZIP封裝及OpenXML SDK驗證均通過（0錯誤）。
+- 使用者確認可改在本機建立後，於 `PC-PA16560048` 建立並啟用「PMR TransFiles 每日前一日正式匯入」；每日09:00、StartWhenAvailable、IgnoreNew、2小時上限，身分為 `PMR\ihao_ting` 的Interactive token。
+- 首次手動觸發於2026-11-10 15:25完成，`LastTaskResult=0`；處理11/09資料，藥液67筆、咬蝕3份皆為existing_same，summary=`NoChange`，未建立備份、未寫入正式資料。下一次排程為2026-11-11 09:00。
+- 運作限制：本機需維持登入狀態並能存取UNC來源、SQL及本機D槽工具；排程執行紀錄位於 `C:\ProgramData\PMR\TransFilesDaily`。

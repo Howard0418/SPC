@@ -1,0 +1,18 @@
+import fs from 'node:fs/promises';
+import {FileBlob,SpreadsheetFile} from 'file:///C:/Users/ihao_ting.PMR.000/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/@oai/artifact-tool/dist/artifact_tool.mjs';
+const [source,output,preview]=process.argv.slice(2);const wb=await SpreadsheetFile.importXlsx(await FileBlob.load(source));
+const tasks=wb.worksheets.getItem('小工作總表'),project=wb.worksheets.getItem('專案進度表');
+tasks.getRange('E280:F280').values=[['本機排程啟用／首次NoChange驗證完成','否']];
+tasks.getRange('I280').values=[['4項目標解析測試通過；本機每日09:00排程已啟用。首次手動觸發LastTaskResult=0，11/09藥液67筆／咬蝕3份均相同並NoChange，未備份、未寫入。下一次11/11 09:00。']];
+tasks.getRange('K280').values=[['11/10使用者同意本機建立；PC-PA16560048以PMR\\ihao_ting互動身分執行，需本機登入且可連UNC。']];
+tasks.getRange('A1').values=[['小工作總表（截至2026-11-10；每日正式匯入排程啟用）']];
+tasks.getRange('B2').values=[[243]];tasks.getRange('D2').values=[[33]];tasks.getRange('F2').values=[[208]];
+tasks.getRange('A3').values=[['核心未完成33件，SPC相關9件；本機每日09:00前一日正式防重匯入已啟用，首次11/09 NoChange驗證完成。需本機登入且可連UNC。']];
+project.getRange('A263').values=[['2026-11-10：每日正式防重匯入排程啟用']];
+project.getRange('S265').values=[['本機排程啟用／首次NoChange驗證完成']];project.getRange('AA265').values=[['◆ 09:00啟用／LastTaskResult 0']];
+project.getRange('A266').values=[['PC-PA16560048已建立每日09:00排程，使用PMR\\ihao_ting互動身分。首次手動觸發處理11/09：藥液67筆與咬蝕3份全數相同，NoChange且未備份／未寫入；下一次11/11 09:00。']];
+project.getRange('AJ5').values=[['11/10本機每日09:00正式防重匯入排程啟用']];project.getRange('AK5').values=[['首次LastTaskResult 0；11/09 NoChange，未重複匯入。']];
+const drawings=(await wb.inspect({kind:'drawing',sheetId:'專案進度表',maxChars:100000})).ndjson;
+if(!drawings.includes('TRANSFILES-NOV-DAILY-1110-TASK-005 2026-11-10 工具完成排程待啟用'))throw new Error('milestone missing');
+wb.recalculate();const errors=(await wb.inspect({kind:'match',searchTerm:'#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A|#NUM!|#NULL!|#SPILL!|#CALC!',options:{useRegex:true,maxResults:100},maxChars:3000})).ndjson;if(!errors.includes('matched 0'))throw new Error('formula errors');
+const p=await wb.render({sheetName:'專案進度表',range:'A263:AK266',scale:1.2,format:'png'});await fs.writeFile(preview,new Uint8Array(await p.arrayBuffer()));await (await SpreadsheetFile.exportXlsx(wb)).save(output);
