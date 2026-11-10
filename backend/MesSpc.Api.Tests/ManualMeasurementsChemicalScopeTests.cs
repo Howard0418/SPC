@@ -90,6 +90,21 @@ public class ManualMeasurementsChemicalScopeTests
         Assert.Contains("\"specificationVersionNo\":7", json);
     }
 
+    [Fact]
+    public async Task Daily_UsesCurrentPpcRange_WhenNoSpecificationVersionExists()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        await fixture.Db.Database.ExecuteSqlRawAsync(
+            "UPDATE PartProcessCharacteristics SET LSL=0, USL=0.5 WHERE Id=1");
+        fixture.AddMeasurements(ppcId: 1, count: 1, measuredAt: new DateTime(2026, 11, 10));
+        await fixture.Db.SaveChangesAsync();
+
+        var result = await fixture.Controller.GetDaily(1, new DateOnly(2026, 11, 10), "OPEN", samplingStage: "GENERAL");
+        var json = JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(result).Value);
+        Assert.Contains("\"initialJudgment\":\"NG\"", json);
+        Assert.Contains("\"judgmentSource\":\"CurrentSpecificationFallback\"", json);
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         private readonly SqliteConnection connection;

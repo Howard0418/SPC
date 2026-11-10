@@ -31,6 +31,8 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
         var specificationVersions=await db.SpecificationLimitVersions.AsNoTracking()
             .Where(x=>ppcIds.Contains(x.PartProcessCharacteristicId)).ToListAsync();
         var versionsByPpc=specificationVersions.ToLookup(x=>x.PartProcessCharacteristicId);
+        var currentSpecifications=await db.PartProcessCharacteristics.AsNoTracking()
+            .Where(x=>ppcIds.Contains(x.Id)).Select(x=>new{x.Id,x.LSL,x.USL}).ToDictionaryAsync(x=>x.Id);
         var byMeasurement=traces.ToLookup(x=>x.VariableMeasurementId);
         var saved=calculations.ToDictionary(x=>x.VariableMeasurementId!.Value);
         var output=new Dictionary<long,ChemicalHistoryPresentation>();
@@ -77,6 +79,8 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
             }
             else if(NearestVersion(versionsByPpc[row.PartProcessCharacteristicId],row.MeasuredAt) is { } version)
                 output[row.Id]=PresentNearestVersion(row,version);
+            else if(currentSpecifications.TryGetValue(row.PartProcessCharacteristicId,out var current))
+                output[row.Id]=PresentCurrentSpecification(row,current.LSL,current.USL);
             else output[row.Id]=new(value,row.RecheckValue.HasValue,"Unknown","Unknown","Unavailable",
                 "缺少相符的歷史判定或規格紀錄，無法判定","HISTORICAL_EVIDENCE_MISSING","SourceEvidenceRequired",
                 "補回量測當時的Receipt／Trace、公式F與規格版本後重新核對；不可套用目前主檔。");
@@ -105,6 +109,19 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
         return new(value,row.RecheckValue.HasValue,Judge(row.MeasuredValue),Judge(value),"NearestSpecificationVersion",
             $"量測日無對應保存規格；依最近的規格版本 {version.VersionNo}（{version.ChangedAt:yyyy-MM-dd}）LSL／USL判定",
             null,"NotRequired",null,version.VersionNo,version.ChangedAt);
+    }
+
+    private static ChemicalHistoryPresentation PresentCurrentSpecification(VariableMeasurement row,double? lsl,double? usl)
+    {
+        var value=row.RecheckValue??row.MeasuredValue;
+        if((!lsl.HasValue&&!usl.HasValue)||(lsl.HasValue&&!double.IsFinite(lsl.Value))
+            ||(usl.HasValue&&!double.IsFinite(usl.Value))||lsl>usl)
+            return new(value,row.RecheckValue.HasValue,"Unknown","Unknown","CurrentSpecificationFallback",
+                "找不到規格版本歷史，且目前項目上下限缺漏或無效，無法判定","CURRENT_SPEC_LIMITS_INVALID",
+                "SourceEvidenceRequired","請到管制項目設定補齊有效的LSL／USL。");
+        string Judge(double input)=>(lsl.HasValue&&input<lsl.Value)||(usl.HasValue&&input>usl.Value)?"NG":"OK";
+        return new(value,row.RecheckValue.HasValue,Judge(row.MeasuredValue),Judge(value),"CurrentSpecificationFallback",
+            "找不到可追溯的規格版本；依目前管制項目的LSL／USL範圍判定");
     }
 
     private static bool TryReadLimits(string? json,out double? lsl,out double? usl)
