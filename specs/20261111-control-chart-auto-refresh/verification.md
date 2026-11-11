@@ -16,7 +16,7 @@
 ## 未執行項目、限制及後續
 
 - 測試站登入後的跨分頁實際畫面驗收待發布後執行。
-- 2026-11-11 已建立測試發布包 `spc-chart-auto-refresh-20261111`。既有維護身分的WinRM權限已恢復，但測試發布 Plan 發現 `SpcSingleTest` 與 `SpcApiTest` 共用 `SpcSingleTest` IIS application pool；發布工具為避免停止集區時中斷另一站而拒絕繼續。未建立發布備份、未停止服務、未寫測試或正式資料庫，正式站未發布。需先取得使用者對IIS集區隔離或測試站Web-only發布流程的明確選擇。
+- 2026-11-11：依使用者選擇完成測試 IIS 集區隔離，`SpcApiTest` 與 `SpcSingleTest` 已各自使用獨立 pool，健康檢查通過。新的測試發布 Plan 已通過；Apply 則在規定的測試庫 `COPY_ONLY`／`CHECKSUM`／`RESTORE VERIFYONLY` 前置步驟停止，原因為執行身分沒有 `PMR_SPC_TEST` 的 `BACKUP DATABASE` 權限。證據顯示尚未開始套用檔案、migration 或資料庫寫入，兩 pool 已恢復 Started，正式站未發布。不得跳過備份；待具備既有維護備份權限的身分可用後重試。
 
 ## 基準與變更紀錄更新位置
 
