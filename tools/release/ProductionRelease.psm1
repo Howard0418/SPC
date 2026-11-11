@@ -5,8 +5,8 @@ function Get-ReleaseProfile([ValidateSet('SPC','Portal')][string]$System,[Valida
     if($Environment -eq 'Test') {
         if($System -eq 'SPC') {
             $p=@{HostName='PC-PA16560048.pmr.com.tw';Machine='PC-PA16560048';Database='PMR_SPC_TEST';Hosts=@('PC-PA16560048.pmr.com.tw','172.16.110.27','SPCTEST.pmr.com.tw');ApiBase='https://SPCTEST.pmr.com.tw';WebBase='https://SPCTEST.pmr.com.tw';Targets=@(
-                @{Site='SpcSingleTest';Pool='SpcSingleTest';Path='D:\SPC\release\test\backend';IisPath='D:\SPC\release\test\backend';Role='Api'},
-                @{Site='SpcSingleTest';Pool='SpcSingleTest';Path='D:\SPC\release\test\frontend';IisPath='D:\SPC\release\test\backend';Role='Web'})}
+                @{Site='SpcApiTest';Pool='SpcApiTest';Path='D:\SPC\release\test\backend';IisPath='D:\SPC\release\test\backend';Role='Api'},
+                @{Site='SpcSingleTest';Pool='SpcSingleTest';Path='D:\SPC\release\test\frontend';IisPath='D:\SPC\release\test\frontend';Role='Web'})}
         }else{
             $p=@{HostName='PC-PA16560048.pmr.com.tw';Machine='PC-PA16560048';Database='PMR_PORTAL_TEST';Hosts=@('PC-PA16560048.pmr.com.tw','172.16.110.27','portaltest.pmr.com.tw');ApiBase='http://172.16.110.27:8091';WebBase='https://portaltest.pmr.com.tw';Targets=@(
                 @{Site='PmrPortalApi';Pool='PmrPortal';Path='D:\PmrPortal\publish\portal-api';IisPath='D:\PmrPortal\publish\portal-api';Role='Api'},
