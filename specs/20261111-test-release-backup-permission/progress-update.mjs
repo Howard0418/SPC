@@ -7,11 +7,11 @@ const tasks = workbook.worksheets.getItem('小工作總表');
 const project = workbook.worksheets.getItem('專案進度表');
 
 tasks.getRange('E287:K287').values = [[
-  'Portal正式已發布／SPC備份已授權但VERIFYONLY受阻', '是', 46337,
-  '查詢頁採SPC effectiveValue；SPC測試發布principal已具PMR_SPC_TEST備份權限，但還原驗證需要更高且未授權的權限。',
-  'SpcAuditApiTest003已加入測試庫db_backupoperator且BACKUP DATABASE=1；R2 Plan與COPY_ONLY備份成功。RESTORE VERIFYONLY回SQL262/class14，newFiles=0，API仍0.1.125。',
+  'Portal正式已發布／SPC測試API126已完成', '是', 46337,
+  '查詢頁採SPC effectiveValue；SPC測試發布已完成必要COPY_ONLY、CHECKSUM、RESTORE VERIFYONLY及連線驗證。',
+  'R3完成，測試API0.1.126／test；Web、JS/CSS MIME、health、version與兩AppPool通過。暫時dbcreator已撤除，sysadmin始終未授予。',
   'D:/SPC/specs/20261111-test-release-backup-permission/spec.md',
-  '未授予dbcreator、CREATE ANY DATABASE或sysadmin；未套用API126，正式SPC未發布。待核准暫時較高權限或專用維護principal。'
+  '最終dbcreator=0／sysadmin=0／BACKUP DATABASE=1；正式SPC未發布。2026/11/9 N1兩張截圖為不同槽位／項目，兩環境資料一致。'
 ]];
 tasks.getRange('G287').setNumberFormat('yyyy-mm-dd');
 
@@ -23,19 +23,19 @@ project.getRange('M300').values = [['實際日期']];
 project.getRange('S300').values = [['狀態']];
 project.getRange('AA300').values = [['11/11 權限里程碑']];
 project.getRange('A301').values = [['SPC']];
-project.getRange('C301').values = [['◆ 測試備份權限已授予／VERIFYONLY受阻']];
+project.getRange('C301').values = [['◆ 測試API126發布完成／暫時權限已撤除']];
 project.getRange('M301').values = [[46337]];
 project.getRange('M301').setNumberFormat('yyyy-mm-dd');
-project.getRange('S301').values = [['備份成功／還原驗證權限待核准']];
-project.getRange('AA301').values = [['◆ DB備份權限1；SQL262阻擋']];
-project.getRange('A302').values = [['測試發布principal已加入PMR_SPC_TEST db_backupoperator，COPY_ONLY備份成功；RESTORE VERIFYONLY需更高權限而回SQL262。未擴權、未套用API126、未發布正式SPC。']];
+project.getRange('S301').values = [['測試發布完成／正式SPC未發布']];
+project.getRange('AA301').values = [['◆ API126；dbcreator已撤除']];
+project.getRange('A302').values = [['R3完成PMR_SPC_TEST COPY_ONLY／CHECKSUM／RESTORE VERIFYONLY及API126發布；Web、資產、health、version與test標籤通過。暫時dbcreator已撤除，sysadmin未授予，正式庫未連線。']];
 const milestone = project.shapes.add({
   geometry: 'diamond',
   anchor: { from: { row: 300, col: 27, rowOffsetPx: 3, colOffsetPx: 2 }, extent: { widthPx: 8, heightPx: 8 } },
   fill: '#F59E0B',
   line: { style: 'solid', fill: '#B45309', width: 1 }
 });
-milestone.name = 'SPC-RELEASE-BACKUP-PERMISSION-1111-TASK-001 2026-11-11 VERIFYONLY受阻';
+milestone.name = 'SPC-RELEASE-BACKUP-PERMISSION-1111-TASK-001 2026-11-11 測試發布完成';
 
 workbook.recalculate();
 const errors = (await workbook.inspect({kind:'match',searchTerm:'#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A|#NUM!|#NULL!|#SPILL!|#CALC!',options:{useRegex:true,maxResults:100},maxChars:3000})).ndjson;

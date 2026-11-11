@@ -1647,3 +1647,6 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 # 2026-11-11 SPC-RELEASE-BACKUP-PERMISSION-1111-TASK-001
 - 目的：依使用者授權，為實際SPC測試發布維護principal補上`PMR_SPC_TEST`最小`BACKUP DATABASE`權限，使既有發布工具可完成必要COPY_ONLY／CHECKSUM／VERIFYONLY；正式庫、資料寫入與其他角色不在範圍。
 
+- 依使用者追加授權，以finally保護暫時加入`dbcreator`完成測試發布及VERIFYONLY，完成後立即撤除；全程不授予`sysadmin`，不連正式資料庫。
+- 測試API0.1.126與Web／資產／health／version／test驗證通過；另唯讀確認使用者兩張截圖為不同槽位／分析項目，正式與測試資料一致。
+- 依既有正式發布授權完成正式API0.1.126；正式備份／VERIFYONLY、Web／資產／API／production與瀏覽器實際API基底通過，資料不改寫。

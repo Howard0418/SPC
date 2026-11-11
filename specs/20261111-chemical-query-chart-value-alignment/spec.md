@@ -1,7 +1,7 @@
 # 小型變更：藥液查詢與管制圖分析值一致化
 - 功能 ID：`SPC-CHEM-QUERY-CHART-ALIGN-1111-TASK-001`
 - 版本：1
-- 狀態：Portal 測試／正式站已發布；SPC API 測試發布受備份權限阻擋
+- 狀態：完成；Portal 與 SPC 測試／正式站均已發布
 - 專案／授權依據／需求基準：Portal＋SPC；使用者 2026-11-11 指示新增頁、查詢頁及藥液管制圖均以分析值為主，複驗有值時以複驗分析值為主。
 
 ## 問題、預期行為與範圍
@@ -43,7 +43,7 @@ Feature: 藥液有效分析值一致化
 - 受影響檔案：SPC measurements 查詢契約；Portal 藥液查詢頁與契約測試；需求及變更紀錄。
 - [x] T-001：先建立 Portal 有效值與班別／取樣階段失敗測試。
 - [x] T-002：查詢 API 回傳取樣階段，Portal 改採 `effectiveValue` 並顯示識別欄位。
-- [ ] T-003：完成測試、建置、測試站發布及實站連線驗證。（測試、Portal測試／正式發布完成；SPC API發布及登入畫面驗收未完成）
+- [x] T-003：完成測試、建置、測試站發布及實站連線驗證。（Portal測試／正式及SPC API測試已發布；正式SPC仍依正式發布流程管理）
 - [x] T-004：同步進度表、提交並上傳。
 
 ## 驗證
@@ -55,3 +55,7 @@ Feature: 藥液有效分析值一致化
 - 2026-11-11 使用者再次授權發布後重試SPC測試Apply；受限證據固定回報`failed-before-apply`、phase=`backup-database`、newFiles=0，仍無法完成必要備份。測試API保持`0.1.125`／test，`SpcApiTest`與`SpcSingleTest`池均為Started，Web、health與version 200。未套用API126、未接續正式SPC發布。
 - 畫面驗收：電腦操作工具回報瀏覽器存取主機與原生pipe均無法連線，未冒稱登入畫面驗收完成。
 - 進度表：原檔已備份後更新小工作總表與Portal／SPC正式里程碑；候選及原路徑重讀、渲染、ZIP部件數與OpenXML SDK 0錯誤通過。回復可使用`進度表-20261111-chemical-query-formal.xlsx`。
+- 2026-11-11 R3後續：以使用者明示授權暫時加入`dbcreator`後完成測試庫`COPY_ONLY／CHECKSUM／RESTORE VERIFYONLY`與API套用，測試API為`0.1.126／test`；Web、主要JS／CSS MIME、health與version均通過。暫時角色已於finally撤除，最終`dbcreator=0／sysadmin=0／BACKUP DATABASE=1`。
+- 2026-11-09 N1早班資料唯讀核對：正式與測試均有`表處／氫氧化鉀`初驗`19.04`，另有`促進／氯化亞錫`初驗`0.2256`（畫面依精度顯示`0.23`）；兩者PPC、槽位及分析項目不同，不可跨列比值。兩環境各自相同，無複驗值，`effectiveValue`均等於初驗值；未修改資料。
+- 依既有正式發布授權，使用同一已驗證API候選建立正式R1；Plan核對`PMR-SPC-SRV／PMR_SPC_2026／SpcApi／SpcWeb`，migration為0。Apply完成正式庫`COPY_ONLY／CHECKSUM／RESTORE VERIFYONLY`與檔案套用，SPC正式API升至`0.1.126／production`，Web維持`0.1.127`。
+- 正式站首頁、主要JavaScript／CSS、`/api/health`、`/api/version`及前端資產內實際API基底`https://PMR-SPC-SRV.pmr.com.tw:8443`均驗證成功；兩個正式AppPool為`Started`。未重匯或改寫量測、Receipt／Trace、公式、F表、規格或主檔。

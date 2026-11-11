@@ -2766,4 +2766,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 使用者明示正式發布授權後，Portal從既有正式230／271基準只加入本件查詢修正，正式升至API1.0.231／Web1.0.272。正式Plan核對PMR-WEB、PmrPortalApi/Web與PMR_PORTAL_UAT，無migration；DB備份COPY_ONLY／CHECKSUM／VERIFYONLY、Apply及Login／CSS／JS／health production／app-version／匿名401通過。SPC API126仍受測試庫備份權限阻擋，未發布測試或正式；量測與主檔資料未異動。
 - 再次取得發布授權後重試SPC測試Apply，仍於`backup-database`回`failed-before-apply`，newFiles=0；測試API保持0.1.125／test，兩個AppPool均Started且Web／health／version 200。未越過必要備份或測試先行，正式SPC未發布。
 - 依使用者授權，為測試發布principal `SpcAuditApiTest003`在`PMR_SPC_TEST`加入`db_backupoperator`，應用程式身分`BACKUP DATABASE=1`且未連正式庫。新R2 Plan通過並已產生COPY_ONLY備份，但`RESTORE VERIFYONLY`以SQL 262／class14拒絕；未擴張至dbcreator／CREATE ANY DATABASE／sysadmin，API126仍未套用，正式SPC未發布。
+- 使用者後續明示授權暫時`dbcreator`後，R3完成測試庫`COPY_ONLY／CHECKSUM／RESTORE VERIFYONLY`與API套用；測試API0.1.126、Web／JS／CSS MIME、health／version／test及兩AppPool通過。finally立即撤除`dbcreator`，最終`dbcreator=0／sysadmin=0／BACKUP DATABASE=1`，正式庫未連線。另唯讀核對2026/11/9 N1：`表處／氫氧化鉀=19.04`與`促進／氯化亞錫=0.2256`為不同PPC，正式與測試一致，無資料修改。
+- 依既有正式授權完成SPC正式R1：Plan核對PMR-SPC-SRV／PMR_SPC_2026，migration 0；正式庫COPY_ONLY／CHECKSUM／VERIFYONLY及Apply完成。正式API0.1.126／production，Web0.1.127保持；首頁、JS／CSS MIME、health／version、瀏覽器實際API基底與兩AppPool通過。未重匯或改寫量測、Receipt／Trace、公式、F表、規格或主檔。
 

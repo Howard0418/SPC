@@ -1,7 +1,7 @@
 # 測試站發布備份權限
 - 功能 ID：`SPC-RELEASE-BACKUP-PERMISSION-1111-TASK-001`
 - 日期：2026-11-11
-- 狀態：`BACKUP DATABASE`已授予；發布仍受`RESTORE VERIFYONLY`權限阻擋
+- 狀態：完成；測試 API 0.1.126 已發布，暫時 `dbcreator` 已撤除
 - 授權：使用者明示授予發布維護身分 `BACKUP DATABASE` 權限。
 
 ## 範圍與風險
@@ -37,3 +37,8 @@ Scenario: 重新執行受控發布
 - 原release ID不可重用；以原候選ZIP雜湊驗證後建立R2，Plan通過。R2確實產生近一小時內的測試庫COPY_ONLY備份，但Apply仍於`backup-database`停止、newFiles=0。
 - 對該最新備份以應用程式身分單獨執行`RESTORE VERIFYONLY ... WITH CHECKSUM`，SQL錯誤262／class14，證明`db_backupoperator`只足以備份，不足以執行發布器要求的還原驗證。
 - 未授予`dbcreator`、`CREATE ANY DATABASE`或`sysadmin`，未套用API126，未執行正式SPC發布。下一步需另行核准暫時較高權限，或由專用維護principal負責備份／VERIFYONLY。
+- 使用者後續明示授權：可將`SpcAuditApiTest003`暫時加入SQL Server `dbcreator`，完成測試發布及VERIFYONLY後立即移除；禁止授予`sysadmin`。執行必須使用finally撤權，並以應用程式身分驗證`IS_SRVROLEMEMBER('dbcreator')=0`。
+- 依上述授權執行 R3：加入前狀態為`dbcreator=0／sysadmin=0／BACKUP DATABASE=1`；加入期間只取得`dbcreator`，`sysadmin`始終為0。
+- R3 已完成`COPY_ONLY／CHECKSUM／RESTORE VERIFYONLY`及測試站套用；發布證據`status=completed／phase=complete／verified=true`，兩個測試 AppPool 皆為`Started`。
+- 發布後`https://spctest.pmr.com.tw`首頁、主要 JavaScript／CSS、`/api/health`及`/api/version`均成功；API版本`0.1.126`、環境`test`，資產 MIME 分別為`application/javascript`及`text/css`。
+- `finally`已立即移除暫時`dbcreator`；應用程式身分最終狀態`PMR_SPC_TEST|SpcAuditApiTest003|dbcreator=0|sysadmin=0|backup=1`。未連線或異動`PMR_SPC_2026`。
