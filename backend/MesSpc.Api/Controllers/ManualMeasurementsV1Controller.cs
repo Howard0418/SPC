@@ -98,6 +98,20 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             try { return (x.UploadBatchId, Payload: JsonSerializer.Deserialize<Dictionary<string, string?>>(x.PayloadJson)); }
             catch { return (x.UploadBatchId, Payload: (Dictionary<string, string?>?)null); }
         }).Where(x => x.Payload is not null).ToList();
+        var rowIds = rows.Select(x => x.Id).ToList();
+        var traces = await db.ChemicalCalculationTraces.AsNoTracking()
+            .Where(x => rowIds.Contains(x.VariableMeasurementId))
+            .OrderByDescending(x => x.VersionNo).ThenByDescending(x => x.CreatedAtUtc)
+            .ToListAsync(ct);
+        var latestTraces = traces
+            .GroupBy(x => (x.VariableMeasurementId, Phase: x.Phase.ToUpperInvariant()))
+            .ToDictionary(x => x.Key, x => x.First());
+        var receiptIds = traces.Select(x => x.ReceiptId)
+            .Concat(rows.Where(x => x.ChemicalReceiptId.HasValue).Select(x => x.ChemicalReceiptId!.Value))
+            .Distinct().ToList();
+        var receipts = await db.ChemicalCalculationReceipts.AsNoTracking()
+            .Where(x => receiptIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.PayloadJson, ct);
         var judgments = await new ChemicalHistoryQueryService(db).GetAsync(rows);
 
         var result = rows.Select(row =>
@@ -108,6 +122,11 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             var payload = detailPayloads.FirstOrDefault(x => x.UploadBatchId == row.UploadBatchId
                 && string.Equals(x.Payload!.GetValueOrDefault("CharacteristicCode"), characteristicCode, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(x.Payload!.GetValueOrDefault("TankCode"), tankCode, StringComparison.OrdinalIgnoreCase)).Payload;
+            latestTraces.TryGetValue((row.Id, "INITIAL"), out var initialTrace);
+            latestTraces.TryGetValue((row.Id, "RECHECK"), out var recheckTrace);
+            var initialReceiptId = initialTrace?.ReceiptId ?? row.ChemicalReceiptId;
+            var initialInput = ReadOriginalInput(initialReceiptId.HasValue && receipts.TryGetValue(initialReceiptId.Value, out var initialJson) ? initialJson : null);
+            var recheckInput = ReadOriginalInput(recheckTrace is not null && receipts.TryGetValue(recheckTrace.ReceiptId, out var recheckJson) ? recheckJson : null);
             judgments.TryGetValue(row.Id, out var judgment);
             return new
             {
@@ -120,10 +139,10 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 row.AdjustAmount,
                 row.MeasuredAt,
                 operatorName = row.Operator,
-                titrationValue = payload?.GetValueOrDefault("TitrationValue"),
-                secondaryTitrationValue = payload?.GetValueOrDefault("SecondaryTitrationValue"),
-                recheckTitrationValue = payload?.GetValueOrDefault("RecheckTitrationValue"),
-                recheckSecondaryTitrationValue = payload?.GetValueOrDefault("RecheckSecondaryTitrationValue"),
+                titrationValue = initialInput.Primary ?? payload?.GetValueOrDefault("TitrationValue"),
+                secondaryTitrationValue = initialInput.Secondary ?? payload?.GetValueOrDefault("SecondaryTitrationValue"),
+                recheckTitrationValue = recheckInput.Primary ?? payload?.GetValueOrDefault("RecheckTitrationValue"),
+                recheckSecondaryTitrationValue = recheckInput.Secondary ?? payload?.GetValueOrDefault("RecheckSecondaryTitrationValue"),
                 initialJudgment = judgment?.InitialJudgment ?? "Unknown",
                 judgment = judgment?.Judgment ?? "Unknown",
                 judgmentSource = judgment?.JudgmentSource ?? "Unavailable",
@@ -134,6 +153,29 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             };
         }).ToList();
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });
+    }
+
+    private static (string? Primary, string? Secondary) ReadOriginalInput(string? payloadJson)
+    {
+        if (string.IsNullOrWhiteSpace(payloadJson)) return (null, null);
+        try
+        {
+            using var document = JsonDocument.Parse(payloadJson);
+            if (!document.RootElement.TryGetProperty("originalInput", out var input) || input.ValueKind != JsonValueKind.Object)
+                return (null, null);
+            return (ReadReceiptValue(input, "Primary"), ReadReceiptValue(input, "Secondary"));
+        }
+        catch (JsonException)
+        {
+            return (null, null);
+        }
+    }
+
+    private static string? ReadReceiptValue(JsonElement input, string propertyName)
+    {
+        if (!input.TryGetProperty(propertyName, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
+        return value.ValueKind == JsonValueKind.String ? value.GetString() : value.GetRawText();
     }
 
     [HttpGet("latest")]

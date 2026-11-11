@@ -13,10 +13,42 @@ namespace MesSpc.Api.Tests.Controllers;
 public class ManualMeasurementsV1ControllerTests
 {
     [Fact]
+    public async Task GetDaily_RestoresOriginalInputsFromLatestReceiptTraceWhenUploadDetailIsAbsent()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase($"daily-receipt-input-{Guid.NewGuid():N}").Options);
+        SeedDailyMaster(db);
+        var date = new DateTime(2028, 8, 3);
+        var measurement = CreateMeasurement("OPEN", 222.11, date.AddHours(8));
+        measurement.RecheckValue = 221.5;
+        var initialId = Guid.NewGuid();
+        var recheckId = Guid.NewGuid();
+        measurement.ChemicalReceiptId = initialId;
+        db.VariableMeasurements.Add(measurement);
+        db.ChemicalCalculationReceipts.AddRange(
+            Receipt(initialId, "8.3", null),
+            Receipt(recheckId, "8.1", "0.2"));
+        await db.SaveChangesAsync();
+        db.ChemicalCalculationTraces.AddRange(
+            new() { VariableMeasurementId=measurement.Id,ReceiptId=initialId,Phase="Initial",VersionNo=1 },
+            new() { VariableMeasurementId=measurement.Id,ReceiptId=recheckId,Phase="Recheck",VersionNo=1 });
+        await db.SaveChangesAsync();
+
+        var result = await CreateController(db).GetDaily(12, new DateOnly(2028, 8, 3), "OPEN");
+
+        var json = System.Text.Json.JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(result).Value);
+        Assert.Contains("\"titrationValue\":\"8.3\"", json);
+        Assert.Contains("\"recheckTitrationValue\":\"8.1\"", json);
+        Assert.Contains("\"recheckSecondaryTitrationValue\":\"0.2\"", json);
+        Assert.Empty(db.UploadDetails);
+    }
+
+    [Fact]
     public async Task GetDaily_ReturnsOnlyRequestedSamplingPhase()
     {
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase($"daily-phase-{Guid.NewGuid():N}").Options);
+        SeedDailyMaster(db);
         var date = new DateTime(2028, 8, 3);
         db.VariableMeasurements.AddRange(
             CreateMeasurement("OPEN", 98.5, date.AddHours(8)),
@@ -40,6 +72,7 @@ public class ManualMeasurementsV1ControllerTests
     {
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase($"daily-middle-phase-{Guid.NewGuid():N}").Options);
+        SeedDailyMaster(db);
         var date = new DateTime(2028, 8, 3);
         db.VariableMeasurements.AddRange(
             CreateMeasurement("OPEN", 98.5, date.AddHours(8)),
@@ -119,6 +152,13 @@ public class ManualMeasurementsV1ControllerTests
     private static ManualMeasurementsV1Controller CreateController(AppDbContext db) => new(db,
         new SpcService(db, new StubEmailService(), new ConfigurationBuilder().Build()));
 
+    private static void SeedDailyMaster(AppDbContext db)
+    {
+        db.Machines.Add(new Machine { Id=12, ProcessId=1, MachineCode="DP", MachineName="除鈀線" });
+        db.QualityCharacteristics.Add(new QualityCharacteristic { Id=1, CharacteristicCode="PARRADELETE", CharacteristicName="PARRADELETE", ControlScope="CHEM" });
+        db.PartProcessCharacteristics.Add(new PartProcessCharacteristic { Id=101, ProcessId=1, MachineId=12, CharacteristicId=1, ControlScope="CHEM", IsEnabled=true });
+    }
+
     private static VariableMeasurement CreateMeasurement(string phase, double value, DateTime measuredAt) => new()
     {
         UploadBatchId = Guid.NewGuid(),
@@ -132,7 +172,18 @@ public class ManualMeasurementsV1ControllerTests
         MeasuredAt = measuredAt,
         PortalDailyDate = measuredAt.Date,
         SamplingPhase = phase,
+        SamplingStage = "GENERAL",
         SourceType = SourceType.Manual
+    };
+
+    private static ChemicalCalculationReceipt Receipt(Guid id, string primary, string? secondary) => new()
+    {
+        Id=id, PartProcessCharacteristicId=101, EffectivityId=1,
+        MeasuredAtUtc=new DateTime(2028,8,3,0,0,0,DateTimeKind.Utc),
+        CreatedAtUtc=new DateTime(2028,8,3,0,0,0,DateTimeKind.Utc),
+        ExpiresAtUtc=new DateTime(2028,8,4,0,0,0,DateTimeKind.Utc),
+        InputHash="hash", SourceKeyHash=Guid.NewGuid().ToString("N"), EngineVersion="test", PrecisionPolicy="test",
+        PayloadJson=System.Text.Json.JsonSerializer.Serialize(new { originalInput=new { Primary=primary, Secondary=secondary } })
     };
 
     private sealed class StubEmailService : IEmailNotificationService

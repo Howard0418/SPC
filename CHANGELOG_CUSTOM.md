@@ -2749,4 +2749,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 日期公式排程新增`requiresSecondaryInput`唯讀契約；只有發行公式實際引用`Secondary`時，Portal才顯示初／複驗第二原始值。
 - 既有日報初／複驗滴定值兼容camelCase與PascalCase欄位回填，不載入即重算或寫入。
 - SPC9、Portal API7、頁面8與Release build通過；測試SPC API0.1.123、Portal API1.0.230／Web1.0.271及實站連線通過。正式未發布，待登入畫面驗收。
+- 2026-11-11：補強 `PORTAL-CHEM-RAW-INPUT-1111-TASK-001`，日報載入改由最新 Trace／Receipt 回填初驗與複驗原始滴定值，缺少 Receipt 才回退 UploadDetail；DP 11/10 四筆資料確認已保存，無資料重匯或改寫。相關 API 測試 14 項通過，測試 API 版本升至 0.1.124，正式未發布。
 

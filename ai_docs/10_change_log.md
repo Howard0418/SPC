@@ -1612,3 +1612,8 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 範圍：SPC 唯讀排程契約、Portal 主檔代理與錄入頁；不修改公式、F值、量測、判定或資料庫。
 - 結果：測試SPC API0.1.123、Portal API1.0.230／Web1.0.271已發布；24項焦點測試與兩專案Release build通過，正式未發布，待登入畫面驗收。
 
+### Receipt 原始滴定值回填修正
+- 目的：修正 2026-11-10 DP 日報已保存 Receipt／Trace 原始滴定值，但 daily API 僅讀 UploadDetail 而未回傳的問題。
+- 作法：以最新 Initial／Recheck Trace 指向的 Receipt 為優先來源，既有 UploadDetail 作相容備援；不補造值、不改寫量測資料。
+- 驗證：先建立失敗測試重現，再完成修正；相關 API 測試 14 項通過。
+
