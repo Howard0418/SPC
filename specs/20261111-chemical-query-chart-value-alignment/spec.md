@@ -1,7 +1,7 @@
 # 小型變更：藥液查詢與管制圖分析值一致化
 - 功能 ID：`SPC-CHEM-QUERY-CHART-ALIGN-1111-TASK-001`
 - 版本：1
-- 狀態：Portal 測試站已發布；SPC API 測試發布受備份權限阻擋
+- 狀態：Portal 測試／正式站已發布；SPC API 測試發布受備份權限阻擋
 - 專案／授權依據／需求基準：Portal＋SPC；使用者 2026-11-11 指示新增頁、查詢頁及藥液管制圖均以分析值為主，複驗有值時以複驗分析值為主。
 
 ## 問題、預期行為與範圍
@@ -43,7 +43,7 @@ Feature: 藥液有效分析值一致化
 - 受影響檔案：SPC measurements 查詢契約；Portal 藥液查詢頁與契約測試；需求及變更紀錄。
 - [x] T-001：先建立 Portal 有效值與班別／取樣階段失敗測試。
 - [x] T-002：查詢 API 回傳取樣階段，Portal 改採 `effectiveValue` 並顯示識別欄位。
-- [ ] T-003：完成測試、建置、測試站發布及實站連線驗證。（測試與Portal發布完成；SPC API發布及登入畫面驗收未完成）
+- [ ] T-003：完成測試、建置、測試站發布及實站連線驗證。（測試、Portal測試／正式發布完成；SPC API發布及登入畫面驗收未完成）
 - [x] T-004：同步進度表、提交並上傳。
 
 ## 驗證
@@ -51,6 +51,6 @@ Feature: 藥液有效分析值一致化
 - Boundary Case：複驗為 0 時仍優先；同日多班別／階段分列。
 - Invalid Input：有效值缺失時維持 `-`，不得補 0 或跨列取值。
 - 實際結果及證據：Portal 契約2/2、Web回歸41/41、SPC API回歸96/96（另1略過）與兩專案 Release build 通過。Portal 測試 API `1.0.231`／Web `1.0.272` 已發布；Login、app-version、CSS、JS、API health、Test DB標籤及匿名302通過。SPC測試交付包Plan通過，但Apply在必要的`PMR_SPC_TEST`備份階段安全停止，現行API仍`0.1.125`且health／version／test正常，無檔案或DB套用。
-- 發布狀態：Portal 測試站已發布；SPC API `0.1.126` 待具備測試庫備份權限後重發。正式未授權、未發布。
+- 發布狀態：使用者於2026-11-11明示正式發布授權後，Portal以既有正式API `1.0.230`／Web `1.0.271`基準只加入本件修正，正式升至API `1.0.231`／Web `1.0.272`。正式Plan核對`PMR-WEB`、`PmrPortalApi/PmrPortalWeb`及`PMR_PORTAL_UAT`，無migration；Apply完成IIS／應用與DB備份、`COPY_ONLY/CHECKSUM/RESTORE VERIFYONLY`、檔案套用與smoke。`https://login.pmr.com.tw:8443/health`回200／production，`/app-version`回`1.0.272.0`，Login、CSS與JS均200且MIME正確，匿名PortalLinks維持401。SPC API `0.1.126`仍待具備測試庫備份權限後先完成測試發布，未越過測試先行或更新正式SPC。
 - 畫面驗收：電腦操作工具回報瀏覽器存取主機與原生pipe均無法連線，未冒稱登入畫面驗收完成。
-- 進度表：原檔已備份後更新小工作總表與Portal／SPC里程碑；候選及原路徑重讀、渲染、ZIP部件數與OpenXML SDK 0錯誤通過。回復可使用本次SHA識別備份。
+- 進度表：原檔已備份後更新小工作總表與Portal／SPC正式里程碑；候選及原路徑重讀、渲染、ZIP部件數與OpenXML SDK 0錯誤通過。回復可使用`進度表-20261111-chemical-query-formal.xlsx`。
