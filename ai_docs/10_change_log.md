@@ -1618,3 +1618,11 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 驗證：先建立失敗測試重現，再完成修正；相關 API 測試 14 項通過。
 - 追加規則：Receipt 已保存欄位有值必須顯示；欄位明確為空時保持空白，不得被 UploadDetail 舊值覆蓋。先以失敗測試重現，修正後相關 API 測試 15 項通過。
 
+## [2026-11-11] 正式發布工具 SPC 環境變數篩選修正
+- 目的：正式 SPC 主機同時承載 Portal 專用 `EnvironmentSwitch__Target` 全機環境變數，既有發布工具將其誤判為 SPC 環境覆寫，導致只讀預檢阻擋。
+- 範圍：僅在 Portal 目標繼續檢查 `EnvironmentSwitch__*`；SPC 仍拒絕 `ConnectionStrings__*` 與 `AppEnvironment` 覆寫。此變更不修改正式機環境變數、連線字串、網站程式或資料。
+
+## [2026-11-11] 正式 SPC HTTPS smoke 目標修正
+- 目的：正式 API 的 HTTP IP 入口會強制導向 HTTPS，IP 直連無法通過憑證主機名稱驗證，造成發布 smoke 誤判失敗並觸發回復。
+- 作法：正式 SPC API smoke 改用 `PMR-SPC-SRV.pmr.com.tw:8443` HTTPS，Web／資產改用同一憑證主機名稱 HTTPS；不降低 TLS 驗證、不改網站 binding。
+

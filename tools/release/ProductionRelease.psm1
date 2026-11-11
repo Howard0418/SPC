@@ -13,7 +13,9 @@ function Get-ReleaseProfile([ValidateSet('SPC','Portal')][string]$System,[Valida
                 @{Site='PmrPortalWeb';Pool='PmrPortalWeb';Path='D:\PmrPortal\publish\portal-web';IisPath='D:\PmrPortal\publish\portal-web';Role='Web'})}
         }
     }elseif($System -eq 'SPC'){
-        $p=@{HostName='PMR-SPC-SRV.pmr.com.tw'; Machine='PMR-SPC-SRV'; Database='PMR_SPC_2026'; Hosts=@('PMR-SPC-SRV.pmr.com.tw','172.16.119.140');ApiBase='http://172.16.119.140:8081';WebBase='http://172.16.119.140'; Targets=@(
+        # Production forces HTTP API traffic to HTTPS.  Smoke checks must use the
+        # certificate hostname, never the raw IP address that fails TLS validation.
+        $p=@{HostName='PMR-SPC-SRV.pmr.com.tw'; Machine='PMR-SPC-SRV'; Database='PMR_SPC_2026'; Hosts=@('PMR-SPC-SRV.pmr.com.tw','172.16.119.140');ApiBase='https://PMR-SPC-SRV.pmr.com.tw:8443';WebBase='https://PMR-SPC-SRV.pmr.com.tw'; Targets=@(
             @{Site='SpcApi';Pool='SpcApi';Path='C:\inetpub\wwwroot\production\backend';IisPath='C:\inetpub\wwwroot\production\backend';Role='Api'},
             @{Site='SpcWeb';Pool='SpcWeb';Path='C:\inetpub\wwwroot\production\frontend';IisPath='C:\inetpub\wwwroot\production\frontend';Role='Web'})}
     }else{

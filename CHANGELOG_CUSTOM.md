@@ -2751,4 +2751,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - SPC9、Portal API7、頁面8與Release build通過；測試SPC API0.1.123、Portal API1.0.230／Web1.0.271及實站連線通過。正式未發布，待登入畫面驗收。
 - 2026-11-11：補強 `PORTAL-CHEM-RAW-INPUT-1111-TASK-001`，日報載入改由最新 Trace／Receipt 回填初驗與複驗原始滴定值，缺少 Receipt 才回退 UploadDetail；DP 11/10 四筆資料確認已保存，無資料重匯或改寫。相關 API 測試 14 項通過，測試 API 版本升至 0.1.124，正式未發布。
 - 2026-11-11：追加原始輸入顯示規則：Receipt欄位有保存值必須顯示，明確空值保持空白，不得被UploadDetail舊值覆蓋；相關API測試15項通過，測試API版本升至0.1.125，正式未發布。
+- 2026-11-11：依使用者正式授權發布藥液日報原始滴定值顯示與第二輸入收斂。正式 SPC API 0.1.125／Web 0.1.127、Portal API 1.0.230／Web 1.0.271；Web、主要 JS／CSS MIME、health、version、production 環境及瀏覽器 Portal 版本均通過。依追加授權套用既有稽核／界限歷程及語系偏好 migration；未重匯或改寫量測、Receipt／Trace、公式、F 表或規格。登入後日報畫面仍待人工驗收。
 

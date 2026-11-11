@@ -102,7 +102,7 @@ Check 'bundle generator excludes settings and private payload' {
  '["20261008183026_AddSpcPointRemarks"]'|Set-Content (Join-Path $root 'catalog.json')
  & (Join-Path $PSScriptRoot '../New-ProductionReleaseBundle.ps1') -MigrationCatalog (Join-Path $root 'catalog.json') -System SPC -ReleaseId GENERATED-001 -SourceCommit ('a'*40) -ApiPackage $api -WebPackage $web -ApiVersion 1.0.0 -WebVersion 1.0.0 -PreviousApiVersion 0.9.0 -PreviousWebVersion 0.9.0 -OutputDirectory (Join-Path $root 'generated')|Out-Null
  $g=Get-Content (Join-Path $root 'generated/manifest.json') -Raw|ConvertFrom-Json
- Assert ($g.packages[0].files.Count -eq 1);Assert ($g.packages[0].files[0].path -eq 'sample.dll');Assert (@($g.smoke|Where-Object {$_.url -eq 'http://172.16.119.140/app.js' -and $_.contentType -eq 'application/javascript'}).Count -eq 1)
+ Assert ($g.packages[0].files.Count -eq 1);Assert ($g.packages[0].files[0].path -eq 'sample.dll');Assert (@($g.smoke|Where-Object {$_.url -eq 'https://PMR-SPC-SRV.pmr.com.tw/app.js' -and $_.contentType -eq 'application/javascript'}).Count -eq 1)
 }
 Check 'pending migration authorization must match exactly' {
  Assert-ProductionPendingMigrations @('one','two') @('two','one')

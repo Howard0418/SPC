@@ -76,7 +76,12 @@ try{
                 }
             }
         }
-        foreach($scope in @('Machine','Process')){foreach($name in [Environment]::GetEnvironmentVariables($scope).Keys){if($name -match '^(ConnectionStrings__|EnvironmentSwitch__|AppEnvironment$)'){throw 'Database environment override needs review'}}}
+        foreach($scope in @('Machine','Process')){foreach($name in [Environment]::GetEnvironmentVariables($scope).Keys){
+            # EnvironmentSwitch is a Portal-only selector.  A Portal variable on a shared
+            # Windows host must not block an otherwise isolated SPC release.
+            $blocked = if($p.system -eq 'Portal') { '^(ConnectionStrings__|EnvironmentSwitch__|AppEnvironment$)' } else { '^(ConnectionStrings__|AppEnvironment$)' }
+            if($name -match $blocked){throw 'Database environment override needs review'}
+        }}
         if($p.system -eq 'SPC'){
             if($settings.AppEnvironment -ine $profile.Environment){throw 'SPC environment mismatch'}
             $cs=$settings.ConnectionStrings.SqlServer
