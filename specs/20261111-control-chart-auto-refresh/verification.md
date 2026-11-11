@@ -16,7 +16,7 @@
 ## 未執行項目、限制及後續
 
 - 測試站登入後的跨分頁實際畫面驗收待發布後執行。
-- 2026-11-11 已建立測試發布包 `spc-chart-auto-refresh-20261111`，測試站發布 Plan 連線遭 `PC-PA16560048.pmr.com.tw` PowerShell Remoting 回覆「存取被拒」阻擋；未傳送檔案、未寫測試或正式資料庫，正式站未發布。待既有測試站維護身分取得 WinRM 發布權限後，以同一 manifest 重試 Plan／Apply。
+- 2026-11-11 已建立測試發布包 `spc-chart-auto-refresh-20261111`。既有維護身分的WinRM權限已恢復，但測試發布 Plan 發現 `SpcSingleTest` 與 `SpcApiTest` 共用 `SpcSingleTest` IIS application pool；發布工具為避免停止集區時中斷另一站而拒絕繼續。未建立發布備份、未停止服務、未寫測試或正式資料庫，正式站未發布。需先取得使用者對IIS集區隔離或測試站Web-only發布流程的明確選擇。
 
 ## 基準與變更紀錄更新位置
 
