@@ -2740,3 +2740,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 依新規則，缺少量測當日保存規格時，採同一PPC日期最近的規格版本，以LSL／USL判定；同距離優先過去版本並回傳版本追蹤資訊。
 - 補正規格版本歷史為0時使用目前PPC範圍，且舊Receipt／Trace無效或缺判定時不再提前回Unknown；測試API0.1.121、7項範圍測試、Release build及API環境驗證通過。正式未發布。
 
+## 2026-11-11 SPC入口導覽與Portal品保人員比對修復
+- 測試站前端改以啟用驗證的 `testhost` 模式重建，恢復頁首「返回入口網站」與「全部登出」。
+- 測試 SPC API 的 Portal 人員名單來源修回 `PmrPortalApi`；上游 200 但回 HTML／空白／非陣列 JSON 時，改回 502 `DIRECTORY_RESPONSE_INVALID`，不洩漏回應內容且不再形成未處理 500。
+- API回歸6/6、頁首控制1/1、2,863×3語系與test build通過；測試API0.1.122／Web0.1.127，Web／JS／CSS MIME、health／version／test及Portal名單22人連線通過。未同步人員或權限，正式未發布；登入畫面待驗。
+

@@ -27,7 +27,9 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
         using var response = await client.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
             return StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。", messageKey = "spc.api.directoryRequestFailed", args = new Dictionary<string,string> { ["status"] = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture) } });
-        var portalUsers = await response.Content.ReadFromJsonAsync<List<PortalUser>>(cancellationToken: cancellationToken) ?? [];
+        var portalResult = await ReadPortalUsers(response, cancellationToken);
+        if (portalResult.Error is not null) return portalResult.Error;
+        var portalUsers = portalResult.Users!;
         var operators = await db.Operators.AsNoTracking().OrderBy(x => x.Id).ToListAsync(cancellationToken);
         var used = new HashSet<int>();
         var rows = new List<object>();
@@ -125,7 +127,46 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
         using var response = await client.SendAsync(message, cancellationToken);
         if (!response.IsSuccessStatusCode)
             return (null, StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。", messageKey = "spc.api.directoryRequestFailed", args = new Dictionary<string,string> { ["status"] = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture) } }));
-        return (await response.Content.ReadFromJsonAsync<List<PortalUser>>(cancellationToken: cancellationToken) ?? [], null);
+        return await ReadPortalUsers(response, cancellationToken);
+    }
+
+    private async Task<(List<PortalUser>? Users, IActionResult? Error)> ReadPortalUsers(
+        HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var mediaType = response.Content.Headers.ContentType?.MediaType;
+            if (!string.Equals(mediaType, "application/json", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(mediaType, "text/json", StringComparison.OrdinalIgnoreCase))
+                return InvalidPortalResponse(mediaType);
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            var users = await JsonSerializer.DeserializeAsync<List<PortalUser>>(stream,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken);
+            return users is null ? InvalidPortalResponse(mediaType) : (users, null);
+        }
+        catch (JsonException exception)
+        {
+            logger.LogWarning(exception, "Portal directory returned an invalid JSON contract.");
+            return InvalidPortalResponse(response.Content.Headers.ContentType?.MediaType);
+        }
+        catch (NotSupportedException exception)
+        {
+            logger.LogWarning(exception, "Portal directory returned an unsupported response contract.");
+            return InvalidPortalResponse(response.Content.Headers.ContentType?.MediaType);
+        }
+    }
+
+    private (List<PortalUser>? Users, IActionResult? Error) InvalidPortalResponse(string? mediaType)
+    {
+        logger.LogWarning("Portal directory returned an invalid payload. ContentType={ContentType}", mediaType ?? "missing");
+        return (null, StatusCode(502, new
+        {
+            message = "Portal 人員比對服務回傳格式不正確，請確認 Portal API 連線設定。",
+            code = "DIRECTORY_RESPONSE_INVALID",
+            messageKey = "spc.api.directoryResponseInvalid",
+            args = ApiUiMessageCatalog.EmptyArguments
+        }));
     }
 
     private static bool Same(string? left, string? right) => string.Equals(left?.Trim(), right?.Trim(), StringComparison.OrdinalIgnoreCase);

@@ -302,6 +302,7 @@
       "settingsUpdateFailed": "更新設定失敗，請洽系統管理員。",
       "settingsDownloadMissing": "找不到指定的檔案。",
       "directoryRequestFailed": "Portal 人員比對服務回應失敗（{status}）。",
+      "directoryResponseInvalid": "Portal 人員比對服務回傳格式不正確，請確認 Portal API 連線設定。",
       "certificatePathInvalid": "無效附件路徑。",
       "calibrationRecordMissing": "校正紀錄不存在。",
       "certificateFileSizeInvalid": "附件需為非空檔案且不超過 10 MB。",

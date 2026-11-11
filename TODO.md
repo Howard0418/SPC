@@ -731,3 +731,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 > 2026-11-10 `SPC-CHEM-NEAREST-SPEC-1110-TASK-001`完成：有效保存判定優先；舊Receipt／Trace無效或缺判定時繼續採最近版本，完全無版本時使用目前PPC的LSL／USL。測試API0.1.121、7項測試與環境驗證通過；正式未發布。核心未完成34件、SPC相關10件不變。
 > 2026-11-11 `PORTAL-CHEM-ENTRY-COMPARE-CLEANUP-1111-TASK-001`：藥液量測錄入頁已移除手動重新預覽及初／複驗公式版本／排程診斷文字；日期／班別／取樣階段變更自動重算，受控公式、F值、token、判定及追溯保持。焦點5/5、藥液回歸41/41、Portal Web Release build與測試站連線驗證通過，測試API1.0.229／Web1.0.270。待登入畫面驗收，正式未授權；核心35件、SPC相關11件。[Portal規格](../PmrPortal/specs/20261111-chemical-entry-comparison-cleanup/spec.md)
+> 2026-11-11 `SPC-OPERATORS-PORTAL-COMPARE-1111-TASK-001`：測試站已恢復返回入口網站／全部登出；Portal名單來源修回Portal API，非JSON回應改為明確502。API6/6、頁首1/1、三語與test build、Web／資產／API／22人名單連線通過；未同步人員／權限，正式未發布，待具權限登入點選驗收。核心36件、SPC相關12件。[規格](specs/20261111-operators-portal-compare-recovery/spec.md)

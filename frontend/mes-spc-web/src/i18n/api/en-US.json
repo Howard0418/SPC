@@ -302,6 +302,7 @@
       "settingsUpdateFailed": "The settings update failed. Contact the system administrator.",
       "settingsDownloadMissing": "The specified file was not found.",
       "directoryRequestFailed": "The Portal personnel comparison request failed ({status}).",
+      "directoryResponseInvalid": "The Portal personnel comparison response format is invalid. Check the Portal API connection settings.",
       "certificatePathInvalid": "The attachment path is invalid.",
       "calibrationRecordMissing": "The calibration record does not exist.",
       "certificateFileSizeInvalid": "The attachment must be non-empty and no larger than 10 MB.",
