@@ -1644,3 +1644,6 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：統一新增藥液、查詢與管制圖的有效分析值規則，複驗有值時優先，否則使用初驗；查詢頁須能辨識班別與取樣階段。
 - 範圍：SPC 唯讀查詢契約與 Portal 查詢顯示；不修改量測、公式、F表、規格、判定歷程或資料庫。
 
+# 2026-11-11 SPC-RELEASE-BACKUP-PERMISSION-1111-TASK-001
+- 目的：依使用者授權，為實際SPC測試發布維護principal補上`PMR_SPC_TEST`最小`BACKUP DATABASE`權限，使既有發布工具可完成必要COPY_ONLY／CHECKSUM／VERIFYONLY；正式庫、資料寫入與其他角色不在範圍。
+
