@@ -2753,3 +2753,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-11：追加原始輸入顯示規則：Receipt欄位有保存值必須顯示，明確空值保持空白，不得被UploadDetail舊值覆蓋；相關API測試15項通過，測試API版本升至0.1.125，正式未發布。
 - 2026-11-11：依使用者正式授權發布藥液日報原始滴定值顯示與第二輸入收斂。正式 SPC API 0.1.125／Web 0.1.127、Portal API 1.0.230／Web 1.0.271；Web、主要 JS／CSS MIME、health、version、production 環境及瀏覽器 Portal 版本均通過。依追加授權套用既有稽核／界限歷程及語系偏好 migration；未重匯或改寫量測、Receipt／Trace、公式、F 表或規格。登入後日報畫面仍待人工驗收。
 
+## 2026-11-11 管制圖公式儲存即時重載
+
+- `SPC-CONTROL-CHART-AUTO-REFRESH-1111-TASK-001`：PPC公式儲存成功後，以同源事件通知目前開啟且同一PPC的即時管制圖／量測趨勢圖重新取數與繪圖；不同PPC、儲存失敗及卸載頁不觸發。通知只含PPC ID，BroadcastChannel不可用時安全回退storage。
+- 4項前端行為／整合測試、三語檢查及Web 0.1.128 production build通過。測試發布包已建立，但`PC-PA16560048.pmr.com.tw` WinRM回覆存取被拒，未傳檔、未寫入任何資料庫；測試與正式站均未發布，待既有維護身分補足遠端發布權限後重試。
+
