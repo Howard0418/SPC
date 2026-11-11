@@ -2764,4 +2764,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - Portal契約2項、Web回歸41項、SPC API回歸96項及兩專案Release build通過；Portal測試API1.0.231／Web1.0.272已發布並完成Web／資產／API／Test DB連線驗證。
 - SPC API0.1.126交付包Plan通過，Apply因`PMR_SPC_TEST`備份權限不足在套用前安全停止；現行測試API0.1.125與資料保持。正式未發布，登入畫面待操作工具恢復後驗收。
 - 使用者明示正式發布授權後，Portal從既有正式230／271基準只加入本件查詢修正，正式升至API1.0.231／Web1.0.272。正式Plan核對PMR-WEB、PmrPortalApi/Web與PMR_PORTAL_UAT，無migration；DB備份COPY_ONLY／CHECKSUM／VERIFYONLY、Apply及Login／CSS／JS／health production／app-version／匿名401通過。SPC API126仍受測試庫備份權限阻擋，未發布測試或正式；量測與主檔資料未異動。
+- 再次取得發布授權後重試SPC測試Apply，仍於`backup-database`回`failed-before-apply`，newFiles=0；測試API保持0.1.125／test，兩個AppPool均Started且Web／health／version 200。未越過必要備份或測試先行，正式SPC未發布。
 

@@ -52,5 +52,6 @@ Feature: 藥液有效分析值一致化
 - Invalid Input：有效值缺失時維持 `-`，不得補 0 或跨列取值。
 - 實際結果及證據：Portal 契約2/2、Web回歸41/41、SPC API回歸96/96（另1略過）與兩專案 Release build 通過。Portal 測試 API `1.0.231`／Web `1.0.272` 已發布；Login、app-version、CSS、JS、API health、Test DB標籤及匿名302通過。SPC測試交付包Plan通過，但Apply在必要的`PMR_SPC_TEST`備份階段安全停止，現行API仍`0.1.125`且health／version／test正常，無檔案或DB套用。
 - 發布狀態：使用者於2026-11-11明示正式發布授權後，Portal以既有正式API `1.0.230`／Web `1.0.271`基準只加入本件修正，正式升至API `1.0.231`／Web `1.0.272`。正式Plan核對`PMR-WEB`、`PmrPortalApi/PmrPortalWeb`及`PMR_PORTAL_UAT`，無migration；Apply完成IIS／應用與DB備份、`COPY_ONLY/CHECKSUM/RESTORE VERIFYONLY`、檔案套用與smoke。`https://login.pmr.com.tw:8443/health`回200／production，`/app-version`回`1.0.272.0`，Login、CSS與JS均200且MIME正確，匿名PortalLinks維持401。SPC API `0.1.126`仍待具備測試庫備份權限後先完成測試發布，未越過測試先行或更新正式SPC。
+- 2026-11-11 使用者再次授權發布後重試SPC測試Apply；受限證據固定回報`failed-before-apply`、phase=`backup-database`、newFiles=0，仍無法完成必要備份。測試API保持`0.1.125`／test，`SpcApiTest`與`SpcSingleTest`池均為Started，Web、health與version 200。未套用API126、未接續正式SPC發布。
 - 畫面驗收：電腦操作工具回報瀏覽器存取主機與原生pipe均無法連線，未冒稱登入畫面驗收完成。
 - 進度表：原檔已備份後更新小工作總表與Portal／SPC正式里程碑；候選及原路徑重讀、渲染、ZIP部件數與OpenXML SDK 0錯誤通過。回復可使用`進度表-20261111-chemical-query-formal.xlsx`。
