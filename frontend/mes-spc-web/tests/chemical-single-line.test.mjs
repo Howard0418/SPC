@@ -39,13 +39,14 @@ test('GENERAL and blank shifts count as morning',()=>{
   assert.equal(shiftLabel('GENERAL'),'早班');
   assert.equal(shiftLabel('OPEN'),'早班');
 });
-test('N1/N2 chart labels show open and close as morning stages without changing legacy shift labels',()=>{
-  assert.equal(shiftLabel('CLOSE'),'晚班');
+test('N1/N2 chart labels show open and close as stages without treating CLOSE as a night shift',()=>{
+  assert.equal(shiftLabel('CLOSE'),'收線待校正');
   assert.equal(chartShiftLabel('OPEN',true),'早(開)');
-  assert.equal(chartShiftLabel('CLOSE',true),'早(收)');
+  assert.equal(chartShiftLabel('CLOSE',true),'早(開)');
+  assert.equal(chartStageShiftLabel('OPEN','CLOSE',true),'早(收)');
   assert.equal(chartStageShiftLabel('MIDDLE','OPEN',true),'中(開)');
   assert.equal(chartStageShiftLabel('MIDDLE','CLOSE',true),'中(收)');
-  assert.equal(chartShiftLabel('CLOSE',false),'晚班');
+  assert.equal(chartShiftLabel('CLOSE',false),'早(開)');
 });
 test('Other-line pairing keeps GENERAL dates on the morning series',()=>{
   const points=[

@@ -24,17 +24,21 @@ export function stageLabel(stage) {
 
 export function normalizeChemicalShift(phase) {
   const value = String(phase ?? '').trim().toUpperCase();
-  if (value === 'MIDDLE' || value === 'CLOSE') return value;
+  if (value === 'MIDDLE') return value;
   return 'OPEN';
 }
 
 export function isRecordedChemicalShift(phase) {
   const value = String(phase ?? '').trim().toUpperCase();
-  return value === 'OPEN' || value === 'MIDDLE' || value === 'CLOSE';
+  return value === 'OPEN' || value === 'MIDDLE';
 }
 
 export function shiftLabel(phase) {
-  return ({ OPEN: '早班', MIDDLE: '中班', CLOSE: '晚班' })[normalizeChemicalShift(phase)];
+  const value = String(phase ?? '').trim().toUpperCase();
+  // CLOSE was historically written into SamplingPhase for some chemical rows.
+  // It is a sampling-stage value, never a chemical night shift.
+  if (value === 'CLOSE') return '收線待校正';
+  return ({ OPEN: '早班', MIDDLE: '中班' })[normalizeChemicalShift(value)];
 }
 
 export function chartShiftLabel(phase, isN1N2 = false) {
@@ -43,10 +47,13 @@ export function chartShiftLabel(phase, isN1N2 = false) {
 }
 
 export function chartStageShiftLabel(phase, stage, isN1N2 = false) {
+  const rawPhase = String(phase ?? '').trim().toUpperCase();
+  if (rawPhase === 'CLOSE') return '收線待校正';
   if (!isN1N2) return shiftLabel(phase);
   const normalizedPhase = normalizeChemicalShift(phase);
   const normalizedStage = String(stage ?? '').trim().toUpperCase();
   if (normalizedPhase === 'MIDDLE' && normalizedStage === 'CLOSE') return '中(收)';
+  if (normalizedStage === 'CLOSE') return '早(收)';
   return chartShiftLabel(normalizedPhase, true);
 }
 
