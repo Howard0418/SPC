@@ -149,6 +149,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 x.MeasuredAt,
                 x.PortalDailyDate,
                 x.SamplingPhase,
+                x.SamplingStage,
                 x.SourceType,
                 x.Operator,
                 x.RecheckValue,
