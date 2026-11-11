@@ -16,6 +16,7 @@ import { formatChartMeasurementDate } from "../utils/chartMeasurementDate";
 import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { normalizeControlScope } from "../utils/controlScope";
 import { resolveActiveRawDataPpcId } from "../utils/spcRawDataDownload";
+import { subscribeControlChartRefresh } from "../utils/controlChartRefresh";
 import { buildHistogramGeometry, renderHistogramBar, resolveHistogram } from "../utils/histogramPresentation";
 import {
   useSingleChemicalLine,
@@ -89,6 +90,7 @@ const uploadBatchId = ref("");
 const loading = ref(false);
 const rawDataDownloading = ref(false);
 const error = ref("");
+let unsubscribeControlChartRefresh = () => {};
 
 // Initialize dates: defaults to today and 3 months ago
 const getTodayStr = () => new Date().toISOString().split("T")[0];
@@ -622,6 +624,7 @@ async function loadMappings() {
 }
 
 onMounted(() => {
+  unsubscribeControlChartRefresh = subscribeControlChartRefresh(refreshOpenChartAfterPpcSave);
   if (route.query.ppcId || route.query.partProcessCharacteristicId) {
     ppcId.value = route.query.ppcId || route.query.partProcessCharacteristicId;
   }
@@ -837,6 +840,15 @@ async function loadInteractiveChart() {
     }
   } finally {
     loading.value = false;
+  }
+}
+
+function refreshOpenChartAfterPpcSave(refreshedPpcId) {
+  if (Number(refreshedPpcId) !== Number(activePpcIdValue.value)) return;
+  if (uploadBatchId.value) {
+    void loadUploadBatchChart();
+  } else {
+    void loadInteractiveChart();
   }
 }
 
@@ -2065,6 +2077,7 @@ function resetChartZoom() {
 }
 
 onBeforeUnmount(() => {
+  unsubscribeControlChartRefresh?.();
   window.removeEventListener("resize", handleResize);
   hidePointContextMenu();
   chartInstance?.dispose();

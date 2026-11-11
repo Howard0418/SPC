@@ -17,6 +17,7 @@ import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } fro
 import { isEditor } from "../utils/auth";
 import { CONTROL_SCOPE, normalizeControlScope } from "../utils/controlScope";
 import { loadPrimaryAndSupporting } from "../utils/progressiveLoad";
+import { notifyControlChartRefresh } from "../utils/controlChartRefresh";
 import {
   FolderTree,
   Plus,
@@ -1036,6 +1037,7 @@ async function save() {
     } else {
       const { data } = await api.put(`/part-process-characteristics/${currentId.value}`, payload);
       savedItem = data;
+      notifyControlChartRefresh(savedItem.id);
       successAlert({ key: "spc.ppc.controlItemUpdated" });
     }
     showModal.value = false;

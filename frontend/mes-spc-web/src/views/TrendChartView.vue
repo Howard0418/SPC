@@ -14,6 +14,7 @@ import * as echarts from "echarts";
 import { formatChartMeasurementDate } from "../utils/chartMeasurementDate";
 import { api, getApiMessageDisplay, getApiErrorMessage, getApiErrorDisplay } from "../api/client";
 import { etchTrendPresentation } from "../utils/etchTrendPresentation";
+import { subscribeControlChartRefresh } from "../utils/controlChartRefresh";
 import { buildHistogramGeometry, renderHistogramBar, resolveHistogram } from "../utils/histogramPresentation";
 import {
   TrendingUp,
@@ -64,6 +65,7 @@ const normalityMethod = "AD";
 // Chart state
 const loading = ref(false);
 const error = ref("");
+let unsubscribeControlChartRefresh = () => {};
 const chartResult = ref(null);
 const trendPresentation = computed(() => etchTrendPresentation(chartResult.value, selectedMapping.value));
 const trendChartEl = ref(null);
@@ -400,6 +402,11 @@ async function loadChart() {
   } finally {
     loading.value = false;
   }
+}
+
+function refreshOpenChartAfterPpcSave(refreshedPpcId) {
+  if (Number(refreshedPpcId) !== Number(activePpcIdValue.value)) return;
+  void loadChart();
 }
 
 function loadSummary() {
@@ -1079,10 +1086,12 @@ onMounted(() => {
   if (route.query.startDate) startDate.value = String(route.query.startDate);
   if (route.query.endDate) endDate.value = String(route.query.endDate);
   loadMappings();
+  unsubscribeControlChartRefresh = subscribeControlChartRefresh(refreshOpenChartAfterPpcSave);
   window.addEventListener("resize", handleResize);
 });
 
 onBeforeUnmount(() => {
+  unsubscribeControlChartRefresh?.();
   window.removeEventListener("resize", handleResize);
   hidePointContextMenu();
   trendChartInstance?.dispose();
