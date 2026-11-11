@@ -84,7 +84,7 @@ try{
         }}
         if($p.system -eq 'SPC'){
             if($settings.AppEnvironment -ine $profile.Environment){throw 'SPC environment mismatch'}
-            $cs=$settings.ConnectionStrings.SqlServer
+            $cs=Convert-ReleaseSqlConnectionString $settings.ConnectionStrings.SqlServer
         }else{
             if($settings.EnvironmentSwitch.Target -ine $profile.Environment){throw 'Portal environment mismatch'}
             $cs=$settings.ConnectionStrings[$profile.Environment]

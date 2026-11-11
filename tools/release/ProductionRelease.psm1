@@ -55,6 +55,12 @@ function Assert-ReleaseWorkspacePath([string]$Path) {
 }
 function Get-ReleaseHash([string]$Path) {(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()}
 function Write-ReleaseJson($Value,[string]$Path) {$Value|ConvertTo-Json -Depth 30|Set-Content -LiteralPath $Path -Encoding UTF8}
+function Convert-ReleaseSqlConnectionString([string]$ConnectionString) {
+    if([string]::IsNullOrWhiteSpace($ConnectionString)){throw 'SQL connection string missing'}
+    # Existing test configuration uses Microsoft.Data.SqlClient's spaced spelling.
+    # Windows PowerShell's System.Data.SqlClient only accepts the canonical key.
+    return [regex]::Replace($ConnectionString,'(?i)Trust\s+Server\s+Certificate\s*=','TrustServerCertificate=')
+}
 
 function Test-ReleaseManifest($Manifest,[string]$Bundle,[string]$MachineName,[ValidateSet('Test','Production')][string]$Environment) {
     $m=$Manifest;$p=Get-ReleaseProfile $m.system $Environment
@@ -219,4 +225,4 @@ function Invoke-ProductionTransaction($Plan,[string]$Bundle,[string]$ReleaseRoot
     $e.finishedAt=[DateTime]::UtcNow.ToString('o');Write-ReleaseJson $e (Join-Path $ReleaseRoot 'evidence.json')
     return $e
 }
-Export-ModuleMember -Function Get-ReleaseProfile,Test-ReleaseManifest,Get-ProductionProfile,Assert-ReleaseWorkspacePath,Assert-ProductionPendingMigrations,Assert-ReleaseRelativePath,Assert-ReleasePayloadPath,Assert-NoReleaseReparse,Get-ReleaseHash,Test-ProductionManifest,Restore-ProductionFiles,Invoke-ProductionTransaction,Write-ReleaseJson
+Export-ModuleMember -Function Get-ReleaseProfile,Test-ReleaseManifest,Get-ProductionProfile,Assert-ReleaseWorkspacePath,Assert-ProductionPendingMigrations,Assert-ReleaseRelativePath,Assert-ReleasePayloadPath,Assert-NoReleaseReparse,Get-ReleaseHash,Test-ProductionManifest,Restore-ProductionFiles,Invoke-ProductionTransaction,Write-ReleaseJson,Convert-ReleaseSqlConnectionString

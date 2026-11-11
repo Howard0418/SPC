@@ -24,6 +24,13 @@ Check 'SPC test API and Web use isolated IIS sites and pools' {
  Assert ($p.Targets[0].IisPath -eq $p.Targets[0].Path)
  Assert ($p.Targets[1].IisPath -eq $p.Targets[1].Path)
 }
+Check 'SQL connection string accepts deployed trust certificate spelling' {
+ $normalized=Convert-ReleaseSqlConnectionString 'Server=172.16.110.16;Database=PMR_SPC_TEST;Trust Server Certificate=true;'
+ $builder=New-Object System.Data.SqlClient.SqlConnectionStringBuilder($normalized)
+ Assert ($builder.DataSource -eq '172.16.110.16')
+ Assert ($builder.InitialCatalog -eq 'PMR_SPC_TEST')
+ Assert ($builder.TrustServerCertificate -eq $true)
+}
 Check 'staging cannot target any test or production website' {
  foreach($envName in @('Test','Production')){foreach($systemName in @('SPC','Portal')){foreach($target in (Get-ReleaseProfile $systemName $envName).Targets){Reject {Assert-ReleaseWorkspacePath (Join-Path $target.Path 'new-stage')}}}}
 }
