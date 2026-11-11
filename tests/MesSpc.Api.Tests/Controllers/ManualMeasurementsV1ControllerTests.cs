@@ -44,6 +44,34 @@ public class ManualMeasurementsV1ControllerTests
     }
 
     [Fact]
+    public async Task GetDaily_KeepsExplicitlyEmptyReceiptInputBlankInsteadOfUsingStaleUploadDetail()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase($"daily-empty-receipt-input-{Guid.NewGuid():N}").Options);
+        SeedDailyMaster(db);
+        var date = new DateTime(2028, 8, 3);
+        var measurement = CreateMeasurement("OPEN", 222.11, date.AddHours(8));
+        var receiptId = Guid.NewGuid();
+        measurement.ChemicalReceiptId = receiptId;
+        db.VariableMeasurements.Add(measurement);
+        db.ChemicalCalculationReceipts.Add(Receipt(receiptId, null, null));
+        db.UploadDetails.Add(new UploadDetail
+        {
+            UploadBatchId=measurement.UploadBatchId, RowNo=1, IsValid=true,
+            PayloadJson=System.Text.Json.JsonSerializer.Serialize(new { CharacteristicCode="PARRADELETE", TankCode=(string?)null, TitrationValue="9.9", SecondaryTitrationValue="8.8" })
+        });
+        await db.SaveChangesAsync();
+
+        var result = await CreateController(db).GetDaily(12, new DateOnly(2028, 8, 3), "OPEN");
+
+        var json = System.Text.Json.JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(result).Value);
+        Assert.Contains("\"titrationValue\":null", json);
+        Assert.Contains("\"secondaryTitrationValue\":null", json);
+        Assert.DoesNotContain("9.9", json);
+        Assert.DoesNotContain("8.8", json);
+    }
+
+    [Fact]
     public async Task GetDaily_ReturnsOnlyRequestedSamplingPhase()
     {
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
@@ -176,7 +204,7 @@ public class ManualMeasurementsV1ControllerTests
         SourceType = SourceType.Manual
     };
 
-    private static ChemicalCalculationReceipt Receipt(Guid id, string primary, string? secondary) => new()
+    private static ChemicalCalculationReceipt Receipt(Guid id, string? primary, string? secondary) => new()
     {
         Id=id, PartProcessCharacteristicId=101, EffectivityId=1,
         MeasuredAtUtc=new DateTime(2028,8,3,0,0,0,DateTimeKind.Utc),

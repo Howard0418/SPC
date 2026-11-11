@@ -1616,4 +1616,5 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：修正 2026-11-10 DP 日報已保存 Receipt／Trace 原始滴定值，但 daily API 僅讀 UploadDetail 而未回傳的問題。
 - 作法：以最新 Initial／Recheck Trace 指向的 Receipt 為優先來源，既有 UploadDetail 作相容備援；不補造值、不改寫量測資料。
 - 驗證：先建立失敗測試重現，再完成修正；相關 API 測試 14 項通過。
+- 追加規則：Receipt 已保存欄位有值必須顯示；欄位明確為空時保持空白，不得被 UploadDetail 舊值覆蓋。先以失敗測試重現，修正後相關 API 測試 15 項通過。
 

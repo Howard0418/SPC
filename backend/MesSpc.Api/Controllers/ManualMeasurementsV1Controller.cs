@@ -139,10 +139,10 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 row.AdjustAmount,
                 row.MeasuredAt,
                 operatorName = row.Operator,
-                titrationValue = initialInput.Primary ?? payload?.GetValueOrDefault("TitrationValue"),
-                secondaryTitrationValue = initialInput.Secondary ?? payload?.GetValueOrDefault("SecondaryTitrationValue"),
-                recheckTitrationValue = recheckInput.Primary ?? payload?.GetValueOrDefault("RecheckTitrationValue"),
-                recheckSecondaryTitrationValue = recheckInput.Secondary ?? payload?.GetValueOrDefault("RecheckSecondaryTitrationValue"),
+                titrationValue = initialInput.HasPrimary ? initialInput.Primary : payload?.GetValueOrDefault("TitrationValue"),
+                secondaryTitrationValue = initialInput.HasSecondary ? initialInput.Secondary : payload?.GetValueOrDefault("SecondaryTitrationValue"),
+                recheckTitrationValue = recheckInput.HasPrimary ? recheckInput.Primary : payload?.GetValueOrDefault("RecheckTitrationValue"),
+                recheckSecondaryTitrationValue = recheckInput.HasSecondary ? recheckInput.Secondary : payload?.GetValueOrDefault("RecheckSecondaryTitrationValue"),
                 initialJudgment = judgment?.InitialJudgment ?? "Unknown",
                 judgment = judgment?.Judgment ?? "Unknown",
                 judgmentSource = judgment?.JudgmentSource ?? "Unavailable",
@@ -155,27 +155,29 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });
     }
 
-    private static (string? Primary, string? Secondary) ReadOriginalInput(string? payloadJson)
+    private static (bool HasPrimary, string? Primary, bool HasSecondary, string? Secondary) ReadOriginalInput(string? payloadJson)
     {
-        if (string.IsNullOrWhiteSpace(payloadJson)) return (null, null);
+        if (string.IsNullOrWhiteSpace(payloadJson)) return (false, null, false, null);
         try
         {
             using var document = JsonDocument.Parse(payloadJson);
             if (!document.RootElement.TryGetProperty("originalInput", out var input) || input.ValueKind != JsonValueKind.Object)
-                return (null, null);
-            return (ReadReceiptValue(input, "Primary"), ReadReceiptValue(input, "Secondary"));
+                return (false, null, false, null);
+            var primary = ReadReceiptValue(input, "Primary");
+            var secondary = ReadReceiptValue(input, "Secondary");
+            return (primary.Present, primary.Value, secondary.Present, secondary.Value);
         }
         catch (JsonException)
         {
-            return (null, null);
+            return (false, null, false, null);
         }
     }
 
-    private static string? ReadReceiptValue(JsonElement input, string propertyName)
+    private static (bool Present, string? Value) ReadReceiptValue(JsonElement input, string propertyName)
     {
-        if (!input.TryGetProperty(propertyName, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            return null;
-        return value.ValueKind == JsonValueKind.String ? value.GetString() : value.GetRawText();
+        if (!input.TryGetProperty(propertyName, out var value)) return (false, null);
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) return (true, null);
+        return (true, value.ValueKind == JsonValueKind.String ? value.GetString() : value.GetRawText());
     }
 
     [HttpGet("latest")]
