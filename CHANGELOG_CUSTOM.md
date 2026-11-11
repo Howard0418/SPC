@@ -2745,3 +2745,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 測試 SPC API 的 Portal 人員名單來源修回 `PmrPortalApi`；上游 200 但回 HTML／空白／非陣列 JSON 時，改回 502 `DIRECTORY_RESPONSE_INVALID`，不洩漏回應內容且不再形成未處理 500。
 - API回歸6/6、頁首控制1/1、2,863×3語系與test build通過；測試API0.1.122／Web0.1.127，Web／JS／CSS MIME、health／version／test及Portal名單22人連線通過。未同步人員或權限，正式未發布；登入畫面待驗。
 
+## 2026-11-11 藥液日報原始滴定值顯示修正
+- 日期公式排程新增`requiresSecondaryInput`唯讀契約；只有發行公式實際引用`Secondary`時，Portal才顯示初／複驗第二原始值。
+- 既有日報初／複驗滴定值兼容camelCase與PascalCase欄位回填，不載入即重算或寫入。
+- SPC9、Portal API7、頁面8與Release build通過；測試SPC API0.1.123、Portal API1.0.230／Web1.0.271及實站連線通過。正式未發布，待登入畫面驗收。
+

@@ -19,6 +19,18 @@ public static class ChemicalFormulaCalculation
 
     public static string Canonical(decimal value) => value.ToString("0.############################", CultureInfo.InvariantCulture);
 
+    public static bool RequiresSecondaryInput(string configJson)
+    {
+        ChemicalCalculationConfig? config;
+        try { config = JsonSerializer.Deserialize<ChemicalCalculationConfig>(configJson, JsonOptions); }
+        catch (JsonException) { return false; }
+        if (config is null) return false;
+        return new[] { config.ConcentrationFormula, config.RecheckConcentrationFormula, config.AdjustmentFormula, config.AdjustmentAmountFormula }
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => Regex.Replace(value!, "\"(?:\"\"|[^\"])*\"", "\"\""))
+            .Any(value => Regex.IsMatch(value, @"(?<![A-Za-z0-9_$!.])Secondary(?![A-Za-z0-9_$!.])", RegexOptions.IgnoreCase));
+    }
+
     public static DateTime ParseMeasuredAt(string value)
     {
         if (string.IsNullOrWhiteSpace(value) || !Regex.IsMatch(value, @"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,7})?(Z|[+-]\d{2}:\d{2})$") ||

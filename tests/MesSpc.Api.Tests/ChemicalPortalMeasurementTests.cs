@@ -13,6 +13,19 @@ namespace MesSpc.Api.Tests;
 public class ChemicalPortalMeasurementTests
 {
     [Fact]
+    public async Task ScheduleCatalogDeclaresWhetherPublishedFormulaUsesSecondary()
+    {
+        await using var f=await Fixture.Create();
+        var single=System.Text.Json.JsonSerializer.Serialize(await f.Service.GetSchedulesAsync(default));
+        single.Should().Contain("\"requiresSecondaryInput\":false");
+        var version=await f.Db.ChemicalAnalysisFormulaVersions.SingleAsync();
+        version.ConfigJson="{\"enabled\":true,\"concentrationFormula\":\"Primary+Secondary\",\"decimalPlaces\":2}";
+        await f.Db.SaveChangesAsync();
+        var dual=System.Text.Json.JsonSerializer.Serialize(await f.Service.GetSchedulesAsync(default));
+        dual.Should().Contain("\"requiresSecondaryInput\":true");
+    }
+
+    [Fact]
     public async Task DistinctExcelRecheckFormulaAndTokenPhaseArePreserved()
     {
         await using var f=await Fixture.Create();

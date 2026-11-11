@@ -579,3 +579,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-10 [既有藥液日報載入保存判定](../specs/20261110-chemical-daily-saved-judgment/spec.md)：daily API回傳量測當時保存的初驗／最終判定及證據來源；Portal載入已有分析值時還原OK／NG，缺證據顯示無法判定與原因，不用目前主檔臆造。測試站完成，待登入畫面驗收，正式未發布。
 - 2026-11-10 [藥液日報最近規格版本判定](../specs/20261110-chemical-nearest-spec-judgment/spec.md)：有效保存判定優先；無效／缺漏追溯則繼續採最近規格版本，完全沒有版本歷史時使用目前PPC的LSL／USL。測試API0.1.121及7項測試完成，正式未發布。
 - 2026-11-11 [SPC 入口導覽與 Portal 品保人員比對修復](../specs/20261111-operators-portal-compare-recovery/spec.md)：測試前端以 `testhost` 建置恢復返回入口網站／全部登出；Portal 名單來源修回 Portal 測試 API，非 JSON 成功回應改為明確 502，不再形成未預期錯誤。測試 API0.1.122／Web0.1.127、6項API、頁首控制、三語與實站連線通過；未同步人員或權限，待登入畫面驗收，正式未發布。
+- 2026-11-11 [藥液日報原始滴定值顯示與第二輸入收斂](../specs/20261111-chemical-entry-raw-input-display/spec.md)：SPC排程清單明示發行公式是否使用`Secondary`；Portal只有真正雙輸入公式顯示初／複驗第二原始值，既有日報兼容camelCase／PascalCase回填滴定值。測試SPC API0.1.123、Portal API1.0.230／Web1.0.271已發布；公式、F值、量測與判定不變，待登入畫面驗收，正式未發布。

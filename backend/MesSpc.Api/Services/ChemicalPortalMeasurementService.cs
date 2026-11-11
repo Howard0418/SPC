@@ -22,8 +22,21 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
     private const string Marker="PortalChemicalTrace-v1";
     private static string? Get(Dictionary<string,string?> row,string key)=>row.GetValueOrDefault(key);
 
-    public async Task<object> GetSchedulesAsync(CancellationToken ct) => await db.ChemicalFormulaPolicies.AsNoTracking()
-        .Where(x=>x.ActiveScheduleRevisionId!=null).Select(x=>new{x.PartProcessCharacteristicId,revisionId=x.ActiveScheduleRevisionId}).ToListAsync(ct);
+    public async Task<object> GetSchedulesAsync(CancellationToken ct)
+    {
+        var rows = await (from policy in db.ChemicalFormulaPolicies.AsNoTracking()
+            join effect in db.ChemicalFormulaEffectivities.AsNoTracking()
+                on policy.ActiveScheduleRevisionId equals effect.ScheduleRevisionId
+            join formula in db.ChemicalAnalysisFormulaVersions.AsNoTracking()
+                on effect.FormulaVersionId equals formula.Id
+            where policy.ActiveScheduleRevisionId != null
+            select new { policy.PartProcessCharacteristicId, RevisionId=policy.ActiveScheduleRevisionId!.Value, formula.ConfigJson })
+            .ToListAsync(ct);
+        return rows.GroupBy(x=>new{x.PartProcessCharacteristicId,x.RevisionId})
+            .Select(group=>new{group.Key.PartProcessCharacteristicId,revisionId=group.Key.RevisionId,
+                requiresSecondaryInput=group.Any(x=>ChemicalFormulaCalculation.RequiresSecondaryInput(x.ConfigJson))})
+            .ToList();
+    }
 
     private async Task<ChemicalPreviewInput> InputAsync(ChemicalPortalPreviewRequest request,CancellationToken ct)
     {
