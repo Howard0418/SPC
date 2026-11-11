@@ -2759,3 +2759,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 4項前端行為／整合測試、三語檢查及Web 0.1.128 production build通過。依使用者選擇完成測試 IIS 集區隔離：`SpcApiTest`、`SpcSingleTest`各使用獨立集區，IIS備份與首頁／API health/version 200驗證通過。
 - 測試發布 Apply 已在受控備份階段停止：執行身分可連線`PMR_SPC_TEST`但沒有`BACKUP DATABASE`權限，無法完成必要的`COPY_ONLY`／`CHECKSUM`／`RESTORE VERIFYONLY`。未套用檔案、migration或資料庫寫入，兩集區皆已恢復Started；正式未發布，待既有具備測試庫備份權限的維護身分可用後重試。
 
+## 2026-11-11 藥液查詢與管制圖分析值一致化
+- Portal查詢改採SPC `effectiveValue`，複驗有值時優先，否則初驗；新增班別與取樣階段欄，避免跨列誤比。管制圖既有相同有效值規則保持。
+- Portal契約2項、Web回歸41項、SPC API回歸96項及兩專案Release build通過；Portal測試API1.0.231／Web1.0.272已發布並完成Web／資產／API／Test DB連線驗證。
+- SPC API0.1.126交付包Plan通過，Apply因`PMR_SPC_TEST`備份權限不足在套用前安全停止；現行測試API0.1.125與資料保持。正式未發布，登入畫面待操作工具恢復後驗收。
+
