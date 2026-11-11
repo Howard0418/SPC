@@ -2756,5 +2756,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-11 管制圖公式儲存即時重載
 
 - `SPC-CONTROL-CHART-AUTO-REFRESH-1111-TASK-001`：PPC公式儲存成功後，以同源事件通知目前開啟且同一PPC的即時管制圖／量測趨勢圖重新取數與繪圖；不同PPC、儲存失敗及卸載頁不觸發。通知只含PPC ID，BroadcastChannel不可用時安全回退storage。
-- 4項前端行為／整合測試、三語檢查及Web 0.1.128 production build通過。測試發布包已建立，既有維護身分WinRM已恢復；但`SpcSingleTest`與`SpcApiTest`共用`SpcSingleTest`集區，保護機制拒絕停止集區發布，以免中斷另一站。未建立發布備份、未停止服務、未寫入任何資料庫；測試與正式站均未發布，待IIS隔離或Web-only流程選擇。
+- 4項前端行為／整合測試、三語檢查及Web 0.1.128 production build通過。依使用者選擇完成測試 IIS 集區隔離：`SpcApiTest`、`SpcSingleTest`各使用獨立集區，IIS備份與首頁／API health/version 200驗證通過。
+- 測試發布 Apply 已在受控備份階段停止：執行身分可連線`PMR_SPC_TEST`但沒有`BACKUP DATABASE`權限，無法完成必要的`COPY_ONLY`／`CHECKSUM`／`RESTORE VERIFYONLY`。未套用檔案、migration或資料庫寫入，兩集區皆已恢復Started；正式未發布，待既有具備測試庫備份權限的維護身分可用後重試。
 
