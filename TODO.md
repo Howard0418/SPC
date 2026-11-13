@@ -750,3 +750,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-13 藥液儲存前自動更新預覽憑證（待驗收）
 
 - [ ] `PORTAL-CHEM-SAVE-FRESH-PREVIEW-1113-TASK-001`：P0，Portal主責／相依SPC既有preview-confirm契約；按確認儲存時自動刷新本次變更的日期公式列，避免舊token／逾期token要求人工重算。18項單元、16項UI與Release build通過，Portal測試API1.0.243／Web1.0.284及Web／資產／API連線驗證完成；DB／schema／公式／F不變。待登入實際儲存驗收，正式未授權。[驗證](specs/20261113-chemical-save-fresh-preview/verification.md)
+
+## 2026-11-13 藥液日期點選自動載入日報（完成）
+
+- [x] `PORTAL-CHEM-DATE-AUTO-LOAD-1113-TASK-001`：P1，Portal主責／相依SPC既有daily與calendar API；月曆點選日期（含同一天）後立即依線別、班別、取樣階段載入，不需再按載入按鈕。日期／階段6、有效值16、保存上下文4、月曆3及Release build通過；測試API1.0.244／Web1.0.285與Web／資產／API連線驗證完成。DB／schema／公式／F不變，正式未授權。[Portal規格](../PmrPortal/specs/20261113-chemical-date-auto-load/spec.md)
