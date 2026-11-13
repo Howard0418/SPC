@@ -1747,3 +1747,10 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 
 使用者要求確認 C1 11/12 小數差異並修正為與 Excel 相同。唯讀證據已定位三個根因：六項公式先取兩位、鍍銅1氯離子原始0.198被保存為0.20、鍍銅1硫酸調整式誤用185／205。只在PMR_SPC_TEST以新公式版本、不可變排程及Receipt／Trace v2受控修正，保留舊證據；先建立純函式測試，備份及指紋通過後套用。Portal／SPC網站程式、schema、正式資料與其他線別不變。詳`specs/20261113-c1-excel-calculation-alignment/`。
 
+## 2026-11-13 Portal 藥液複驗保留初驗調整欄
+
+- 目的：修正輸入複驗滴定值後，複驗預覽空白調整結果覆蓋初驗「調整／調整量」的問題。
+- 範圍：Portal 批次錄入即時複驗及儲存前預覽刷新；不修改 SPC 公式、F 值、API、DB 或歷史資料。
+- 驗收：複驗仍更新分析值／判定／token，但畫面與 confirm payload 保留初驗調整結果。
+- 規格：`D:/PmrPortal/specs/20261113-chemical-recheck-preserve-adjustment/spec.md`。
+
