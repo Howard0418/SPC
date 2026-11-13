@@ -2779,3 +2779,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - Portal 日報將初驗欄明確標為「初驗分析值」，並顯示與查詢／SPC 圖表同源的「最終（查詢／圖表）」；有複驗採保存複驗值，否則採保存初驗值，`0` 仍視為有效複驗。
 - Portal UI 9/9、SPC 圖表有效值焦點測試 1/1、Portal API/Web 與 SPC API build 通過。Portal 測試 API 1.0.232／Web 1.0.273 已發布；首頁、資產 MIME、Portal health、SPC health/version 與實際 SPC API 基底均通過。既有完整歷史判定類別有 2 項既存失敗，已隔離記錄；正式未發布。
 
+## 2026-11-13 藥液量測項目 3／4 位精度
+
+- SPC 預覽 API 回傳有效日期公式的`decimalPlaces`；Portal 依該值顯示及保存滴定值、初驗／複驗分析值、最終值與單筆／批次 payload，不再以固定 2／3 位截斷第 4 位。
+- 4 位公式、載入歷史初複驗、既有排程與單／批次輸入回歸通過；不修改歷史量測、公式或資料庫 schema。
+- 測試 SPC backend 已更新；Portal API 1.0.234／Web 1.0.275 已發布。首頁登入、資產 MIME、Portal 實際 API health 及 SPC health/version 均為 test 成功；正式未發布。[驗證](specs/20261113-chemical-entry-per-item-precision/verification.md)
+

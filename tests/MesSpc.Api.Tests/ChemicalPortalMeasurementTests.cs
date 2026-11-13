@@ -13,6 +13,20 @@ namespace MesSpc.Api.Tests;
 public class ChemicalPortalMeasurementTests
 {
     [Fact]
+    public async Task PreviewReturnsConfiguredDecimalPlaces()
+    {
+        await using var f=await Fixture.Create();
+        var version=await f.Db.ChemicalAnalysisFormulaVersions.SingleAsync();
+        version.ConfigJson="{\"enabled\":true,\"concentrationFormula\":\"Primary*2\",\"decimalPlaces\":4}";
+        await f.Db.SaveChangesAsync();
+
+        var preview=await f.Service.PreviewAsync(new(1,"2026-10-20T12:00:00+08:00","1.2345",null,"OPEN","GENERAL"),"editor",default);
+
+        preview.DecimalPlaces.Should().Be(4);
+        preview.Result.Stored.Should().Be("2.469");
+    }
+
+    [Fact]
     public async Task ScheduleCatalogDeclaresWhetherPublishedFormulaUsesSecondary()
     {
         await using var f=await Fixture.Create();

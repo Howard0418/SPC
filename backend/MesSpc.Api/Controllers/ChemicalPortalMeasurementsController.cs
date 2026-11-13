@@ -21,7 +21,7 @@ public sealed class ChemicalPortalMeasurementsController(ChemicalPortalMeasureme
     [HttpPost("preview")]
     public Task<IActionResult> Preview(ChemicalPortalPreviewRequest request,CancellationToken ct)=>Execute(async()=>{
         var value=await service.PreviewAsync(request,Actor,ct);
-        return (object)new{concentration=value.Result.Stored,rawConcentration=value.Result.Raw,judgment=value.Result.Judgment,
+        return (object)new{concentration=value.Result.Stored,rawConcentration=value.Result.Raw,decimalPlaces=value.DecimalPlaces,judgment=value.Result.Judgment,
             adjustment=value.Result.Adjustment,adjustmentAmount=value.Result.AdjustmentAmount,previewToken=value.Token,
             value.RevisionId,value.FormulaVersionId,value.FormulaVersionNo,value.FTableHistoryId,value.ExpiresAtUtc};
     });

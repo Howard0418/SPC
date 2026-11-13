@@ -16,7 +16,7 @@ public sealed record ChemicalPublishSchedule(long? BaseRevisionId, string Reason
 public sealed record ChemicalPreviewInput(string MeasuredAt, string Primary, string? Secondary, string SourceKey, string? Phase = null);
 public sealed record ChemicalPrepareRequest(ChemicalPreviewInput Input, string Token);
 public sealed record ChemicalPreviewResult(long RevisionId, long FormulaVersionId, int FormulaVersionNo, long? FTableHistoryId,
-    DateTime MeasuredAtUtc, ChemicalCalculatedValue Result, string EngineVersion, string PrecisionPolicy, string Token, DateTime ExpiresAtUtc);
+    DateTime MeasuredAtUtc, ChemicalCalculatedValue Result, int DecimalPlaces, string EngineVersion, string PrecisionPolicy, string Token, DateTime ExpiresAtUtc);
 public sealed class ChemicalPreviewConflictException(string message) : Exception(message);
 internal sealed record ChemicalPreviewTicket(int PpcId, string Actor, string PayloadHash, DateTime ExpiresAtUtc);
 internal sealed record ChemicalResolvedCalculation(long RevisionId, ChemicalFormulaEffectivity Period, ChemicalAnalysisFormulaVersion Formula,
@@ -176,7 +176,8 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         if (string.IsNullOrWhiteSpace(actor) || actor.Length > 100) throw ApiUiException.Attach(new ArgumentException("缺少有效操作者。"), "spc.api.actorRequired");
         var value=await ResolveAsync(id,input,ct); var expires=Now.AddMinutes(10);
         var token=protector.Protect(JsonSerializer.Serialize(new ChemicalPreviewTicket(id,actor,Hash(value.PayloadJson),expires)));
-        return new(value.RevisionId,value.Formula.Id,value.Formula.VersionNo,value.Period.FTableHistoryId,value.MeasuredAtUtc,value.Result,
+        var decimalPlaces=JsonSerializer.Deserialize<ChemicalCalculationConfig>(value.Formula.ConfigJson, new JsonSerializerOptions { PropertyNameCaseInsensitive=true })?.DecimalPlaces ?? 3;
+        return new(value.RevisionId,value.Formula.Id,value.Formula.VersionNo,value.Period.FTableHistoryId,value.MeasuredAtUtc,value.Result,decimalPlaces,
             ChemicalFormulaCalculation.EngineVersion,ChemicalFormulaCalculation.PrecisionPolicy,token,expires);
     }
 
