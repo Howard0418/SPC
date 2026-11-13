@@ -2769,3 +2769,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 使用者後續明示授權暫時`dbcreator`後，R3完成測試庫`COPY_ONLY／CHECKSUM／RESTORE VERIFYONLY`與API套用；測試API0.1.126、Web／JS／CSS MIME、health／version／test及兩AppPool通過。finally立即撤除`dbcreator`，最終`dbcreator=0／sysadmin=0／BACKUP DATABASE=1`，正式庫未連線。另唯讀核對2026/11/9 N1：`表處／氫氧化鉀=19.04`與`促進／氯化亞錫=0.2256`為不同PPC，正式與測試一致，無資料修改。
 - 依既有正式授權完成SPC正式R1：Plan核對PMR-SPC-SRV／PMR_SPC_2026，migration 0；正式庫COPY_ONLY／CHECKSUM／VERIFYONLY及Apply完成。正式API0.1.126／production，Web0.1.127保持；首頁、JS／CSS MIME、health／version、瀏覽器實際API基底與兩AppPool通過。未重匯或改寫量測、Receipt／Trace、公式、F表、規格或主檔。
 
+## 2026-11-13 CAL-VERIFY-002 使用者確認取消
+
+- 使用者確認校驗資料正確，`CAL-VERIFY-002` 不再執行原始 Excel 恢復；不偽造59列原始證據。
+- 僅同步 TODO、需求、規格、變更目的與原進度表；核心未完成37→36、SPC相關13→12，人工12／待核銷4不變。程式、資料庫、公式、測試／正式網站皆未變更，建置與發布不適用。
+

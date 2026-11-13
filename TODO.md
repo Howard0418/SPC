@@ -598,7 +598,7 @@
 
 ## 校驗既有驗證差異（非三語化功能，2026-10-26）
 - [x] CAL-VERIFY-001：未知 Editor JWT 改為 fail closed；AuthorizationAccess 5項及校驗匯入權限5項通過，測試API0.1.93已發布，正式未更新。[規格與驗證](specs/20261031-calibration-editor-fail-closed/spec.md)。
-- [ ] CAL-VERIFY-002：恢復既有校驗真範本驗收所需原始 Excel，檔案 docs/QA-2-003-02A 儀器設備校驗管制一覽表-2026年-品保 - 更新.xlsx 目前缺少；不偽造59列原始證據。其餘生成式範本／隔離API測試已驗證。
+- [x] CAL-VERIFY-002：使用者於 2026-11-13 確認資料正確，無須取得或恢復缺少的原始 Excel；本項取消執行，不偽造59列原始證據。其餘生成式範本／隔離API測試已驗證。詳見 `specs/20261113-cal-verify-002-closeout/spec.md`。
 - 證據與本批前重現：[08C4A 驗證](specs/20261026-i18n-task08c4a/verification.md)。兩項保留待辦，不冒稱124項全通過；三語化依連續授權接續C4B。
 
 - 2026-10-26 08C4B完成：55鍵／110前端、21必要API與設備來源3、本機39／發布39與build/hash/health/同源通過；校驗124為122通過、同2項既有差異保留；只測試Web0.1.99/API0.1.80，剩17件，接續08C4C 匯入逐列錯誤與警示。
