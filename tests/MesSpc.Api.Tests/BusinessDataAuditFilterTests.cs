@@ -4,6 +4,7 @@ using System.Data.Common;
 using MesSpc.Api.Controllers;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
+using MesSpc.Api.Services;
 using MesSpc.Api.Services.Auditing;
 using MesSpc.Api.Services.Security;
 using Microsoft.AspNetCore.Http;
@@ -94,5 +95,81 @@ public sealed class BusinessDataAuditFilterTests
         db.ChangeTracker.Clear();
         Assert.Equal(0, await db.Parts.CountAsync(x => x.PartNo == "AUDIT-MUST-ROLLBACK"));
         Assert.Single(await db.AuditEvents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task PpcFormulaUpdateReusesBusinessAuditTransaction()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        await using var db = new AppDbContext(options);
+        await db.Database.EnsureCreatedAsync();
+
+        var process = new Process { ProcessCode = "N2", ProcessName = "化鎳線(N2)", ControlScope = "CHEM" };
+        var characteristic = new QualityCharacteristic
+        {
+            CharacteristicCode = "CHAR-000851", CharacteristicName = "PH", ControlScope = "CHEM",
+            InputMode = "DIRECT", DecimalPlaces = 2
+        };
+        var chartGroup = new ControlChartGroup
+        {
+            GroupCode = "CHEM_TREND", GroupName = "藥液趨勢圖", GroupType = "TREND_CHART",
+            BusinessScopeCode = "CHEM", IsEnabled = true
+        };
+        var actor = new Operator { Id = 7, OperatorCode = "AUDIT", OperatorName = "Audit QA", Username = "audit.qa", Role = "Editor" };
+        db.AddRange(process, characteristic, chartGroup, actor);
+        await db.SaveChangesAsync();
+        var item = new PartProcessCharacteristic
+        {
+            ControlScope = "CHEM", ProcessId = process.Id, CharacteristicId = characteristic.Id,
+            SequenceNo = 1, LSL = 9.5, USL = 11, TargetValue = 10.25, SampleSize = 1,
+            DisplayMode = "TREND_CHART", ChemicalAnalysisConfigJson = """{"enabled":true,"concentrationFormula":"Primary * 1","adjustmentFormula":"IF(Concentration>U11,\"更槽\",\"\")","decimalPlaces":2}""",
+            IsRequired = true, IsEnabled = true
+        };
+        db.PartProcessCharacteristics.Add(item);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["AppEnvironment"] = "test", ["Auth:Enabled"] = "true", ["Audit:AuthenticationEnabled"] = "true",
+            ["Audit:BusinessDataEnabled"] = "true", ["Audit:AttemptedAccountHmacKey"] = new string('k', 32)
+        }).Build();
+        var writer = new AuditEventWriter(db, options, config, TimeProvider.System, NullLogger<AuditEventWriter>.Instance);
+        var authentication = new AuthenticationAudit(writer, config, NullLogger<AuthenticationAudit>.Instance);
+        var filter = new BusinessDataAuditFilter(db, writer, authentication, new AuditPermissions(db, config), config,
+            NullLogger<BusinessDataAuditFilter>.Instance);
+        var http = new DefaultHttpContext();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity([new(ClaimTypes.NameIdentifier, "7"), new(ClaimTypes.Name, "audit.qa"), new("jti", "ppc-formula")], "test"));
+        http.Request.Method = "PUT";
+        http.Request.RouteValues["id"] = item.Id;
+        var controller = new PartProcessCharacteristicsController(db, new ChemicalAnalysisFormulaVersionService(db))
+        { ControllerContext = new ControllerContext { HttpContext = http } };
+        var request = new PartProcessCharacteristic
+        {
+            ControlScope = item.ControlScope, ProcessId = item.ProcessId, CharacteristicId = item.CharacteristicId,
+            SequenceNo = item.SequenceNo, LSL = item.LSL, USL = item.USL, TargetValue = item.TargetValue,
+            SampleSize = item.SampleSize, DisplayMode = item.DisplayMode,
+            ChemicalAnalysisConfigJson = """{"enabled":true,"concentrationFormula":"Primary * 1","adjustmentFormula":"IF(Concentration>USL,\"更槽\",\"\")","decimalPlaces":2}""",
+            ChemicalAnalysisFormulaVersionReason = "修正 Excel 儲存格引用", IsRequired = true, IsEnabled = true
+        };
+        var descriptor = new ControllerActionDescriptor
+        {
+            ControllerTypeInfo = typeof(PartProcessCharacteristicsController).GetTypeInfo(), ControllerName = "PartProcessCharacteristics",
+            ActionName = "Update", MethodInfo = typeof(PartProcessCharacteristicsController).GetMethod("Update")!
+        };
+        var action = new ActionContext(http, new RouteData(), descriptor);
+        var executing = new ActionExecutingContext(action, [], new Dictionary<string, object?> { ["id"] = item.Id, ["req"] = request }, controller);
+
+        await filter.OnActionExecutionAsync(executing, async () =>
+            new ActionExecutedContext(action, [], controller) { Result = await controller.Update(item.Id, request) });
+
+        Assert.Null(executing.Result);
+        db.ChangeTracker.Clear();
+        Assert.Contains("USL", (await db.PartProcessCharacteristics.SingleAsync(x => x.Id == item.Id)).ChemicalAnalysisConfigJson);
+        var version = await db.ChemicalAnalysisFormulaVersions.SingleAsync();
+        Assert.Equal("修正 Excel 儲存格引用", version.Reason);
+        Assert.Equal("masterdata.record.update", (await db.AuditEvents.SingleAsync()).EventCode);
     }
 }

@@ -627,7 +627,8 @@ public class PartProcessCharacteristicsController(
         x.RuleGroupId = null;
 
         var useTransaction = !string.Equals(db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
-        await using var transaction = useTransaction ? await db.Database.BeginTransactionAsync() : null;
+        var ownsTransaction = useTransaction && db.Database.CurrentTransaction is null;
+        await using var transaction = ownsTransaction ? await db.Database.BeginTransactionAsync() : null;
         if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase) || formulaConfigChanged)
         {
             var staleResults = await db.SpcCalculationResults
