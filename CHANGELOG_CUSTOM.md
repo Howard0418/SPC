@@ -2794,3 +2794,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 驗收更正：使用者確認11/09 N1／表處／氫氧化鉀為`8.5 → 19.040`。查明原查詢用`MeasuredAt`把11/10的ID92273 `9 → 20.160`列入11/09；改以新增頁同源的`PortalDailyDate`查詢、排序與顯示，非日報才回退`MeasuredAt`。SPC歷史5/5、Portal UI12/12及兩端build通過；測試SPC API0.1.127、Portal API1.0.241／Web1.0.282已發布並通過連線驗證。
 - 排列一致化：查詢頁同日期／階段資料改用新增資料頁共用的槽體與分析項目主檔順序，不再依量測ID倒序。Portal UI13/13及Web build通過；測試Portal API1.0.242／Web1.0.283已發布，資產、health、version與SPC API0.1.127／test連線驗證通過；正式未發布。
 
+## 2026-11-13 藥液管制圖開收線辨識
+
+- 管制圖已有 `SamplingStage=OPEN/CLOSE` 時，X軸與tooltip顯示`早(開)`／`早(收)`；主檔投影缺機台欄位時仍由保存階段辨識，不再把同日兩點都顯示為「早班」。
+- 保留 N1／N2 藥液既有單一序列、點位、MR、管制線、Cpk、規格與資料。焦點測試8/8、i18n及Web build通過。
+- SPC測試Web0.1.129已發布，API維持0.1.127/test；首頁、主JS/CSS MIME及同源health/version通過。測試庫備份／VERIFYONLY完成，暫時dbcreator已撤除且未授予sysadmin。正式未發布，登入畫面待人工驗收。
+
