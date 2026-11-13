@@ -568,6 +568,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [稽核目標與安全異動摘要](../specs/20261109-audit-change-summary/spec.md)：顯示目標使用者姓名／代碼／ID及既有allowlist的權限清單、異動欄位、狀態與筆數；不交付原始JSON或敏感原值。測試站已發布，正式未發布。
 - 2026-11-09 [控制線公式儲存後重算重繪](../specs/20261029-control-line-formula-recalc/verification.md)：正式API103已依授權發布；首頁／JS／CSS、實際API基底、health／version、CORS、COPY_ONLY備份與五個資料指紋驗證通過，公式與量測未異動。指定PPC登入後實際儲存／重繪仍待驗收，本件不標DONE。
 - 2026-11-09 [常態分析直方圖與Minitab對齊](../specs/20261109-normality-minitab-alignment/verification.md)：第一階段由API回傳唯一histogram統計契約，管制圖與趨勢圖共用連續數值X軸、相鄰箱格、常態曲線與實際界線。測試API0.1.115／Web0.1.126已發布，完整後端540、前端7項、三語及實站連線通過；Minitab原始資料、版本、分箱設定與登入畫面逐格對帳待驗，正式未發布。
+- 2026-11-13 [N2促進氯化亞錫三位精度修正](../specs/20261113-n2-promoter-tin-precision-correction/verification.md)：公式與F內容不變，PPC2518改以公式1244/v4的三位精度保存；0.10由Raw0.2256得到0.226，與Excel一致。量測94084以新Receipt／Trace v2修正並保留舊證據；測試庫備份、排程revision1743、查詢值、指紋及冪等通過，網站不需發布，正式未異動。
 > 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：1440px／96vw單一尺寸與首次上傳立即預覽已由使用者確認。正式R4完成，API1.0.218原檔與SHA256保持、Web1.0.248；DB備份驗證、首頁／site.css MIME、API health／production及401通過。正式畫面列人工確認，核心41／SPC18。[Portal驗證](D:/PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)。
 - 2026-11-09 [管制項目設定漸進式載入](../specs/20261109-ppc-progressive-loading/verification.md)：主清單回應後立即顯示，12組輔助主檔與初始製程篩選維持背景並行；輔助失敗不清空主清單。2項行為測試、2822×3語系、test build與測試站Web／資產／同源API驗證通過；Web0.1.124，正式未發布。核心未完成41／SPC相關18保持。
 - 2026-11-09 [CPK 匯出月份資料範圍](../specs/20261109-cpk-export-month-scope/spec.md)：品質履歷頁選擇的月份現在限定台北月初（含）至次月月初（不含）的量測、警報、違規與能力計算；錯誤月份格式拒絕。測試 API 0.1.114 已發布，自動化與連線通過，待登入後實際下載驗收；正式未授權。

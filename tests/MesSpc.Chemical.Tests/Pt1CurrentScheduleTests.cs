@@ -12,4 +12,8 @@ public class Pt1CurrentScheduleTests
  [Fact]public void SourceFAddressesNormalizeAndValuesCompare(){var x="[{\"CellAddress\":\"F!$B$3\",\"NumericValue\":0.99},{\"CellAddress\":\"B6\",\"NumericValue\":1}]";var y="[{\"CellAddress\":\"F!B6\",\"NumericValue\":1,\"StandardSolution\":\"EDTA\"},{\"CellAddress\":\"F!B3\",\"NumericValue\":0.990}]";Assert.Equal(SchedulePlan.FSignature(x),SchedulePlan.FSignature(y));}
  [Fact]public void NullFIsNotZero()=>Assert.Throws<InvalidOperationException>(()=>SchedulePlan.FSignature("[{\"CellAddress\":\"F!B3\",\"NumericValue\":null}]"));
  [Fact]public void DuplicateNormalizedFRejected()=>Assert.Throws<InvalidOperationException>(()=>SchedulePlan.FSignature("[{\"CellAddress\":\"B3\",\"NumericValue\":0.99},{\"CellAddress\":\"F!$B$3\",\"NumericValue\":0.99}]"));
+ [Fact]public void CorrectCurrentReplacesOnlyReviewedOpenSlice(){var history=Old();var current=new Slice(Cut,null,796,248);var p=SchedulePlan.CorrectCurrent([history,current],Cut,796,248,999);Assert.True(p.Changed);Assert.Equal(history,p.Periods[0]);Assert.Equal(new Slice(Cut,null,999,248),p.Periods[1]);}
+ [Fact]public void CorrectCurrentIsIdempotent(){var p=SchedulePlan.CorrectCurrent([Old(),new(Cut,null,999,248)],Cut,796,248,999);Assert.False(p.Changed);}
+ [Fact]public void CorrectCurrentRejectsUnexpectedSource()=>Assert.Throws<InvalidOperationException>(()=>SchedulePlan.CorrectCurrent([Old(),new(Cut,null,700,248)],Cut,796,248,999));
+ [Fact]public void CorrectCurrentRejectsDifferentBoundaryOrF(){Assert.Throws<InvalidOperationException>(()=>SchedulePlan.CorrectCurrent([Old(),new(Cut.AddTicks(1),null,796,248)],Cut,796,248,999));Assert.Throws<InvalidOperationException>(()=>SchedulePlan.CorrectCurrent([Old(),new(Cut,null,796,247)],Cut,796,248,999));}
 }

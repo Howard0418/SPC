@@ -742,3 +742,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-13 N2 P400 最近公式排程補齊（完成）
 
 - [x] `SPC-CHEM-N2-P400-SCHEDULE-1113-TASK-001`：P0，SPC主責；CHAR-000847 已自2026/11/7起套用最近公式v4／1157與F248。測試庫備份驗證、新增1修訂／29區間、11/12 Preview／Prepare、保護指紋與冪等通過；網站不需發布，正式未異動。[驗證](specs/20261113-n2-p400-current-formula-schedule/verification.md)
+
+## 2026-11-13 N2 促進氯化亞錫三位精度修正（完成）
+
+- [x] `SPC-CHEM-N2-TIN-PRECISION-1113-TASK-001`：P0，SPC主責；公式1244/v4僅將精度改為3，active revision1743沿用F248；0.10已由Raw0.2256保存／查詢為0.226。量測94084以新Receipt／Trace v2受控修正，舊證據保持；測試13/13、備份、指紋與冪等通過，網站不需發布，正式未異動。[驗證](specs/20261113-n2-promoter-tin-precision-correction/verification.md)

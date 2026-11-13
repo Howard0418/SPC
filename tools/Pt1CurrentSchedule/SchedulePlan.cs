@@ -13,6 +13,16 @@ public static class SchedulePlan
   if(rows.Any(x=>x.UntilUtc is null||x.UntilUtc>start||x.FromUtc>=start))throw new InvalidOperationException("Cannot overwrite or overlap existing effectiveness");
   rows.Add(desired);Validate(rows);return new(true,rows);
  }
+ public static MergedSchedule CorrectCurrent(IEnumerable<Slice> old,DateTime start,long expectedFormula,long expectedF,long replacementFormula)
+ {
+  if(expectedFormula<=0||expectedF<=0||replacementFormula<=0)throw new InvalidOperationException("Reviewed formulas and F history required");
+  var rows=old.OrderBy(x=>x.FromUtc).ToList();Validate(rows);
+  var current=rows.LastOrDefault()??throw new InvalidOperationException("Current schedule is empty");
+  var desired=new Slice(start,null,replacementFormula,expectedF);
+  if(current==desired)return new(false,rows);
+  if(current!=new Slice(start,null,expectedFormula,expectedF))throw new InvalidOperationException("Current effectiveness differs from reviewed source");
+  rows[^1]=desired;Validate(rows);return new(true,rows);
+ }
  private static void Validate(IReadOnlyList<Slice> rows)
  {
   for(int i=0;i<rows.Count;i++)if(rows[i].UntilUtc<=rows[i].FromUtc||(i>0&&(rows[i-1].UntilUtc==null||rows[i-1].UntilUtc>rows[i].FromUtc)))throw new InvalidOperationException("Invalid or overlapping periods");
