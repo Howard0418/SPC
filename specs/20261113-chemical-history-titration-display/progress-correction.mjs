@@ -6,10 +6,10 @@ const workbook = await SpreadsheetFile.importXlsx(await FileBlob.load(source));
 const tasks = workbook.worksheets.getItem('小工作總表');
 const project = workbook.worksheets.getItem('專案進度表');
 
-tasks.getRange('I290').values=[['SPC歷史5/5、Portal UI12/12、build通過；11/09 N1／表處／氫氧化鉀為8.5→19.040，ID92273的9→20.160屬11/10；SPC0.1.127、Portal241／282及health/version=test。']];
-tasks.getRange('K290').values=[['正式未發布；登入後畫面待使用者重新整理確認。日期依PortalDailyDate，非日報才回退MeasuredAt。']];
-project.getRange('AB315').values=[['◆ SPC5／Portal12']];
-project.getRange('A316').values=[['查詢初驗／複驗滴定值與新增頁同源；日報查詢日期採PortalDailyDate，避免將11/10的9／20.160列入11/09。11/09 N1／表處／氫氧化鉀正確為8.5／19.040；測試與build通過，SPC0.1.127、Portal241／282及health/version為test。正式未發布。']];
+tasks.getRange('I290').values=[['SPC歷史5/5、Portal UI13/13、build通過；11/09 N1／表處／氫氧化鉀為8.5→19.040，查詢排列改採新增頁相同主檔順序；SPC0.1.127、Portal242／283及health/version=test。']];
+tasks.getRange('K290').values=[['正式未發布；日期依PortalDailyDate，非日報才回退MeasuredAt；同日同階段依槽體／分析項目主檔順序排列。']];
+project.getRange('AB315').values=[['◆ SPC5／Portal13']];
+project.getRange('A316').values=[['查詢初驗／複驗滴定值與新增頁同源；日報日期採PortalDailyDate，排列採新增頁相同槽體／分析項目主檔順序。11/09 N1／表處／氫氧化鉀為8.5／19.040；測試與build通過，SPC0.1.127、Portal242／283及health/version為test。正式未發布。']];
 
 workbook.recalculate();
 console.log((await workbook.inspect({kind:'table',range:'小工作總表!A290:K290',include:'values,formulas',tableMaxRows:2,tableMaxCols:11,maxChars:8000})).ndjson);
