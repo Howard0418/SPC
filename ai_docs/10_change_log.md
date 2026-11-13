@@ -1702,3 +1702,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：修正BusinessDataAuditFilter與ChemicalPortalMeasurementService重複建立交易，造成Portal藥液日報confirm回傳500。
 - 範圍：SPC API稽核交易協調、藥液確認整合測試與測試站發布；不改公式、F、主檔、既有量測、Portal UI或schema。
 
+# 2026-11-13 藥液預覽空白第二滴定值正規化
+
+- 目的：修正 Portal 預覽以 `null`、確認以空字串送出未提供的第二滴定值時，SPC 快照雜湊誤判為輸入已變更並回 409。
+- 範圍：先補 `ChemicalPortalMeasurementService` 回歸測試，再於建立公式輸入前統一空白第二滴定值；不改公式、資料庫、既有量測或 Portal UI。
+- 規格：`specs/20261113-chemical-preview-empty-secondary/`。
+

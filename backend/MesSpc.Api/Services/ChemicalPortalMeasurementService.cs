@@ -46,7 +46,8 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
         var at=ChemicalFormulaCalculation.ParseMeasuredAt(request.MeasuredAt);
         if(request.SamplingPhase is not ("OPEN" or "MIDDLE"))throw ApiUiException.Attach(new ArgumentException("請選早班或中班。"), "spc.api.chemicalShiftRequired");
         if(!ChemicalSamplingStage.TryNormalize(mapping.Machine?.MachineCode,request.SamplingStage,out var stage))throw ApiUiException.Attach(new ArgumentException(ChemicalSamplingStage.Error), "spc.api.chemicalSamplingStageInvalid");
-        return new(request.MeasuredAt,request.Primary,request.Secondary,$"PortalDaily|{request.PpcId}|{at.AddHours(8):yyyyMMdd}|{request.SamplingPhase}|{stage}",request.Phase);
+        var secondary=string.IsNullOrWhiteSpace(request.Secondary)?null:request.Secondary;
+        return new(request.MeasuredAt,request.Primary,secondary,$"PortalDaily|{request.PpcId}|{at.AddHours(8):yyyyMMdd}|{request.SamplingPhase}|{stage}",request.Phase);
     }
 
     /// <summary>Dates and original decimal strings are resolved by SPC; no custom expression from the browser is trusted.</summary>

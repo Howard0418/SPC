@@ -91,6 +91,21 @@ public class ChemicalPortalMeasurementTests
     }
 
     [Fact]
+    public async Task EmptySecondaryFromPortalConfirmMatchesNullPreview()
+    {
+        await using var f=await Fixture.Create();
+        var row=await f.Row("1.2345",null);
+        row["SecondaryTitrationValue"]="";
+        row["RecheckSecondaryTitrationValue"]="";
+
+        await f.Service.ConfirmAsync(new(Guid.NewGuid(),[row]),"editor",default);
+
+        var measurement=await f.Db.VariableMeasurements.SingleAsync();
+        measurement.MeasuredValue.Should().Be(2.47);
+        (await f.Db.ChemicalCalculationReceipts.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
     public async Task DailyUpdateAppendsTraceAndPreservesOriginalRawValues()
     {
         await using var f=await Fixture.Create();await f.Service.ConfirmAsync(new(Guid.NewGuid(),[await f.Row("1",null)]),"editor",default);
