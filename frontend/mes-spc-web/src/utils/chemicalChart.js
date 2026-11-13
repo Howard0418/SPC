@@ -18,6 +18,22 @@ export function useSingleChemicalLine(mapping) {
   return isChemical && ['N1', 'N2'].includes(machineCode);
 }
 
+export function useChemicalStageLabels(mapping, points = []) {
+  if (useSingleChemicalLine(mapping)) return true;
+  const scope = String(
+    mapping?.controlScope
+    ?? mapping?.scope
+    ?? mapping?.controlScopeName
+    ?? mapping?.scopeName
+    ?? mapping?.category
+    ?? ''
+  ).trim().toUpperCase();
+  const isChemical = scope === 'CHEM' || scope === 'CHEMICAL' || scope.includes('藥液');
+  return isChemical && points.some(point => ['OPEN', 'CLOSE'].includes(
+    String(point?.samplingStage ?? '').trim().toUpperCase()
+  ));
+}
+
 export function stageLabel(stage) {
   return ({ OPEN: '開線', CLOSE: '收線' })[stage] || '未分階段';
 }

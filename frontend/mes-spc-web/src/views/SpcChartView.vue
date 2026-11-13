@@ -20,6 +20,7 @@ import { subscribeControlChartRefresh } from "../utils/controlChartRefresh";
 import { buildHistogramGeometry, renderHistogramBar, resolveHistogram } from "../utils/histogramPresentation";
 import {
   useSingleChemicalLine,
+  useChemicalStageLabels,
   stageLabel,
   normalizeChemicalShift,
   isRecordedChemicalShift,
@@ -1373,7 +1374,7 @@ function renderECharts() {
   }
 
   // Control limits (Static, for Variables)
-  const singleChemicalLine = useSingleChemicalLine(mapping);
+  const singleChemicalLine = useChemicalStageLabels(mapping, rawTopPoints);
   const pairedPhaseMode = rawTopPoints.some(p => isRecordedChemicalShift(p.samplingPhase));
   const hasDynamicLimits = !pairedPhaseMode && rawTopPoints.some(p => p.uclStat != null || p.lclStat != null);
   const dynamicLimitPointCount = rawTopPoints.filter(p => p.uclStat != null || p.clStat != null || p.lclStat != null).length;
