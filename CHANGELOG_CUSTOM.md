@@ -2851,3 +2851,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 所有藥液初驗／複驗公式將Primary／Secondary先以`MidpointRounding.AwayFromZero`取至小數第3位，再代入公式；公式分析值保存與API顯示精度固定為小數第3位。
 - 更新計算引擎與精度策略版本，Receipt同時保留原始輸入及實際計算用的三位正規化值；既有已保存量測、Receipt／Trace、公式、F表、規格與資料庫schema均未批次改寫。
 - 紅燈4項先重現舊行為；焦點回歸54/54與Release build通過。SPC測試API0.1.131已發布，Web首頁與JS／CSS MIME、health／version及前端實際同源`/api`皆為test成功。瀏覽器自動化元件不可用，登入畫面留待使用者驗收；正式未發布。
+- 2026-11-13 [藥液量測刪除沿用稽核交易](specs/20261113-chemical-delete-audit-transaction/verification.md)：修正BusinessDataAuditFilter已開交易後刪除端點再次開交易造成503；量測改採邏輯刪除並保留不可變Receipt／Trace，SPC結果、警示及兩層稽核維持同成同敗。紅燈先重現，相關36/36與Release publish通過；測試API0.1.132及Web／資產／同源／8901連線驗證正常，待登入實際刪除驗收，正式未發布。

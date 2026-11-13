@@ -148,6 +148,7 @@ public class ManualMeasurementsV1ControllerTests
 
         Assert.IsType<OkObjectResult>(result);
         Assert.Empty(await db.VariableMeasurements.ToListAsync());
+        Assert.True((await db.VariableMeasurements.IgnoreQueryFilters().SingleAsync()).IsDeleted);
         Assert.Empty(await db.SpcCalculationResults.ToListAsync());
         Assert.Empty(await db.AlertEvents.ToListAsync());
         var audit = Assert.Single(await db.UploadDetails.ToListAsync());

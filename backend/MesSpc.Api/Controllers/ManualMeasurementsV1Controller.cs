@@ -508,7 +508,8 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             ? User.Identity?.Name ?? row.Operator
             : operatorName.Trim();
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var ownsTransaction = db.Database.IsRelational() && db.Database.CurrentTransaction is null;
+        await using var tx = ownsTransaction ? await db.Database.BeginTransactionAsync(ct) : null;
         var calculations = await db.SpcCalculationResults
             .Where(x => x.VariableMeasurementId == id).ToListAsync(ct);
         var alerts = await db.AlertEvents
@@ -545,9 +546,13 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 }
             })
         });
-        db.VariableMeasurements.Remove(row);
+        // Formula receipts and traces are immutable evidence. Logical deletion keeps that
+        // evidence intact while removing the measurement from every normal query.
+        row.IsDeleted = true;
+        row.UpdatedAt = DateTime.UtcNow;
+        row.UpdatedBy = actor;
         await db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
+        if (tx is not null) await tx.CommitAsync(ct);
 
         return Ok(new { id, deleted = true });
     }

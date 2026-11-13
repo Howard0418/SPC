@@ -1761,3 +1761,11 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 保護：不批次改寫既有量測、Receipt／Trace、公式、F表或正式資料；新計算證據更新引擎與精度策略版本。
 - 規格：`specs/20261113-chemical-global-three-decimal-calculation/`。
 
+# 2026-11-13 藥液量測刪除沿用稽核交易
+
+- 目的：修正業務稽核已開啟交易後，刪除量測端點再次開啟交易而回傳 500 的錯誤。
+- 範圍：只協調 `ManualMeasurementsV1Controller.DeleteItem` 的交易擁有權；保留刪除資格、衍生資料清理與稽核同成同敗，不修改公式、F、schema、既有量測或正式站。
+- 驗證：先以 SQLite 關聯式整合測試重現外層稽核交易，再做最小修正與既有回歸。
+- 規格：`specs/20261113-chemical-delete-audit-transaction/spec.md`。
+- 結果：控制器只在沒有外層關聯式交易時自行建立交易，量測採邏輯刪除並保留不可變Receipt／Trace；紅燈先重現503，相關36/36及Release publish通過。測試API0.1.132完成Web／資產／同源與8901連線驗證，待登入實際刪除驗收，正式未發布。
+

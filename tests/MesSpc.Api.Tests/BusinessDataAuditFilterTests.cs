@@ -242,4 +242,60 @@ public sealed class BusinessDataAuditFilterTests
         Assert.Single(await fixture.Db.AuditEvents.ToListAsync());
         Assert.Equal(1, fixture.Mail.Sent);
     }
+
+    [Fact]
+    public async Task ChemicalPortalDeleteReusesBusinessAuditTransactionAndPreservesImmutableTrace()
+    {
+        await using var fixture = await ChemicalPortalMeasurementTests.Fixture.Create();
+        await fixture.Service.ConfirmAsync(
+            new ChemicalPortalConfirmRequest(Guid.NewGuid(), [await fixture.Row("7.1", null, "audit.qa")]),
+            "audit.qa", default);
+        var measurement = await fixture.Db.VariableMeasurements.SingleAsync();
+        fixture.Db.Operators.Add(new Operator
+        {
+            Id = 7, OperatorCode = "AUDIT", OperatorName = "Audit QA", Username = "audit.qa", Role = "Editor"
+        });
+        await fixture.Db.SaveChangesAsync();
+        fixture.Db.ChangeTracker.Clear();
+
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["AppEnvironment"] = "test", ["Auth:Enabled"] = "true", ["Audit:AuthenticationEnabled"] = "true",
+            ["Audit:BusinessDataEnabled"] = "true", ["Audit:AttemptedAccountHmacKey"] = new string('k', 32)
+        }).Build();
+        var writer = new AuditEventWriter(fixture.Db, fixture.Options, config, TimeProvider.System, NullLogger<AuditEventWriter>.Instance);
+        var authentication = new AuthenticationAudit(writer, config, NullLogger<AuthenticationAudit>.Instance);
+        var filter = new BusinessDataAuditFilter(fixture.Db, writer, authentication, new AuditPermissions(fixture.Db, config), config,
+            NullLogger<BusinessDataAuditFilter>.Instance);
+        var http = new DefaultHttpContext();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity([
+            new(ClaimTypes.NameIdentifier, "7"), new(ClaimTypes.Name, "audit.qa"), new(ClaimTypes.Role, "Editor"), new("jti", "chemical-delete")
+        ], "test"));
+        http.Request.Method = "DELETE";
+        http.Request.RouteValues["id"] = measurement.Id;
+        var controller = new ManualMeasurementsV1Controller(fixture.Db,
+            new SpcService(fixture.Db, fixture.Mail, new ConfigurationBuilder().Build()))
+        { ControllerContext = new ControllerContext { HttpContext = http } };
+        var descriptor = new ControllerActionDescriptor
+        {
+            ControllerTypeInfo = typeof(ManualMeasurementsV1Controller).GetTypeInfo(), ControllerName = "ManualMeasurementsV1",
+            ActionName = "DeleteItem", MethodInfo = typeof(ManualMeasurementsV1Controller).GetMethod("DeleteItem")!
+        };
+        var action = new ActionContext(http, new RouteData(), descriptor);
+        var executing = new ActionExecutingContext(action, [],
+            new Dictionary<string, object?> { ["id"] = measurement.Id, ["operatorName"] = "audit.qa" }, controller);
+        ActionExecutedContext? completed = null;
+
+        await filter.OnActionExecutionAsync(executing, async () => completed =
+            new ActionExecutedContext(action, [], controller) { Result = await controller.DeleteItem(measurement.Id, "audit.qa") });
+
+        Assert.Null(executing.Result);
+        Assert.IsType<OkObjectResult>(completed!.Result);
+        fixture.Db.ChangeTracker.Clear();
+        Assert.Empty(await fixture.Db.VariableMeasurements.ToListAsync());
+        Assert.True((await fixture.Db.VariableMeasurements.IgnoreQueryFilters().SingleAsync()).IsDeleted);
+        Assert.Single(await fixture.Db.ChemicalCalculationTraces.ToListAsync());
+        Assert.Single(await fixture.Db.ChemicalCalculationReceipts.ToListAsync());
+        Assert.Equal("measurement.record.delete", (await fixture.Db.AuditEvents.SingleAsync()).EventCode);
+    }
 }
