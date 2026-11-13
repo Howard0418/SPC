@@ -596,3 +596,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-13 [藥液量測確認與稽核交易相容](../specs/20261113-chemical-confirm-audit-transaction/spec.md)：Portal藥液Confirm保留服務自主管理的完整交易，稽核不再建立衝突的外層交易；量測、Receipt、Trace、統計與稽核事件同成同敗，通知只在提交後執行。測試API0.1.129已發布，待登入後實際儲存確認；正式未發布。
 - 2026-11-13 [藥液空白第二滴定值預覽一致](../specs/20261113-chemical-preview-empty-secondary/spec.md)：單滴定項目未提供第二滴定值時，Portal預覽的`null`與確認批次的空字串在SPC統一視為未提供值，不得誤判為預覽內容變更；有效第二滴定值及日期／輸入／規格／公式變更防護保持。測試API0.1.130已發布，待登入實際儲存人工驗收；正式未發布。
 - 2026-11-13 [N2 P400 最近公式排程補齊](../specs/20261113-n2-p400-current-formula-schedule/verification.md)：測試庫 N2／催化／P400 自 2026/11/7 起採最近公式 v4／1157 與 F248；新增1個不可變修訂及29區間，原28段與55份Receipt保持。11/12 Preview／Prepare、保護資料指紋與冪等通過；網站不需發布，正式未異動。
+- 2026-11-13 [藥液儲存前自動更新預覽憑證](../specs/20261113-chemical-save-fresh-preview/verification.md)：Portal確認前重新preview本次變更的日期公式列，並以同次分析值、調整結果與新token送入confirm；直接輸入不新增preview，SPC 409防護保持。測試API1.0.243／Web1.0.284及18項單元、16項UI、Web／資產／API連線驗證通過；待登入實際儲存驗收，正式未發布。

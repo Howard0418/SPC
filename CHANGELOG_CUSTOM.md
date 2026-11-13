@@ -2829,3 +2829,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 依使用者指示採最近公式1157/v4與F248，備份驗證後新增revision1742及29個完整期間，原28段逐段保持並附加11/07起開放段；原55份Receipt、Trace、量測、公式、F、PPC與規格保持。
 - 11/12滴定值0.17的Preview／Prepare、verify、重跑plan、API health/version皆通過；測試Receipt以savepoint回復，`pending=0`。網站程式不需發布，正式環境未異動。
 - 2026-11-13：完成`SPC-CHEM-N2-TIN-PRECISION-1113-TASK-001`。N2／促進／氯化亞錫公式與F不變，測試庫以公式1244/v4將保存精度改為3；輸入0.10由Raw0.2256保存與查詢為0.226，與Excel一致。量測94084新增Receipt／Trace v2並保留原證據；13項測試、備份、保護指紋與冪等通過。網站不需發布，正式未異動。
+## 2026-11-13 藥液儲存前自動更新預覽憑證
+
+- Portal確認儲存前會重新預覽本次變更的日期公式初驗／複驗，confirm使用同一次計算結果與最新token；直接輸入項目維持原流程。
+- 18項單元、16項UI及Portal Web Release build通過；測試API1.0.243／Web1.0.284已發布，Web／JS／CSS MIME、Portal實際API基底與SPC測試API健康／版本驗證通過。
+- 未修改SPC公式、F、排程、資料庫、schema或既有量測。待登入實際儲存驗收；正式未授權、未發布。
