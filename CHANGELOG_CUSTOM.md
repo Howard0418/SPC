@@ -2800,3 +2800,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 保留 N1／N2 藥液既有單一序列、點位、MR、管制線、Cpk、規格與資料。焦點測試8/8、i18n及Web build通過。
 - SPC測試Web0.1.129已發布，API維持0.1.127/test；首頁、主JS/CSS MIME及同源health/version通過。測試庫備份／VERIFYONLY完成，暫時dbcreator已撤除且未授予sysadmin。正式未發布，登入畫面待人工驗收。
 
+## 2026-11-13 PPC 公式儲存交易衝突修正
+
+- 修正 `BusinessDataAuditFilter` 已建立交易時，PPC Update 再建立交易而造成500；現在沿用外層交易，PPC公式、公式版本與稽核事件維持原子性。
+- 新增SQLite關聯式回歸，相關19項與API build通過；完整API測試另有10項既有藥液歷史判定／修復失敗，與本件隔離重跑結果一致。
+- 已發布SPC測試API0.1.128（Web0.1.129保持），備份驗證、暫時權限撤銷、首頁／JS／CSS MIME及同源health／version通過。先前失敗的PH公式需重新按儲存；正式未發布。
+
