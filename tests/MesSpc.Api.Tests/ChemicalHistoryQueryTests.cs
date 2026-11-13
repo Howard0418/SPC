@@ -4,6 +4,7 @@ using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using MesSpc.Api.Controllers;
+using MesSpc.Api.SpcEngine.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 namespace MesSpc.Api.Tests;
@@ -51,6 +52,28 @@ public class ChemicalHistoryQueryTests
         f.Db.ChangeTracker.Clear();var rows=await f.Db.VariableMeasurements.AsNoTracking().ToListAsync();
         var result=(await new ChemicalHistoryQueryService(f.Db).GetAsync(rows)).Single().Value;
         result.HasRecheck.Should().BeTrue();result.EffectiveValue.Should().Be(0);result.Judgment.Should().Be("OK");result.InitialJudgment.Should().Be("NG");
+    }
+
+    [Fact]
+    public async Task InteractiveChartUsesTheSameSavedRecheckEffectiveValueAsHistory()
+    {
+        await using var db=new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var process=new Process{Id=1,ProcessCode="C1"};
+        var machine=new Machine{Id=1,MachineCode="P400",ProcessId=1};
+        var characteristic=new QualityCharacteristic{Id=1,CharacteristicCode="CHEM",DataCategory="Variable"};
+        var chartType=new ControlChartType{Id=1,ChartTypeCode="I_MR",DataCategory="Variable"};
+        var mapping=new PartProcessCharacteristic{Id=1,ProcessId=1,MachineId=1,CharacteristicId=1,ChartTypeId=1,ControlScope="CHEM",SampleSize=1,IsEnabled=true};
+        var batch=new UploadBatch{UploadBatchId=Guid.NewGuid()};
+        db.AddRange(process,machine,characteristic,chartType,mapping,batch,
+            new VariableMeasurement{Id=1,PartProcessCharacteristicId=1,ProcessId=1,MachineId=1,CharacteristicId=1,UploadBatchId=batch.UploadBatchId,MeasuredAt=new DateTime(2026,11,9,16,0,0),MeasuredValue=12.18,RecheckValue=12.41});
+        await db.SaveChangesAsync();
+
+        var chart=await new SpcService(db,new ChemicalPortalMeasurementTests.FakeEmail(),new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build())
+            .GetInteractiveChartAsync(1,null,includeAllPoints:true);
+
+        chart.Should().NotBeNull();
+        chart!.RawDataPoints.Should().BeAssignableTo<IEnumerable<SpcDataPoint>>().Which.Should().ContainSingle().Which.Value.Should().Be(12.41);
+        (await new ChemicalHistoryQueryService(db).GetAsync(await db.VariableMeasurements.ToListAsync()))[1].EffectiveValue.Should().Be(12.41);
     }
 
     [Fact]
