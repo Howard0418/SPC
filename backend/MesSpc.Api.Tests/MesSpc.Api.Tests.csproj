@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MesSpc.Api\MesSpc.Api.csproj" />
+    <Compile Include="..\..\tools\C1ExcelAlignment\AlignmentPlan.cs" Link="C1ExcelAlignment\AlignmentPlan.cs" />
   </ItemGroup>
 
 </Project>
