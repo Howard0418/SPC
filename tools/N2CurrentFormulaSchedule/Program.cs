@@ -13,18 +13,25 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Pt1CurrentSchedule;
 
-if (args.Length != 3 || args[2] is not ("plan" or "apply" or "verify"))
-    throw new ArgumentException("TEST_CONFIG EVIDENCE_DIR plan|apply|verify");
+if (args.Length is < 3 or > 4 || args[2] is not ("plan" or "apply" or "verify") ||
+    (args.Length == 4 && args[3] is not ("chloride" or "p400")))
+    throw new ArgumentException("TEST_CONFIG EVIDENCE_DIR plan|apply|verify [chloride|p400]");
 
-const string TaskId = "SPC-CHEM-N2-CURRENT-SCHEDULE-1113-TASK-001";
 const long FHistoryId = 248;
 var startUtc = new DateTime(2026, 11, 6, 16, 0, 0, DateTimeKind.Utc);
 var measuredAt = "2026-11-12T00:00:00+08:00";
-var expected = new Dictionary<int, Expected>
-{
-    [2516] = new("催化", 1158, 4),
-    [2518] = new("促進", 796, 3)
-};
+var profile = args.Length == 4 ? args[3] : "chloride";
+var taskId = profile == "p400"
+    ? "SPC-CHEM-N2-P400-SCHEDULE-1113-TASK-001"
+    : "SPC-CHEM-N2-CURRENT-SCHEDULE-1113-TASK-001";
+var primary = profile == "p400" ? "0.17" : "1";
+var expected = profile == "p400"
+    ? new Dictionary<int, Expected> { [2515] = new("催化", "CHAR-000847", 1157, 4) }
+    : new Dictionary<int, Expected>
+    {
+        [2516] = new("催化", "CHAR-000827", 1158, 4),
+        [2518] = new("促進", "CHAR-000827", 796, 3)
+    };
 var mode = args[2];
 var json = new JsonSerializerOptions { WriteIndented = true };
 Directory.CreateDirectory(args[1]);
@@ -75,7 +82,7 @@ async Task<List<PlanItem>> ReadPlan()
             .Include(x => x.Machine).Include(x => x.Tank).Include(x => x.Characteristic)
             .SingleAsync(x => x.Id == id);
         if (!mapping.IsEnabled || mapping.ControlScope != "CHEM" || mapping.Machine?.MachineCode != "N2" ||
-            mapping.Tank?.TankName != identity.Tank || mapping.Characteristic?.CharacteristicCode != "CHAR-000827")
+            mapping.Tank?.TankName != identity.Tank || mapping.Characteristic?.CharacteristicCode != identity.CharacteristicCode)
             throw new InvalidOperationException($"PPC {id} business identity changed.");
 
         var formula = await db.ChemicalAnalysisFormulaVersions.AsNoTracking()
@@ -134,7 +141,7 @@ async Task<Dictionary<string, string>> ProtectedFingerprints()
 
 var initialPlan = await ReadPlan();
 var pending = initialPlan.Count(x => x.Schedule.Changed);
-if (pending is not (0 or 2)) throw new InvalidOperationException("Partial target state requires manual review.");
+if (pending != 0 && pending != expected.Count) throw new InvalidOperationException("Partial target state requires manual review.");
 var sourceHash = Hash(Serialize(initialPlan));
 var beforeProtected = await ProtectedFingerprints();
 var oldRevisions = await db.ChemicalFormulaScheduleRevisions.AsNoTracking()
@@ -147,7 +154,7 @@ var maxEffectId = oldEffects.Max(x => x.Id);
 
 var reviewedPath = Path.Combine(args[1], "reviewed-plan.json");
 await File.WriteAllTextAsync(Path.Combine(args[1], $"{stamp}-{mode}-before.json"),
-    JsonSerializer.Serialize(new { TaskId, mode, sourceHash, pending, initialPlan, beforeProtected }, json));
+    JsonSerializer.Serialize(new { taskId, profile, mode, sourceHash, pending, initialPlan, beforeProtected }, json));
 Console.WriteLine($"{mode}: pending={pending}; formulas={string.Join(',', initialPlan.Select(x => $"{x.Id}:v{x.VersionNo}/{x.FormulaId}"))}; F={FHistoryId}; start={startUtc:o}");
 
 async Task Verify(bool expectApplied)
@@ -164,16 +171,37 @@ async Task Verify(bool expectApplied)
             .SingleAsync();
         if (match.FormulaVersionId != item.FormulaId || match.FTableHistoryId != FHistoryId)
             throw new InvalidOperationException("Effective formula or F history mismatch.");
-        var preview = await Service().PreviewAsync(item.Id, new(measuredAt, "1", null, TaskId + "-verify", "Initial"),
-            Environment.UserName, default);
+        var input = new ChemicalPreviewInput(measuredAt, primary, null, taskId + "-verify", "Initial");
+        var preview = await Service().PreviewAsync(item.Id, input, Environment.UserName, default);
         if (preview.FormulaVersionId != item.FormulaId || preview.FTableHistoryId != FHistoryId)
             throw new InvalidOperationException("Preview did not use the expected latest version.");
+
+        var ownsTransaction = db.Database.CurrentTransaction is null;
+        await using var ownedTransaction = ownsTransaction
+            ? await db.Database.BeginTransactionAsync(IsolationLevel.Serializable)
+            : null;
+        var transaction = db.Database.CurrentTransaction
+            ?? throw new InvalidOperationException("Prepare verification requires a transaction.");
+        var savepoint = $"verify_prepare_{item.Id}";
+        await transaction.CreateSavepointAsync(savepoint);
+        try
+        {
+            var receipt = await Service().PrepareAsync(item.Id, new(input, preview.Token), Environment.UserName, default);
+            if (receipt.PartProcessCharacteristicId != item.Id || receipt.EffectivityId != match.Id)
+                throw new InvalidOperationException("Prepare did not use the expected schedule period.");
+        }
+        finally
+        {
+            await transaction.RollbackToSavepointAsync(savepoint);
+            db.ChangeTracker.Clear();
+            if (ownedTransaction is not null) await ownedTransaction.RollbackAsync();
+        }
     }
 }
 
 if (mode == "plan")
 {
-    await File.WriteAllTextAsync(reviewedPath, JsonSerializer.Serialize(new { TaskId, sourceHash, initialPlan }, json));
+    await File.WriteAllTextAsync(reviewedPath, JsonSerializer.Serialize(new { taskId, profile, sourceHash, initialPlan }, json));
 }
 else if (mode == "apply" && pending > 0)
 {
@@ -187,7 +215,7 @@ else if (mode == "apply" && pending > 0)
         command.CommandTimeout = 600;
         command.CommandText = "SELECT CONVERT(nvarchar(4000),SERVERPROPERTY('InstanceDefaultBackupPath'))";
         var directory = Convert.ToString(await command.ExecuteScalarAsync())!;
-        var backup = directory.TrimEnd('\\') + $"\\PMR_SPC_TEST_N2_CURRENT_SCHEDULE_{stamp}.bak";
+        var backup = directory.TrimEnd('\\') + $"\\PMR_SPC_TEST_N2_{profile.ToUpperInvariant()}_CURRENT_SCHEDULE_{stamp}.bak";
         command.CommandText = "BACKUP DATABASE [PMR_SPC_TEST] TO DISK=@path WITH COPY_ONLY,CHECKSUM;RESTORE VERIFYONLY FROM DISK=@path WITH CHECKSUM";
         var parameter = command.CreateParameter(); parameter.ParameterName = "@path"; parameter.Value = backup; command.Parameters.Add(parameter);
         await command.ExecuteNonQueryAsync();
@@ -210,7 +238,7 @@ else if (mode == "apply" && pending > 0)
             RevisionNo = revisionNo,
             CreatedAtUtc = DateTime.UtcNow,
             Actor = Environment.UserName,
-            Reason = TaskId + " / 使用者指定自2026-11-07起套用各項最近公式版本"
+            Reason = taskId + " / 使用者指定自2026-11-07起套用最近公式版本"
         };
         db.Add(revision);
         await db.SaveChangesAsync();
@@ -261,9 +289,9 @@ using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
 var health = await http.GetStringAsync("https://spctest.pmr.com.tw/api/health");
 var version = await http.GetStringAsync("https://spctest.pmr.com.tw/api/version");
 await File.WriteAllTextAsync(Path.Combine(args[1], $"{stamp}-{mode}.json"),
-    JsonSerializer.Serialize(new { TaskId, mode, pending, remaining, sourceHash, initialPlan, finalPlan, protectedDataUnchanged = true,
+    JsonSerializer.Serialize(new { taskId, profile, mode, pending, remaining, sourceHash, initialPlan, finalPlan, protectedDataUnchanged = true,
         apiHealth = JsonSerializer.Deserialize<object>(health), apiVersion = JsonSerializer.Deserialize<object>(version) }, json));
 Console.WriteLine($"{mode}: remaining={remaining}; protected=unchanged; health={health}; version={version}");
 
-sealed record Expected(string Tank, long FormulaId, int VersionNo);
+sealed record Expected(string Tank, string CharacteristicCode, long FormulaId, int VersionNo);
 sealed record PlanItem(int Id, string Tank, long RevisionId, bool PolicyEnabled, long FormulaId, int VersionNo, long FId, MergedSchedule Schedule);

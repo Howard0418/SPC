@@ -738,3 +738,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-13 N2 氯化亞錫目前公式排程補齊（完成）
 
 - [x] `SPC-CHEM-N2-CURRENT-SCHEDULE-1113-TASK-001`：P0，SPC主責；依使用者指示，N2催化／促進氯化亞錫自2026/11/7起套用最新公式v4／v3與F248。測試庫備份驗證、新增2修訂／58區間、11/12預覽、保護指紋與冪等通過；網站不需發布，正式未異動。[驗證](specs/20261113-n2-current-formula-schedule/verification.md)
+
+## 2026-11-13 N2 P400 最近公式排程補齊（完成）
+
+- [x] `SPC-CHEM-N2-P400-SCHEDULE-1113-TASK-001`：P0，SPC主責；CHAR-000847 已自2026/11/7起套用最近公式v4／1157與F248。測試庫備份驗證、新增1修訂／29區間、11/12 Preview／Prepare、保護指紋與冪等通過；網站不需發布，正式未異動。[驗證](specs/20261113-n2-p400-current-formula-schedule/verification.md)
