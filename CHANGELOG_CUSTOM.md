@@ -2806,3 +2806,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 新增SQLite關聯式回歸，相關19項與API build通過；完整API測試另有10項既有藥液歷史判定／修復失敗，與本件隔離重跑結果一致。
 - 已發布SPC測試API0.1.128（Web0.1.129保持），備份驗證、暫時權限撤銷、首頁／JS／CSS MIME及同源health／version通過。先前失敗的PH公式需重新按儲存；正式未發布。
 
+## 2026-11-13 藥液量測確認交易衝突修正
+
+- 修正BusinessDataAuditFilter與ChemicalPortalMeasurementService對Confirm重複建立Serializable交易而回傳500；藥液服務保留完整交易，稽核事件加入同一交易。
+- SQLite真實Controller／Service／Filter整合測試先重現503；修正後成功保存量測、Receipt、Trace、統計與稽核，通知只在提交後送出，稽核失敗整批回滾。相關13項與API build通過。
+- 已發布SPC測試API0.1.129（Web0.1.129保持）；備份驗證、暫時權限撤銷、首頁／JS／CSS MIME及同源health／version通過。待使用者登入重試實際儲存；正式未發布。
