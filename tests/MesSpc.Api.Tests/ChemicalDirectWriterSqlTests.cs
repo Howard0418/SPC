@@ -110,7 +110,7 @@ public class ChemicalDirectWriterSqlTests
             statusReader.GetString(statusReader.GetOrdinal("statisticsStatus")).Should().Be("Completed");
             var evidence=(await new ChemicalTraceQueryService(seed).GetAsync(ppc.Id,null,vm.Id,0,0,default))!;
             evidence.Rows.Single().Calculations.Should().HaveCount(2);
-            evidence.Rows.Single().Calculations.Single(x=>x.Phase=="Initial").RawResult.Should().Be("2.469");
+            evidence.Rows.Single().Calculations.Single(x=>x.Phase=="Initial").RawResult.Should().Be("2.47");
             (await new ChemicalTraceQueryService(seed).GetAsync(ppc.Id,null,null,0,0,default))!.Rows.Should().Contain(x=>x.MeasurementId==vm.Id);
             // One file crossing two effective dates: the same real DB path keeps both actual versions.
             var oldDateFormula=new ChemicalAnalysisFormulaVersion{PartProcessCharacteristicId=ppc.Id,VersionNo=2,ConfigJson="{\"enabled\":true,\"concentrationFormula\":\"Primary*3\",\"decimalPlaces\":2}"};
@@ -121,7 +121,7 @@ public class ChemicalDirectWriterSqlTests
             var earlierVm=await Commit(earlier);
             var mixed=(await new ChemicalTraceQueryService(seed).GetAsync(ppc.Id,null,null,0,0,default))!;
             mixed.MultipleFormulaVersions.Should().BeTrue();
-            mixed.Rows.Single(x=>x.MeasurementId==earlierVm).Calculations.Single(x=>x.Phase=="Initial").StoredResult.Should().Be("3.7");
+            mixed.Rows.Single(x=>x.MeasurementId==earlierVm).Calculations.Single(x=>x.Phase=="Initial").StoredResult.Should().Be("3.705");
             mixed.Rows.Single(x=>x.MeasurementId==vm.Id).Calculations.Single(x=>x.Phase=="Initial").StoredResult.Should().Be("2.47");
         }finally{await seed.Database.ExecuteSqlRawAsync("ALTER ROLE SpcChemicalDirectWriter DROP MEMBER Task005Writer; DROP USER Task005Writer;");}
  }

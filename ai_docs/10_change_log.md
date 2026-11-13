@@ -1754,3 +1754,10 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 驗收：複驗仍更新分析值／判定／token，但畫面與 confirm payload 保留初驗調整結果。
 - 規格：`D:/PmrPortal/specs/20261113-chemical-recheck-preserve-adjustment/spec.md`。
 
+# 2026-11-13 藥液滴定值與分析值統一三位計算
+
+- 目的：依使用者確認，所有藥液公式先將初驗／複驗的第一、第二滴定值以AwayFromZero取至小數第3位，再代入公式，分析值亦取至小數第3位。
+- 範圍：SPC計算引擎、預覽精度契約、焦點回歸與測試站發布；Portal沿用API回傳，不另建公式。
+- 保護：不批次改寫既有量測、Receipt／Trace、公式、F表或正式資料；新計算證據更新引擎與精度策略版本。
+- 規格：`specs/20261113-chemical-global-three-decimal-calculation/`。
+

@@ -165,6 +165,8 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
             formulaConfigJson=formula.ConfigJson, fTableHistoryId=f?.Id, fCellsJson=f?.CellsJson, measuredAtUtc=at, originalInput=input,
             primaryCanonical=ChemicalFormulaCalculation.Canonical(ChemicalFormulaCalculation.ReadDecimal(input.Primary,"Primary")),
             secondaryCanonical=string.IsNullOrWhiteSpace(input.Secondary)?null:ChemicalFormulaCalculation.Canonical(ChemicalFormulaCalculation.ReadDecimal(input.Secondary,"Secondary")),
+            calculationPrimaryCanonical=ChemicalFormulaCalculation.Canonical(ChemicalFormulaCalculation.NormalizeInput(input.Primary,"Primary")),
+            calculationSecondaryCanonical=string.IsNullOrWhiteSpace(input.Secondary)?null:ChemicalFormulaCalculation.Canonical(ChemicalFormulaCalculation.NormalizeInput(input.Secondary,"Secondary")),
             sourceKeyHash=Hash(input.SourceKey), unit=mapping.Unit, segmentId=segment?.Id, lsl,usl,target,result,
             engineVersion=ChemicalFormulaCalculation.EngineVersion, precisionPolicy=ChemicalFormulaCalculation.PrecisionPolicy });
         return new(revisionId,period,formula,at,result,payload);
@@ -176,7 +178,7 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         if (string.IsNullOrWhiteSpace(actor) || actor.Length > 100) throw ApiUiException.Attach(new ArgumentException("缺少有效操作者。"), "spc.api.actorRequired");
         var value=await ResolveAsync(id,input,ct); var expires=Now.AddMinutes(10);
         var token=protector.Protect(JsonSerializer.Serialize(new ChemicalPreviewTicket(id,actor,Hash(value.PayloadJson),expires)));
-        var decimalPlaces=JsonSerializer.Deserialize<ChemicalCalculationConfig>(value.Formula.ConfigJson, new JsonSerializerOptions { PropertyNameCaseInsensitive=true })?.DecimalPlaces ?? 3;
+        var decimalPlaces=ChemicalFormulaCalculation.OutputDecimalPlaces;
         return new(value.RevisionId,value.Formula.Id,value.Formula.VersionNo,value.Period.FTableHistoryId,value.MeasuredAtUtc,value.Result,decimalPlaces,
             ChemicalFormulaCalculation.EngineVersion,ChemicalFormulaCalculation.PrecisionPolicy,token,expires);
     }

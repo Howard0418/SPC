@@ -46,7 +46,7 @@ public class ChemicalFormulaScheduleSqlTests
         await using var verify=Open(); var service=Svc(verify);
         var preview=await service.PreviewAsync(ppc.Id,new("2026-10-20T12:00:00+08:00","1.2345",null,"sql-"+suffix),"editor",default);
         var receipt=await service.PrepareAsync(ppc.Id,new(new("2026-10-20T12:00:00+08:00","1.2345",null,"sql-"+suffix),preview.Token),"editor",default);
-        receipt.PayloadJson.Should().Contain("2.469");
+        receipt.PayloadJson.Should().Contain("2.47");
         (await verify.ChemicalFormulaPolicies.SingleAsync(x=>x.PartProcessCharacteristicId==ppc.Id)).IsEnabled.Should().BeFalse();
         (await verify.ChemicalCalculationReceipts.CountAsync(x=>x.PartProcessCharacteristicId==ppc.Id)).Should().Be(1);
         (await verify.VariableMeasurements.CountAsync(x=>x.PartProcessCharacteristicId==ppc.Id)).Should().Be(0);

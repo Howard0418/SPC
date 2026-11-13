@@ -30,7 +30,7 @@ public class ChemicalHistoryQueryTests
     }
 
     [Fact]
-    public async Task SavedRawJudgmentSurvivesDisplayRoundingAndLaterMasterChanges()
+    public async Task SavedThreeDecimalJudgmentSurvivesLaterMasterChanges()
     {
         await using var f=await ChemicalPortalMeasurementTests.Fixture.Create();
         var mapping=await f.Db.PartProcessCharacteristics.SingleAsync();mapping.USL=1.002;mapping.LSL=0;await f.Db.SaveChangesAsync();
@@ -38,8 +38,8 @@ public class ChemicalHistoryQueryTests
         mapping.USL=99;await f.Db.SaveChangesAsync();f.Db.ChangeTracker.Clear();
         var rows=await f.Db.VariableMeasurements.AsNoTracking().ToListAsync();
         var result=(await new ChemicalHistoryQueryService(f.Db).GetAsync(rows)).Single().Value;
-        result.EffectiveValue.Should().Be(1);result.Judgment.Should().Be("NG");result.InitialJudgment.Should().Be("NG");
-        result.JudgmentSource.Should().Be("SavedTrace");result.PrecisionNote.Should().NotBeEmpty();
+        result.EffectiveValue.Should().Be(1.004);result.Judgment.Should().Be("NG");result.InitialJudgment.Should().Be("NG");
+        result.JudgmentSource.Should().Be("SavedTrace");result.PrecisionNote.Should().BeNullOrEmpty();
         f.Db.ChangeTracker.Entries().Should().BeEmpty();
     }
 

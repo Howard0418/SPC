@@ -12,8 +12,10 @@ public sealed record ChemicalCalculatedValue(string Raw, string Stored, string A
 /// <summary>Explicit-offset dates, mandatory inputs and versioned Portal-compatible chemical calculation.</summary>
 public static class ChemicalFormulaCalculation
 {
-    public const string EngineVersion = "portal-excel8-v3-lazy";
-    public const string PrecisionPolicy = "decimal-excel8-away-from-zero-v1";
+    public const string EngineVersion = "portal-excel8-v4-three-decimal-input";
+    public const string PrecisionPolicy = "input-3dp-output-3dp-away-from-zero-v1";
+    public const int InputDecimalPlaces = 3;
+    public const int OutputDecimalPlaces = 3;
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private static readonly Regex Identifiers = new("[A-Za-z_$][A-Za-z0-9_$!.]*", RegexOptions.Compiled);
 
@@ -62,8 +64,8 @@ public static class ChemicalFormulaCalculation
             ?? throw ApiUiException.Attach(new ArgumentException("公式配置無效。"), "spc.api.chemicalConfigInvalid");
         if (!config.Enabled || string.IsNullOrWhiteSpace(config.ConcentrationFormula) || config.DecimalPlaces is < 0 or > 8)
             throw ApiUiException.Attach(new ArgumentException("請選啟用且有濃度公式、精度0至8的歷史版本。"), "spc.api.chemicalVersionPrecisionInvalid");
-        var cells = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase) { ["PRIMARY"] = ReadDecimal(primary, "Primary") };
-        if (!string.IsNullOrWhiteSpace(secondary)) cells["SECONDARY"] = ReadDecimal(secondary, "Secondary");
+        var cells = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase) { ["PRIMARY"] = NormalizeInput(primary, "Primary") };
+        if (!string.IsNullOrWhiteSpace(secondary)) cells["SECONDARY"] = NormalizeInput(secondary, "Secondary");
         if (lsl.HasValue) cells["LSL"] = lsl.Value;
         if (usl.HasValue) cells["USL"] = usl.Value;
         if (target.HasValue) cells["TARGET"] = target.Value;
@@ -93,7 +95,7 @@ public static class ChemicalFormulaCalculation
             var adjustment = Evaluate(config.AdjustmentFormula, false);
             var amount = Evaluate(config.AdjustmentAmountFormula, false);
             var judgment = lsl.HasValue && raw < lsl || usl.HasValue && raw > usl ? "NG" : lsl.HasValue || usl.HasValue ? "OK" : "Unknown";
-            return new(Canonical(raw.Value), Canonical(decimal.Round(raw.Value, config.DecimalPlaces, MidpointRounding.AwayFromZero)), adjustment, amount, judgment);
+            return new(Canonical(raw.Value), Canonical(decimal.Round(raw.Value, OutputDecimalPlaces, MidpointRounding.AwayFromZero)), adjustment, amount, judgment);
         }
         catch (Exception ex) when (ex is FormatException or OverflowException or DivideByZeroException or NotSupportedException or InvalidOperationException)
         { throw ApiUiException.Attach(new ArgumentException("公式無法計算，請核對語法、除數與輸入。", ex), "spc.api.chemicalCalculationInvalid"); }
@@ -116,6 +118,9 @@ public static class ChemicalFormulaCalculation
             throw ApiUiException.Attach(new ArgumentException($"{label}超出可精確保存的decimal精度。"), "spc.api.chemicalDecimalPrecision", new Dictionary<string,string> { ["field"] = label });
         return value;
     }
+
+    public static decimal NormalizeInput(string? text, string label) =>
+        decimal.Round(ReadDecimal(text, label), InputDecimalPlaces, MidpointRounding.AwayFromZero);
 }
 
 public sealed record ChemicalCalculationConfig(bool Enabled = false, string ConcentrationFormula = "", string? AdjustmentFormula = null,

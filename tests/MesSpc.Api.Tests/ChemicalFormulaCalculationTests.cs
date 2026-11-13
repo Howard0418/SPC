@@ -6,6 +6,34 @@ namespace MesSpc.Api.Tests;
 public class ChemicalFormulaCalculationTests
 {
     [Theory]
+    [InlineData("0.3524", "53.504")]
+    [InlineData("0.3525", "53.656")]
+    [InlineData("-0.3525", "-53.656")]
+    public void TitrationIsRoundedToThreeDecimalsBeforeFormulaAndResultIsThreeDecimals(string primary, string expected)
+    {
+        const string config = "{\"enabled\":true,\"concentrationFormula\":\"Primary*152\",\"decimalPlaces\":2}";
+
+        var result = ChemicalFormulaCalculation.Calculate(config, primary, null, "[]", null, null, null);
+
+        result.Raw.Should().Be(expected);
+        result.Stored.Should().Be(expected);
+    }
+
+    [Fact]
+    public void InitialRecheckAndSecondaryUseSameThreeDecimalInputPolicy()
+    {
+        const string config = "{\"enabled\":true,\"concentrationFormula\":\"Primary+Secondary\",\"recheckConcentrationFormula\":\"Primary*Secondary\",\"decimalPlaces\":8}";
+
+        var initial = ChemicalFormulaCalculation.Calculate(config, "1.2344", "2.3455", "[]", null, null, null, "Initial");
+        var recheck = ChemicalFormulaCalculation.Calculate(config, "1.2344", "2.3455", "[]", null, null, null, "Recheck");
+
+        initial.Raw.Should().Be("3.58");
+        initial.Stored.Should().Be("3.58");
+        recheck.Raw.Should().Be("2.894964");
+        recheck.Stored.Should().Be("2.895");
+    }
+
+    [Theory]
     [InlineData("IF(Primary=0,7,1/Primary)","0","7")]
     [InlineData("IF(Primary=0,1/(Primary-1),7)","1","7")]
     [InlineData("IFERROR(IF(Primary=0,1/Primary,9),7)","0","7")]
@@ -60,11 +88,11 @@ public class ChemicalFormulaCalculationTests
     { Action act = () => ChemicalFormulaCalculation.ParseMeasuredAt(date); act.Should().Throw<ArgumentException>(); }
 
     [Theory]
-    [InlineData("Primary*2", "1.23456789", "2.46913578", "2.47")]
-    [InlineData("1/3", "1", "0.33333333", "0.33")]
+    [InlineData("Primary*2", "1.23456789", "2.47", "2.47")]
+    [InlineData("1/3", "1", "0.33333333", "0.333")]
     [InlineData("ROUND(Primary,0)", "2.5", "3", "3")]
     [InlineData("IF(Primary>2,10,20)", "3", "10", "10")]
-    [InlineData("Primary", "-1.235", "-1.235", "-1.24")]
+    [InlineData("Primary", "-1.235", "-1.235", "-1.235")]
     public void PortalCompatiblePrecision(string formula, string primary, string raw, string stored)
     {
         var result = ChemicalFormulaCalculation.Calculate("{\"enabled\":true,\"concentrationFormula\":\"" + formula + "\",\"decimalPlaces\":2}", primary, null, "[]", null, null, null);

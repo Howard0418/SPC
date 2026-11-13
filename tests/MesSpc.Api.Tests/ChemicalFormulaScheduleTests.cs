@@ -56,7 +56,7 @@ public sealed class ChemicalFormulaScheduleTests
         var a=await svc.PreviewAsync(1,Input("2026-10-31T23:59:59+08:00"),"editor",default);
         var b=await svc.PreviewAsync(1,Input(),"editor",default);
         a.FormulaVersionId.Should().Be(1); b.FormulaVersionId.Should().Be(2);
-        a.Result.Raw.Should().Be("2.469"); b.Result.Raw.Should().Be("3.7035");
+        a.Result.Raw.Should().Be("2.47"); b.Result.Raw.Should().Be("3.705");
         (await db.ChemicalFormulaPolicies.SingleAsync()).IsEnabled.Should().BeFalse();
         (await db.ChemicalCalculationReceipts.CountAsync()).Should().Be(0);
     }

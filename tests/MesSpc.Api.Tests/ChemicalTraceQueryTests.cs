@@ -21,7 +21,7 @@ public class ChemicalTraceQueryTests
   page!.TotalMeasurements.Should().Be(2);page.UnknownMeasurements.Should().Be(1);
   var saved=page.Rows.Single(x=>x.MeasurementId==vm.Id);saved.Status.Should().Be("Recorded");
   saved.Calculations.Select(x=>x.Phase).Should().BeEquivalentTo("Initial","Recheck");
-  saved.Calculations.Single(x=>x.Phase=="Initial").RawResult.Should().Be("2.469");
+  saved.Calculations.Single(x=>x.Phase=="Initial").RawResult.Should().Be("2.47");
   saved.Calculations.Single(x=>x.Phase=="Initial").FormulaConfigJson.Should().Contain("Primary*2").And.NotContain("999");
   page.Rows.Single(x=>x.MeasurementId!=vm.Id).Status.Should().Be("Unknown");
   (await svc.GetAsync(1,null,null,0,0,default))!.Rows.Should().BeEmpty();

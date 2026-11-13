@@ -13,7 +13,7 @@ namespace MesSpc.Api.Tests;
 public class ChemicalPortalMeasurementTests
 {
     [Fact]
-    public async Task PreviewReturnsConfiguredDecimalPlaces()
+    public async Task PreviewReturnsGlobalThreeDecimalPlaces()
     {
         await using var f=await Fixture.Create();
         var version=await f.Db.ChemicalAnalysisFormulaVersions.SingleAsync();
@@ -22,8 +22,8 @@ public class ChemicalPortalMeasurementTests
 
         var preview=await f.Service.PreviewAsync(new(1,"2026-10-20T12:00:00+08:00","1.2345",null,"OPEN","GENERAL"),"editor",default);
 
-        preview.DecimalPlaces.Should().Be(4);
-        preview.Result.Stored.Should().Be("2.469");
+        preview.DecimalPlaces.Should().Be(3);
+        preview.Result.Stored.Should().Be("2.47");
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class ChemicalPortalMeasurementTests
         await using var f=await Fixture.Create();
         var row=await f.Row("1.2345","2.3456"); row["MeasuredValue"]="999"; row["RecheckValue"]="888";
         var id=Guid.NewGuid(); await f.Service.ConfirmAsync(new(id,[row]),"editor",default);
-        var vm=await f.Db.VariableMeasurements.SingleAsync();vm.MeasuredValue.Should().Be(2.47);vm.RecheckValue.Should().Be(4.69);
+        var vm=await f.Db.VariableMeasurements.SingleAsync();vm.MeasuredValue.Should().Be(2.47);vm.RecheckValue.Should().Be(4.692);
         (await f.Db.ChemicalCalculationReceipts.CountAsync()).Should().Be(2);
         (await f.Db.UploadDetails.Select(x=>x.PayloadJson).ToListAsync()).Should().OnlyContain(x=>!x.Contains("ChemicalPreviewToken") && !x.Contains("ChemicalRecheckPreviewToken"));
         (await f.Db.ChemicalCalculationTraces.Select(x=>x.Phase).ToListAsync()).Should().BeEquivalentTo("Initial","Recheck");
@@ -125,8 +125,8 @@ public class ChemicalPortalMeasurementTests
         var mapping=await f.Db.PartProcessCharacteristics.SingleAsync();mapping.ChartTypeId=1;mapping.USL=1.002;
         await f.Db.SaveChangesAsync();
         await f.Service.ConfirmAsync(new(Guid.NewGuid(),[await f.Row("0.502",null)]),"editor",default);
-        (await f.Db.VariableMeasurements.SingleAsync()).MeasuredValue.Should().Be(1.0);
-        var statistic=await f.Db.SpcCalculationResults.SingleAsync();statistic.StatisticValue.Should().Be(1.0);statistic.IsOutOfSpec.Should().BeTrue();
+        (await f.Db.VariableMeasurements.SingleAsync()).MeasuredValue.Should().Be(1.004);
+        var statistic=await f.Db.SpcCalculationResults.SingleAsync();statistic.StatisticValue.Should().Be(1.004);statistic.IsOutOfSpec.Should().BeTrue();
         (await f.Db.AlertEvents.SingleAsync()).ActualValue.Should().Be(1.004);
         f.Mail.Sent.Should().Be(1);f.Mail.BeforeCommit.Should().BeFalse();
     }
