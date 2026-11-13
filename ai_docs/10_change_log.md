@@ -1697,3 +1697,8 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：修正稽核已開啟交易時，PPC 更新 API 再開第二個交易造成公式無法儲存的錯誤。
 - 保護：維持資料、公式版本歷史與稽核事件同成同敗；不改公式內容、schema、權限或正式資料。
 
+# 2026-11-13 藥液量測確認交易衝突
+
+- 目的：修正BusinessDataAuditFilter與ChemicalPortalMeasurementService重複建立交易，造成Portal藥液日報confirm回傳500。
+- 範圍：SPC API稽核交易協調、藥液確認整合測試與測試站發布；不改公式、F、主檔、既有量測、Portal UI或schema。
+

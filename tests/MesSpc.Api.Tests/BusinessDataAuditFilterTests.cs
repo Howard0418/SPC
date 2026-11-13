@@ -172,4 +172,74 @@ public sealed class BusinessDataAuditFilterTests
         Assert.Equal("修正 Excel 儲存格引用", version.Reason);
         Assert.Equal("masterdata.record.update", (await db.AuditEvents.SingleAsync()).EventCode);
     }
+
+    [Fact]
+    public async Task ChemicalPortalConfirmUsesItsAtomicTransactionWithBusinessAudit()
+    {
+        await using var fixture = await ChemicalPortalMeasurementTests.Fixture.Create();
+        fixture.Db.Operators.Add(new Operator
+        {
+            Id = 7, OperatorCode = "AUDIT", OperatorName = "Audit QA", Username = "audit.qa", Role = "Editor"
+        });
+        fixture.Db.ControlChartTypes.Add(new ControlChartType { Id = 1, ChartGroupId = 1, ChartTypeCode = "I_MR" });
+        var mapping = await fixture.Db.PartProcessCharacteristics.SingleAsync();
+        mapping.ChartTypeId = 1;
+        mapping.USL = 1.002;
+        await fixture.Db.SaveChangesAsync();
+
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["AppEnvironment"] = "test", ["Auth:Enabled"] = "true", ["Audit:AuthenticationEnabled"] = "true",
+            ["Audit:BusinessDataEnabled"] = "true", ["Audit:AttemptedAccountHmacKey"] = new string('k', 32)
+        }).Build();
+        var writer = new AuditEventWriter(fixture.Db, fixture.Options, config, TimeProvider.System, NullLogger<AuditEventWriter>.Instance);
+        var authentication = new AuthenticationAudit(writer, config, NullLogger<AuthenticationAudit>.Instance);
+        var filter = new BusinessDataAuditFilter(fixture.Db, writer, authentication, new AuditPermissions(fixture.Db, config), config,
+            NullLogger<BusinessDataAuditFilter>.Instance);
+        var http = new DefaultHttpContext();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity([
+            new(ClaimTypes.NameIdentifier, "7"), new(ClaimTypes.Name, "audit.qa"), new(ClaimTypes.Role, "Editor"), new("jti", "chemical-confirm")
+        ], "test"));
+        http.Request.Method = "POST";
+        var controller = new ChemicalPortalMeasurementsController(fixture.Service, NullLogger<ChemicalPortalMeasurementsController>.Instance)
+        { ControllerContext = new ControllerContext { HttpContext = http } };
+        var request = new ChemicalPortalConfirmRequest(Guid.NewGuid(), [await fixture.Row("1.2345", null, "audit.qa")]);
+        var descriptor = new ControllerActionDescriptor
+        {
+            ControllerTypeInfo = typeof(ChemicalPortalMeasurementsController).GetTypeInfo(), ControllerName = "ChemicalPortalMeasurements",
+            ActionName = "Confirm", MethodInfo = typeof(ChemicalPortalMeasurementsController).GetMethod("Confirm")!
+        };
+        var action = new ActionContext(http, new RouteData(), descriptor);
+        var executing = new ActionExecutingContext(action, [], new Dictionary<string, object?> { ["request"] = request }, controller);
+
+        ActionExecutedContext? completed = null;
+        await filter.OnActionExecutionAsync(executing, async () => completed =
+            new ActionExecutedContext(action, [], controller) { Result = await controller.Confirm(request, default) });
+
+        Assert.Null(executing.Result);
+        Assert.IsType<OkObjectResult>(completed!.Result);
+        fixture.Db.ChangeTracker.Clear();
+        Assert.Single(await fixture.Db.VariableMeasurements.ToListAsync());
+        Assert.Single(await fixture.Db.ChemicalCalculationReceipts.ToListAsync());
+        Assert.Single(await fixture.Db.ChemicalCalculationTraces.ToListAsync());
+        Assert.Single(await fixture.Db.SpcCalculationResults.ToListAsync());
+        Assert.Equal("measurement.record.create", (await fixture.Db.AuditEvents.SingleAsync()).EventCode);
+        Assert.Equal(1, fixture.Mail.Sent);
+        Assert.False(fixture.Mail.BeforeCommit);
+
+        var savedValue = (await fixture.Db.VariableMeasurements.SingleAsync()).MeasuredValue;
+        await fixture.Db.Database.ExecuteSqlRawAsync("CREATE TRIGGER FailChemicalAudit BEFORE INSERT ON AuditEvents BEGIN SELECT RAISE(ABORT,'synthetic audit failure'); END;");
+        var failedRequest = new ChemicalPortalConfirmRequest(Guid.NewGuid(), [await fixture.Row("4.5", null, "audit.qa")]);
+        var failedExecuting = new ActionExecutingContext(action, [], new Dictionary<string, object?> { ["request"] = failedRequest }, controller);
+        ActionExecutedContext? failedCompleted = null;
+
+        await filter.OnActionExecutionAsync(failedExecuting, async () => failedCompleted =
+            new ActionExecutedContext(action, [], controller) { Result = await controller.Confirm(failedRequest, default) });
+
+        Assert.IsType<ConflictObjectResult>(failedCompleted!.Result);
+        fixture.Db.ChangeTracker.Clear();
+        Assert.Equal(savedValue, (await fixture.Db.VariableMeasurements.SingleAsync()).MeasuredValue);
+        Assert.Single(await fixture.Db.AuditEvents.ToListAsync());
+        Assert.Equal(1, fixture.Mail.Sent);
+    }
 }

@@ -78,6 +78,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
             {
                 if(existing.FileHash!=hash || existing.OriginalFileName!=Marker || existing.ImportStatus!="Imported")
                     throw ApiUiException.Attach(new ChemicalPreviewConflictException("requestId已用於其他內容或狀態，請重新確認資料。"), "spc.api.chemicalRequestUsed");
+                await db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);return new(existing.UploadBatchId,true);
             }
             var evidence=new Dictionary<int,ChemicalPortalEvidence>();
@@ -128,6 +129,9 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
             await uploads.ConfirmAsync(batch.UploadBatchId,ct:ct,chemicalEvidence:evidence,
                 deferVariableNotifications:true,trustedChemicalWorkflow:true);
             await new ChemicalSavedSpecificationService(db).CaptureAsync(batch.UploadBatchId,actor,ct);
+            // The business audit filter stages its evidence before this service starts the transaction.
+            // Save once more to guarantee that evidence participates in this atomic commit.
+            await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct); committed=true;
             logger.LogInformation("Portal chemical batch committed {BatchId}, traced items {Count}",batch.UploadBatchId,evidence.Count);
             await tx.DisposeAsync();

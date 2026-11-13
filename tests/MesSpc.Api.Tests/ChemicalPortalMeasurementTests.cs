@@ -148,36 +148,38 @@ public class ChemicalPortalMeasurementTests
     {
         private readonly SqliteConnection connection;
         public AppDbContext Db {get;}
+        public DbContextOptions<AppDbContext> Options {get;}
         public FakeEmail Mail {get;}
         public ChemicalPortalMeasurementService Service {get;}
-        private Fixture(SqliteConnection connection,AppDbContext db)
+        private Fixture(SqliteConnection connection,DbContextOptions<AppDbContext> options,AppDbContext db)
         {
-            this.connection=connection;Db=db;Mail=new(){IsTransaction=()=>db.Database.CurrentTransaction is not null};
+            this.connection=connection;Options=options;Db=db;Mail=new(){IsTransaction=()=>db.Database.CurrentTransaction is not null};
             var schedule=new ChemicalFormulaScheduleService(db,new EphemeralDataProtectionProvider(),TimeProvider.System,NullLogger<ChemicalFormulaScheduleService>.Instance);
             Service=new(db,schedule,new UploadService(db,new SpcService(db,Mail,new ConfigurationBuilder().Build())),NullLogger<ChemicalPortalMeasurementService>.Instance);
         }
         public static async Task<Fixture> Create()
         {
             var connection=new SqliteConnection("Data Source=:memory:;Foreign Keys=False");await connection.OpenAsync();
-            var db=new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options);await db.Database.EnsureCreatedAsync();
+            var options=new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+            var db=new AppDbContext(options);await db.Database.EnsureCreatedAsync();
             db.AddRange(new Process{Id=1,ProcessCode="C1",ControlScope="CHEM"},new Machine{Id=1,MachineCode="C1",ProcessId=1},
                 new ProductionLine{Id=1,LineCode="C1"},new Tank{Id=1,LineId=1,TankCode="T1"},
                 new QualityCharacteristic{Id=1,CharacteristicCode="CONC",ControlScope="CHEM",InputMode="FORMULA"},
                 new ControlChartGroup{Id=1,GroupCode="CHEMICAL",BusinessScopeCode="CHEM",RequiresMachine=true,RequiresTank=true},
                 new PartProcessCharacteristic{Id=1,ProcessId=1,MachineId=1,TankId=1,CharacteristicId=1,ControlScope="CHEM"},
                 new ChemicalAnalysisFormulaVersion{Id=1,PartProcessCharacteristicId=1,VersionNo=1,ConfigJson="{\"enabled\":true,\"concentrationFormula\":\"Primary*2\",\"decimalPlaces\":2}"});
-            await db.SaveChangesAsync();var f=new Fixture(connection,db);
+            await db.SaveChangesAsync();var f=new Fixture(connection,options,db);
             var schedule=new ChemicalFormulaScheduleService(db,new EphemeralDataProtectionProvider(),TimeProvider.System,NullLogger<ChemicalFormulaScheduleService>.Instance);
             await schedule.PublishAsync(1,new(null,"fixture",[new(1,null,"2026-10-01",null)]),"editor",default);
             return f;
         }
-        public async Task<Dictionary<string,string?>> Row(string primary,string? recheck)
+        public async Task<Dictionary<string,string?>> Row(string primary,string? recheck,string actor="editor")
         {
             var input=new ChemicalPortalPreviewRequest(1,"2026-10-20T12:00:00+08:00",primary,null,"OPEN","GENERAL");
-            var preview=await Service.PreviewAsync(input,"editor",default);
+            var preview=await Service.PreviewAsync(input,actor,default);
             var row=new Dictionary<string,string?> { ["PpcId"]="1",["ControlScope"]="CHEM",["ProcessCode"]="C1",["MachineCode"]="C1",["TankCode"]="T1",["CharacteristicCode"]="CONC",
                 ["MeasuredAt"]=input.MeasuredAt,["TitrationValue"]=primary,["MeasuredValue"]="0",["SampleNo"]="1",["SamplingPhase"]="OPEN",["SamplingStage"]="GENERAL",["Operator"]="editor",["ChemicalPreviewToken"]=preview.Token };
-            if(recheck is not null){var p=await Service.PreviewAsync(input with{Primary=recheck,Phase="Recheck"},"editor",default);row["RecheckTitrationValue"]=recheck;row["RecheckValue"]="0";row["ChemicalRecheckPreviewToken"]=p.Token;}
+            if(recheck is not null){var p=await Service.PreviewAsync(input with{Primary=recheck,Phase="Recheck"},actor,default);row["RecheckTitrationValue"]=recheck;row["RecheckValue"]="0";row["ChemicalRecheckPreviewToken"]=p.Token;}
             return row;
         }
         public async ValueTask DisposeAsync(){await Db.DisposeAsync();await connection.DisposeAsync();}
