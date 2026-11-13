@@ -2785,3 +2785,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 4 位公式、載入歷史初複驗、既有排程與單／批次輸入回歸通過；不修改歷史量測、公式或資料庫 schema。
 - 測試 SPC backend 已更新；Portal API 1.0.234／Web 1.0.275 已發布。首頁登入、資產 MIME、Portal 實際 API health 及 SPC health/version 均為 test 成功；正式未發布。[驗證](specs/20261113-chemical-entry-per-item-precision/verification.md)
 
+## 2026-11-13 藥液查詢顯示保存滴定值
+
+- SPC 歷史查詢回傳量測 Receipt 保存的初驗／複驗原始滴定值，並相容大小寫與數值／字串 JSON；缺 Receipt 的舊資料才回退同批 UploadDetail。
+- Portal 查詢頁新增初驗／複驗滴定值欄位及班別／取樣階段條件。SPC 歷史4/4、Portal UI12/12及兩端build通過；11/09 N1七筆Receipt Primary唯讀核對完整，P200為`12.7 → 151.638`。
+- SPC／Portal測試站已發布且health/version為test成功；正式未發布。[驗證](specs/20261113-chemical-history-titration-display/verification.md)
+

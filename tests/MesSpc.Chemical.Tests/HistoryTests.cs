@@ -59,6 +59,39 @@ public class HistoryTests
         Assert.Equal(605,json.RootElement.GetProperty("total").GetInt32());
     }
 
+    [Fact]
+    public async Task VariableHistoryReturnsSavedInitialTitrationFromReceipt()
+    {
+        await using var f=await Fixture.Create();
+        var supersededReceiptId=Guid.NewGuid();
+        var receiptId=Guid.NewGuid();
+        f.Db.ChemicalCalculationReceipts.Add(new ChemicalCalculationReceipt
+        {
+            Id=supersededReceiptId,PartProcessCharacteristicId=0,MeasuredAtUtc=DateTime.UtcNow,
+            CreatedAtUtc=DateTime.UtcNow.AddMinutes(-1),ExpiresAtUtc=DateTime.UtcNow.AddMinutes(9),
+            PayloadJson="{\"originalInput\":{\"Primary\":\"7.0\",\"Secondary\":null}}"
+        });
+        f.Db.ChemicalCalculationReceipts.Add(new ChemicalCalculationReceipt
+        {
+            Id=receiptId,PartProcessCharacteristicId=0,MeasuredAtUtc=DateTime.UtcNow,
+            CreatedAtUtc=DateTime.UtcNow,ExpiresAtUtc=DateTime.UtcNow.AddMinutes(10),
+            PayloadJson="{\"originalInput\":{\"Primary\":\"8.5\",\"Secondary\":null}}"
+        });
+        f.Db.ChemicalCalculationTraces.Add(new ChemicalCalculationTrace
+        {
+            VariableMeasurementId=605,ReceiptId=supersededReceiptId,Phase="Initial",VersionNo=1
+        });
+        f.Db.ChemicalCalculationTraces.Add(new ChemicalCalculationTrace
+        {
+            VariableMeasurementId=605,ReceiptId=receiptId,Phase="Initial",VersionNo=2
+        });
+        await f.Db.SaveChangesAsync();
+
+        using var json=JsonDocument.Parse(JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(await Read(f.Controller)).Value));
+        var row=json.RootElement.GetProperty("rows").EnumerateArray().Single(x=>x.GetProperty("Id").GetInt64()==605);
+        Assert.Equal("8.5",row.GetProperty("titrationValue").GetString());
+    }
+
     sealed class Fixture : IAsyncDisposable
     {
         readonly SqliteConnection connection;
