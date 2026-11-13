@@ -1707,4 +1707,5 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：修正 Portal 預覽以 `null`、確認以空字串送出未提供的第二滴定值時，SPC 快照雜湊誤判為輸入已變更並回 409。
 - 範圍：先補 `ChemicalPortalMeasurementService` 回歸測試，再於建立公式輸入前統一空白第二滴定值；不改公式、資料庫、既有量測或 Portal UI。
 - 規格：`specs/20261113-chemical-preview-empty-secondary/`。
+- 結果：紅燈測試先重現409；修正後焦點回歸20/20及Release build通過。測試API0.1.130已完成備份驗證、發布、資產MIME、health/version與Chrome同源API檢查；正式未發布，待登入實際儲存人工驗收。
 

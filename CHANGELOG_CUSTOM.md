@@ -2811,3 +2811,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 修正BusinessDataAuditFilter與ChemicalPortalMeasurementService對Confirm重複建立Serializable交易而回傳500；藥液服務保留完整交易，稽核事件加入同一交易。
 - SQLite真實Controller／Service／Filter整合測試先重現503；修正後成功保存量測、Receipt、Trace、統計與稽核，通知只在提交後送出，稽核失敗整批回滾。相關13項與API build通過。
 - 已發布SPC測試API0.1.129（Web0.1.129保持）；備份驗證、暫時權限撤銷、首頁／JS／CSS MIME及同源health／version通過。待使用者登入重試實際儲存；正式未發布。
+
+## 2026-11-13 藥液空白第二滴定值預覽衝突修正
+
+- 根因為單滴定項目預覽送`null`、確認送空字串，前端視為同一空值但SPC快照雜湊視為不同，造成預覽後數秒內仍回`chemicalPreviewChanged`。
+- SPC建立公式輸入前統一空白第二滴定值為未提供值；有效第二滴定值及日期、第一滴定值、班別、取樣階段、規格與排程變更拒絕保持。
+- 紅燈測試先精確重現409；修正後焦點回歸20/20、Release build 0 warning／0 error。測試API0.1.130已發布，備份／VERIFYONLY、權限撤銷、Web資產MIME、health/version及Chrome同源API通過；正式未發布。
