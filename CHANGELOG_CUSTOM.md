@@ -2791,3 +2791,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - Portal 查詢頁新增初驗／複驗滴定值欄位及班別／取樣階段條件。SPC 歷史4/4、Portal UI12/12及兩端build通過；11/09 N1七筆Receipt Primary唯讀核對完整，P200為`12.7 → 151.638`。
 - SPC／Portal測試站已發布且health/version為test成功；正式未發布。[驗證](specs/20261113-chemical-history-titration-display/verification.md)
 
+- 驗收更正：使用者確認11/09 N1／表處／氫氧化鉀為`8.5 → 19.040`。查明原查詢用`MeasuredAt`把11/10的ID92273 `9 → 20.160`列入11/09；改以新增頁同源的`PortalDailyDate`查詢、排序與顯示，非日報才回退`MeasuredAt`。SPC歷史5/5、Portal UI12/12及兩端build通過；測試SPC API0.1.127、Portal API1.0.241／Web1.0.282已發布並通過連線驗證。
+

@@ -49,6 +49,24 @@ public class HistoryTests
     }
 
     [Fact]
+    public async Task PortalDailyHistoryFiltersAndDisplaysByReportDateInsteadOfUtcMeasuredAt()
+    {
+        await using var f = await Fixture.Create();
+        var reportDate = new DateTime(2026, 11, 9);
+        f.Db.VariableMeasurements.AddRange(
+            new VariableMeasurement { Id=1101,ProcessId=1,MeasuredAt=reportDate.AddDays(1),PortalDailyDate=reportDate,MeasuredValue=19.04 },
+            new VariableMeasurement { Id=1102,ProcessId=1,MeasuredAt=reportDate,PortalDailyDate=reportDate.AddDays(1),MeasuredValue=20.16 });
+        await f.Db.SaveChangesAsync();
+
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(Assert.IsType<OkObjectResult>(
+            await Read(f.Controller,start:reportDate,end:reportDate.AddDays(1).AddTicks(-1))).Value));
+        var rows = json.RootElement.GetProperty("rows").EnumerateArray().ToList();
+        Assert.Contains(rows, row => row.GetProperty("Id").GetInt64() == 1101
+            && row.GetProperty("historyDate").GetDateTime().Date == reportDate);
+        Assert.DoesNotContain(rows, row => row.GetProperty("Id").GetInt64() == 1102);
+    }
+
+    [Fact]
     public async Task InvalidRangeOrOffsetRejected_DefaultContractRetained()
     {
         await using var f = await Fixture.Create();
