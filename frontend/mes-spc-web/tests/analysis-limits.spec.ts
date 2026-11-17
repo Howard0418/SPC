@@ -36,6 +36,22 @@ test('keeps dirty rows across pages and applies one atomic batch', async ({ page
 
   await page.goto('/analysis-limit-overview');
   await expect(page.getByTestId('limits-row-1')).toBeVisible();
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const desktop = await page.locator('table').evaluate(table => ({
+    width: table.getBoundingClientRect().width,
+    container: table.parentElement!.clientWidth
+  }));
+  expect(Math.abs(desktop.width - desktop.container)).toBeLessThanOrEqual(2);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobile = await page.locator('table').evaluate(table => ({
+    width: table.getBoundingClientRect().width,
+    container: table.parentElement!.clientWidth,
+    overflow: getComputedStyle(table.parentElement!).overflowX
+  }));
+  expect(mobile.width).toBeGreaterThanOrEqual(1380);
+  expect(mobile.width).toBeGreaterThan(mobile.container);
+  expect(mobile.overflow).toBe('auto');
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByLabel('USL Item 1').fill('11');
   await page.locator('select').filter({ has: page.locator('option[value="5"]') }).selectOption('5');
   await page.getByRole('button', { name: '下一頁' }).click();

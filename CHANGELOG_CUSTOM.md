@@ -2875,3 +2875,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 更新計算引擎與精度策略版本，Receipt同時保留原始輸入及實際計算用的三位正規化值；既有已保存量測、Receipt／Trace、公式、F表、規格與資料庫schema均未批次改寫。
 - 紅燈4項先重現舊行為；焦點回歸54/54與Release build通過。SPC測試API0.1.131已發布，Web首頁與JS／CSS MIME、health／version及前端實際同源`/api`皆為test成功。瀏覽器自動化元件不可用，登入畫面留待使用者驗收；正式未發布。
 - 2026-11-13 [藥液量測刪除沿用稽核交易](specs/20261113-chemical-delete-audit-transaction/verification.md)：修正BusinessDataAuditFilter已開交易後刪除端點再次開交易造成503；量測改採邏輯刪除並保留不可變Receipt／Trace，SPC結果、警示及兩層稽核維持同成同敗。紅燈先重現，相關36/36與Release publish通過；測試API0.1.132及Web／資產／同源／8901連線驗證正常，待登入實際刪除驗收，正式未發布。
+## 2026-11-17 分析項目界限總覽全寬修正
+
+- 表格增加w-full以填滿寬螢幕容器，保留1380px最小寬、手機橫向捲動及原六界限編輯／預檢／套用流程。
+- 工具3項、Playwright2項、i18n及隔離test build通過；測試Web0.1.132→0.1.133，API維持0.1.132 test，首頁／主JS／CSS及同源API驗證通過。正式未更新。
+- 原進度表已同步原生里程碑；父件SPC-LIMITS-BULK-1104-TASK-001仍待整案畫面驗收，核心46件不變。

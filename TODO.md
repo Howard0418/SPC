@@ -36,7 +36,7 @@
 
 ## 2026-11-04 分析項目規格／管制界限總覽（P1／只規劃）
 
-- [ ] `SPC-LIMITS-BULK-1104-TASK-001`：P1，SPC主責；核心實作、自動化、測試DB備份／migration及測試站發布已完成，六欄限定preview／apply、格式提示、過期拒絕、原子rollback、版本／不可變批次歷程均通過。瀏覽器工具離線，尚缺登入後總覽、預檢、成功／錯誤與歷程截圖，完成AC-008後才可標DONE；正式未授權。[規格](specs/20261104-analysis-limit-overview-batch/spec.md)／[驗證](specs/20261104-analysis-limit-overview-batch/verification.md)。
+- [ ] `SPC-LIMITS-BULK-1104-TASK-001`：P1，SPC主責；核心實作、自動化、測試DB備份／migration及測試站發布已完成，六欄限定preview／apply、格式提示、過期拒絕、原子rollback、版本／不可變批次歷程均通過。11/17[表格全寬畫面子項](specs/20261117-analysis-limits-full-width/spec.md)已發布測試Web0.1.133，工具3項／UI2項及build、首頁／資產／同源API0.1.132 test驗證通過；原進度表已同步，不新增重複核心待辦。瀏覽器工具離線，尚缺登入後總覽、預檢、成功／錯誤與歷程截圖，完成AC-008後才可標DONE；正式未授權。[規格](specs/20261104-analysis-limit-overview-batch/spec.md)／[驗證](specs/20261104-analysis-limit-overview-batch/verification.md)。
 
 ## 2026-11-03 圖表日期顯示（測試／正式完成）
 
