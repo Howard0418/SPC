@@ -38,7 +38,9 @@ async function setupSchedule(page:Page, options:{viewer?:boolean,conflict?:boole
   if(fail){fail=false;return route.fulfill({status:500,json:{message:'排程暫時無法載入'}});}
   return route.fulfill({json:{success:true,data:{revisionId:10,periods:[{formulaVersionId:1,fTableHistoryId:null,effectiveFromUtc:'2026-10-01T16:00:00Z',effectiveUntilUtcExclusive:'2026-10-31T16:00:00Z'}],message:'目前僅排程與試算；既有寫入尚未切換日期選版。'}}});
  });
- await page.goto('/part-process-characteristics?editId=1');await page.getByRole('button',{name:'藥液公式',exact:true}).click(); return writes;
+ // The editor tab is intentionally hidden. Exercise the unchanged schedule
+ // component in an isolated test fixture rather than restoring a product entry.
+ await page.goto('/tests/fixtures/chemical-schedule.html'); return writes;
 }
 const section=(page:Page)=>page.getByRole('region',{name:'公式生效排程'});
 test('Taipei inclusive days without writes',async({page})=>{

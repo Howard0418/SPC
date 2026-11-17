@@ -18,7 +18,7 @@ async function setup(page: Page, reject = false, configOverride?: string) {
   let json:any=[]; if(path.endsWith('/version'))json={environment:'test',version:'test'};else if(path.endsWith('/part-process-characteristics'))json=rows;
  else if(path.endsWith('/processes'))json=[{id:1,processCode:'CHEM',processName:'藥液',controlScope:'CHEM'}];
  else if(path.endsWith('/characteristics'))json=rows.map(r=>({id:r.characteristicId,characteristicName:`濃度${r.id}`,controlScope:'CHEM',dataCategory:'Variable'}));
- else if(path.endsWith('/machines'))json=[{id:1,machineCode:'N1'}];
+ else if(path.endsWith('/machines'))json=[{id:1,processId:1,machineCode:'N1'}];
  else if(path.endsWith('/tanks'))json=rows.map(r=>({id:r.tankId,machineId:1,tankName:r.tank.tankName}));
  else if(path.endsWith('/control-chart-groups'))json=[{id:1,groupCode:'CHEM',groupType:'TREND_CHART',businessScopeCode:'CHEM',isEnabled:true}];
   return route.fulfill({json});
@@ -49,17 +49,18 @@ test('mobile history and unchanged reference do not write',async({page})=>{
  const puts=await setup(page);await page.setViewportSize({width:390,height:844});await page.goto('/chemical-analysis-overview');await page.getByLabel('參照文件／修改依據',{exact:true}).fill('僅改備註');await expect(page.getByRole('button',{name:/儲存變更/})).toBeDisabled();await page.getByRole('button',{name:'版本歷史',exact:true}).first().click();await expect(page.getByRole('region',{name:'公式版本歷史'})).toBeVisible();expect(puts).toHaveLength(0);
 });
 
-test('settings saves reference into the same PPC history',async({page})=>{
- const puts=await setup(page);await page.goto('/part-process-characteristics?editId=1');
- await page.getByRole('button',{name:'藥液公式',exact:true}).click();
- await page.getByLabel('參照文件／修改依據',{exact:true}).fill('WI-SETTINGS');
- await page.getByLabel('濃度公式 *',{exact:true}).fill('Primary * 4');
- await page.getByRole('button',{name:'版本紀錄',exact:true}).click();
- await expect(page.getByText('參照文件／修改依據：WI-OLD')).toBeVisible();
- await page.getByRole('button',{name:'確認儲存',exact:true}).click();
- await expect.poll(()=>puts.length).toBe(1);expect(puts[0].chemicalAnalysisFormulaVersionReason).toBe('WI-SETTINGS');
- expect(JSON.parse(puts[0].chemicalAnalysisConfigJson).recheckConcentrationFormula).toBe('Primary*3.177*F!B6');
- await page.goto('/chemical-analysis-overview');await page.getByRole('button',{name:'版本歷史',exact:true}).first().click();await expect(page.getByText('參照文件／修改依據：WI-SETTINGS')).toBeVisible();
+test('settings hides chemical formulas for every analysis item on desktop and mobile',async({page})=>{
+ const puts=await setup(page);
+ for(const width of [1280,390])for(const id of [1,2]){
+  await page.setViewportSize({width,height:844});
+  await page.goto(`/part-process-characteristics?editId=${id}`);
+  await expect(page.getByTestId('ppc-dialog')).toBeVisible();
+  await expect(page.getByRole('button',{name:'藥液公式',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('region',{name:'公式生效排程'})).toHaveCount(0);
+  await page.getByRole('button',{name:'進階設定',exact:true}).click();
+  await page.getByRole('button',{name:'基本資料',exact:true}).click();
+ }
+ expect(puts).toHaveLength(0);
 });
 
 test('history loading error supports retry without losing context',async({page})=>{
@@ -68,8 +69,8 @@ test('history loading error supports retry without losing context',async({page})
  await page.goto('/chemical-analysis-overview');await page.getByRole('button',{name:'版本歷史',exact:true}).first().click();await expect(page.getByRole('alert')).toContainText('暫時無法讀取');failed=false;await page.getByRole('button',{name:'重試',exact:true}).click();await expect(page.getByText('此修改日期區間沒有公式版本紀錄；不會補造過去歷史。')).toBeVisible();
 });
 
-test('settings reference-only save preserves original formula JSON',async({page})=>{
- const puts=await setup(page);await page.goto('/part-process-characteristics?editId=1');await page.getByRole('button',{name:'藥液公式',exact:true}).click();await page.getByLabel('參照文件／修改依據',{exact:true}).fill('僅備註');await page.getByRole('button',{name:'確認儲存',exact:true}).click();await expect.poll(()=>puts.length).toBe(1);expect(puts[0].chemicalAnalysisConfigJson).toBe(JSON.stringify({enabled:true,concentrationFormula:'Primary',decimalPlaces:2,recheckConcentrationFormula:'Primary*3.177*F!B6'}));
+test('settings save with hidden formula tab preserves original formula JSON',async({page})=>{
+ const puts=await setup(page);await page.goto('/part-process-characteristics?editId=1');await expect(page.getByTestId('ppc-dialog')).toBeVisible();await expect(page.getByRole('button',{name:'藥液公式',exact:true})).toHaveCount(0);await page.getByRole('button',{name:'確認儲存',exact:true}).click();await expect.poll(()=>puts.length).toBe(1);expect(puts[0].chemicalAnalysisConfigJson).toBe(JSON.stringify({enabled:true,concentrationFormula:'Primary',decimalPlaces:2,recheckConcentrationFormula:'Primary*3.177*F!B6'}));
 });
 
 test('overview date range validates, paginates, and clears without writes',async({page})=>{
@@ -85,12 +86,12 @@ test('overview date range validates, paginates, and clears without writes',async
  await history.getByRole('button',{name:'歷史下一頁',exact:true}).click();await expect.poll(()=>calls.at(-1)?.searchParams.get('skip')).toBe('20');await expect(history.locator('article')).toHaveCount(5);
  await history.getByRole('button',{name:'清除',exact:true}).click();await expect.poll(()=>calls.at(-1)?.searchParams.get('skip')).toBe('0');await expect(history.getByLabel('修改起日')).toHaveValue('');expect(puts).toHaveLength(0);
 });
-test('settings formula and specification histories use modification dates',async({page})=>{
+test('settings specification history still filters dates while chemical formula history stays hidden',async({page})=>{
  await setup(page);const seen:string[]=[];
  await page.route('**/api/part-process-characteristics/1/specification-limit-versions**',route=>{seen.push(route.request().url());return route.fulfill({json:{data:[{id:1,versionNo:1,sourceKind:'Base',changeType:'Update',changedBy:'測試人員',changedAt:'2026-10-19T00:00:00Z',previousSnapshotJson:'{"USL":20}',snapshotJson:'{"USL":21}'}]}})});
  await page.goto('/part-process-characteristics?editId=1');await page.getByRole('button',{name:'規格與抽樣',exact:true}).click();
  const spec=page.getByRole('region',{name:'規格界線版本歷史'});await expect(spec.getByText('修改前後規格')).toBeVisible();await spec.getByLabel('修改起日').fill('2026-10-01');await spec.getByRole('button',{name:'查詢',exact:true}).click();await expect.poll(()=>seen.at(-1)).toContain('fromDate=2026-10-01');
- await page.getByRole('button',{name:'藥液公式',exact:true}).click();await page.getByRole('button',{name:'版本紀錄',exact:true}).click();await expect(page.getByLabel('修改起日')).toBeVisible();
+ await expect(page.getByRole('button',{name:'藥液公式',exact:true})).toHaveCount(0);await expect(spec.getByLabel('修改起日')).toBeVisible();
 });
 test('F table history filters and clears dates on mobile',async({page})=>{
  await setup(page);const seen:URL[]=[];

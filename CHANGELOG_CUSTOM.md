@@ -2802,6 +2802,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-17 每次更新必須遞增版本
 
+- [隱藏每項目編輯視窗藥液公式分頁](specs/20261117-ppc-hide-chemical-tab/verification.md)：依截圖移除可見分頁並停止內容掛載，保留公式JSON與其他四頁保存。8項單元語系、10項畫面、7項隔離排程元件與test build通過；乾淨來源發布測試Web0.1.130，主JS／CSS MIME及同源API0.1.132/test驗證通過。進度表／總表307及原生里程碑同步，OpenXML0錯誤；核心46／Portal相關17。待畫面確認，正式未發布。
+
 - [隱藏藥液調整欄位TASK-001](specs/20261117-chemical-hide-adjustment-columns/verification.md)：使用者追加要求先執行後，Portal新增／查詢／確認資訊screen隱藏完成，保留計算／初複驗／保存與print；37項回歸及聚焦2項、Release通過，測試API248／Web287已發布與版本／連線驗證。原進度表305及原生里程碑同步、OpenXML0錯誤；待畫面確認，002未執行、正式未發布。
 
 - 2026-11-17另依使用者要求[規劃隱藏藥液調整欄位](specs/20261117-chemical-hide-adjustment-columns/spec.md)：新增P2兩件，001 Portal查詢／新增、002 SPC總覽，保留計算／初複驗／保存及匯出。排P0阻擋、安全與資料正確性P0/P1後，不立即實作。原進度表／總表305～306與原生規劃里程碑同步，OpenXML0錯誤；核心45／Portal相關17。未改應用程式、未發布。
