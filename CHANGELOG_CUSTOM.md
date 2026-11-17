@@ -2827,7 +2827,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 前端在主檔映射暫時缺失時，現改以同日完整`OPEN/CLOSE`成對階段作為受限回退證據，顯示`早(開)`／`早(收)`；不完整、空白與`GENERAL`不變。量測、API、統計、MR、界限與正式站均未修改。
 - 新紅燈後 `chemical-single-line` 9/9、i18n 2863×3、production／test build通過；測試Web已更新為`index-B3cdgzbq.js`，首頁、資產MIME、同源API health/version均為test。登入畫面待使用者確認，正式未發布。[規格與驗證](specs/20261117-chemical-chart-stage-label-runtime-fallback/verification.md)
 - 2026-11-17 [舊收線欄位相容修正](specs/20261117-chemical-chart-stage-label-runtime-fallback/verification.md)：正式唯讀確認N1／表處／氫氧化鉀10/22收線ID79642為`CLOSE/GENERAL`；N1／N2圖表改顯示`早(收)`，非N1／N2待校正提示保持。紅燈先重現，焦點11/11、三語及隔離test build通過；測試Web0.1.136、API0.1.132/test及資產MIME正常。數值、MR、統計、API、DB與正式站未變，待登入畫面驗收。
-- 2026-11-17 [管制圖OOS紅點優先修正](specs/20261117-chart-oos-color-priority/spec.md)：修復階段色覆蓋異常紅點的舊回歸；排除點灰色，OOS／OOC／規則失控紅色優先，正常點才採階段色。收線OOS紅燈先重現，焦點11/11、三語與隔離test build通過；測試Web0.1.137、API0.1.132/test及資產MIME正常。資料、判定、MR、統計與正式站未變，待登入畫面驗收。
+- 2026-11-17 [管制圖OOS紅點優先修正](specs/20261117-chart-oos-color-priority/spec.md)：修復階段色覆蓋異常紅點的舊回歸；排除點灰色，OOS／OOC／規則失控紅色優先，正常點才採階段色。收線OOS紅燈先重現，焦點11/11、三語及production build通過。使用者完成測試驗收後，正式Web0.1.138已發布，API維持0.1.127／production；首頁／JS／CSS與Chromium實際API連線通過。首次偵測不適用的測試站`web.config`後已立即恢復正式設定並重驗，API、DB、資料、判定、MR與統計未變。
 
 ## 2026-11-13 PPC 公式儲存交易衝突修正
 
