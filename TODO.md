@@ -755,6 +755,12 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] `PORTAL-CHEM-DATE-AUTO-LOAD-1113-TASK-001`：P1，Portal主責／相依SPC既有daily與calendar API；月曆點選日期（含同一天）後立即依線別、班別、取樣階段載入，不需再按載入按鈕。日期／階段6、有效值16、保存上下文4、月曆3及Release build通過；測試API1.0.244／Web1.0.285與Web／資產／API連線驗證完成。DB／schema／公式／F不變，正式未授權。[Portal規格](../PmrPortal/specs/20261113-chemical-date-auto-load/spec.md)
 
+## 2026-11-17 藥液調整欄位隱藏（僅規劃）
+
+> 新增兩件P2：[隱藏藥液調整兩欄](specs/20261117-chemical-hide-adjustment-columns/spec.md)。
+- [ ] `SPC-CHEM-HIDE-ADJUST-1117-TASK-001`：P2／Portal，隱藏查詢及新增頁調整／調整量，計算與保存保持；排P0使用阻擋、安全及資料正確性P0/P1後，未實作／未發布。
+- [ ] `SPC-CHEM-HIDE-ADJUST-1117-TASK-002`：P2／SPC，隱藏線別分析項目總覽兩欄及編輯控制，保留公式資料；依001後執行，不立即實作／發布。
+
 ## 2026-11-13 藥液量測刪除交易衝突（待驗收）
 
 - [ ] `SPC-CHEM-DELETE-TRANSACTION-1113-TASK-001`：P0，SPC API主責／相依Portal刪除操作與業務稽核；刪除沿用外層稽核交易，無外層時維持自行交易，量測邏輯刪除並保留Receipt／Trace。紅燈先重現503，相關36/36通過；測試API0.1.132與Web／資產／同源／8901連線驗證完成。待登入重試原刪除操作，正式未授權。[驗證](specs/20261113-chemical-delete-audit-transaction/verification.md)
