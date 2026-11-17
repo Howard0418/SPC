@@ -1,4 +1,10 @@
 # 驗證紀錄
+
+## 2026-11-17 正式發布
+
+- 使用者授權正式發布；三件共同發布為 SPC API `0.1.127`／Web `0.1.135`、Portal API `1.0.251`／Web `1.0.276`。
+- Portal UI12/12、API273/273、相容性24/24；SPC歷史4/4、藥液API10/10及Release publish通過。兩站首頁、資產MIME、health/version、production環境及匿名401通過；無migration，兩庫備份`verified=true`。
+- 首次發布因舊工具把共用環境變數與HTTP轉址誤判，交易自動回復後人工啟動原AppPool並核對舊版；隔離修正工具後重發成功。瀏覽器自動化元件不可用，登入畫面未新增截圖。
 - 功能 ID：SPC-CHEM-EFFECTIVE-VALUE-1113-TASK-001
 - 規格版本：1
 - 日期／環境：2026-11-13／Portal 測試 IIS、SPC 測試 API

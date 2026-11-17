@@ -1,4 +1,9 @@
 # 驗證紀錄
+
+## 2026-11-17 正式發布
+
+- 與最終值、歷史滴定值共同發布：SPC API `0.1.127`／Web `0.1.135`；Portal API `1.0.251`／Web `1.0.276`。
+- 焦點測試、Release publish、正式版本／環境／首頁／資產MIME／health／匿名401及兩庫備份驗證通過；無schema或資料異動。
 - 功能 ID：SPC-CHEM-PRECISION-1113-TASK-001
 - 狀態：已完成（正式站未發布）
 

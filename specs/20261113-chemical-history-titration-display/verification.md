@@ -1,5 +1,11 @@
 # 驗證紀錄
 
+## 2026-11-17 正式發布
+
+- 與最終值、項目精度共同發布：SPC API `0.1.127`／Web `0.1.135`；Portal API `1.0.251`／Web `1.0.276`。
+- SPC歷史4/4、Portal UI12/12、API273/273、相容性24/24與Release publish通過；正式首頁、資產MIME、health/version、production環境及匿名401通過。無migration，兩庫備份`verified=true`。
+- 原進度表288～290列更新為正式完成，新增441～444列及原生里程碑，圖形131→132；公式錯誤0。核心未完成45→42，Portal相關16→13。
+
 - SPC `HistoryTests`：5/5 通過；新增 Receipt `Primary=8.5` 回傳、同階段多版本採最新 VersionNo，以及 `PortalDailyDate=11/09` 不受 `MeasuredAt=11/10` 影響的日期回歸。
 - Portal `chemical-effective-ui.cjs`：13/13 通過；涵蓋查詢列顯示保存滴定值，以及同日資料依新增頁主檔順序排列。
 - SPC Release build：0 警告、0 錯誤；Portal Web build：0 警告、0 錯誤。

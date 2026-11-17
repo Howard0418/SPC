@@ -761,6 +761,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 > 新增兩件P2：[隱藏藥液調整兩欄](specs/20261117-chemical-hide-adjustment-columns/spec.md)。
 - [x] `SPC-CHEM-HIDE-ADJUST-1117-TASK-001`：使用者確認Portal新增／查詢兩欄screen隱藏並授權正式；正式API250／Web275，聚焦2、API47、相容性16及正式備份／連線／版本／production／401驗證通過。002維持測試待驗收、正式未發布。[驗證](specs/20261117-chemical-hide-adjustment-columns/verification.md)。核心45／Portal相關16。
+- [x] `SPC-CHEM-EFFECTIVE-VALUE-1113-TASK-001`、`SPC-CHEM-PRECISION-1113-TASK-001`、`SPC-CHEM-HISTORY-TITRATION-1113-TASK-001`：使用者授權正式發布；SPC API127／Web135、Portal API251／Web276，焦點測試、兩庫備份及正式連線驗證通過，無migration。[驗證](specs/20261113-chemical-effective-value-entry-display/verification.md)。核心42／Portal相關13。
 - [ ] `SPC-CHEM-HIDE-ADJUST-1117-TASK-002`：總覽兩式screen隱藏並依截圖補表格100%填滿容器，保留手機捲動、濃度編輯與兩式保存／匯出／print。11項畫面回歸、test build、測試Web0.1.132／同源API0.1.132 test驗證通過，原進度表同步。待畫面驗收，正式未發布。[驗證](specs/20261117-chemical-hide-adjustment-columns/verification.md)
 
 ## 2026-11-13 藥液量測刪除交易衝突（待驗收）

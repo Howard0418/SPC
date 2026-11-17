@@ -2802,6 +2802,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-17 每次更新必須遞增版本
 
+- [藥液三項一致性工作正式發布](specs/20261113-chemical-effective-value-entry-display/verification.md)：最終分析值、項目3／4位精度及歷史滴定值依授權共同發布。正式SPC API0.1.127／Web0.1.135、Portal API1.0.251／Web1.0.276；焦點測試、兩庫備份、首頁／資產MIME／API版本與production環境／匿名401通過，無migration。首次工具誤判已受控回復並以隔離修正工具重發完成。進度表288～290及441～444、原生里程碑同步；核心42／Portal13。
+
 - [TASK-002總覽全寬修正](specs/20261117-chemical-hide-adjustment-columns/verification.md)：依截圖在screen表格補width100%，消除右側大空白，保留960px最小寬及橫向捲動。11項畫面回歸（含1920寬度差≤2px）、三語及test build通過；乾淨來源發布測試Web0.1.132，資產MIME及同源API0.1.132/test驗證通過。原進度表306及原生修正里程碑同步，OpenXML0錯誤；核心46保持，待畫面確認，正式未發布。
 
 - [TASK-002總覽調整兩式隱藏](specs/20261117-chemical-hide-adjustment-columns/verification.md)：依追加先執行授權，以scoped screen樣式隱藏兩欄，保留DOM／draft／濃度編輯／原兩式保存與print／匯出。11項畫面回歸、三語2863鍵及test build通過；乾淨來源發布測試Web0.1.131，JS／CSS MIME及實際同源API0.1.132/test驗證通過。原進度表306與原生測試里程碑同步、OpenXML0錯誤；核心46／Portal相關17保持，待畫面確認，正式未發布。
