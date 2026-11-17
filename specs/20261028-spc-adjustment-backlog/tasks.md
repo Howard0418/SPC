@@ -18,7 +18,7 @@
 - [x] TASK-003 [測試入口根網址改為 portaltest HTTPS](../20261029-spc-entry-https/verification.md)；建置通過並套用測試前端。
 - [x] TASK-004 [三個月報 Sheet 實作、測試與正式發布](../20261028-monthly-category-sheets/verification.md)；正式 SPC 已發布並完成 health／version／首頁驗收。
 - [x] TASK-005 [已／未處置件數實作、測試與正式發布](../20261028-monthly-disposition/verification.md)；正式 SPC 已發布並完成 health／首頁驗收。
-- [x] TASK-006 [常態直方圖柱改淺藍色](../20261029-histogram-light-blue/verification.md)；測試前端建置與套用完成，正式站未發布。
+- [x] TASK-006 [常態直方圖柱改淺藍色](../20261029-histogram-light-blue/verification.md)；正式Web118資產已核對，2026-11-17使用者人工驗收完成，本件DONE。
 
 規劃交付檢查：[v1歷史](verification.md)／[v2截圖補充結果](../20261028-chemical-screenshot-followup/verification.md)。優先順序為後續選取依據，不是現在執行授權。
 
