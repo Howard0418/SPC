@@ -1,11 +1,11 @@
 # 驗證紀錄
 
 - 功能 ID：`PORTAL-CHEM-SAVE-FRESH-PREVIEW-1113-TASK-001`
-- 規格版本：2
-- 日期／環境：2026-11-13／Portal測試站＋SPC測試API
-- 實作狀態：測試站完成
-- 驗證狀態：自動化通過；待登入實際儲存驗收
-- 發布狀態：Portal測試站 API 1.0.243／Web 1.0.284；正式未授權
+- 規格版本：3
+- 日期／環境：2026-11-17／Portal正式區
+- 實作狀態：完成
+- 驗證狀態：自動化、使用者驗收及正式環境驗證通過
+- 發布狀態：Portal正式區 API 1.0.252／Web 1.0.277
 
 | 驗收 ID | 命令或操作 | 預期結果 | 實際結果及證據 | 狀態 |
 |---|---|---|---|---|
@@ -16,7 +16,10 @@
 | BUILD | `dotnet build src/PmrPortal.Web/PmrPortal.Web.csproj -c Release --no-restore` | 無錯誤 | 0 warning／0 error | 通過 |
 | RELEASE | `scripts/publish-all.ps1 -Configuration Release` | 測試站可用 | API 1.0.243／Web 1.0.284；Login、JS、CSS均HTTP 200且MIME正確 | 通過 |
 | API | Portal實際API基底與SPC測試API | 健康、版本及環境正確 | Portal `172.16.110.27:8091/health`為test；SPC health/version為0.1.130/test | 通過 |
-| LIVE | 登入後實際按儲存 | 不再出現過期預覽錯誤且保存成功 | 電腦操作原生管道不可用，待使用者於已登入頁面驗收 | 待驗收 |
+| LIVE | 登入後實際按儲存 | 不再出現過期預覽錯誤且保存成功 | 使用者確認已驗收並授權正式發布 | 通過 |
+| FORMAL | 正式發布 `portal-chem-save-fresh-formal-20261117` | 正式區版本與環境正確 | API 1.0.252／Web 1.0.277；發布證據 `phase=complete`、`status=completed` | 通過 |
+| FORMAL-WEB | Login、`site.js`、`site.css`、`chemical-effective-trace.js` | HTTP 200且MIME正確，功能資產存在 | Login 200；JS為`text/javascript`、CSS為`text/css`，功能內容存在 | 通過 |
+| FORMAL-API | 正式 health、同源API及部署DLL | production環境、路徑可達、版本一致 | `:8443/health`為ok/production；`/api/auth/me`回401；DLL為API 1.0.252／Web 1.0.277 | 通過 |
 
 ## 回歸說明
 
@@ -25,8 +28,8 @@
 
 ## 回復
 
-回復Portal Web 1.0.283與API 1.0.242前版發布內容；無資料庫回復需求。
+以正式發布工具回復本次部署前備份；無資料庫回復需求。
 
 ## 未完成
 
-請使用者重新整理測試站、載入當日日報後再次儲存。收到成功確認後，才將本件由待驗收改為DONE並核銷進度表。
+無。本件已完成使用者驗收、正式發布及正式環境驗證。

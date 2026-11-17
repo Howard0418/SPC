@@ -747,9 +747,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] `SPC-CHEM-N2-TIN-PRECISION-1113-TASK-001`：P0，SPC主責；公式1244/v4僅將精度改為3，active revision1743沿用F248；0.10已由Raw0.2256保存／查詢為0.226。量測94084以新Receipt／Trace v2受控修正，舊證據保持；測試13/13、備份、指紋與冪等通過，網站不需發布，正式未異動。[驗證](specs/20261113-n2-promoter-tin-precision-correction/verification.md)
 
-## 2026-11-13 藥液儲存前自動更新預覽憑證（待驗收）
+## 2026-11-13 藥液儲存前自動更新預覽憑證（已完成）
 
-- [ ] `PORTAL-CHEM-SAVE-FRESH-PREVIEW-1113-TASK-001`：P0，Portal主責／相依SPC既有preview-confirm契約；按確認儲存時自動刷新本次變更的日期公式列，避免舊token／逾期token要求人工重算。18項單元、16項UI與Release build通過，Portal測試API1.0.243／Web1.0.284及Web／資產／API連線驗證完成；DB／schema／公式／F不變。待登入實際儲存驗收，正式未授權。[驗證](specs/20261113-chemical-save-fresh-preview/verification.md)
+- [x] `PORTAL-CHEM-SAVE-FRESH-PREVIEW-1113-TASK-001`：P0，Portal主責／相依SPC既有preview-confirm契約；按確認儲存時自動刷新本次變更的日期公式列，避免舊token／逾期token要求人工重算。18項單元與UI回歸通過，使用者已驗收；2026-11-17正式區API1.0.252／Web1.0.277發布及正式Web／資產／API／部署版本驗證完成。DB／schema／公式／F不變。[驗證](specs/20261113-chemical-save-fresh-preview/verification.md)
 
 ## 2026-11-13 藥液日期點選自動載入日報（完成）
 
