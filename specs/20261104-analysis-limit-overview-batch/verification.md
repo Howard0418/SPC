@@ -27,6 +27,16 @@
 - Web 首頁：HTTP 200 / `text/html`。
 - 主 JavaScript：HTTP 200 / `application/javascript`；主 CSS：HTTP 200 / `text/css`。
 - `/api/health` 與 `/api/version`：HTTP 200；版本 0.1.113、環境 `test`。
+
+## 2026-11-17 正式發布
+
+- 使用者已確認畫面並授權正式發布。
+- 焦點測試 `LimitBatch*`：16/16 通過；API Release publish、Web production build、三語 2863 鍵檢查通過。
+- 正式發布前：API 0.1.133／Web 0.1.139；發布後：API 0.1.134／Web 0.1.140，環境 `production`。
+- 正式首頁 HTTP 200 `text/html`；主 JS `index-BlzugLq4.js` HTTP 200 `application/javascript`；主 CSS HTTP 200 `text/css`；JS 含 Web 0.1.140 及 `analysis-limit-overview` 路由。
+- 正式 `/api/health` 與 `/api/version` 均成功，回 API 0.1.134／production。發布證據 phase=`complete`、status=`completed`。
+- 正式資料庫已存在 `20261109135930_AddLimitChangeHistory`；第一次含 migration 的唯讀 preflight 因待執行清單不相符而安全停止，未寫入資料。第二個交付包不重複套用 migration，正式資料庫無結構或資料異動。
+- 瀏覽器控制介面未連線，無法追加 UI 自動化截圖；使用者既有畫面確認與正式 HTTP／資產／API 實站驗證作為本次驗收證據。
 - 瀏覽器 API 基底為同源 `/api`，非標準埠 `https://spctest.pmr.com.tw:8901/api/health` 亦為 HTTP 200。
 - 匿名呼叫 preview 回 401，Editor 權限保護生效。
 - 回復點：`release/test/frontend.backup-analysis-limits-20261109`、`release/test/backend.backup-analysis-limits-20261109` 及上述資料庫備份。

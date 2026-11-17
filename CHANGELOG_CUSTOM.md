@@ -2901,3 +2901,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - `SPC-ADJUST-1028-TASK-006` 經使用者確認驗收；正式Web118既有兩頁淺藍bar資產保持，不重新發布。
 - 本次僅核銷人工驗收並同步文件／進度表；bins、頻數、常態曲線、界線、tooltip、下載資料、API與DB均未修改。
+
+## 2026-11-17 分析項目界限總覽整案正式發布
+
+- `SPC-LIMITS-BULK-1104-TASK-001` 經使用者確認畫面並授權正式發布；正式 API 0.1.133→0.1.134、Web 0.1.139→0.1.140。
+- 16項界限批次焦點測試、API publish、Web production build及三語2863鍵檢查通過；正式首頁、主JS／CSS、API health/version與production環境驗證成功。
+- 正式資料庫已存在 `20261109135930_AddLimitChangeHistory`，發布安全檢查拒絕重複migration後，改以零資料庫異動交付包完成發布；發布證據狀態為completed。
