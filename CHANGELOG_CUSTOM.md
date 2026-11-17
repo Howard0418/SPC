@@ -2802,6 +2802,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-17 每次更新必須遞增版本
 
+- [TASK-002總覽調整兩式隱藏](specs/20261117-chemical-hide-adjustment-columns/verification.md)：依追加先執行授權，以scoped screen樣式隱藏兩欄，保留DOM／draft／濃度編輯／原兩式保存與print／匯出。11項畫面回歸、三語2863鍵及test build通過；乾淨來源發布測試Web0.1.131，JS／CSS MIME及實際同源API0.1.132/test驗證通過。原進度表306與原生測試里程碑同步、OpenXML0錯誤；核心46／Portal相關17保持，待畫面確認，正式未發布。
+
 - TASK-002需求重申：已將[總覽兩式欄位隱藏規劃](specs/20261117-chemical-hide-adjustment-columns/spec.md)補明為「調整公式、調整量公式」表頭／展示格／編輯控制，保留濃度公式及兩式原值／保存。沿用SPC-CHEM-HIDE-ADJUST-1117-TASK-002與原P2排序，本次僅文件釐清，未改程式、未發布、未新增工作或改變進度狀態；進度表不適用，核心46保持。
 
 - [隱藏每項目編輯視窗藥液公式分頁](specs/20261117-ppc-hide-chemical-tab/verification.md)：依截圖移除可見分頁並停止內容掛載，保留公式JSON與其他四頁保存。8項單元語系、10項畫面、7項隔離排程元件與test build通過；乾淨來源發布測試Web0.1.130，主JS／CSS MIME及同源API0.1.132/test驗證通過。進度表／總表307及原生里程碑同步，OpenXML0錯誤；核心46／Portal相關17。待畫面確認，正式未發布。
