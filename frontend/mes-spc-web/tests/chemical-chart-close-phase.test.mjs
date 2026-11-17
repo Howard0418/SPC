@@ -10,6 +10,7 @@ test('chemical shift labels only expose early or middle shifts', () => {
 
 test('legacy CLOSE means close stage rather than a night shift', () => {
   assert.equal(chartStageShiftLabel('CLOSE', 'GENERAL', false), '收線待校正');
+  assert.equal(chartStageShiftLabel('CLOSE', 'GENERAL', true), '早(收)');
   assert.equal(chartStageShiftLabel('OPEN', 'CLOSE', true), '早(收)');
   assert.equal(chartStageShiftLabel('MIDDLE', 'CLOSE', true), '中(收)');
 });

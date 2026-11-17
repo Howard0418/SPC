@@ -79,7 +79,7 @@ export function chartShiftLabel(phase, isN1N2 = false) {
 
 export function chartStageShiftLabel(phase, stage, isN1N2 = false) {
   const rawPhase = String(phase ?? '').trim().toUpperCase();
-  if (rawPhase === 'CLOSE') return '收線待校正';
+  if (rawPhase === 'CLOSE') return isN1N2 ? '早(收)' : '收線待校正';
   if (!isN1N2) return shiftLabel(phase);
   const normalizedPhase = normalizeChemicalShift(phase);
   const normalizedStage = String(stage ?? '').trim().toUpperCase();
