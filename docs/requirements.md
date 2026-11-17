@@ -74,6 +74,8 @@
 
 # SPC 現行需求索引
 
+- 2026-11-17 [隱藏藥液調整欄位TASK-001執行](../specs/20261117-chemical-hide-adjustment-columns/verification.md)：使用者追加先執行授權後，Portal新增／查詢隱藏完成，計算與保存保持；測試API248／Web287、37項回歸與聚焦2項通過，待畫面確認。SPC總覽TASK-002仍未實作，正式未發布。
+
 - 2026-11-17 [藥液調整兩欄暫時隱藏規劃](../specs/20261117-chemical-hide-adjustment-columns/spec.md)：P2兩件，先Portal查詢／新增，再SPC線別分析項目總覽；僅隱藏呈現，保留公式計算／初複驗／保存。依優先順序入池，不立即實作或發布。
 
 - 2026-11-13 [藥液最終分析值一致顯示](../specs/20261113-chemical-effective-value-entry-display/spec.md)：Portal 日報保留初驗與複驗證據，並明示「最終（查詢／圖表）」；唯一有效值固定為已保存的 `RecheckValue ?? MeasuredValue`（複驗 0 仍有效）。Portal 查詢及 SPC 圖表同用此保存值；歷史資料不得套現行公式回算或寫回。Portal 測試 API 1.0.232／Web 1.0.273 已發布，正式未發布。
