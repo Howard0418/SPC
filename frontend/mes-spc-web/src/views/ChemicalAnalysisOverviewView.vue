@@ -238,7 +238,7 @@ onMounted(load);
 
 <style scoped>
 @media screen {
-  table { min-width: 960px; }
+  table { width: 100%; min-width: 960px; }
   th:nth-child(6), td:nth-child(6),
   th:nth-child(7), td:nth-child(7) { display: none !important; }
 }

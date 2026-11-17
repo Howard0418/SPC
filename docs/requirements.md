@@ -74,6 +74,8 @@
 
 # SPC 現行需求索引
 
+- 2026-11-17 [TASK-002總覽表格全寬修正](../specs/20261117-chemical-hide-adjustment-columns/verification.md)：依截圖表格以100%填滿可用容器，保留960px最小寬與手機橫向捲動，隱藏兩式及保存行為保持。11項畫面回歸及test build通過，測試Web0.1.132已發布待確認，正式未發布。
+
 - 2026-11-17 [TASK-002總覽調整兩式欄位隱藏測試完成](../specs/20261117-chemical-hide-adjustment-columns/verification.md)：依追加先執行授權，總覽調整公式／調整量公式screen隱藏，濃度編輯與兩式原值／保存、print／匯出保持；11項畫面與test build通過，測試Web0.1.131已發布，待畫面確認，正式未發布。
 
 - 2026-11-17 [TASK-002總覽兩式欄位規劃重申](../specs/20261117-chemical-hide-adjustment-columns/spec.md)：只隱藏線別分析項目總覽「調整公式、調整量公式」的展示與編輯欄位，保留濃度公式、兩式原值及保存；沿用原P2工作，不新增重複件。使用者明確要求僅規劃，不立即實作或發布。

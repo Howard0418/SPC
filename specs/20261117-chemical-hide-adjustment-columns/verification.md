@@ -30,3 +30,11 @@
 - 實際https://SPCTEST.pmr.com.tw首頁200/text/html；主JS index-BiEo5pnE.js為200/application/javascript並含前台版本0.1.131，CSS index-BykfK_2R.css為200/text/css。前端實際同源/api/health與/api/version均200，API0.1.132／environment=test。正式未發布。
 - 原進度表小工作306及原生測試里程碑同步；原119圖形名稱保持、新增1個。17,874個非本件儲存格值一致、公式0錯誤、候選及原檔OpenXML0錯誤，重讀／渲染通過；未做Excel人工開檔或列印。
 - 核心未完成46件／Portal相關17件保持，本件仍待使用者登入測試總覽畫面確認，不宣稱本人已驗收。
+
+## TASK-002全寬修正（2026-11-17）
+- 使用者截圖指出表格右側空白；原因為隱藏兩欄後table仍採自動內容寬度。screen表格新增width100%，保留960px最小寬及外層overflow-x-auto；print及計算／保存程式未改。
+- Playwright11/11通過；新增1920px viewport量測table寬度與父容器clientWidth差≤2px，搭配1280／390既有兩欄隱藏、濃度編輯保存、公式原值與print回歸。
+- 隔離乾淨HEAD只加入本件Vue及版本，test build與2863×3語系檢查通過；既有chunk-size／Browserslist提示保留，不改無關套件。
+- 測試Web更新0.1.132，備份D:/SPC/.hide-adjust-002-full-width-20261117/backup-frontend。首頁200/text/html、主JS index-DehbGvSi.js=200/application/javascript且含前台0.1.132，CSS index-4q7c1vbI.css=200/text/css；實際同源/api/health及/api/version=200，API0.1.132／test，無後端更新。
+- 原進度表既有工作306補最新版本與寬度驗證，新增原生寬度修正里程碑；原120圖形名稱保持，18,027個非本件儲存格值一致，公式0錯誤，候選及原檔OpenXML0錯誤，重讀／渲染通過。未做Excel人工開檔／列印。
+- 同一工作延續，不重複新增或核銷；核心46／Portal相關17保持。待使用者畫面確認，正式未發布。

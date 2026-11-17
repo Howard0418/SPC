@@ -46,6 +46,9 @@ test('overview hides adjustment formulas on desktop and mobile and preserves the
  const config={enabled:true,concentrationFormula:'Primary',adjustmentFormula:'IF(Concentration<10,"添加","")',adjustmentAmountFormula:'Primary * 2',decimalPlaces:2,recheckConcentrationFormula:'Primary*3.177*F!B6',legacyKeep:{id:99}};
  const puts=await setup(page,false,JSON.stringify(config));await page.goto('/chemical-analysis-overview');
  const row=page.getByTestId('overview-row-1');
+ await page.setViewportSize({width:1920,height:1080});
+ const widths=await page.locator('table').evaluate(table=>({table:table.getBoundingClientRect().width,container:table.parentElement!.clientWidth}));
+ expect(Math.abs(widths.table-widths.container)).toBeLessThanOrEqual(2);
  for(const width of [1280,390]){
   await page.setViewportSize({width,height:844});
   await expect(page.locator('thead th:visible')).toHaveCount(9);
