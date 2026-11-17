@@ -1,4 +1,4 @@
-- 2026-11-13 [藥液滴定值與分析值統一三位計算](../specs/20261113-chemical-global-three-decimal-calculation/spec.md)：所有藥液公式的初驗／複驗第一、第二滴定值先以AwayFromZero取至小數第3位，再代入公式；分析值再取至小數第3位。此規則取代先前依個別公式2／3／4位保存的新計算行為；既有已保存歷史值不批次改寫。測試API0.1.131已發布，待登入畫面人工驗收，正式未發布。
+- 2026-11-13 [藥液滴定值與分析值統一三位計算](../specs/20261113-chemical-global-three-decimal-calculation/spec.md)：所有藥液公式的初驗／複驗第一、第二滴定值先以AwayFromZero取至小數第3位，再代入公式；分析值再取至小數第3位。此規則取代先前依個別公式2／3／4位保存的新計算行為；既有已保存歷史值不批次改寫。使用者完成驗收，2026-11-17已發布正式API0.1.133／Web0.1.139。
 
 - 2026-11-13 [N2氯化亞錫目前公式排程補齊](../specs/20261113-n2-current-formula-schedule/verification.md)：測試庫N2催化／促進自2026/11/7起分別套用最新公式v4／v3與F248；新增2個不可變修訂及58區間，既有28段逐項保留。11/12預覽、保護資料指紋與冪等通過；網站不需發布，正式未異動。
 
@@ -608,9 +608,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-13 [藥液查詢顯示保存滴定值](../specs/20261113-chemical-history-titration-display/spec.md)：查詢頁初驗／複驗滴定值與新增頁使用相同來源；Receipt `originalInput.Primary` 優先，舊資料缺 Receipt 才回退同批 PPC／槽位＋品質特性的 UploadDetail。日報日期查詢與顯示採 `PortalDailyDate`，非日報才回退 `MeasuredAt`；同日資料依新增頁相同的槽體與分析項目主檔順序排列，不從分析值反推或跨線別取值。測試 Portal API1.0.242／Web1.0.283 已發布，正式未發布。
 - 2026-11-13 [N1／N2藥液管制圖開收線辨識](../specs/20261113-chemical-chart-stage-label/spec.md)：同日量測點依保存的 `SamplingStage` 顯示`早(開)`／`早(收)`；即使主檔投影缺機台代碼也不退回兩個相同「早班」。2026-11-17補強：主檔對應尚未解析但同日有完整`OPEN/CLOSE`成對證據時仍顯示開／收；另相容舊資料以`SamplingPhase=CLOSE`、`SamplingStage=GENERAL`表示收線的契約，僅N1／N2顯示`早(收)`，非N1／N2保留待校正提示。保留單一時間序列、MR、統計、規格及原始資料。測試Web0.1.136、API0.1.132/test；正式未發布，登入畫面待人工驗收。
 - 2026-11-17 [管制圖OOS紅點優先](../specs/20261117-chart-oos-color-priority/spec.md)：排除點維持灰色；未排除且OOS、OOC或規則失控的點一律紅色；正常點才採開／收線階段色。只改前端樣式優先順序，不改判定、數值、MR或統計。使用者完成測試人工驗收；正式Web0.1.138已發布，API維持0.1.127／production，首頁／資產MIME及瀏覽器實際API連線驗證通過。
-- 2026-11-13 [PPC 公式儲存沿用稽核交易](../specs/20261113-ppc-audit-transaction-reuse/spec.md)：稽核篩選器已有交易時，PPC 更新沿用同一交易，避免公式設定因巢狀交易回傳500；公式版本與稽核事件維持同成同敗。測試API0.1.128已發布並通過連線驗證，待登入後重新儲存確認；正式未發布。
-- 2026-11-13 [藥液量測確認與稽核交易相容](../specs/20261113-chemical-confirm-audit-transaction/spec.md)：Portal藥液Confirm保留服務自主管理的完整交易，稽核不再建立衝突的外層交易；量測、Receipt、Trace、統計與稽核事件同成同敗，通知只在提交後執行。測試API0.1.129已發布，待登入後實際儲存確認；正式未發布。
-- 2026-11-13 [藥液空白第二滴定值預覽一致](../specs/20261113-chemical-preview-empty-secondary/spec.md)：單滴定項目未提供第二滴定值時，Portal預覽的`null`與確認批次的空字串在SPC統一視為未提供值，不得誤判為預覽內容變更；有效第二滴定值及日期／輸入／規格／公式變更防護保持。測試API0.1.130已發布，待登入實際儲存人工驗收；正式未發布。
+- 2026-11-13 [PPC 公式儲存沿用稽核交易](../specs/20261113-ppc-audit-transaction-reuse/spec.md)：稽核篩選器已有交易時，PPC 更新沿用同一交易，避免公式設定因巢狀交易回傳500；公式版本與稽核事件維持同成同敗。使用者完成驗收，2026-11-17已發布正式API0.1.133／Web0.1.139。
+- 2026-11-13 [藥液量測確認與稽核交易相容](../specs/20261113-chemical-confirm-audit-transaction/spec.md)：Portal藥液Confirm保留服務自主管理的完整交易，稽核不再建立衝突的外層交易；量測、Receipt、Trace、統計與稽核事件同成同敗，通知只在提交後執行。使用者完成驗收，2026-11-17已發布正式API0.1.133／Web0.1.139。
+- 2026-11-13 [藥液空白第二滴定值預覽一致](../specs/20261113-chemical-preview-empty-secondary/spec.md)：單滴定項目未提供第二滴定值時，Portal預覽的`null`與確認批次的空字串在SPC統一視為未提供值，不得誤判為預覽內容變更；有效第二滴定值及日期／輸入／規格／公式變更防護保持。使用者完成驗收，2026-11-17已發布正式API0.1.133／Web0.1.139。
 - 2026-11-13 [N2 P400 最近公式排程補齊](../specs/20261113-n2-p400-current-formula-schedule/verification.md)：測試庫 N2／催化／P400 自 2026/11/7 起採最近公式 v4／1157 與 F248；新增1個不可變修訂及29區間，原28段與55份Receipt保持。11/12 Preview／Prepare、保護資料指紋與冪等通過；網站不需發布，正式未異動。
 - 2026-11-13 [藥液儲存前自動更新預覽憑證](../specs/20261113-chemical-save-fresh-preview/verification.md)：Portal確認前重新preview本次變更的日期公式列，並以同次分析值、調整結果與新token送入confirm；直接輸入不新增preview，SPC 409防護保持。測試API1.0.243／Web1.0.284及18項單元、16項UI、Web／資產／API連線驗證通過；待登入實際儲存驗收，正式未發布。
 - 2026-11-13 [藥液日期點選自動載入日報](../../PmrPortal/specs/20261113-chemical-date-auto-load/spec.md)：新增頁月曆點選任一日期（含已選日期）後，立即依目前線別、班別及取樣階段載入日報；手動載入按鈕保留，延遲回應不得覆蓋最後選擇。29項回歸及build通過，測試API1.0.244／Web1.0.285已發布；正式未發布。

@@ -766,7 +766,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-13 藥液量測刪除交易衝突（待驗收）
 
-- [ ] `SPC-CHEM-DELETE-TRANSACTION-1113-TASK-001`：P0，SPC API主責／相依Portal刪除操作與業務稽核；刪除沿用外層稽核交易，無外層時維持自行交易，量測邏輯刪除並保留Receipt／Trace。紅燈先重現503，相關36/36通過；測試API0.1.132與Web／資產／同源／8901連線驗證完成。待登入重試原刪除操作，正式未授權。[驗證](specs/20261113-chemical-delete-audit-transaction/verification.md)
+- [x] `SPC-CHEM-DELETE-TRANSACTION-1113-TASK-001`：使用者完成實際刪除驗收；已併入正式API0.1.133／Web0.1.139，量測邏輯刪除並保留Receipt／Trace／Audit。正式備份、首頁／資產MIME、API production與Chromium連線通過。[正式發布](specs/20261117-accepted-api-formal-alignment/spec.md)
+
+- [x] `SPC-ACCEPTED-API-FORMAL-ALIGN-1117-TASK-001`：使用者確認PPC交易、Confirm交易、空白第二滴定值、全域三位計算及刪除交易五項均已驗收並授權正式。正式API0.1.133／Web0.1.139；焦點70項通過，既有歷史判定2項失敗未增加；migration 0，未搬移測試資料／公式／F／排程／設定。核心未完成37件。[規格與結果](specs/20261117-accepted-api-formal-alignment/spec.md)
 
 - [x] `SPC-CHEM-CHART-STAGE-LABEL-1113-TASK-001`：N1／N2開收線與舊`CLOSE/GENERAL`標籤相容、OOS／OOC／規則失控紅色優先均完成；使用者完成測試驗收並授權正式。正式Web0.1.138／API0.1.127 production，焦點11/11、i18n、production build、首頁／資產MIME與Chromium實際API連線通過；API、DB、量測與統計未修改。核心未完成41件。[驗證](specs/20261117-chart-oos-color-priority/spec.md)
 - [x] `PORTAL-VISITOR-MAIL-1117-TASK-001`：P1，Portal主責；使用者確認訪客預約寄送總務Email已驗收並授權正式。本功能已作為必要相依包含於正式API248／Web273，沿用SMTP與Chat；正式備份／Login／資產／API production／401已驗，本次不重複部署或改版。[規格](../PmrPortal/specs/20261117-visitor-reservation-email/spec.md)。核心48件／Portal相關19件。

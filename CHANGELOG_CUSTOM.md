@@ -2831,6 +2831,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-13 PPC 公式儲存交易衝突修正
 
+- 2026-11-17使用者確認本節及其後的Confirm交易、空白第二滴定值、全域三位計算、刪除交易五項均已驗收並授權正式；以正式API0.1.127隔離來源合併發布為API0.1.133，Web依規則升0.1.139。焦點70項、production publish、正式備份與Web／資產／API production／Chromium實際連線通過；migration 0，未搬移測試資料、公式、F、排程或設定。[發布規格](specs/20261117-accepted-api-formal-alignment/spec.md)
+
 - 修正 `BusinessDataAuditFilter` 已建立交易時，PPC Update 再建立交易而造成500；現在沿用外層交易，PPC公式、公式版本與稽核事件維持原子性。
 - 新增SQLite關聯式回歸，相關19項與API build通過；完整API測試另有10項既有藥液歷史判定／修復失敗，與本件隔離重跑結果一致。
 - 已發布SPC測試API0.1.128（Web0.1.129保持），備份驗證、暫時權限撤銷、首頁／JS／CSS MIME及同源health／version通過。先前失敗的PH公式需重新按儲存；正式未發布。
