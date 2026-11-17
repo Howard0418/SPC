@@ -2800,6 +2800,12 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 保留 N1／N2 藥液既有單一序列、點位、MR、管制線、Cpk、規格與資料。焦點測試8/8、i18n及Web build通過。
 - SPC測試Web0.1.129已發布，API維持0.1.127/test；首頁、主JS/CSS MIME及同源health/version通過。測試庫備份／VERIFYONLY完成，暫時dbcreator已撤除且未授予sysadmin。正式未發布，登入畫面待人工驗收。
 
+## 2026-11-17 藥液管制圖開收線標籤執行期回退
+
+- 使用者回報 N2／化鎳／PH（PPC 2520）在 2026-11-04 的 8.420／8.400 兩筆仍顯示相同「早班」。唯讀核對確認 ID 92009 為`OPEN`、ID 92019 為`CLOSE`，資料正確。
+- 前端在主檔映射暫時缺失時，現改以同日完整`OPEN/CLOSE`成對階段作為受限回退證據，顯示`早(開)`／`早(收)`；不完整、空白與`GENERAL`不變。量測、API、統計、MR、界限與正式站均未修改。
+- 新紅燈後 `chemical-single-line` 9/9、i18n 2863×3、production／test build通過；測試Web已更新為`index-B3cdgzbq.js`，首頁、資產MIME、同源API health/version均為test。登入畫面待使用者確認，正式未發布。[規格與驗證](specs/20261117-chemical-chart-stage-label-runtime-fallback/verification.md)
+
 ## 2026-11-13 PPC 公式儲存交易衝突修正
 
 - 修正 `BusinessDataAuditFilter` 已建立交易時，PPC Update 再建立交易而造成500；現在沿用外層交易，PPC公式、公式版本與稽核事件維持原子性。

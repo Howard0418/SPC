@@ -758,3 +758,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-13 藥液量測刪除交易衝突（待驗收）
 
 - [ ] `SPC-CHEM-DELETE-TRANSACTION-1113-TASK-001`：P0，SPC API主責／相依Portal刪除操作與業務稽核；刪除沿用外層稽核交易，無外層時維持自行交易，量測邏輯刪除並保留Receipt／Trace。紅燈先重現503，相關36/36通過；測試API0.1.132與Web／資產／同源／8901連線驗證完成。待登入重試原刪除操作，正式未授權。[驗證](specs/20261113-chemical-delete-audit-transaction/verification.md)
+
+> 2026-11-17 `SPC-CHEM-CHART-STAGE-LABEL-1113-TASK-001`驗收發現 N2／化鎳／PH 的11/04開收線重複顯示「早班」。資料 ID 92009／92019 已核對為`OPEN/CLOSE`；前端新增同日完整階段對的受限執行期回退，9項回歸與兩種build通過，測試Web已更新。待登入畫面確認`早(開)`／`早(收)`後才核銷，不新增核心待辦。[驗證](specs/20261117-chemical-chart-stage-label-runtime-fallback/verification.md)

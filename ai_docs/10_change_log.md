@@ -1769,3 +1769,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 規格：`specs/20261113-chemical-delete-audit-transaction/spec.md`。
 - 結果：控制器只在沒有外層關聯式交易時自行建立交易，量測採邏輯刪除並保留不可變Receipt／Trace；紅燈先重現503，相關36/36及Release publish通過。測試API0.1.132完成Web／資產／同源與8901連線驗證，待登入實際刪除驗收，正式未發布。
 
+# 2026-11-17 藥液管制圖開收線標籤執行期回退
+
+- 目的：修正 N2／化鎳／PH 在資料已保存 `OPEN`／`CLOSE` 時，圖表仍將同日兩點顯示為「早班」的問題。
+- 範圍：僅 SPC 前端圖表標籤判定與回歸測試。資料、API、統計、圖表序列、正式站均不修改。
+- 規格：`specs/20261117-chemical-chart-stage-label-runtime-fallback/spec.md`。
+

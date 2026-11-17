@@ -29,9 +29,24 @@ export function useChemicalStageLabels(mapping, points = []) {
     ?? ''
   ).trim().toUpperCase();
   const isChemical = scope === 'CHEM' || scope === 'CHEMICAL' || scope.includes('藥液');
-  return isChemical && points.some(point => ['OPEN', 'CLOSE'].includes(
+  const hasRecordedStage = points.some(point => ['OPEN', 'CLOSE'].includes(
     String(point?.samplingStage ?? '').trim().toUpperCase()
   ));
+  if (isChemical && hasRecordedStage) return true;
+
+  // A direct chart link can render before its mapping has been resolved.  Only
+  // fall back to point evidence when one calendar day explicitly contains both
+  // stages; a single, blank, or GENERAL stage must keep its existing label.
+  if (scope) return false;
+  const stagesByDate = new Map();
+  for (const point of points) {
+    const date = chemicalDateKey(point);
+    const stage = String(point?.samplingStage ?? '').trim().toUpperCase();
+    if (!date || !['OPEN', 'CLOSE'].includes(stage)) continue;
+    if (!stagesByDate.has(date)) stagesByDate.set(date, new Set());
+    stagesByDate.get(date).add(stage);
+  }
+  return [...stagesByDate.values()].some(stages => stages.has('OPEN') && stages.has('CLOSE'));
 }
 
 export function stageLabel(stage) {

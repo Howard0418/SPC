@@ -94,6 +94,21 @@ test('Recorded open and close stages stay distinct when mapping machine metadata
  const top=option.series.find(s=>s.yAxisIndex===0);
  assert.deepEqual(Array.from(top.data,p=>p.value),[19.04,17.472]);
 });
+test('Same-day OPEN/CLOSE pair keeps stage labels when mapping is temporarily unavailable',()=>{
+ const code=renderEChartsCode();
+ const context=Object.fromEntries([...code.matchAll(/\b(\w+)\.value\b/g)].map(m=>[m[1],{value:false}]));
+ let option;
+ const points=[
+  {measuredAt:'2026-11-04T00:00:00',portalDailyDate:'2026-11-04',samplingPhase:'OPEN',samplingStage:'OPEN',value:8.42},
+  {measuredAt:'2026-11-04T00:00:00',portalDailyDate:'2026-11-04',samplingPhase:'OPEN',samplingStage:'CLOSE',value:8.4}
+ ];
+ Object.assign(context,{useSingleChemicalLine,useChemicalStageLabels,stageLabel,normalizeChemicalShift,isRecordedChemicalShift,shiftLabel,chartShiftLabel,chartStageShiftLabel,chemicalDateKey,buildPairedShiftLookup,hidePointContextMenu:()=>{},localizeChart:()=>{},chartInstance:null,chartEl:{value:{}},selectedMapping:{value:null},chartResult:{value:{chartType:'I-MR',chartData:{points},secondaryChartData:{points:[{value:.02}]}}},echarts:{init:()=>({setOption:o=>option=o,on:()=>{}})},router:{replace:()=>{}},route:{path:'/spc',query:{}},renderHistogramChart:()=>{},formatNumber:String});
+ vm.runInNewContext(code+';renderECharts();',context);
+ assert.deepEqual(Array.from(option.xAxis[0].data),['11/04 早(開)','11/04 早(收)']);
+ const top=option.series.find(s=>s.yAxisIndex===0);
+ assert.deepEqual(Array.from(top.data,p=>p.value),[8.42,8.4]);
+ assert.deepEqual(Array.from(option.series.find(s=>s.yAxisIndex===1).data,p=>p.value),[.02]);
+});
 test('DP mixed GENERAL and OPEN still draws every morning date',()=>{
  const code=renderEChartsCode();
  const context=Object.fromEntries([...code.matchAll(/\b(\w+)\.value\b/g)].map(m=>[m[1],{value:false}]));
