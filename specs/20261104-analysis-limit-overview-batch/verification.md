@@ -5,6 +5,7 @@
 - 依使用者截圖讓表格填滿容器；僅增加w-full，保留1380px最小寬及手機橫向捲動。
 - 工具3項、Playwright2項與test build通過；測試Web0.1.133／API0.1.132 test及首頁／主資產／同源API驗證通過。
 - [子項規格與驗證](../20261117-analysis-limits-full-width/spec.md)。原進度表已同步；本項不代表整案AC-008全部完成，正式未更新。
+- 後續使用者確認全寬子項並授權正式發布：僅將w-full加入原正式來源，正式Web0.1.134／API0.1.126 production；5項回歸、production build、備份雜湊、首頁／資產／實際8443 API及正式Origin的Chromium fetch通過。原進度表正式里程碑已同步，父件其餘AC-008不自動完成。
 
 狀態：自動化與測試站發布完成；待實際瀏覽器畫面／截圖驗收；正式未授權。
 
