@@ -38,3 +38,10 @@
 - 測試Web更新0.1.132，備份D:/SPC/.hide-adjust-002-full-width-20261117/backup-frontend。首頁200/text/html、主JS index-DehbGvSi.js=200/application/javascript且含前台0.1.132，CSS index-4q7c1vbI.css=200/text/css；實際同源/api/health及/api/version=200，API0.1.132／test，無後端更新。
 - 原進度表既有工作306補最新版本與寬度驗證，新增原生寬度修正里程碑；原120圖形名稱保持，18,027個非本件儲存格值一致，公式0錯誤，候選及原檔OpenXML0錯誤，重讀／渲染通過。未做Excel人工開檔／列印。
 - 同一工作延續，不重複新增或核銷；核心46／Portal相關17保持。待使用者畫面確認，正式未發布。
+
+## TASK-001正式發布與驗收（2026-11-17）
+- 使用者確認 Portal 藥液新增／查詢頁隱藏調整與調整量可驗收並授權正式；TASK-002 SPC 總覽未納入本次發布。
+- 由正式 API1.0.249／Web1.0.274 隔離基準套入 TASK-001；聚焦畫面2／2、正式基準API47／47、相容性16／16及Release publish通過。桌面／手機兩欄不可見、DOM與確認payload仍保留、print仍顯示原欄。
+- 唯讀預檢通過後發布正式 API1.0.250／Web1.0.275；無 migration。正式 Login、site.css、site.js、API health均200且MIME正確，`/app-version`為1.0.275.0、API為production、匿名`/api/auth/me`為401。
+- 正式API／Web DLL版本與候選SHA-256完全相符；資料庫備份`verified=true`。回復來源為正式發布目錄`C:/ProgramData/PMR-Releases/Production/portal-hide-chemical-adjust-20261117-r1`，可回復API1.0.249／Web1.0.274。
+- TASK-001結案後核心未完成45件／Portal相關16件；TASK-002仍待畫面驗收與正式授權。
