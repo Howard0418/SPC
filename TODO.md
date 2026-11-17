@@ -768,7 +768,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] `SPC-CHEM-DELETE-TRANSACTION-1113-TASK-001`：P0，SPC API主責／相依Portal刪除操作與業務稽核；刪除沿用外層稽核交易，無外層時維持自行交易，量測邏輯刪除並保留Receipt／Trace。紅燈先重現503，相關36/36通過；測試API0.1.132與Web／資產／同源／8901連線驗證完成。待登入重試原刪除操作，正式未授權。[驗證](specs/20261113-chemical-delete-audit-transaction/verification.md)
 
-> 2026-11-17 `SPC-CHEM-CHART-STAGE-LABEL-1113-TASK-001`：除N2同日階段回退外，正式唯讀確認N1／表處／氫氧化鉀10/22舊收線ID79642為`SamplingPhase=CLOSE`、`SamplingStage=GENERAL`。N1／N2相容顯示`早(收)`，非N1／N2提示不變；紅燈後焦點11/11及隔離build通過，測試Web0.1.136／API0.1.132 test已驗證。待登入確認19.260=`早(開)`、17.470=`早(收)`後核銷；正式未發布，不新增核心待辦。[驗證](specs/20261117-chemical-chart-stage-label-runtime-fallback/verification.md)
+> 2026-11-17 `SPC-CHEM-CHART-STAGE-LABEL-1113-TASK-001`：N1／N2開收線與舊`CLOSE/GENERAL`標籤相容完成；追加修復階段色覆蓋OOS紅點的既有回歸，排除點灰色、OOS／OOC／規則失控紅色優先，正常點才採階段色。紅燈後焦點11/11及隔離build通過，測試Web0.1.137／API0.1.132 test已驗證。待登入確認10/22與11/09的17.470為紅點後核銷；正式未發布，不新增核心待辦。[驗證](specs/20261117-chart-oos-color-priority/spec.md)
 - [x] `PORTAL-VISITOR-MAIL-1117-TASK-001`：P1，Portal主責；使用者確認訪客預約寄送總務Email已驗收並授權正式。本功能已作為必要相依包含於正式API248／Web273，沿用SMTP與Chat；正式備份／Login／資產／API production／401已驗，本次不重複部署或改版。[規格](../PmrPortal/specs/20261117-visitor-reservation-email/spec.md)。核心48件／Portal相關19件。
 - [x] `PORTAL-PERMISSION-EMAIL-1117-TASK-001`：P1，Portal主責；使用者完成 Email 保存／重載與總務收信驗收並授權正式。正式 API249／Web274，資料庫備份、Login／資產、API production 與匿名401驗證通過，無schema。[規格](../PmrPortal/specs/20261117-permission-email-edit/spec.md)。核心46件／Portal相關17件。
 - [x] `PORTAL-PERMISSION-ROLE-FILTER-1117-TASK-001`：P1，Portal主責；使用者完成角色查詢人工驗收並授權正式。正式 API249／Web274，Swagger角色參數、資料庫備份、Login／資產、API production 與匿名401驗證通過。[規格](../PmrPortal/specs/20261117-permission-role-filter/spec.md)。核心46件／Portal相關17件。

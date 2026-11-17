@@ -86,13 +86,16 @@ test('Recorded open and close stages stay distinct when mapping machine metadata
  let option;
  const points=[
   {measuredAt:'2026-11-09T00:00:00',portalDailyDate:'2026-11-09',samplingPhase:'OPEN',samplingStage:'OPEN',value:19.04},
-  {measuredAt:'2026-11-09T00:00:00',portalDailyDate:'2026-11-09',samplingPhase:'OPEN',samplingStage:'CLOSE',value:17.472}
+  {measuredAt:'2026-11-09T00:00:00',portalDailyDate:'2026-11-09',samplingPhase:'OPEN',samplingStage:'CLOSE',value:17.472,outOfSpec:true}
  ];
  Object.assign(context,{useSingleChemicalLine,useChemicalStageLabels,stageLabel,normalizeChemicalShift,isRecordedChemicalShift,shiftLabel,chartShiftLabel,chartStageShiftLabel,chemicalDateKey,buildPairedShiftLookup,hidePointContextMenu:()=>{},localizeChart:()=>{},chartInstance:null,chartEl:{value:{}},selectedMapping:{value:{controlScope:'CHEM'}},chartResult:{value:{chartType:'I-MR',chartData:{points},secondaryChartData:{points:[{value:1.568}]}}},echarts:{init:()=>({setOption:o=>option=o,on:()=>{}})},router:{replace:()=>{}},route:{path:'/spc',query:{}},renderHistogramChart:()=>{},formatNumber:String});
  vm.runInNewContext(code+';renderECharts();',context);
  assert.deepEqual(Array.from(option.xAxis[0].data),['11/09 早(開)','11/09 早(收)']);
  const top=option.series.find(s=>s.yAxisIndex===0);
  assert.deepEqual(Array.from(top.data,p=>p.value),[19.04,17.472]);
+ assert.equal(top.data[0].itemStyle.color,'#3b82f6');
+ assert.equal(top.data[1].itemStyle.color,'#ef4444');
+ assert.equal(top.data[1].itemStyle.borderColor,'#991b1b');
 });
 test('Same-day OPEN/CLOSE pair keeps stage labels when mapping is temporarily unavailable',()=>{
  const code=renderEChartsCode();

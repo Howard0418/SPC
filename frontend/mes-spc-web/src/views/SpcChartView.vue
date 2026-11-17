@@ -1452,8 +1452,8 @@ function renderECharts() {
       CLOSE: { color: "#f97316", borderColor: "#c2410c", symbol: "rect" }
     };
     const phaseStyle = phase ? phaseStyles[phase] : null;
-    let color = phaseStyle?.color || (isErr ? "#ef4444" : "#3b82f6");
-    let borderColor = phaseStyle?.borderColor || (isErr ? "#991b1b" : "#2563eb");
+    let color = isErr ? "#ef4444" : (phaseStyle?.color || "#3b82f6");
+    let borderColor = isErr ? "#991b1b" : (phaseStyle?.borderColor || "#2563eb");
     let symbol = phaseStyle?.symbol || "circle";
     let symbolSize = isErr ? 12 : 8;
     if (isExcluded) {
@@ -1478,8 +1478,8 @@ function renderECharts() {
     
     const phase = pairedPhaseMode ? normalizeChemicalShift(p.samplingPhase) : null;
     const phaseStyles = { OPEN: ["#3b82f6", "#2563eb", "circle"], MIDDLE: ["#10b981", "#047857", "diamond"], CLOSE: ["#f97316", "#c2410c", "rect"] };
-    let color = phaseStyles[phase]?.[0] || (isErr ? "#ef4444" : "#3b82f6");
-    let borderColor = phaseStyles[phase]?.[1] || (isErr ? "#991b1b" : "#2563eb");
+    let color = isErr ? "#ef4444" : (phaseStyles[phase]?.[0] || "#3b82f6");
+    let borderColor = isErr ? "#991b1b" : (phaseStyles[phase]?.[1] || "#2563eb");
     let symbol = phaseStyles[phase]?.[2] || "circle";
     let symbolSize = isErr ? 12 : 8;
     
