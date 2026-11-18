@@ -16,3 +16,12 @@
 
 - 測試區以任一藥液項目勾選「不列入計算及繪圖」並選擇備註後儲存，確認重載及查詢可見、SPC 圖表不繪製且樣本數不含該筆。
 - 取消勾選再儲存，確認點位恢復納入計算與繪圖。
+
+## 測試區發布
+
+- SPC：API 0.1.136 → 0.1.137；Web 0.1.142 → 0.1.143。
+- Portal：API 1.0.263 → 1.0.265；Web 1.0.301 → 1.0.303（含發布腳本自動遞增）。
+- SPC `/api/health`、`/api/version` 均回 HTTP 200、版本 0.1.137、環境 `test`；首頁與實際 JS／CSS 皆 HTTP 200 且 MIME 正確。
+- Portal首頁／登入、`app-version`、測試 API health、同源 `/api/auth/me` 路徑、實際 JS／CSS 均可達；版本 Web 1.0.303、API DLL 1.0.265，資料庫環境為 `test`。
+- SPC 測試區發布前備份：`D:\SPC\release\backup-chemical-exclusion-test-20261118-202851`。
+- 正式區未發布。
