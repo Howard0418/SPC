@@ -41,6 +41,40 @@ public class PartProcessCharacteristicMaintenanceTests
     }
 
     [Fact]
+    public async Task UpdateChemicalAdjustmentParameters_ReturnsCommittedControlValueChanges()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var process = new Process { ProcessCode = "N2", ProcessName = "化鎳線(N2)", ControlScope = "CHEM" };
+        var tank = new Tank { TankCode = "PROMOTE", TankName = "促進" };
+        var characteristic = new QualityCharacteristic { CharacteristicCode = "SNCL2", CharacteristicName = "氯化亞錫", ControlScope = "CHEM" };
+        db.AddRange(process, tank, characteristic);
+        await db.SaveChangesAsync();
+        var item = new PartProcessCharacteristic
+        {
+            ControlScope = "CHEM", ProcessId = process.Id, TankId = tank.Id, CharacteristicId = characteristic.Id,
+            ChemicalAnalysisConfigJson = "{\"additionControlValue\":18.5,\"dilutionControlValue\":21.5}"
+        };
+        db.Add(item);
+        await db.SaveChangesAsync();
+
+        var result = await new PartProcessCharacteristicsController(db).UpdateChemicalAdjustmentParameters(
+            item.Id, new ChemicalAdjustmentParametersRequest(null, 19.5m, 21.5m, null), CancellationToken.None);
+
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        using var json = System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(ok.Value));
+        var root = json.RootElement;
+        root.GetProperty("ProcessName").GetString().Should().Be("化鎳線(N2)");
+        root.GetProperty("TankName").GetString().Should().Be("促進");
+        root.GetProperty("CharacteristicName").GetString().Should().Be("氯化亞錫");
+        var changes = root.GetProperty("AdjustmentChanges");
+        changes.GetProperty("AdditionControlValue").GetProperty("Changed").GetBoolean().Should().BeTrue();
+        changes.GetProperty("AdditionControlValue").GetProperty("Previous").GetDecimal().Should().Be(18.5m);
+        changes.GetProperty("AdditionControlValue").GetProperty("Current").GetDecimal().Should().Be(19.5m);
+        changes.GetProperty("DilutionControlValue").GetProperty("Changed").GetBoolean().Should().BeFalse();
+    }
+
+    [Fact]
     public async Task UpdateChemicalAdjustmentParameters_RejectsNonPositiveValueWithoutChangingData()
     {
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()

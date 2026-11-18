@@ -681,6 +681,8 @@ public class PartProcessCharacteristicsController(
         try { config = string.IsNullOrWhiteSpace(previous) ? new JsonObject() : JsonNode.Parse(previous)!.AsObject(); }
         catch (JsonException) { return BadRequest(new { code = "CHEM_CONFIG_INVALID", message = "既有藥液設定格式錯誤，未儲存任何資料。" }); }
 
+        var previousAddition = GetDecimal(config, "additionControlValue");
+        var previousDilution = GetDecimal(config, "dilutionControlValue");
         SetDecimal(config, "tankCapacityLiters", req.TankCapacityLiters);
         SetDecimal(config, "additionControlValue", req.AdditionControlValue);
         SetDecimal(config, "dilutionControlValue", req.DilutionControlValue);
@@ -694,13 +696,47 @@ public class PartProcessCharacteristicsController(
         var versionService = chemicalFormulaVersions ?? new ChemicalAnalysisFormulaVersionService(db);
         await versionService.RecordChangeAsync(id, previous, item.ChemicalAnalysisConfigJson,
             User?.Identity?.Name, "藥液調整參數維護", ct);
-        return Ok(new { item.Id, item.ChemicalAnalysisConfigJson });
+        var processName = await db.Processes.Where(x => x.Id == item.ProcessId).Select(x => x.ProcessName).FirstOrDefaultAsync(ct);
+        var tankName = item.TankId.HasValue
+            ? await db.Tanks.Where(x => x.Id == item.TankId.Value).Select(x => x.TankName).FirstOrDefaultAsync(ct)
+            : null;
+        var characteristicName = await db.QualityCharacteristics.Where(x => x.Id == item.CharacteristicId)
+            .Select(x => x.CharacteristicName).FirstOrDefaultAsync(ct);
+        return Ok(new
+        {
+            item.Id,
+            item.ChemicalAnalysisConfigJson,
+            ProcessName = processName,
+            TankName = tankName,
+            CharacteristicName = characteristicName,
+            AdjustmentChanges = new
+            {
+                AdditionControlValue = new
+                {
+                    Previous = previousAddition,
+                    Current = req.AdditionControlValue,
+                    Changed = previousAddition != req.AdditionControlValue
+                },
+                DilutionControlValue = new
+                {
+                    Previous = previousDilution,
+                    Current = req.DilutionControlValue,
+                    Changed = previousDilution != req.DilutionControlValue
+                }
+            }
+        });
     }
 
     private static void SetDecimal(JsonObject config, string name, decimal? value)
     {
         if (value.HasValue) config[name] = value.Value;
         else config.Remove(name);
+    }
+
+    private static decimal? GetDecimal(JsonObject config, string name)
+    {
+        if (!config.TryGetPropertyValue(name, out var node) || node is null) return null;
+        return node is JsonValue jsonValue && jsonValue.TryGetValue<decimal>(out var value) ? value : null;
     }
 
     [HttpGet("{id:int}/rules")]
