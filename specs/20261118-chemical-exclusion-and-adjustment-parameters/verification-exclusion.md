@@ -39,3 +39,5 @@
 - Portal Web 50 項測試通過；Release build 0 警告、0 錯誤。
 - 桌機取消 `col-xl-10` 上限，內容容器 `width: 100%`／`max-width: none`；內距採 `clamp(12px, 1.5vw, 28px)`，767.98px 以下改為 8px。
 - 僅調整版面 CSS 與容器 class，未改 API、資料庫、公式、輸入、計算或保存流程。
+- Portal 測試區版本：API 1.0.265 → 1.0.267、Web 1.0.303 → 1.0.305（含發布腳本自動遞增）。首頁、Login、`app-version`、測試API health、同源 `/api/auth/me` 路徑及實際 JS／CSS 均驗證可達且環境為 `test`；正式區未發布。
+- 中央進度表第317列已補入滿版測試與 Portal API 1.0.267／Web 1.0.305證據，狀態仍為待人工驗收；更新前備份 `進度表-20261118-fullwidth-before.xlsx`。原檔更新前 SHA256 `A2067D9017DD9FE8626A265EDBECC95F177537C888BACD42EBAC4D12CC453B98`、更新後 `196F16093D97F919F079DE2CA7DAB4A97C709694F2B37C3AE6EA46ADB44727BB`；Artifact Tool重開、151圖形、公式錯誤0與ZIP 13 entries／空名稱0通過，Microsoft Excel人工開啟未執行。
