@@ -6,6 +6,7 @@ using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace MesSpc.Api.Controllers;
 
@@ -652,6 +653,44 @@ public class PartProcessCharacteristicsController(
         return Ok(x);
     }
 
+    [HttpPut("{id:int}/chemical-adjustment-parameters")]
+    public async Task<IActionResult> UpdateChemicalAdjustmentParameters(
+        int id, ChemicalAdjustmentParametersRequest req, CancellationToken ct)
+    {
+        if (new[] { req.TankCapacityLiters, req.AdditionControlValue, req.DilutionControlValue }
+            .Any(value => value.HasValue && value.Value <= 0))
+            return BadRequest(new { code = "CHEM_PARAMETER_POSITIVE", message = "槽容與管制值必須大於 0，空白表示未設定。" });
+
+        var item = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (item is null) return NotFound();
+        if (!string.Equals(NormalizeScope(item.ControlScope), "CHEM", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { code = "CHEM_PARAMETER_SCOPE", message = "僅能維護藥液分析項目的調整參數。" });
+
+        var previous = item.ChemicalAnalysisConfigJson;
+        JsonObject config;
+        try { config = string.IsNullOrWhiteSpace(previous) ? new JsonObject() : JsonNode.Parse(previous)!.AsObject(); }
+        catch (JsonException) { return BadRequest(new { code = "CHEM_CONFIG_INVALID", message = "既有藥液設定格式錯誤，未儲存任何資料。" }); }
+
+        SetDecimal(config, "tankCapacityLiters", req.TankCapacityLiters);
+        SetDecimal(config, "additionControlValue", req.AdditionControlValue);
+        SetDecimal(config, "dilutionControlValue", req.DilutionControlValue);
+        item.ChemicalAnalysisConfigJson = config.ToJsonString();
+        item.UpdatedAt = DateTime.UtcNow;
+        item.UpdatedBy = User?.Identity?.Name;
+
+        await db.SaveChangesAsync(ct);
+        var versionService = chemicalFormulaVersions ?? new ChemicalAnalysisFormulaVersionService(db);
+        await versionService.RecordChangeAsync(id, previous, item.ChemicalAnalysisConfigJson,
+            User?.Identity?.Name, "藥液調整參數維護", ct);
+        return Ok(new { item.Id, item.ChemicalAnalysisConfigJson });
+    }
+
+    private static void SetDecimal(JsonObject config, string name, decimal? value)
+    {
+        if (value.HasValue) config[name] = value.Value;
+        else config.Remove(name);
+    }
+
     [HttpGet("{id:int}/rules")]
     public async Task<IActionResult> GetRules(int id)
     {
@@ -1006,6 +1045,11 @@ public class PartProcessCharacteristicsController(
     public sealed record ItemRulesResponse(int PartProcessCharacteristicId, int? RuleGroupId, List<ItemRuleOption> Rules);
     public sealed record ItemRulesUpdateRequest(List<string>? SelectedRuleCodes);
 }
+
+public sealed record ChemicalAdjustmentParametersRequest(
+    decimal? TankCapacityLiters,
+    decimal? AdditionControlValue,
+    decimal? DilutionControlValue);
 
 [ApiController]
 [Route("api/control-chart-groups")]

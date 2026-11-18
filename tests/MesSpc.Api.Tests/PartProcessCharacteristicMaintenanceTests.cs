@@ -13,6 +13,45 @@ namespace MesSpc.Api.Tests;
 public class PartProcessCharacteristicMaintenanceTests
 {
     [Fact]
+    public async Task UpdateChemicalAdjustmentParameters_PreservesFormulaAndLimits_AndCreatesVersion()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var item = new PartProcessCharacteristic
+        {
+            ControlScope = "CHEM", ProcessId = 1, CharacteristicId = 1,
+            LSL = 18, TargetValue = 20, USL = 22,
+            ChemicalAnalysisConfigJson = """{"enabled":true,"concentrationFormula":"Primary*2","custom":"keep"}"""
+        };
+        db.Add(item); await db.SaveChangesAsync();
+
+        var controller = new PartProcessCharacteristicsController(db, new ChemicalAnalysisFormulaVersionService(db));
+        var result = await controller.UpdateChemicalAdjustmentParameters(item.Id,
+            new ChemicalAdjustmentParametersRequest(1000m, 18.5m, 21.5m), CancellationToken.None);
+
+        result.Should().BeOfType<OkObjectResult>();
+        var saved = await db.PartProcessCharacteristics.SingleAsync();
+        saved.LSL.Should().Be(18); saved.TargetValue.Should().Be(20); saved.USL.Should().Be(22);
+        saved.ChemicalAnalysisConfigJson.Should().Contain("Primary*2").And.Contain("\"custom\":\"keep\"")
+            .And.Contain("\"tankCapacityLiters\":1000").And.Contain("\"additionControlValue\":18.5")
+            .And.Contain("\"dilutionControlValue\":21.5");
+        (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task UpdateChemicalAdjustmentParameters_RejectsNonPositiveValueWithoutChangingData()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var item = new PartProcessCharacteristic { ControlScope = "CHEM", ChemicalAnalysisConfigJson = "{}" };
+        db.Add(item); await db.SaveChangesAsync();
+        var result = await new PartProcessCharacteristicsController(db).UpdateChemicalAdjustmentParameters(item.Id,
+            new ChemicalAdjustmentParametersRequest(0m, null, null), CancellationToken.None);
+        result.Should().BeOfType<BadRequestObjectResult>();
+        item.ChemicalAnalysisConfigJson.Should().Be("{}");
+    }
+
+    [Fact]
     public async Task Update_RejectsLongFormulaReferenceBeforeSavingAnyFields()
     {
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
