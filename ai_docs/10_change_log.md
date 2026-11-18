@@ -1811,3 +1811,6 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 結果：正式資料庫migration已存在，未重複執行；正式首頁、主JS／CSS、production health/version及功能路由通過，核心未完成由35降為34，SPC相關由13降為12。
 ## [2026-11-17] PORTAL-CHEM-SAVE-FRESH-PREVIEW-1113-TASK-001 正式結案
 使用者確認藥液儲存前自動刷新預覽功能已驗收並授權正式發布。Portal正式區已更新為API 1.0.252／Web 1.0.277，Web、靜態資產、production API、同源API與實際部署版本均通過；本次不修改SPC程式、公式、F、schema或資料。同步規格、驗證、需求索引、TODO與中央進度表後結案。
+## [2026-11-18] CURRENT-TASK-STATUS-RECONCILIATION-20261118 目的
+
+依使用者指示同步現行小工作實際階段：TransFiles 004～008改列程式／腳本／交付包完成但待正式驗收；兩項SPC隱藏功能記錄畫面驗收與正式發布授權但未部署；修正歷史判定T-005誤寫完成。只改文件與中央進度，不發布、不寫資料、不核銷。

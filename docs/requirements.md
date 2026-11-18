@@ -76,13 +76,15 @@
 
 - 2026-11-17 [TASK-002總覽表格全寬修正](../specs/20261117-chemical-hide-adjustment-columns/verification.md)：依截圖表格以100%填滿可用容器，保留960px最小寬與手機橫向捲動，隱藏兩式及保存行為保持。11項畫面回歸及test build通過，測試Web0.1.132已發布待確認，正式未發布。
 
-- 2026-11-17 [TASK-002總覽調整兩式欄位隱藏測試完成](../specs/20261117-chemical-hide-adjustment-columns/verification.md)：依追加先執行授權，總覽調整公式／調整量公式screen隱藏，濃度編輯與兩式原值／保存、print／匯出保持；11項畫面與test build通過，測試Web0.1.131已發布，待畫面確認，正式未發布。
+- 2026-11-17 [TASK-002總覽調整兩式欄位隱藏測試完成](../specs/20261117-chemical-hide-adjustment-columns/verification.md)：依追加先執行授權，總覽調整公式／調整量公式screen隱藏，濃度編輯與兩式原值／保存、print／匯出保持；11項畫面與test build通過，測試Web0.1.131已發布；使用者已完成畫面驗收並授權正式發布，尚待實際部署驗證。
 
 - 2026-11-17 [TASK-002總覽兩式欄位規劃重申](../specs/20261117-chemical-hide-adjustment-columns/spec.md)：只隱藏線別分析項目總覽「調整公式、調整量公式」的展示與編輯欄位，保留濃度公式、兩式原值及保存；沿用原P2工作，不新增重複件。使用者明確要求僅規劃，不立即實作或發布。
 
-- 2026-11-17 [隱藏PPC編輯藥液公式分頁](../specs/20261117-ppc-hide-chemical-tab/spec.md)：依使用者截圖，所有分析項目共用編輯／新增表單不顯示藥液公式分頁與內容；保留原公式JSON、排程及其他分頁保存。測試Web0.1.130已發布、正式未發布，待畫面確認；不擴張隱藏公式總覽或其他公式功能。
+- 2026-11-17 [隱藏PPC編輯藥液公式分頁](../specs/20261117-ppc-hide-chemical-tab/spec.md)：依使用者截圖，所有分析項目共用編輯／新增表單不顯示藥液公式分頁與內容；保留原公式JSON、排程及其他分頁保存。測試Web0.1.130已發布，使用者已完成畫面驗收並授權正式發布；尚待實際部署與連線驗證，不擴張隱藏公式總覽或其他公式功能。
 
-- 2026-11-17 [隱藏藥液調整欄位TASK-001執行](../specs/20261117-chemical-hide-adjustment-columns/verification.md)：使用者追加先執行授權後，Portal新增／查詢隱藏完成，計算與保存保持；測試API248／Web287、37項回歸與聚焦2項通過，待畫面確認。SPC總覽TASK-002仍未實作，正式未發布。
+- 2026-11-17 [隱藏藥液調整欄位TASK-001執行](../specs/20261117-chemical-hide-adjustment-columns/verification.md)：使用者追加先執行授權後，Portal新增／查詢隱藏完成，計算與保存保持；測試API248／Web287、37項回歸與聚焦2項通過。TASK-001已正式結案；SPC總覽TASK-002已完成測試與畫面驗收、取得正式發布授權，尚待部署驗證。
+
+- 2026-11-18 [現行小工作狀態核對](../specs/20261118-current-task-status-reconciliation/spec.md)：TransFiles 004～008已有程式／腳本／交付成果但仍待正式小批、runner／排程與查回驗收；SPC總覽兩式隱藏與PPC藥液公式分頁隱藏均已畫面驗收並取得正式發布授權，尚待實際部署驗證。核心未完成32件、SPC相關12件保持。
 
 - 2026-11-17 [藥液調整兩欄暫時隱藏規劃](../specs/20261117-chemical-hide-adjustment-columns/spec.md)：P2兩件，先Portal查詢／新增，再SPC線別分析項目總覽；僅隱藏呈現，保留公式計算／初複驗／保存。依優先順序入池，不立即實作或發布。
 

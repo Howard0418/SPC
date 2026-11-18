@@ -154,13 +154,13 @@
 |1|TRANSFILES-PROD-1028-TASK-001|P1|[契約與來源環境防護已完成](specs/20261028-transfiles-production-identity/spec.md)；SPC／Portal HTTPS、DB最小權限、DPAPI、SSO launch及唯讀主檔通過；正式入口與SPC健康正常。|
 |2|TRANSFILES-PROD-1028-TASK-002|P1|三類來源路徑設定、檔案穩定檢查與格式修正建議；依001。11/10已完成藥液／咬蝕11/01～11/10切片：藥液UNC路徑、補液位／更槽排除、早／中班與N1/N2開收線解析已測；三類完整設定與錯誤報告仍未完成。|
 |3|TRANSFILES-PROD-1028-TASK-003|P1|藥液正式匯入、初複驗／日期公式追溯；依001／002。|
-|4|TRANSFILES-PROD-1028-TASK-004|P1|咬蝕正式流程與Portal／SPC雙站恢復；依001／002，003後逐件。|
-|5|TRANSFILES-PROD-1028-TASK-005|P1|落塵正式Particle匯入與查回；依001／002，004後逐件。|
-|6|TRANSFILES-PROD-1028-TASK-006|P1|共用runner、去重、檢查點與限次重試；依003～005。|
-|7|TRANSFILES-PROD-1028-TASK-007|P2|固定時間設定與Windows排程管理；依006及核准身分。|
-|8|TRANSFILES-PROD-1028-TASK-008|P2|獨立交付包與三類分階段正式驗收；依001～007，正式寫入與排程啟用另授權。|
+|4|TRANSFILES-PROD-1028-TASK-004|P1|咬蝕正式流程程式與測試完成；待正式來源小批、Portal／SPC雙站查回與防重驗收。|
+|5|TRANSFILES-PROD-1028-TASK-005|P1|落塵Particle匯入程式與測試完成；待正式來源小批、四粒徑查回與防重驗收。|
+|6|TRANSFILES-PROD-1028-TASK-006|P1|共用runner、去重、檢查點與限次重試實作／測試完成；待正式runner身分與中斷續傳驗收。|
+|7|TRANSFILES-PROD-1028-TASK-007|P2|Windows排程腳本完成；待執行主機建立工作、核准身分及啟用授權。|
+|8|TRANSFILES-PROD-1028-TASK-008|P2|獨立交付包完成；待三類正式小批、回復演練與排程啟用驗收。|
 
-001已完成；002～008待執行，轉檔核心未完成剩7件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
+001～002已完成；003～008皆已有程式／腳本／交付成果，但正式來源小批、runner／排程啟用與正式查回仍待授權驗收，因此轉檔核心未完成仍為6件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
 
 > 2026-11-10 `TRANSFILES-NOV-DAILY-1110-TASK-001` 唯讀預檢完成：修正藥液UNC路徑，補液位／更槽排除，中班及N1/N2開收線分離；62項通過。藥液368列、咬蝕21份1,750點可進入後續對帳，11/10 QE1缺S4/S14隔離。本切片不新增核心未完計數；測試庫對帳、正式補匯及09:00排程仍沿002～008管理。
 
@@ -757,12 +757,12 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-17 藥液調整欄位隱藏（僅規劃）
 
-- [ ] `SPC-PPC-HIDE-CHEM-TAB-1117-TASK-001`：已依截圖隱藏所有分析項目編輯表單藥液公式分頁及內容，保留公式JSON與其他分頁保存；單元語系8、畫面10、排程元件7及test build通過。測試Web0.1.130與資產／同源API test驗證完成、進度表同步，待畫面確認，正式未發布。[驗證](specs/20261117-ppc-hide-chemical-tab/verification.md)
+- [ ] `SPC-PPC-HIDE-CHEM-TAB-1117-TASK-001`：已依截圖隱藏所有分析項目編輯表單藥液公式分頁及內容，保留公式JSON與其他分頁保存；單元語系8、畫面10、排程元件7及test build通過。測試Web0.1.130與資產／同源API test驗證完成；使用者已完成畫面驗收並授權正式發布，尚待實際部署、版本與正式連線驗證後結案。[驗證](specs/20261117-ppc-hide-chemical-tab/verification.md)
 
 > 新增兩件P2：[隱藏藥液調整兩欄](specs/20261117-chemical-hide-adjustment-columns/spec.md)。
-- [x] `SPC-CHEM-HIDE-ADJUST-1117-TASK-001`：使用者確認Portal新增／查詢兩欄screen隱藏並授權正式；正式API250／Web275，聚焦2、API47、相容性16及正式備份／連線／版本／production／401驗證通過。002維持測試待驗收、正式未發布。[驗證](specs/20261117-chemical-hide-adjustment-columns/verification.md)。核心45／Portal相關16。
+- [x] `SPC-CHEM-HIDE-ADJUST-1117-TASK-001`：使用者確認Portal新增／查詢兩欄screen隱藏並授權正式；正式API250／Web275，聚焦2、API47、相容性16及正式備份／連線／版本／production／401驗證通過。002已完成畫面驗收與正式發布授權，尚待實際部署驗證。[驗證](specs/20261117-chemical-hide-adjustment-columns/verification.md)。核心45／Portal相關16。
 - [x] `SPC-CHEM-EFFECTIVE-VALUE-1113-TASK-001`、`SPC-CHEM-PRECISION-1113-TASK-001`、`SPC-CHEM-HISTORY-TITRATION-1113-TASK-001`：使用者授權正式發布；SPC API127／Web135、Portal API251／Web276，焦點測試、兩庫備份及正式連線驗證通過，無migration。[驗證](specs/20261113-chemical-effective-value-entry-display/verification.md)。核心42／Portal相關13。
-- [ ] `SPC-CHEM-HIDE-ADJUST-1117-TASK-002`：總覽兩式screen隱藏並依截圖補表格100%填滿容器，保留手機捲動、濃度編輯與兩式保存／匯出／print。11項畫面回歸、test build、測試Web0.1.132／同源API0.1.132 test驗證通過，原進度表同步。待畫面驗收，正式未發布。[驗證](specs/20261117-chemical-hide-adjustment-columns/verification.md)
+- [ ] `SPC-CHEM-HIDE-ADJUST-1117-TASK-002`：總覽兩式screen隱藏並依截圖補表格100%填滿容器，保留手機捲動、濃度編輯與兩式保存／匯出／print。11項畫面回歸、test build、測試Web0.1.132／同源API0.1.132 test驗證通過；使用者已完成畫面驗收並授權正式發布，尚待實際部署、版本與正式連線驗證後結案。[驗證](specs/20261117-chemical-hide-adjustment-columns/verification.md)
 
 ## 2026-11-13 藥液量測刪除交易衝突（待驗收）
 

@@ -44,4 +44,8 @@
 - 由正式 API1.0.249／Web1.0.274 隔離基準套入 TASK-001；聚焦畫面2／2、正式基準API47／47、相容性16／16及Release publish通過。桌面／手機兩欄不可見、DOM與確認payload仍保留、print仍顯示原欄。
 - 唯讀預檢通過後發布正式 API1.0.250／Web1.0.275；無 migration。正式 Login、site.css、site.js、API health均200且MIME正確，`/app-version`為1.0.275.0、API為production、匿名`/api/auth/me`為401。
 - 正式API／Web DLL版本與候選SHA-256完全相符；資料庫備份`verified=true`。回復來源為正式發布目錄`C:/ProgramData/PMR-Releases/Production/portal-hide-chemical-adjust-20261117-r1`，可回復API1.0.249／Web1.0.274。
-- TASK-001結案後核心未完成45件／Portal相關16件；TASK-002仍待畫面驗收與正式授權。
+- TASK-001結案後核心未完成45件／Portal相關16件。
+
+## TASK-002人工驗收狀態（2026-11-18）
+- 使用者已確認測試畫面可驗收並授權更新正式區。
+- 本次狀態同步未執行正式部署；TASK-002須待實際版本遞增、正式Web／資產MIME、API production環境與瀏覽器實際API基底驗證成功後才能結案。
