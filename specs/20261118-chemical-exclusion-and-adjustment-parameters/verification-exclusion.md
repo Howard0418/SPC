@@ -46,3 +46,5 @@
 
 - 移除備註選單預設 `disabled`；直接選擇任一固定備註會自動勾選「不列入」，取消勾選仍清空備註。
 - Portal Web 51項測試通過；Release build 0警告、0錯誤。API、資料庫、公式及保存欄位契約未變。
+- 已發布 Portal 測試區 API `1.0.269`／Web `1.0.307`；Login、`app-version`、測試 API health、同源 API 路徑及實際 JavaScript／CSS 均驗證可達，環境為 `test`。正式區未發布。
+- 中央進度表第317列已補入本次測試與發布證據，狀態仍為「測試區已發布／待人工驗收」。更新前備份 `進度表-20261118-note-select-before.xlsx`；原檔更新前 SHA256 `196F16093D97F919F079DE2CA7DAB4A97C709694F2B37C3AE6EA46ADB44727BB`、更新後 `A8E8BACAFE4D96EA942032B9788F24DA2738F42E4A57B662130CA1E57495DE27`。Artifact Tool 重開、151個圖形、公式錯誤0與ZIP 13 entries／空名稱0通過；Microsoft Excel人工開啟未執行。
