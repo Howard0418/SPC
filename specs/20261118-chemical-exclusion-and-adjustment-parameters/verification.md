@@ -1,4 +1,14 @@
 # 驗證紀錄
+
+## 2026-11-18 `PORTAL-PROCESS-ROLE-1118-TASK-001`
+
+- 紅燈：角色常數不存在造成API測試編譯失敗；權限頁顯示原始 `process_engineering` 而非「製程人員」。
+- 實作：新增內建角色常數、可重複的 RoleBootstrap 建立及權限管理中文顯示；未把角色加入任何頁面授權判斷，也未自動指派使用者。
+- 自動化：焦點API 2／2、Web 1／1；API全套288／288、Web全套47／47；兩個Release build均0警告／0錯誤。
+- 測試發布：乾淨隔離來源以標準腳本發布Portal測試區，API `1.0.258→1.0.259`、Web `1.0.296→1.0.297`。首次兩次嘗試因隔離工作樹缺NuGet assets在傳檔前停止；完成兩專案restore並退回未生效版本基準後重試成功，無版本跳號。
+- 連線：Login 200／HTML、`/app-version` 1.0.297、CSS 200／text/css、JS 200／text/javascript、實際API基底8091 `/health` 200且dbEnvironment=test；已部署DLL為API1.0.259／Web1.0.297。現行站點沒有同源`/api/health`、`/api/version`或上游`/version`，以實際基底health及DLL版本替代記錄。
+- 人工畫面：Windows瀏覽器操作通道不可用，未取得登入後權限頁截圖；角色啟動建立由實站API成功啟動及自動化覆蓋，仍建議使用者在「權限管理」目視確認「製程人員」。
+- 正式區未發布；無schema migration、未指派或修改任何使用者角色。
 - 功能 ID：20261118-chemical-exclusion-and-adjustment-parameters
 - 規格版本：1
 - 日期／環境：2026-11-18／文件規劃
