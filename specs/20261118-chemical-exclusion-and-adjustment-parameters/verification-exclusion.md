@@ -16,6 +16,7 @@
 
 - 測試區以任一藥液項目勾選「不列入計算及繪圖」並選擇備註後儲存，確認重載及查詢可見、SPC 圖表不繪製且樣本數不含該筆。
 - 取消勾選再儲存，確認點位恢復納入計算與繪圖。
+- 以桌機寬螢幕及手機／窄視窗確認頁面依可用寬度展開，兩側無固定大面積空白，窄螢幕表格仍可水平捲動。
 
 ## 測試區發布
 
@@ -32,3 +33,9 @@
 - 更新前備份：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\Voice\備份\進度表-20261118-chemical-exclusion-before.xlsx`。
 - 原檔更新前 SHA256 `242B4A38373A3DA995EDE8E3C90696A042583647474669421F30BC8EDB93DC81`；更新後 SHA256 `A2067D9017DD9FE8626A265EDBECC95F177537C888BACD42EBAC4D12CC453B98`。
 - Artifact Tool 重開驗證工作列、151 個原生圖形及新里程碑；公式錯誤掃描 0 筆，ZIP 封裝 13 entries／空名稱 0；已從原路徑重讀。Microsoft Excel 人工開啟未執行。
+
+## 響應式滿版追加驗證
+
+- Portal Web 50 項測試通過；Release build 0 警告、0 錯誤。
+- 桌機取消 `col-xl-10` 上限，內容容器 `width: 100%`／`max-width: none`；內距採 `clamp(12px, 1.5vw, 28px)`，767.98px 以下改為 8px。
+- 僅調整版面 CSS 與容器 class，未改 API、資料庫、公式、輸入、計算或保存流程。
