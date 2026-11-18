@@ -25,3 +25,10 @@
 - Portal首頁／登入、`app-version`、測試 API health、同源 `/api/auth/me` 路徑、實際 JS／CSS 均可達；版本 Web 1.0.303、API DLL 1.0.265，資料庫環境為 `test`。
 - SPC 測試區發布前備份：`D:\SPC\release\backup-chemical-exclusion-test-20261118-202851`。
 - 正式區未發布。
+
+## 進度表同步
+
+- 原活頁簿「小工作總表」第 317 列更新為「測試區已發布／待人工驗收」，目前待辦維持「是」；「專案進度表」新增 2026-11-18 原生里程碑。
+- 更新前備份：`C:\Users\ihao_ting.PMR.000\Desktop\SPC開發\Voice\備份\進度表-20261118-chemical-exclusion-before.xlsx`。
+- 原檔更新前 SHA256 `242B4A38373A3DA995EDE8E3C90696A042583647474669421F30BC8EDB93DC81`；更新後 SHA256 `A2067D9017DD9FE8626A265EDBECC95F177537C888BACD42EBAC4D12CC453B98`。
+- Artifact Tool 重開驗證工作列、151 個原生圖形及新里程碑；公式錯誤掃描 0 筆，ZIP 封裝 13 entries／空名稱 0；已從原路徑重讀。Microsoft Excel 人工開啟未執行。
