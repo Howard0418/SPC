@@ -18,6 +18,16 @@
 - 新增7個revision及182個effectivity（175段原歷史複製＋7段缺口），沒有UPDATE／DELETE舊排程。
 - 若七個新區間尚未產生receipt，可受控把policy指回原revision 255～261；若已有receipt，不可直接切回破壞追溯，須另案評估。
 
+## 11/03 後續缺口修正
+
+- 使用者於首次修正後提供新畫面，量測日期為`2026-11-03`；前次只授權並補到11/03 00:00前，故屬下一個連續日期缺口，不是瀏覽器快取。
+- 唯讀確認測試區PPC2474～2480在11/03各Coverage=1，正式各Coverage=0；添加桶雖在測試有排程，但畫面載入為7筆且不在前次七項範圍，本次仍不擴張。
+- 第二次正式備份`PMR_SPC_2026_QE2_SCHEDULE_1103_20261118-102325.bak`，`COPY_ONLY／CHECKSUM／RESTORE VERIFYONLY`通過。
+- 新增revision 302～308；各精確複製既有26段並加入11/03一段，目前各27段、11/03 Coverage=1。新增7 revision／189 effectivity，舊revision/effectivity保持。
+- 七項×00:00／12:00／23:59:59共21組11/03預覽與測試Raw／Stored／Judgment一致；獨立verify為`pending=0／remaining=0／addedRevisions=0`，保護資料保持。
+- 兩次合計補齊11/02及11/03，各日七段；仍未補其他未提出日期。
+- 原進度表再次備份為`進度表_QE2正式1103排程續補前_20261118_1026.xlsx`後取代；公式錯誤0、ZIP封裝可讀，最終SHA-256 `5ADF90134F350FC0E517B5154AB8FFFB2F348752C96C3CDD44260AF47D5A9CDB`；核心未完成維持28件。
+
 ## 程式與連線驗證
 
 - `Pt1CurrentScheduleTests` 16/16通過；受控工具Release build 0 warning／0 error。完整Chemical專案135項為133通過／2失敗；失敗皆為既有`CalendarTests`日期資料篩選得到0，單獨重跑仍相同，與本件排程規則、工具及正式資料表無交集，未在本件擴張修正。
