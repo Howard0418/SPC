@@ -23,6 +23,15 @@ public static class SchedulePlan
   if(current!=new Slice(start,null,expectedFormula,expectedF))throw new InvalidOperationException("Current effectiveness differs from reviewed source");
   rows[^1]=desired;Validate(rows);return new(true,rows);
  }
+ public static MergedSchedule InsertClosedGap(IEnumerable<Slice> old,DateTime fromUtc,DateTime untilUtc,long formula,long? f)
+ {
+  if(formula<=0||untilUtc<=fromUtc)throw new InvalidOperationException("Reviewed formula and a valid closed range are required");
+  var rows=old.OrderBy(x=>x.FromUtc).ToList();Validate(rows);
+  var desired=new Slice(fromUtc,untilUtc,formula,f);
+  if(rows.Contains(desired))return new(false,rows);
+  if(rows.Any(x=>x.FromUtc<untilUtc&&(x.UntilUtc is null||x.UntilUtc>fromUtc)))throw new InvalidOperationException("Cannot overwrite or overlap existing effectiveness");
+  rows.Add(desired);rows=rows.OrderBy(x=>x.FromUtc).ToList();Validate(rows);return new(true,rows);
+ }
  private static void Validate(IReadOnlyList<Slice> rows)
  {
   for(int i=0;i<rows.Count;i++)if(rows[i].UntilUtc<=rows[i].FromUtc||(i>0&&(rows[i-1].UntilUtc==null||rows[i-1].UntilUtc>rows[i].FromUtc)))throw new InvalidOperationException("Invalid or overlapping periods");

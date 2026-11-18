@@ -775,3 +775,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] `PORTAL-PERMISSION-EMAIL-1117-TASK-001`：P1，Portal主責；使用者完成 Email 保存／重載與總務收信驗收並授權正式。正式 API249／Web274，資料庫備份、Login／資產、API production 與匿名401驗證通過，無schema。[規格](../PmrPortal/specs/20261117-permission-email-edit/spec.md)。核心46件／Portal相關17件。
 - [x] `PORTAL-PERMISSION-ROLE-FILTER-1117-TASK-001`：P1，Portal主責；使用者完成角色查詢人工驗收並授權正式。正式 API249／Web274，Swagger角色參數、資料庫備份、Login／資產、API production 與匿名401驗證通過。[規格](../PmrPortal/specs/20261117-permission-role-filter/spec.md)。核心46件／Portal相關17件。
 - [x] `PORTAL-EMPLOYEE-GATE-MAIL-1117-TASK-001`：P1，Portal主責；使用者確認測試功能並授權正式。正式API247／Web272基準只加入總務Email通知必要相依，關聯API45項／權限頁15項通過；備份驗證及正式Login／資產／API production／401通過，正式API248／Web273。[規格](../PmrPortal/specs/20261117-employee-gate-email/spec.md)。核心49件／Portal相關20件。
+
+> 2026-11-18 SPC-CHEM-QE2-SCHEDULE-GAP-1118-TASK-001：正式QE2主槽／酸洗七項已補齊2026-11-02不可變公式排程；備份驗證、21組預覽、保護資料與冪等通過。新增後同次完成，不列入未完成；網站版本保持API0.1.134／Web0.1.140。[驗證](specs/20261118-qe2-production-schedule-gap/verification.md)
