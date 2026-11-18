@@ -667,6 +667,9 @@ public class PartProcessCharacteristicsController(
         if (new[] { req.TankCapacityLiters, req.AdditionControlValue, req.DilutionControlValue }
             .Any(value => value.HasValue && value.Value <= 0))
             return BadRequest(new { code = "CHEM_PARAMETER_POSITIVE", message = "槽容與管制值必須大於 0，空白表示未設定。" });
+        var chemicalName = string.IsNullOrWhiteSpace(req.ChemicalName) ? null : req.ChemicalName.Trim();
+        if (chemicalName?.Length > 100)
+            return BadRequest(new { code = "CHEM_NAME_TOO_LONG", message = "藥液不可超過 100 字。" });
         var remark = string.IsNullOrWhiteSpace(req.AdjustmentRemark) ? null : req.AdjustmentRemark.Trim();
         if (remark?.Length > 500)
             return BadRequest(new { code = "CHEM_REMARK_TOO_LONG", message = "備註不可超過 500 字。" });
@@ -683,6 +686,8 @@ public class PartProcessCharacteristicsController(
 
         var previousAddition = GetDecimal(config, "additionControlValue");
         var previousDilution = GetDecimal(config, "dilutionControlValue");
+        if (chemicalName is null) config.Remove("chemicalName");
+        else config["chemicalName"] = chemicalName;
         SetDecimal(config, "tankCapacityLiters", req.TankCapacityLiters);
         SetDecimal(config, "additionControlValue", req.AdditionControlValue);
         SetDecimal(config, "dilutionControlValue", req.DilutionControlValue);
@@ -1095,6 +1100,7 @@ public class PartProcessCharacteristicsController(
 }
 
 public sealed record ChemicalAdjustmentParametersRequest(
+    string? ChemicalName,
     decimal? TankCapacityLiters,
     decimal? AdditionControlValue,
     decimal? DilutionControlValue,

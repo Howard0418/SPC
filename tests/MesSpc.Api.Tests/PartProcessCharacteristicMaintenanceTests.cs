@@ -27,7 +27,7 @@ public class PartProcessCharacteristicMaintenanceTests
 
         var controller = new PartProcessCharacteristicsController(db, new ChemicalAnalysisFormulaVersionService(db));
         var result = await controller.UpdateChemicalAdjustmentParameters(item.Id,
-            new ChemicalAdjustmentParametersRequest(1000m, 18.5m, 21.5m, "  依 WI-001 觀察  "), CancellationToken.None);
+            new ChemicalAdjustmentParametersRequest("  氫氧化鉀  ", 1000m, 18.5m, 21.5m, "  依 WI-001 觀察  "), CancellationToken.None);
 
         result.Should().BeOfType<OkObjectResult>();
         var saved = await db.PartProcessCharacteristics.SingleAsync();
@@ -36,6 +36,7 @@ public class PartProcessCharacteristicMaintenanceTests
             .And.Contain("\"tankCapacityLiters\":1000").And.Contain("\"additionControlValue\":18.5")
             .And.Contain("\"dilutionControlValue\":21.5");
         using var config = System.Text.Json.JsonDocument.Parse(saved.ChemicalAnalysisConfigJson!);
+        config.RootElement.GetProperty("chemicalName").GetString().Should().Be("氫氧化鉀");
         config.RootElement.GetProperty("adjustmentRemark").GetString().Should().Be("依 WI-001 觀察");
         (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(1);
     }
@@ -59,7 +60,7 @@ public class PartProcessCharacteristicMaintenanceTests
         await db.SaveChangesAsync();
 
         var result = await new PartProcessCharacteristicsController(db).UpdateChemicalAdjustmentParameters(
-            item.Id, new ChemicalAdjustmentParametersRequest(null, 19.5m, 21.5m, null), CancellationToken.None);
+            item.Id, new ChemicalAdjustmentParametersRequest(null, null, 19.5m, 21.5m, null), CancellationToken.None);
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         using var json = System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(ok.Value));
@@ -82,7 +83,7 @@ public class PartProcessCharacteristicMaintenanceTests
         var item = new PartProcessCharacteristic { ControlScope = "CHEM", ChemicalAnalysisConfigJson = "{}" };
         db.Add(item); await db.SaveChangesAsync();
         var result = await new PartProcessCharacteristicsController(db).UpdateChemicalAdjustmentParameters(item.Id,
-            new ChemicalAdjustmentParametersRequest(0m, null, null, null), CancellationToken.None);
+            new ChemicalAdjustmentParametersRequest(null, 0m, null, null, null), CancellationToken.None);
         result.Should().BeOfType<BadRequestObjectResult>();
         item.ChemicalAnalysisConfigJson.Should().Be("{}");
     }
@@ -95,9 +96,26 @@ public class PartProcessCharacteristicMaintenanceTests
         var item = new PartProcessCharacteristic { ControlScope = "CHEM", ChemicalAnalysisConfigJson = "{\"adjustmentRemark\":\"原備註\"}" };
         db.Add(item); await db.SaveChangesAsync();
         var result = await new PartProcessCharacteristicsController(db).UpdateChemicalAdjustmentParameters(item.Id,
-            new ChemicalAdjustmentParametersRequest(null, null, null, new string('備', 501)), CancellationToken.None);
+            new ChemicalAdjustmentParametersRequest(null, null, null, null, new string('備', 501)), CancellationToken.None);
         result.Should().BeOfType<BadRequestObjectResult>();
         item.ChemicalAnalysisConfigJson.Should().Be("{\"adjustmentRemark\":\"原備註\"}");
+        (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task UpdateChemicalAdjustmentParameters_RejectsChemicalNameOver100CharactersWithoutChangingData()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var original = "{\"chemicalName\":\"原藥液\"}";
+        var item = new PartProcessCharacteristic { ControlScope = "CHEM", ChemicalAnalysisConfigJson = original };
+        db.Add(item); await db.SaveChangesAsync();
+
+        var result = await new PartProcessCharacteristicsController(db).UpdateChemicalAdjustmentParameters(item.Id,
+            new ChemicalAdjustmentParametersRequest(new string('藥', 101), null, null, null, null), CancellationToken.None);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+        item.ChemicalAnalysisConfigJson.Should().Be(original);
         (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(0);
     }
 
