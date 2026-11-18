@@ -27,7 +27,7 @@ public class PartProcessCharacteristicMaintenanceTests
 
         var controller = new PartProcessCharacteristicsController(db, new ChemicalAnalysisFormulaVersionService(db));
         var result = await controller.UpdateChemicalAdjustmentParameters(item.Id,
-            new ChemicalAdjustmentParametersRequest(1000m, 18.5m, 21.5m), CancellationToken.None);
+            new ChemicalAdjustmentParametersRequest(1000m, 18.5m, 21.5m, "  依 WI-001 觀察  "), CancellationToken.None);
 
         result.Should().BeOfType<OkObjectResult>();
         var saved = await db.PartProcessCharacteristics.SingleAsync();
@@ -35,6 +35,8 @@ public class PartProcessCharacteristicMaintenanceTests
         saved.ChemicalAnalysisConfigJson.Should().Contain("Primary*2").And.Contain("\"custom\":\"keep\"")
             .And.Contain("\"tankCapacityLiters\":1000").And.Contain("\"additionControlValue\":18.5")
             .And.Contain("\"dilutionControlValue\":21.5");
+        using var config = System.Text.Json.JsonDocument.Parse(saved.ChemicalAnalysisConfigJson!);
+        config.RootElement.GetProperty("adjustmentRemark").GetString().Should().Be("依 WI-001 觀察");
         (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(1);
     }
 
@@ -46,9 +48,23 @@ public class PartProcessCharacteristicMaintenanceTests
         var item = new PartProcessCharacteristic { ControlScope = "CHEM", ChemicalAnalysisConfigJson = "{}" };
         db.Add(item); await db.SaveChangesAsync();
         var result = await new PartProcessCharacteristicsController(db).UpdateChemicalAdjustmentParameters(item.Id,
-            new ChemicalAdjustmentParametersRequest(0m, null, null), CancellationToken.None);
+            new ChemicalAdjustmentParametersRequest(0m, null, null, null), CancellationToken.None);
         result.Should().BeOfType<BadRequestObjectResult>();
         item.ChemicalAnalysisConfigJson.Should().Be("{}");
+    }
+
+    [Fact]
+    public async Task UpdateChemicalAdjustmentParameters_RejectsRemarkOver500CharactersWithoutChangingData()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var item = new PartProcessCharacteristic { ControlScope = "CHEM", ChemicalAnalysisConfigJson = "{\"adjustmentRemark\":\"原備註\"}" };
+        db.Add(item); await db.SaveChangesAsync();
+        var result = await new PartProcessCharacteristicsController(db).UpdateChemicalAdjustmentParameters(item.Id,
+            new ChemicalAdjustmentParametersRequest(null, null, null, new string('備', 501)), CancellationToken.None);
+        result.Should().BeOfType<BadRequestObjectResult>();
+        item.ChemicalAnalysisConfigJson.Should().Be("{\"adjustmentRemark\":\"原備註\"}");
+        (await db.ChemicalAnalysisFormulaVersions.CountAsync()).Should().Be(0);
     }
 
     [Fact]

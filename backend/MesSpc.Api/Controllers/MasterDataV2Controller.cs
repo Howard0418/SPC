@@ -660,6 +660,9 @@ public class PartProcessCharacteristicsController(
         if (new[] { req.TankCapacityLiters, req.AdditionControlValue, req.DilutionControlValue }
             .Any(value => value.HasValue && value.Value <= 0))
             return BadRequest(new { code = "CHEM_PARAMETER_POSITIVE", message = "槽容與管制值必須大於 0，空白表示未設定。" });
+        var remark = string.IsNullOrWhiteSpace(req.AdjustmentRemark) ? null : req.AdjustmentRemark.Trim();
+        if (remark?.Length > 500)
+            return BadRequest(new { code = "CHEM_REMARK_TOO_LONG", message = "備註不可超過 500 字。" });
 
         var item = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (item is null) return NotFound();
@@ -674,6 +677,8 @@ public class PartProcessCharacteristicsController(
         SetDecimal(config, "tankCapacityLiters", req.TankCapacityLiters);
         SetDecimal(config, "additionControlValue", req.AdditionControlValue);
         SetDecimal(config, "dilutionControlValue", req.DilutionControlValue);
+        if (remark is null) config.Remove("adjustmentRemark");
+        else config["adjustmentRemark"] = remark;
         item.ChemicalAnalysisConfigJson = config.ToJsonString();
         item.UpdatedAt = DateTime.UtcNow;
         item.UpdatedBy = User?.Identity?.Name;
@@ -1049,7 +1054,8 @@ public class PartProcessCharacteristicsController(
 public sealed record ChemicalAdjustmentParametersRequest(
     decimal? TankCapacityLiters,
     decimal? AdditionControlValue,
-    decimal? DilutionControlValue);
+    decimal? DilutionControlValue,
+    string? AdjustmentRemark);
 
 [ApiController]
 [Route("api/control-chart-groups")]
