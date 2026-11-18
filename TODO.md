@@ -2,6 +2,7 @@
 
 - [ ] `PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001`：P0／先，Portal＋SPC；錄入增加不列入計算及繪圖與固定備註，保存追溯但由所有 SPC 統計、能力值、規則及圖表排除。涉及 migration，正式另行授權。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
 - [ ] `PORTAL-CHEM-ADJUST-PARAMETERS-1118-TASK-001`：P1／後；調整公式頁增加藥液、槽容(L)、添加管制值、稀釋管制值，先共用現有來源避免重複建模。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
+- [ ] `PORTAL-CHEM-ADJUST-REMARK-1118-TASK-001`：P1／相依前件；調整公式頁每個分析項目增加選填備註，最多500字，留版本／稽核且不參與計算。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
 
 > 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001` 使用者確認測試正常後完成正式R4：API1.0.218原檔保持、Web1.0.248；備份、Web／CSS MIME、API health／production及401通過。正式畫面列人工確認；核心41／SPC18。[驗證](../PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)
 
