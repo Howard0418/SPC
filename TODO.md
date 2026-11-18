@@ -755,9 +755,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] `PORTAL-CHEM-DATE-AUTO-LOAD-1113-TASK-001`：P1，Portal主責／相依SPC既有daily與calendar API；月曆點選日期（含同一天）後立即依線別、班別、取樣階段載入，不需再按載入按鈕。日期／階段6、有效值16、保存上下文4、月曆3及Release build通過；測試API1.0.244／Web1.0.285與Web／資產／API連線驗證完成。DB／schema／公式／F不變，正式未授權。[Portal規格](../PmrPortal/specs/20261113-chemical-date-auto-load/spec.md)
 
-## 2026-11-17 藥液調整欄位隱藏（僅規劃）
+## 2026-11-17 藥液調整欄位隱藏
 
-- [ ] `SPC-PPC-HIDE-CHEM-TAB-1117-TASK-001`：已依截圖隱藏所有分析項目編輯表單藥液公式分頁及內容，保留公式JSON與其他分頁保存；單元語系8、畫面10、排程元件7及test build通過。測試Web0.1.130與資產／同源API test驗證完成；使用者已完成畫面驗收並授權正式發布，尚待實際部署、版本與正式連線驗證後結案。[驗證](specs/20261117-ppc-hide-chemical-tab/verification.md)
+- [x] `SPC-PPC-HIDE-CHEM-TAB-1117-TASK-001`：使用者完成畫面驗收；正式Web0.1.140建置來源與驗收版本頁面SHA-256完全相同，正式主資產已移除藥液公式分頁與內容掛載，API0.1.134／production正常。功能由後續正式整併發布一併生效，本次未重複部署；核心未完成31件、SPC相關11件。[驗證](specs/20261117-ppc-hide-chemical-tab/verification.md)
 
 > 新增兩件P2：[隱藏藥液調整兩欄](specs/20261117-chemical-hide-adjustment-columns/spec.md)。
 - [x] `SPC-CHEM-HIDE-ADJUST-1117-TASK-001`：使用者確認Portal新增／查詢兩欄screen隱藏並授權正式；正式API250／Web275，聚焦2、API47、相容性16及正式備份／連線／版本／production／401驗證通過。002已完成畫面驗收與正式發布授權，尚待實際部署驗證。[驗證](specs/20261117-chemical-hide-adjustment-columns/verification.md)。核心45／Portal相關16。
