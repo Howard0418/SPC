@@ -1,3 +1,8 @@
+## 2026-11-18 藥液量測排除與調整參數（僅規劃）
+
+- [ ] `PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001`：P0／先，Portal＋SPC；錄入增加不列入計算及繪圖與固定備註，保存追溯但由所有 SPC 統計、能力值、規則及圖表排除。涉及 migration，正式另行授權。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
+- [ ] `PORTAL-CHEM-ADJUST-PARAMETERS-1118-TASK-001`：P1／後；調整公式頁增加藥液、槽容(L)、添加管制值、稀釋管制值，先共用現有來源避免重複建模。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
+
 > 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001` 使用者確認測試正常後完成正式R4：API1.0.218原檔保持、Web1.0.248；備份、Web／CSS MIME、API health／production及401通過。正式畫面列人工確認；核心41／SPC18。[驗證](../PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)
 
 > 2026-11-09 `SPC-NORMALITY-MINITAB-1109-TASK-001`（P1／SPC）第一階段已發布測試站：API0.1.115提供單一histogram契約，管制圖與趨勢圖共用連續X軸、相鄰箱格、曲線及實際界線；540後端、7前端、2862×3語系、test build與實站Web／資產MIME／同源及8901 API通過。Minitab原始值、版本、分箱設定與登入畫面逐格對帳仍待驗，故保持未完成；核心41、SPC18，正式未發布。[驗證](specs/20261109-normality-minitab-alignment/verification.md)
@@ -124,7 +129,7 @@
 
 ## 2026-10-30 移除設備監控入口
 
-- [ ] `SPC-REMOVE-EQUIPMENT-MONITORING-20261030`：P2，僅規劃待執行。移除設備即時狀態、設備點位總覽、重點點位監控的前端導覽與直接路由可見性；保留後端／資料以利回復，不影響其他正常功能。
+- [x] `SPC-REMOVE-EQUIPMENT-MONITORING-20261030`：P2，使用者確認已完成。移除設備即時狀態、設備點位總覽、重點點位監控的前端導覽與直接路由可見性；保留後端／資料以利回復，不影響其他正常功能。
 - 規格：`specs/20261030-remove-equipment-monitoring/spec.md`。
 
 ## 2026-10-30 SPC 測試區無法連結（最高優先）
@@ -714,9 +719,11 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] `SPC-TEST-DATA-CLEANUP-20261105`：P1，依授權清除全部測試量測／匯入，保留主檔、公式、F及稽核；正式保持。[驗證](specs/20261105-test-measurement-cleanup/verification.md)：53081列封存、12表查詢0／336圖表空；SQL10、Chemical117、Python15通過，測試純封存trigger追加授權已套用，正式69表SHA256保持。指定Excel48格以G核准線別為準，日期／同鍵值另核，不重匯正式。原進度表70原生物件／總表已同步，核心45／SPC22、人工11／核銷4保持；無網站發布。
 - PT1正式日期排程缺口（P0，既有`SPC-CHEM-F-CONSISTENCY-1103-TASK-001`子範圍，不重複父子計數）：使用者另授權2440／2441／2443／2444，保留十月、補11/03起目前公式／F。[驗證](specs/20261105-pt1-current-formula-schedule/verification.md)：正式備份VERIFYONLY後4份revision81～84／80區間，重用既有公式99～102及F歷史1；96組初複驗相符、4邊界拒絕、實際重送0新增，量測與主檔保持。126單元通過，原進度71物件／265列已同步；無網站發布，瀏覽器timeoutMs未驗畫面。其餘76項缺當日排程另待授權，父件仍未DONE，核心45／SPC22保持。
 - [x] `PORTAL-BIRTHDAY-SIZE-1105-TASK-001`：Portal主責／P2，1440px／96vw單一尺寸與首次上傳立即預覽已由使用者確認。正式R4完成，API1.0.218原檔保持、Web1.0.248；備份、Web／CSS MIME、API health／production及401通過。正式畫面列人工確認。[Portal驗證](../PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)。核心41／SPC18。
-# 2026-11-05 測試區九／十月資料重匯（來源阻擋）
+# 2026-11-05 測試區九月起資料重匯（完成）
 
-- [ ] `SPC-TEST-REIMPORT-20261105`（P0，T2～T5完成；主系統SPC／相依TransFiles與Portal顯示；DB：只寫測試PMR_SPC_TEST；發布：尚無；rollback：依本批ID受控封存）9月前資料不看，89組／933列衝突固定排除。原9月起5筆誤報已修正Secondary解析，40項測試及808檔重跑後，9月起3,215列全READY、錯誤0、衝突0；精簡5筆核對表已交付。T6測試DB備份與apply尚未執行，DB寫入0。[驗證](specs/20261105-test-sep-oct-reimport/verification.md)
+- [x] `SPC-TEST-REIMPORT-20261105`（P0；主系統SPC／相依TransFiles與Portal顯示；DB：僅PMR_SPC_TEST；發布：不適用；rollback：依本批ID受控封存）9月前衝突固定排除；9月起3,215列已匯入，2,746份公式追蹤完整。COPY_ONLY/CHECKSUM備份與VERIFYONLY、逐筆值核對及相同來源重送0變更通過；正式PMR_SPC_2026未連線／未讀寫。[驗證](specs/20261105-test-sep-oct-reimport/verification.md)
+
+- [x] `SPC-TEST-CLEANUP-20261105-B`（P0；主系統SPC／相依Portal；DB：僅PMR_SPC_TEST；發布：不適用）九月量測1,462筆、隔離／驗收PPC 235項、殘留測試PPC 13項、測試製程6個及測試分析項目248個均已封存，重查皆0；十月正常1,494筆與雜湊保持，正式PMR_SPC_2026未連線／未讀寫。[驗證](specs/20261105-test-september-isolated-cleanup/spec.md)
 
 > 2026-11-09 `SPC-PPC-LOAD-1109-TASK-001`完成：管制項目設定頁主清單改為完成即顯示，12組輔助主檔與初始製程篩選背景並行；輔助失敗保留主清單並顯示錯誤。2項行為測試、2822×3語系及test build通過；測試Web0.1.124、首頁／JS/CSS MIME／同源API test及匿名401通過，正式未發布。登入後速度畫面因操作管道不可用列人工觀察；核心未完成41／SPC相關18保持。[驗證](specs/20261109-ppc-progressive-loading/verification.md)
 
@@ -733,8 +740,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 > 2026-11-18 `PORTAL-CHEM-ENTRY-COMPARE-CLEANUP-1111-TASK-001`完成：藥液量測錄入頁已移除手動重新預覽及初／複驗公式版本／排程診斷文字；使用者完成測試畫面驗收並授權正式。核對確認功能已隨Portal正式API1.0.252／Web1.0.277生效，本輪未重複部署；核心未完成29件、SPC相關9件。[Portal規格](../PmrPortal/specs/20261111-chemical-entry-comparison-cleanup/spec.md)
 > 2026-11-11 `SPC-OPERATORS-PORTAL-COMPARE-1111-TASK-001`：測試站已恢復返回入口網站／全部登出；Portal名單來源修回Portal API，非JSON回應改為明確502。API6/6、頁首1/1、三語與test build、Web／資產／API／22人名單連線通過；未同步人員／權限，正式未發布，待具權限登入點選驗收。核心36件、SPC相關12件。[規格](specs/20261111-operators-portal-compare-recovery/spec.md)
 > 2026-11-17 `PORTAL-CHEM-RAW-INPUT-1111-TASK-001`完成：使用者確認人工驗收；單輸入日期公式只顯示必要欄位，日報依最新Trace／Receipt回填保存原始滴定值。正式SPC API0.1.125／Web0.1.127、Portal API1.0.230／Web1.0.271維持，不重新發布、不改寫量測、公式或F表。核心未完成降為36件。[規格](specs/20261111-chemical-entry-raw-input-display/spec.md)
-> 2026-11-11 `SPC-CONTROL-CHART-AUTO-REFRESH-1111-TASK-001`（P1；主系統SPC Web；相依：無；DB：無；發布：測試站受阻／正式未授權；rollback：回復前版Web資產）：PPC公式儲存成功後，同一PPC的既開即時管制圖與量測趨勢圖自動重載；不同PPC與儲存失敗不動。4項自動化測試與Web0.1.128 build通過；WinRM已恢復，但`SpcSingleTest`與`SpcApiTest`共用IIS集區，發布保護拒絕停止集區，以免中斷另一站。未建立備份、未停服務、未傳檔／發布。待選擇IIS集區隔離或Web-only發布流程，再進行登入實際畫面驗收。[規格](specs/20261111-control-chart-auto-refresh/spec.md)
-
+> 2026-11-11 `SPC-CONTROL-CHART-AUTO-REFRESH-1111-TASK-001`（P1；主系統SPC Web；相依：無；DB：無；發布：測試站受測試庫備份權限阻擋／正式未授權；rollback：回復前版Web資產）：PPC公式儲存成功後，同一PPC的既開即時管制圖與量測趨勢圖自動重載；不同PPC與儲存失敗不動。4項自動化測試與Web0.1.128 build通過；測試`SpcApiTest`／`SpcSingleTest`已隔離集區、IIS備份及健康檢查通過。Apply因執行身分缺少`PMR_SPC_TEST`的`BACKUP DATABASE`權限而在COPY_ONLY／CHECKSUM／VERIFYONLY前停止，未套用檔案、migration或資料；待具備既有維護備份權限的身分可用後重試，再進行登入實際畫面驗收。[規格](specs/20261111-control-chart-auto-refresh/spec.md)
 ## 2026-11-13 N2 氯化亞錫目前公式排程補齊（完成）
 
 - [x] `SPC-CHEM-N2-CURRENT-SCHEDULE-1113-TASK-001`：P0，SPC主責；依使用者指示，N2催化／促進氯化亞錫自2026/11/7起套用最新公式v4／v3與F248。測試庫備份驗證、新增2修訂／58區間、11/12預覽、保護指紋與冪等通過；網站不需發布，正式未異動。[驗證](specs/20261113-n2-current-formula-schedule/verification.md)
@@ -775,5 +781,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] `PORTAL-PERMISSION-EMAIL-1117-TASK-001`：P1，Portal主責；使用者完成 Email 保存／重載與總務收信驗收並授權正式。正式 API249／Web274，資料庫備份、Login／資產、API production 與匿名401驗證通過，無schema。[規格](../PmrPortal/specs/20261117-permission-email-edit/spec.md)。核心46件／Portal相關17件。
 - [x] `PORTAL-PERMISSION-ROLE-FILTER-1117-TASK-001`：P1，Portal主責；使用者完成角色查詢人工驗收並授權正式。正式 API249／Web274，Swagger角色參數、資料庫備份、Login／資產、API production 與匿名401驗證通過。[規格](../PmrPortal/specs/20261117-permission-role-filter/spec.md)。核心46件／Portal相關17件。
 - [x] `PORTAL-EMPLOYEE-GATE-MAIL-1117-TASK-001`：P1，Portal主責；使用者確認測試功能並授權正式。正式API247／Web272基準只加入總務Email通知必要相依，關聯API45項／權限頁15項通過；備份驗證及正式Login／資產／API production／401通過，正式API248／Web273。[規格](../PmrPortal/specs/20261117-employee-gate-email/spec.md)。核心49件／Portal相關20件。
-
-> 2026-11-18 SPC-CHEM-QE2-SCHEDULE-GAP-1118-TASK-001：正式QE2主槽／酸洗七項已補齊2026-11-02及11/03不可變公式排程；兩次備份驗證、各日21組預覽、保護資料與冪等通過。新增後同次完成，不列入未完成；網站版本保持API0.1.134／Web0.1.140。[驗證](specs/20261118-qe2-production-schedule-gap/verification.md)
+> 2026-11-18 `SPC-CHEM-QE2-SCHEDULE-GAP-1118-TASK-001`：正式QE2主槽／酸洗七項已補齊2026-11-02及11/03不可變公式排程；兩次備份驗證、各日21組預覽、保護資料與冪等通過。新增後同次完成，不列入未完成；網站版本保持API0.1.134／Web0.1.140。[驗證](specs/20261118-qe2-production-schedule-gap/verification.md)
+> 2026-11-18 `TRANSFILES-CHEM-OPERATOR-FALLBACK-1118-TASK-001`：藥液日報有分析者時保留原值；缺少或空白時，GUI與新舊資料轉檔均改輸出「轉檔工具匯入」，不再使用User01。新增2項回歸且GUI共38項通過、5模組編譯及新版EXE啟動通過；已重新打包 `2026.11.18.1` 並更新主工具，待人工轉檔驗收。未呼叫API、未匯入或回寫資料，仍列為1件未完成小工作。[規格](specs/20261118-chemical-import-operator-fallback/spec.md)
