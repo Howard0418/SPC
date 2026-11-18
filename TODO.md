@@ -100,7 +100,7 @@
 
 [規格](specs/20261102-chemical-adjustment-plan/spec.md)／[排序與四類測試](specs/20261102-chemical-adjustment-plan/tasks.md)。新增四個獨立小工作，逐件執行；不啟動既有暫停項目。
 
-- [ ] `SPC-CHEM-1102-TASK-001`：P1，Portal主責／SPC相依；[保存後同製程／量測日查詢已測試修正](specs/20261102-chemical-save-history/verification.md)，Portal API216/Web259及SPC API0.1.96新保存規格快照測試發布；四線5筆隔離實站保存／歷史／日報一致且皆OK，現僅待正式授權；測試專用項目已停用，保留未完成旗標。舊008完成紀錄保留。
+- [x] `SPC-CHEM-1102-TASK-001`：P1，Portal主責／SPC相依；保存後依送出PPC與量測日查詢、新保存規格快照及四線5筆隔離實站驗收皆通過。核對確認功能已隨Portal正式API1.0.252／Web1.0.277及SPC正式API0.1.134生效，本輪未重複部署或操作正式量測；測試專用項目保持停用。[正式核銷](specs/20261118-chemical-save-history-formal-closeout/spec.md)
 - [x] `SPC-CHEM-1102-TASK-002`：P1，SPC主責／Portal相依；[QE2 Excel差異對帳完成](specs/20261109-qe2-task002-closeout/verification.md)：Excel基準已由87項正式公式同步、493筆正式值更正及114項目前公式／F一致性覆蓋，重送0新增；舊量測缺快照交由歷史無法判定工作追蹤，009不自動核銷。
 - [x] `SPC-CHEM-1102-TASK-004`：P2，SPC主責／Portal相依；[正式與測試去重完成](specs/20261102-p400-duplicate/verification.md)：兩區均停用無量測重複P400 2593，保留有效N1 2619及N2 2515；正式處理已納入11/05受控對齊，備份、重驗及保護指紋通過，未重複異動資料。
 
