@@ -783,3 +783,12 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] `PORTAL-EMPLOYEE-GATE-MAIL-1117-TASK-001`：P1，Portal主責；使用者確認測試功能並授權正式。正式API247／Web272基準只加入總務Email通知必要相依，關聯API45項／權限頁15項通過；備份驗證及正式Login／資產／API production／401通過，正式API248／Web273。[規格](../PmrPortal/specs/20261117-employee-gate-email/spec.md)。核心49件／Portal相關20件。
 > 2026-11-18 `SPC-CHEM-QE2-SCHEDULE-GAP-1118-TASK-001`：正式QE2主槽／酸洗七項已補齊2026-11-02及11/03不可變公式排程；兩次備份驗證、各日21組預覽、保護資料與冪等通過。新增後同次完成，不列入未完成；網站版本保持API0.1.134／Web0.1.140。[驗證](specs/20261118-qe2-production-schedule-gap/verification.md)
 > 2026-11-18 `TRANSFILES-CHEM-OPERATOR-FALLBACK-1118-TASK-001`：藥液日報有分析者時保留原值；缺少或空白時，GUI與新舊資料轉檔均改輸出「轉檔工具匯入」，不再使用User01。新增2項回歸且GUI共38項通過、5模組編譯及新版EXE啟動通過；已重新打包 `2026.11.18.1` 並更新主工具，待人工轉檔驗收。未呼叫API、未匯入或回寫資料，仍列為1件未完成小工作。[規格](specs/20261118-chemical-import-operator-fallback/spec.md)
+
+## 2026-11-18 入口網站福利、生日賀卡與總務通知（只規劃）
+
+- [ ] `PORTAL-EMPLOYEE-GATE-MAIL-TIMES-1118-TASK-001`：P0，員工進出 Email 增加離廠／回廠時間；主系統 Portal，無 schema，相依既有 SMTP，rollback 回復前版寄信內容。
+- [ ] `PORTAL-VISITOR-MAIL-HOST-DETAILS-1118-TASK-001`：P0，訪客 Email 增加車號、受訪部門與分機；主系統 Portal，需受訪人快照 migration，相依既有 SMTP，rollback 回復前版 API／Web並保留新增欄位。
+- [ ] `PORTAL-BIRTHDAY-MONTHLY-CARDS-1118-TASK-001`：P1，生日賀卡依月份選圖、支援多月份上傳及每人本月不再顯示；主系統 Portal，需月份設定與顯示紀錄 migration，rollback 回復單圖畫面並保留新表。
+- [ ] `PORTAL-PARTNER-MERCHANTS-1118-TASK-001`：P2，建立特約商店專區與最小管理功能；主系統 Portal，需新主檔 migration，rollback 隱藏入口並回復前版 API／Web。
+
+> 四件依 P0、P0、P1、P2 每次只執行一件；本次未實作、未發布。[Portal規格](../PmrPortal/specs/20261118-portal-benefits-birthday-mail-enhancements/spec.md)
