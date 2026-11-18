@@ -1859,3 +1859,10 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 規則：去除前後空白、最多 500 字；空白代表未設定，沿用同一設定 JSON 與版本歷史。
 - 邊界：備註不參與濃度、調整、調整量、判定、SPC 計算或圖表。
 
+# 2026-11-18 PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001
+
+- 目的：藥液量測可標記不列入 SPC 計算及繪圖，同時保留原始量測與追溯。
+- 設計：共用既有 `SpcPointExclusions`，保存為 `ExcludedVisible`；不新增 schema，避免重複排除模型。
+- 原因：只允許 `NO_OPEN_LINE_CURRENT_TANK`、`CLOSE_LINE`、`DETECTION_NO_OPEN_LINE`；取消勾選時停用既有 Portal 排除。
+- 邊界：排除仍計算並保存分析值，只影響 SPC 統計、規則及圖表；既有未傳欄位資料視為正常納入。
+

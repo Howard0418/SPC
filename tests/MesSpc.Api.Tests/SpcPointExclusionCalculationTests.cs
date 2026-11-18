@@ -86,7 +86,7 @@ public class SpcPointExclusionCalculationTests
     }
 
     [Fact]
-    public async Task GetInteractiveChartAsync_WhenAttributePointExcluded_MarksAttributeRawPointExcluded()
+    public async Task GetInteractiveChartAsync_WhenAttributePointHidden_OmitsPointFromChartAndRawData()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -145,9 +145,9 @@ public class SpcPointExclusionCalculationTests
 
         result.Should().NotBeNull();
         var rawPoints = result!.RawDataPoints.Should().BeAssignableTo<List<AttributeDataPoint>>().Subject;
-        rawPoints.Single(x => x.AttributeMeasurementId == 12).IsExcluded.Should().BeTrue();
+        rawPoints.Should().NotContain(x => x.AttributeMeasurementId == 12);
         rawPoints.Single(x => x.AttributeMeasurementId == 11).IsExcluded.Should().BeFalse();
-        GetPoints(result.ChartData).Select(x => GetLong(x, "attributeMeasurementId")).Should().Contain(12);
+        GetPoints(result.ChartData).Select(x => GetLong(x, "attributeMeasurementId")).Should().NotContain(12);
     }
 
     private static VariableMeasurement NewMeasurement(long id, int ppcId, Guid batchId, double value, DateTime measuredAt) => new()

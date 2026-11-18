@@ -13,6 +13,46 @@ namespace MesSpc.Api.Tests;
 public class ChemicalPortalMeasurementTests
 {
     [Fact]
+    public async Task ConfirmExcludedChemicalRow_PreservesMeasurementAndCreatesVisiblePointExclusion()
+    {
+        await using var f=await Fixture.Create();
+        var row=await f.Row("1.25",null);
+        row["IsExcluded"]="true";
+        row["ExclusionReason"]="NO_OPEN_LINE_CURRENT_TANK";
+        await f.Service.ConfirmAsync(new(Guid.NewGuid(),[row]),"editor",default);
+
+        var measurement=await f.Db.VariableMeasurements.SingleAsync();
+        var exclusion=await f.Db.SpcPointExclusions.SingleAsync();
+        exclusion.VariableMeasurementId.Should().Be(measurement.Id);
+        exclusion.PartProcessCharacteristicId.Should().Be(measurement.PartProcessCharacteristicId);
+        exclusion.State.Should().Be("ExcludedHidden");
+        exclusion.Reason.Should().Be("NO_OPEN_LINE_CURRENT_TANK");
+        exclusion.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ConfirmExcludedChemicalRow_RejectsMissingOrUnknownReasonAtomically()
+    {
+        await using var f=await Fixture.Create();
+        var row=await f.Row("1.25",null); row["IsExcluded"]="true"; row["ExclusionReason"]="UNKNOWN";
+        Func<Task> act=()=>f.Service.ConfirmAsync(new(Guid.NewGuid(),[row]),"editor",default);
+        await act.Should().ThrowAsync<ArgumentException>();
+        f.Db.ChangeTracker.Clear();
+        (await f.Db.VariableMeasurements.CountAsync()).Should().Be(0);
+        (await f.Db.SpcPointExclusions.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ConfirmNormalChemicalRow_DeactivatesPriorPortalExclusion()
+    {
+        await using var f=await Fixture.Create();
+        var excluded=await f.Row("1.25",null); excluded["IsExcluded"]="true"; excluded["ExclusionReason"]="CLOSE_LINE";
+        await f.Service.ConfirmAsync(new(Guid.NewGuid(),[excluded]),"editor",default);
+        await f.Service.ConfirmAsync(new(Guid.NewGuid(),[await f.Row("1.5",null)]),"editor",default);
+        (await f.Db.SpcPointExclusions.SingleAsync()).IsActive.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task PreviewReturnsGlobalThreeDecimalPlaces()
     {
         await using var f=await Fixture.Create();

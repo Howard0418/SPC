@@ -131,6 +131,11 @@ public class ProcessesController(AppDbContext db) : ControllerBase
             .ToListAsync();
         var presentation = await new ChemicalHistoryQueryService(db).GetAsync(page);
         var ids=page.Select(x=>x.Id).ToList();
+        var activeExclusions=await db.SpcPointExclusions.AsNoTracking()
+            .Where(x=>x.IsActive && x.PointScope=="VariableMeasurement" && x.VariableMeasurementId.HasValue && ids.Contains(x.VariableMeasurementId.Value))
+            .ToListAsync();
+        var exclusions=activeExclusions.GroupBy(x=>x.VariableMeasurementId!.Value)
+            .ToDictionary(g=>g.Key,g=>g.OrderByDescending(x=>x.UpdatedAt??x.CreatedAt).First());
         var traceInputs=await (from trace in db.ChemicalCalculationTraces.AsNoTracking()
                                join receipt in db.ChemicalCalculationReceipts.AsNoTracking() on trace.ReceiptId equals receipt.Id
                                where ids.Contains(trace.VariableMeasurementId)
@@ -206,7 +211,9 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 repairEligibility = presentation[x.Id].RepairEligibility,
                 repairSuggestion = presentation[x.Id].RepairSuggestion,
                 x.AdjustAction,
-                x.AdjustAmount
+                x.AdjustAmount,
+                isExcluded = exclusions.ContainsKey(x.Id),
+                exclusionReason = exclusions.GetValueOrDefault(x.Id)?.Reason
             })
             .ToList();
 

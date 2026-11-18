@@ -20,6 +20,10 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
     ILogger<ChemicalPortalMeasurementService> logger)
 {
     private const string Marker="PortalChemicalTrace-v1";
+    private static readonly HashSet<string> ExclusionReasons = new(StringComparer.Ordinal)
+    {
+        "NO_OPEN_LINE_CURRENT_TANK", "CLOSE_LINE", "DETECTION_NO_OPEN_LINE"
+    };
     private static string? Get(Dictionary<string,string?> row,string key)=>row.GetValueOrDefault(key);
 
     public async Task<object> GetSchedulesAsync(CancellationToken ct)
@@ -108,6 +112,13 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 row["MeasuredValue"]=value.Stored;row["RecheckValue"]=recheck is null?"":final.Stored;
                 row["AdjustAction"]=final.Adjustment;row["AdjustAmount"]=final.AdjustmentAmount;
 
+                var isExcluded=bool.TryParse(Get(row,"IsExcluded"),out var excluded) && excluded;
+                var exclusionReason=Get(row,"ExclusionReason")?.Trim();
+                if(isExcluded && (string.IsNullOrWhiteSpace(exclusionReason) || !ExclusionReasons.Contains(exclusionReason)))
+                    throw ApiUiException.Attach(new ArgumentException("勾選不列入計算及繪圖時，必須選擇有效備註。"), "spc.api.chemicalExclusionReasonRequired");
+                row["IsExcluded"]=isExcluded?"true":"false";
+                row["ExclusionReason"]=isExcluded?exclusionReason:"";
+
             }
             foreach(var row in rows){row.Remove("ChemicalPreviewToken");row.Remove("ChemicalRecheckPreviewToken");}
             var batch=await uploads.CreateVariableBatchAsync(rows,"PortalDaily",actor,Marker,ct:ct,
@@ -129,6 +140,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
             batch.FileHash=hash;
             await uploads.ConfirmAsync(batch.UploadBatchId,ct:ct,chemicalEvidence:evidence,
                 deferVariableNotifications:true,trustedChemicalWorkflow:true);
+            await SyncPortalExclusionsAsync(batch.UploadBatchId,rows,actor,ct);
             await new ChemicalSavedSpecificationService(db).CaptureAsync(batch.UploadBatchId,actor,ct);
             // The business audit filter stages its evidence before this service starts the transaction.
             // Save once more to guarantee that evidence participates in this atomic commit.
@@ -144,6 +156,37 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
         {
             if(!committed)await tx.RollbackAsync(ct);
             db.ChangeTracker.Clear();throw;
+        }
+    }
+
+    private async Task SyncPortalExclusionsAsync(Guid uploadBatchId,List<Dictionary<string,string?>> rows,string actor,CancellationToken ct)
+    {
+        var ppcIds=rows.Select(row=>int.Parse(row["PpcId"]!,System.Globalization.CultureInfo.InvariantCulture)).ToList();
+        var measurements=await db.VariableMeasurements
+            .Where(x=>x.UploadBatchId==uploadBatchId && ppcIds.Contains(x.PartProcessCharacteristicId))
+            .ToDictionaryAsync(x=>x.PartProcessCharacteristicId,ct);
+        if(measurements.Count!=ppcIds.Count)
+            throw new InvalidOperationException("藥液量測排除同步找不到本批量測資料。");
+
+        foreach(var row in rows)
+        {
+            var ppcId=int.Parse(row["PpcId"]!,System.Globalization.CultureInfo.InvariantCulture);
+            var measurement=measurements[ppcId];
+            var existing=await db.SpcPointExclusions.FirstOrDefaultAsync(x=>x.PartProcessCharacteristicId==ppcId
+                && x.VariableMeasurementId==measurement.Id && x.PointScope=="VariableMeasurement" && x.IsActive,ct);
+            var isExcluded=string.Equals(Get(row,"IsExcluded"),"true",StringComparison.OrdinalIgnoreCase);
+            if(!isExcluded)
+            {
+                if(existing is not null){existing.IsActive=false;existing.UpdatedBy=actor;existing.UpdatedAt=DateTime.UtcNow;}
+                continue;
+            }
+            existing ??= new SpcPointExclusion
+            {
+                PartProcessCharacteristicId=ppcId,PointScope="VariableMeasurement",VariableMeasurementId=measurement.Id,
+                State="ExcludedHidden",IsActive=true,CreatedBy=actor,CreatedAt=DateTime.UtcNow
+            };
+            if(existing.Id==0)db.SpcPointExclusions.Add(existing);
+            existing.State="ExcludedHidden";existing.Reason=Get(row,"ExclusionReason");existing.UpdatedBy=actor;existing.UpdatedAt=DateTime.UtcNow;
         }
     }
 

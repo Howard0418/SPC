@@ -12,7 +12,7 @@
 - TransFiles：非範圍；舊匯入未帶旗標視為正常納入。
 
 ## 實作方式與需求對應
-1. 先執行 `PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001`：以失敗測試固定契約與排除口徑，再做 migration、SPC 計算／圖表、Portal UI 與追溯。（R-001～004、006）
+1. 先執行 `PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001`：以失敗測試固定契約與排除口徑，共用既有 `SpcPointExclusions`，完成 SPC 計算／圖表、Portal UI 與追溯，不新增 migration。（R-001～004、006）
 2. 獨立執行 `PORTAL-PROCESS-ROLE-1118-TASK-001`：建立製程通知角色與權限頁顯示，確認不擴張頁面權限。（R-011）
 3. 前件穩定後執行 `PORTAL-CHEM-ADJUST-PARAMETERS-1118-TASK-001`：共用量測新增頁的 PPC 主檔投影帶入槽位／項目／規格／範圍，再建立參數新增、修改、版本及稽核。（R-005～006、008～009）
 4. 參數欄位完成後執行 `PORTAL-CHEM-ADJUST-REMARK-1118-TASK-001`：備註沿用同一分析項目與版本／稽核契約。（R-006～007）
