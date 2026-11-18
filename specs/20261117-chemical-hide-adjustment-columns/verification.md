@@ -49,3 +49,10 @@
 ## TASK-002人工驗收狀態（2026-11-18）
 - 使用者已確認測試畫面可驗收並授權更新正式區。
 - 本次狀態同步未執行正式部署；TASK-002須待實際版本遞增、正式Web／資產MIME、API production環境與瀏覽器實際API基底驗證成功後才能結案。
+
+## TASK-002正式生效核對與結案（2026-11-18）
+- 後續唯讀稽核確認TASK-002其實已隨正式Web0.1.140整併發布生效，不需重複部署。
+- 正式建置來源、全寬驗收來源及目前工作樹的`ChemicalAnalysisOverviewView.vue` SHA-256均為`52D8AC38EFBA9E32D6F11AF27659FBAD0FE9F617E2EB81C44F8B8A4125BCDEEC`。
+- 正式首頁仍載入`index-BlzugLq4.js`，首頁與JavaScript／CSS資產HTTP 200且MIME正確；既有正式發布驗證為Web0.1.140、API0.1.134／production。
+- 本輪僅核銷文件與進度狀態，未傳檔、未停站、未修改程式／API／DB／設定，不觸發新的版本遞增。中央核心未完成31→30、SPC相關11→10、完成248→249。
+- 核銷規格與BDD證據見[正式生效核銷](../20261118-hide-adjust-formal-closeout/spec.md)。
