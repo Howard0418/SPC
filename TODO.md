@@ -1,6 +1,6 @@
 ## 2026-11-18 團保名冊複製貼上匯入
 
-- [ ] `PORTAL-GI-PASTE-IMPORT-1118-TASK-001`：P1／測試區已發布、待人工驗收；團保資料管理移除 `.xlsx` 檔案選擇器，改為 Excel 九欄資料直接貼上，保留預檢、逐列錯誤、確認匯入、批次歷程與既有驗證。Portal 測試 API 1.0.276／Web 1.0.314；正式區未發布。[規格](specs/20261118-group-insurance-paste-import/spec.md)
+- [ ] `PORTAL-GI-PASTE-IMPORT-1118-TASK-001`：P1／測試區已發布、待人工驗收；團保資料管理移除 `.xlsx` 上傳與大文字區，改為固定九欄格線，可從任一格貼上並自動增列；保留預檢、逐列錯誤、確認匯入、批次歷程與既有驗證。Portal 測試 API 1.0.277／Web 1.0.315；正式區未發布。[規格](specs/20261118-group-insurance-paste-import/spec.md)
 
 ## 2026-11-18 藥液量測排除與調整參數（僅規劃）
 
