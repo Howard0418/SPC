@@ -42,5 +42,6 @@
 - 測試發布：Portal API 1.0.276／Web 1.0.314；首頁與實際 CSS／JavaScript 200 且 MIME 正確，Web 版本正確、API health 為 test／database ok，同源匿名及 JSON 貼上端點未登入皆為 401。
 - 正式區未授權、未發布；登入後實際貼上及確認匯入待人工驗收。
 - 2026-11-19 格線修訂：Web 52項、團保 API 63項、JavaScript 語法及 Release build 通過；測試區 API 1.0.277／Web 1.0.315，首頁、CSS／JavaScript、health、同源 API 與 test 標籤驗證通過。待人工確認格線貼上，正式未發布。
+- 2026-11-19 正式發布：使用者確認驗收並授權。正式現行 API1.0.254／Web1.0.279 完整備份至 `C:/ProgramData/PMR-Releases/Production/portal-gi-grid-20261119-20261119-081449`，隔離候選只加入本件後發布 API1.0.255／Web1.0.280。首頁、Login、實際 CSS／JavaScript、貼上 JSON 端點匿名401、API health production／database ok、候選與部署 DLL 雜湊、四份保護設定及 uploads 445檔均通過；無 migration 或正式名冊寫入。
 
-狀態：測試區已發布／待人工驗收。
+狀態：已驗收／正式發布完成。
