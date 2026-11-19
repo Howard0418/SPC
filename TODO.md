@@ -742,7 +742,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 > 2026-11-10 後續核准改於本機建立：`PC-PA16560048` 每日09:00排程已啟用，首次手動觸發 `LastTaskResult=0`；11/09結果NoChange，未備份／未寫入。TASK-005完成，核心未完成33件、SPC相關9件。
 > 2026-11-10 `TRANSFILES-IMPORT-SWITCH-1110-TASK-001`完成：桌面可控制每日排程總開關並獨立選擇藥液／咬蝕量；4項測試、三種實機唯讀狀態通過，最終兩類皆啟用。新增後同次完成，核心未完成33件、SPC相關9件不變。
 
-> 2026-11-10 `SPC-CHEM-DAILY-JUDGMENT-1110-TASK-001`：既有日報保存判定已發布測試站；API回傳保存判定，Portal還原OK／NG，缺證據顯示無法判定原因。待登入畫面驗收，正式未發布。核心未完成34件、SPC相關10件。
+> 2026-11-19 `SPC-CHEM-DAILY-JUDGMENT-1110-TASK-001`：既有日報保存判定已由使用者完成測試區人工驗收；API回傳保存判定，Portal還原OK／NG，缺證據顯示無法判定原因。狀態為「人工驗收通過／正式待授權」，正式未發布。[驗證](specs/20261110-chemical-daily-saved-judgment/verification.md)
 
 > 2026-11-10 `SPC-CHEM-NEAREST-SPEC-1110-TASK-001`完成：有效保存判定優先；舊Receipt／Trace無效或缺判定時繼續採最近版本，完全無版本時使用目前PPC的LSL／USL。測試API0.1.121、7項測試與環境驗證通過；正式未發布。核心未完成34件、SPC相關10件不變。
 > 2026-11-18 `PORTAL-CHEM-ENTRY-COMPARE-CLEANUP-1111-TASK-001`完成：藥液量測錄入頁已移除手動重新預覽及初／複驗公式版本／排程診斷文字；使用者完成測試畫面驗收並授權正式。核對確認功能已隨Portal正式API1.0.252／Web1.0.277生效，本輪未重複部署；核心未完成29件、SPC相關9件。[Portal規格](../PmrPortal/specs/20261111-chemical-entry-comparison-cleanup/spec.md)

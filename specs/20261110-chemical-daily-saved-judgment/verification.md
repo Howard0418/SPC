@@ -6,4 +6,8 @@
 - 測試站發布：SPC API0.1.118，Portal API1.0.228／Web1.0.269；SPC首頁、health/version 200及test，Portal首頁／CSS 200 MIME正確、app-version 200，實際Portal API基底health 200且DB environment=test。
 - 第一次Portal隔離發布因缺project.assets.json於寫入前停止，app_offline已清除；restore後標準publish-all成功。
 - 中央進度表已同步：小工作總表新增本件、核心未完成34件／SPC相關10件；候選公式錯誤0、XLSX必要OpenXML項目檢查通過，原檔已備份後取代。
-- 正式站、正式資料、schema、量測、公式與F表未修改。待使用者登入載入截圖案例確認畫面後才能DONE。
+- 2026-11-19使用者明示測試區人工驗收通過；登入後既有日報判定顯示已接受。
+- 正式站、正式資料、schema、量測、公式與F表未修改；正式發布仍須另行授權，因此中央工作池維持未完成。
+- 本次只同步驗收狀態，建置、重新測試與網站發布不適用。
+- 中央進度表已同步「人工驗收通過／正式待授權」及原生里程碑；更新前備份為`C:/Users/ihao_ting.PMR.000/Desktop/SPC開發/Voice/備份/進度表-藥液日報判定人工驗收-20261119-130909.xlsx`，取代後SHA-256為`97678758CD228964FEDE8C526509CD0814622B39C4F79BEA8BD7E4AA18540C9B`。
+- artifact-tool公式錯誤搜尋0筆、OpenXML SDK驗證0錯誤、里程碑預覽已目視；中央未完成30件，其中SPC相關7件。
