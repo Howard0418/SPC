@@ -19,6 +19,8 @@ const redirectGuardKey = "mes_spc_auth_redirecting_until";
 const ssoGraceUntilKey = "mes_spc_sso_grace_until";
 const redirectCooldownMs = 5000;
 const ssoGraceMs = 8000;
+const ssoUnauthorizedSettleMs = 250;
+let pendingUnauthorizedRedirect = null;
 
 function nowMs() {
   return Date.now();
@@ -31,6 +33,24 @@ function readSessionTimestamp(key) {
 
 function isWithinSessionWindow(key) {
   return readSessionTimestamp(key) > nowMs();
+}
+
+function cancelPendingUnauthorizedRedirect() {
+  if (pendingUnauthorizedRedirect !== null) {
+    window.clearTimeout(pendingUnauthorizedRedirect);
+    pendingUnauthorizedRedirect = null;
+  }
+}
+
+function redirectExpiredSession() {
+  cancelPendingUnauthorizedRedirect();
+  sessionStorage.removeItem(ssoGraceUntilKey);
+  sessionStorage.setItem(redirectGuardKey, String(nowMs() + redirectCooldownMs));
+  clearAuthSession();
+  if (!window.location.pathname.includes("/login")) {
+    const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    window.location.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
+  }
 }
 
 api.interceptors.request.use((config) => {
@@ -50,17 +70,22 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (r) => { recordSuccessfulRead(r); return r; },
+  (r) => {
+    cancelPendingUnauthorizedRedirect();
+    recordSuccessfulRead(r);
+    return r;
+  },
   (err) => {
     if (err?.response?.status === 401 && typeof window !== "undefined") {
-      if (isWithinSessionWindow(ssoGraceUntilKey) || isWithinSessionWindow(redirectGuardKey)) {
+      if (isWithinSessionWindow(redirectGuardKey)) {
         return Promise.reject(err);
       }
-      sessionStorage.setItem(redirectGuardKey, String(nowMs() + redirectCooldownMs));
-      clearAuthSession();
-      if (!window.location.pathname.includes("/login")) {
-        const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-        window.location.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
+      if (isWithinSessionWindow(ssoGraceUntilKey)) {
+        if (pendingUnauthorizedRedirect === null) {
+          pendingUnauthorizedRedirect = window.setTimeout(redirectExpiredSession, ssoUnauthorizedSettleMs);
+        }
+      } else {
+        redirectExpiredSession();
       }
     }
     return Promise.reject(err);

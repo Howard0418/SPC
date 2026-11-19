@@ -804,3 +804,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] `PORTAL-SPC-CHEM-HISTORY-SCOPE-1119-TASK-001`：P0，Portal＋SPC；程式與自動化測試完成，使用者已確認測試區資料並完成人工驗收，依指示不再發布測試區。藥液歷史只回傳 CHEM PPC，既有 PROCESS 咬蝕量保持原值並回歸咬蝕功能。無 schema／資料異動；正式發布仍待另行授權。[規格](specs/20261119-chemical-history-scope-isolation/spec.md)／[驗證](specs/20261119-chemical-history-scope-isolation/verification.md)
 
+## 2026-11-19 SPC 登入過期自動返回登入頁
+
+- [ ] `SPC-AUTH-EXPIRY-REDIRECT-1119-TASK-001`：P0，SPC Web；401／Token 過期自動返回 Portal 登入並保留原頁，避免 SSO 寬限期內永久停留錯誤畫面。無 DB／權限異動；測試區完成後待人工驗收，正式另行授權。[規格](specs/20261119-auth-expiry-login-redirect/spec.md)
+
