@@ -1958,3 +1958,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：Portal 藥液錄入改由固定備註直接決定排除，並讓 SPC 圖點提示／新增編輯備註分離呈現固定排除原因與自由文字備註，避免自由備註覆蓋下拉對應。
 - 範圍：Portal 量測頁、SPC Portal 確認服務、SPC 管制圖與相關測試；無 schema／公式／量測值變更。
 
+## 2026-11-19 PORTAL-SPC-CHEM-LEGACY-EXCLUSION-CLEANUP-1119-TASK-001
+- 目的：移除舊版 Portal「不列入」checkbox 遺留的藥液隱藏排除，避免新版備註行為仍受舊狀態影響。
+- 範圍：只軟停用測試區 Portal 固定原因 `ExcludedHidden`；不改量測、人工排除、schema 或網站版本。
+
