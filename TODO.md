@@ -821,7 +821,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-19 管制線計算法反映於圖表
 
-- [ ] `SPC-CONTROL-LIMIT-METHOD-1119-TASK-001`（P0；主系統 SPC API／相依 SPC Web；DB：無；正式另行授權）：I-MR樣本標準差法實站數值正確；Xbar-S移動全距與樣本標準差依同批資料所得界限不同但非常接近。實站續驗發現 `#2620` 子組 n=50 超出既有A2全距常數表2～25，標準全距法會安全回退系統標準公式，故整體尚未驗收；待決定擴充n=50常數或停用不適用選項後再驗。[驗證](specs/20261119-control-limit-method-rendering/verification.md)
+- [x] `SPC-CONTROL-LIMIT-METHOD-1119-TASK-001`（P0；主系統 SPC API／相依 SPC Web；DB：無；正式另行授權）：四種公式的計算與圖點套用已驗；標準全距法依既有常數表限子組2～25，n=50時Web隱藏選項並提示、API拒絕且不改原設定，避免靜默回退。測試API `0.1.155`／Web `0.1.164` 已發布及連線驗證，正式待授權。[驗證](specs/20261119-control-limit-method-rendering/verification.md)
 - [x] `SPC-IMR-FORMULA-METHOD-1119-TASK-001`（P0；主系統 SPC API／相依 SPC Web；DB：無）：I-MR 已依樣本標準差法或平均移動全距法重算 I 圖管制界線；不適用的標準全距法已隱藏。實際 #2437 往返驗證界線不同，測試區 API `0.1.148`／Web `0.1.156` 已發布，正式另行授權。[規格](specs/20261119-imr-formula-method-support/spec.md)／[驗證](specs/20261119-imr-formula-method-support/verification.md)
 # SPC-PPC-CHART-NEW-TAB-1119-TASK-001
 

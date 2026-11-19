@@ -636,3 +636,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-19 [舊版 Portal 藥液排除清理](../specs/20261119-legacy-portal-chemical-exclusion-cleanup/spec.md)：僅軟停用舊 checkbox 建立的 Portal 固定原因隱藏排除，保留量測原值與人工 SPC 排除；測試區已清理 2 筆，正式資料另行授權。
 - 2026-11-19 [管制線計算法反映於圖表](../specs/20261119-control-limit-method-rendering/spec.md)：Xbar-R與Xbar-S明確選擇標準全距、平均移動全距或樣本標準差法時，上方Xbar圖點與OOC判定須採所選方法計算的UCL／CL／LCL，不得由PPC／日期區段固定界限覆蓋；Xbar-S下方S圖維持既有算法，空白公式設定保留相容行為。測試站API0.1.144／Web0.1.152已發布，待人工畫面驗收，正式未發布。
 - 2026-11-19 [登入過期導向不閃現401錯誤](../specs/20261119-auth-expiry-login-redirect/spec.md)：受保護API回401時清除失效登入並返回Portal登入，導向期間不得先渲染未授權／載入失敗紅框；SSO短暫競態若有成功回應，須自動重試原失敗請求。錄影逐格重現與E2E通過，測試站API0.1.145／Web0.1.153已發布，正式未發布。
+- [管制線公式 n=50 防呆](../specs/20261119-control-limit-method-rendering/spec.md)：標準全距法僅適用已有常數的子組大小2～25；超出範圍時 Web 不提供該選項且 API 不得接受或靜默改用其他算法。

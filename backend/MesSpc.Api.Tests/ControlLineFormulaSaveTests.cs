@@ -97,6 +97,21 @@ public class ControlLineFormulaSaveTests
         }
     }
 
+    [Fact]
+    public async Task StandardRange_WithUnsupportedSubgroupSize_IsRejectedWithoutChangingSavedFormula()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:;Foreign Keys=False");
+        await using var db = await Setup(connection);
+        var request = Request("{\"XbarCalculationMethod\":\"STANDARD_RANGE\"}");
+        request.SampleSize = 50;
+
+        var result = Assert.IsType<BadRequestObjectResult>(await Controller(db).Update(1, request));
+
+        Assert.Contains("PPC_STANDARD_RANGE_SAMPLE_SIZE_UNSUPPORTED", JsonSerializer.Serialize(result.Value));
+        Assert.Equal(Before, (await db.PartProcessCharacteristics.SingleAsync()).FormulaConfigJson);
+        Assert.Equal(2, await db.SpcCalculationResults.CountAsync());
+    }
+
     [Theory]
     [InlineData(null, " ", false)]
     [InlineData("{\"nested\":{\"b\":2,\"a\":1}}", "{\"nested\":{\"a\":1,\"b\":2}}", false)]

@@ -116,6 +116,11 @@ test('I-MR exposes only applicable formula methods and builds sample sigma JSON'
  await dialog(page).getByRole('button',{name:/樣本標準差法/}).click();
  await expect(field(page,'formulaConfigJson')).toHaveValue(/SIGMA_METHOD/);
 });
+test('standard range is unavailable when subgroup size exceeds the supported constants',async({page})=>{
+ await prepare(page,1);await tab(page,2).click();await field(page,'sampleSize').fill('50');await tab(page,5).click();
+ await expect(dialog(page).getByRole('button',{name:/標準全距法/})).toHaveCount(0);
+ await expect(dialog(page).getByTestId('ppc-standard-range-unavailable')).toContainText('2～25');
+});
 for(const locale of ['zh-TW','zh-CN','en-US'])test(`mobile schedule and segments ${locale}: drafts and controls fit`,async({page})=>{
  await page.setViewportSize({width:390,height:900});const {writes}=await prepare(page,3);await tab(page,4).click();await dialog(page).getByTestId('locale-select').selectOption(locale);const s=dialog(page).locator('section').filter({has:page.getByTestId('schedule-add')});await s.getByTestId('schedule-primary').fill('0.2');await s.getByTestId('schedule-reason').fill('草稿');await s.getByTestId('schedule-publish').scrollIntoViewIfNeeded();await expect(s.getByTestId('schedule-publish')).toBeInViewport();expect(await s.evaluate(el=>el.scrollWidth)).toBeLessThanOrEqual((await s.boundingBox())!.width);await expect(dialog(page).locator('button[type="submit"]')).toBeInViewport();
  await dialog(page).getByRole('button',{name:locale==='en-US'?'Close':locale==='zh-CN'?'关闭':'關閉',exact:true}).click();await page.getByTestId('ppc-segments').first().click();const d=page.getByTestId('segment-dialog');await d.getByTestId('locale-select').selectOption(locale);await d.getByTestId('ppc-segmentForm.note').fill('未存');await d.locator('form button[type="submit"]').scrollIntoViewIfNeeded();await expect(d.locator('form button[type="submit"]')).toBeInViewport();expect(await d.evaluate(el=>el.scrollWidth)).toBeLessThanOrEqual(390);expect(writes).toEqual([]);

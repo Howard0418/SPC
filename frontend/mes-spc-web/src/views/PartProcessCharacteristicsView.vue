@@ -560,7 +560,11 @@ const selectedChartType = computed(() =>
   chartTypes.value.find(x => x.id === Number(form.value.chartTypeId)) || null
 );
 const isImrChartType = computed(() => ["I_MR", "I-MR"].includes(String(selectedChartType.value?.chartTypeCode || "").toUpperCase()));
-const applicableFormulaOptions = computed(() => isImrChartType.value
+const supportsStandardRange = computed(() => {
+  const sampleSize = Number(form.value.sampleSize);
+  return !isImrChartType.value && Number.isInteger(sampleSize) && sampleSize >= 2 && sampleSize <= 25;
+});
+const applicableFormulaOptions = computed(() => !supportsStandardRange.value
   ? formulaOptions.filter(option => !option.id || !option.id.includes('"STANDARD_RANGE"'))
   : formulaOptions);
 
@@ -2188,6 +2192,9 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                   </div>
                   <p v-if="isImrChartType" class="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
                     {{ t('spc.ppc.imrFormulaHelp') }}
+                  </p>
+                  <p v-else-if="!supportsStandardRange" data-testid="ppc-standard-range-unavailable" class="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                    {{ t('spc.ppc.standardRangeSampleSizeHelp', { sampleSize: form.sampleSize }) }}
                   </p>
 
                   <div class="space-y-1.5">

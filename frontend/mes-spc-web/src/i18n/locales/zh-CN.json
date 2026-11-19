@@ -743,6 +743,7 @@
       "meanMovingRangeMethod": "平均移动全距法",
       "sampleStandardDeviationMethod": "样本标准差法",
       "imrFormulaHelp": "I-MR 没有子组全距，因此不提供标准全距法；可使用系统标准、平均移动全距或样本标准差法。",
+      "standardRangeSampleSizeHelp": "标准全距法仅支持子组大小 2～25；目前为 {sampleSize}，请改用系统标准、平均移动全距或样本标准差法。",
       "customFormulas": "自订公式",
       "trendChart": "趋势图",
       "controlChart": "管制图",
