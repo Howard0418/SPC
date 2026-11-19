@@ -33,3 +33,10 @@
 
 - Portal Web 可由發布前備份目錄回復；SPC Web 可由前一版 0.1.148 原始碼重新建置回復。
 - 資料庫未變更，無資料回復步驟。
+
+## 2026-11-19 現況再驗證
+
+- `node --test tests/chemical-adjustment-paste.test.mjs`：3/3通過；現行 `npm run build:test` 通過，i18n 2,878 keys × 3 locales通過。
+- SPC測試站 `/chemical-adjustment-parameters` 與目前主 JavaScript 均HTTP 200，JS MIME為`application/javascript`；API health=ok、version=`0.1.155`、environment=test。
+- Portal舊網址 `/Spc/QualityAssurance` 回302，Location仍為`/Spc/Launch?returnUrl=%2Fchemical-adjustment-parameters`，沒有恢復舊Portal維護頁。
+- 本輪為現況驗證，沒有產品程式變更或重複發布；登入後實際畫面與儲存仍待人工驗收，正式未發布。
