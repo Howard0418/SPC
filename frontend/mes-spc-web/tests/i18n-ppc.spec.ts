@@ -19,6 +19,7 @@ async function prepare(page:Page,id?:number,role='Editor'){
  const reads:string[]=[];const writes:any[]=[];const state={reject:false,empty:false,closed:0,failSchedule:false,noteMetadata:false,englishName:null as string|null,records:structuredClone(records),segments:[structuredClone(segment)]};
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());if(u.origin!==new URL(test.info().project.use.baseURL as string).origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();const path=u.pathname,method=route.request().method();
+  if(path==='/api/v1/audit/activity')return route.fulfill({status:204});
   if(method!=='GET'){
    expect(path).toMatch(/^\/api\/(part-process-characteristics(\/\d+)?(\/chemical-formula-schedule(\/preview)?|\/chemical-analysis-formula-versions\/\d+\/restore)?|control-limit-segments(\/\d+)?|v1\/spc\/trial-calculate)$/);
    const body=method==='DELETE'?null:route.request().postDataJSON();writes.push({method,path,search:u.search,body});if(state.reject)return route.fulfill({status:409,json:{message:'原 API 衝突訊息 <b>@:key {name}</b>'}});
@@ -97,6 +98,13 @@ test('PPC API conflict and mode conversion preserve draft and clearing contract'
 });
 test('PPC empty state and existing Viewer guard',async({page})=>{const {state,writes}=await prepare(page);state.empty=true;await page.reload();await page.getByTestId('locale-select').selectOption('en-US');await expect(page.locator('main')).toContainText('No matching control items');expect(writes).toEqual([])});
 test('PPC Viewer cannot access editor route',async({page})=>{const {writes}=await prepare(page,undefined,'Viewer');await expect(page).not.toHaveURL(/part-process-characteristics\?keep=42$/);expect(writes).toEqual([])});
+test('chart action opens matching chart in a new tab and keeps the settings page',async({page})=>{
+ await prepare(page);const originalUrl=page.url();
+ const chartLinks=page.getByTestId('ppc-open-chart');
+ await expect(chartLinks.first()).toHaveAttribute('target','_blank');await expect(chartLinks.first()).toHaveAttribute('rel','noopener noreferrer');
+ await expect(chartLinks.first()).toHaveAttribute('href','/spc?ppcId=1');
+ await expect(chartLinks.nth(2)).toHaveAttribute('href','/trend-chart?ppcId=3');expect(page.url()).toBe(originalUrl);
+});
 for(const locale of ['zh-TW','zh-CN','en-US'])test(`mobile schedule and segments ${locale}: drafts and controls fit`,async({page})=>{
  await page.setViewportSize({width:390,height:900});const {writes}=await prepare(page,3);await tab(page,4).click();await dialog(page).getByTestId('locale-select').selectOption(locale);const s=dialog(page).locator('section').filter({has:page.getByTestId('schedule-add')});await s.getByTestId('schedule-primary').fill('0.2');await s.getByTestId('schedule-reason').fill('草稿');await s.getByTestId('schedule-publish').scrollIntoViewIfNeeded();await expect(s.getByTestId('schedule-publish')).toBeInViewport();expect(await s.evaluate(el=>el.scrollWidth)).toBeLessThanOrEqual((await s.boundingBox())!.width);await expect(dialog(page).locator('button[type="submit"]')).toBeInViewport();
  await dialog(page).getByRole('button',{name:locale==='en-US'?'Close':locale==='zh-CN'?'关闭':'關閉',exact:true}).click();await page.getByTestId('ppc-segments').first().click();const d=page.getByTestId('segment-dialog');await d.getByTestId('locale-select').selectOption(locale);await d.getByTestId('ppc-segmentForm.note').fill('未存');await d.locator('form button[type="submit"]').scrollIntoViewIfNeeded();await expect(d.locator('form button[type="submit"]')).toBeInViewport();expect(await d.evaluate(el=>el.scrollWidth)).toBeLessThanOrEqual(390);expect(writes).toEqual([]);
