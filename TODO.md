@@ -822,6 +822,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-19 管制線計算法反映於圖表
 
 - [ ] `SPC-CONTROL-LIMIT-METHOD-1119-TASK-001`（P0；主系統 SPC API／相依 SPC Web；DB：無；發布：測試站已完成，正式另行授權；rollback：回復 API0.1.143／Web0.1.151）：Xbar-R與Xbar-S均會把所選方法的計算界限反映於上方Xbar圖點及OOC判定；Xbar-S下方S圖維持既有算法。焦點6、完整API106及Web build通過；測試API0.1.144／Web0.1.152，待人工切換公式確認畫面。[驗證](specs/20261119-control-limit-method-rendering/verification.md)
+- [x] `SPC-IMR-FORMULA-METHOD-1119-TASK-001`（P0；主系統 SPC API／相依 SPC Web；DB：無）：I-MR 已依樣本標準差法或平均移動全距法重算 I 圖管制界線；不適用的標準全距法已隱藏。實際 #2437 往返驗證界線不同，測試區 API `0.1.148`／Web `0.1.156` 已發布，正式另行授權。[規格](specs/20261119-imr-formula-method-support/spec.md)／[驗證](specs/20261119-imr-formula-method-support/verification.md)
 # SPC-PPC-CHART-NEW-TAB-1119-TASK-001
 
 - [x] 管制項目設定清單的橘色管制圖按鍵改為新分頁開啟；一般圖與趨勢圖路由、自身頁面保留及測試站發布均已驗證。正式站尚未授權發布。

@@ -559,6 +559,10 @@ const availableCharacteristics = computed(() =>
 const selectedChartType = computed(() =>
   chartTypes.value.find(x => x.id === Number(form.value.chartTypeId)) || null
 );
+const isImrChartType = computed(() => ["I_MR", "I-MR"].includes(String(selectedChartType.value?.chartTypeCode || "").toUpperCase()));
+const applicableFormulaOptions = computed(() => isImrChartType.value
+  ? formulaOptions.filter(option => !option.id || !option.id.includes('"STANDARD_RANGE"'))
+  : formulaOptions);
 
 function getControlScopeGroupType(scope) {
   const normalizedScope = normalizeControlScope(scope);
@@ -2167,7 +2171,7 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
 
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <button
-                      v-for="option in formulaOptions"
+                      v-for="option in applicableFormulaOptions"
                       :key="option.id"
                       type="button"
                       @click="form.formulaConfigJson = option.id"
@@ -2182,6 +2186,9 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                       </span>
                     </button>
                   </div>
+                  <p v-if="isImrChartType" class="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                    {{ t('spc.ppc.imrFormulaHelp') }}
+                  </p>
 
                   <div class="space-y-1.5">
                     <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">{{ t('spc.ppc.controlLimitFormulaJSON') }}</label>

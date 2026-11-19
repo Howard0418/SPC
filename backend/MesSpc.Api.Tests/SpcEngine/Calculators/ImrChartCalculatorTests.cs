@@ -6,6 +6,36 @@ namespace MesSpc.Api.Tests.SpcEngine.Calculators;
 
 public class ImrChartCalculatorTests
 {
+    private static List<SpcDataPoint> AsymmetricData() =>
+    [
+        new() { MeasuredAt = DateTime.UtcNow, Value = 1 },
+        new() { MeasuredAt = DateTime.UtcNow.AddMinutes(1), Value = 2 },
+        new() { MeasuredAt = DateTime.UtcNow.AddMinutes(2), Value = 8 },
+        new() { MeasuredAt = DateTime.UtcNow.AddMinutes(3), Value = 9 },
+        new() { MeasuredAt = DateTime.UtcNow.AddMinutes(4), Value = 11 }
+    ];
+
+    [Fact]
+    public void Calculate_SelectedMethods_ShouldChangeIChartLimitsAndRenderedPoints()
+    {
+        const string sigma = "{\"XbarCalculationMethod\":\"SIGMA_METHOD\",\"Multiplier\":3}";
+        const string moving = "{\"XbarCalculationMethod\":\"MOVING_RANGE_OF_XBAR\",\"MrMultiplier\":2.66}";
+        var standardResult = ImrChartCalculator.Calculate(AsymmetricData(), new ControlLimits());
+        var sigmaResult = ImrChartCalculator.Calculate(AsymmetricData(), new ControlLimits(), formulaConfigJson: sigma);
+        var movingResult = ImrChartCalculator.Calculate(AsymmetricData(), new ControlLimits(), formulaConfigJson: moving);
+        dynamic standardStat = standardResult.StatControlLimits!;
+        dynamic sigmaStat = sigmaResult.StatControlLimits!;
+        dynamic movingStat = movingResult.StatControlLimits!;
+        dynamic sigmaChart = sigmaResult.ChartData;
+
+        Assert.Equal("SIGMA_METHOD", (string)sigmaStat.iControlLimitsStat.calculationMethod);
+        Assert.Equal("MR_METHOD", (string)movingStat.iControlLimitsStat.calculationMethod);
+        Assert.NotEqual((double)standardStat.iControlLimitsStat.ucl, (double)sigmaStat.iControlLimitsStat.ucl, 6);
+        Assert.NotEqual((double)sigmaStat.iControlLimitsStat.ucl, (double)movingStat.iControlLimitsStat.ucl, 6);
+        Assert.Equal((double)sigmaStat.iControlLimitsStat.ucl, (double)sigmaChart.points[0].uclStat, 10);
+        Assert.Equal((double)sigmaStat.iControlLimitsStat.lcl, (double)sigmaChart.points[0].lclStat, 10);
+    }
+
     [Fact]
     public void Calculate_ShouldComputeCorrectLimitsAndPoints()
     {

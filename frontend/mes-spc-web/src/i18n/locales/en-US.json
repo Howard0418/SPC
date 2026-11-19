@@ -742,6 +742,7 @@
       "standardRangeMethod": "Standard range method",
       "meanMovingRangeMethod": "Mean moving range method",
       "sampleStandardDeviationMethod": "Sample standard deviation method",
+      "imrFormulaHelp": "I-MR has no subgroup range, so the standard range method is unavailable. Use system standard, moving range, or sample standard deviation.",
       "customFormulas": "Custom formulas",
       "trendChart": "Trend chart",
       "controlChart": "Control chart",

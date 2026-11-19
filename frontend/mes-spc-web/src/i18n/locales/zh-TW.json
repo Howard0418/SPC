@@ -742,6 +742,7 @@
       "standardRangeMethod": "標準全距法",
       "meanMovingRangeMethod": "平均移動全距法",
       "sampleStandardDeviationMethod": "樣本標準差法",
+      "imrFormulaHelp": "I-MR 沒有子組全距，因此不提供標準全距法；可使用系統標準、平均移動全距或樣本標準差法。",
       "customFormulas": "自訂公式",
       "trendChart": "趨勢圖",
       "controlChart": "管制圖",

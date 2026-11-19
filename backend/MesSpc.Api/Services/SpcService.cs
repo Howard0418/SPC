@@ -529,7 +529,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             }
             else if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, enabledRuleCodes) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
+                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, enabledRuleCodes, mapping.FormulaConfigJson) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
             }
             else // XBAR_R / XBAR_S
             {
@@ -1595,7 +1595,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits);
+                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, formulaConfigJson: mapping.FormulaConfigJson);
             }
             else // XBAR_R / XBAR_S
             {
