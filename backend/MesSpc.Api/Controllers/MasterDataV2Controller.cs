@@ -220,7 +220,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 x.AdjustAction,
                 x.AdjustAmount,
                 isExcluded = exclusions.ContainsKey(x.Id),
-                exclusionReason = exclusions.GetValueOrDefault(x.Id)?.Reason
+                exclusionReason = Detail(x,"ExclusionReason")
             })
             .ToList();
 

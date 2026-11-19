@@ -156,7 +156,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 specificationVersionNo = judgment?.SpecificationVersionNo,
                 specificationVersionAt = judgment?.SpecificationVersionAt
                 ,isExcluded = exclusion is not null
-                ,exclusionReason = exclusion?.Reason
+                ,exclusionReason = payload?.GetValueOrDefault("ExclusionReason")
             };
         }).ToList();
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });
