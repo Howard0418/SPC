@@ -176,6 +176,13 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
         catch(ArgumentException){return null;}
     }
 
+    internal static bool MatchesEntryPayload(IReadOnlyDictionary<string,string?> payload,int ppcId,string? tankCode,string? characteristicCode)
+    {
+        if(string.Equals(payload.GetValueOrDefault("PpcId"),ppcId.ToString(System.Globalization.CultureInfo.InvariantCulture),StringComparison.Ordinal))return true;
+        return string.Equals(payload.GetValueOrDefault("TankCode"),tankCode,StringComparison.OrdinalIgnoreCase)
+            && string.Equals(payload.GetValueOrDefault("CharacteristicCode"),characteristicCode,StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task ClearLegacyPortalExclusionsAsync(Guid uploadBatchId,List<Dictionary<string,string?>> rows,string actor,CancellationToken ct)
     {
         var ppcIds=rows.Select(row=>int.Parse(row["PpcId"]!,System.Globalization.CultureInfo.InvariantCulture)).ToList();

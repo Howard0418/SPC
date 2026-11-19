@@ -37,4 +37,14 @@ public sealed class ChemicalPortalExclusionTests
         Assert.Null(ChemicalPortalMeasurementService.ReadEntryRemarkPayload(payload,1));
         Assert.Null(ChemicalPortalMeasurementService.ReadEntryRemarkPayload("{\"PpcId\":2437,\"ExclusionReason\":\"舊自由文字\"}",2437));
     }
+
+    [Fact]
+    public void MatchesEntryPayload_PrefersPpcAndKeepsLegacyFallback()
+    {
+        var current=new Dictionary<string,string?>{{"PpcId","2587"},{"TankCode","wrong"},{"CharacteristicCode","wrong"}};
+        var legacy=new Dictionary<string,string?>{{"TankCode","T1"},{"CharacteristicCode","KOH"}};
+        Assert.True(ChemicalPortalMeasurementService.MatchesEntryPayload(current,2587,"T1","KOH"));
+        Assert.True(ChemicalPortalMeasurementService.MatchesEntryPayload(legacy,2587,"T1","KOH"));
+        Assert.False(ChemicalPortalMeasurementService.MatchesEntryPayload(legacy,2587,"T2","KOH"));
+    }
 }
