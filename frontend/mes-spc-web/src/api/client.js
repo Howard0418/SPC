@@ -175,6 +175,10 @@ export function getApiErrorDisplay(err) {
     return getApiMessageDisplay(null,err?.response?.data?.message) || translate('spc.api.forbidden');
   }
   const responseData = err?.response?.data;
+  const responseType = String(err?.response?.headers?.['content-type'] || '');
+  if (typeof responseData === 'string' && (responseType.includes('text/html') || /<\/?(?:html|body)\b/i.test(responseData))) {
+    return translate('spc.api.serviceUpdating');
+  }
   return [typeof responseData === 'string' ? responseData.trim() : '', responseData?.title, responseData?.message, msg]
     .find(value => typeof value === 'string' && value) || translate('spc.api.requestFailed');
 }

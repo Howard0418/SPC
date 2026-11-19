@@ -12,6 +12,7 @@
       "conflict": "Other records reference this data. Remove the related child records or their links before continuing.",
       "forbidden": "Permission denied (403). Viewers can only view and query data.",
       "requestFailed": "Request failed",
+      "serviceUpdating": "The system is being updated. Please try again shortly.",
       "environmentMismatch": "Safety check blocked the request: WEB is {webEnvironment} and API is {apiEnvironment}. Writes are prohibited because the environments differ.",
       "ssoNotConfigured": "Portal SSO is not configured.",
       "authAuditUnavailable": "Sign-in auditing is temporarily unavailable. Please try again.",

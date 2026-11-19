@@ -12,6 +12,7 @@
       "conflict": "此资料已被其他记录关联，请先删除或解除相关联的子资料后再操作。",
       "forbidden": "权限不足（403）。检视者只能查看与查询资料。",
       "requestFailed": "请求失败",
+      "serviceUpdating": "系统正在更新，请稍后重试。",
       "environmentMismatch": "安全性阻挡：WEB 为 {webEnvironment}，API 为 {apiEnvironment}，环境不一致，禁止写入。",
       "ssoNotConfigured": "Portal SSO 尚未设置。",
       "authAuditUnavailable": "登录审计暂时无法使用，请稍后重试。",

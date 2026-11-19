@@ -16,7 +16,7 @@ test.beforeEach(({page})=>{const list:string[]=[];errors.set(page,list);page.on(
 test.afterEach(({page})=>expect(errors.get(page)).toEqual([]));
 async function prepare(page:Page,id?:number,role='Editor'){
  await page.addInitScript(role=>{localStorage.setItem('mes_spc_token','mock-ui-only-token');localStorage.setItem('mes_spc_user',JSON.stringify({id:101,role,username:'ppc-fixture'}))},role);
- const reads:string[]=[];const writes:any[]=[];const state={reject:false,empty:false,closed:0,failSchedule:false,noteMetadata:false,englishName:null as string|null,records:structuredClone(records),segments:[structuredClone(segment)]};
+ const reads:string[]=[];const writes:any[]=[];const state={reject:false,empty:false,closed:0,failSchedule:false,updatingRules:0,noteMetadata:false,englishName:null as string|null,records:structuredClone(records),segments:[structuredClone(segment)]};
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());if(u.origin!==new URL(test.info().project.use.baseURL as string).origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();const path=u.pathname,method=route.request().method();
   if(path==='/api/v1/audit/activity')return route.fulfill({status:204});
@@ -37,7 +37,7 @@ async function prepare(page:Page,id?:number,role='Editor'){
   else if(path.endsWith('/chemical-analysis-formula-versions'))data={data:state.empty?[]:[version]};
   else if(path.endsWith('/specification-limit-versions'))data={data:state.empty?[]:[{id:91,versionNo:2,sourceKind:'Segment',changeType:'Updated',changedBy:raw,changedAt:'2026-10-24T04:05:00Z',previousSnapshotJson:null,snapshotJson:'{"lsl":0.2,"原值":"原文"}'}]};
   else if(path.endsWith('/chemical-f-table/versions'))data=[{id:72,versionNo:2,versionCode:'F-RAW',displayName:raw}];
-  else if(/\/part-process-characteristics\/\d+\/rules$/.test(path))data={rules};
+  else if(/\/part-process-characteristics\/\d+\/rules$/.test(path)){if(state.updatingRules>0){state.updatingRules--;return route.fulfill({status:503,contentType:'text/html',body:'<html><body>Updating</body></html>'})}data={rules};}
   else if(!state.empty){
    if(path==='/api/part-process-characteristics')data=state.records;
    else if(path==='/api/parts')data=[{id:1,partNo:'RAW-001',partName:raw}];
@@ -104,6 +104,11 @@ test('chart action opens matching chart in a new tab and keeps the settings page
  await expect(chartLinks.first()).toHaveAttribute('target','_blank');await expect(chartLinks.first()).toHaveAttribute('rel','noopener noreferrer');
  await expect(chartLinks.first()).toHaveAttribute('href','/spc?ppcId=1');
  await expect(chartLinks.nth(2)).toHaveAttribute('href','/trend-chart?ppcId=3');expect(page.url()).toBe(originalUrl);
+});
+test('temporary IIS Updating response retries rule loading without exposing HTML',async({page})=>{
+ const {state,reads}=await prepare(page);state.updatingRules=1;await page.getByTestId('ppc-edit').first().click();
+ await expect(dialog(page)).toBeVisible();await expect(dialog(page)).not.toContainText('<html>');
+ await expect.poll(()=>reads.filter(x=>x==='/api/part-process-characteristics/1/rules').length).toBe(2);
 });
 for(const locale of ['zh-TW','zh-CN','en-US'])test(`mobile schedule and segments ${locale}: drafts and controls fit`,async({page})=>{
  await page.setViewportSize({width:390,height:900});const {writes}=await prepare(page,3);await tab(page,4).click();await dialog(page).getByTestId('locale-select').selectOption(locale);const s=dialog(page).locator('section').filter({has:page.getByTestId('schedule-add')});await s.getByTestId('schedule-primary').fill('0.2');await s.getByTestId('schedule-reason').fill('草稿');await s.getByTestId('schedule-publish').scrollIntoViewIfNeeded();await expect(s.getByTestId('schedule-publish')).toBeInViewport();expect(await s.evaluate(el=>el.scrollWidth)).toBeLessThanOrEqual((await s.boundingBox())!.width);await expect(dialog(page).locator('button[type="submit"]')).toBeInViewport();

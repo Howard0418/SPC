@@ -932,7 +932,7 @@ async function openEditModal(item) {
   await nextTick();
   isHydratingForm.value = false;
   try {
-    const { data } = await api.get(`/part-process-characteristics/${item.id}/rules`);
+    const { data } = await loadPpcRulesWithUpdatingRetry(item.id);
     form.value.selectedRuleCodes = displayMode === "CONTROL_CHART" ? (data?.rules || [])
       .filter(rule => rule.isSelected)
       .map(rule => rule.ruleCode) : [];
@@ -1304,6 +1304,26 @@ function chartOrTrendLocation(item) {
 
 function chartOrTrendHref(item) {
   return router.resolve(chartOrTrendLocation(item)).href;
+}
+
+function isTemporaryUpdatingResponse(error) {
+  const status = Number(error?.response?.status);
+  const data = error?.response?.data;
+  const contentType = String(error?.response?.headers?.['content-type'] || '');
+  return [502, 503, 504].includes(status)
+    && typeof data === 'string'
+    && (contentType.includes('text/html') || /Updating|<\/?(?:html|body)\b/i.test(data));
+}
+
+async function loadPpcRulesWithUpdatingRetry(itemId) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await api.get(`/part-process-characteristics/${itemId}/rules`);
+    } catch (error) {
+      if (!isTemporaryUpdatingResponse(error) || attempt === 2) throw error;
+      await new Promise(resolve => window.setTimeout(resolve, 300 * (attempt + 1)));
+    }
+  }
 }
 
 onMounted(async () => {
