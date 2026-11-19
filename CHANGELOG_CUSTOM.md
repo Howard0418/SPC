@@ -3109,3 +3109,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - `SPC-CHEM-DAILY-JUDGMENT-1110-TASK-001` 已由使用者確認測試區人工驗收通過，狀態更新為「人工驗收通過／正式待授權」。
 - 本次沒有程式、資料庫或網站更新；正式站未發布。
 
+## 2026-11-19 藥液管制值異動通知改寄Email
+
+- `PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001` 依使用者確認由Synology Chat改為既有SMTP Email，寄給啟用品保／製程角色人員的有效個人Email並去重；寄送失敗不回滾已提交參數。
+- Portal API298項、API／Web Release build通過；測試API1.0.281／Web1.0.319已發布並完成Web、資產、實際API基底test環境及匿名401驗證。正式未發布。
+

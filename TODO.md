@@ -8,7 +8,7 @@
 - [ ] `PORTAL-CHEM-ADJUST-PARAMETERS-1118-TASK-001`：P1／待人工驗收；程式、自動測試及測試站發布完成；槽位、分析項目、規格、範圍唯讀，可保存藥液名稱、槽容與添加／稀釋管制值。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
 - [ ] `PORTAL-CHEM-ADJUST-BATCH-PASTE-1118-TASK-001`：P1／實作完成、待測試區人工驗收；Excel 多列貼上依槽位＋分析項目配對，清理空白、先預覽再保存，空白欄不覆蓋既有值。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-batch-paste.md)
 - [x] `PORTAL-PROCESS-ROLE-1118-TASK-001`：P0；製程人員角色與權限頁中文顯示完成，未擴張頁面權限或自動指派；測試API1.0.259／Web1.0.297已發布，登入畫面待人工目視。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification.md)
-- [ ] `PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001`：P1／測試區已發布、待人工驗收；添加／稀釋管制值有效值異動且提交成功後，以Chat Bot通知品保與製程角色，列出前後值並提示是否檢討規格／範圍。同值、只改槽容／備註或保存失敗不通知。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-control-notify.md)
+- [ ] `PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001`：P1／Email版測試區已發布、待人工收信驗收；添加／稀釋管制值有效值異動且提交成功後，以既有SMTP寄給品保與製程角色人員的有效個人Email，列出前後值並提示是否檢討規格／範圍。同值、只改槽容／備註或保存失敗不通知。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-control-notify.md)
 - [ ] `PORTAL-CHEM-ADJUST-REMARK-1118-TASK-001`：P1／待人工驗收；程式、自動測試及測試站發布完成；備註最多500字，留版本／稽核且不參與計算。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
 
 > 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001` 使用者確認測試正常後完成正式R4：API1.0.218原檔保持、Web1.0.248；備份、Web／CSS MIME、API health／production及401通過。正式畫面列人工確認；核心41／SPC18。[驗證](../PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)
