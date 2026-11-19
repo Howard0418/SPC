@@ -1924,3 +1924,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## [2026-11-19] PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001 通知通道更正
 - 使用者確認添加／稀釋管制值異動應寄Email；改用既有SMTP與品保／製程角色有效個人Email，保留提交後通知及失敗不回滾規則。
 
+# 2026-11-19 藥液量測調整公式移至 SPC
+
+- 目的：修正系統責任歸屬，將 SPC 主檔調整參數維護畫面由 Portal 移入 SPC；保留 Portal SSO 與角色 Email 通知，不改資料庫 schema、計算或量測輸入。
+

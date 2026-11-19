@@ -3114,3 +3114,10 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - `PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001` 依使用者確認由Synology Chat改為既有SMTP Email，寄給啟用品保／製程角色人員的有效個人Email並去重；寄送失敗不回滾已提交參數。
 - Portal API298項、API／Web Release build通過；測試API1.0.281／Web1.0.319已發布並完成Web、資產、實際API基底test環境及匿名401驗證。正式未發布。
 
+# 2026-11-19 藥液量測調整公式移至 SPC
+
+- 新增 SPC `/chemical-adjustment-parameters` 維護頁、編輯者選單、固定格線及 Excel 五欄貼上／預覽／批次儲存；沿用 Portal 受控代理以保留品保／製程角色 Email 通知。
+- Portal 品保專區卡片與舊 `/Spc/QualityAssurance` 改經 SSO 導向 SPC 新頁，不再承載維護 UI。
+- 測試：貼上工具 3 passed、SPC test build 與 Portal Release build 通過；測試站 SPC Web 0.1.149、Portal Web 1.0.320，API 版本未變，連線／MIME／環境標籤通過。正式站未發布。
+- 待辦：瀏覽器控制服務不可用，待人工畫面驗收；中央進度表因 artifact_session 未設定未同步，原檔未覆蓋。
+

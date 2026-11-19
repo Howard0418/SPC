@@ -5,7 +5,8 @@
 ## 2026-11-18 藥液量測排除與調整參數（僅規劃）
 
 - [x] `PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001`：P0／正式發布完成，Portal＋SPC；錄入增加不列入計算及繪圖與固定備註，保存追溯但由所有 SPC 統計、能力值、規則及圖表排除。共用既有排除資料表，無 migration；正式連線、版本、環境、資產及唯讀端點驗證通過。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
-- [ ] `PORTAL-CHEM-ADJUST-PARAMETERS-1118-TASK-001`：P1／待人工驗收；程式、自動測試及測試站發布完成；槽位、分析項目、規格、範圍唯讀，可保存藥液名稱、槽容與添加／稀釋管制值。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
+- [ ] `SPC-CHEM-ADJUST-PAGE-MOVE-1119-TASK-001`：P1／測試站已發布、待人工畫面驗收及中央進度表補同步；SPC Web 0.1.149、Portal Web 1.0.320，Portal 僅保留 SSO 入口與既有角色 Email 通知。[驗證](specs/20261119-chemical-adjustment-page-move/verification.md)
+- [x] `PORTAL-CHEM-ADJUST-PARAMETERS-1118-TASK-001`：畫面歸屬已由 `SPC-CHEM-ADJUST-PAGE-MOVE-1119-TASK-001` 取代；既有參數儲存契約保留。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
 - [ ] `PORTAL-CHEM-ADJUST-BATCH-PASTE-1118-TASK-001`：P1／實作完成、待測試區人工驗收；Excel 多列貼上依槽位＋分析項目配對，清理空白、先預覽再保存，空白欄不覆蓋既有值。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-batch-paste.md)
 - [x] `PORTAL-PROCESS-ROLE-1118-TASK-001`：P0；製程人員角色與權限頁中文顯示完成，未擴張頁面權限或自動指派；測試API1.0.259／Web1.0.297已發布，登入畫面待人工目視。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification.md)
 - [ ] `PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001`：P1／Email版測試區已發布、待人工收信驗收；添加／稀釋管制值有效值異動且提交成功後，以既有SMTP寄給品保與製程角色人員的有效個人Email，列出前後值並提示是否檢討規格／範圍。同值、只改槽容／備註或保存失敗不通知。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-control-notify.md)

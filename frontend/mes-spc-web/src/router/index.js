@@ -22,6 +22,7 @@ import PortalSsoView from "../views/PortalSsoView.vue";
 import ChemicalAnalysisOverviewView from "../views/ChemicalAnalysisOverviewView.vue";
 import AnalysisLimitsOverviewView from "../views/AnalysisLimitsOverviewView.vue";
 import ChemicalFTableView from "../views/ChemicalFTableView.vue";
+import ChemicalAdjustmentParametersView from "../views/ChemicalAdjustmentParametersView.vue";
 import EtchAnalysisView from "../views/EtchAnalysisView.vue";
 import InstrumentCalibrationsView from "../views/InstrumentCalibrationsView.vue";
 import ParticleMonitoringView from "../views/ParticleMonitoringView.vue";
@@ -74,6 +75,7 @@ const routes = [
   { path: "/chemical-analysis-overview", component: ChemicalAnalysisOverviewView, meta: { editorOnly: true } },
   { path: "/analysis-limit-overview", component: AnalysisLimitsOverviewView, meta: { editorOnly: true } },
   { path: "/chemical-f-table", component: ChemicalFTableView, meta: { editorOnly: true } },
+  { path: "/chemical-adjustment-parameters", component: ChemicalAdjustmentParametersView, meta: { editorOnly: true } },
   { path: "/control-chart-groups", component: ControlChartGroupsView, props: { groupsOnly: true }, meta: { editorOnly: true } },
   { path: "/control-chart-categories", redirect: "/part-process-characteristics" },
   { path: "/control-chart-types", redirect: "/part-process-characteristics" },
