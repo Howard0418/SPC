@@ -3153,4 +3153,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 無 schema migration；補正固定備註須同步到實際 ECharts 繪圖點，並將 Portal 查詢欄改為「備註」、直接顯示日報下拉備註。測試區 Portal API 1.0.285／Web 1.0.324、SPC API 0.1.153／Web 0.1.159，測試及連線驗證通過，正式區未發布。
 - 後續依使用者要求清理測試區舊版「不列入」資料：軟停用 2 筆 Portal 固定原因 `ExcludedHidden`，執行後剩餘 0 筆；人工右鍵排除 1 筆保持啟用。正式資料未異動。
 - 修正固定備註保存後重載空白：資料實際已寫入 payload，問題為日報重載未優先依 PPC ID 配對；改為 PPC ID 優先、槽位＋分析項目回退。測試 API 0.1.154，8項焦點測試通過。
+- 修正圖點自由備註已保存但 tooltip 未顯示：確認測試庫備註與量測 ID 正確後，tooltip 改為依目前圖點 ID 即時合併 `SpcPointRemark`，並補 ECharts 實際 series meta 與 tooltip 回歸。SPC Web 遞增為 0.1.160；API 維持 0.1.154。
 

@@ -14,6 +14,7 @@
 - Given 使用者選擇固定備註並儲存，When SPC 查詢該點，Then 該點正常列入計算及繪圖，固定備註可由圖點提示看見。
 - Given 圖點已有 Portal 固定備註，When 開啟新增／編輯備註，Then 對話框分區顯示固定備註及獨立自由文字備註。
 - Given 使用者保存或清空自由文字備註，When 重新載入，Then 只異動 `SpcPointRemark`，固定下拉對應的排除原因與排除狀態不變。
+- Given 圖點自由備註已儲存且量測 ID 相符，When 使用者不重新查詢而直接移到圖點，Then 提示框立即顯示「圖點自由備註」及內容。
 - Given 固定備註有值，When SPC 確認批次，Then 強制 `IsExcluded=false`，保存備註但不得建立排除。
 
 ## 驗證與回復
