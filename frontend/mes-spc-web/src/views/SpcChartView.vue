@@ -467,14 +467,18 @@ const exclusionReasonLabel = (value) => ({
   DETECTION_NO_OPEN_LINE: t('spc.chartActions.exclusionDetectionNoOpen')
 }[String(value || '')] || String(value || ''));
 function applyPointRemarksToChart() {
-  const points = chartResult.value?.rawDataPoints || [];
-  points.forEach(point => {
-    const row = findPointRemark(point);
-    const entryRemark = findMeasurementEntryRemark(point);
-    point.pointRemarkId = row ? readField(row, "id", "Id") : null;
-    point.pointRemark = row ? readField(row, "remark", "Remark") : "";
-    point.exclusionReason = entryRemark ? readField(entryRemark, "reason", "Reason") || "" : "";
-  });
+  const collections = [
+    chartResult.value?.rawDataPoints,
+    chartResult.value?.chartData?.points,
+    chartResult.value?.secondaryChartData?.points
+  ].filter(Array.isArray);
+  collections.forEach(points => points.forEach(point => {
+      const row = findPointRemark(point);
+      const entryRemark = findMeasurementEntryRemark(point);
+      point.pointRemarkId = row ? readField(row, "id", "Id") : null;
+      point.pointRemark = row ? readField(row, "remark", "Remark") : "";
+      point.exclusionReason = entryRemark ? readField(entryRemark, "reason", "Reason") || "" : "";
+    }));
 }
 const formatRuleCode = (value) => {
   const match = String(value || "").match(/^(?:Rule|Nelson)(\d+)/i);
