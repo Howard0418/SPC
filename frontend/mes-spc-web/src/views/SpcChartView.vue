@@ -91,6 +91,7 @@ const uploadBatchId = ref("");
 const loading = ref(false);
 const rawDataDownloading = ref(false);
 const error = ref("");
+const overallSummaryRef = ref(null);
 let unsubscribeControlChartRefresh = () => {};
 
 // Initialize dates: defaults to today and 3 months ago
@@ -647,6 +648,7 @@ onMounted(() => {
     loadMappings();
   }
   window.addEventListener("resize", handleResize);
+  nextTick(() => overallSummaryRef.value?.load());
 });
 
 watch(batchId, () => {
@@ -733,6 +735,8 @@ async function loadActiveChart() {
       return;
     }
   }
+
+  if (route.path === "/spc") overallSummaryRef.value?.load();
 
   if (!ppcId.value && (selectedDimension.value === "PRODUCT" || selectedProcessId.value)) {
     loading.value = true;
@@ -2122,7 +2126,7 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
       </button>
     </div>
 
-    <OverallSummary v-if="route.path === '/spc'" />
+    <OverallSummary v-if="route.path === '/spc'" ref="overallSummaryRef" :start-date="startDate" :end-date="endDate" />
 
     <!-- 🌟 三大類管制項目維度選擇器 -->
     <div v-if="isMonthlyChartPage" class="flex flex-wrap items-center gap-3">

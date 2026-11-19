@@ -9,6 +9,7 @@ export async function prepare(page:Page,path='/spc',deep=false){
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());if(u.origin!==new URL(test.info().project.use.baseURL as string).origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();const method=route.request().method();
   if(method!=='GET'){
+   if(method==='POST'&&u.pathname==='/api/v1/audit/activity')return route.fulfill({status:204});
    expect(method+' '+u.pathname).toMatch(/^(DELETE \/api\/v1\/spc\/(point-exclusions\/91|point-remarks\/201)|PUT \/api\/v1\/spc\/(point-remarks|point-exclusions)|POST \/api\/v1\/spc\/(ocap|exclude-batch\/[^/]+))$/);
    const body=method==='DELETE'?null:route.request().postData()?route.request().postDataJSON():null;writes.push({method,path:u.pathname,body});
    if(state.rejectWrites)return route.fulfill({status:409,json:{message:raw}});

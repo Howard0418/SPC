@@ -808,3 +808,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] `SPC-AUTH-EXPIRY-REDIRECT-1119-TASK-001`：P0，SPC Web；401／Token 過期自動返回 Portal 登入並保留原頁，短暫競態後有成功回應則取消跳轉。專項 E2E 2 項、test build、測試站 API 0.1.140／Web 0.1.146 與首頁／資產／health／version／匿名401通過；待人工驗收，正式另行授權。[規格](specs/20261119-auth-expiry-login-redirect/spec.md)／[驗證](specs/20261119-auth-expiry-login-redirect/verification.md)
 
+## 2026-11-19 Overall 與主查詢共用日期
+
+- [ ] `SPC-OVERALL-SHARED-DATE-1119-TASK-001`：P1，SPC Web；移除 Overall 內重複日期與按鈕，統一使用主查詢區日期；線別／維度不縮小 Overall 全站統計。無 DB／API 異動，測試發布後待人工驗收，正式另行授權。[規格](specs/20261119-overall-shared-date-query/spec.md)
+
