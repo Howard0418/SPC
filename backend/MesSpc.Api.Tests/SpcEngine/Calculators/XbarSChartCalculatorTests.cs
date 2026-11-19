@@ -6,6 +6,20 @@ namespace MesSpc.Api.Tests.SpcEngine.Calculators;
 
 public class XbarSChartCalculatorTests
 {
+    private static List<Subgroup> CreateAsymmetricSubgroups()
+    {
+        var startedAt = new DateTime(2026, 11, 19, 0, 0, 0, DateTimeKind.Utc);
+        return
+        [
+            new() { MeasuredAt = startedAt, Values = { 0.22, 0.26 } },
+            new() { MeasuredAt = startedAt.AddDays(1), Values = { 0.29, 0.33 } },
+            new() { MeasuredAt = startedAt.AddDays(2), Values = { 0.26, 0.30 } },
+            new() { MeasuredAt = startedAt.AddDays(3), Values = { 0.37, 0.41 } },
+            new() { MeasuredAt = startedAt.AddDays(4), Values = { 0.16, 0.20 } },
+            new() { MeasuredAt = startedAt.AddDays(5), Values = { 0.20, 0.24 } }
+        ];
+    }
+
     [Fact]
     public void Calculate_ShouldComputeCorrectLimitsAndPointsForXbarS()
     {
@@ -41,5 +55,31 @@ public class XbarSChartCalculatorTests
 
         dynamic sChartData = result.SecondaryChartData!;
         Assert.Equal(3, sChartData.points.Count);
+    }
+
+    [Fact]
+    public void Calculate_SelectedMethod_ShouldChangeXbarLimitsButKeepSChartLimits()
+    {
+        var configuredLimits = new ControlLimits { UCL = 0.31, CL = 0.28, LCL = 0.24 };
+        const string rangeFormula = "{\"XbarCalculationMethod\":\"STANDARD_RANGE\"}";
+        const string sigmaFormula = "{\"XbarCalculationMethod\":\"SIGMA_METHOD\",\"Multiplier\":3}";
+
+        var rangeResult = XbarSChartCalculator.Calculate(
+            CreateAsymmetricSubgroups(), configuredLimits, 2, formulaConfigJson: rangeFormula);
+        var sigmaResult = XbarSChartCalculator.Calculate(
+            CreateAsymmetricSubgroups(), configuredLimits, 2, formulaConfigJson: sigmaFormula);
+
+        dynamic rangeStat = rangeResult.StatControlLimits!;
+        dynamic sigmaStat = sigmaResult.StatControlLimits!;
+        dynamic rangeChart = rangeResult.ChartData;
+        dynamic sigmaChart = sigmaResult.ChartData;
+
+        Assert.NotEqual((double)rangeStat.xbarControl.ucl, (double)sigmaStat.xbarControl.ucl, 6);
+        Assert.NotEqual((double)rangeStat.xbarControl.lcl, (double)sigmaStat.xbarControl.lcl, 6);
+        Assert.Equal((double)sigmaStat.xbarControl.ucl, (double)sigmaChart.points[0].uclStat, 10);
+        Assert.Equal((double)sigmaStat.xbarControl.lcl, (double)sigmaChart.points[0].lclStat, 10);
+        Assert.Equal((double)rangeStat.sControl.ucl, (double)sigmaStat.sControl.ucl, 10);
+        Assert.Equal((double)rangeStat.sControl.lcl, (double)sigmaStat.sControl.lcl, 10);
+        Assert.NotEqual((double)rangeChart.points[0].uclStat, (double)sigmaChart.points[0].uclStat, 6);
     }
 }

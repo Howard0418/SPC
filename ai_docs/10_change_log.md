@@ -1936,4 +1936,5 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：修正 Xbar-R 明確選擇樣本標準差／平均移動全距／標準全距法後，圖點 UCL／CL／LCL 仍被 PPC 或日期區段固定界限覆蓋，造成畫面管制線不變。
 - 範圍：先新增回歸測試，再只調整 `XbarRChartCalculator` 所選公式的界限優先順序；不修改量測、規格、主檔界限或資料庫。
 - 規格：`specs/20261119-control-limit-method-rendering/`。
+- 續修：使用者實測項目為 Xbar-S；現行 `SpcService` 未將公式 JSON 傳入 Xbar-S 計算器，故標準全距與樣本標準差完全相同。規格升版補足 Xbar-S 上圖支援，下方 S 圖維持既有算法。
 

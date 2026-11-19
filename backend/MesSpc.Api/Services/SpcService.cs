@@ -570,7 +570,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
                 if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
                 {
-                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, enabledRuleCodes) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
+                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, enabledRuleCodes, mapping.FormulaConfigJson) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
                 }
                 else
                 {
@@ -1610,7 +1610,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
                 if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
                 {
-                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal);
+                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson: mapping.FormulaConfigJson);
                 }
                 else
                 {

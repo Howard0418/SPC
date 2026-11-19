@@ -1,6 +1,6 @@
 {
   "name": "mes-spc-web",
-  "version": "0.1.151",
+  "version": "0.1.152",
   "private": true,
   "type": "module",
   "scripts": {
