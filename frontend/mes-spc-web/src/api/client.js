@@ -21,6 +21,7 @@ const redirectCooldownMs = 5000;
 const ssoGraceMs = 8000;
 const ssoUnauthorizedSettleMs = 250;
 let pendingUnauthorizedRedirect = null;
+let pendingUnauthorizedRequests = [];
 
 function nowMs() {
   return Date.now();
@@ -40,6 +41,25 @@ function cancelPendingUnauthorizedRedirect() {
     window.clearTimeout(pendingUnauthorizedRedirect);
     pendingUnauthorizedRedirect = null;
   }
+}
+
+function holdUnauthorizedRequest(error) {
+  return new Promise((resolve, reject) => {
+    pendingUnauthorizedRequests.push({ config: error.config, resolve, reject });
+  });
+}
+
+function retryPendingUnauthorizedRequests() {
+  const requests = pendingUnauthorizedRequests;
+  pendingUnauthorizedRequests = [];
+  for (const request of requests) {
+    api.request({ ...request.config, __spcAuthRetry: true })
+      .then(request.resolve, request.reject);
+  }
+}
+
+function holdUntilNavigation() {
+  return new Promise(() => {});
 }
 
 function redirectExpiredSession() {
@@ -71,21 +91,29 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (r) => {
+    const shouldRetryUnauthorizedRequests = pendingUnauthorizedRequests.length > 0;
     cancelPendingUnauthorizedRedirect();
+    if (shouldRetryUnauthorizedRequests) retryPendingUnauthorizedRequests();
     recordSuccessfulRead(r);
     return r;
   },
   (err) => {
     if (err?.response?.status === 401 && typeof window !== "undefined") {
       if (isWithinSessionWindow(redirectGuardKey)) {
-        return Promise.reject(err);
+        return holdUntilNavigation();
+      }
+      if (err.config?.__spcAuthRetry) {
+        redirectExpiredSession();
+        return holdUntilNavigation();
       }
       if (isWithinSessionWindow(ssoGraceUntilKey)) {
         if (pendingUnauthorizedRedirect === null) {
           pendingUnauthorizedRedirect = window.setTimeout(redirectExpiredSession, ssoUnauthorizedSettleMs);
         }
+        return holdUnauthorizedRequest(err);
       } else {
         redirectExpiredSession();
+        return holdUntilNavigation();
       }
     }
     return Promise.reject(err);
