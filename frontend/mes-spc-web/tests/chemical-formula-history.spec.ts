@@ -42,7 +42,7 @@ test('shared history and reference survive overview save',async({page})=>{
  await expect(page.getByText('儲存完成：成功 1 筆，失敗 0 筆。')).toBeVisible();expect(puts[0].chemicalAnalysisFormulaVersionReason).toBe('WI-CA-001｜Rev.03');await page.getByRole('button',{name:'重新載入',exact:true}).click();await expect(page.getByText('參照文件／修改依據：WI-CA-001｜Rev.03')).toBeVisible();
  await page.getByRole('button',{name:'版本歷史',exact:true}).nth(1).click();await expect(page.getByText('此修改日期區間沒有公式版本紀錄；不會補造過去歷史。')).toBeVisible();
 });
-test('overview hides adjustment formulas on desktop and mobile and preserves them when saving concentration',async({page})=>{
+test('overview shows adjustment formulas on desktop and mobile and preserves them when saving concentration',async({page})=>{
  const config={enabled:true,concentrationFormula:'Primary',adjustmentFormula:'IF(Concentration<10,"添加","")',adjustmentAmountFormula:'Primary * 2',decimalPlaces:2,recheckConcentrationFormula:'Primary*3.177*F!B6',legacyKeep:{id:99}};
  const puts=await setup(page,false,JSON.stringify(config));await page.goto('/chemical-analysis-overview');
  const row=page.getByTestId('overview-row-1');
@@ -51,12 +51,12 @@ test('overview hides adjustment formulas on desktop and mobile and preserves the
  expect(Math.abs(widths.table-widths.container)).toBeLessThanOrEqual(2);
  for(const width of [1280,390]){
   await page.setViewportSize({width,height:844});
-  await expect(page.locator('thead th:visible')).toHaveCount(9);
-  await expect(row.locator('td:visible')).toHaveCount(9);
+  await expect(page.locator('thead th:visible')).toHaveCount(11);
+  await expect(row.locator('td:visible')).toHaveCount(11);
  }
  await row.getByTestId('overview-edit').click();
- await expect(row.getByTestId('overview-adjustmentFormula')).toBeHidden();
- await expect(row.getByTestId('overview-adjustmentAmountFormula')).toBeHidden();
+ await expect(row.getByTestId('overview-adjustmentFormula')).toBeVisible();
+ await expect(row.getByTestId('overview-adjustmentAmountFormula')).toBeVisible();
  await expect(row.getByTestId('overview-concentrationFormula')).toBeVisible();
  await row.getByTestId('overview-concentrationFormula').fill('Primary * 4');
  await page.getByRole('button',{name:/儲存變更/}).click();await expect.poll(()=>puts.length).toBe(1);

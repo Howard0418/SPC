@@ -238,9 +238,7 @@ onMounted(load);
 
 <style scoped>
 @media screen {
-  table { width: 100%; min-width: 960px; }
-  th:nth-child(6), td:nth-child(6),
-  th:nth-child(7), td:nth-child(7) { display: none !important; }
+  table { width: 100%; min-width: 1260px; }
 }
 th,td{padding:.8rem 1rem;vertical-align:top}.field,.formula-field{width:100%;border:1px solid #cbd5e1;border-radius:.65rem;padding:.55rem .7rem;background:transparent}.formula-field,.formula-preview{min-width:16rem;line-height:1.45;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.82rem;white-space:pre-wrap;overflow-wrap:anywhere}.formula-field{min-height:8.5rem;resize:vertical}.formula-preview{margin:0;border:1px solid #e2e8f0;border-radius:.65rem;background:#f8fafc;padding:.65rem .75rem;color:#0f172a}.dark .formula-preview{border-color:#334155;background:#0f172a;color:#e2e8f0}.btn-primary,.btn-outline{display:inline-flex;align-items:center;gap:.4rem;border-radius:.7rem;padding:.55rem .8rem;font-size:.875rem;font-weight:700}.btn-primary{background:#059669;color:white}.btn-outline{border:1px solid #94a3b8}.badge-green,.badge-gray,.badge-amber{border-radius:9999px;padding:.2rem .55rem;font-size:.75rem;font-weight:700;white-space:nowrap}.badge-green{background:#d1fae5;color:#047857}.badge-gray{background:#e2e8f0;color:#475569}.badge-amber{background:#fef3c7;color:#b45309}
 </style>

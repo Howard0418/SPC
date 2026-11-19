@@ -3122,3 +3122,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 待辦：瀏覽器控制服務不可用，待人工畫面驗收；中央進度表因 artifact_session 未設定未同步，原檔未覆蓋。
 
 - 2026-11-19 使用者指示中央Excel進度表後續停止例行更新；狀態改以TODO、spec／verification及CHANGELOG維護，只有當次再次明確要求時才更新Excel。同步修正AGENTS共用規則，本次未修改或覆蓋進度表。
+- 2026-11-19 `SPC-CHEM-SHOW-ADJUST-1119-TASK-001`：線別分析項目總覽恢復顯示調整公式／調整量公式，保留既有編輯、保存、版本歷史及匯出；Portal頁不變。test build與三語通過，測試站Web0.1.150已發布，API維持0.1.142/test，Web／資產／API連線驗證通過；Playwright受本機WebServer `ERR_FAILED`阻擋，待人工畫面驗收。正式未發布。
