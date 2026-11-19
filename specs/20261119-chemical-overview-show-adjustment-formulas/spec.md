@@ -34,3 +34,9 @@
 - 已發布SPC測試站Web 0.1.150；API未修改，維持0.1.142／test。
 - 測試站首頁、主JS、主CSS、API health/version皆200且MIME／test環境正確；發布資產包含兩式控制與Web 0.1.150。
 - 備份：`release/test/frontend.backup-show-adjustment-20261119-133837`。正式站未發布。
+
+## 2026-11-19 再驗證
+
+- 重新執行 `chemical-formula-history.spec.ts` 的 3 個 overview 案例，Vite WebServer 啟動後仍在 `page.goto('/chemical-analysis-overview')` 回 `ERR_FAILED`，三案皆未進入欄位斷言；未發現產品程式錯誤證據。
+- Windows 原生電腦操作 pipe 與 browser access host 均不可用，無法以自動瀏覽器替代人工登入驗收。
+- 原始碼及測試站發布狀態維持：兩式欄位存在且 screen 隱藏規則已移除；本輪無程式修改、不重複發布，仍待使用者人工畫面驗收。
