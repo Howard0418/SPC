@@ -806,5 +806,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-19 SPC 登入過期自動返回登入頁
 
-- [ ] `SPC-AUTH-EXPIRY-REDIRECT-1119-TASK-001`：P0，SPC Web；401／Token 過期自動返回 Portal 登入並保留原頁，避免 SSO 寬限期內永久停留錯誤畫面。無 DB／權限異動；測試區完成後待人工驗收，正式另行授權。[規格](specs/20261119-auth-expiry-login-redirect/spec.md)
+- [ ] `SPC-AUTH-EXPIRY-REDIRECT-1119-TASK-001`：P0，SPC Web；401／Token 過期自動返回 Portal 登入並保留原頁，短暫競態後有成功回應則取消跳轉。專項 E2E 2 項、test build、測試站 API 0.1.140／Web 0.1.146 與首頁／資產／health／version／匿名401通過；待人工驗收，正式另行授權。[規格](specs/20261119-auth-expiry-login-redirect/spec.md)／[驗證](specs/20261119-auth-expiry-login-redirect/verification.md)
 
