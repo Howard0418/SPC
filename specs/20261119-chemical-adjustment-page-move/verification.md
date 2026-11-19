@@ -27,7 +27,7 @@
 ## 未完成驗證
 
 - Windows Computer Use native pipe 與 browser access host 均不可用，無法代為完成已登入瀏覽器的實際畫面驗收；保留待人工驗收。
-- 中央進度表同步未完成：`@oai/artifact-tool` 回報 `Trusted RPC service is not configured: artifact_session`，未覆蓋原檔；依規則保留為未完成。
+- 中央進度表未覆蓋；使用者於2026-11-19明確指示後續停止例行更新，故不再列為本工作阻擋或待補項。
 
 ## 回復
 

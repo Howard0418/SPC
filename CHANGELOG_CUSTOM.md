@@ -3121,3 +3121,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 測試：貼上工具 3 passed、SPC test build 與 Portal Release build 通過；測試站 SPC Web 0.1.149、Portal Web 1.0.320，API 版本未變，連線／MIME／環境標籤通過。正式站未發布。
 - 待辦：瀏覽器控制服務不可用，待人工畫面驗收；中央進度表因 artifact_session 未設定未同步，原檔未覆蓋。
 
+- 2026-11-19 使用者指示中央Excel進度表後續停止例行更新；狀態改以TODO、spec／verification及CHANGELOG維護，只有當次再次明確要求時才更新Excel。同步修正AGENTS共用規則，本次未修改或覆蓋進度表。
