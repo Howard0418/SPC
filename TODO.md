@@ -200,7 +200,7 @@
 
 ## 2026-10-28 Portal Grafana入口（僅規劃）
 
-- [ ] `PORTAL-GRAFANA-1028-TASK-001`：P2，沿用首頁快速連結，建議名稱「3F 環境監控」，新分頁開啟指定Grafana URL且保留所有參數。[Portal主規格](../PmrPortal/specs/20261028-grafana-entry-plan/spec.md)／[中央引用](specs/20261028-portal-grafana-entry-sync/spec.md)。
+- [x] `PORTAL-GRAFANA-1028-TASK-001`：已核銷；2026-11-17依使用者要求停用測試／正式3F環境監控入口並完成人工驗收，2026-11-19中央工作池補正為完成，不再建立或恢復連結。[Portal結案](../PmrPortal/specs/20261117-remove-grafana-entry/spec.md)／[中央引用](specs/20261028-portal-grafana-entry-sync/spec.md)。
 - 後續排在原載入／計算／查詢及月報004／005之後、配色006之前；只規劃，不立即設定或實作。不改Grafana登入／儀表板、不新建API／schema；未來可能經既有admin管理新增1筆連結設定，正式仍另授權。
 - 本件只計1件，不另計中央同步父件，其他暫停／受阻維持。
 
