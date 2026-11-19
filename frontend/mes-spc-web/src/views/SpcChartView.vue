@@ -1113,12 +1113,19 @@ function closePointRemarkModal() {
 }
 
 async function refreshChartAfterPointRemarkChange(activePpcId) {
+  const refreshPpcId = Number(activePpcId);
+  if (!Number.isFinite(refreshPpcId) || refreshPpcId <= 0) return;
   closePointRemarkModal();
   hidePointContextMenu();
   chartInstance?.dispatchAction({ type: "hideTip" });
   trendChartInstance?.dispatchAction({ type: "hideTip" });
-  await loadPointRemarks(activePpcId);
-  await loadActiveChart();
+  ppcId.value = String(refreshPpcId);
+  await loadPointRemarks(refreshPpcId);
+  if (uploadBatchId.value) {
+    await loadUploadBatchChart();
+  } else {
+    await loadInteractiveChart();
+  }
   await nextTick();
   chartInstance?.dispatchAction({ type: "hideTip" });
   trendChartInstance?.dispatchAction({ type: "hideTip" });
