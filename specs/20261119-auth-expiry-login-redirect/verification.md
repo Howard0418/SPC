@@ -5,6 +5,7 @@
 - Build：三語系 2,864 鍵檢查及 Vite test build 通過。
 - 測試發布：SPC API `0.1.140`、Web `0.1.146`，Git `d32a6e0d`。
 - 實站：Web 首頁 200；主 JS `application/javascript`、CSS `text/css`；API `/api/health`、`/api/version` 200 且為 test；未登入 Overall API 回 401，符合本次導向觸發條件。
+- 環境隔離複核：瀏覽器實際同源基底 `https://spctest.pmr.com.tw/api` 回 API `0.1.140`／`test`，後端設定 `AppEnvironment=test`、資料庫 `PMR_SPC_TEST`；測試主 JS 不含正式 API `PMR-SPC-SRV:8443`。正式 API 維持 `0.1.134`／`production`，本次未更新。
 - 備份：`D:/SPC/release/backup-auth-expiry-test-20261119-20261119-092948`。
 - 正式狀態：未發布，待人工驗收及另行授權。
 - 回復：以備份目錄回復 `release/test` API／Web，重新啟動 `SpcApiTest` 集區。
