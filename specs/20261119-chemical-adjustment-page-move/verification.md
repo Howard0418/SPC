@@ -40,3 +40,9 @@
 - SPC測試站 `/chemical-adjustment-parameters` 與目前主 JavaScript 均HTTP 200，JS MIME為`application/javascript`；API health=ok、version=`0.1.155`、environment=test。
 - Portal舊網址 `/Spc/QualityAssurance` 回302，Location仍為`/Spc/Launch?returnUrl=%2Fchemical-adjustment-parameters`，沒有恢復舊Portal維護頁。
 - 本輪為現況驗證，沒有產品程式變更或重複發布；登入後實際畫面與儲存仍待人工驗收，正式未發布。
+
+## 2026-11-19 人工驗收
+
+- 使用者已確認 SPC 藥液量測調整公式新頁畫面，頁面移轉與顯示結果通過。
+- 本次僅核銷測試區人工畫面驗收狀態，沒有程式、API、資料庫、設定或網站發布變更；正式站仍須另行授權。
+- 原 Excel 進度表依既定規則不例行更新。

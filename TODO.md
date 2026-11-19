@@ -7,7 +7,7 @@
 - [x] `SPC-CHEM-SHOW-ADJUST-1119-TASK-001`：P2／測試站已發布並完成人工畫面驗收；線別分析項目總覽恢復顯示調整公式與調整量公式，Portal錄入／查詢頁仍維持隱藏。SPC Web 0.1.150，API維持0.1.142/test；正式站未發布。[規格](specs/20261119-chemical-overview-show-adjustment-formulas/spec.md)
 
 - [x] `PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001`：P0／正式發布完成，Portal＋SPC；錄入增加不列入計算及繪圖與固定備註，保存追溯但由所有 SPC 統計、能力值、規則及圖表排除。共用既有排除資料表，無 migration；正式連線、版本、環境、資產及唯讀端點驗證通過。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
-- [ ] `SPC-CHEM-ADJUST-PAGE-MOVE-1119-TASK-001`：P1／測試站已發布、待人工畫面驗收；現況貼上測試3/3、test build與i18n通過，SPC測試頁／主JS／API均正常且Portal舊頁仍302至新SPC頁。目前SPC API0.1.155／test；本輪未重複發布。[驗證](specs/20261119-chemical-adjustment-page-move/verification.md)
+- [x] `SPC-CHEM-ADJUST-PAGE-MOVE-1119-TASK-001`：P1／測試站已發布並完成人工畫面驗收；貼上測試3/3、test build與i18n通過，SPC測試頁／主JS／API均正常且Portal舊頁仍302至新SPC頁。現行SPC API0.1.155／test；正式站未發布。[驗證](specs/20261119-chemical-adjustment-page-move/verification.md)
 - [x] `PORTAL-CHEM-ADJUST-PARAMETERS-1118-TASK-001`：畫面歸屬已由 `SPC-CHEM-ADJUST-PAGE-MOVE-1119-TASK-001` 取代；既有參數儲存契約保留。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
 - [x] `PORTAL-CHEM-ADJUST-BATCH-PASTE-1118-TASK-001`：P1／實作、測試區發布及人工驗收完成；Excel 多列貼上依槽位＋分析項目配對，清理空白、先預覽再保存，空白欄不覆蓋既有值。正式站未發布。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-batch-paste.md)
 - [x] `PORTAL-PROCESS-ROLE-1118-TASK-001`：P0；製程人員角色與權限頁中文顯示完成，未擴張頁面權限或自動指派；測試API1.0.259／Web1.0.297已發布，登入畫面待人工目視。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification.md)
