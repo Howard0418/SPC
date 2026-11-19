@@ -20,6 +20,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
     ILogger<ChemicalPortalMeasurementService> logger)
 {
     private const string Marker="PortalChemicalTrace-v1";
+    internal const string PortalExclusionState="ExcludedVisible";
     private static readonly HashSet<string> ExclusionReasons = new(StringComparer.Ordinal)
     {
         "NO_OPEN_LINE_CURRENT_TANK", "CLOSE_LINE", "DETECTION_NO_OPEN_LINE"
@@ -112,12 +113,9 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 row["MeasuredValue"]=value.Stored;row["RecheckValue"]=recheck is null?"":final.Stored;
                 row["AdjustAction"]=final.Adjustment;row["AdjustAmount"]=final.AdjustmentAmount;
 
-                var isExcluded=bool.TryParse(Get(row,"IsExcluded"),out var excluded) && excluded;
-                var exclusionReason=Get(row,"ExclusionReason")?.Trim();
-                if(isExcluded && (string.IsNullOrWhiteSpace(exclusionReason) || !ExclusionReasons.Contains(exclusionReason)))
-                    throw ApiUiException.Attach(new ArgumentException("勾選不列入計算及繪圖時，必須選擇有效備註。"), "spc.api.chemicalExclusionReasonRequired");
-                row["IsExcluded"]=isExcluded?"true":"false";
-                row["ExclusionReason"]=isExcluded?exclusionReason:"";
+                var exclusion=NormalizeExclusion(Get(row,"ExclusionReason"));
+                row["IsExcluded"]=exclusion.IsExcluded?"true":"false";
+                row["ExclusionReason"]=exclusion.Reason??"";
 
             }
             foreach(var row in rows){row.Remove("ChemicalPreviewToken");row.Remove("ChemicalRecheckPreviewToken");}
@@ -159,6 +157,15 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
         }
     }
 
+    internal static (bool IsExcluded,string? Reason) NormalizeExclusion(string? value)
+    {
+        var reason=string.IsNullOrWhiteSpace(value)?null:value.Trim();
+        if(reason is null)return(false,null);
+        if(!ExclusionReasons.Contains(reason))
+            throw ApiUiException.Attach(new ArgumentException("請選擇有效的排除備註。"), "spc.api.chemicalExclusionReasonRequired");
+        return(true,reason);
+    }
+
     private async Task SyncPortalExclusionsAsync(Guid uploadBatchId,List<Dictionary<string,string?>> rows,string actor,CancellationToken ct)
     {
         var ppcIds=rows.Select(row=>int.Parse(row["PpcId"]!,System.Globalization.CultureInfo.InvariantCulture)).ToList();
@@ -183,10 +190,10 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
             existing ??= new SpcPointExclusion
             {
                 PartProcessCharacteristicId=ppcId,PointScope="VariableMeasurement",VariableMeasurementId=measurement.Id,
-                State="ExcludedHidden",IsActive=true,CreatedBy=actor,CreatedAt=DateTime.UtcNow
+                State=PortalExclusionState,IsActive=true,CreatedBy=actor,CreatedAt=DateTime.UtcNow
             };
             if(existing.Id==0)db.SpcPointExclusions.Add(existing);
-            existing.State="ExcludedHidden";existing.Reason=Get(row,"ExclusionReason");existing.UpdatedBy=actor;existing.UpdatedAt=DateTime.UtcNow;
+            existing.State=PortalExclusionState;existing.Reason=Get(row,"ExclusionReason");existing.UpdatedBy=actor;existing.UpdatedAt=DateTime.UtcNow;
         }
     }
 

@@ -177,6 +177,7 @@ const pointRemarkSaving = ref(false);
 const pointRemarkModal = ref({
   visible: false,
   text: "",
+  exclusionReason: "",
   point: null,
   existing: null
 });
@@ -449,12 +450,24 @@ const findPointRemark = (point) => {
   if (!key) return null;
   return pointRemarks.value.find(row => getRemarkIdentityKey(row) === key) || null;
 };
+const findPointExclusion = (point) => {
+  const key = getPointIdentityKey(point);
+  if (!key) return null;
+  return excludedPoints.value.find(row => getRemarkIdentityKey(row) === key) || null;
+};
+const exclusionReasonLabel = (value) => ({
+  NO_OPEN_LINE_CURRENT_TANK: t('spc.chartActions.exclusionNoOpenCurrentTank'),
+  CLOSE_LINE: t('spc.chartActions.exclusionCloseLine'),
+  DETECTION_NO_OPEN_LINE: t('spc.chartActions.exclusionDetectionNoOpen')
+}[String(value || '')] || String(value || ''));
 function applyPointRemarksToChart() {
   const points = chartResult.value?.rawDataPoints || [];
   points.forEach(point => {
     const row = findPointRemark(point);
+    const exclusion = findPointExclusion(point);
     point.pointRemarkId = row ? readField(row, "id", "Id") : null;
     point.pointRemark = row ? readField(row, "remark", "Remark") : "";
+    point.exclusionReason = exclusion ? readField(exclusion, "reason", "Reason") || "" : "";
   });
 }
 const formatRuleCode = (value) => {
@@ -868,6 +881,7 @@ async function loadExcludedPoints(activePpcId = activePpcIdValue.value) {
       params: { ppcId: Number(activePpcId) }
     });
     excludedPoints.value = res.data?.data || [];
+    applyPointRemarksToChart();
   } catch (e) {
     error.value = { key: 'spc.chartQuery.loadExcludedFailed', args: { error: getApiErrorDisplay(e) } };
     excludedPoints.value = [];
@@ -1032,9 +1046,11 @@ function openPointRemarkModal() {
     return;
   }
   const existing = findPointRemark(point);
+  const exclusion = findPointExclusion(point);
   pointRemarkModal.value = {
     visible: true,
     text: existing ? readField(existing, "remark", "Remark") || "" : "",
+    exclusionReason: exclusion ? readField(exclusion, "reason", "Reason") || "" : "",
     point,
     existing
   };
@@ -1042,7 +1058,7 @@ function openPointRemarkModal() {
 }
 
 function closePointRemarkModal() {
-  pointRemarkModal.value = { visible: false, text: "", point: null, existing: null };
+  pointRemarkModal.value = { visible: false, text: "", exclusionReason: "", point: null, existing: null };
 }
 
 async function savePointRemark() {
@@ -1665,7 +1681,8 @@ function renderECharts() {
           if (meta.sideCode && meta.sideCode !== "0") res += `<div>${htmlChartLabel("板面")}: <span class="text-blue-300 font-bold">${meta.sideCode === "1" ? "S1 (Top)" : "S2 (Bottom)"}</span></div>`;
           if (meta.lineId) res += `<div>${htmlChartLabel("產線")}: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>${htmlChartLabel("槽體")}: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
-          if (meta.pointRemark) res += `<div>${htmlChartLabel("備註")}: <span class="text-amber-200">${escapeChartText(meta.pointRemark)}</span></div>`;
+          if (meta.exclusionReason) res += `<div>${htmlChartLabel("排除備註")}: <span class="text-orange-200">${escapeChartText(exclusionReasonLabel(meta.exclusionReason))}</span></div>`;
+          if (meta.pointRemark) res += `<div>${htmlChartLabel("圖點備註")}: <span class="text-amber-200">${escapeChartText(meta.pointRemark)}</span></div>`;
           if (meta.slotId) res += `<div>${htmlChartLabel("槽位")}: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
           const phase = normalizeChemicalShift(meta.samplingPhase);
           const phaseColors = { OPEN: "text-blue-300", MIDDLE: "text-emerald-300", CLOSE: "text-orange-300" };
@@ -1882,7 +1899,8 @@ function renderTrendChart() {
           if (meta.lotNo) res += `<div>${htmlChartLabel("批號")}: <span class="text-slate-200">${escapeChartText(meta.lotNo)}</span></div>`;
           if (meta.serialNo) res += `<div>${htmlChartLabel("序號")}: <span class="text-slate-200">${escapeChartText(meta.serialNo)}</span></div>`;
           if (meta.operator) res += `<div>${htmlChartLabel("人員")}: <span class="text-slate-200">${escapeChartText(meta.operator)}</span></div>`;
-          if (meta.pointRemark) res += `<div>${htmlChartLabel("備註")}: <span class="text-amber-200">${escapeChartText(meta.pointRemark)}</span></div>`;
+          if (meta.exclusionReason) res += `<div>${htmlChartLabel("排除備註")}: <span class="text-orange-200">${escapeChartText(exclusionReasonLabel(meta.exclusionReason))}</span></div>`;
+          if (meta.pointRemark) res += `<div>${htmlChartLabel("圖點備註")}: <span class="text-amber-200">${escapeChartText(meta.pointRemark)}</span></div>`;
           if (meta.lineId) res += `<div>${htmlChartLabel("產線")}: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>${htmlChartLabel("槽體")}: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
           if (meta.slotId) res += `<div>${htmlChartLabel("槽位")}: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
@@ -2514,6 +2532,12 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
         >
           <div data-testid="chart-remark-dialog" role="dialog" :aria-label="t('spc.chartActions.remark')" class="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-4">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 class="text-sm font-black text-slate-900 dark:text-white">{{ t('spc.chartActions.remark') }}</h3><LocalePicker /></div>
+            <div data-testid="chart-action-exclusionReason" class="mb-3 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 px-3 py-2">
+              <div class="text-xs font-bold text-orange-700 dark:text-orange-300">{{ t('spc.chartActions.savedExclusionReason') }}</div>
+              <div class="mt-1 text-sm text-slate-800 dark:text-slate-100">{{ pointRemarkModal.exclusionReason ? exclusionReasonLabel(pointRemarkModal.exclusionReason) : t('spc.chartActions.noExclusionReason') }}</div>
+              <div class="mt-1 text-[11px] text-slate-500">{{ t('spc.chartActions.exclusionReasonSeparated') }}</div>
+            </div>
+            <label class="mb-1 block text-xs font-bold text-slate-600 dark:text-slate-300">{{ t('spc.chartActions.customPointRemark') }}</label>
             <textarea
               data-testid="chart-action-pointRemarkModal.text" v-model="pointRemarkModal.text"
               maxlength="500"

@@ -43,6 +43,8 @@ const chartLabelKeys = {
   "產線": "line",
   "槽體": "tank",
   "備註": "remark",
+  "排除備註": "exclusionRemark",
+  "圖點備註": "pointRemark",
   "槽位": "slot",
   "班別": "shift",
   "取樣階段": "stage",

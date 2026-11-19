@@ -27,7 +27,7 @@ export async function prepare(page:Page,path='/spc',deep=false){
   }else if(u.pathname==='/api/v1/spc/chart'){
    if(state.failChart)return route.fulfill({status:state.failChart,json:{message:raw}});const points=[0,0.2,0.4].map((value,i)=>({measuredAt:`2026-10-2${i+1}T12:00:00`,value,variableMeasurementId:state.pointIds?501+i:undefined,violatedRules:[],lotNo:raw,pointRemark:raw,outOfSpec:state.violations}));data={chartType:state.chartType,normality:{pValue:state.pValue,testName:'Anderson-Darling'},limits:{usl:10,lsl:0,target:0,ucl:8,cl:4,lcl:0},chartData:{points},secondaryChartData:{points:points.map(p=>({...p,value:0.1}))},rawDataPoints:points,subgroupSize:1,capability:{sigmaOverall:0,ca:0,pp:1.2,ppk:1.1},monitorContext:{lineName:raw,characteristicName:raw,slotName:raw}};
   }else if(u.pathname==='/api/v1/spc/point-exclusions'){
-   if(state.failExcluded)return route.fulfill({status:503,json:{message:raw}});data={data:state.restored?[]:[{id:91,variableMeasurementId:501,state:'ExcludedHidden',updatedAt:'2026-10-26T04:00:00Z'},{Id:92,AttributeMeasurementId:601,State:'ExcludedVisible'},{id:93,state:'UnknownRawState'}]};
+   if(state.failExcluded)return route.fulfill({status:503,json:{message:raw}});data={data:state.restored?[]:[{id:91,variableMeasurementId:501,state:'ExcludedHidden',reason:'CLOSE_LINE',updatedAt:'2026-10-26T04:00:00Z'},{Id:92,AttributeMeasurementId:601,State:'ExcludedVisible'},{id:93,state:'UnknownRawState'}]};
   }else if(u.pathname==='/api/v1/spc/point-remarks')data={data:state.remarkExists?[{id:201,variableMeasurementId:501,remark:state.remarkText}]:[]};
   else if(u.pathname.endsWith('/chemical-calculation-traces'))data={data:{applicable:false,rows:[]}};
   else if(u.pathname==='/api/v1/spc/chart/raw-data'){

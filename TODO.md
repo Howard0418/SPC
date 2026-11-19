@@ -831,3 +831,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] 編輯管制項目遇到 IIS 暫時更新頁時自動重試管制規則，且錯誤顯示不再暴露 HTML；測試站已驗證，正式站尚未授權發布。
 
+## 2026-11-19 藥液排除備註與圖點自由備註分離
+
+- [x] `PORTAL-SPC-CHEM-REMARK-SEPARATION-1119-TASK-001`：P0，Portal＋SPC；移除錄入頁不列入勾選，固定備註直接決定排除；固定備註點保留圖上顯示但不納入統計；SPC 圖點提示與備註對話框分離顯示固定排除原因及自由文字備註。測試區 Portal API 1.0.282／Web 1.0.321、SPC API 0.1.150／Web 0.1.157 已發布並驗證；正式另行授權。[驗證](specs/20261119-chemical-exclusion-remark-separation/verification.md)
+

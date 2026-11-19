@@ -632,5 +632,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-18 `PORTAL-PROCESS-ROLE-1118-TASK-001`完成：Portal測試區新增製程人員角色與權限頁中文顯示，未擴張功能權限或自動指派。API288、Web47與Release build通過，測試API1.0.259／Web1.0.297及實際test API基底驗證完成；登入畫面待人工目視，正式未發布。
 - 2026-11-19 [藥液量測調整公式移至 SPC](../specs/20261119-chemical-adjustment-page-move/spec.md)：維護畫面、固定格線與批次貼上改由 SPC Web 承載；Portal 只保留 SSO 入口及既有角色 Email 通知，舊網址相容導向新頁。
 - 2026-11-19 [線別分析項目總覽恢復顯示調整兩式](../specs/20261119-chemical-overview-show-adjustment-formulas/spec.md)：撤銷先前screen隱藏，桌面與手機橫向表格恢復「調整公式／調整量公式」檢視及編輯；Portal藥液新增／查詢頁維持隱藏，不改公式內容、保存契約或資料。
+- 2026-11-19 [藥液固定備註與圖點備註分離](../specs/20261119-chemical-exclusion-remark-separation/spec.md)：Portal 錄入移除「不列入」勾選，固定備註點不納入統計但保留圖點；SPC tooltip 與新增／編輯備註分開顯示固定備註及自由備註，兩者獨立保存、不互相覆蓋。
 - 2026-11-19 [管制線計算法反映於圖表](../specs/20261119-control-limit-method-rendering/spec.md)：Xbar-R與Xbar-S明確選擇標準全距、平均移動全距或樣本標準差法時，上方Xbar圖點與OOC判定須採所選方法計算的UCL／CL／LCL，不得由PPC／日期區段固定界限覆蓋；Xbar-S下方S圖維持既有算法，空白公式設定保留相容行為。測試站API0.1.144／Web0.1.152已發布，待人工畫面驗收，正式未發布。
 - 2026-11-19 [登入過期導向不閃現401錯誤](../specs/20261119-auth-expiry-login-redirect/spec.md)：受保護API回401時清除失效登入並返回Portal登入，導向期間不得先渲染未授權／載入失敗紅框；SSO短暫競態若有成功回應，須自動重試原失敗請求。錄影逐格重現與E2E通過，測試站API0.1.145／Web0.1.153已發布，正式未發布。
