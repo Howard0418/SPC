@@ -810,9 +810,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-19 Overall 與主查詢共用日期
 
-- [ ] `SPC-OVERALL-SHARED-DATE-1119-TASK-001`：P1，SPC Web；移除 Overall 內重複日期與按鈕，統一使用主查詢區日期；線別／維度不縮小 Overall 全站統計。無 DB／API 異動，測試發布後待人工驗收，正式另行授權。[規格](specs/20261119-overall-shared-date-query/spec.md)
+- [x] `SPC-OVERALL-SHARED-DATE-1119-TASK-001`：P1，SPC Web；移除 Overall 內重複日期與按鈕，統一使用主查詢區日期；2026-11-19 已驗收並發布正式（API `0.1.135`／Web `0.1.141`）。[規格](specs/20261119-overall-shared-date-query/spec.md)
 
 ## 2026-11-19 SPC 入口網站新分頁
 
-- [ ] `SPC-PORTAL-NEW-TAB-1119-TASK-001`：P1，SPC Web；右上角「入口網站」改以新分頁開啟既有 Portal 首頁，保留 SPC 原頁方便對照。無 API／DB 異動，測試發布後待人工驗收，正式另行授權。[規格](specs/20261119-portal-link-new-tab/spec.md)
+- [x] `SPC-PORTAL-NEW-TAB-1119-TASK-001`：P1，SPC Web；右上角「入口網站」改以新分頁開啟既有 Portal 首頁；2026-11-19 已驗收並發布正式（API `0.1.135`／Web `0.1.141`）。[規格](specs/20261119-portal-link-new-tab/spec.md)
 
