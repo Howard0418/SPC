@@ -1866,6 +1866,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 原因：只允許 `NO_OPEN_LINE_CURRENT_TANK`、`CLOSE_LINE`、`DETECTION_NO_OPEN_LINE`；取消勾選時停用既有 Portal 排除。
 - 邊界：排除仍計算並保存分析值，只影響 SPC 統計、規則及圖表；既有未傳欄位資料視為正常納入。
 - 2026-11-19 使用者授權正式發布；以現行正式基線只合併本項，SPC API137／Web143、Portal API259／Web284。正式唯讀端點確認排除欄位，無 migration 或資料改寫。
+- 後續確認最小正式合併遺漏已驗收滿版版型；補入同工作既有響應式全寬修正並升版 Portal API260／Web285，不改 SPC、API契約或資料。
 
 # 2026-11-18 PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001
 

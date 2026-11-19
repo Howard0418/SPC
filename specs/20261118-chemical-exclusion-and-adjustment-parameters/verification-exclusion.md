@@ -58,3 +58,12 @@
 - 正式 Web 首頁、主 JavaScript／CSS 與 MIME、API health/version、production 環境、Portal 瀏覽器實際 API 基底及兩站部署 DLL 雜湊均驗證通過。
 - 正式受保護唯讀端點確認回傳 `isExcluded`、`exclusionReason`；量測仍為 18,460 筆。未執行 migration、刪除、搬移或業務資料改寫。
 - 中央進度表第 317 列與 11/19 原生里程碑已結案，核心未完成由 31 降為 30；公式錯誤掃描 0、OpenXML 錯誤 0、取代前後雜湊一致。更新前備份 `進度表-藥液排除正式完成-20261119-120452.xlsx`。
+
+## 正式滿版補正（2026-11-19）
+
+- 根因：前次正式發布採最小合併，只帶入排除功能，遺漏同一工作中已在測試區驗收的響應式滿版版型；正式頁仍存在 `col-xl-10` 桌機寬度限制。
+- 已移除桌機欄寬上限，頁面與內容容器改為 100%／無最大寬度，安全內距採 `clamp(12px, 1.5vw, 28px)`，767.98px 以下為 8px；窄螢幕表格水平捲動契約保持。
+- Portal 正式版本：API `1.0.259` → `1.0.260`、Web `1.0.284` → `1.0.285`；回復點 `C:\ProgramData\PMR-Releases\Production\PORTAL-CHEM-FULLWIDTH-20261119-122051`。
+- 版型契約檢查與 API／Web Release build 0 警告、0 錯誤；正式 Login、app-version、API health、production 資料庫環境、JS／CSS MIME 與兩個 DLL 雜湊驗證通過。
+- 本次只修正 Portal 藥液量測錄入頁版型；SPC、輸入、公式、排除、查詢、儲存、schema 與正式資料均未修改。
+- 中央進度表第 317 列及 11/19 原生里程碑已補入正式滿版版本證據，核心未完成維持 30；公式錯誤掃描 0、OpenXML 錯誤 0。更新前備份 `進度表-正式藥液滿版補正-20261119-122322.xlsx`。
