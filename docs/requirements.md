@@ -632,3 +632,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-18 `PORTAL-PROCESS-ROLE-1118-TASK-001`完成：Portal測試區新增製程人員角色與權限頁中文顯示，未擴張功能權限或自動指派。API288、Web47與Release build通過，測試API1.0.259／Web1.0.297及實際test API基底驗證完成；登入畫面待人工目視，正式未發布。
 - 2026-11-19 [藥液量測調整公式移至 SPC](../specs/20261119-chemical-adjustment-page-move/spec.md)：維護畫面、固定格線與批次貼上改由 SPC Web 承載；Portal 只保留 SSO 入口及既有角色 Email 通知，舊網址相容導向新頁。
 - 2026-11-19 [線別分析項目總覽恢復顯示調整兩式](../specs/20261119-chemical-overview-show-adjustment-formulas/spec.md)：撤銷先前screen隱藏，桌面與手機橫向表格恢復「調整公式／調整量公式」檢視及編輯；Portal藥液新增／查詢頁維持隱藏，不改公式內容、保存契約或資料。
+- 2026-11-19 [管制線計算法反映於圖表](../specs/20261119-control-limit-method-rendering/spec.md)：Xbar-R 明確選擇標準全距、平均移動全距或樣本標準差法時，圖點與 OOC 判定須採所選方法計算的 UCL／CL／LCL，不得再由 PPC／日期區段固定界限覆蓋；空白公式設定保留既有相容行為。測試站 API0.1.143／Web0.1.151已發布，待人工畫面驗收，正式未發布。

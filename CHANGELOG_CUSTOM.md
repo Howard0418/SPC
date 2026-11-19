@@ -3123,3 +3123,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 2026-11-19 使用者指示中央Excel進度表後續停止例行更新；狀態改以TODO、spec／verification及CHANGELOG維護，只有當次再次明確要求時才更新Excel。同步修正AGENTS共用規則，本次未修改或覆蓋進度表。
 - 2026-11-19 `SPC-CHEM-SHOW-ADJUST-1119-TASK-001`：線別分析項目總覽恢復顯示調整公式／調整量公式，保留既有編輯、保存、版本歷史及匯出；Portal頁不變。test build與三語通過，測試站Web0.1.150已發布，API維持0.1.142/test，Web／資產／API連線驗證通過；Playwright受本機WebServer `ERR_FAILED`阻擋，待人工畫面驗收。正式未發布。
+## 2026-11-19 管制線計算法實際反映UCL／LCL
+- 根因：後端雖已依 `SIGMA_METHOD`、`MOVING_RANGE_OF_XBAR` 或 `STANDARD_RANGE` 算出新界限，組裝圖點時卻優先回傳 PPC／日期區段既有 UCL／CL／LCL；前端逐點管制線因此畫回舊值。
+- 修正：明確選擇 Xbar-R 計算法且可成功估算時，`uclStat/clStat/lclStat` 與 OOC 判定改採所選公式結果；未選方法或資料不足時保留既有相容回退。
+- 驗證：修正前回歸重現樣本標準差 UCL 預期13.027844932、實際99；修正後計算器4／4、相關公式16／16、完整API105通過／1略過，i18n 2865×3與test build通過。
+- 發布：SPC測試站API0.1.143／Web0.1.151；首頁、JS／CSS MIME、health、version、test環境及瀏覽器同源API基底皆驗證通過。正式未發布、DB／量測／公式設定未異動，待人工畫面驗收。

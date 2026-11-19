@@ -819,3 +819,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] `SPC-PORTAL-NEW-TAB-1119-TASK-001`：P1，SPC Web；右上角「入口網站」改以新分頁開啟既有 Portal 首頁；2026-11-19 已驗收並發布正式（API `0.1.135`／Web `0.1.141`）。[規格](specs/20261119-portal-link-new-tab/spec.md)
 
+## 2026-11-19 管制線計算法反映於圖表
+
+- [ ] `SPC-CONTROL-LIMIT-METHOD-1119-TASK-001`（P0；主系統 SPC API／相依 SPC Web；DB：無；發布：測試站已完成，正式另行授權；rollback：回復 API0.1.142／Web0.1.150）：所選方法的計算界限現已優先反映於圖點與OOC判定；修正前回歸重現UCL預期13.028／實際99，修正後焦點16、完整API105及Web build通過。測試API0.1.143／Web0.1.151，待人工切換公式確認畫面。[驗證](specs/20261119-control-limit-method-rendering/verification.md)
