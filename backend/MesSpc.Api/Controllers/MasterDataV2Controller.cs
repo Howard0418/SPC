@@ -77,7 +77,8 @@ public class ProcessesController(AppDbContext db) : ControllerBase
     /// <summary>依製程與包含端點的日期範圍查詢量測；skip/take 穩定分頁，total 為篩選後總數。</summary>
     [HttpGet("{id:int}/measurements")]
     public async Task<IActionResult> GetMeasurements(int id, [FromQuery] string type = "variable", [FromQuery] int take = 200,
-        [FromQuery] int skip = 0, [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null)
+        [FromQuery] int skip = 0, [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null,
+        [FromQuery] string? controlScope = null)
     {
         if (skip < 0 || (start.HasValue && end.HasValue && start > end))
             return ApiUiError.WithLegacyMessage(BadRequest("分頁起點不可為負數，開始日期不可晚於結束日期。"), HttpContext, "spc.api.masterPageRangeInvalid");
@@ -121,6 +122,12 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         }
 
         var variableQuery = db.VariableMeasurements.AsNoTracking().Where(x => x.ProcessId == id);
+        if (!string.IsNullOrWhiteSpace(controlScope) && !string.Equals(controlScope, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            var normalizedScope = ControlScopeCodes.Normalize(controlScope);
+            variableQuery = variableQuery.Where(x => db.PartProcessCharacteristics
+                .Any(ppc => ppc.Id == x.PartProcessCharacteristicId && ppc.ControlScope == normalizedScope));
+        }
         if (start.HasValue) variableQuery = variableQuery.Where(x => (x.PortalDailyDate ?? x.MeasuredAt) >= start.Value);
         if (end.HasValue) variableQuery = variableQuery.Where(x => (x.PortalDailyDate ?? x.MeasuredAt) <= end.Value);
         var page = await variableQuery

@@ -800,3 +800,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] `PORTAL-PARTNER-MERCHANTS-1118-TASK-001`：P2，建立特約商店專區與最小管理功能；主系統 Portal，需新主檔 migration，rollback 隱藏入口並回復前版 API／Web。
 
 > 四件依 P0、P0、P1、P2 每次只執行一件；本次未實作、未發布。[Portal規格](../PmrPortal/specs/20261118-portal-benefits-birthday-mail-enhancements/spec.md)
+## 2026-11-19 藥液歷史與咬蝕量資料歸屬隔離
+
+- [ ] `PORTAL-SPC-CHEM-HISTORY-SCOPE-1119-TASK-001`：P0，Portal＋SPC；程式與自動化測試完成，SPC 8 項／Portal 11 項通過。藥液歷史只回傳 CHEM PPC，既有 PROCESS 咬蝕量保持原值並回歸咬蝕功能。無 schema／資料異動；測試區發布與人工驗收待完成，正式另行授權。[規格](specs/20261119-chemical-history-scope-isolation/spec.md)
+
