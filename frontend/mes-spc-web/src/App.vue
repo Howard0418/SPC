@@ -206,9 +206,6 @@ const logout = createLogoutHandler({
   redirect: () => window.location.assign(portalLogoutUrl)
 });
 
-function returnToPortal() {
-  window.location.assign(portalHomeUrl);
-}
 </script>
 
 <template>
@@ -243,14 +240,15 @@ function returnToPortal() {
 
         <!-- Auth info -->
         <div v-if="authOn" class="flex flex-wrap items-center gap-3 text-sm pl-2 border-l border-slate-700/80">
-          <button
-            type="button"
+          <a
+            :href="portalHomeUrl"
+            target="_blank"
+            rel="noopener noreferrer"
             class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-blue-600/80 hover:text-white border border-slate-700 transition-all text-slate-300"
             :title="t('spc.shell.portalTitle')"
-            @click="returnToPortal"
           >
             <House class="w-3.5 h-3.5" /> {{ t("spc.shell.portal") }}
-          </button>
+          </a>
           <div v-if="currentUser" class="text-right leading-tight">
             <div class="text-xs font-bold text-white">{{ currentUser.displayName || currentUser.username }}</div>
             <div class="text-[10px] text-blue-300">{{ t(currentUser.role === 'Viewer' ? 'spc.shell.viewer' : 'spc.shell.editor') }}</div>

@@ -7,7 +7,10 @@ const testhost = readFileSync(new URL('../.env.testhost', import.meta.url), 'utf
 
 test('authenticated shell keeps Portal return and logout controls', () => {
   assert.match(testhost, /^VITE_AUTH_ENABLED=true$/m);
-  assert.match(shell, /@click="returnToPortal"/);
+  assert.match(shell, /:href="portalHomeUrl"/);
+  assert.match(shell, /target="_blank"/);
+  assert.match(shell, /rel="noopener noreferrer"/);
+  assert.doesNotMatch(shell, /@click="returnToPortal"/);
   assert.match(shell, /@click="logout"/);
   assert.match(shell, /t\("spc\.shell\.portal"\)/);
   assert.match(shell, /t\("spc\.shell\.logout"\)/);
