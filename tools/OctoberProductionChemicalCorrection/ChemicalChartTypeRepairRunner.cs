@@ -35,10 +35,16 @@ internal static class ChemicalChartTypeRepairRunner
         if (args[2] == "--verify")
         {
             var completed = await CountJobsAsync(connection, "Completed");
+            var pending = await CountJobsAsync(connection, "Pending");
+            var processing = await CountJobsAsync(connection, "Processing");
+            var failed = await CountJobsAsync(connection, "Failed");
             var repairedPpcs = await CountRepairedPpcsAsync(connection);
-            await WriteAsync(args[1], stamp, "verify", new { mode = "verify", database = DatabaseName, completed, repairedPpcs });
-            if (repairedPpcs != 25 || completed != 493)
-                throw new InvalidOperationException($"Repair verification incomplete: repairedPpcs={repairedPpcs}, completedJobs={completed}.");
+            var enabledRepairedPpcs = await CountEnabledRepairedPpcsAsync(connection);
+            var olderEligibleJobs = await CountOlderEligibleJobsAsync(connection);
+            var targetMeasurements = await CountTargetMeasurementsAsync(connection);
+            await WriteAsync(args[1], stamp, "verify", new { mode = "verify", database = DatabaseName, completed, pending, processing, failed, repairedPpcs, enabledRepairedPpcs, olderEligibleJobs, targetMeasurements });
+            if (repairedPpcs != 25 || completed != 493 || targetMeasurements != 493)
+                throw new InvalidOperationException($"Repair verification incomplete: repairedPpcs={repairedPpcs}, enabledRepairedPpcs={enabledRepairedPpcs}, completed={completed}, pending={pending}, processing={processing}, failed={failed}, olderEligibleJobs={olderEligibleJobs}, targetMeasurements={targetMeasurements}.");
             Console.WriteLine("VERIFIED: ppcs=25 I_MR; jobs=493 Completed");
             return 0;
         }
@@ -66,8 +72,12 @@ internal static class ChemicalChartTypeRepairRunner
                 "SELECT Id FROM ControlChartTypes WHERE ChartTypeCode='I_MR' AND IsEnabled=1 AND IsDeleted=0");
             var changedPpcs = await ExecuteAsync(connection, transaction, ApplyPpcSql,
                 new("@ChartTypeId", chartTypeId), new("@Actor", actor), new("@TaskCode", TaskCode));
-            if (changedPpcs != 25)
-                throw new InvalidOperationException($"Formal apply scope drift: ppcs={changedPpcs}.");
+            if (changedPpcs != plan.ToUpdate.Count)
+                throw new InvalidOperationException($"Formal apply scope drift: ppcs={changedPpcs}, expected={plan.ToUpdate.Count}.");
+            var retriedJobs = await ExecuteAsync(connection, transaction, RetryFailedJobsSql,
+                new SqlParameter("@TaskCode", TaskCode));
+            if (retriedJobs != 160)
+                throw new InvalidOperationException($"Formal retry scope drift: jobs={retriedJobs}.");
             await transaction.CommitAsync();
         }
         catch
@@ -79,7 +89,7 @@ internal static class ChemicalChartTypeRepairRunner
         var repaired = await CountRepairedPpcsAsync(connection);
         if (repaired != 25) throw new InvalidOperationException($"Post-apply PPC verification failed: {repaired}.");
         await WriteAsync(args[1], stamp, "apply", new { mode = "apply", database = DatabaseName, backup, before = snapshot, repairedPpcs = repaired });
-        Console.WriteLine("APPLIED: ppcs=25 I_MR; existing failed jobs will be retried by the statistics worker; no measurements imported");
+        Console.WriteLine("APPLIED: ppcs=25 I_MR; jobs=160 queued for statistics retry; no measurements imported");
         return 0;
     }
 
@@ -146,6 +156,37 @@ internal static class ChemicalChartTypeRepairRunner
         return Convert.ToInt32(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
     }
 
+    private static async Task<int> CountEnabledRepairedPpcsAsync(SqlConnection connection)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT COUNT(*) FROM PartProcessCharacteristics p JOIN ControlChartTypes c ON c.Id=p.ChartTypeId WHERE p.Id IN ({TargetPpcIds}) AND p.IsEnabled=1 AND p.IsDeleted=0 AND c.ChartTypeCode='I_MR' AND c.IsEnabled=1 AND c.IsDeleted=0";
+        return Convert.ToInt32(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<int> CountOlderEligibleJobsAsync(SqlConnection connection)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+SELECT COUNT(*) FROM ChemicalStatisticsJobs j
+WHERE j.Status<>'Completed' AND (j.NextAttemptAtUtc IS NULL OR j.NextAttemptAtUtc<=SYSUTCDATETIME())
+AND j.CreatedAtUtc < (SELECT MIN(t.CreatedAtUtc) FROM ChemicalStatisticsJobs t JOIN ChemicalCalculationReceipts r ON r.Id=t.ReceiptId WHERE r.PayloadJson LIKE '%'+@TaskCode+'%');
+""";
+        command.Parameters.AddWithValue("@TaskCode", TaskCode);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<int> CountTargetMeasurementsAsync(SqlConnection connection)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+SELECT COUNT(DISTINCT j.VariableMeasurementId)
+FROM ChemicalStatisticsJobs j JOIN ChemicalCalculationReceipts r ON r.Id=j.ReceiptId
+WHERE r.PayloadJson LIKE '%'+@TaskCode+'%';
+""";
+        command.Parameters.AddWithValue("@TaskCode", TaskCode);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
+    }
+
     private static async Task<int> ScalarIntAsync(SqlConnection connection, SqlTransaction transaction, string sql)
     {
         await using var command = connection.CreateCommand(); command.Transaction = transaction; command.CommandText = sql;
@@ -199,6 +240,14 @@ FROM PartProcessCharacteristics p JOIN targets t ON t.Id=p.Id WHERE p.ChartTypeI
     private const string CountJobsSql = """
 SELECT COUNT(*) FROM ChemicalStatisticsJobs j JOIN ChemicalCalculationReceipts r ON r.Id=j.ReceiptId
 WHERE r.PayloadJson LIKE '%'+@TaskCode+'%' AND j.Status=@Status;
+""";
+
+    private const string RetryFailedJobsSql = """
+UPDATE j
+SET Status='Pending',NextAttemptAtUtc=NULL,LastError=NULL
+FROM ChemicalStatisticsJobs j
+JOIN ChemicalCalculationReceipts r ON r.Id=j.ReceiptId
+WHERE r.PayloadJson LIKE '%'+@TaskCode+'%' AND j.Status='Failed';
 """;
 
     private const string TargetPpcIds = "2425,2426,2430,2431,2432,2438,2440,2444,2457,2459,2463,2473,2475,2478,2480,2481,2528,2539,2544,2546,2547,2555,2556,2557,2558";
