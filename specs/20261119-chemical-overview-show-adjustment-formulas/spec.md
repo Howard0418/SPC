@@ -40,3 +40,8 @@
 - 重新執行 `chemical-formula-history.spec.ts` 的 3 個 overview 案例，Vite WebServer 啟動後仍在 `page.goto('/chemical-analysis-overview')` 回 `ERR_FAILED`，三案皆未進入欄位斷言；未發現產品程式錯誤證據。
 - Windows 原生電腦操作 pipe 與 browser access host 均不可用，無法以自動瀏覽器替代人工登入驗收。
 - 原始碼及測試站發布狀態維持：兩式欄位存在且 screen 隱藏規則已移除；本輪無程式修改、不重複發布，仍待使用者人工畫面驗收。
+
+## 2026-11-19 人工驗收
+
+- 使用者已確認線別分析項目總覽畫面，調整公式與調整量公式顯示結果通過。
+- 本次只核銷測試區人工驗收狀態，沒有程式、API、資料庫、設定或網站發布變更；正式站仍須另行授權。

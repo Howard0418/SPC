@@ -4,7 +4,7 @@
 
 ## 2026-11-18 藥液量測排除與調整參數（僅規劃）
 
-- [ ] `SPC-CHEM-SHOW-ADJUST-1119-TASK-001`：P2／測試站已發布、待人工畫面驗收；線別分析項目總覽恢復顯示調整公式與調整量公式，Portal錄入／查詢頁仍維持隱藏。SPC Web 0.1.150，API維持0.1.142/test。[規格](specs/20261119-chemical-overview-show-adjustment-formulas/spec.md)
+- [x] `SPC-CHEM-SHOW-ADJUST-1119-TASK-001`：P2／測試站已發布並完成人工畫面驗收；線別分析項目總覽恢復顯示調整公式與調整量公式，Portal錄入／查詢頁仍維持隱藏。SPC Web 0.1.150，API維持0.1.142/test；正式站未發布。[規格](specs/20261119-chemical-overview-show-adjustment-formulas/spec.md)
 
 - [x] `PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001`：P0／正式發布完成，Portal＋SPC；錄入增加不列入計算及繪圖與固定備註，保存追溯但由所有 SPC 統計、能力值、規則及圖表排除。共用既有排除資料表，無 migration；正式連線、版本、環境、資產及唯讀端點驗證通過。[規格](specs/20261118-chemical-exclusion-and-adjustment-parameters/spec.md)
 - [ ] `SPC-CHEM-ADJUST-PAGE-MOVE-1119-TASK-001`：P1／測試站已發布、待人工畫面驗收；現況貼上測試3/3、test build與i18n通過，SPC測試頁／主JS／API均正常且Portal舊頁仍302至新SPC頁。目前SPC API0.1.155／test；本輪未重複發布。[驗證](specs/20261119-chemical-adjustment-page-move/verification.md)
