@@ -802,5 +802,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 > 四件依 P0、P0、P1、P2 每次只執行一件；本次未實作、未發布。[Portal規格](../PmrPortal/specs/20261118-portal-benefits-birthday-mail-enhancements/spec.md)
 ## 2026-11-19 藥液歷史與咬蝕量資料歸屬隔離
 
-- [ ] `PORTAL-SPC-CHEM-HISTORY-SCOPE-1119-TASK-001`：P0，Portal＋SPC；程式與自動化測試完成，SPC 8 項／Portal 11 項通過。藥液歷史只回傳 CHEM PPC，既有 PROCESS 咬蝕量保持原值並回歸咬蝕功能。無 schema／資料異動；測試區發布與人工驗收待完成，正式另行授權。[規格](specs/20261119-chemical-history-scope-isolation/spec.md)
+- [ ] `PORTAL-SPC-CHEM-HISTORY-SCOPE-1119-TASK-001`：P0，Portal＋SPC；程式與自動化測試完成，使用者已確認測試區資料並完成人工驗收，依指示不再發布測試區。藥液歷史只回傳 CHEM PPC，既有 PROCESS 咬蝕量保持原值並回歸咬蝕功能。無 schema／資料異動；正式發布仍待另行授權。[規格](specs/20261119-chemical-history-scope-isolation/spec.md)／[驗證](specs/20261119-chemical-history-scope-isolation/verification.md)
 
