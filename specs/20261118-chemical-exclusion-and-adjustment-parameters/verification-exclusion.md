@@ -48,3 +48,13 @@
 - Portal Web 51項測試通過；Release build 0警告、0錯誤。API、資料庫、公式及保存欄位契約未變。
 - 已發布 Portal 測試區 API `1.0.269`／Web `1.0.307`；Login、`app-version`、測試 API health、同源 API 路徑及實際 JavaScript／CSS 均驗證可達，環境為 `test`。正式區未發布。
 - 中央進度表第317列已補入本次測試與發布證據，狀態仍為「測試區已發布／待人工驗收」。更新前備份 `進度表-20261118-note-select-before.xlsx`；原檔更新前 SHA256 `196F16093D97F919F079DE2CA7DAB4A97C709694F2B37C3AE6EA46ADB44727BB`、更新後 `A8E8BACAFE4D96EA942032B9788F24DA2738F42E4A57B662130CA1E57495DE27`。Artifact Tool 重開、151個圖形、公式錯誤0與ZIP 13 entries／空名稱0通過；Microsoft Excel人工開啟未執行。
+
+## 正式發布（2026-11-19）
+
+- 使用者明確授權後，以現行已驗收正式版本為基線，只合併本項排除功能；未帶入其他尚未授權功能。
+- SPC 正式版本：API `0.1.136` → `0.1.137`、Web `0.1.142` → `0.1.143`；回復點 `C:\ProgramData\PMR-Releases\Production\SPC-CHEM-EXCLUSION-20261119-120044`。
+- Portal 正式版本：API `1.0.258` → `1.0.259`、Web `1.0.283` → `1.0.284`；回復點 `C:\ProgramData\PMR-Releases\Production\PORTAL-CHEM-EXCLUSION-20261119-120131`。
+- SPC API Release build 0 警告／0 錯誤、排除回歸 16 項通過；Portal API／Web Release build 通過、排除畫面契約 4 項通過；SPC i18n 2,864×3 與 production build 通過。
+- 正式 Web 首頁、主 JavaScript／CSS 與 MIME、API health/version、production 環境、Portal 瀏覽器實際 API 基底及兩站部署 DLL 雜湊均驗證通過。
+- 正式受保護唯讀端點確認回傳 `isExcluded`、`exclusionReason`；量測仍為 18,460 筆。未執行 migration、刪除、搬移或業務資料改寫。
+- 中央進度表第 317 列與 11/19 原生里程碑已結案，核心未完成由 31 降為 30；公式錯誤掃描 0、OpenXML 錯誤 0、取代前後雜湊一致。更新前備份 `進度表-藥液排除正式完成-20261119-120452.xlsx`。

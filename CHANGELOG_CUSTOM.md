@@ -3087,3 +3087,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 正式受保護端點以 `controlScope=CHEM` 實查 PT1 374、PT2 342、QE1 289、QE2 511，與資料庫 CHEM 分類一致；PROCESS／EtchReport 13,663 筆保留於咬蝕功能。
 - 首頁、主資產、API health/version、production 環境與部署 DLL 雜湊驗證通過；無 migration、刪除、搬移或資料改寫。回復點 `SPC-CHEM-SCOPE-20261119-114455`。
 
+## 2026-11-19 藥液量測不列入計算與繪圖正式發布
+
+- `PORTAL-SPC-CHEM-EXCLUSION-1118-TASK-001` 經授權發布正式區；SPC API `0.1.136` → `0.1.137`、Web `0.1.142` → `0.1.143`。
+- 排除狀態沿用既有 `SpcPointExclusions`，固定三項備註；排除量測保留追溯，但不進入 SPC 統計、能力值、規則或圖表。
+- 建置、排除回歸、正式健康／版本／資產／環境／雜湊及唯讀端點驗證通過；無 migration 或正式資料改寫。回復點 `SPC-CHEM-EXCLUSION-20261119-120044`。
+
