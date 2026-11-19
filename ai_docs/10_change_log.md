@@ -1911,4 +1911,5 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：正式藥液查詢只取 PPC `ControlScope=CHEM`；既有 `PROCESS / EtchReport` 咬蝕量保留原值、批次及追溯，只由咬蝕功能使用。
 - 正式唯讀盤點確認 CHEM 4,797 筆、PROCESS 13,663 筆、孤兒 0 筆；本階段不修改正式資料或 schema。
 - 既有程式修正與測試已在測試區，正式 SPC／Portal API 發布須另行授權。
+- 使用者授權後，以已接受正式基線只加入 `controlScope=CHEM` 契約並同步升版；正式 SPC API136／Web142、Portal API258／Web283 已發布。四線受保護端點 CHEM 數量 374／342／289／511 與資料庫一致，PROCESS／EtchReport 13,663 筆保持；無 schema 或資料寫入。
 

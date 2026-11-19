@@ -3081,3 +3081,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 正式頁混入根因為 SPC 與 Portal 正式 API 尚未發布 `controlScope=CHEM` 隔離契約；不需刪除、搬移或改寫量測。
 - SPC焦點1項、Portal代理11項回歸通過；正式發布仍待另行授權。
 
+## 2026-11-19 藥液與咬蝕量正式查詢隔離發布
+
+- `PORTAL-SPC-CHEM-HISTORY-SCOPE-1119-TASK-001` 經授權發布正式區；SPC 正式 API `0.1.135` → `0.1.136`、Web `0.1.141` → `0.1.142`。
+- 正式受保護端點以 `controlScope=CHEM` 實查 PT1 374、PT2 342、QE1 289、QE2 511，與資料庫 CHEM 分類一致；PROCESS／EtchReport 13,663 筆保留於咬蝕功能。
+- 首頁、主資產、API health/version、production 環境與部署 DLL 雜湊驗證通過；無 migration、刪除、搬移或資料改寫。回復點 `SPC-CHEM-SCOPE-20261119-114455`。
+
