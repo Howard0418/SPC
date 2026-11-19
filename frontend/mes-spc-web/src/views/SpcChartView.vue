@@ -1112,15 +1112,25 @@ function closePointRemarkModal() {
   pointRemarkModal.value = { visible: false, text: "", exclusionReason: "", point: null, existing: null };
 }
 
+async function refreshChartAfterPointRemarkChange(activePpcId) {
+  closePointRemarkModal();
+  hidePointContextMenu();
+  chartInstance?.dispatchAction({ type: "hideTip" });
+  trendChartInstance?.dispatchAction({ type: "hideTip" });
+  await loadPointRemarks(activePpcId);
+  await loadActiveChart();
+  await nextTick();
+  chartInstance?.dispatchAction({ type: "hideTip" });
+  trendChartInstance?.dispatchAction({ type: "hideTip" });
+}
+
 async function savePointRemark() {
   const payload = getPointRemarkPayload(pointRemarkModal.value.point, pointRemarkModal.value.text);
   if (!payload) return;
   pointRemarkSaving.value = true;
   try {
     await api.put("/v1/spc/point-remarks", payload);
-    await loadPointRemarks(payload.partProcessCharacteristicId);
-    await loadActiveChart();
-    closePointRemarkModal();
+    await refreshChartAfterPointRemarkChange(payload.partProcessCharacteristicId);
   } catch (e) {
     alert(t('spc.chartActions.remarkFailed', { error: getApiErrorMessage(e) }));
   } finally {
@@ -1140,9 +1150,7 @@ async function clearPointRemark() {
     } else {
       await api.put("/v1/spc/point-remarks", payload);
     }
-    await loadPointRemarks(payload.partProcessCharacteristicId);
-    await loadActiveChart();
-    closePointRemarkModal();
+    await refreshChartAfterPointRemarkChange(payload.partProcessCharacteristicId);
   } catch (e) {
     alert(t('spc.chartActions.clearFailed', { error: getApiErrorMessage(e) }));
   } finally {
