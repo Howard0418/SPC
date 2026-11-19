@@ -3099,3 +3099,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 正式頁移除 `col-xl-10` 桌機寬度限制，改為響應式全寬與安全內距；不修改 SPC、公式、排除、查詢、儲存或資料。
 - Release build、正式 Login／資產／app-version／API health／production 環境及部署雜湊通過；回復點 `PORTAL-CHEM-FULLWIDTH-20261119-122051`。
 
+## 2026-11-19 常態分析與 Minitab 對齊人工驗收
+
+- `SPC-NORMALITY-MINITAB-1109-TASK-001` 已由使用者確認測試區人工驗收通過；狀態更新為「人工驗收通過／正式待授權」。
+- 本次沒有程式、資料庫或網站更新；正式站未發布。Minitab未公開自動分箱演算法及未提供golden fixture的限制維持記錄。
+
