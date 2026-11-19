@@ -833,7 +833,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-19 藥液排除備註與圖點自由備註分離
 
-- [x] `PORTAL-SPC-CHEM-REMARK-SEPARATION-1119-TASK-001`：P0，Portal＋SPC；移除錄入頁不列入勾選，固定下拉只保存備註且正常列入統計／繪圖；查詢頁「備註」、SPC 圖點提示與備註對話框均顯示日報下拉備註，並與自由文字備註分離；日報重載以 PPC ID 優先帶回選項；自由備註於 tooltip 執行時依量測 ID 讀取，避免 API 已有資料但圖點未顯示。測試區 Portal API 1.0.285／Web 1.0.324、SPC API 0.1.154／Web 0.1.160 已發布並驗證；正式另行授權。[驗證](specs/20261119-chemical-exclusion-remark-separation/verification.md)
+- [x] `PORTAL-SPC-CHEM-REMARK-SEPARATION-1119-TASK-001`：P0，Portal＋SPC；移除錄入頁不列入勾選，固定下拉只保存備註且正常列入統計／繪圖；查詢頁「備註」、SPC 圖點提示與備註對話框均顯示日報下拉備註，並與自由文字備註分離；日報重載以 PPC ID 優先帶回選項；自由備註於 tooltip 執行時依量測 ID 讀取，備註每20字換行且字級14px。測試區 Portal API 1.0.285／Web 1.0.324、SPC API 0.1.154／Web 0.1.161 已發布並驗證；正式另行授權。[驗證](specs/20261119-chemical-exclusion-remark-separation/verification.md)
 
 - [x] `PORTAL-SPC-CHEM-LEGACY-EXCLUSION-CLEANUP-1119-TASK-001`：P0，SPC 測試資料；已軟停用 2 筆舊版 Portal「不列入」checkbox 建立的固定原因隱藏排除，保留人工排除及量測原始資料；正式資料另行授權。[驗證](specs/20261119-legacy-portal-chemical-exclusion-cleanup/verification.md)
 

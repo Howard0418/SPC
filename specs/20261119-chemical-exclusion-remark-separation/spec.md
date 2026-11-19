@@ -15,6 +15,7 @@
 - Given 圖點已有 Portal 固定備註，When 開啟新增／編輯備註，Then 對話框分區顯示固定備註及獨立自由文字備註。
 - Given 使用者保存或清空自由文字備註，When 重新載入，Then 只異動 `SpcPointRemark`，固定下拉對應的排除原因與排除狀態不變。
 - Given 圖點自由備註已儲存且量測 ID 相符，When 使用者不重新查詢而直接移到圖點，Then 提示框立即顯示「圖點自由備註」及內容。
+- Given 固定備註或自由備註超過 20 個字，When 顯示圖點提示，Then 每 20 個 Unicode 字元自動換行，提示內容使用 14px 字級且不橫向撐滿圖表。
 - Given 固定備註有值，When SPC 確認批次，Then 強制 `IsExcluded=false`，保存備註但不得建立排除。
 
 ## 驗證與回復

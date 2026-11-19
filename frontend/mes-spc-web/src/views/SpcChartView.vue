@@ -459,6 +459,19 @@ const measurementEntryRemarkReason = (point) => {
   const row = findMeasurementEntryRemark(point);
   return String(point?.exclusionReason ?? point?.ExclusionReason ?? (row ? readField(row, "reason", "Reason") : "") ?? "");
 };
+const formatTooltipRemark = (value, charactersPerLine = 20) => String(value || "")
+  .split(/\r?\n/)
+  .flatMap(line => {
+    const characters = Array.from(line);
+    if (characters.length === 0) return [""];
+    const chunks = [];
+    for (let index = 0; index < characters.length; index += charactersPerLine) {
+      chunks.push(characters.slice(index, index + charactersPerLine).join(""));
+    }
+    return chunks;
+  })
+  .map(escapeChartText)
+  .join("<br>");
 const findPointExclusion = (point) => {
   const key = getPointIdentityKey(point);
   if (!key) return null;
@@ -1709,20 +1722,21 @@ function renderECharts() {
       trigger: "axis",
       backgroundColor: "rgba(15, 23, 42, 0.95)",
       borderColor: "#334155",
-      textStyle: { color: "#fff", fontSize: 12 },
+      textStyle: { color: "#fff", fontSize: 14 },
+      extraCssText: "max-width:min(460px,calc(100vw - 32px));white-space:normal;overflow-wrap:anywhere;line-height:1.5;",
       formatter: (params) => {
         let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${escapeChartText(params[0].axisValue)}</div>`;
         const meta = params[0].data?.meta;
         if (meta) {
-          res += `<div class="text-[10px] text-slate-400 mb-2">`;
+          res += `<div class="text-slate-400 mb-2" style="font-size:14px;line-height:1.5">`;
           if (meta.lotNo) res += `<div>${htmlChartLabel("批號")}: <span class="text-slate-200">${escapeChartText(meta.lotNo)}</span></div>`;
           if (meta.sideCode && meta.sideCode !== "0") res += `<div>${htmlChartLabel("板面")}: <span class="text-blue-300 font-bold">${meta.sideCode === "1" ? "S1 (Top)" : "S2 (Bottom)"}</span></div>`;
           if (meta.lineId) res += `<div>${htmlChartLabel("產線")}: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>${htmlChartLabel("槽體")}: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
           const entryReason = measurementEntryRemarkReason(meta);
           const freeRemark = pointRemarkText(meta);
-          if (entryReason) res += `<div>${htmlChartLabel("排除備註")}: <span class="text-orange-200">${escapeChartText(exclusionReasonLabel(entryReason))}</span></div>`;
-          if (freeRemark) res += `<div>${htmlChartLabel("圖點備註")}: <span class="text-amber-200">${escapeChartText(freeRemark)}</span></div>`;
+          if (entryReason) res += `<div>${htmlChartLabel("排除備註")}: <span class="text-orange-200">${formatTooltipRemark(exclusionReasonLabel(entryReason))}</span></div>`;
+          if (freeRemark) res += `<div>${htmlChartLabel("圖點備註")}: <span class="text-amber-200">${formatTooltipRemark(freeRemark)}</span></div>`;
           if (meta.slotId) res += `<div>${htmlChartLabel("槽位")}: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
           const phase = normalizeChemicalShift(meta.samplingPhase);
           const phaseColors = { OPEN: "text-blue-300", MIDDLE: "text-emerald-300", CLOSE: "text-orange-300" };
@@ -1930,19 +1944,20 @@ function renderTrendChart() {
       trigger: "axis",
       backgroundColor: "rgba(15, 23, 42, 0.95)",
       borderColor: "#334155",
-      textStyle: { color: "#fff", fontSize: 12 },
+      textStyle: { color: "#fff", fontSize: 14 },
+      extraCssText: "max-width:min(460px,calc(100vw - 32px));white-space:normal;overflow-wrap:anywhere;line-height:1.5;",
       formatter: (params) => {
         let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${escapeChartText(params[0].axisValue)}</div>`;
         const meta = params[0].data?.meta;
         if (meta) {
-          res += `<div class="text-[10px] text-slate-400 mb-2">`;
+          res += `<div class="text-slate-400 mb-2" style="font-size:14px;line-height:1.5">`;
           if (meta.lotNo) res += `<div>${htmlChartLabel("批號")}: <span class="text-slate-200">${escapeChartText(meta.lotNo)}</span></div>`;
           if (meta.serialNo) res += `<div>${htmlChartLabel("序號")}: <span class="text-slate-200">${escapeChartText(meta.serialNo)}</span></div>`;
           if (meta.operator) res += `<div>${htmlChartLabel("人員")}: <span class="text-slate-200">${escapeChartText(meta.operator)}</span></div>`;
           const entryReason = measurementEntryRemarkReason(meta);
           const freeRemark = pointRemarkText(meta);
-          if (entryReason) res += `<div>${htmlChartLabel("排除備註")}: <span class="text-orange-200">${escapeChartText(exclusionReasonLabel(entryReason))}</span></div>`;
-          if (freeRemark) res += `<div>${htmlChartLabel("圖點備註")}: <span class="text-amber-200">${escapeChartText(freeRemark)}</span></div>`;
+          if (entryReason) res += `<div>${htmlChartLabel("排除備註")}: <span class="text-orange-200">${formatTooltipRemark(exclusionReasonLabel(entryReason))}</span></div>`;
+          if (freeRemark) res += `<div>${htmlChartLabel("圖點備註")}: <span class="text-amber-200">${formatTooltipRemark(freeRemark)}</span></div>`;
           if (meta.lineId) res += `<div>${htmlChartLabel("產線")}: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>${htmlChartLabel("槽體")}: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
           if (meta.slotId) res += `<div>${htmlChartLabel("槽位")}: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;

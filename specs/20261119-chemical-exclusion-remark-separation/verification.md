@@ -4,11 +4,12 @@
 - SPC API：`ChemicalPortalExclusionTests` 7/7 通過，確認固定備註只保存、不建立排除，並可從日報 payload 依 PPC 讀取。
 - SPC Web：備註相關 Playwright 4/4 通過；繁中畫面另留本機驗證截圖 `test-remark-separated.png`（不納入版本庫）。
 - i18n：三語 2,876 keys 檢查通過；Web test build 通過。
-- 測試區：Portal API `1.0.285`／Web `1.0.324`；SPC API `0.1.154`／Web `0.1.160`。
+- 測試區：Portal API `1.0.285`／Web `1.0.324`；SPC API `0.1.154`／Web `0.1.161`。
 - 圖表資料投影：固定備註同步附加至 `rawDataPoints`、`chartData.points` 及次圖點；Playwright 直接驗證 ECharts 實際 series meta 為 `CLOSE_LINE`。
 - Portal 查詢頁：欄名改為「備註」，由日報 payload 的 `ExclusionReason` 顯示中文下拉備註；不再以啟用排除紀錄決定內容或顯示排除狀態。
 - 保存重載：資料庫確認 PPC 2587 最近兩次 payload 均保存 `CLOSE_LINE`；修正日報重載為 PPC ID 優先配對，槽位＋分析項目僅供舊資料回退。API 焦點測試 8/8 通過。
 - 自由備註顯示：測試庫 PPC 2551 的量測 91882 存在有效自由備註，圖表 API 的主圖點亦帶相同量測 ID；tooltip 改於顯示時依 ID 讀取目前備註。備註 Playwright 4/4 通過，包含儲存後 ECharts meta 與 tooltip 立即顯示、清除後立即移除。
+- 提示可讀性：45字備註的瀏覽器測試確認輸出為20／20／5字三行，實際計算樣式為14px；備註 Playwright 4/4 通過。
 - 連線：Portal 與 SPC 首頁、主要 JavaScript／CSS、health／version、瀏覽器實際 API 基底均成功，環境標籤為 `test`。
 - 資料契約：固定下拉備註存 `SpcPointExclusion.Reason`；圖點自由備註存 `SpcPointRemark.Remark`，兩者互不覆蓋。
 - 統計契約：固定備註點正常列入統計與繪圖；只有 SPC 人工排除影響統計。
