@@ -45,7 +45,7 @@
 
 ## 2026-11-04 藥液歷史「無法判定」（P0／執行中）
 
-- [ ] `SPC-CHEM-HISTORY-JUDGMENT-1104-TASK-001`：P0，SPC主責、Portal／TransFiles相依；T-001～T-004已完成。測試庫1,611筆Unknown均明示缺歷史證據原因與補件建議，寫入0；測試SPC API0.1.109／Portal API1.0.221／Web1.0.261已發布驗證。[盤點](specs/20261104-chemical-history-judgment-unknown/inventory-20261104.md)／[驗證](specs/20261104-chemical-history-judgment-unknown/verification.md)。T-005登入畫面／截圖與T-006整案收尾仍未完成；不得套目前主檔回判舊資料，正式資料與正式發布另行授權。
+- [x] `SPC-CHEM-HISTORY-JUDGMENT-1104-TASK-001`：T-001～T-004既有成果保留；使用者於2026-11-19確認匯入資料工作不做，T-005／T-006取消、不再執行且不列未完成。[取消紀錄](specs/20261119-import-work-cancellation/spec.md)
 
 ## 2026-11-04 分析項目規格／管制界限總覽（P1／只規劃）
 
@@ -57,7 +57,7 @@
 
 ## 2026-11-03 咬蝕固定規則與漏匯防護（正式API已部署／人工待驗）
 
-- [ ] `TRANSFILES-ETCH-1103-TASK-001`：P0，工具109／SPC96及主要356／Portal12通過，第二次受控取代與防重查回已實作。正式API102／Portal218及兩站專用開關已部署，69／74表及134份10384筆唯讀吻合／未重匯；本輪使用者正式登入後API102與32子組載入通過。日期前端另獲授權完成Web118，Portal247保持。原生EXE及正式工具登入／preview仍待人工，[正式紀錄](specs/20261103-etch-import-completeness/formal-release.md)。核心42／SPC20，無schema／正式量測寫入／排程，其他待辦保持。
+- [x] `TRANSFILES-ETCH-1103-TASK-001`：既有程式、API發布與查回證據保留；使用者於2026-11-19確認後續匯入資料工作不做，EXE／正式工具preview人工驗收取消，不再列未完成。[取消紀錄](specs/20261119-import-work-cancellation/spec.md)
 
 ## 2026-11-03 SPC 使用者活動稽核（001～008測試完成，009部分完成；現核心42／涉及SPC18）
 
@@ -166,14 +166,14 @@
 |---|---|---|---|
 |1|TRANSFILES-PROD-1028-TASK-001|P1|[契約與來源環境防護已完成](specs/20261028-transfiles-production-identity/spec.md)；SPC／Portal HTTPS、DB最小權限、DPAPI、SSO launch及唯讀主檔通過；正式入口與SPC健康正常。|
 |2|TRANSFILES-PROD-1028-TASK-002|P1|三類來源路徑設定、檔案穩定檢查與格式修正建議；依001。11/10已完成藥液／咬蝕11/01～11/10切片：藥液UNC路徑、補液位／更槽排除、早／中班與N1/N2開收線解析已測；三類完整設定與錯誤報告仍未完成。|
-|3|TRANSFILES-PROD-1028-TASK-003|P1|藥液正式匯入、初複驗／日期公式追溯；依001／002。|
-|4|TRANSFILES-PROD-1028-TASK-004|P1|咬蝕正式流程程式與測試完成；待正式來源小批、Portal／SPC雙站查回與防重驗收。|
-|5|TRANSFILES-PROD-1028-TASK-005|P1|落塵Particle匯入程式與測試完成；待正式來源小批、四粒徑查回與防重驗收。|
-|6|TRANSFILES-PROD-1028-TASK-006|P1|共用runner、去重、檢查點與限次重試實作／測試完成；待正式runner身分與中斷續傳驗收。|
-|7|TRANSFILES-PROD-1028-TASK-007|P2|Windows排程腳本完成；待執行主機建立工作、核准身分及啟用授權。|
-|8|TRANSFILES-PROD-1028-TASK-008|P2|獨立交付包完成；待三類正式小批、回復演練與排程啟用驗收。|
+|3|TRANSFILES-PROD-1028-TASK-003|P1|取消／不執行；保留既有程式與測試，不做正式匯入。|
+|4|TRANSFILES-PROD-1028-TASK-004|P1|取消／不執行；不做咬蝕正式小批。|
+|5|TRANSFILES-PROD-1028-TASK-005|P1|取消／不執行；不做落塵正式小批。|
+|6|TRANSFILES-PROD-1028-TASK-006|P1|取消／不執行；不做正式runner驗收。|
+|7|TRANSFILES-PROD-1028-TASK-007|P2|取消／不執行；不建立或啟用排程。|
+|8|TRANSFILES-PROD-1028-TASK-008|P2|取消／不執行；不做正式交付驗收。|
 
-001～002已完成；003～008皆已有程式／腳本／交付成果，但正式來源小批、runner／排程啟用與正式查回仍待授權驗收，因此轉檔核心未完成仍為6件。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
+001～002已完成；003～008既有程式／腳本／交付成果保留，但使用者於2026-11-19確認後續匯入工作取消，6件均不再列未完成。既有10/14框架、10/20日期公式協定與10/22落塵修補不重複列入；舊TransFiles API-CONNECTION-TASK-005人工故障驗收暫緩保持。
 
 > 2026-11-10 `TRANSFILES-NOV-DAILY-1110-TASK-001` 唯讀預檢完成：修正藥液UNC路徑，補液位／更槽排除，中班及N1/N2開收線分離；62項通過。藥液368列、咬蝕21份1,750點可進入後續對帳，11/10 QE1缺S4/S14隔離。本切片不新增核心未完計數；測試庫對帳、正式補匯及09:00排程仍沿002～008管理。
 
@@ -790,7 +790,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] `PORTAL-PERMISSION-ROLE-FILTER-1117-TASK-001`：P1，Portal主責；使用者完成角色查詢人工驗收並授權正式。正式 API249／Web274，Swagger角色參數、資料庫備份、Login／資產、API production 與匿名401驗證通過。[規格](../PmrPortal/specs/20261117-permission-role-filter/spec.md)。核心46件／Portal相關17件。
 - [x] `PORTAL-EMPLOYEE-GATE-MAIL-1117-TASK-001`：P1，Portal主責；使用者確認測試功能並授權正式。正式API247／Web272基準只加入總務Email通知必要相依，關聯API45項／權限頁15項通過；備份驗證及正式Login／資產／API production／401通過，正式API248／Web273。[規格](../PmrPortal/specs/20261117-employee-gate-email/spec.md)。核心49件／Portal相關20件。
 > 2026-11-18 `SPC-CHEM-QE2-SCHEDULE-GAP-1118-TASK-001`：正式QE2主槽／酸洗七項已補齊2026-11-02及11/03不可變公式排程；兩次備份驗證、各日21組預覽、保護資料與冪等通過。新增後同次完成，不列入未完成；網站版本保持API0.1.134／Web0.1.140。[驗證](specs/20261118-qe2-production-schedule-gap/verification.md)
-> 2026-11-18 `TRANSFILES-CHEM-OPERATOR-FALLBACK-1118-TASK-001`：藥液日報有分析者時保留原值；缺少或空白時，GUI與新舊資料轉檔均改輸出「轉檔工具匯入」，不再使用User01。新增2項回歸且GUI共38項通過、5模組編譯及新版EXE啟動通過；已重新打包 `2026.11.18.1` 並更新主工具，待人工轉檔驗收。未呼叫API、未匯入或回寫資料，仍列為1件未完成小工作。[規格](specs/20261118-chemical-import-operator-fallback/spec.md)
+> 2026-11-19 `TRANSFILES-CHEM-OPERATOR-FALLBACK-1118-TASK-001`：既有程式、測試與打包結果保留；使用者確認匯入資料工作不做，人工轉檔驗收取消，不再列未完成。[取消紀錄](specs/20261119-import-work-cancellation/spec.md)
 
 ## 2026-11-18 入口網站福利、生日賀卡與總務通知（只規劃）
 
