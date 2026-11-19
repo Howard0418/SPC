@@ -173,6 +173,7 @@ const pointExclusionSaving = ref(false);
 const excludedPoints = ref([]);
 const excludedPointsLoading = ref(false);
 const pointRemarks = ref([]);
+const measurementEntryRemarks = ref([]);
 const pointRemarkSaving = ref(false);
 const pointRemarkModal = ref({
   visible: false,
@@ -455,6 +456,11 @@ const findPointExclusion = (point) => {
   if (!key) return null;
   return excludedPoints.value.find(row => getRemarkIdentityKey(row) === key) || null;
 };
+const findMeasurementEntryRemark = (point) => {
+  const key = getPointIdentityKey(point);
+  if (!key) return null;
+  return measurementEntryRemarks.value.find(row => getRemarkIdentityKey(row) === key) || null;
+};
 const exclusionReasonLabel = (value) => ({
   NO_OPEN_LINE_CURRENT_TANK: t('spc.chartActions.exclusionNoOpenCurrentTank'),
   CLOSE_LINE: t('spc.chartActions.exclusionCloseLine'),
@@ -464,10 +470,10 @@ function applyPointRemarksToChart() {
   const points = chartResult.value?.rawDataPoints || [];
   points.forEach(point => {
     const row = findPointRemark(point);
-    const exclusion = findPointExclusion(point);
+    const entryRemark = findMeasurementEntryRemark(point);
     point.pointRemarkId = row ? readField(row, "id", "Id") : null;
     point.pointRemark = row ? readField(row, "remark", "Remark") : "";
-    point.exclusionReason = exclusion ? readField(exclusion, "reason", "Reason") || "" : "";
+    point.exclusionReason = entryRemark ? readField(entryRemark, "reason", "Reason") || "" : "";
   });
 }
 const formatRuleCode = (value) => {
@@ -812,6 +818,7 @@ async function loadUploadBatchChart() {
     });
     chartResult.value = res.data;
     await loadExcludedPoints(ppcId.value);
+    await loadMeasurementEntryRemarks(ppcId.value);
     await loadPointRemarks(ppcId.value);
     loading.value = false;
     await nextTick();
@@ -845,6 +852,7 @@ async function loadInteractiveChart() {
     });
     chartResult.value = res.data;
     await loadExcludedPoints(activePpcId);
+    await loadMeasurementEntryRemarks(activePpcId);
     await loadPointRemarks(activePpcId);
     loading.value = false;
     await nextTick();
@@ -907,6 +915,23 @@ async function loadPointRemarks(activePpcId = activePpcIdValue.value) {
   }
 }
 
+async function loadMeasurementEntryRemarks(activePpcId = activePpcIdValue.value) {
+  if (!activePpcId) {
+    measurementEntryRemarks.value = [];
+    return;
+  }
+  try {
+    const res = await api.get("/v1/spc/measurement-entry-remarks", {
+      params: { ppcId: Number(activePpcId) }
+    });
+    measurementEntryRemarks.value = res.data?.data || [];
+    applyPointRemarksToChart();
+  } catch (e) {
+    error.value = { key: 'spc.chartQuery.loadRemarksFailed', args: { error: getApiErrorDisplay(e) } };
+    measurementEntryRemarks.value = [];
+  }
+}
+
 async function drawSingleChart(row) {
   if (row?.groupType === "TREND_CHART" || row?.chartKind === "趨勢圖") {
     router.push({ path: "/trend-chart", query: { ppcId: row.partProcessCharacteristicId } });
@@ -966,6 +991,7 @@ async function returnToSummary() {
   selectedPointIndex.value = -1;
   excludedPoints.value = [];
   pointRemarks.value = [];
+  measurementEntryRemarks.value = [];
   showExcludedPointsPanel.value = false;
   selectedSummaryRow.value = null;
   ppcId.value = "";
@@ -1046,11 +1072,11 @@ function openPointRemarkModal() {
     return;
   }
   const existing = findPointRemark(point);
-  const exclusion = findPointExclusion(point);
+  const entryRemark = findMeasurementEntryRemark(point);
   pointRemarkModal.value = {
     visible: true,
     text: existing ? readField(existing, "remark", "Remark") || "" : "",
-    exclusionReason: exclusion ? readField(exclusion, "reason", "Reason") || "" : "",
+    exclusionReason: entryRemark ? readField(entryRemark, "reason", "Reason") || "" : "",
     point,
     existing
   };
