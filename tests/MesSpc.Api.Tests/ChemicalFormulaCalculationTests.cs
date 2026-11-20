@@ -5,6 +5,66 @@ namespace MesSpc.Api.Tests;
 
 public class ChemicalFormulaCalculationTests
 {
+    [Fact]
+    public void NamedAdjustmentParametersAreAvailableCaseInsensitively()
+    {
+        const string config = """
+            {"enabled":true,"concentrationFormula":"Primary","tankCapacityLiters":1000,
+             "additionControlValue":20,"dilutionControlValue":22,
+             "adjustmentFormula":"IF(Concentration<addition_control_value,\"添加\",IF(Concentration>DILUTION_CONTROL_VALUE,\"稀釋\",\"\"))",
+             "adjustmentAmountFormula":"ROUND((ADDITION_CONTROL_VALUE-Concentration)*tank_capacity_liters/1000,1)&\" L\""}
+            """;
+
+        var addition = ChemicalFormulaCalculation.Calculate(config, "18", null, "[]", null, null, null);
+        var dilution = ChemicalFormulaCalculation.Calculate(config, "23", null, "[]", null, null, null);
+
+        addition.Adjustment.Should().Be("添加");
+        addition.AdjustmentAmount.Should().Be("2 L");
+        dilution.Adjustment.Should().Be("稀釋");
+    }
+
+    [Theory]
+    [InlineData("TANK_CAPACITY_LITERS")]
+    [InlineData("ADDITION_CONTROL_VALUE")]
+    [InlineData("DILUTION_CONTROL_VALUE")]
+    public void ReferencedMissingAdjustmentParameterIsRejected(string parameter)
+    {
+        var config = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            enabled = true,
+            concentrationFormula = "Primary",
+            adjustmentFormula = $"IF({parameter}>0,\"設定\",\"\")"
+        });
+
+        Action action = () => ChemicalFormulaCalculation.Calculate(config, "1", null, "[]", null, null, null);
+
+        action.Should().Throw<ArgumentException>().WithMessage($"*{parameter}*");
+    }
+
+    [Theory]
+    [InlineData("tankCapacityLiters", "0")]
+    [InlineData("additionControlValue", "-1")]
+    [InlineData("dilutionControlValue", "0")]
+    public void NonPositiveAdjustmentParameterIsRejectedEvenWhenFormulaDoesNotReferenceIt(string name, string value)
+    {
+        var config = $"{{\"enabled\":true,\"concentrationFormula\":\"Primary\",\"{name}\":{value}}}";
+
+        Action action = () => ChemicalFormulaCalculation.Calculate(config, "1", null, "[]", null, null, null);
+
+        action.Should().Throw<ArgumentException>().WithMessage("*必須大於 0*");
+    }
+
+    [Fact]
+    public void LegacyFormulaDoesNotRequireAdjustmentParameters()
+    {
+        var result = ChemicalFormulaCalculation.Calculate(
+            "{\"enabled\":true,\"concentrationFormula\":\"Primary*2\",\"adjustmentFormula\":\"IF(Concentration<5,\\\"添加\\\",\\\"\\\")\"}",
+            "2", null, "[]", null, null, null);
+
+        result.Raw.Should().Be("4");
+        result.Adjustment.Should().Be("添加");
+    }
+
     [Theory]
     [InlineData("0.3524", "53.504")]
     [InlineData("0.3525", "53.656")]

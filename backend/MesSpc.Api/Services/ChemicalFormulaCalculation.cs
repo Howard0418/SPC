@@ -12,7 +12,7 @@ public sealed record ChemicalCalculatedValue(string Raw, string Stored, string A
 /// <summary>Explicit-offset dates, mandatory inputs and versioned Portal-compatible chemical calculation.</summary>
 public static class ChemicalFormulaCalculation
 {
-    public const string EngineVersion = "portal-excel8-v4-three-decimal-input";
+    public const string EngineVersion = "portal-excel8-v5-adjustment-parameters";
     public const string PrecisionPolicy = "input-3dp-output-3dp-away-from-zero-v1";
     public const int InputDecimalPlaces = 3;
     public const int OutputDecimalPlaces = 3;
@@ -69,8 +69,18 @@ public static class ChemicalFormulaCalculation
         if (lsl.HasValue) cells["LSL"] = lsl.Value;
         if (usl.HasValue) cells["USL"] = usl.Value;
         if (target.HasValue) cells["TARGET"] = target.Value;
+        AddAdjustmentParameter("TANK_CAPACITY_LITERS", config.TankCapacityLiters);
+        AddAdjustmentParameter("ADDITION_CONTROL_VALUE", config.AdditionControlValue);
+        AddAdjustmentParameter("DILUTION_CONTROL_VALUE", config.DilutionControlValue);
         foreach (var cell in JsonSerializer.Deserialize<List<ChemicalFTableHistoryCell>>(fCellsJson, JsonOptions) ?? [])
             if (cell.NumericValue.HasValue) cells[ChemicalFTableService.NormalizeCellAddress("F!" + cell.CellAddress.Replace("F!", "", StringComparison.OrdinalIgnoreCase))] = cell.NumericValue.Value;
+        void AddAdjustmentParameter(string name, decimal? value)
+        {
+            if (!value.HasValue) return;
+            if (value.Value <= 0)
+                throw ApiUiException.Attach(new ArgumentException($"藥液調整參數 {name} 必須大於 0，空白表示未設定。"), "spc.api.chemicalConfigInvalid");
+            cells[name] = value.Value;
+        }
         decimal? raw = null;
         string Evaluate(string? formula, bool numeric)
         {
@@ -124,4 +134,5 @@ public static class ChemicalFormulaCalculation
 }
 
 public sealed record ChemicalCalculationConfig(bool Enabled = false, string ConcentrationFormula = "", string? AdjustmentFormula = null,
-    string? AdjustmentAmountFormula = null, int DecimalPlaces = 2, string? RecheckConcentrationFormula = null);
+    string? AdjustmentAmountFormula = null, int DecimalPlaces = 2, string? RecheckConcentrationFormula = null,
+    decimal? TankCapacityLiters = null, decimal? AdditionControlValue = null, decimal? DilutionControlValue = null);

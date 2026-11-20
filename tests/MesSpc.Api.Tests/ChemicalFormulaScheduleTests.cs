@@ -62,6 +62,23 @@ public sealed class ChemicalFormulaScheduleTests
     }
 
     [Fact]
+    public async Task PreviewUsesAdjustmentParametersFromScheduledImmutableFormulaVersion()
+    {
+        await using var db=Db(); await Seed(db); var svc=Service(db);
+        var mapping=await db.PartProcessCharacteristics.SingleAsync();
+        mapping.ChemicalAnalysisConfigJson="{\"enabled\":true,\"concentrationFormula\":\"Primary\",\"additionControlValue\":99}";
+        var scheduled=await db.ChemicalAnalysisFormulaVersions.SingleAsync(x=>x.Id==2);
+        scheduled.ConfigJson="{\"enabled\":true,\"concentrationFormula\":\"Primary*ADDITION_CONTROL_VALUE\",\"additionControlValue\":3}";
+        await db.SaveChangesAsync();
+
+        await svc.PublishAsync(1,Request(),"editor",default);
+        var preview=await svc.PreviewAsync(1,Input(),"editor",default);
+
+        preview.FormulaVersionId.Should().Be(2);
+        preview.Result.Raw.Should().Be("3.705");
+    }
+
+    [Fact]
     public async Task StaleRevisionAndChangedInputOrActorAreRejected()
     {
         await using var db=Db(); await Seed(db); var svc=Service(db);

@@ -1,7 +1,7 @@
 # 技術計畫
 
 - 功能 ID：`20261120-chemical-adjustment-excel-alignment`
-- 規格版本：1
+- 規格版本：3
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響檔案
@@ -29,6 +29,7 @@
 3. 在公式儲存格集合加入 `TANK_CAPACITY_LITERS`、`ADDITION_CONTROL_VALUE`、`DILUTION_CONTROL_VALUE`。
 4. 未引用的空參數不影響既有公式；引用空參數沿用「未知輸入不得當 0」原則回明確錯誤。
 5. 只把已確認 Excel 公式轉為網站語法；既有公式不批次改寫。
+6. 試算從有效排程選定的不可變公式版本讀取三參數；目前 PPC 的未排程異動不覆蓋該版本，維持歷史可重現性。
 
 ### 階段 3：總覽交叉確認（TASK-003）
 

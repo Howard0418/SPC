@@ -1,3 +1,9 @@
+## 2026-11-20 SPC-CHEM-ADJUST-ALIGN-1120-TASK-002 計算參數契約
+
+- 先以紅燈測試確認計算器尚不認得三個調整參數，再加入不分大小寫的 `TANK_CAPACITY_LITERS`、`ADDITION_CONTROL_VALUE`、`DILUTION_CONTROL_VALUE`；公式引用未設定參數沿用未知輸入拒絕，已設定為0／負數亦拒絕。
+- 排程試算固定讀取有效排程所選的不可變公式版本參數，PPC目前未排程異動不改寫歷史結果；舊公式無須補參數且輸出保持。引擎升為 `portal-excel8-v5-adjustment-parameters`，API升為 `0.1.161`；未修改公式、F、PPC、量測或資料庫，無migration。
+- 計算／排程聚焦46項通過；擴大本次相關75項中73通過，完整614項中587通過／16項既有失敗／11略過，未冒充全綠。測試站發布、Web／資產／API與Playwright瀏覽器實際API基底驗證見[驗證紀錄](specs/20261120-chemical-adjustment-excel-alignment/verification.md)。正式站未發布；本件完成後中央未完成小工作8件，TASK-003／004仍待執行。
+
 ## 2026-11-20 藥液調整管制值與公式唯讀對帳
 
 - 固定來源日報表 SHA-256，將142列合併為114個來源身分並唯讀對照PMR_SPC_TEST：110唯一配對、4來源未配對、3網站額外，無一對多歧義。
