@@ -52,6 +52,13 @@ const form = ref({
 });
 const formErr = ref("");
 const visiblePermissionCatalog = computed(() => permissionCatalog.value.filter(permission => !removedEquipmentPermissions.has(permission.code)));
+const permissionNameByCode = computed(() => new Map(permissionCatalog.value.map(permission => [permission.code, permission.name || permission.label || permission.code])));
+
+function displayedPermissions(item) {
+  return [...new Set(item.pagePermissions || [])]
+    .filter(code => !removedEquipmentPermissions.has(code))
+    .map(code => ({ code, name: permissionNameByCode.value.get(code) || code }));
+}
 
 async function load() {
   err.value = "";
@@ -341,6 +348,7 @@ onMounted(load);
               <th class="py-4 px-6">{{ t('spc.settings.nameCode') }}</th>
               <th class="py-4 px-6">{{ t('spc.settings.operatorDepartment') }}</th>
               <th class="py-4 px-6">{{ t('spc.settings.accountRole') }}</th>
+              <th class="py-4 px-6 min-w-64">{{ t('spc.settings.pagePermissions') }}</th>
               <th class="py-4 px-6">{{ t('spc.settings.alertEmail') }}</th>
               <th class="py-4 px-6 text-center">{{ t('spc.settings.employment') }}</th>
               <th class="py-4 px-6 text-right">{{ t('spc.settings.actions') }}</th>
@@ -348,10 +356,10 @@ onMounted(load);
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-300">
             <tr v-if="loading && rows.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400">{{ t('spc.settings.loadingPeople') }}</td>
+              <td colspan="8" class="py-12 text-center text-slate-400">{{ t('spc.settings.loadingPeople') }}</td>
             </tr>
             <tr v-else-if="filteredRows.length === 0">
-              <td colspan="7" class="py-12 text-center text-slate-400 font-medium">{{ t('spc.settings.noPeople') }}</td>
+              <td colspan="8" class="py-12 text-center text-slate-400 font-medium">{{ t('spc.settings.noPeople') }}</td>
             </tr>
             <tr
               v-else
@@ -381,6 +389,28 @@ onMounted(load);
                 ]">
                   {{ item.role === 'Editor' ? t('spc.settings.editor') : t('spc.settings.viewer') }}
                 </span>
+              </td>
+              <td class="py-4 px-6 text-xs align-top">
+                <details
+                  v-if="displayedPermissions(item).length"
+                  :data-testid="`settings-pagePermissions-${item.id}`"
+                  class="group/permissions"
+                >
+                  <summary class="cursor-pointer select-none font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                    {{ t('spc.settings.permissionCount', { count: displayedPermissions(item).length }) }}
+                  </summary>
+                  <div class="mt-2 flex max-w-md flex-wrap gap-1.5">
+                    <span
+                      v-for="permission in displayedPermissions(item)"
+                      :key="permission.code"
+                      class="inline-flex rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
+                      :title="permission.code"
+                    >
+                      {{ permission.name }}
+                    </span>
+                  </div>
+                </details>
+                <span v-else class="text-slate-400">{{ t('spc.settings.noPagePermissions') }}</span>
               </td>
               <td class="py-4 px-6 font-mono text-xs text-slate-600 dark:text-slate-300">
                 <div class="flex items-center gap-1.5">
