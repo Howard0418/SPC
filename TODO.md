@@ -853,4 +853,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 > 001／002 四類通知已以隔離資料分流並各試寄一封，SMTP 均接受（`e3c1120a`）。待確認實際到信及登入後的站台勾選、保存、重載與事件驗收。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
 ## 2026-11-20 OOS／OOC 郵件連到異常處置
 
-- [ ] `SPC-ALERT-MAIL-WORKFLOW-1120-TASK-001`：P1／SPC。郵件連結定位警報、查看管制圖及儲存異常處置。測試 Web `0.1.170`／API `0.1.159` 已發布，待從新警報郵件登入驗收。[規格與驗證](specs/20261120-alert-email-workflow-link/spec.md)
+- [ ] `SPC-ALERT-MAIL-WORKFLOW-1120-TASK-001`：P1／SPC。郵件連結改為與選單相同的完整異常單簽核處置清單，補入、捲動並醒目定位對應警報；沿用列內管制圖與異常處置保存。測試 Web `0.1.171`／API `0.1.160` 已發布，自動化與實際建置驗證通過，待從新警報郵件登入驗收。[規格與驗證](specs/20261120-alert-email-workflow-link/spec.md)
