@@ -1,3 +1,7 @@
+## 2026-11-20 SMTP 公式通知接點盤點
+
+- 核對調整量／濃度公式保存、版本還原、排程及 SPC 稽核交易；記錄交易提交後才通知的要求及 Portal 管制值通知邊界。僅同步規格與待辦。[規格](specs/20261120-smtp-notification-recipient-routing/spec.md)
+
 ## 2026-11-20 SMTP OOS／OOC 收件驗收前檢查
 
 - 測試站設定檔的 SMTP 主機與範例相同，工作站端 DNS 無法解析，且登入操作服務不可用。實際收信驗收待可用測試 SMTP 與登入工作階段。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
