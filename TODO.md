@@ -16,7 +16,7 @@
 - [x] `PORTAL-CHEM-ADJUST-BATCH-PASTE-1118-TASK-001`：P1／實作、測試區發布及人工驗收完成；Excel 多列貼上依槽位＋分析項目配對，清理空白、先預覽再保存，空白欄不覆蓋既有值。正式站未發布。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-batch-paste.md)
 - [x] `PORTAL-PROCESS-ROLE-1118-TASK-001`：P0；製程人員角色與權限頁中文顯示完成，未擴張頁面權限或自動指派；測試API1.0.259／Web1.0.297已發布，登入畫面待人工目視。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification.md)
 - [x] `PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001`：P1／測試區 Email 版已完成；2026-11-20 使用者確認人工收信驗收通過。添加／稀釋管制值有效值異動且提交成功後，以既有 SMTP 寄給啟用的品保與製程角色有效個人 Email，重複地址去重；同值、只改槽容／備註或保存失敗不通知。正式區未發布，須另行授權。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-control-notify.md)
-- [ ] `PORTAL-CHEM-ADJUST-REMARK-1118-TASK-001`：P1／待人工驗收；程式、自動測試及測試站發布完成；備註最多500字，留版本／稽核且不參與計算。2026-11-20 已複核 SPC 測試入口及環境，瀏覽器操作服務不可用，登入後新增、修改、清空與重載仍待驗。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-adjustment-remark.md)
+- [x] `PORTAL-CHEM-ADJUST-REMARK-1118-TASK-001`：P1／測試區驗收完成；2026-11-20 使用者確認 SPC 維護頁的備註人工驗收通過。備註最多500字，留版本／稽核且不參與計算。正式發布待另行授權。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-adjustment-remark.md)
 
 > 2026-11-09 `PORTAL-BIRTHDAY-SIZE-1105-TASK-001` 使用者確認測試正常後完成正式R4：API1.0.218原檔保持、Web1.0.248；備份、Web／CSS MIME、API health／production及401通過。正式畫面列人工確認；核心41／SPC18。[驗證](../PmrPortal/specs/20261105-birthday-card-readable-size/verification.md)
 

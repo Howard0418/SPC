@@ -1,3 +1,7 @@
+## 2026-11-20 藥液調整參數備註人工驗收
+
+- 使用者確認 SPC 測試站備註功能人工驗收完成，工作池已核銷。正式發布待另行授權。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-adjustment-remark.md)
+
 ## 2026-11-20 藥液調整參數備註測試站複核
 
 - SPC 測試入口、主資產及 API `0.1.156`／`test` 連線正常。瀏覽器與 Windows 操作服務不可用，登入後新增、修改、清空及重載仍待人工驗收，本次無資料寫入或發布。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-adjustment-remark.md)
