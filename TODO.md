@@ -13,6 +13,10 @@
 
 - [ ] `SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：P0／SPC；重導守衛期間的401已改為可結束錯誤，避免人員清單永久載入。2026-11-20續作重跑核心4項通過；目前測試站Web `0.1.172`／API `0.1.161/test`、資產、環境及匿名401均正常。Windows操作服務native pipe離線，仍待有效登入使用者重走錄影路徑人工驗收；正式未授權。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
 
+## 2026-11-20 藥液歷史異常稽核證據判定回歸（僅登錄）
+
+- [ ] `SPC-CHEM-MALFORMED-AUDIT-JUDGMENT-1120-TASK-001`：P1／SPC API；稽核整案續驗時發現3組非物件／破損`UploadDetail.PayloadJson`的獨立測試，預期歷史判定`Unknown`但實得`OK`。先診斷保存規格證據與目前／最近規格fallback優先序，不得將破損稽核當成可信證據；未修程式、DB或站台。[規格](specs/20261120-chemical-malformed-audit-judgment-regression/spec.md)
+
 ## 2026-11-18 團保名冊複製貼上匯入
 
 - [x] `PORTAL-GI-PASTE-IMPORT-1118-TASK-001`：使用者確認驗收並授權正式發布；團保資料管理已改為固定九欄格線，可從任一格貼上並自動增列，保留預檢、逐列錯誤、確認匯入及批次歷程。首次正式包造成藥液錄入頁回退，已以完整已驗收正式候選重建修正；正式 API 1.0.256／Web 1.0.281，團保格線、最新版藥液頁、production health、資產、設定與資料保護驗證通過。[規格](specs/20261118-group-insurance-paste-import/spec.md)
@@ -91,7 +95,7 @@
 - [x] `SPC-AUDIT-1103-TASK-006`：P1，測試站成功進頁、查詢／篩選與Xlsx匯出事件95～106完成實際驗收；12筆可信actor、Test環境、canonical route、允許清單與敏感遮罩正確，重複ClientEventId 0。正式未發布；截圖整案驗收依009。[驗證](specs/20261109-audit-navigation-read-activity/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-007`：P2，稽核查詢／匯出API與頁面、游標分頁、六類篩選及獨立明示權限已完成；測試API0.1.110／Web0.1.121，522後端與本件前端2項、三語系build及Web／資產／health／version通過。正式未發布；登入畫面與截圖依009。[驗證](specs/20261109-audit-query-export/verification.md)。
 - [x] `SPC-AUDIT-1103-TASK-008`：P2，180／365日及730／1825日政策、加密封存、legal hold、容量摘要與受控維護API完成；531通過／11既有隔離略過。PMR_SPC_TEST備份VERIFYONLY、migration與既有199筆指紋保持，API0.1.111；執行開關停用，正式未發布。核心未完成42、SPC18、完成196；下一件009未開始。[驗證](specs/20261109-audit-retention-archive/verification.md)。
-- [ ] `SPC-AUDIT-1103-TASK-009`：P2，同機雙程序／同一PMR_SPC_TEST效能3輪均通過；非稽核讀取提前短路，高風險業務資料與稽核改為同交易／同次SaveChanges。35項焦點、113項稽核回歸及Release build通過，測試API0.1.116與實際新增／刪除Part稽核驗證完成。內建與Windows瀏覽器服務均不可用，登入後查詢／匯出、異動摘要與遮罩截圖仍待驗，故本件不核銷；正式發布另授權。[摘要規格](specs/20261109-audit-change-summary/spec.md)／[整案驗證](specs/20261109-audit-e2e-acceptance/verification.md)。
+- [ ] `SPC-AUDIT-1103-TASK-009`：P2，同機雙程序／同一PMR_SPC_TEST效能3輪均通過；非稽核讀取提前短路，高風險業務資料與稽核改為同交易／同次SaveChanges。2026-11-20精確重跑113項稽核回歸通過、3項SQL隔離略過；PMR_SPC_TEST 6,903筆的環境錯置、非法Details、敏感字串及重複ClientEventId皆0。測試站現行API `0.1.161/test`及Web／資產／匿名401正常。Windows操作服務native pipe仍不可用，登入後查詢／匯出、異動摘要與遮罩截圖仍待驗，故本件不核銷；正式發布另授權。[摘要規格](specs/20261109-audit-change-summary/spec.md)／[整案驗證](specs/20261109-audit-e2e-acceptance/verification.md)。
 
 「操作」已固定為業務動作、實際送出的查詢／篩選／匯出與成功進頁，不記滑鼠移動、每次按鍵或捲動；SPC只記自身可見的SSO交換，不擴張Portal帳密登入。截圖只作Git外測試驗收證據；正式附件另立高風險工作。TASK-001四項政策已明示核准。
 

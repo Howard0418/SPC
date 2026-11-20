@@ -2,6 +2,15 @@
 
 狀態：部分完成；T3已完成，T4受瀏覽器服務阻擋，TASK-009仍列未完成。
 
+## 2026-11-20 續驗
+
+- Windows操作技能依規定列舉視窗，同一輕量呼叫重試、重置JavaScript kernel後再初始化及重試，仍回報`Computer Use native pipe is unavailable`，因此未操作登入、權限、查詢或匯出，也未生成異動摘要／遮罩截圖。T4仍未通過。
+- 精確稽核回歸篩選（排除另一個藥液歷史測試類別）113項通過、3項SQL隔離測試依現行環境略過、0失敗。
+- `PMR_SPC_TEST`唯讀重查為6,903筆AuditEvents：環境錯置0、Details JSON非法或過長0、敏感關鍵字命中0、ClientEventId重複0；查詢／匯出事件62、主檔新增／刪除444，封存批次／封存事件／legal hold均0。
+- 測試站首頁、主JavaScript `index-BZ75TLhy.js`、CSS `index-BJMaQS-8.css`均回200且MIME正確；`/api/health`與`/api/version`皆回`0.1.161/test`，同源匿名`/api/v1/audit/events`回401。
+- 廣義`FullyQualifiedName~Audit`篩選額外帶入3組`ChemicalSavedSpecificationTests.MalformedOrNonObjectAuditCannotCrashHistoryOrBecomeEvidence`並可獨立重現：預期`Unknown`、實得`OK`。該項屬藥液歷史證據優先序，已另登錄`SPC-CHEM-MALFORMED-AUDIT-JUDGMENT-1120-TASK-001`，本件不跨範圍修正。
+- 本次未修改程式、資料、權限、版本或站台，測試／正式均未發布。
+
 ## 已完成
 
 - 完整後端回歸531通過、11個既有明示隔離測試略過、0失敗；稽核查詢前端2項通過，測試版三語系build通過。
