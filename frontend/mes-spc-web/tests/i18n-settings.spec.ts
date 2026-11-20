@@ -234,14 +234,19 @@ for (const locale of ["zh-TW", "zh-CN", "en-US"])
     const { writes, errors } = await prepare(page, "/settings/smtp");
     await expect(page.getByTestId("settings-form.password")).toHaveValue("");
     await page.getByTestId("settings-form.port").fill("110s");
+    const ooc = page.getByRole("checkbox", { name: / OOC$/ });
+    await expect(ooc).toBeChecked();
+    await ooc.uncheck();
     await page.getByTestId("locale-select").selectOption(locale);
     await page.locator("form button[type=submit]").click();
+    await expect.poll(() => writes.length).toBe(1);
     expect(writes[0].body).toMatchObject({
       host: "smtp.example.invalid",
       port: 110,
       enableSsl: true,
       password: "",
       recipientOperatorIds: [1],
+      recipientSelection: { outOfSpec: [1], outOfControl: [], adjustmentFormula: [], concentrationFormula: [] },
     });
     await page.getByTestId("settings-sendTestEmail").click();
     await expect.poll(() => writes.length).toBe(2);

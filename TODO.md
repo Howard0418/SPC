@@ -847,5 +847,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 ## 2026-11-20 SMTP 郵件通知依類型選擇收件人（規劃）
 
-- [ ] `SPC-SMTP-RECIPIENTS-1120-TASK-001`：P1／SPC／未開始。先處理 OOS、OOC 獨立收件與舊名單相容，加入四類收件人矩陣。涉及通知權限及持久化，依全工作池排序逐件執行。[規格](specs/20261120-smtp-notification-recipient-routing/spec.md)
+- [ ] `SPC-SMTP-RECIPIENTS-1120-TASK-001`：P1／SPC。OOS／OOC 分類與舊名單相容已實作；測試 Web `0.1.168`／API `0.1.157` 已發布並通過連線驗證，待登入與實際收信驗收。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
 - [ ] `SPC-SMTP-RECIPIENTS-1120-TASK-002`：P2／SPC／未開始，依賴 001。接上調整量及濃度公式實質修改通知，核對 SPC／Portal 實際保存入口及寄送責任。[規格](specs/20261120-smtp-notification-recipient-routing/spec.md)

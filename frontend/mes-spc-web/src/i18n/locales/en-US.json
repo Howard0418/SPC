@@ -1949,6 +1949,7 @@
     "settings": {
       "configuration": "System configuration",
       "smtpTitle": "SMTP server and quality alert settings",
+      "recipientType": { "outOfSpec": "OOS", "outOfControl": "OOC", "adjustmentFormula": "Adjustment formula changes", "concentrationFormula": "Concentration formula changes", "pending": "Pending activation", "invalidEmail": "Fix this email in the operator directory", "fallback": "OOS or OOC alerts use the default address below when no valid recipient is selected. Select all and Clear apply to the displayed operators." },
       "smtpDescription": "Configure automatic email delivery for SPC out-of-control (OOC) and out-of-specification (OOS) alerts, including local backup paths.",
       "connection": "Server and connection",
       "host": "SMTP server host",

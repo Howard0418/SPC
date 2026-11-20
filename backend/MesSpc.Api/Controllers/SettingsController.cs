@@ -38,10 +38,12 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
             .Select(x => new { x.Id, x.OperatorCode, x.OperatorName, x.Department, x.Email })
             .ToListAsync();
         var setting = await db.SpcAlertNotificationSettings.OrderBy(x => x.Id).FirstOrDefaultAsync();
+        var legacyIds = ParseRecipientIds(setting?.RecipientOperatorIdsJson);
         return Ok(new
         {
             smtp = dto,
-            recipientOperatorIds = ParseRecipientIds(setting?.RecipientOperatorIdsJson),
+            recipientOperatorIds = legacyIds,
+            recipientSelection = AlertRecipientSelection.Read(config),
             operators,
             departments = operators.Select(x => x.Department).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().OrderBy(x => x)
         });
@@ -78,10 +80,33 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
 
             node["SmtpSettings"] = smtpObject;
 
+            if (dto.RecipientSelection is { } selection)
+            {
+                if (selection.OutOfSpec is null || selection.OutOfControl is null ||
+                    selection.AdjustmentFormula is null || selection.ConcentrationFormula is null)
+                    return InvalidRecipient();
+                var selected = selection.OutOfSpec.Concat(selection.OutOfControl)
+                    .Concat(selection.AdjustmentFormula).Concat(selection.ConcentrationFormula).Distinct().ToArray();
+                var emails = await db.Operators.Where(x => selected.Contains(x.Id) && x.IsActive)
+                    .Select(x => x.Email).ToListAsync();
+                if (emails.Count != selected.Length || emails.Any(email => !AlertRecipientSelection.IsValidEmail(email)))
+                    return InvalidRecipient();
+
+                node[AlertRecipientSelection.ConfigurationKey] = JsonSerializer.Serialize(selection);
+                var temporaryPath = $"{filePath}.{Guid.NewGuid():N}.tmp";
+                try
+                {
+                    await System.IO.File.WriteAllTextAsync(temporaryPath, node.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                    System.IO.File.Move(temporaryPath, filePath, overwrite: true);
+                }
+                finally { System.IO.File.Delete(temporaryPath); }
+                return SmtpSettingsUpdated();
+            }
+
             var ids = dto.RecipientOperatorIds.Distinct().ToList();
             var validCount = await db.Operators.CountAsync(x => ids.Contains(x.Id) && x.IsActive && x.Email != null && x.Email != "");
             if (validCount != ids.Count)
-                return BadRequest(new { success = false, message = "收件人包含停用或未設定 Email 的使用者。", code="REPORT_RECIPIENT_INVALID", messageKey="spc.api.reportRecipientInvalid", args=ApiUiMessageCatalog.EmptyArguments });
+                return InvalidRecipient();
             var setting = await db.SpcAlertNotificationSettings.FirstOrDefaultAsync() ?? new SpcAlertNotificationSetting();
             if (setting.Id == 0) db.SpcAlertNotificationSettings.Add(setting);
             setting.RecipientOperatorIdsJson = JsonSerializer.Serialize(ids);
@@ -91,14 +116,21 @@ public class SettingsController(IConfiguration config, IWebHostEnvironment env, 
             await System.IO.File.WriteAllTextAsync(filePath, node.ToJsonString(options));
             await db.SaveChangesAsync();
 
-            logger.LogInformation("SMTP 設定已更新至 appsettings.json");
-            return Ok(new { success = true, message = "SMTP 設定已成功更新並生效。", code="SMTP_SETTINGS_UPDATED", messageKey="spc.api.smtpSettingsUpdated", args=ApiUiMessageCatalog.EmptyArguments });
+            return SmtpSettingsUpdated();
         }
         catch (Exception)
         {
             logger.LogError("SMTP_SETTINGS_UPDATE_FAILED");
             return StatusCode(500, new { success = false, messageKey = "spc.api.settingsUpdateFailed", args = ApiUiMessageCatalog.EmptyArguments, message = "更新設定失敗，請稍後重試。" });
         }
+    }
+
+    private IActionResult InvalidRecipient() => BadRequest(new { success = false, message = "收件人包含停用或未設定有效 Email 的使用者。", code = "REPORT_RECIPIENT_INVALID", messageKey = "spc.api.reportRecipientInvalid", args = ApiUiMessageCatalog.EmptyArguments });
+
+    private IActionResult SmtpSettingsUpdated()
+    {
+        logger.LogInformation("SMTP 設定已更新至 appsettings.json");
+        return Ok(new { success = true, message = "SMTP 設定已成功更新並生效。", code = "SMTP_SETTINGS_UPDATED", messageKey = "spc.api.smtpSettingsUpdated", args = ApiUiMessageCatalog.EmptyArguments });
     }
 
     [HttpPost("smtp/test")]
@@ -235,6 +267,7 @@ public class SmtpSettingsDto
     public string SenderEmail { get; set; } = "spc-alert@pmr.com.tw";
     public string DefaultRecipientEmail { get; set; } = "ihao_ting@pmr.com.tw";
     public List<int> RecipientOperatorIds { get; set; } = [];
+    public AlertRecipientSelection? RecipientSelection { get; set; }
     public bool EnableSsl { get; set; }
     public bool SaveToLocalDisk { get; set; } = true;
     public string LocalDiskFolder { get; set; } = @"C:\Users\ihao_ting.PMR.000\Desktop\MES\EmailOutbox";

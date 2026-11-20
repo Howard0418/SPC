@@ -1949,6 +1949,7 @@
     "settings": {
       "configuration": "系統組態配置中心",
       "smtpTitle": "SMTP 郵件伺服器與異常預警通報設定",
+      "recipientType": { "outOfSpec": "OOS", "outOfControl": "OOC", "adjustmentFormula": "調整量公式修改", "concentrationFormula": "濃度公式修改", "pending": "待啟用", "invalidEmail": "請先修正作業人員的 Email", "fallback": "OOS 或 OOC 若無有效收件人，會寄至下方的預設收件信箱。全選與清除僅套用目前顯示的人員。" },
       "smtpDescription": "管理 SPC 管制界限失控 (OOC) 或規格違規 (OOS) 時自動派發電子郵件之發送器參數與本地備份路徑。",
       "connection": "伺服器與連線參數",
       "host": "SMTP 伺服器主機 (Host)",

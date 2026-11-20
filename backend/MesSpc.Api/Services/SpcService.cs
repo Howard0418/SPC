@@ -280,7 +280,14 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
     private async Task SendAlertEmailAsync(AlertEvent alert, string fallbackName)
     {
         var setting = await db.SpcAlertNotificationSettings.AsNoTracking().OrderBy(x => x.Id).FirstOrDefaultAsync();
-        var ids = ParseRecipientIds(setting?.RecipientOperatorIdsJson);
+        var selection = AlertRecipientSelection.Read(config);
+        var classifiedIds = alert.AlertType switch
+        {
+            AlertType.OutOfSpec => selection?.OutOfSpec,
+            AlertType.OutOfControl => selection?.OutOfControl,
+            _ => null
+        };
+        var ids = classifiedIds?.ToList() ?? ParseRecipientIds(setting?.RecipientOperatorIdsJson);
         List<(string Email, string OperatorName)> recipients;
         if (ids.Count > 0)
         {
@@ -289,6 +296,10 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 .Select(x => new { x.Email, x.OperatorName })
                 .ToListAsync();
             recipients = operatorRecipients.Select(x => (x.Email!, x.OperatorName)).ToList();
+            if (classifiedIds is not null)
+                recipients = recipients.Where(x => AlertRecipientSelection.IsValidEmail(x.Email))
+                    .Select(x => (Email: x.Email.Trim(), x.OperatorName))
+                    .DistinctBy(x => x.Email, StringComparer.OrdinalIgnoreCase).ToList();
         }
         else
         {

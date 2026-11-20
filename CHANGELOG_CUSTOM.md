@@ -1,3 +1,7 @@
+## 2026-11-20 SMTP OOS／OOC 分類收件
+
+- OOS／OOC 已能各自選擇收件人，兼容共用舊名單及預設地址。測試 Web `0.1.168`／API `0.1.157` 已發布，待實際收信驗收。兩類公式通知待相依工作。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
 ## 2026-11-20 SMTP 分類通知收件人規劃
 
 - 新增 P1 預警與收件矩陣、P2 公式異動路由兩件相依小工作。已核對現有共用名單及預設回退，記錄輸入格式、授權、測試與回復規則。僅文件規劃。[規格](specs/20261120-smtp-notification-recipient-routing/spec.md)
