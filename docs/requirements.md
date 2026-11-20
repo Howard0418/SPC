@@ -640,3 +640,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-20 [作業人員頁登入重導後無限載入](../specs/20261120-operators-auth-loading-loop/spec.md)：測試站 `/operators` 遇必要 API 401 時不得在登入重導後永久停在載入中；有效登入須完成清單，逾期最多重導一次，重導返回仍未授權或其他失敗須停止 loading 並顯示明確訊息。測試站Web `0.1.166`已發布，待人工重走錄影路徑；正式未授權。
 - 2026-11-20 [藥液調整管制值 Email 通知驗收](../specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-control-notify.md)：添加／稀釋管制值有效異動後，以 SMTP 寄給啟用、未封存、Person 且 Email 有效的品保／製程角色人員；地址去重。使用者已確認測試區人工收信驗收，正式區未發布。
 - 2026-11-20 [作業人員頁面權限總覽](../specs/20261120-operator-page-permission-overview/spec.md)：列表直接顯示每位人員的完整頁面權限名稱及實際數量，無須展開。
+- 2026-11-20 [SMTP 郵件通知依類型選擇收件人](../specs/20261120-smtp-notification-recipient-routing/spec.md)：規劃 OOS、OOC、調整量公式修改及濃度公式修改獨立勾選收件人，保留舊預警名單相容。規格已入池，尚未實作。
