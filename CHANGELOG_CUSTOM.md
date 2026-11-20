@@ -1,3 +1,7 @@
+## 2026-11-20 SMTP 四類通知隔離試寄
+
+- 使用隔離測試人員驗證 OOS、OOC、調整量公式及濃度公式的分流，四封均由測試 SMTP 接受。實際到信及登入站台驗收待確認。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
 ## 2026-11-20 測試 SMTP 到信確認
 
 - 使用者確認收到測試信 `e872bea5`，基本寄送驗證通過。四類事件收件仍待驗收。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
