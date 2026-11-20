@@ -1,8 +1,8 @@
 ## 2026-11-20 藥液調整管制值與公式依日報表對帳（規劃完成）
 
-> 指定 `藥液分析日報表.xlsx` 唯讀盤點為 11 張資料 Sheet／142 列，另有 F 係數表。來源含 15 列槽容空白、25 個添加 `NA`、41 個稀釋 `NA`、3 列缺調整公式及 39 列缺調整量公式，須先逐列對帳，不能直接覆寫網站。[規格](specs/20261120-chemical-adjustment-excel-alignment/spec.md)／[來源盤點](specs/20261120-chemical-adjustment-excel-alignment/source-inventory.md)
+> TASK-001唯讀對帳完成：142來源列合併為114個身分，110個唯一配對、4來源未配對、3網站額外，無一對多歧義。三參數唯一明確數值差異為N1氫氧化鉀稀釋22／23；所有公式、`NA`與空白差異保持隔離。[結果](specs/20261120-chemical-adjustment-excel-alignment/reconciliation.md)
 
-- [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-001`：P1／SPC／唯讀建立 Excel 11 張資料 Sheet、142 列與測試區 PPC 的逐列矩陣，分類自然鍵、開收線、`NA`、缺值、硬編碼槽容、獨立目標與倍率；不寫 DB、不改 Excel、不發布。
+- [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-001`：P1／SPC／Excel原檔SHA-256已固定；114來源身分中110唯一配對、4未配對，網站另3項。槽容／添加／稀釋及兩式逐列矩陣已完成；未寫DB、未改Excel、未發布。[矩陣](specs/20261120-chemical-adjustment-excel-alignment/reconciliation-matrix.md)
 - [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-002`：P1／SPC API／讓計算器支援槽容、添加及稀釋三個具名參數，缺值明確拒絕且既有公式保持；相依 TASK-001，測試通過後發布測試 API。
 - [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-003`：P1／SPC Web／線別分析項目總覽同列唯讀顯示三參數、兩式及對帳警示，匯出同步且公式保存不得覆寫參數；相依 TASK-002，測試通過後發布測試 Web。
 - [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-004`：P1／SPC 測試資料／依核准矩陣受控同步，完成 before snapshot、preview、版本／稽核、NoChange、計算及兩頁人工驗收；相依 TASK-001～003，正式資料與正式發布另行授權。
