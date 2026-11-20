@@ -798,7 +798,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-18 入口網站福利、生日賀卡與總務通知（只規劃）
 
 - [x] `PORTAL-EMPLOYEE-GATE-MAIL-TIMES-1118-TASK-001`：P0，員工進出 Email 已增加離廠／回廠時間，有值採 `yyyy-MM-dd HH:mm`、無值顯示「尚未登記」；焦點13／13、完整API 299／299及Release build通過，測試API1.0.286／Web1.0.325已發布並驗證，待人工收信驗收，正式未發布。[驗證](../PmrPortal/specs/20261118-portal-benefits-birthday-mail-enhancements/verification.md)
-- [ ] `PORTAL-VISITOR-MAIL-HOST-DETAILS-1118-TASK-001`：P0／測試區已發布、待人工收信驗收；修正 Web 未傳受訪人工號造成部門／分機顯示「未設定」，新增／編輯會由啟用人員資料保存或刷新快照。焦點測試通過、完整API305／305及Release build通過；測試API1.0.290／Web1.0.329已發布並確認Test環境。[驗證](../PmrPortal/specs/20261118-portal-benefits-birthday-mail-enhancements/verification.md)
+- [x] `PORTAL-VISITOR-MAIL-HOST-DETAILS-1118-TASK-001`：P0／測試區人工收信驗收完成；修正 Web 未傳受訪人工號造成部門／分機顯示「未設定」，新增／編輯會由啟用人員資料保存或刷新快照。焦點測試通過、完整API305／305及Release build通過；測試API1.0.290／Web1.0.329已發布並確認Test環境。正式未發布。[驗證](../PmrPortal/specs/20261118-portal-benefits-birthday-mail-enhancements/verification.md)
 - [ ] `PORTAL-BIRTHDAY-MONTHLY-CARDS-1118-TASK-001`：P1／測試區已發布、待人工畫面驗收；生日賀卡依月份選圖、同批多月份上傳，每人每年月／圖片版本可勾選不再顯示。沿用 feature_settings 無 migration；測試API1.0.287／Web1.0.326，焦點與完整API及build通過。[驗證](../PmrPortal/specs/20261118-portal-benefits-birthday-mail-enhancements/verification.md)
 - [ ] `PORTAL-PARTNER-MERCHANTS-1118-TASK-001`：P2，建立特約商店專區與最小管理功能；主系統 Portal，需新主檔 migration，rollback 隱藏入口並回復前版 API／Web。
 
