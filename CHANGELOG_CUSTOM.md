@@ -1,3 +1,9 @@
+## 2026-11-20 SPC-CHEM-ADJUST-ALIGN-1120-TASK-004 核准候選與備份權限阻擋
+
+- 六項決策已核准；受控候選固定為7筆N2調整量公式，只替換錯線槽容常數。15項轉換／NoChange／計算測試通過，Release工具build成功，最終Preview為7筆Update。
+- PMR_SPC_TEST COPY_ONLY／CHECKSUM備份成功，但應用與Windows身分皆無RESTORE VERIFYONLY權限，故交易前停止、0資料寫入。PPC2587另在核准後由23並行改為22，與文字核准衝突並保持隔離。
+- 未發布網站、未改版本、Excel、排程或歷史試算；TASK-004保持未完成，中央未完成小工作7件。
+
 ## 2026-11-20 SPC-CHEM-ADJUST-ALIGN-1120-TASK-004 受控同步預檢
 
 - 已固定指定Excel原雜湊與PMR_SPC_TEST before snapshot；唯讀preview仍為114來源身分、110唯一配對、4來源未配對、3網站限定，三參數與兩式分類均未漂移。

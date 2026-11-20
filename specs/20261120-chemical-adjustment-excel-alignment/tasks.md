@@ -1,13 +1,13 @@
 # 任務
 
 - 功能 ID：`20261120-chemical-adjustment-excel-alignment`
-- 規格版本：5
+- 規格版本：6
 - [規格](spec.md)｜[計畫](plan.md)｜[來源盤點](source-inventory.md)
 
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-001`：P1／唯讀建立 11 張資料 Sheet、142 列與測試區 PPC 的逐列對帳矩陣；合併後114個來源身分、110唯一配對、4來源未配對、3網站額外，無一對多歧義。三參數唯一明確數值差異為N1氫氧化鉀稀釋22／23；公式差異及`NA`／空白均已隔離，未寫 DB、未改 Excel、未發布。[結果](reconciliation.md)（R-001～R-004；AC-001～AC-004）
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-002`：P1／API 計算器已支援槽容、添加及稀釋三個不分大小寫的具名變數；引用缺值與已設定非正數均拒絕，既有公式保持。排程試算鎖定不可變公式版本內參數；API `0.1.161` 已發布測試站。（R-005、R-008；AC-005、AC-008；相依 TASK-001）
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-003`：P1／線別分析項目總覽已同列唯讀顯示三參數與兩式，匯出同步；公式引用未設定參數顯示三語警示，公式保存不覆寫參數。Web `0.1.172` 已發布測試站。（R-006、R-008；AC-006、AC-008；相依 TASK-002）
-- [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-004`：P1／執行中；來源與測試庫 before snapshot、preview 已完成，結果仍為110唯一配對、4來源未配對、3網站限定。尚無逐列核准的差異清單，依未確認差異零寫入規則暫停 apply；待核准後再驗版本／稽核、重送 NoChange、計算及兩頁人工驗收。正式資料與正式發布另行授權。（R-007、R-008；AC-007、AC-008；相依 TASK-001～003）
+- [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-004`：P1／執行中；六項決策已核准，7筆N2調整量公式只替換錯線槽容常數，15項轉換／計算測試及最終Preview通過。COPY_ONLY／CHECKSUM備份已建立，但應用及Windows身分均無RESTORE VERIFYONLY權限，交易前停止、0寫入；PPC2587並行由23改22亦保持隔離。待解除兩項阻擋後再驗版本／稽核、重送NoChange及兩頁人工驗收。正式資料與正式發布另行授權。（R-007、R-008；AC-007、AC-008；相依TASK-001～003）
 
 ## 執行順序
 

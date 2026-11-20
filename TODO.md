@@ -5,7 +5,7 @@
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-001`：P1／SPC／Excel原檔SHA-256已固定；114來源身分中110唯一配對、4未配對，網站另3項。槽容／添加／稀釋及兩式逐列矩陣已完成；未寫DB、未改Excel、未發布。[矩陣](specs/20261120-chemical-adjustment-excel-alignment/reconciliation-matrix.md)
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-002`：P1／SPC API／計算器已支援槽容、添加及稀釋三個不分大小寫的具名參數；引用缺值與已設定非正數明確拒絕，既有公式保持，排程試算使用不可變公式版本內參數。測試API `0.1.161` 已發布。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-003`：P1／SPC Web／線別分析項目總覽已同列唯讀顯示三參數與兩式，匯出同步；公式引用未設定參數顯示三語警示，公式保存不覆寫參數。測試Web `0.1.172` 已發布。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
-- [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-004`：P1／SPC 測試資料／執行中；固定來源與測試庫 before snapshot、preview 已完成，尚無逐列核准差異清單，依未確認差異零寫入規則暫停 apply。待核准後完成版本／稽核、NoChange、計算及兩頁人工驗收；正式資料與正式發布另行授權。
+- [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-004`：P1／SPC 測試資料／執行中；六項決策已核准，7筆N2槽容公式Preview與15項轉換／計算測試通過。COPY_ONLY／CHECKSUM備份成功，但兩種身分均無`RESTORE VERIFYONLY`權限，故交易前停止、0寫入；另PPC2587在核准後由23改成22，與文字核准衝突並保持隔離。待DBA完成VERIFYONLY及使用者確認2587後，再執行版本／稽核、NoChange與兩頁驗收；正式資料與正式發布另行授權。
 
 ## 2026-11-20 作業人員頁登入重導後無限載入
 
