@@ -1,3 +1,7 @@
+## 2026-11-20 PPC ID搜尋（測試站完成）
+
+- [x] `SPC-PPC-ID-SEARCH-1120-TASK-001`：P1／SPC Web；「管制項目設定與規格維護」已支援PPC ID搜尋，`2587`可直接找到對應列，保留現有文字與組合篩選。聚焦15項、三語i18n、test build及發布後Web／資產／API驗證通過；測試Web `0.1.173`／API `0.1.161/test`。無API／DB／權限影響，正式未授權。[規格與驗證](specs/20261120-ppc-id-search/spec.md)
+
 ## 2026-11-20 藥液調整管制值與公式依日報表對帳（規劃完成）
 
 > TASK-001～003完成：唯讀對帳、計算參數契約及總覽交叉確認均已發布測試站；三參數在總覽唯讀、匯出同步，引用缺值會警示。所有 Excel 公式、`NA`與空白差異仍保持隔離。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
@@ -11,7 +15,7 @@
 
 > Web `0.1.167` 實站續驗確認未登入時單次導向 Portal 測試登入並保留 `/operators`；待登入者重走逾期重導與返回原頁。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
 
-- [ ] `SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：P0／SPC；重導守衛期間的401已改為可結束錯誤，避免人員清單永久載入。2026-11-20續作重跑核心4項通過；目前測試站Web `0.1.172`／API `0.1.161/test`、資產、環境及匿名401均正常。Windows操作服務native pipe離線，仍待有效登入使用者重走錄影路徑人工驗收；正式未授權。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
+- [ ] `SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：P0／SPC；重導守衛期間的401已改為可結束錯誤，避免人員清單永久載入。2026-11-20續作重跑核心4項通過；目前測試站Web `0.1.173`／API `0.1.161/test`、資產、環境及匿名401均正常，本次PPC ID搜尋發布未改動其守衛。Windows操作服務native pipe離線，仍待有效登入使用者重走錄影路徑人工驗收；正式未授權。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
 
 ## 2026-11-20 藥液歷史異常稽核證據判定回歸（僅登錄）
 

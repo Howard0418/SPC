@@ -715,7 +715,8 @@ watch(() => form.value.machineId, async (newMachineId, oldMachineId) => {
 
 const filteredRows = computed(() => {
   return rows.value.filter(row => {
-    const q = searchQuery.value.toLowerCase();
+    const q = searchQuery.value.trim().toLowerCase();
+    const ppcId = String(row.id ?? "");
     const pNo = row.part?.partNo || "";
     const pName = row.part?.partName || "";
     const prName = row.process?.processName || "";
@@ -728,7 +729,8 @@ const filteredRows = computed(() => {
     const tankCode = row.tank?.tankCode || "";
     const tankName = row.tank?.tankName || "";
 
-    const matchQuery = !q || 
+    const matchQuery = !q ||
+      ppcId.includes(q) ||
       pNo.toLowerCase().includes(q) || pName.toLowerCase().includes(q) ||
       prName.toLowerCase().includes(q) || prNameEn.toLowerCase().includes(q) ||
       chCode.toLowerCase().includes(q) || chName.toLowerCase().includes(q) || chNameEn.toLowerCase().includes(q) ||

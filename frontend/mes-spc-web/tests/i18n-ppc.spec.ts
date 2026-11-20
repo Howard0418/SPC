@@ -63,6 +63,11 @@ for(const width of [1920,1366,1280,390])for(const locale of ['zh-TW','zh-CN','en
  expect(await dialog(page).evaluate(el=>el.scrollWidth)).toBeLessThanOrEqual(width);expect(writes).toEqual([]);
  if(width===390&&locale==='en-US')await page.screenshot({path:'../../.codex-tmp/i18n-task05c3/ppc-mobile-en.png'});
 });
+test('PPC search matches numeric ID 2587 without another API request',async({page})=>{
+ const {state,reads,writes}=await prepare(page);state.records[0].id=2587;await page.reload();const before=reads.length;
+ await page.getByTestId('ppc-searchQuery').fill('2587');await expect(page.getByTestId('ppc-edit')).toHaveCount(1);
+ expect(reads.length).toBe(before);expect(writes).toEqual([]);
+});
 for(const locale of ['zh-TW','zh-CN','en-US']){
  for(const id of [1,2,3])test(`edit ${id} ${locale}: LSL 0.2, stable draft and original DTO`,async({page})=>{
   const {writes,reads}=await prepare(page,id);await expect(dialog(page)).toBeVisible();await tab(page,2).click();await field(page,'lsl').fill('0.2');const handle=await field(page,'lsl').elementHandle();const before=reads.length,url=page.url();await dialog(page).getByTestId('locale-select').selectOption(locale);expect(await handle!.evaluate(el=>el.isConnected)).toBe(true);expect(reads.length).toBe(before);expect(page.url()).toBe(url);expect(writes).toEqual([]);await expect(field(page,'lsl')).toHaveValue('0.2');await expect(dialog(page)).toContainText('0.3 ± 0.1');
