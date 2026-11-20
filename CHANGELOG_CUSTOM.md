@@ -3425,3 +3425,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-21 公式通知收件人實站驗收進度
 
 - 調整量／濃度公式通知欄各 2 位收件人，可獨立勾選，重載還原既有設定；待確認兩封隔離試寄到信。無重新發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
+## 2026-11-21 公式通知收信驗收完成
+
+- 使用者確認調整量與濃度公式兩封隔離試寄皆收到，核銷 TASK-002。只更新驗收紀錄，未重新發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)

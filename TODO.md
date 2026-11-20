@@ -870,7 +870,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-20 SMTP 郵件通知依類型選擇收件人（規劃）
 
 - [x] `SPC-SMTP-RECIPIENTS-1120-TASK-001`：P1／SPC。OOS／OOC 分類與舊名單相容已發布測試站。2026-11-20 使用者已確認 SMTP 測試信到達；2026-11-21 已以實站登入驗證 OOS／OOC 可獨立勾選，重載還原既有各 1 位；使用者確認收到信，同意測試站驗收並核銷；正式未發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
-- [ ] `SPC-SMTP-RECIPIENTS-1120-TASK-002`：P2／SPC。已依提交後公式版本實作調整量／濃度公式分流通知；2026-11-20續驗後端36項、SMTP三語／四寬度15項全通過，測試API`0.1.163/test`、同源／直連、首頁與匿名401正常。2026-11-21 實站驗證兩類各 2 位收件人、勾選互不影響、重載還原；仍待公式通知兩封到信確認，本輪未保存名單或修改公式。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+- [x] `SPC-SMTP-RECIPIENTS-1120-TASK-002`：P2／SPC。已依提交後公式版本實作調整量／濃度公式分流通知；2026-11-20續驗後端36項、SMTP三語／四寬度15項全通過，測試API`0.1.163/test`、同源／直連、首頁與匿名401正常。2026-11-21 實站驗證兩類各 2 位收件人、勾選互不影響、重載還原；使用者確認兩封公式試寄皆到信，測試驗收完成；本輪未保存名單或修改公式。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
 
 > 001／002 四類通知已以隔離資料分流並各試寄一封，SMTP 均接受（`e3c1120a`）。待確認實際到信及登入後的站台勾選、保存、重載與事件驗收。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
 ## 2026-11-20 OOS／OOC 郵件連到異常處置
