@@ -637,5 +637,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-19 [管制線計算法反映於圖表](../specs/20261119-control-limit-method-rendering/spec.md)：Xbar-R與Xbar-S明確選擇標準全距、平均移動全距或樣本標準差法時，上方Xbar圖點與OOC判定須採所選方法計算的UCL／CL／LCL，不得由PPC／日期區段固定界限覆蓋；Xbar-S下方S圖維持既有算法，空白公式設定保留相容行為。測試站API0.1.144／Web0.1.152已發布，待人工畫面驗收，正式未發布。
 - 2026-11-19 [登入過期導向不閃現401錯誤](../specs/20261119-auth-expiry-login-redirect/spec.md)：受保護API回401時清除失效登入並返回Portal登入，導向期間不得先渲染未授權／載入失敗紅框；SSO短暫競態若有成功回應，須自動重試原失敗請求。錄影逐格重現與E2E通過，測試站API0.1.145／Web0.1.153已發布，正式未發布。
 - [管制線公式 n=50 防呆](../specs/20261119-control-limit-method-rendering/spec.md)：標準全距法僅適用已有常數的子組大小2～25；超出範圍時 Web 不提供該選項且 API 不得接受或靜默改用其他算法。
-- 2026-11-20 [作業人員頁登入重導後無限載入](../specs/20261120-operators-auth-loading-loop/spec.md)：測試站 `/operators` 遇必要 API 401 時不得在登入重導後永久停在載入中；有效登入須完成清單，逾期最多重導一次並在 SSO 返回後重載，無法恢復須停止 loading 並顯示明確訊息。P0 規劃已入池，本次不修改程式或發布。
+- 2026-11-20 [作業人員頁登入重導後無限載入](../specs/20261120-operators-auth-loading-loop/spec.md)：測試站 `/operators` 遇必要 API 401 時不得在登入重導後永久停在載入中；有效登入須完成清單，逾期最多重導一次，重導返回仍未授權或其他失敗須停止 loading 並顯示明確訊息。測試站Web `0.1.166`已發布，待人工重走錄影路徑；正式未授權。
 - 2026-11-20 [藥液調整管制值 Email 通知驗收](../specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-control-notify.md)：添加／稀釋管制值有效異動後，以 SMTP 寄給啟用、未封存、Person 且 Email 有效的品保／製程角色人員；地址去重。使用者已確認測試區人工收信驗收，正式區未發布。

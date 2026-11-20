@@ -58,6 +58,12 @@ function retryPendingUnauthorizedRequests() {
   }
 }
 
+function createAuthRedirectGuardError() {
+  const error = new Error("Authentication navigation is in progress.");
+  error.code = "AUTH_REDIRECT_GUARD";
+  return error;
+}
+
 function holdUntilNavigation() {
   return new Promise(() => {});
 }
@@ -100,7 +106,7 @@ api.interceptors.response.use(
   (err) => {
     if (err?.response?.status === 401 && typeof window !== "undefined") {
       if (isWithinSessionWindow(redirectGuardKey)) {
-        return holdUntilNavigation();
+        return Promise.reject(createAuthRedirectGuardError());
       }
       if (err.config?.__spcAuthRetry) {
         redirectExpiredSession();
@@ -157,6 +163,7 @@ export function getApiErrorDisplay(err) {
   const msg = err?.message || "";
   const code = err?.code || "";
   const translate = (key,args = {}) => snapshotApiDisplay({key,args});
+  if (code === "AUTH_REDIRECT_GUARD") return translate('spc.api.unauthorized');
   if (code === "ENVIRONMENT_MISMATCH") return translate('spc.api.environmentMismatch',{webEnvironment,apiEnvironment});
   const knownMessage = captureApiErrorDisplay(err?.response?.data,apiMessageSource);
   if (knownMessage !== null) return knownMessage;
