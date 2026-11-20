@@ -2047,7 +2047,7 @@
       "operatorDepartment": "Department",
       "accountRole": "Login account / role",
       "pagePermissions": "Page permissions",
-      "permissionCount": "{count} permissions — view",
+      "permissionCount": "{count} permissions",
       "noPagePermissions": "No page permissions",
       "alertEmail": "Email (quality alerts)",
       "employment": "Employment status",

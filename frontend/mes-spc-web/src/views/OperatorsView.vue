@@ -391,14 +391,13 @@ onMounted(load);
                 </span>
               </td>
               <td class="py-4 px-6 text-xs align-top">
-                <details
+                <div
                   v-if="displayedPermissions(item).length"
                   :data-testid="`settings-pagePermissions-${item.id}`"
-                  class="group/permissions"
                 >
-                  <summary class="cursor-pointer select-none font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                  <p class="font-bold text-blue-600 dark:text-blue-400">
                     {{ t('spc.settings.permissionCount', { count: displayedPermissions(item).length }) }}
-                  </summary>
+                  </p>
                   <div class="mt-2 flex max-w-md flex-wrap gap-1.5">
                     <span
                       v-for="permission in displayedPermissions(item)"
@@ -409,7 +408,7 @@ onMounted(load);
                       {{ permission.name }}
                     </span>
                   </div>
-                </details>
+                </div>
                 <span v-else class="text-slate-400">{{ t('spc.settings.noPagePermissions') }}</span>
               </td>
               <td class="py-4 px-6 font-mono text-xs text-slate-600 dark:text-slate-300">

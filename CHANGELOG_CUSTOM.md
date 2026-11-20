@@ -1,3 +1,7 @@
+## 2026-11-20 作業人員頁面權限直接顯示
+
+- 各列直接顯示頁面權限及「共 N 項」。測試 Web 0.1.166 → 0.1.167，API 0.1.156。焦點測試、建置及測試站連線通過，待登入目視驗收。[驗證](specs/20261120-operator-page-permission-overview/verification.md)
+
 ## 2026-11-20 藥液調整參數備註人工驗收
 
 - 使用者確認 SPC 測試站備註功能人工驗收完成，工作池已核銷。正式發布待另行授權。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-adjustment-remark.md)

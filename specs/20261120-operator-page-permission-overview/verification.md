@@ -15,3 +15,11 @@
 ## 注意事項
 - 原 `i18n-settings` 既有「儲存失敗後重送」三語系案例受新增的稽核 activity request 影響仍失敗，與本次列表唯讀欄位無關；本次新增驗收案例及 build 均通過，未將舊案例宣稱通過。
 - 正式站未發布；無資料庫或既有權限資料異動。
+
+## 2026-11-20 直接顯示調整
+
+- Playwright 確認無需點擊即可看見「共 1 項」及權限名稱，且沒有「點此查看」。作業人員回歸共 18 項通過，原有三語系「儲存失敗後重送」3 項仍失敗。
+- `npm run build:test` 與三語系 2,881 鍵檢查通過。以隔離來源建置，未納入工作區內的趨勢圖改動。
+- SPC 測試 Web `0.1.166` → `0.1.167`，API `0.1.156` → `0.1.156`。首頁與主 JS／CSS 均 HTTP 200 且 MIME 正確，測試站主資產含新版號。
+- 已發布資產的 Chromium 路由驗證確認同源 `/api`，並用 Chromium 對該實際基底確認 health／version 均 HTTP 200、環境 `test`，未登入 `/api/operators` 回預期的 401。使用者端 `:8901` 也確認版本及環境。
+- 待登入目視現行名單。正式站未發布。Web 回復可使用 `release/test/frontend.backup-operator-permissions-direct-20261120` 的 `index.html` 切回既有前版資產，並重驗 Web 與 API。

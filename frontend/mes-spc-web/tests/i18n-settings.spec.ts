@@ -340,9 +340,9 @@ for (const locale of ["zh-TW", "zh-CN", "en-US"])
 test("operator list shows resolved page permission names", async ({ page }) => {
   const { errors } = await prepare(page, "/operators");
   const permissions = page.getByTestId("settings-pagePermissions-1");
-  await expect(permissions).toContainText("1");
-  await permissions.locator("summary").click();
-  await expect(permissions).toContainText(raw);
+  await expect(permissions.getByText("共 1 項", { exact: true })).toBeVisible();
+  await expect(permissions.getByText(raw, { exact: true })).toBeVisible();
+  await expect(permissions.getByText("點此查看")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 for (const locale of ["zh-TW", "zh-CN", "en-US"])
