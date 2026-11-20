@@ -3417,3 +3417,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-21 OOS／OOC 收件人實站驗收進度
 
 - 測試站登入後可獨立勾選兩欄，重載正確還原既有名單。保存與實際事件收件仍待驗證，本次無發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
+## 2026-11-21 OOS／OOC 收件人分流核銷
+
+- 使用者確認收到信並同意驗收 TASK-001；本次只更新驗收紀錄，未重新發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
