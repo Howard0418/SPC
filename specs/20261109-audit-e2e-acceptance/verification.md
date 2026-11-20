@@ -4,6 +4,10 @@
 
 ## 2026-11-20 續驗
 
+- 依使用者要求切換至下一小工作後再次續驗：computer-use技能的native pipe在輕量重試、重置kernel、重新初始化後仍不存在，因此沒有操作登入或產生畫面截圖。
+- 目前程式基準的稽核專屬回歸118通過、3項需隔離SQL設定而略過、0失敗。`PMR_SPC_TEST`唯讀重查為7,769筆AuditEvents：環境錯置0、Details JSON非法／超長0、敏感關鍵字命中0、ClientEventId重複0；新業務按鈕事件仍為0，符合尚未人工操作。
+- 現行測試站首頁、主JavaScript／CSS均HTTP 200且MIME正確；同源及`:8901` API均為`0.1.163/test`，health `ok`，匿名稽核查詢401。未修改程式、資料、權限、版本或站台，正式未異動；T4仍待登入畫面驗收。
+
 - Windows操作技能依規定列舉視窗，同一輕量呼叫重試、重置JavaScript kernel後再初始化及重試，仍回報`Computer Use native pipe is unavailable`，因此未操作登入、權限、查詢或匯出，也未生成異動摘要／遮罩截圖。T4仍未通過。
 - 精確稽核回歸篩選（排除另一個藥液歷史測試類別）113項通過、3項SQL隔離測試依現行環境略過、0失敗。
 - `PMR_SPC_TEST`唯讀重查為6,903筆AuditEvents：環境錯置0、Details JSON非法或過長0、敏感關鍵字命中0、ClientEventId重複0；查詢／匯出事件62、主檔新增／刪除444，封存批次／封存事件／legal hold均0。

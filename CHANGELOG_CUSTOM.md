@@ -3386,3 +3386,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - `PMR_SPC_TEST`以COPY_ONLY／CHECKSUM備份後套用單一約束migration，AuditEvents指紋保持；後端9項與稽核回歸122項、前端6項、i18n及build通過。
 - 測試Web`0.1.174`／API`0.1.163/test`已發布，同源／`:8901`、首頁及主資產驗證正常；待登入人工驗收，正式未發布。[驗證](specs/20261120-audit-business-action-allowlist/verification.md)
 
+## 2026-11-20 SPC-AUDIT-1103-TASK-009 稽核整案自動續驗
+
+- 稽核專屬回歸118通過、3項SQL隔離略過；測試庫7,769筆事件的環境、Details格式／大小、敏感字串及ClientEventId重複皆0異常。
+- 測試站API`0.1.163/test`、同源／直連、首頁及主資產正常，匿名稽核查詢401；computer-use native pipe依規範復原後仍不可用，登入畫面與遮罩截圖未冒充通過，TASK-009保持待驗。無程式、資料、版本或發布異動，正式未變。[驗證](specs/20261109-audit-e2e-acceptance/verification.md)
+
