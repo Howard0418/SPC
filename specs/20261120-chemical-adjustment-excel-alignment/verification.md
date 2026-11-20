@@ -1,9 +1,9 @@
 # 驗證紀錄
 
 - 功能 ID：`20261120-chemical-adjustment-excel-alignment`
-- 規格版本：6
+- 規格版本：7
 - 日期／環境：2026-11-20／來源活頁簿＋PMR_SPC_TEST唯讀查詢＋SPC測試站
-- 實作狀態：TASK-001～003完成；TASK-004候選與工具完成，apply受阻於VERIFYONLY權限及PPC2587衝突
+- 實作狀態：TASK-001～003完成；TASK-004測試資料apply／retry完成，待PPC2587決策及兩頁人工驗收
 - 驗證狀態：TASK-001～003通過；TASK-002完整API回歸另有16項既有失敗如實保留
 - 發布狀態：測試 Web `0.1.172`／API `0.1.161/test` 已發布；正式站未發布
 
@@ -15,7 +15,7 @@
 | AC-004 | 公式參照轉換與差異分類 | 分離門檻、槽容、目標與倍率 | 調整式74相符／14網站缺／3來源缺／19不同；調整量53相符／22皆空／7網站缺／3來源缺／25不同，詳[結果](reconciliation.md) | 通過 |
 | AC-005 | API 單元／整合測試 | 三變數計算與缺值拒絕 | 三變數不分大小寫可計算；引用空值與已設定0／負數拒絕；排程採不可變公式版本參數。計算＋排程46項通過 | 通過 |
 | AC-006 | 兩頁與匯出畫面測試 | 同源顯示、單一編輯權責 | 總覽從同一JSON唯讀顯示槽容／添加／稀釋，匯出同步三欄；公式保存保留參數，引用缺值顯示三語警示 | 通過 |
-| AC-007 | 測試資料 preview/apply/retry/rollback | 受控同步與可回復 | before snapshot及preview完成；尚無核准差異列，apply／retry／rollback依規則未執行 | 部分完成／受阻 |
+| AC-007 | 測試資料 preview/apply/retry/rollback | 受控同步與可回復 | 7筆核准列新增7版本／7稽核；重送7筆NoChange／0新增，備份VERIFYONLY通過、保護指紋不變；PPC2587隔離 | 通過（隔離列待決策） |
 | AC-008 | 聚焦與回歸測試、build、測試站 smoke | 無明顯 regression | TASK-003畫面64項與三語2895鍵通過，test build成功；測試Web／資產／API／瀏覽器同源API smoke通過。TASK-002既有API失敗另保留 | 通過 |
 
 ## 文件檢查
@@ -58,7 +58,17 @@ UTF-8唯讀 preview 重跑仍為114個來源身分、110唯一配對、4來源�
 - 新增失敗關閉工具與15項測試：7筆固定身分、固定舊／新公式SHA-256、只改`adjustmentAmountFormula`、重送NoChange及7組候選計算全數通過；工具Release build 0警告／0錯誤，最終plan為7筆Update。
 - 初始snapshot後，PPC2587由既有頁面新增版本6並把稀釋值23改成22；此列不在7筆候選，工具將其納入其他PPC保護指紋，未覆寫。因與文字核准23衝突，仍需使用者再次確認。
 - 2026-11-20 15:34 +08:00 建立`PMR_SPC_TEST_N2_CAPACITY_20261120-153400.bak`；SQL備份歷程確認COPY_ONLY及CHECKSUM成功，約96MB。應用帳號及Windows整合身分執行`RESTORE VERIFYONLY ... WITH CHECKSUM`皆因缺少master的CREATE DATABASE權限失敗；工具在交易前停止，公式版本、稽核及PPC均0寫入，不降低備份驗證門檻。
-- 目前未執行apply／retry／畫面驗收，未修改來源Excel、既有排程、歷史試算、網站程式或版本；沒有測試站或正式站發布。
+- 此次權限阻擋時尚未執行apply／retry；後續DBA完成VERIFYONLY後的套用結果見下節。來源Excel、既有排程、歷史試算、網站程式或版本均未修改，沒有測試站或正式站發布。
+
+### TASK-004 測試資料套用與重送
+
+- 使用者回報 DBA 執行`RESTORE VERIFYONLY ... WITH CHECKSUM`結果為「檔案1上的備份組有效」，完成時間`2026-11-20T15:38:31.1091985+08:00`；受控工具據此使用已固定備份，不重複建立未驗證備份。
+- 2026-11-20約15:39 +08:00在`PMR_SPC_TEST`單一Serializable交易套用PPC 2512、2514、2515、2516、2519、2550、2594；目前設定只改調整量公式的核准槽容token，新增公式版本1400～1406及每列一筆`configuration.formula.update`服務稽核。其他PPC、其他公式版本、F歷史、量測、公式政策／修訂／生效區間指紋均不變。
+- 套用後7筆槽容依序為600、250、630、630、1200、1000、1200，公式SHA-256前12碼依序為`87AC90C20820`、`A170B965C15B`、`129AB463EC17`、`3844C8EE78A3`、`E1B2D50F1671`、`517BFFD0CEC3`、`70C148F0CA80`；最新版本與目前設定JSON一致。
+- 相同清單第二次apply為7筆`NoChange`，公式版本+0、稽核+0；套用後啟用藥液PPC快照SHA-256為`2BFDF6A54D170FA2DE110D61C7FD95F443BEBE6D7D6C26F5EB8606F7D2D6D858`。PPC2587保持最新並行值22，工具未覆寫。
+- 測試：新增15項固定身分／欄位隔離／公式雜湊／NoChange／候選計算全過；既有計算、公式版本、排程及追溯聚焦60項為59通過／1項需Portal來源條件略過；受控工具Release build 0警告／0錯誤。
+- 連線：測試站首頁、主JS`index-BZ75TLhy.js`、主CSS`index-BJMaQS-8.css`均HTTP 200且MIME正確；同源health為`ok`、version為`0.1.161/test`。本次只改測試資料與受控工具，Web `0.1.172`／API `0.1.161`未改、未重新發布，正式站未異動。
+- 兩頁畫面：依computer-use技能初始化後，Windows native pipe連續失敗，重置後仍不可用；未冒充登入後「藥液量測調整公式」及「線別分析項目總覽」人工驗收。PPC2587最終採23或保留22亦待使用者確認，因此TASK-004尚未DONE。
 
 ## 基準與變更紀錄更新位置
 

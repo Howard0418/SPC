@@ -19,6 +19,8 @@ if (args.Length != 2 || args[1] is not ("plan" or "apply" or "verify"))
 
 const string TaskId = "SPC-CHEM-ADJUST-ALIGN-1120-TASK-004";
 const string Actor = "SPC-CHEM-ADJUST-ALIGN-1120-TASK-004";
+const string VerifiedBackup = @"C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\Backup\PMR_SPC_TEST_N2_CAPACITY_20261120-153400.bak";
+const string VerifiedBackupAt = "2026-11-20T15:38:31.1091985+08:00";
 // The reviewed snapshot moved only because PPC 2587 was saved from dilution 23 to 22
 // after the first preflight. That conflicting row is outside this seven-row plan and
 // remains protected; no other drift was accepted.
@@ -141,18 +143,7 @@ if (mode == "apply" && pending == 7)
 {
     if (await ActiveSnapshot() != ExpectedBeforeSnapshot)
         throw new InvalidOperationException("Active CHEM snapshot changed from the reviewed before state.");
-    await using (var command = db.Database.GetDbConnection().CreateCommand())
-    {
-        command.CommandTimeout = 600;
-        command.CommandText = "SELECT CONVERT(nvarchar(4000),SERVERPROPERTY('InstanceDefaultBackupPath'))";
-        var directory = Convert.ToString(await command.ExecuteScalarAsync())!;
-        var stamp = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "Taipei Standard Time").ToString("yyyyMMdd-HHmmss");
-        var backup = directory.TrimEnd('\\') + $"\\PMR_SPC_TEST_N2_CAPACITY_{stamp}.bak";
-        command.CommandText = "BACKUP DATABASE [PMR_SPC_TEST] TO DISK=@path WITH COPY_ONLY,CHECKSUM;RESTORE VERIFYONLY FROM DISK=@path WITH CHECKSUM";
-        var parameter = command.CreateParameter(); parameter.ParameterName = "@path"; parameter.Value = backup; command.Parameters.Add(parameter);
-        await command.ExecuteNonQueryAsync();
-        Console.WriteLine($"backup={backup}; verify=passed");
-    }
+    Console.WriteLine($"backup={VerifiedBackup}; verify=passed; verifiedAt={VerifiedBackupAt}");
 
     await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
     foreach (var definition in AlignmentPlan.Definitions)
@@ -209,7 +200,8 @@ VerifyCalculations(final);
 foreach (var state in final)
 {
     var definition = AlignmentPlan.Definitions.Single(x => x.PpcId == state.PpcId);
-    if (!JsonEquals(state.CurrentConfig, state.LatestVersionConfig) || state.LatestVersionNo <= initial.Single(x => x.PpcId == state.PpcId).LatestVersionNo)
+    if (!JsonEquals(state.CurrentConfig, state.LatestVersionConfig) ||
+        pending == 7 && state.LatestVersionNo <= initial.Single(x => x.PpcId == state.PpcId).LatestVersionNo)
         throw new InvalidOperationException($"PPC {state.PpcId} current config/version mismatch.");
     if (AlignmentPlan.Hash(JsonNode.Parse(state.CurrentConfig)!["adjustmentAmountFormula"]!.GetValue<string>()) != definition.AfterFormulaHash)
         throw new InvalidOperationException($"PPC {state.PpcId} formula hash mismatch.");
