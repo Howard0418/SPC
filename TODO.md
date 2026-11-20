@@ -11,7 +11,7 @@
 
 > Web `0.1.167` 實站續驗確認未登入時單次導向 Portal 測試登入並保留 `/operators`；待登入者重走逾期重導與返回原頁。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
 
-- [ ] `SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：P0／SPC；重導守衛期間的401已改為可結束錯誤，避免人員清單永久載入；登入導向、並行成功、部分失敗與權限回歸共6項通過。測試站Web `0.1.166`／API `0.1.156`及環境連線驗證完成，待登入使用者重走錄影路徑人工驗收；正式未授權。[規格](specs/20261120-operators-auth-loading-loop/spec.md)
+- [ ] `SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：P0／SPC；重導守衛期間的401已改為可結束錯誤，避免人員清單永久載入。2026-11-20續作重跑核心4項通過；目前測試站Web `0.1.172`／API `0.1.161/test`、資產、環境及匿名401均正常。Windows操作服務native pipe離線，仍待有效登入使用者重走錄影路徑人工驗收；正式未授權。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
 
 ## 2026-11-18 團保名冊複製貼上匯入
 

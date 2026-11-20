@@ -1,3 +1,8 @@
+## 2026-11-20 作業人員頁登入loading驗收續作
+
+- 依P0排序重新執行`SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：核心重導／loading 4項通過；目前測試Web `0.1.172`、API `0.1.161/test`、首頁／JS／CSS／health／version及匿名人員API401均正常，部署資產含既有守衛修正。
+- Windows操作服務native pipe重試與重置後仍離線，無法代走有效登入SSO返回；未冒充人工驗收。無程式／資料／版本變更，不發布，正式未異動；本件與中央未完成小工作總數7件均保持。
+
 ## 2026-11-20 SPC-CHEM-ADJUST-ALIGN-1120-TASK-004 測試資料受控套用
 
 - DBA確認COPY_ONLY／CHECKSUM備份有效後，PMR_SPC_TEST受控套用7筆N2調整量公式槽容常數，新增公式版本1400～1406及7筆服務稽核；只改核准欄位，既有排程、F、量測及其他PPC／版本指紋不變。

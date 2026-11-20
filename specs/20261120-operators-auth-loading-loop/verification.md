@@ -25,3 +25,10 @@
 - Chromium 未登入開啟 SPC 測試站 `/operators`，僅導向 Portal 測試站登入一次，登入頁回 HTTP 200。SPC 同源工作階段儲存保留 `/operators`，Portal 登入的返回路徑為 `/Spc/Launch`。
 - 瀏覽器確認同源 API health HTTP 200、版本 `0.1.156`、環境 `test`，受保護的人員 API 匿名回 401。驗收使用已部署 Web `0.1.167`，本次未更新站台。
 - 使用者已確認同一頁的權限總覽畫面。登入操作服務目前離線，仍待有效帳號重走錄影中的逾期重導並確認 SSO 返回後解除載入。
+
+## 2026-11-20 依優先順序再次執行
+
+- Windows電腦操作技能初始化後，`list_apps`連續回報native pipe不存在；依指引重試一次、重置核心並重新初始化後仍相同，因此停止UI輸入，未操作登入、帳號、角色或權限，未冒充人工通過。
+- `operators-auth-loading.spec.ts`及`auth-expiry-redirect.spec.ts`共4項重新通過：既有重導守衛401可結束loading、部分API失敗顯示可讀錯誤、SSO grace只導向一次、平行成功會取消短暫重導。
+- 目前測試站首頁、主JS／CSS均HTTP 200且MIME正確；health=`ok`、API=`0.1.161/test`，匿名`/api/operators`正確回401。部署主資產含Web `0.1.172`及`AUTH_REDIRECT_GUARD`修正。
+- 本輪無程式／資料／版本變更，不需發布；正式站未異動。有效登入者重走原錄影路徑仍是唯一未完成驗收，TASK-001保持未DONE。
