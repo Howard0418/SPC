@@ -49,8 +49,8 @@
 | 09 | Portal：本人偏好 API／持久化（DONE） | [驗證](D:/PmrPortal/specs/20261101-i18n-09-portal-locale-preference/verification.md)；測試 API1.0.207／Web1.0.250，正式未發布 |
 | 10 | Portal：JSON 介接／Layout 語言選單／無刷新試點（DONE） | [驗證](D:/PmrPortal/specs/20261101-i18n-10-portal-layout-switch/verification.md)；測試 API1.0.209／Web1.0.252，正式未發布 |
 | 11 | Portal：首頁／公告／活動／會議／通訊錄 UI（DONE，測試站） | 依 10；保留查詢、月曆日期、草稿及公告權限 |
-| 12 | Portal：人事／團保／生日／權限與管理 UI（含 Vue 2 錯誤頁） | 依 10；生日月日及團保功能不變，顯示與寫入值分離 |
-| 13 | Portal：安全／職安／總務／文具／品保／Mobile 剩餘 UI | 依 10；每批依實際頁面細分，不一次大改 |
+| 12 | Portal：人事／團保／生日／權限與管理 UI（含 Vue 2 錯誤頁） | 已實作並發布測試站，真人驗收延後。生日月日及團保功能不變，[12D 驗證](D:/PmrPortal/specs/20261121-i18n-12d-vue-error-logs/verification.md) |
+| 13 | Portal：安全／職安／總務／文具／品保／Mobile 剩餘 UI | 入口、行動登入／導覽與行動門禁已發布測試站。桌面門禁、職安、總務／文具、品保內頁等續作，[13C 驗證](D:/PmrPortal/specs/20261121-i18n-13c-mobile-gate/verification.md) |
 | 14 | Portal：API／驗證／郵件／匯出與列印 | 依 11～13；個別 request 傳文化，不改既有機器格式 |
 | 15 | KM：JSON 介接／Layout 切換／偏好快取 | 依 02／09；驗證 Portal 身分介接，不改票證協定與 ACL |
 | 16 | KM：文件櫃／文件詳情／分類／搜尋／版本 UI | 依 15；文件原文不動，原狀態 value 不變 |
@@ -167,3 +167,5 @@
 - 2026-10-27 I18N-CHAR-001-B完成：圖表／摘要／警報／追溯品質特性名稱三語接線，additive英文欄位保留原名、代碼及歷史；125語系／32 API、本機16與警報補驗4、發布16加原144回歸、build/hash/health/同源14通過。只測試Web0.1.109/API0.1.86，正式未更新；三語化剩14件，其中SPC C一件。
 
 - 2026-10-27 I18N-CHAR-001-C完成：人讀報表／郵件附件、藥液總覽與F表品質特性名稱切語；歷史快照／CSV與原計算不變。126語系／40必要API、本機5及發布74瀏覽器、build/hash/health/同源14通過；只測試Web0.1.110/API0.1.87，正式未更新。SPC本案A／B／C完成，剩09～21共13件維持暫停，真人審稿未完成。
+
+- 2026-11-21 依使用者指示先實作、跑自動檢查並發布測試站，真人驗收延後。12A～12D 及 13A～13C 已發布，Portal 現行測試 API 1.0.306／Web 1.0.345。依完成定義仍有 I18N-12～21 共 10 件未核銷。
