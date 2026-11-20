@@ -27,3 +27,5 @@
 2. 開啟「使用者活動紀錄」，查詢事件`interaction.business_action`；應顯示「送出業務操作」、固定ActionKey、頁面、Succeeded及HTTP狀態。
 3. 以安全方式造成一次合法API失敗時，應顯示相同ActionKey、Failed與狀態碼，但不含錯誤本文。
 4. 確認畫面與Xlsx都沒有輸入的Email、公式、密碼、token、request body或query值；只在文字框輸入而未送出時不應新增事件。
+
+- 2026-11-21 使用者確認測試站可查到業務按鈕稽核紀錄。成功／失敗各筆結果與 HTTP 狀態、畫面與 Xlsx 的敏感原文排除，以及僅輸入未送出的情境仍待確認。
