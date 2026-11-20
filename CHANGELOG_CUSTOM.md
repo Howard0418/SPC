@@ -1,3 +1,7 @@
+## 2026-11-20 SMTP OOS／OOC 收件驗收前檢查
+
+- 測試站設定檔的 SMTP 主機與範例相同，工作站端 DNS 無法解析，且登入操作服務不可用。實際收信驗收待可用測試 SMTP 與登入工作階段。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
 ## 2026-11-20 SMTP OOS／OOC 分類收件
 
 - OOS／OOC 已能各自選擇收件人，兼容共用舊名單及預設地址。測試 Web `0.1.168`／API `0.1.157` 已發布，待實際收信驗收。兩類公式通知待相依工作。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
