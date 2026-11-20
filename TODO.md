@@ -18,9 +18,9 @@
 
 - [x] `SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：P0／SPC；重導守衛期間的401已改為可結束錯誤，避免人員清單永久載入。核心4項、測試站Web `0.1.173`／API `0.1.161/test`、資產、環境及匿名401正常；2026-11-20使用者確認有效登入、逾期重導返回`/operators`及解除loading人工驗收通過。正式未授權。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
 
-## 2026-11-20 藥液歷史異常稽核證據判定回歸（僅登錄）
+## 2026-11-20 藥液歷史異常稽核證據判定回歸（測試站完成）
 
-- [ ] `SPC-CHEM-MALFORMED-AUDIT-JUDGMENT-1120-TASK-001`：P1／SPC API；稽核整案續驗時發現3組非物件／破損`UploadDetail.PayloadJson`的獨立測試，預期歷史判定`Unknown`但實得`OK`。先診斷保存規格證據與目前／最近規格fallback優先序，不得將破損稽核當成可信證據；未修程式、DB或站台。[規格](specs/20261120-chemical-malformed-audit-judgment-regression/spec.md)
+- [x] `SPC-CHEM-MALFORMED-AUDIT-JUDGMENT-1120-TASK-001`：P1／SPC API；破損、非物件、錯誤或空`details`的保存規格稽核不再靜默套用現行規格，固定回`Unknown`／`SAVED_SPEC_EVIDENCE_INVALID`／`EvidenceConflict`；真正無證據及合法證據既有行為保持。聚焦14項通過，測試API `0.1.162/test`已發布並完成同源、直連、Web與資產驗證；無schema或資料回填，正式未發布。[規格與驗證](specs/20261120-chemical-malformed-audit-judgment-regression/verification.md)
 
 ## 2026-11-18 團保名冊複製貼上匯入
 

@@ -1,3 +1,9 @@
+## 2026-11-20 藥液歷史破損稽核證據安全判定
+
+- 保存規格讀取會區分「完全沒有證據」與「有宣稱保存規格但內容無效」；非物件、JSON破損、錯誤或空`details`回`Unknown`／`SAVED_SPEC_EVIDENCE_INVALID`／`EvidenceConflict`，不再以現行規格誤判`OK`。
+- 聚焦14項通過；完整API套件591通過／13失敗／11略過，13項為既有歷史修復舊預期、InMemory GroupBy與Portal排除測試，均與本次差異無交集，未跨範圍修正。
+- API `0.1.161`→`0.1.162`已發布測試站；同源與`:8901`直連版本／`test`環境、health、Web首頁及主JS／CSS均通過。Web維持`0.1.173`，無schema、資料回填或正式發布。[驗證](specs/20261120-chemical-malformed-audit-judgment-regression/verification.md)
+
 ## 2026-11-20 作業人員頁登入重導人工驗收完成
 
 - 使用者確認有效登入、登入逾期／重新登入、返回`/operators`及人員清單解除loading的原錄影路徑通過；結合核心4項回歸與測試站Web`0.1.173`／API`0.1.161/test`連線證據，`SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`完成核銷。

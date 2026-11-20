@@ -118,6 +118,7 @@ public class ChemicalSavedSpecificationTests
     [Theory]
     [InlineData("[\"PortalChemicalSpecificationSavedV1\"]")]
     [InlineData("{\"action\":\"PortalChemicalSpecificationSavedV1\",\"details\":\"forged\"}")]
+    [InlineData("{\"action\":\"PortalChemicalSpecificationSavedV1\",\"details\":[]}")]
     [InlineData("{\"action\":\"PortalChemicalSpecificationSavedV1\",\"details\":broken}")]
     public async Task MalformedOrNonObjectAuditCannotCrashHistoryOrBecomeEvidence(string json)
     {
@@ -126,6 +127,11 @@ public class ChemicalSavedSpecificationTests
             new UploadDetail{UploadBatchId=batch,IsValid=false,PayloadJson=json});
         await f.Db.SaveChangesAsync();
         var rows=await f.Db.VariableMeasurements.AsNoTracking().ToListAsync();
-        (await new ChemicalHistoryQueryService(f.Db).GetAsync(rows)).Single().Value.Judgment.Should().Be("Unknown");
+        var result=(await new ChemicalHistoryQueryService(f.Db).GetAsync(rows)).Single().Value;
+        result.Judgment.Should().Be("Unknown");
+        result.InitialJudgment.Should().Be("Unknown");
+        result.JudgmentReasonCode.Should().Be("SAVED_SPEC_EVIDENCE_INVALID");
+        result.RepairEligibility.Should().Be("EvidenceConflict");
+        result.RepairSuggestion.Should().NotBeNullOrWhiteSpace();
     }
 }

@@ -1,3 +1,5 @@
+- 2026-11-20 [藥液歷史破損稽核證據安全判定](../specs/20261120-chemical-malformed-audit-judgment-regression/spec.md)：宣稱為保存規格但payload非物件、JSON破損或`details`錯誤／空白時，歷史判定固定為`Unknown`、`SAVED_SPEC_EVIDENCE_INVALID`及`EvidenceConflict`，不得改套目前／最近規格；真正無證據與合法證據既有契約保持。測試API `0.1.162`已發布，無schema或資料回填，正式未發布。[驗證](../specs/20261120-chemical-malformed-audit-judgment-regression/verification.md)
+
 - 2026-11-20 [PPC ID搜尋](../specs/20261120-ppc-id-search/spec.md)：「SPC 管制項目設定與規格維護」搜尋欄支援以PPC ID十進位文字比對（例如`2587`），並保留原有料號、製程、機台／槽位、特性與組合篩選行為。測試Web `0.1.173`已發布；API、資料與權限不變，正式未發布。
 
 - 2026-11-20 [藥液調整管制值與公式依日報表對帳](../specs/20261120-chemical-adjustment-excel-alignment/spec.md)：指定日報表 11 張資料 Sheet／142 列作唯讀比對基準；調整參數頁是槽容、添加／稀釋管制值唯一編輯入口，線別分析項目總覽同列唯讀顯示三參數與兩式並同步匯出。TASK-001～003、005已完成唯讀對帳、三參數計算契約、總覽交叉確認及91筆兩式具名參數轉換；17筆無公式不變、5筆缺稀釋參數隔離。TASK-004仍待PPC2587決策及兩頁人工驗收。[驗證](../specs/20261120-chemical-adjustment-excel-alignment/verification.md)
