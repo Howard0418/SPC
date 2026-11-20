@@ -1,10 +1,10 @@
 ## 2026-11-20 藥液調整管制值與公式依日報表對帳（規劃完成）
 
-> TASK-001唯讀對帳及 TASK-002 計算參數契約完成：計算器已提供三個具名參數，引用缺值／非正數拒絕，排程維持不可變版本；所有 Excel 公式、`NA`與空白差異仍保持隔離。[結果](specs/20261120-chemical-adjustment-excel-alignment/reconciliation.md)
+> TASK-001～003完成：唯讀對帳、計算參數契約及總覽交叉確認均已發布測試站；三參數在總覽唯讀、匯出同步，引用缺值會警示。所有 Excel 公式、`NA`與空白差異仍保持隔離。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
 
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-001`：P1／SPC／Excel原檔SHA-256已固定；114來源身分中110唯一配對、4未配對，網站另3項。槽容／添加／稀釋及兩式逐列矩陣已完成；未寫DB、未改Excel、未發布。[矩陣](specs/20261120-chemical-adjustment-excel-alignment/reconciliation-matrix.md)
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-002`：P1／SPC API／計算器已支援槽容、添加及稀釋三個不分大小寫的具名參數；引用缺值與已設定非正數明確拒絕，既有公式保持，排程試算使用不可變公式版本內參數。測試API `0.1.161` 已發布。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
-- [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-003`：P1／SPC Web／線別分析項目總覽同列唯讀顯示三參數、兩式及對帳警示，匯出同步且公式保存不得覆寫參數；相依 TASK-002，測試通過後發布測試 Web。
+- [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-003`：P1／SPC Web／線別分析項目總覽已同列唯讀顯示三參數與兩式，匯出同步；公式引用未設定參數顯示三語警示，公式保存不覆寫參數。測試Web `0.1.172` 已發布。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
 - [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-004`：P1／SPC 測試資料／依核准矩陣受控同步，完成 before snapshot、preview、版本／稽核、NoChange、計算及兩頁人工驗收；相依 TASK-001～003，正式資料與正式發布另行授權。
 
 ## 2026-11-20 作業人員頁登入重導後無限載入

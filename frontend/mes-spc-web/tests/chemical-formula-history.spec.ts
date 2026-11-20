@@ -51,8 +51,8 @@ test('overview shows adjustment formulas on desktop and mobile and preserves the
  expect(Math.abs(widths.table-widths.container)).toBeLessThanOrEqual(2);
  for(const width of [1280,390]){
   await page.setViewportSize({width,height:844});
-  await expect(page.locator('thead th:visible')).toHaveCount(11);
-  await expect(row.locator('td:visible')).toHaveCount(11);
+  await expect(page.locator('thead th:visible')).toHaveCount(14);
+  await expect(row.locator('td:visible')).toHaveCount(14);
  }
  await row.getByTestId('overview-edit').click();
  await expect(row.getByTestId('overview-adjustmentFormula')).toBeVisible();
@@ -65,7 +65,7 @@ test('overview shows adjustment formulas on desktop and mobile and preserves the
   await expect(page.getByTestId('overview-row-1').getByTestId('overview-concentrationFormula')).toHaveValue('Primary * 4');
   await page.getByTestId('overview-row-1').getByTestId('overview-edit').click();
   await expect(page.getByTestId('overview-row-1').locator('pre').first()).toHaveText('Primary * 4');
- await page.emulateMedia({media:'print'});await expect(page.locator('thead th:visible')).toHaveCount(11);
+ await page.emulateMedia({media:'print'});await expect(page.locator('thead th:visible')).toHaveCount(14);
 });
 test('partial failure preserves draft and reference',async({page})=>{
  await setup(page,true);await page.goto('/chemical-analysis-overview');for(let i=0;i<2;i++)await page.getByRole('button',{name:'編輯',exact:true}).first().click();await page.locator('textarea').nth(0).fill('Primary * 2');await page.locator('textarea').nth(3).fill('Primary * 3');await page.getByLabel('參照文件／修改依據',{exact:true}).fill('依據文件');await page.getByRole('button',{name:/儲存變更/}).click();await expect(page.getByText('儲存完成：成功 1 筆，失敗 1 筆。')).toBeVisible();await expect(page.locator('textarea').nth(3)).toHaveValue('Primary * 3');await expect(page.getByLabel('參照文件／修改依據',{exact:true})).toHaveValue('依據文件');

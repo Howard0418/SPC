@@ -1,3 +1,9 @@
+## 2026-11-20 SPC-CHEM-ADJUST-ALIGN-1120-TASK-003 總覽交叉確認
+
+- 線別分析項目總覽從同一份`ChemicalAnalysisConfigJson`同列唯讀顯示槽容、添加管制值、稀釋管制值及兩式；Excel匯出同步增加三欄。參數仍只能在藥液量測調整公式頁維護，不新增第二個編輯入口。
+- 當任一公式引用`TANK_CAPACITY_LITERS`、`ADDITION_CONTROL_VALUE`或`DILUTION_CONTROL_VALUE`但值未設定時，設定狀態以繁中／簡中／英文顯示對應警示；公式保存以原JSON合併，測試證明不覆寫三參數。
+- 紅燈2項轉綠；藥液總覽／F表53項、公式歷史與保存11項、三語2895鍵及test build通過。測試Web `0.1.171`→`0.1.172`，API維持`0.1.161/test`；Web／主JS／CSS／health／version及Playwright瀏覽器同源API驗證通過。正式未發布、無DB或資料寫入；完成後中央未完成小工作7件。
+
 ## 2026-11-20 SPC-CHEM-ADJUST-ALIGN-1120-TASK-002 計算參數契約
 
 - 先以紅燈測試確認計算器尚不認得三個調整參數，再加入不分大小寫的 `TANK_CAPACITY_LITERS`、`ADDITION_CONTROL_VALUE`、`DILUTION_CONTROL_VALUE`；公式引用未設定參數沿用未知輸入拒絕，已設定為0／負數亦拒絕。
