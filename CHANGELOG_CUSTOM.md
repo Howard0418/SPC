@@ -3396,3 +3396,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 台北月份、exclusive upper bound、錯誤格式與跨月工作簿核心7項，以及報表／多語工作簿回歸16項全數通過。
 - 測試API`0.1.163/test`、同源／直連、首頁及主資產正常，匿名匯出401；computer-use native pipe不可用，登入後實際下載未冒充完成。無程式、資料、版本或發布異動，正式未變。[驗證](specs/20261109-cpk-export-month-scope/verification.md)
 
+## 2026-11-20 SMTP公式修改通知自動續驗
+
+- 調整量／濃度公式差異、已提交版本、收件分流／去重、PPC保存、稽核及SMTP設定後端36項通過；明示Web測試環境後，SMTP三語／四種寬度與DTO焦點15項通過。
+- 測試API`0.1.163/test`、同源／直連、首頁與匿名401正常；未修改公式、設定或資料，未寄實際郵件。登入保存及實際收件仍待人工，正式未變。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
