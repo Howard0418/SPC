@@ -237,6 +237,9 @@ for (const locale of ["zh-TW", "zh-CN", "en-US"])
     const ooc = page.getByRole("checkbox", { name: / OOC$/ });
     await expect(ooc).toBeChecked();
     await ooc.uncheck();
+    await page.getByTestId("locale-select").selectOption("zh-TW");
+    await page.getByRole("checkbox", { name: / 調整量公式修改$/ }).check();
+    await expect(page.getByRole("checkbox", { name: / 濃度公式修改$/ })).not.toBeChecked();
     await page.getByTestId("locale-select").selectOption(locale);
     await page.locator("form button[type=submit]").click();
     await expect.poll(() => writes.length).toBe(1);
@@ -246,7 +249,7 @@ for (const locale of ["zh-TW", "zh-CN", "en-US"])
       enableSsl: true,
       password: "",
       recipientOperatorIds: [1],
-      recipientSelection: { outOfSpec: [1], outOfControl: [], adjustmentFormula: [], concentrationFormula: [] },
+      recipientSelection: { outOfSpec: [1], outOfControl: [], adjustmentFormula: [1], concentrationFormula: [] },
     });
     await page.getByTestId("settings-sendTestEmail").click();
     await expect.poll(() => writes.length).toBe(2);

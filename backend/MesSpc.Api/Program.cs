@@ -82,6 +82,7 @@ builder.Services.AddScoped<FormulaEngineService>();
 builder.Services.AddScoped<LimitBatchService>();
 builder.Services.AddScoped<ChemicalFTableService>();
 builder.Services.AddScoped<ChemicalAnalysisFormulaVersionService>();
+builder.Services.AddScoped<ChemicalFormulaNotice>();
 builder.Services.AddScoped<ChemicalFormulaScheduleService>();
 builder.Services.AddScoped<ChemicalPortalMeasurementService>();
 builder.Services.AddScoped<ChemicalStatisticsProcessor>();

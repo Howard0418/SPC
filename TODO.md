@@ -848,4 +848,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-20 SMTP 郵件通知依類型選擇收件人（規劃）
 
 - [ ] `SPC-SMTP-RECIPIENTS-1120-TASK-001`：P1／SPC。OOS／OOC 分類與舊名單相容已實作；測試 Web `0.1.168`／API `0.1.157` 已發布。實際收信驗收受測試 SMTP 主機 DNS 及登入操作服務阻擋。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
-- [ ] `SPC-SMTP-RECIPIENTS-1120-TASK-002`：P2／SPC／依賴 001。已盤點公式保存、還原、排程及稽核交易接點；待實作交易提交後的調整量及濃度公式修改通知。[規格](specs/20261120-smtp-notification-recipient-routing/spec.md)
+- [ ] `SPC-SMTP-RECIPIENTS-1120-TASK-002`：P2／SPC。已依提交後公式版本實作調整量／濃度公式分流通知，測試 Web `0.1.169`／API `0.1.158` 已發布；實際收件與 001 一併待驗。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)

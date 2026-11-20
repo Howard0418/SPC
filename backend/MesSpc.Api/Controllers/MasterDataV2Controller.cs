@@ -653,7 +653,7 @@ public class PartProcessCharacteristicsController(
         }
         await db.SaveChangesAsync();
         var formulaVersionService = chemicalFormulaVersions ?? new ChemicalAnalysisFormulaVersionService(db);
-        await formulaVersionService.RecordChangeAsync(
+        var formulaVersion = await formulaVersionService.RecordChangeAsync(
             x.Id,
             previousChemicalAnalysisConfigJson,
             x.ChemicalAnalysisConfigJson,
@@ -664,6 +664,7 @@ public class PartProcessCharacteristicsController(
         {
             await transaction.CommitAsync();
         }
+        ChemicalFormulaNotice.AfterResponse(ControllerContext.HttpContext, formulaVersion.Version?.Id);
         return Ok(x);
     }
 

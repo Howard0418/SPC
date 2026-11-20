@@ -1,3 +1,7 @@
+## 2026-11-20 SMTP 調整量與濃度公式修改通知
+
+- 四類收件人可各自勾選，公式通知在提交後依實際異動分流。測試 Web `0.1.169`／API `0.1.158` 已發布並完成站台驗證；實際收件及正式發布仍待處理。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
 ## 2026-11-20 SMTP 公式通知接點盤點
 
 - 核對調整量／濃度公式保存、版本還原、排程及 SPC 稽核交易；記錄交易提交後才通知的要求及 Portal 管制值通知邊界。僅同步規格與待辦。[規格](specs/20261120-smtp-notification-recipient-routing/spec.md)

@@ -240,8 +240,7 @@ onMounted(() => {
                   <th scope="col" class="p-2">{{ t('spc.settings.alertRecipients') }}</th>
                   <th v-for="column in recipientColumns" :key="column" scope="col" class="p-2 text-center">
                     {{ t(`spc.settings.recipientType.${column}`) }} ({{ recipientSelection[column].length }})
-                    <span v-if="column.endsWith('Formula')" class="block font-normal">{{ t('spc.settings.recipientType.pending') }}</span>
-                    <span v-else class="flex justify-center gap-2 whitespace-nowrap font-normal">
+                    <span class="flex justify-center gap-2 whitespace-nowrap font-normal">
                       <button type="button" class="text-indigo-600 dark:text-indigo-300" @click="setVisibleRecipients(column, true)">{{ t('spc.settings.selectAll') }}</button>
                       <button type="button" class="text-slate-600 dark:text-slate-300" @click="setVisibleRecipients(column, false)">{{ t('spc.settings.clear') }}</button>
                     </span>
@@ -256,7 +255,7 @@ onMounted(() => {
                     </th>
                     <td v-for="column in recipientColumns" :key="column" class="p-2 text-center">
                       <input v-model="recipientSelection[column]" type="checkbox" :value="user.id"
-                        :disabled="column.endsWith('Formula') || (!validRecipient(user) && !recipientSelection[column].includes(user.id))"
+                        :disabled="!validRecipient(user) && !recipientSelection[column].includes(user.id)"
                         :aria-label="`${user.operatorName} ${t(`spc.settings.recipientType.${column}`)}`"
                         class="h-4 w-4 accent-indigo-600" />
                     </td>
