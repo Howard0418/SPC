@@ -1,3 +1,7 @@
+## 2026-11-20 藥液調整參數備註測試站複核
+
+- SPC 測試入口、主資產及 API `0.1.156`／`test` 連線正常。瀏覽器與 Windows 操作服務不可用，登入後新增、修改、清空及重載仍待人工驗收，本次無資料寫入或發布。[驗證](specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-adjustment-remark.md)
+
 ## 2026-11-20 藥液調整管制值 Email 通知人工驗收
 - Portal 測試資料庫唯讀確認兩個去重後有效收件地址，涵蓋品保與製程人員角色。
 - 使用者確認修改添加／稀釋管制值後的人工收信驗收通過，`PORTAL-CHEM-ADJUST-CONTROL-NOTIFY-1118-TASK-001` 測試區完成。
