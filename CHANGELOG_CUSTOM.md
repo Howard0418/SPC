@@ -1,3 +1,7 @@
+## 2026-11-20 作業人員頁登入重導續驗
+
+- 測試站 Chromium 驗證未登入時單次導向 Portal 測試登入並保留 `/operators`。登入服務操作受阻，逾期 SSO 返回後的實站驗收仍待完成。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
+
 ## 2026-11-20 作業人員頁面權限總覽驗收
 
 - 使用者確認 SPC 測試站作業人員頁面權限總覽驗收通過，工作池已核銷。正式發布待另行授權。[驗證](specs/20261120-operator-page-permission-overview/verification.md)
