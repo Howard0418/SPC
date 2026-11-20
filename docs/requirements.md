@@ -651,3 +651,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-20 [使用者業務按鈕安全稽核](../specs/20261120-audit-business-action-allowlist/verification.md)：只針對固定白名單API送出後記錄ActionKey、頁面、結果、Method與HTTP狀態；不記逐字輸入、request body、query或敏感原文。測試Web`0.1.174`／API`0.1.163/test`已發布，約束migration、聚焦／回歸、三語、build及Web／API連線通過；待登入人工驗收，正式未發布。
 
 - 2026-11-21 [使用者活動稽核 TASK-009](../specs/20261109-audit-e2e-acceptance/verification.md) 完成測試站登入後查詢、匯出、異動摘要與遮罩畫面驗收；正式未發布。
+
+- 2026-11-21 品質履歷 Cpk 月份匯出須走站內已驗證的 API 客戶端；測試站登入、下載與月份資料對帳通過。[驗證](../specs/20261109-cpk-export-month-scope/verification.md)

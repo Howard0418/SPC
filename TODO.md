@@ -664,7 +664,7 @@
 - 2026-10-26 新盤點08C6已知成功／統計提示仍原文，依高頻畫面優先接線後回E，剩15件；不改算法。
 
 ### REPORT-DATA-VERIFY-001：既有CPK匯出月份與資料範圍業務確認（獨立於三語化）
-- [ ] `SPC-CPK-EXPORT-MONTH-SCOPE-1109-TASK-001`：量測、警報、違規與能力統計限定台北月份，錯誤格式拒絕；2026-11-20續驗核心7項與工作簿／多語回歸16項全通過，測試API`0.1.163/test`、同源／直連、Web／資產及匿名401正常。computer-use native pipe不可用，尚待登入後實際下載／工作簿核對；正式未發布。[規格](specs/20261109-cpk-export-month-scope/spec.md)／[驗證](specs/20261109-cpk-export-month-scope/verification.md)
+- [x] `SPC-CPK-EXPORT-MONTH-SCOPE-1109-TASK-001`：2026-11-21 修正登入後匯出 401，測試 Web 0.1.175／API 0.1.163/test；10／11 月實際下載、檔名、月份及摘要與測試庫一致，正式未發布。[驗證](specs/20261109-cpk-export-month-scope/verification.md)
 
 - 2026-10-26 08C6完成：10鍵／120前端、47不同必要API分批、藥液59與跨專案公式25、本機8圖表／42PPC／6邊界及發布8圖表／2PPC通過；5檔原公式SQL逐字保持；只測試Web0.1.106/API0.1.84，剩14件，接續08E 人讀報表與匯出。
 

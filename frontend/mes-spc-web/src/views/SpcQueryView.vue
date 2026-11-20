@@ -39,11 +39,28 @@ const batches = ref([]);
 const alertsMap = ref({});
 const exportMonth = ref(new Date().toISOString().slice(0, 7));
 
-function exportCpkMaster() {
-  const baseUrl = (api.defaults?.baseURL || "/api").replace(/\/+$/, "");
-  const month = encodeURIComponent(exportMonth.value);
-  const url = `${baseUrl}/v1/reports/cpk-summary?month=${month}&uiLocale=${encodeURIComponent(normalizeLocale(locale.value))}`;
-  window.open(url, "_blank");
+const exporting = ref(false);
+
+async function exportCpkMaster() {
+  const month = exportMonth.value;
+  exporting.value = true;
+  err.value = "";
+  try {
+    const response = await api.get("/v1/reports/cpk-summary", {
+      params: { month, uiLocale: normalizeLocale(locale.value) },
+      responseType: "blob"
+    });
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `PMR_Quality_CPK_Summary_${month.replace("-", "")}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    err.value = getApiErrorDisplay(e);
+  } finally {
+    exporting.value = false;
+  }
 }
 
 async function executeQuery() {
@@ -130,7 +147,7 @@ onMounted(() => {
           <label class="text-[10px] font-bold text-slate-400 uppercase mb-1">{{ t('spc.trace.month') }}</label>
           <input data-testid="trace-exportMonth" v-model="exportMonth" type="month" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-bold focus:outline-none focus:border-indigo-500" />
         </div>
-        <button data-testid="trace-exportCpkMaster" @click="exportCpkMaster" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all self-end">
+        <button data-testid="trace-exportCpkMaster" @click="exportCpkMaster" :disabled="exporting || !exportMonth" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all self-end">
           <Download class="w-4 h-4" /> {{ t('spc.trace.exportCpk') }}
         </button>
       </div>
