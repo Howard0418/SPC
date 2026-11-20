@@ -2,7 +2,9 @@
 
 2026-10-26使用者已授權[持續完成](../20261026-i18n-continuation/spec.md)，各件驗證／測試發布／提交上傳後直接接續；舊STOP紀錄保留歷史，不再等待逐項核准。外部條件與真人審稿不得冒稱完成。
 
-2026-11-01最新狀態：SPC三語化開發批次（至08E）完成；新增品質特性名稱切語A／B／C已完成；Portal I18N-09 本人偏好 API／持久化及 I18N-10 Layout 無刷新切換已完成並發布測試站；11～21共11件未完成。譯文仍為draft，真人審稿未完成。
+2026-11-01最新狀態：SPC三語化開發批次（至08E）完成；新增品質特性名稱切語A／B／C已完成；Portal I18N-09 本人偏好 API／持久化及 I18N-10 Layout 無刷新切換已完成並發布測試站；11～21共11件在當日未完成。譯文仍為draft，真人審稿未完成。
+
+2026-11-21：I18N-11 已完成 Portal 測試站與登入驗證，API 1.0.299、Web 1.0.338。I18N-12～21 共 10 件未完成。[收尾驗證](D:/PmrPortal/specs/20261121-i18n-11e-directory/verification.md)
 
 | Task | 主系統／範圍 | 相依、資料庫及發布影響 |
 |---|---|---|
@@ -46,7 +48,7 @@
 | 08E | SPC：人讀報表與匯出（DONE） | [驗證與回復](../20261026-i18n-task08e/verification.md)，測試Web0.1.107/API0.1.85，正式未更新 |
 | 09 | Portal：本人偏好 API／持久化（DONE） | [驗證](D:/PmrPortal/specs/20261101-i18n-09-portal-locale-preference/verification.md)；測試 API1.0.207／Web1.0.250，正式未發布 |
 | 10 | Portal：JSON 介接／Layout 語言選單／無刷新試點（DONE） | [驗證](D:/PmrPortal/specs/20261101-i18n-10-portal-layout-switch/verification.md)；測試 API1.0.209／Web1.0.252，正式未發布 |
-| 11 | Portal：首頁／公告／活動／會議／通訊錄 UI | 依 10；保留查詢、月曆日期、草稿及公告權限 |
+| 11 | Portal：首頁／公告／活動／會議／通訊錄 UI（DONE，測試站） | 依 10；保留查詢、月曆日期、草稿及公告權限 |
 | 12 | Portal：人事／團保／生日／權限與管理 UI（含 Vue 2 錯誤頁） | 依 10；生日月日及團保功能不變，顯示與寫入值分離 |
 | 13 | Portal：安全／職安／總務／文具／品保／Mobile 剩餘 UI | 依 10；每批依實際頁面細分，不一次大改 |
 | 14 | Portal：API／驗證／郵件／匯出與列印 | 依 11～13；個別 request 傳文化，不改既有機器格式 |
