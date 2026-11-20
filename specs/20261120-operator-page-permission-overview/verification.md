@@ -23,3 +23,8 @@
 - SPC 測試 Web `0.1.166` → `0.1.167`，API `0.1.156` → `0.1.156`。首頁與主 JS／CSS 均 HTTP 200 且 MIME 正確，測試站主資產含新版號。
 - 已發布資產的 Chromium 路由驗證確認同源 `/api`，並用 Chromium 對該實際基底確認 health／version 均 HTTP 200、環境 `test`，未登入 `/api/operators` 回預期的 401。使用者端 `:8901` 也確認版本及環境。
 - 待登入目視現行名單。正式站未發布。Web 回復可使用 `release/test/frontend.backup-operator-permissions-direct-20261120` 的 `index.html` 切回既有前版資產，並重驗 Web 與 API。
+
+## 2026-11-20 使用者確認驗收
+
+- 使用者確認測試站作業人員頁面權限總覽驗收通過，驗收版本為 Web `0.1.167`／API `0.1.156`。
+- 本次同步驗收紀錄，無程式或站台更新。正式發布待另行授權。

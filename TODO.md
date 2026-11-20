@@ -841,5 +841,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] `PORTAL-SPC-CHEM-LEGACY-EXCLUSION-CLEANUP-1119-TASK-001`：P0，SPC 測試資料；已軟停用 2 筆舊版 Portal「不列入」checkbox 建立的固定原因隱藏排除，保留人工排除及量測原始資料；正式資料另行授權。[驗證](specs/20261119-legacy-portal-chemical-exclusion-cleanup/verification.md)
 
-- [ ] `SPC-OPERATOR-PAGE-PERMISSIONS-1120-TASK-001`：P1／SPC；作業人員列表直接顯示各人頁面權限名稱與「共 N 項」，移除「點此查看」及展開控制。測試 Web 0.1.167／API 0.1.156 已發布並完成連線驗證，待登入目視驗收。[驗證](specs/20261120-operator-page-permission-overview/verification.md)
+- [x] `SPC-OPERATOR-PAGE-PERMISSIONS-1120-TASK-001`：P1／SPC；2026-11-20 使用者確認測試站驗收通過。作業人員列表直接顯示頁面權限名稱與「共 N 項」。測試 Web 0.1.167／API 0.1.156，正式發布待另行授權。[驗證](specs/20261120-operator-page-permission-overview/verification.md)
 
