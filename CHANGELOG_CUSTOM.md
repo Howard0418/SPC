@@ -1,3 +1,7 @@
+## 2026-11-20 測試 SMTP 到信確認
+
+- 使用者確認收到測試信 `e872bea5`，基本寄送驗證通過。四類事件收件仍待驗收。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
 ## 2026-11-20 測試 SMTP 指定信箱試寄
 
 - 測試 SMTP 已接受一封指定信箱測試信，待確認到信與四類事件收件。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
