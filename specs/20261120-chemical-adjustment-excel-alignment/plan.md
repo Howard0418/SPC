@@ -1,7 +1,7 @@
 # 技術計畫
 
 - 功能 ID：`20261120-chemical-adjustment-excel-alignment`
-- 規格版本：8
+- 規格版本：9
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響檔案

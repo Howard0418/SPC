@@ -1,3 +1,8 @@
+## 2026-11-20 藥液調整參數與公式人工驗收完成
+
+- 使用者驗收「藥液量測調整公式」與「線別分析項目總覽」的槽容、添加／稀釋管制值及兩式對應；依目前畫面驗收結果，PPC2587稀釋值保留22，不恢復先前候選23。
+- `SPC-CHEM-ADJUST-ALIGN-1120-TASK-004`完成；本次只同步文件，不修改程式、資料、版本或站台，正式資料與正式發布仍須另行授權。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
+
 ## 2026-11-20 藥液歷史破損稽核證據安全判定
 
 - 保存規格讀取會區分「完全沒有證據」與「有宣稱保存規格但內容無效」；非物件、JSON破損、錯誤或空`details`回`Unknown`／`SAVED_SPEC_EVIDENCE_INVALID`／`EvidenceConflict`，不再以現行規格誤判`OK`。
