@@ -1,3 +1,8 @@
+## 2026-11-20 作業人員頁登入重導人工驗收完成
+
+- 使用者確認有效登入、登入逾期／重新登入、返回`/operators`及人員清單解除loading的原錄影路徑通過；結合核心4項回歸與測試站Web`0.1.173`／API`0.1.161/test`連線證據，`SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`完成核銷。
+- 本次只同步驗收狀態，不修改程式、資料庫、角色、權限、版本或站台；正式發布仍待另行授權。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
+
 ## 2026-11-20 SPC-CHEM-ADJUST-ALIGN-1120-TASK-005 兩式連結調整參數
 
 - 依使用者確認，添加／稀釋管制值與規格LSL／USL分離；測試庫91筆調整／調整量公式改用`ADDITION_CONTROL_VALUE`、`DILUTION_CONTROL_VALUE`與`TANK_CAPACITY_LITERS`，並保留`/1000`、Target、配槽目標、比重及倍率。

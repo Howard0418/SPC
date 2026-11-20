@@ -14,9 +14,9 @@
 
 ## 2026-11-20 作業人員頁登入重導後無限載入
 
-> Web `0.1.167` 實站續驗確認未登入時單次導向 Portal 測試登入並保留 `/operators`；待登入者重走逾期重導與返回原頁。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
+> Web `0.1.167` 實站續驗確認未登入時單次導向 Portal 測試登入並保留 `/operators`；2026-11-20使用者已完成有效登入、逾期重導返回及解除loading人工驗收。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
 
-- [ ] `SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：P0／SPC；重導守衛期間的401已改為可結束錯誤，避免人員清單永久載入。2026-11-20續作重跑核心4項通過；目前測試站Web `0.1.173`／API `0.1.161/test`、資產、環境及匿名401均正常，本次PPC ID搜尋發布未改動其守衛。Windows操作服務native pipe離線，仍待有效登入使用者重走錄影路徑人工驗收；正式未授權。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
+- [x] `SPC-OPERATORS-AUTH-LOADING-1120-TASK-001`：P0／SPC；重導守衛期間的401已改為可結束錯誤，避免人員清單永久載入。核心4項、測試站Web `0.1.173`／API `0.1.161/test`、資產、環境及匿名401正常；2026-11-20使用者確認有效登入、逾期重導返回`/operators`及解除loading人工驗收通過。正式未授權。[驗證](specs/20261120-operators-auth-loading-loop/verification.md)
 
 ## 2026-11-20 藥液歷史異常稽核證據判定回歸（僅登錄）
 
