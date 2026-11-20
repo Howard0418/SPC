@@ -19,3 +19,8 @@
 - 後端 42 項通過，涵蓋公式差異、版本存在檢查、分流和去重，及 PPC、稽核及 SMTP 回歸。Chromium SMTP 15 項通過，新增勾選與 DTO 斷言的三語系焦點 3 項再驗通過。Web 三語系及建置、API Release publish 通過。
 - 首次複製在測試 API DLL 仍被鎖定時停止，實際 API 仍為 `0.1.157`。以 R2 僅重啟獨立測試 API 集區後發布成功。Web `0.1.168` → `0.1.169`、API `0.1.157` → `0.1.158`，測試首頁、SMTP 頁和主 JS／CSS HTTP 200、MIME 和 Web 版本正確；實際 Chromium 同源 API health／version、匿名 SMTP 401、`:8901` 直連及 test 環境通過。測試設定檔雜湊維持。
 - 回復使用首次嘗試前的 `release/test/backend.backup-smtp-formula-1120-20261120` 和 `release/test/frontend.backup-smtp-formula-1120-20261120` 前版程式與資產。無 migration；未寄實際郵件，兩件實際收件仍待測試 SMTP 及有權限登入，正式未發布。
+
+## 2026-11-20 使用者更新測試 SMTP 後複核
+
+- 測試站 API `0.1.158`／`test`。設定檔已使用新的 SMTP 主機，TCP 25、SMTP 220 歡迎訊息、EHLO／STARTTLS 及 TLS 憑證交握均通過，預設信箱格式有效。先前 DNS 阻擋已解除。
+- 測試站尚未儲存分類名單。本次未送出認證或郵件；實際寄送及四類收件對照仍待登入後以指定信箱驗收。

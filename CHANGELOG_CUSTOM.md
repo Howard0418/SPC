@@ -1,3 +1,7 @@
+## 2026-11-20 測試 SMTP 連線複核
+
+- 使用者設定的新測試 SMTP 已通過 TCP 25、SMTP 歡迎訊息及 STARTTLS 憑證交握，先前 DNS 阻擋解除。實際收件待驗。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
 ## 2026-11-20 SMTP 調整量與濃度公式修改通知
 
 - 四類收件人可各自勾選，公式通知在提交後依實際異動分流。測試 Web `0.1.169`／API `0.1.158` 已發布並完成站台驗證；實際收件及正式發布仍待處理。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
