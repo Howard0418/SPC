@@ -3413,3 +3413,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-21 Cpk 月份報表登入下載驗收
 
 - 修正品質履歷 Cpk 匯出未帶權杖的 401，測試 Web 0.1.175／API 0.1.163/test，10／11 月實際下載並完成唯讀對帳。正式未發布。[驗證](specs/20261109-cpk-export-month-scope/verification.md)
+
+## 2026-11-21 OOS／OOC 收件人實站驗收進度
+
+- 測試站登入後可獨立勾選兩欄，重載正確還原既有名單。保存與實際事件收件仍待驗證，本次無發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
