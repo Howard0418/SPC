@@ -10,6 +10,7 @@ using MesSpc.Api.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using MesSpc.Api.Domain;
@@ -19,34 +20,45 @@ namespace TestChemicalReimport;
 
 internal static class Program
 {
-    private const string ApiRoot = "https://spctest.pmr.com.tw/api";
     private const string AdjustmentRepairReason = "2026-11-09 藥液日別調整公式補齊";
+    private const string ProductionAdjustmentRepairReason = "SPC-CHEM-F-CONSISTENCY-1103-TASK-001-PROD-ADJUSTMENT";
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     public static async Task<int> Main(string[] args)
     {
         if (args.Length >= 1 && args[0] is "--cleanup-inventory" or "--cleanup-apply")
             return await RunCleanupAsync(args);
-        if (args.Length is not (4 or 5) || args[3] is not ("--plan" or "--apply" or "--verify" or "--repair-adjustment-plan" or "--repair-adjustment-apply" or "--repair-adjustment-verify"))
+        if (args.Length is not (4 or 5) || args[3] is not ("--plan" or "--apply" or "--verify" or "--repair-adjustment-plan" or "--repair-adjustment-apply" or "--repair-adjustment-verify" or "--repair-adjustment-production-plan" or "--repair-adjustment-production-apply" or "--repair-adjustment-production-verify"))
             throw new ArgumentException("PREVIEW_JSON TEST_APPSETTINGS EVIDENCE_DIR --plan|--apply|--verify|--repair-adjustment-plan|--repair-adjustment-apply|--repair-adjustment-verify [PRODUCTION_APPSETTINGS_FOR_TEST_BACKUP_ONLY]");
-        var repairAdjustment = args[3].StartsWith("--repair-adjustment-", StringComparison.Ordinal);
-        var operation = repairAdjustment ? args[3]["--repair-adjustment-".Length..] : args[3][2..];
+        var productionRepair = args[3].StartsWith("--repair-adjustment-production-", StringComparison.Ordinal);
+        var repairAdjustment = productionRepair || args[3].StartsWith("--repair-adjustment-", StringComparison.Ordinal);
+        var operation = productionRepair ? args[3]["--repair-adjustment-production-".Length..] : repairAdjustment ? args[3]["--repair-adjustment-".Length..] : args[3][2..];
+        if (productionRepair && (args.Length != 5 || args[4] != "--confirm-production=PMR_SPC_2026"))
+            throw new InvalidOperationException("Production adjustment repair requires the exact database confirmation token.");
         Directory.CreateDirectory(args[2]);
         var cfg = new ConfigurationBuilder().AddJsonFile(Path.GetFullPath(args[1])).Build();
-        var connection = cfg.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("Test SQL connection missing.");
+        var connection = cfg.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("SQL connection missing.");
         var cs = new SqlConnectionStringBuilder(connection.Replace("Trust Server Certificate=", "TrustServerCertificate=", StringComparison.OrdinalIgnoreCase));
-        if (cfg["AppEnvironment"] != "test" || cs.InitialCatalog != "PMR_SPC_TEST") throw new InvalidOperationException("Only PMR_SPC_TEST is permitted.");
 
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-        var versionText = await http.GetStringAsync(ApiRoot + "/version");
+        var apiRoot = productionRepair ? "https://pmr-spc-srv.pmr.com.tw:8443/api" : "https://spctest.pmr.com.tw/api";
+        var versionText = await http.GetStringAsync(apiRoot + "/version");
         using (var version = JsonDocument.Parse(versionText))
-            if (version.RootElement.GetProperty("environment").GetString() != "test") throw new InvalidOperationException("Test API environment guard failed.");
+        {
+            var apiEnvironment = version.RootElement.GetProperty("environment").GetString();
+            if (productionRepair)
+                TestChemicalReimportPlanner.ValidateProductionAdjustmentTarget(cfg["AppEnvironment"], cs.DataSource, cs.InitialCatalog, apiEnvironment);
+            else if (cfg["AppEnvironment"] != "test" || cs.InitialCatalog != "PMR_SPC_TEST" || apiEnvironment != "test")
+                throw new InvalidOperationException("Only PMR_SPC_TEST is permitted.");
+        }
 
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(cs.ConnectionString).Options);
         await db.Database.OpenConnectionAsync();
-        await VerifyDatabaseAsync(db);
+        await VerifyDatabaseAsync(db, productionRepair);
+        var sourceHash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(args[0]))).ToLowerInvariant();
         var source = Load(args[0]);
-        if (source.Count != 3215) throw new InvalidOperationException($"Approved September onward scope changed: {source.Count}.");
+        if (productionRepair) TestChemicalReimportPlanner.ValidateProductionAdjustmentSource(sourceHash, source.Count);
+        else if (source.Count != 3215) throw new InvalidOperationException($"Approved September onward scope changed: {source.Count}.");
         var masters = await db.PartProcessCharacteristics.AsNoTracking().Include(x => x.Machine).Include(x => x.Tank).Include(x => x.Characteristic)
             .Where(x => x.ControlScope == "CHEM").Select(x => new MasterRow(x.Id, x.Machine == null ? "" : x.Machine.MachineCode,
                 x.Tank == null ? "" : x.Tank.TankCode, x.Tank == null ? "" : x.Tank.TankName,
@@ -77,8 +89,9 @@ internal static class Program
 
         var schedule = new ChemicalFormulaScheduleService(db, new EphemeralDataProtectionProvider(), TimeProvider.System, NullLogger<ChemicalFormulaScheduleService>.Instance);
         await using var rehearsal = await db.Database.BeginTransactionAsync();
+        var repairReason = productionRepair ? ProductionAdjustmentRepairReason : AdjustmentRepairReason;
         var scheduleResult = await EnsureSchedulesAsync(db, rows, actor: CurrentActor(), default,
-            repairAdjustment ? AdjustmentRepairReason : "2026-11-05 九月起測試區藥液日報重匯");
+            repairAdjustment ? repairReason : "2026-11-05 九月起測試區藥液日報重匯", productionRepair);
         var actor = CurrentActor(); var previewChecks = 0; var previewErrors = new List<object>();
         foreach (var row in rows)
         {
@@ -98,14 +111,14 @@ internal static class Program
         }
         await rehearsal.RollbackAsync(); db.ChangeTracker.Clear();
         var state = await CaptureStateAsync(db);
-        File.WriteAllText(Path.Combine(args[2], "preflight.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", sourceRows = rows.Count, mappings = rows.Select(x => x.PpcId).Distinct().Count(), previewChecks, previewErrorCount = previewErrors.Count, previewErrors, scheduleResult, rehearsalRolledBack = true, state, apiVersion = JsonSerializer.Deserialize<object>(versionText) }, JsonOptions));
+        File.WriteAllText(Path.Combine(args[2], "preflight.json"), JsonSerializer.Serialize(new { environment = productionRepair ? "production" : "test", database = cs.InitialCatalog, sourceSha256 = sourceHash, sourceRows = rows.Count, mappings = rows.Select(x => x.PpcId).Distinct().Count(), previewChecks, previewErrorCount = previewErrors.Count, previewErrors, scheduleResult, rehearsalRolledBack = true, state, apiVersion = JsonSerializer.Deserialize<object>(versionText) }, JsonOptions));
         if (previewErrors.Count > 0) throw new InvalidOperationException($"公式／F日期預覽失敗 {previewErrors.Count} 筆；禁止寫入，詳見preflight.json。");
         if (operation == "plan") { Console.WriteLine($"PLAN: rows={rows.Count}; mappings={rows.Select(x => x.PpcId).Distinct().Count()}; previews={previewChecks}; active={state.ActiveMeasurements}"); return 0; }
         object? backup = null;
         if (operation == "apply")
         {
             var backupConnection = cs.ConnectionString;
-            if (args.Length == 5)
+            if (!productionRepair && args.Length == 5)
             {
                 var maintenanceCfg = new ConfigurationBuilder().AddJsonFile(Path.GetFullPath(args[4])).Build();
                 var maintenance = new SqlConnectionStringBuilder((maintenanceCfg.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("Maintenance SQL connection missing.")).Replace("Trust Server Certificate=", "TrustServerCertificate=", StringComparison.OrdinalIgnoreCase));
@@ -120,21 +133,24 @@ internal static class Program
             if (repairAdjustment)
             {
                 var before = await CaptureStateAsync(db);
-                var existingRepairs = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == AdjustmentRepairReason);
+                var protectedBefore = productionRepair ? await CaptureProtectedAsync(db) : null;
+                var existingRepairs = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == repairReason);
                 object repairedSchedules = new { reusedExisting = existingRepairs };
                 if (existingRepairs == 0)
                 {
                     await using var repairTx = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
-                    repairedSchedules = await EnsureSchedulesAsync(db, rows, actor, default, AdjustmentRepairReason);
+                    repairedSchedules = await EnsureSchedulesAsync(db, rows, actor, default, repairReason, productionRepair);
                     await repairTx.CommitAsync();
                     db.ChangeTracker.Clear();
                 }
                 else if (existingRepairs != 82) throw new InvalidOperationException("Adjustment schedule repair revision count is incomplete.");
                 var after = await CaptureStateAsync(db);
                 if (before != after) throw new InvalidOperationException("Adjustment schedule repair changed protected measurement/F/master counts.");
-                var repairRevisionCount = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == AdjustmentRepairReason);
+                if (productionRepair && !ProtectedEqual(protectedBefore!, await CaptureProtectedAsync(db)))
+                    throw new InvalidOperationException("Production protected table fingerprints changed.");
+                var repairRevisionCount = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == repairReason);
                 if (repairRevisionCount != 82) throw new InvalidOperationException("Adjustment schedule repair idempotence failed.");
-                File.WriteAllText(Path.Combine(args[2], "adjustment-repair-result.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", backup, repairedSchedules, protectedStateBefore = before, protectedStateAfter = after, idempotenceRevisionCount = repairRevisionCount, productionWritten = false }, JsonOptions));
+                File.WriteAllText(Path.Combine(args[2], "adjustment-repair-result.json"), JsonSerializer.Serialize(new { environment = productionRepair ? "production" : "test", database = cs.InitialCatalog, sourceSha256 = sourceHash, backup, repairedSchedules, protectedStateBefore = before, protectedStateAfter = after, protectedFingerprintsUnchanged = !productionRepair || ProtectedEqual(protectedBefore!, await CaptureProtectedAsync(db)), idempotenceRevisionCount = repairRevisionCount, productionWritten = productionRepair }, JsonOptions));
                 Console.WriteLine($"ADJUSTMENT REPAIR APPLIED: schedules=82; protectedMeasurements={after.ActiveMeasurements}");
                 return 0;
             }
@@ -151,9 +167,9 @@ internal static class Program
         }
         if (repairAdjustment)
         {
-            var repairRevisionCount = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == AdjustmentRepairReason);
+            var repairRevisionCount = await db.ChemicalFormulaScheduleRevisions.CountAsync(x => x.Reason == repairReason);
             if (repairRevisionCount != 82) throw new InvalidOperationException("Adjustment schedule repair verification failed.");
-            File.WriteAllText(Path.Combine(args[2], "adjustment-repair-verify.json"), JsonSerializer.Serialize(new { database = "PMR_SPC_TEST", sourceRows = rows.Count, previewChecks, previewErrorCount = previewErrors.Count, repairRevisionCount, protectedState = state, productionWritten = false }, JsonOptions));
+            File.WriteAllText(Path.Combine(args[2], "adjustment-repair-verify.json"), JsonSerializer.Serialize(new { environment = productionRepair ? "production" : "test", database = cs.InitialCatalog, sourceSha256 = sourceHash, sourceRows = rows.Count, previewChecks, previewErrorCount = previewErrors.Count, repairRevisionCount, protectedState = state, productionWritten = false }, JsonOptions));
             Console.WriteLine($"ADJUSTMENT REPAIR VERIFIED: schedules={repairRevisionCount}; previews={previewChecks}; errors=0");
             return 0;
         }
@@ -172,7 +188,7 @@ internal static class Program
         var cs = new SqlConnectionStringBuilder(raw.Replace("Trust Server Certificate=", "TrustServerCertificate=", StringComparison.OrdinalIgnoreCase));
         if (cfg["AppEnvironment"] != "test" || cs.InitialCatalog != "PMR_SPC_TEST") throw new InvalidOperationException("Only PMR_SPC_TEST is permitted.");
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(cs.ConnectionString).Options);
-        await db.Database.OpenConnectionAsync(); await VerifyDatabaseAsync(db);
+        await db.Database.OpenConnectionAsync(); await VerifyDatabaseAsync(db, production: false);
         var before = await CleanupInventoryAsync(db);
         File.WriteAllText(Path.Combine(args[2], "cleanup-inventory-before.json"), JsonSerializer.Serialize(before, JsonOptions));
         if (!apply) { Console.WriteLine($"CLEANUP INVENTORY: september={before.SeptemberActive}; isolatedPpcs={before.IsolatedPpcs.Count}; isolatedMeasurements={before.IsolatedActiveMeasurements}; testProcesses={before.TestProcesses.Count}; testCharacteristics={before.TestCharacteristics.Count}"); return 0; }
@@ -267,7 +283,7 @@ internal static class Program
         return initial + "|" + recheck + "|" + adjustment + "|" + amount + "|" + f;
     }
 
-    private static async Task<object> EnsureSchedulesAsync(AppDbContext db, IReadOnlyList<PlannedRow> rows, string actor, CancellationToken ct, string reason = "2026-11-05 九月起測試區藥液日報重匯")
+    private static async Task<object> EnsureSchedulesAsync(AppDbContext db, IReadOnlyList<PlannedRow> rows, string actor, CancellationToken ct, string reason = "2026-11-05 九月起測試區藥液日報重匯", bool production = false)
     {
         var formulaRows = rows.Where(x => x.Source.Initial.Mode == "FORMULA").ToList();
         var histories = await db.ChemicalFTableVersionHistories.ToListAsync(ct);
@@ -287,7 +303,14 @@ internal static class Program
         {
             var signature = FSignature(row.Source.FValues);
             if (historyBySignature.ContainsKey(signature)) continue;
-            var history = new ChemicalFTableVersionHistory { VersionNo = nextF++, VersionCode = "TEST-REIMPORT-" + ShortHash(signature), DisplayName = "測試區日報F歷史快照", CellsJson = FCellsJson(row.Source.FValues), ChangeType = "HistoricalExcelSnapshot", ChangedBy = actor, Reason = reason, ChangedAt = DateTime.UtcNow };
+            var history = new ChemicalFTableVersionHistory
+            {
+                VersionNo = nextF++,
+                VersionCode = (production ? "PROD-ADJUSTMENT-" : "TEST-REIMPORT-") + ShortHash(signature),
+                DisplayName = production ? "正式核准日報F歷史快照" : "測試區日報F歷史快照",
+                CellsJson = FCellsJson(row.Source.FValues), ChangeType = "HistoricalExcelSnapshot",
+                ChangedBy = actor, Reason = reason, ChangedAt = DateTime.UtcNow
+            };
             db.Add(history); historyBySignature[signature] = history; fCreated++;
         }
         await db.SaveChangesAsync(ct);
@@ -298,7 +321,7 @@ internal static class Program
             var versionBySignature = new Dictionary<string, ChemicalAnalysisFormulaVersion>(StringComparer.Ordinal);
             foreach (var variant in group.GroupBy(ScheduleSignature))
             {
-                var sample = variant.First(); var config = FormulaConfig(sample);
+                var sample = variant.First(); var config = FormulaConfig(sample, production);
                 var found = existingVersions.LastOrDefault(x => JsonNode.DeepEquals(JsonNode.Parse(x.ConfigJson), JsonNode.Parse(config)));
                 if (found is null)
                 {
@@ -342,10 +365,14 @@ internal static class Program
         return new { fCreated, formulaCreated, schedules, effects };
     }
 
-    private static string FormulaConfig(PlannedRow row)
+    private static string FormulaConfig(PlannedRow row, bool production)
     {
-        return TestChemicalReimportPlanner.FormulaConfig(row.Master.ConfigJson, row.Source.Initial.Formula!,
+        var json = TestChemicalReimportPlanner.FormulaConfig(row.Master.ConfigJson, row.Source.Initial.Formula!,
             row.Source.Recheck?.Formula ?? row.Source.Initial.Formula!, row.Source.AdjustmentFormula, row.Source.AdjustmentAmountFormula);
+        if (!production) return json;
+        var node = JsonNode.Parse(json)!.AsObject();
+        node["version"] = "PROD-ADJUSTMENT-REPAIR-2026";
+        return node.ToJsonString();
     }
 
     private static string FSignature(IReadOnlyDictionary<string, decimal> cells) => string.Join(";", cells.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase).Select(x => x.Key.ToUpperInvariant() + "=" + x.Value.ToString("0.############################", CultureInfo.InvariantCulture)));
@@ -353,17 +380,36 @@ internal static class Program
     private static string ShortHash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)))[..12];
     private static DateTime ToUtc(DateTime local) => TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
-    private static async Task VerifyDatabaseAsync(AppDbContext db)
+    private static async Task VerifyDatabaseAsync(AppDbContext db, bool production)
     {
         await using var cmd = db.Database.GetDbConnection().CreateCommand(); cmd.CommandText = "SELECT DB_NAME(),CONVERT(nvarchar(100),CONNECTIONPROPERTY('local_net_address'))";
         await using var reader = await cmd.ExecuteReaderAsync(); await reader.ReadAsync();
-        if (reader.GetString(0) != "PMR_SPC_TEST" || reader.GetString(1) != "172.16.110.16") throw new InvalidOperationException("Actual test SQL target mismatch.");
+        var expectedDatabase = production ? "PMR_SPC_2026" : "PMR_SPC_TEST";
+        if (reader.GetString(0) != expectedDatabase || reader.GetString(1) != "172.16.110.16") throw new InvalidOperationException("Actual SQL target mismatch.");
     }
 
     private static async Task<State> CaptureStateAsync(AppDbContext db) => new(
         await db.VariableMeasurements.LongCountAsync(x => !x.IsDeleted), await db.ChemicalCalculationReceipts.LongCountAsync(),
         await db.ChemicalCalculationTraces.LongCountAsync(), await db.PartProcessCharacteristics.LongCountAsync(x => x.ControlScope == "CHEM" && x.IsEnabled),
         await db.ChemicalFTableVersions.LongCountAsync(x => x.IsActive));
+
+    private static async Task<Dictionary<string, string>> CaptureProtectedAsync(AppDbContext db)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var table in new[] { "PartProcessCharacteristics", "ChemicalFTableVersions", "ChemicalFTableCells", "VariableMeasurements", "UploadBatches", "UploadDetails", "ChemicalCalculationReceipts", "ChemicalCalculationTraces", "ChemicalStatisticsJobs", "AlertEvents" })
+        {
+            await using var command = db.Database.GetDbConnection().CreateCommand();
+            command.Transaction = db.Database.CurrentTransaction?.GetDbTransaction();
+            command.CommandText = $"SELECT COUNT_BIG(*),CHECKSUM_AGG(BINARY_CHECKSUM(*)) FROM dbo.[{table}]";
+            await using var reader = await command.ExecuteReaderAsync(); await reader.ReadAsync();
+            result[table] = reader.GetInt64(0).ToString(CultureInfo.InvariantCulture) + ":" +
+                (reader.IsDBNull(1) ? "NULL" : reader.GetInt32(1).ToString(CultureInfo.InvariantCulture));
+        }
+        return result;
+    }
+
+    private static bool ProtectedEqual(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
+        => left.Count == right.Count && left.All(x => right.TryGetValue(x.Key, out var value) && value == x.Value);
 
     private static async Task<Dictionary<string, string?>> PayloadAsync(ChemicalPortalMeasurementService portal, PlannedRow row, string actor)
     {
@@ -485,10 +531,12 @@ internal static class Program
     private static async Task<object> BackupAsync(string connection, string evidenceDirectory)
     {
         await using var sql = new SqlConnection(connection); await sql.OpenAsync(); await using var command = sql.CreateCommand();
-        command.CommandText = "SELECT DB_NAME(),CONVERT(nvarchar(100),CONNECTIONPROPERTY('local_net_address'))"; await using (var reader = await command.ExecuteReaderAsync()) { await reader.ReadAsync(); if (reader.GetString(0) != "PMR_SPC_TEST" || reader.GetString(1) != "172.16.110.16") throw new InvalidOperationException("Backup target guard failed."); }
+        command.CommandText = "SELECT DB_NAME(),CONVERT(nvarchar(100),CONNECTIONPROPERTY('local_net_address'))";
+        string database;
+        await using (var reader = await command.ExecuteReaderAsync()) { await reader.ReadAsync(); database = reader.GetString(0); if (database is not ("PMR_SPC_TEST" or "PMR_SPC_2026") || reader.GetString(1) != "172.16.110.16") throw new InvalidOperationException("Backup target guard failed."); }
         command.CommandText = "SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(4000))"; var directory = (string?)await command.ExecuteScalarAsync() ?? throw new InvalidOperationException("SQL backup directory unavailable.");
-        var path = directory.TrimEnd('\\', '/') + "\\PMR_SPC_TEST_pre_sep_reimport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".bak";
-        command.CommandTimeout = 300; command.CommandText = "BACKUP DATABASE [PMR_SPC_TEST] TO DISK=@path WITH COPY_ONLY,CHECKSUM,INIT"; command.Parameters.AddWithValue("@path", path); await command.ExecuteNonQueryAsync();
+        var path = directory.TrimEnd('\\', '/') + $"\\{database}_pre_adjustment_schedule_" + DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".bak";
+        command.CommandTimeout = 300; command.CommandText = $"BACKUP DATABASE [{database}] TO DISK=@path WITH COPY_ONLY,CHECKSUM,INIT"; command.Parameters.AddWithValue("@path", path); await command.ExecuteNonQueryAsync();
         command.CommandText = "RESTORE VERIFYONLY FROM DISK=@path WITH CHECKSUM"; await command.ExecuteNonQueryAsync(); return new { path, checksum = true, verifyOnly = true };
     }
 

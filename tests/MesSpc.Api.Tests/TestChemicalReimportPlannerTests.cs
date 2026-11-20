@@ -22,6 +22,34 @@ public sealed class TestChemicalReimportPlannerTests
         Assert.Null(node["adjustmentFormula"]);
         Assert.Null(node["adjustmentAmountFormula"]);
     }
+
+    [Fact]
+    public void Production_adjustment_repair_accepts_only_exact_formal_target()
+        => TestChemicalReimportPlanner.ValidateProductionAdjustmentTarget(
+            "production", "172.16.110.16", "PMR_SPC_2026", "production");
+
+    [Theory]
+    [InlineData("test", "172.16.110.16", "PMR_SPC_2026", "production")]
+    [InlineData("production", "172.16.110.16", "PMR_SPC_TEST", "production")]
+    [InlineData("production", "localhost", "PMR_SPC_2026", "production")]
+    [InlineData("production", "172.16.110.16", "PMR_SPC_2026", "test")]
+    public void Production_adjustment_repair_rejects_any_target_mismatch(
+        string appEnvironment, string server, string database, string apiEnvironment)
+        => Assert.Throws<InvalidOperationException>(() =>
+            TestChemicalReimportPlanner.ValidateProductionAdjustmentTarget(
+                appEnvironment, server, database, apiEnvironment));
+
+    [Fact]
+    public void Production_adjustment_repair_requires_pinned_source_hash()
+    {
+        TestChemicalReimportPlanner.ValidateProductionAdjustmentSource(
+            TestChemicalReimportPlanner.ProductionAdjustmentSourceSha256, 3215);
+        Assert.Throws<InvalidOperationException>(() =>
+            TestChemicalReimportPlanner.ValidateProductionAdjustmentSource(new string('0', 64), 3215));
+        Assert.Throws<InvalidOperationException>(() =>
+            TestChemicalReimportPlanner.ValidateProductionAdjustmentSource(
+                TestChemicalReimportPlanner.ProductionAdjustmentSourceSha256, 3214));
+    }
     [Fact]
     public void Canon_matches_excel_multiline_item_to_master_name()
         => Assert.Equal("氫氧化鉀", TestChemicalReimportPlanner.CanonItem("氫氧化鉀 (g/L)\nKOH"));

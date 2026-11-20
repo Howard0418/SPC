@@ -10,6 +10,25 @@ public sealed record MasterIdentity(int PpcId, string MachineCode, string TankNa
 
 public static partial class TestChemicalReimportPlanner
 {
+    public const string ProductionAdjustmentSourceSha256 = "04509df0a8cfd99df150f8d098ec4df6f5c5161c5dcb385ae41e5b97c196e3e2";
+
+    public static void ValidateProductionAdjustmentTarget(
+        string? appEnvironment, string server, string database, string? apiEnvironment)
+    {
+        if (!string.Equals(appEnvironment, "production", StringComparison.Ordinal) ||
+            !string.Equals(server, "172.16.110.16", StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(database, "PMR_SPC_2026", StringComparison.Ordinal) ||
+            !string.Equals(apiEnvironment, "production", StringComparison.Ordinal))
+            throw new InvalidOperationException("Production adjustment schedule target guard failed.");
+    }
+
+    public static void ValidateProductionAdjustmentSource(string sha256, int sourceRows)
+    {
+        if (!string.Equals(sha256, ProductionAdjustmentSourceSha256, StringComparison.OrdinalIgnoreCase) ||
+            sourceRows != 3215)
+            throw new InvalidOperationException("Approved production adjustment source guard failed.");
+    }
+
     public static string FormulaConfig(string currentJson, string initial, string recheck, string? adjustment, string? amount)
     {
         var node = JsonNode.Parse(string.IsNullOrWhiteSpace(currentJson) ? "{}" : currentJson)?.AsObject() ?? new JsonObject();
