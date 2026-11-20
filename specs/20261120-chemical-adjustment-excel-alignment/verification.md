@@ -1,9 +1,9 @@
 # 驗證紀錄
 
 - 功能 ID：`20261120-chemical-adjustment-excel-alignment`
-- 規格版本：7
+- 規格版本：8
 - 日期／環境：2026-11-20／來源活頁簿＋PMR_SPC_TEST唯讀查詢＋SPC測試站
-- 實作狀態：TASK-001～003完成；TASK-004測試資料apply／retry完成，待PPC2587決策及兩頁人工驗收
+- 實作狀態：TASK-001～003、005完成；TASK-004測試資料apply／retry完成，待PPC2587決策及兩頁人工驗收
 - 驗證狀態：TASK-001～003通過；TASK-002完整API回歸另有16項既有失敗如實保留
 - 發布狀態：測試 Web `0.1.172`／API `0.1.161/test` 已發布；正式站未發布
 
@@ -17,6 +17,7 @@
 | AC-006 | 兩頁與匯出畫面測試 | 同源顯示、單一編輯權責 | 總覽從同一JSON唯讀顯示槽容／添加／稀釋，匯出同步三欄；公式保存保留參數，引用缺值顯示三語警示 | 通過 |
 | AC-007 | 測試資料 preview/apply/retry/rollback | 受控同步與可回復 | 7筆核准列新增7版本／7稽核；重送7筆NoChange／0新增，備份VERIFYONLY通過、保護指紋不變；PPC2587隔離 | 通過（隔離列待決策） |
 | AC-008 | 聚焦與回歸測試、build、測試站 smoke | 無明顯 regression | TASK-003畫面64項與三語2895鍵通過，test build成功；測試Web／資產／API／瀏覽器同源API smoke通過。TASK-002既有API失敗另保留 | 通過 |
+| AC-009 | 兩式門檻／槽容具名參數轉換、隔離、套用與冪等 | 不以LSL／USL或硬編碼常數作動作依據 | 91筆完成具名參數轉換並新增91版本／91稽核；17 NoFormula不變、5 MissingParameter隔離。重送NoChange、最新版本、樣本公式、計算及保護指紋通過 | 通過 |
 
 ## 文件檢查
 
@@ -69,6 +70,23 @@ UTF-8唯讀 preview 重跑仍為114個來源身分、110唯一配對、4來源�
 - 測試：新增15項固定身分／欄位隔離／公式雜湊／NoChange／候選計算全過；既有計算、公式版本、排程及追溯聚焦60項為59通過／1項需Portal來源條件略過；受控工具Release build 0警告／0錯誤。
 - 連線：測試站首頁、主JS`index-BZ75TLhy.js`、主CSS`index-BJMaQS-8.css`均HTTP 200且MIME正確；同源health為`ok`、version為`0.1.161/test`。本次只改測試資料與受控工具，Web `0.1.172`／API `0.1.161`未改、未重新發布，正式站未異動。
 - 兩頁畫面：依computer-use技能初始化後，Windows native pipe連續失敗，重置後仍不可用；未冒充登入後「藥液量測調整公式」及「線別分析項目總覽」人工驗收。PPC2587最終採23或保留22亦待使用者確認，因此TASK-004尚未DONE。
+
+## TASK-005 具名參數轉換預覽與阻擋
+
+- 轉換器以公式運算子與動作分支辨識添加／稀釋門檻，並只在乘法容量位置替換槽容；引號內文字、`/1000` 單位換算、Target、配槽目標、比重與倍率保持。`IF(Concentration>門檻,"","添加")`反向寫法明確對應添加參數。
+- 核心紅綠測試9項通過；連同既有計算與N2槽容聚焦共24項通過。工具建置0警告／0錯誤。
+- 測試庫113筆啟用藥液PPC快照為`2BFDF6A54D170FA2DE110D61C7FD95F443BEBE6D7D6C26F5EB8606F7D2D6D858`；preview為91筆可更新、17筆無公式、5筆因缺稀釋管制值隔離。91筆候選均以添加以下、區間內、稀釋以上代表值送入現行計算引擎，無語法、未知參數或除數錯誤。
+- 2026-11-20 17:15:52～17:15:53 +08:00 已建立`PMR_SPC_TEST_ADJUST_PARAMS_20261120-171552.bak`；`msdb`確認COPY_ONLY流程完成且`has_backup_checksums=1`。應用SQL身分及Windows整合身分執行`RESTORE VERIFYONLY ... WITH CHECKSUM`均因缺少`master`的`CREATE DATABASE`權限失敗。
+- 工具在Serializable交易之前失敗關閉；公式設定、公式版本、稽核、排程、F及量測均0寫入。須由DBA確認此新備份有效後，才可固定該備份證據並續行91筆套用、NoChange重送及保護指紋驗證。
+
+### TASK-005 備份確認後套用與驗證
+
+- 2026-11-20 20:38:53 +08:00 使用者確認上述備份組有效；工具固定該檔案及確認時間，不再建立未驗證的新備份。
+- 以原快照`2BFDF6A54D170FA2DE110D61C7FD95F443BEBE6D7D6C26F5EB8606F7D2D6D858`為交易前守衛，在單一Serializable交易更新91筆目前設定，新增91個公式版本及91筆`configuration.formula.update`服務稽核；17筆無公式與5筆缺稀釋管制值未寫入。
+- 套用後快照為`5DC845262C59D49EA739B65983EE650ABCD9D00DBCF2285F298956CC813CBFF6`；再次preview為91 AlreadyAligned／17 NoFormula／5 MissingParameter／0 Update，相同apply回`NoChange`，verify確認91筆目前設定均等於最新公式版本，且TASK版本／稽核皆為91。
+- C5／清潔／硫酸（PPC2425）抽查通過：調整式使用`ADDITION_CONTROL_VALUE`／`DILUTION_CONTROL_VALUE`；調整量式三處槽容均使用`TANK_CAPACITY_LITERS`，`/1000`單位換算保持且未出現`/TANK_CAPACITY_LITERS`。
+- 排程修訂、有效區間、F歷史及量測全表指紋在交易前後一致。未修改API／Web程式或設定，故版本維持API`0.1.161/test`、Web`0.1.173`，不需網站發布；正式資料與正式站未異動。
+- 隔離的5筆為PPC 2513、2589、2590、2594、2595，皆因公式含高值動作但「稀釋管制值」未設定；依規格不以舊數字或USL代入，待日後補齊參數才可轉換。
 
 ## 基準與變更紀錄更新位置
 

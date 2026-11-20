@@ -1,3 +1,9 @@
+## 2026-11-20 SPC-CHEM-ADJUST-ALIGN-1120-TASK-005 兩式連結調整參數
+
+- 依使用者確認，添加／稀釋管制值與規格LSL／USL分離；測試庫91筆調整／調整量公式改用`ADDITION_CONTROL_VALUE`、`DILUTION_CONTROL_VALUE`與`TANK_CAPACITY_LITERS`，並保留`/1000`、Target、配槽目標、比重及倍率。
+- 使用者確認COPY_ONLY／CHECKSUM備份有效後，以單一交易新增91個公式版本與91筆服務稽核；17筆無公式不變，5筆缺稀釋參數安全隔離。重送NoChange、最新版本一致、C5清潔硫酸樣本、候選計算及排程／F／量測保護指紋通過。
+- 未修改API／Web程式或版本，測試站維持API`0.1.161/test`、Web`0.1.173`且不需重新發布；正式資料與正式站未異動。[規格與驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
+
 ## 2026-11-20 PPC ID搜尋（SPC-PPC-ID-SEARCH-1120-TASK-001）
 
 - 「SPC 管制項目設定與規格維護」現有computed篩選新增PPC ID文字比對，輸入`2587`可直接只顯示對應列；不發送額外API請求，既有料號、製程、機台／槽位、特性與組合篩選保持。三語搜尋說明與placeholder同步標示PPC ID。

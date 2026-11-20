@@ -10,6 +10,7 @@
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-002`：P1／SPC API／計算器已支援槽容、添加及稀釋三個不分大小寫的具名參數；引用缺值與已設定非正數明確拒絕，既有公式保持，排程試算使用不可變公式版本內參數。測試API `0.1.161` 已發布。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
 - [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-003`：P1／SPC Web／線別分析項目總覽已同列唯讀顯示三參數與兩式，匯出同步；公式引用未設定參數顯示三語警示，公式保存不覆寫參數。測試Web `0.1.172` 已發布。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
 - [ ] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-004`：P1／SPC 測試資料／執行中；DBA已確認備份有效，7筆N2槽容公式已受控套用，新增7版本／7稽核，重送7筆NoChange／0新增，計算、保護指紋、既有排程與59項回歸通過。PPC2587在核准後由23改成22，與文字核准衝突並保持隔離；Windows操作服務離線，兩頁登入畫面尚待人工驗收。正式資料與正式發布另行授權。
+- [x] `SPC-CHEM-ADJUST-ALIGN-1120-TASK-005`：P0／SPC 測試資料／完成；使用者確認備份有效後，91筆調整／調整量公式已改用添加、稀釋及槽容具名參數，新增91版本／91稽核；重送NoChange、候選邊界計算、最新版本一致及排程／F／量測保護指紋通過。17筆無公式不變，5筆缺稀釋參數依規格隔離；未改網站版本，正式資料未動。[驗證](specs/20261120-chemical-adjustment-excel-alignment/verification.md)
 
 ## 2026-11-20 作業人員頁登入重導後無限載入
 

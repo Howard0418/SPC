@@ -22,6 +22,7 @@
     <ProjectReference Include="..\MesSpc.Api\MesSpc.Api.csproj" />
     <Compile Include="..\..\tools\C1ExcelAlignment\AlignmentPlan.cs" Link="C1ExcelAlignment\AlignmentPlan.cs" />
     <Compile Include="..\..\tools\N2CapacityAlignment\AlignmentPlan.cs" Link="N2CapacityAlignment\AlignmentPlan.cs" />
+    <Compile Include="..\..\tools\AdjustmentParameterFormulaAlignment\FormulaParameterAlignment.cs" Link="AdjustmentParameterFormulaAlignment\FormulaParameterAlignment.cs" />
   </ItemGroup>
 
 </Project>
