@@ -28,3 +28,5 @@
 - Regression：既有進頁、查詢、匯出、交易式業務稽核、401重導與寫入環境保護保持。
 - 資料庫：不新增欄位或改業務資料；只讓既有ClientEventId約束接受固定的業務操作事件，以支援重試冪等。測試庫先建立COPY_ONLY／CHECKSUM備份並核對msdb完成紀錄再migration；目前最小權限帳號不能執行RESTORE VERIFYONLY，限制須明示保留。
 - 回復：回復前版Web／API並保留既有append-only事件；若需DB回復，以migration Down還原原約束，須先確認沒有新事件仍帶ClientEventId。
+
+- 2026-11-21 既有測試站已完成成功、失敗、未送出與安全摘要驗收。[驗證](verification.md)

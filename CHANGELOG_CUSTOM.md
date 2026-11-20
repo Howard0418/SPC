@@ -3429,3 +3429,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-21 公式通知收信驗收完成
 
 - 使用者確認調整量與濃度公式兩封隔離試寄皆收到，核銷 TASK-002。只更新驗收紀錄，未重新發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
+## 2026-11-21 業務按鈕安全稽核驗收完成
+
+- 測試站保存成功／拒絕各產生安全紀錄，未送出無事件，畫面與 Xlsx 核對通過。只更新驗收紀錄，未重新發布。[驗證](specs/20261120-audit-business-action-allowlist/verification.md)
