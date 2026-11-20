@@ -3421,3 +3421,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-21 OOS／OOC 收件人分流核銷
 
 - 使用者確認收到信並同意驗收 TASK-001；本次只更新驗收紀錄，未重新發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
+## 2026-11-21 公式通知收件人實站驗收進度
+
+- 調整量／濃度公式通知欄各 2 位收件人，可獨立勾選，重載還原既有設定；待確認兩封隔離試寄到信。無重新發布。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
