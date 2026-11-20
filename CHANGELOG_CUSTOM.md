@@ -1,3 +1,7 @@
+## 2026-11-20 測試 SMTP 指定信箱試寄
+
+- 測試 SMTP 已接受一封指定信箱測試信，待確認到信與四類事件收件。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+
 ## 2026-11-20 測試 SMTP 連線複核
 
 - 使用者設定的新測試 SMTP 已通過 TCP 25、SMTP 歡迎訊息及 STARTTLS 憑證交握，先前 DNS 阻擋解除。實際收件待驗。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
