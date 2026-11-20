@@ -3391,3 +3391,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 稽核專屬回歸118通過、3項SQL隔離略過；測試庫7,769筆事件的環境、Details格式／大小、敏感字串及ClientEventId重複皆0異常。
 - 測試站API`0.1.163/test`、同源／直連、首頁及主資產正常，匿名稽核查詢401；computer-use native pipe依規範復原後仍不可用，登入畫面與遮罩截圖未冒充通過，TASK-009保持待驗。無程式、資料、版本或發布異動，正式未變。[驗證](specs/20261109-audit-e2e-acceptance/verification.md)
 
+## 2026-11-20 CPK匯出月份範圍自動續驗
+
+- 台北月份、exclusive upper bound、錯誤格式與跨月工作簿核心7項，以及報表／多語工作簿回歸16項全數通過。
+- 測試API`0.1.163/test`、同源／直連、首頁及主資產正常，匿名匯出401；computer-use native pipe不可用，登入後實際下載未冒充完成。無程式、資料、版本或發布異動，正式未變。[驗證](specs/20261109-cpk-export-month-scope/verification.md)
+
