@@ -5,7 +5,8 @@ import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
 import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
-import { onMounted, ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { api, getApiErrorDisplay } from "../api/client";
 import { 
   ShieldAlert, 
@@ -23,10 +24,18 @@ import {
 } from "lucide-vue-next";
 
 const { t, locale } = useI18n({ useScope: "global" });
+const route = useRoute();
+const router = useRouter();
 const rows = ref([]);
 const loading = ref(false);
 const err = ref("");
 const successMsg = ref("");
+const linkedAlert = computed(() => route.query.alertId !== undefined);
+const chartLocation = computed(() => {
+  const alert = linkedAlert.value ? rows.value[0] : null;
+  if (!alert?.ppcId || !alert.chartDate) return null;
+  return { path: "/spc", query: { ppcId: alert.ppcId, startDate: alert.chartDate, endDate: alert.chartDate } };
+});
 
 // Filter state
 const statusFilter = ref("Open"); // "Open", "InProgress", "Closed", "All"
@@ -54,16 +63,29 @@ async function load() {
   err.value = "";
   loading.value = true;
   try {
-    const { data } = await api.get("/v1/alerts");
-    rows.value = data || [];
+    if (linkedAlert.value) {
+      rows.value = [];
+      const id = route.query.alertId;
+      if (typeof id !== "string" || !/^[1-9]\d{0,9}$/.test(id) || Number(id) > 2147483647) {
+        err.value = { key: "spc.alerts.linkedAlertMissing" };
+        return;
+      }
+      const { data } = await api.get(`/v1/alerts/${id}`);
+      if (route.query.alertId === id) rows.value = [data];
+    } else {
+      const { data } = await api.get("/v1/alerts");
+      if (!linkedAlert.value) rows.value = data || [];
+    }
   } catch (e) {
-    err.value = getApiErrorDisplay(e);
+    err.value = linkedAlert.value && e.response?.status === 404
+      ? { key: "spc.alerts.linkedAlertMissing" } : getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
 }
 
 const filteredRows = computed(() => {
+  if (linkedAlert.value) return rows.value;
   return rows.value.filter(r => {
     // 1. Search Query
     const q = searchQuery.value.toLowerCase();
@@ -136,7 +158,11 @@ async function submitWorkflow() {
   }
 }
 
-onMounted(load);
+watch(() => route.query.alertId, () => {
+  showModal.value = false;
+  currentAlert.value = null;
+  load();
+}, { immediate: true });
 </script>
 
 <template>
@@ -198,6 +224,14 @@ onMounted(load);
       <CheckCircle2 class="w-5 h-5 flex-shrink-0 text-emerald-500" />
       <div class="font-bold">{{ displayUiMessage(t, successMsg) }}</div>
     </div>
+
+    <section v-if="chartLocation" class="space-y-2 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+      <RouterLink :to="chartLocation" target="_blank" rel="noopener" class="text-sm font-semibold text-sky-700 dark:text-sky-400">
+        {{ t('spc.alerts.openLinkedChart') }}
+      </RouterLink>
+      <iframe data-testid="alert-linked-chart" :src="router.resolve(chartLocation).href" :title="t('spc.alerts.viewChart')"
+        class="h-[40rem] w-full rounded-xl border border-slate-200 dark:border-slate-700" />
+    </section>
 
     <!-- Stats & Filters -->
     <div class="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">

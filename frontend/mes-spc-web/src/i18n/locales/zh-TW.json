@@ -1617,6 +1617,8 @@
       "workflowLoading": "載入警報單中...",
       "workflowEmpty": "目前沒有符合條件的異常單",
       "viewChart": "查看 SPC 圖表",
+      "openLinkedChart": "在新分頁開啟此管制圖",
+      "linkedAlertMissing": "找不到此警報，請確認郵件連結或開啟警報清單。",
       "legacyNoPpc": "舊資料未綁定 V1 PPC",
       "rootCause": "真因分析 (Root Cause)",
       "action": "處置對策 (Action)",

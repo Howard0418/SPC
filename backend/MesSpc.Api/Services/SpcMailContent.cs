@@ -18,12 +18,21 @@ public static class SpcMailContent
     public static string TestRecipient(string? locale) => Text("mailTestRecipient",locale);
 
     /// <summary>Builds an alert without translating its original diagnostic, identifiers or enum.</summary>
-    public static LocalizedMailContent Alert(AlertEvent alert, string recipientName, string? locale = null)
+    public static LocalizedMailContent Alert(AlertEvent alert, string recipientName, string? locale = null, string? environment = null)
     {
         string H(string key, params (string Name,string Value)[] args) => WebUtility.HtmlEncode(Text(key,locale,args));
         var subjectArgs = new[] { ("type",alert.AlertType.ToString()),("part",alert.PartId.ToString(CultureInfo.InvariantCulture)),("process",alert.ProcessId.ToString(CultureInfo.InvariantCulture)) };
         var subject = Text("mailAlertSubject",locale,subjectArgs);
         var color = alert.AlertType==AlertType.OutOfSpec?"#dc2626":"#ea580c";
+        var origin = environment?.ToLowerInvariant() switch
+        {
+            "test" => "https://spctest.pmr.com.tw",
+            "production" => "https://pmr-spc-srv.pmr.com.tw",
+            _ => null
+        };
+        var link = origin is not null && alert.Id > 0 && alert.AlertType is AlertType.OutOfSpec or AlertType.OutOfControl
+            ? $"<p><a href=\"{origin}/alerts-workflow?alertId={alert.Id.ToString(CultureInfo.InvariantCulture)}\">{H("mailAlertWorkflowLink")}</a></p>"
+            : "";
         var time = alert.OccurredAt.AddHours(8).ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
         string Row(string key,string value) => $"<tr><td style='padding:12px;border:1px solid #e2e8f0;color:#64748b;font-weight:bold;'>{H(key)}</td><td style='padding:12px;border:1px solid #e2e8f0;font-weight:bold;'>{WebUtility.HtmlEncode(value)}</td></tr>";
         var body = $@"<div style='font-family:Arial,sans-serif;border:1px solid #e2e8f0;padding:25px;border-radius:12px;max-width:650px;background:#fff;color:#1e293b;'>
@@ -36,7 +45,7 @@ public static class SpcMailContent
 {Row("mailMeasured",alert.ActualValue?.ToString("F4",CultureInfo.InvariantCulture) ?? "")}
 {Row("mailReason",alert.Message)}
 </table><div style='background:#fef2f2;border-left:4px solid #ef4444;padding:15px;margin:20px 0;'><strong>{H("mailActionLabel")}</strong> {H("mailAction")}</div>
-<div style='margin-top:30px;padding-top:15px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center;'><p>{H("mailFooter")}</p><p>{H("mailNoReply")}</p></div></div>";
+{link}<div style='margin-top:30px;padding-top:15px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center;'><p>{H("mailFooter")}</p><p>{H("mailNoReply")}</p></div></div>";
         return new(subject,body,Text("mailAlertSubject","zh-TW",subjectArgs));
     }
 

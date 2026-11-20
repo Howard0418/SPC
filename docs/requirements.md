@@ -641,3 +641,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-20 [藥液調整管制值 Email 通知驗收](../specs/20261118-chemical-exclusion-and-adjustment-parameters/verification-control-notify.md)：添加／稀釋管制值有效異動後，以 SMTP 寄給啟用、未封存、Person 且 Email 有效的品保／製程角色人員；地址去重。使用者已確認測試區人工收信驗收，正式區未發布。
 - 2026-11-20 [作業人員頁面權限總覽](../specs/20261120-operator-page-permission-overview/spec.md)：列表直接顯示每位人員的完整頁面權限名稱及實際數量，無須展開。
 - 2026-11-20 [SMTP 郵件通知依類型選擇收件人](../specs/20261120-smtp-notification-recipient-routing/spec.md)：OOS、OOC、調整量公式修改及濃度公式修改可獨立勾選。OOS／OOC 沿用舊名單相容與預設回退；公式類只通知已提交的實質變更，空名單不寄。測試站待實際收信驗收。
+- 2026-11-20 [OOS／OOC 郵件連到管制圖與異常處置](../specs/20261120-alert-email-workflow-link/spec.md)：郵件依環境連結同一筆警報，使用既有權限瀏覽管制圖並保存處置。測試站已發布，待登入驗收。

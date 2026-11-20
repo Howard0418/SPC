@@ -431,6 +431,7 @@
       "particleValidationErrors": "The batch contains validation errors and was not imported.",
       "particleDuplicateMeasurement": "The batch contains duplicate measurements. Existing data was not overwritten.",
       "mailAlertSubject": "[Quality alert {type}] Abnormal value for part/process {part}-{process}",
+      "mailAlertWorkflowLink": "View control chart and enter corrective action",
       "mailTestSubject": "[MES+SPC test] Automated alert and email notification test ({host}:{port})",
       "mailAlertHeading": "Real-time quality alert",
       "mailOos": "Out of specification (OOS)",

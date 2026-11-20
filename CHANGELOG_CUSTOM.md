@@ -1,3 +1,7 @@
+## 2026-11-20 OOS／OOC 郵件連到異常處置
+
+- 新警報郵件可連到對應管制圖與處置頁。測試 Web `0.1.170`／API `0.1.159` 已發布並驗證，待從實際郵件登入驗收。[規格與驗證](specs/20261120-alert-email-workflow-link/spec.md)
+
 ## 2026-11-20 SMTP 四類通知隔離試寄
 
 - 使用隔離測試人員驗證 OOS、OOC、調整量公式及濃度公式的分流，四封均由測試 SMTP 接受。實際到信及登入站台驗收待確認。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)

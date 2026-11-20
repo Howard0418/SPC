@@ -851,3 +851,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] `SPC-SMTP-RECIPIENTS-1120-TASK-002`：P2／SPC。已依提交後公式版本實作調整量／濃度公式分流通知，測試 Web `0.1.169`／API `0.1.158` 已發布；實際收件與 001 一併待驗。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
 
 > 001／002 四類通知已以隔離資料分流並各試寄一封，SMTP 均接受（`e3c1120a`）。待確認實際到信及登入後的站台勾選、保存、重載與事件驗收。[驗證](specs/20261120-smtp-notification-recipient-routing/verification.md)
+## 2026-11-20 OOS／OOC 郵件連到異常處置
+
+- [ ] `SPC-ALERT-MAIL-WORKFLOW-1120-TASK-001`：P1／SPC。郵件連結定位警報、查看管制圖及儲存異常處置。測試 Web `0.1.170`／API `0.1.159` 已發布，待從新警報郵件登入驗收。[規格與驗證](specs/20261120-alert-email-workflow-link/spec.md)

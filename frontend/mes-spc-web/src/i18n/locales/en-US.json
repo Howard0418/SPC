@@ -1617,6 +1617,8 @@
       "workflowLoading": "Loading alert records...",
       "workflowEmpty": "No alerts match the criteria",
       "viewChart": "View SPC chart",
+      "openLinkedChart": "Open this control chart in a new tab",
+      "linkedAlertMissing": "This alert could not be found. Check the email link or open the alert list.",
       "legacyNoPpc": "Legacy record has no V1 PPC link",
       "rootCause": "Root cause",
       "action": "Corrective action",

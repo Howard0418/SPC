@@ -17,6 +17,44 @@ namespace MesSpc.Api.Tests;
 
 public class NotificationContentTests
 {
+    [Theory]
+    [InlineData("test", "https://spctest.pmr.com.tw")]
+    [InlineData("production", "https://pmr-spc-srv.pmr.com.tw")]
+    public void AlertMailLinksToTheMatchingEnvironment(string environment, string origin)
+    {
+        var alert = new AlertEvent { Id = 37, AlertType = AlertType.OutOfSpec };
+        var content = SpcMailContent.Alert(alert, "Engineer", "zh-TW", environment);
+        Assert.Contains($"href=\"{origin}/alerts-workflow?alertId=37\"", content.HtmlBody);
+    }
+
+    [Fact]
+    public async Task LinkedAlertUsesMeasurementPpcAndReloadsSavedWorkflow()
+    {
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        db.Parts.Add(new() { Id = 2, PartNo = "TEST" });
+        db.Processes.Add(new() { Id = 3, ProcessCode = "TEST" });
+        db.QualityCharacteristics.Add(new() { Id = 4, CharacteristicCode = "TEST" });
+        db.PartProcessCharacteristics.AddRange(
+            new() { Id = 1, PartId = 2, ProcessId = 3, CharacteristicId = 4 },
+            new() { Id = 2, PartId = 2, ProcessId = 3, CharacteristicId = 4 });
+        db.VariableMeasurements.Add(new()
+        {
+            Id = 9, PartProcessCharacteristicId = 2, MeasuredAt = new DateTime(2026, 11, 19, 17, 0, 0, DateTimeKind.Utc)
+        });
+        db.AlertEvents.Add(new() { Id = 51, PartId = 2, ProcessId = 3, CharacteristicId = 4, VariableMeasurementId = 9 });
+        await db.SaveChangesAsync();
+        var ctrl = new AlertsController(db, Mock.Of<IEmailNotificationService>(), new ConfigurationBuilder().Build());
+        Assert.IsType<NotFoundResult>(await ctrl.GetById(999, default));
+        Assert.IsType<OkObjectResult>(await ctrl.UpdateWorkflow(51, new("Closed", "Cause", "Action", "Owner")));
+        var result = Assert.IsType<OkObjectResult>(await ctrl.GetById(51, default));
+        var data = System.Text.Json.JsonSerializer.SerializeToElement(result.Value);
+        Assert.Equal(2, data.GetProperty("PpcId").GetInt32());
+        Assert.Equal("2026-11-20", data.GetProperty("ChartDate").GetString());
+        Assert.Equal("Action", data.GetProperty("CorrectiveAction").GetString());
+        Assert.Equal("Closed", data.GetProperty("Status").GetString());
+    }
+
     [Fact]
     public void MissingMeasurementStaysBlankRatherThanBecomingZero()
     {
