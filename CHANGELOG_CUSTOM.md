@@ -3380,3 +3380,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 正式首頁、主 JavaScript／CSS MIME、API health／version 與 `production` 環境標籤通過；前端5項、後端21項回歸通過。
 - 為避免把目前開發分支其他未授權修改帶入，本次不重複部署，故沒有網站內容更新、不遞增版本；未公開 Minitab 自動分箱演算法仍不作完全等同聲明。
 
+## 2026-11-20 使用者業務按鈕安全稽核（測試）
+
+- 固定白名單記錄已送出的儲存、刪除、匯入、公式／F表、人員、異常處置、設定、通知測試及報表寄送；摘要只含ActionKey、頁面、結果、Method與HTTP狀態，不保存輸入原文、body、query、密碼或token。
+- `PMR_SPC_TEST`以COPY_ONLY／CHECKSUM備份後套用單一約束migration，AuditEvents指紋保持；後端9項與稽核回歸122項、前端6項、i18n及build通過。
+- 測試Web`0.1.174`／API`0.1.163/test`已發布，同源／`:8901`、首頁及主資產驗證正常；待登入人工驗收，正式未發布。[驗證](specs/20261120-audit-business-action-allowlist/verification.md)
+

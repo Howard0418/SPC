@@ -20,7 +20,7 @@ public partial class AppDbContext
             table.HasCheckConstraint("CK_AuditEvents_Outcome", "[Outcome] IN ('Succeeded','Denied','Failed')");
             table.HasCheckConstraint("CK_AuditEvents_SchemaVersion", "[SchemaVersion] = 1");
             table.HasCheckConstraint("CK_AuditEvents_Actor", "([ActorType]='User' AND [ActorOperatorId] IS NOT NULL AND [ActorOperatorId]>0 AND [ActorAssurance] IN ('Jwt','PortalAssertion')) OR ([ActorType]='Anonymous' AND [ActorOperatorId] IS NULL AND [ActorAssurance]='None' AND [ActorAccountSnapshot] IS NULL AND [ActorOperatorCodeSnapshot] IS NULL AND [ActorDisplayNameSnapshot] IS NULL AND [ActorRoleSnapshot] IS NULL AND [ActorServiceCode] IS NULL) OR ([ActorType]='Service' AND [ActorOperatorId] IS NULL AND [ActorAssurance]='Service' AND [ActorServiceCode] IS NOT NULL)");
-            table.HasCheckConstraint("CK_AuditEvents_ClientEvent", "[ClientEventId] IS NULL OR ([EventCode]='navigation.page.enter' AND [ActorType]='User' AND [SessionIdHash] IS NOT NULL)");
+            table.HasCheckConstraint("CK_AuditEvents_ClientEvent", "[ClientEventId] IS NULL OR ([EventCode] IN ('navigation.page.enter','interaction.business_action') AND [ActorType]='User' AND [SessionIdHash] IS NOT NULL)");
             table.HasCheckConstraint("CK_AuditEvents_HttpStatus", "[HttpStatus] IS NULL OR [HttpStatus] BETWEEN 100 AND 599");
             if (Database.IsSqlServer())
             {

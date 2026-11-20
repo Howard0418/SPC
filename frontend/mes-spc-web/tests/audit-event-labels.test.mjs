@@ -5,6 +5,7 @@ import { describeAuditCode, describeAuditTarget } from "../src/utils/auditEventL
 const t = key => ({
   "spc.audit.labels.pages.auditEvents": "使用者活動紀錄",
   "spc.audit.labels.events.pageEnter": "進入頁面",
+  "spc.audit.labels.events.businessAction": "送出業務操作",
   "spc.audit.labels.outcomes.succeeded": "成功",
   "spc.audit.labels.sources.webRouter": "網頁導覽",
   "spc.audit.labels.targets.operator": "使用者"
@@ -13,6 +14,7 @@ const t = key => ({
 test("已知稽核代碼顯示可讀名稱並保留原始代碼", () => {
   assert.deepEqual(describeAuditCode("pages", "admin.audit.events", t), { label: "使用者活動紀錄", code: "admin.audit.events" });
   assert.deepEqual(describeAuditCode("events", "navigation.page.enter", t), { label: "進入頁面", code: "navigation.page.enter" });
+  assert.deepEqual(describeAuditCode("events", "interaction.business_action", t), { label: "送出業務操作", code: "interaction.business_action" });
   assert.deepEqual(describeAuditCode("outcomes", "Succeeded", t), { label: "成功", code: "Succeeded" });
   assert.deepEqual(describeAuditCode("sources", "WebRouter", t), { label: "網頁導覽", code: "WebRouter" });
 });

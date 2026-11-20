@@ -648,3 +648,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-20 [作業人員頁面權限總覽](../specs/20261120-operator-page-permission-overview/spec.md)：列表直接顯示每位人員的完整頁面權限名稱及實際數量，無須展開。
 - 2026-11-20 [SMTP 郵件通知依類型選擇收件人](../specs/20261120-smtp-notification-recipient-routing/spec.md)：OOS、OOC、調整量公式修改及濃度公式修改可獨立勾選。OOS／OOC 沿用舊名單相容與預設回退；公式類只通知已提交的實質變更，空名單不寄。測試站待實際收信驗收。
 - 2026-11-20 [OOS／OOC 郵件連到管制圖與異常處置](../specs/20261120-alert-email-workflow-link/spec.md)：郵件依環境連到與選單相同的完整異常單簽核處置清單，補入、捲動並醒目定位對應警報；沿用該列管制圖與處置保存操作。測試站 v2 已發布，使用者真實郵件連結人工驗收通過；正式站未發布。
+- 2026-11-20 [使用者業務按鈕安全稽核](../specs/20261120-audit-business-action-allowlist/verification.md)：只針對固定白名單API送出後記錄ActionKey、頁面、結果、Method與HTTP狀態；不記逐字輸入、request body、query或敏感原文。測試Web`0.1.174`／API`0.1.163/test`已發布，約束migration、聚焦／回歸、三語、build及Web／API連線通過；待登入人工驗收，正式未發布。

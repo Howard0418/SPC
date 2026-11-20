@@ -1,3 +1,7 @@
+## 2026-11-20 使用者業務按鈕安全稽核（測試站完成，待人工驗收）
+
+- [ ] `SPC-AUDIT-BUSINESS-ACTIONS-1120-TASK-001`：P1／SPC Web＋API；固定白名單、安全摘要及重試冪等已完成，測試庫只擴充既有ClientEventId約束；後端9項與稽核回歸122項、前端6項、三語及build通過。測試Web`0.1.174`／API`0.1.163/test`已發布，同源／直連／資產正常；待使用者登入確認成功／失敗事件與敏感原文不落地後核銷。正式另授權。[規格與驗證](specs/20261120-audit-business-action-allowlist/verification.md)
+
 ## 2026-11-20 PPC ID搜尋（測試站完成）
 
 - [x] `SPC-PPC-ID-SEARCH-1120-TASK-001`：P1／SPC Web；「管制項目設定與規格維護」已支援PPC ID搜尋，`2587`可直接找到對應列，保留現有文字與組合篩選。聚焦15項、三語i18n、test build及發布後Web／資產／API驗證通過；測試Web `0.1.173`／API `0.1.161/test`。無API／DB／權限影響，正式未授權。[規格與驗證](specs/20261120-ppc-id-search/spec.md)

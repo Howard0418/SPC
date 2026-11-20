@@ -73,6 +73,48 @@ public sealed class NavigationReadAuditTests
         Assert.Equal("Xlsx", JsonDocument.Parse(rows[1].DetailsJson).RootElement.GetProperty("ExportFormat").GetString());
     }
 
+    [Fact]
+    public async Task BusinessActionKeepsOnlyAllowlistedActionAndOutcomeAndIsIdempotent()
+    {
+        await using var f = new Fixture(); await f.InitializeAsync();
+        var id = Guid.NewGuid();
+        var request = new ActivityAuditRequest("BusinessAction", "chemical.analysis.overview", id,
+            ActionKey: "formula.save", Outcome: "Failed", RequestMethod: "PUT", HttpStatus: 409);
+        await f.Audit.RecordAsync(f.Context(), request);
+        await f.Audit.RecordAsync(f.Context(), request);
+        var row = await f.Db.AuditEvents.SingleAsync();
+        Assert.Equal("interaction.business_action", row.EventCode);
+        Assert.Equal("Interaction", row.Category);
+        Assert.Equal("Failed", row.Outcome);
+        Assert.Equal(409, row.HttpStatus);
+        Assert.Equal("formula.save", JsonDocument.Parse(row.DetailsJson).RootElement.GetProperty("ActionKey").GetString());
+        Assert.Equal("formula.save", AuditEventQueryService.ParseSafeSummary(row.DetailsJson)!.ActionKey);
+        Assert.DoesNotContain("formula text", row.DetailsJson, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("formula.save.raw")]
+    [InlineData("password")]
+    [InlineData("")]
+    public async Task BusinessActionRejectsKeysOutsideFixedAllowlist(string actionKey)
+    {
+        await using var f = new Fixture(); await f.InitializeAsync();
+        await Assert.ThrowsAsync<AuditEventValidationException>(() => f.Audit.RecordAsync(f.Context(),
+            new ActivityAuditRequest("BusinessAction", "chemical.analysis.overview", Guid.NewGuid(),
+                ActionKey: actionKey, Outcome: "Succeeded", RequestMethod: "PUT", HttpStatus: 200)));
+        Assert.Empty(await f.Db.AuditEvents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task BusinessActionRejectsValidActionOnWrongPage()
+    {
+        await using var f = new Fixture(); await f.InitializeAsync();
+        await Assert.ThrowsAsync<AuditEventValidationException>(() => f.Audit.RecordAsync(f.Context(),
+            new ActivityAuditRequest("BusinessAction", "alert.overview", Guid.NewGuid(),
+                ActionKey: "formula.save", Outcome: "Succeeded", RequestMethod: "PUT", HttpStatus: 200)));
+        Assert.Empty(await f.Db.AuditEvents.ToListAsync());
+    }
+
     [Theory]
     [InlineData("PageEnter", "unknown.page")]
     [InlineData("Unknown", "analysis.spc.overall")]

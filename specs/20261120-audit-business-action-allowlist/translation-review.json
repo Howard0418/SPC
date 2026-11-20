@@ -1,0 +1,31 @@
+{
+  "task": "SPC-AUDIT-BUSINESS-ACTIONS-1120-TASK-001",
+  "contractVersion": "1.0.0",
+  "status": "draft",
+  "metadata": [
+    {
+      "key": "spc.audit.businessAction",
+      "context": "使用者活動紀錄的安全摘要欄位標籤",
+      "surface": "text",
+      "sourceHash": "24ebe3846d63b26e6b357956ad3bb937387af193fc149389d08b5dde88508f97",
+      "placeholders": [],
+      "protectedTokens": []
+    },
+    {
+      "key": "spc.audit.labels.events.businessAction",
+      "context": "固定業務按鈕事件的可讀名稱",
+      "surface": "text",
+      "sourceHash": "08b7e7e287e4a640bbcb235c919c1433b81e5ccaf3f2dee2b75d86d3c0d0e685",
+      "placeholders": [],
+      "protectedTokens": []
+    }
+  ],
+  "ledger": [
+    { "key": "spc.audit.businessAction", "locale": "zh-TW", "sourceHash": "24ebe3846d63b26e6b357956ad3bb937387af193fc149389d08b5dde88508f97", "translationHash": "24ebe3846d63b26e6b357956ad3bb937387af193fc149389d08b5dde88508f97", "status": "draft", "reviewer": null, "reviewedAt": null, "severity": null, "uncertain": true, "comment": "待真人驗收" },
+    { "key": "spc.audit.businessAction", "locale": "zh-CN", "sourceHash": "24ebe3846d63b26e6b357956ad3bb937387af193fc149389d08b5dde88508f97", "translationHash": "f90d033b1c42e3f28ad74f0ff4570f9b8a75ade46ec2e4180391633a2e5381be", "status": "draft", "reviewer": null, "reviewedAt": null, "severity": null, "uncertain": true, "comment": "待真人驗收" },
+    { "key": "spc.audit.businessAction", "locale": "en-US", "sourceHash": "24ebe3846d63b26e6b357956ad3bb937387af193fc149389d08b5dde88508f97", "translationHash": "33196cf72041e5f01e4920d1b74f34e5575d1018b513005949b8b85bdda97ea6", "status": "draft", "reviewer": null, "reviewedAt": null, "severity": null, "uncertain": true, "comment": "待真人驗收" },
+    { "key": "spc.audit.labels.events.businessAction", "locale": "zh-TW", "sourceHash": "08b7e7e287e4a640bbcb235c919c1433b81e5ccaf3f2dee2b75d86d3c0d0e685", "translationHash": "08b7e7e287e4a640bbcb235c919c1433b81e5ccaf3f2dee2b75d86d3c0d0e685", "status": "draft", "reviewer": null, "reviewedAt": null, "severity": null, "uncertain": true, "comment": "待真人驗收" },
+    { "key": "spc.audit.labels.events.businessAction", "locale": "zh-CN", "sourceHash": "08b7e7e287e4a640bbcb235c919c1433b81e5ccaf3f2dee2b75d86d3c0d0e685", "translationHash": "3d4a24c57696667a6f8602dd8cc76e3ec28cba70dafb699fdd1f9183cec1b7d2", "status": "draft", "reviewer": null, "reviewedAt": null, "severity": null, "uncertain": true, "comment": "待真人驗收" },
+    { "key": "spc.audit.labels.events.businessAction", "locale": "en-US", "sourceHash": "08b7e7e287e4a640bbcb235c919c1433b81e5ccaf3f2dee2b75d86d3c0d0e685", "translationHash": "afaa95627959cc4c00bf156d3abbf2dd3018ddf27090ea31df6d2614468d6b04", "status": "draft", "reviewer": null, "reviewedAt": null, "severity": null, "uncertain": true, "comment": "待真人驗收" }
+  ]
+}

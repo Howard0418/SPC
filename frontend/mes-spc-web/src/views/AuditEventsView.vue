@@ -53,6 +53,7 @@ const summary = row => {
   if (value.permissionCodes?.length) parts.push(`${t('spc.audit.permissionsSet')}：${value.permissionCodes.join('、')}`);
   if (value.previousStatus || value.newStatus) parts.push(`${t('spc.audit.statusChange')}：${value.previousStatus || '-'} → ${value.newStatus || '-'}`);
   if (value.recordCount != null) parts.push(`${t('spc.audit.recordCount')}：${value.recordCount}`);
+  if (value.actionKey) parts.push(`${t('spc.audit.businessAction')}：${value.actionKey}`);
   return parts.join('；') || "-";
 };
 onMounted(() => load());

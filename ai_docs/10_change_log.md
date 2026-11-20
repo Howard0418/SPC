@@ -1,3 +1,9 @@
+## [2026-11-20] SPC-AUDIT-BUSINESS-ACTIONS-1120-TASK-001 修改目的
+- 目的：依使用者核准，以固定白名單補上「已送出哪一類業務按鈕」的安全稽核摘要。
+- 範圍：只記ActionKey、頁面、成功／失敗、HTTP狀態及可信actor；不記逐字輸入、每次點擊、request body、query值或敏感原文。先建後端與前端紅燈測試，沿用既有AuditEvents，通過後遞增Web／API版本並只發布測試站。
+- 測試發現：既有`CK_AuditEvents_ClientEvent`只允許進頁事件使用ClientEventId；為避免best-effort重試產生重複事件，新增最小migration只允許固定`interaction.business_action`共用既有冪等鍵，不新增欄位或修改業務資料。
+- 結果：測試庫完成COPY_ONLY／CHECKSUM備份與最小migration，AuditEvents指紋保持；後端9項與稽核回歸122項、前端6項、三語及build通過。測試Web`0.1.174`／API`0.1.163/test`已發布，同源／直連／資產正常；待使用者登入人工驗收，正式未發布。
+
 ## [2026-11-20] SPC-CHEM-F-CONSISTENCY-1103-TASK-001 人工驗收完成
 - 使用者確認第2項正式F表畫面驗收通過；與自動證據單一啟用版本、B3=.99及其餘七格1.00一致。父工作完成核銷，本次不修改程式、DB、版本或站台。
 
