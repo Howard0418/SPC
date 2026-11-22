@@ -3442,3 +3442,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 14 筆／21 欄，10 筆完成 46 組引擎試算，4 筆待稀釋規則。測試庫備份已建立，VERIFYONLY 權限受阻，未套用。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
 - 使用者已驗收 SPC 左側導覽 16 px。
+
+- 依使用者確認逐欄比較 Excel 與現有設定。唯一配對 110 筆，142 欄相符，29 欄既有運算式有差異，21 欄網站空白。測試備份驗證仍待 DBA。[逐欄對照](specs/20261122-chemical-missing-adjustment-formulas/formula-comparison.md)
