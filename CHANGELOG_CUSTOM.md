@@ -3446,3 +3446,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 依使用者確認逐欄比較 Excel 與現有設定。唯一配對 110 筆，142 欄相符，29 欄既有運算式有差異，21 欄網站空白。測試備份驗證仍待 DBA。[逐欄對照](specs/20261122-chemical-missing-adjustment-formulas/formula-comparison.md)
 
 - 使用者已授權補入 SPC 測試區 10 筆／16 個空白公式欄，預檢基準未漂移，資料異動仍待同一備份由 DBA 驗證。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
+
+- 使用者確認同一備份已驗證。SPC 測試庫已補入 10 筆／16 空白公式欄，10 版本與 10 稽核，重送 NoChange。待登入畫面及 4 筆稀釋規則確認。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
