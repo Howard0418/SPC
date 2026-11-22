@@ -271,15 +271,15 @@ const logout = createLogoutHandler({
       <aside :class="stackedMobileNav ? 'max-md:w-full max-md:max-h-40' : ''" class="w-64 flex-shrink-0 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800/80 p-4 space-y-6 overflow-y-auto backdrop-blur-sm shadow-xl flex flex-col justify-between">
         <div class="space-y-6">
           <div v-for="cat in menuCategories" :key="cat.title" class="space-y-1.5">
-            <h3 class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {{ t(cat.title) }}
+            <h3 class="px-3 text-[16px] leading-snug font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
+              <span class="w-1.5 h-1.5 shrink-0 rounded-full bg-blue-500"></span> {{ t(cat.title) }}
             </h3>
             <div class="space-y-1">
               <router-link
                 v-for="m in cat.items"
                 :key="m.to"
                 :to="m.to"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-slate-800/80 dark:hover:text-blue-400 transition-all group"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[16px] leading-snug font-semibold text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-slate-800/80 dark:hover:text-blue-400 transition-all group"
                 active-class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white dark:from-blue-600 dark:to-indigo-600 dark:text-white shadow-lg shadow-blue-500/20 dark:shadow-blue-900/30 font-bold"
               >
                 <component :is="m.icon" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />

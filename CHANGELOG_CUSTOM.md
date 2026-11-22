@@ -3433,3 +3433,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-21 業務按鈕安全稽核驗收完成
 
 - 測試站保存成功／拒絕各產生安全紀錄，未送出無事件，畫面與 Xlsx 核對通過。只更新驗收紀錄，未重新發布。[驗證](specs/20261120-audit-business-action-allowlist/verification.md)
+
+## 2026-11-22 SPC-SIDEBAR-1122 左側導覽字級
+
+- SPC 左側群組與導覽連結調為 16 px。測試 Web 0.1.176／API 0.1.163，三語桌面與手機隔離畫面驗證、實站資產與 API 檢查通過。[驗證](specs/20261122-spc-sidebar-16px/verification.md)
