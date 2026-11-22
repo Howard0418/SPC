@@ -657,3 +657,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-21 業務按鈕安全稽核完成測試站成功、失敗、未送出及 Xlsx 安全摘要驗收。[驗證](../specs/20261120-audit-business-action-allowlist/verification.md)
 
 - 2026-11-22 [SPC 左側導覽字級](../specs/20261122-spc-sidebar-16px/spec.md)。群組與連結調為 16 px，長標籤換行。
+
+- 2026-11-22 [藥液調整兩式缺漏補正](../specs/20261122-chemical-missing-adjustment-formulas/spec.md)。目前設定空白另依來源公式、必要參數及受控版本補正。待測試庫備份驗證。

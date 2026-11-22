@@ -3437,3 +3437,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-22 SPC-SIDEBAR-1122 左側導覽字級
 
 - SPC 左側群組與導覽連結調為 16 px。測試 Web 0.1.176／API 0.1.163，三語桌面與手機隔離畫面驗證、實站資產與 API 檢查通過。[驗證](specs/20261122-spc-sidebar-16px/verification.md)
+
+## 2026-11-22 SPC-CHEM-MISSING-ADJUST-1122 藥液調整公式缺漏盤點
+
+- 14 筆／21 欄，10 筆完成 46 組引擎試算，4 筆待稀釋規則。測試庫備份已建立，VERIFYONLY 權限受阻，未套用。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
+- 使用者已驗收 SPC 左側導覽 16 px。

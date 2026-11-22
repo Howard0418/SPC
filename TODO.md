@@ -877,4 +877,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] `SPC-ALERT-MAIL-WORKFLOW-1120-TASK-001`：P1／SPC。郵件連結改為與選單相同的完整異常單簽核處置清單，補入、捲動並醒目定位對應警報；沿用列內管制圖與異常處置保存。測試 Web `0.1.171`／API `0.1.160` 已發布，自動化、實際建置及使用者郵件連結人工驗收通過。[規格與驗證](specs/20261120-alert-email-workflow-link/spec.md)
 
-- [x] SPC-SIDEBAR-1122 SPC 左側導覽字級 16 px，隔離畫面驗證通過，測試 Web 0.1.176 已發布。[規格](specs/20261122-spc-sidebar-16px/spec.md)
+- [x] SPC-SIDEBAR-1122 SPC 左側導覽字級 16 px，測試 Web 0.1.176 已發布，2026-11-22 使用者確認驗收。[規格](specs/20261122-spc-sidebar-16px/spec.md)
+
+- [ ] SPC-CHEM-MISSING-ADJUST-1122 SPC 測試區調整兩式缺漏，10 筆候選已試算待備份驗證，4 筆待稀釋規則確認。[規格](specs/20261122-chemical-missing-adjustment-formulas/spec.md)
