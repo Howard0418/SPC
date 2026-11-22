@@ -3448,3 +3448,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 使用者已授權補入 SPC 測試區 10 筆／16 個空白公式欄，預檢基準未漂移，資料異動仍待同一備份由 DBA 驗證。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
 
 - 使用者確認同一備份已驗證。SPC 測試庫已補入 10 筆／16 空白公式欄，10 版本與 10 稽核，重送 NoChange。待登入畫面及 4 筆稀釋規則確認。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
+
+## 2026-11-23 SPC-CHEM-OVERVIEW-ORDER-1123 線別分析項目總覽排序
+
+- 按線別、槽位及分析項目主檔順序，避免同槽項目交錯。12 項 Chromium 回歸通過，測試 Web 0.1.177 已發布。[驗證](specs/20261123-chemical-overview-order/verification.md)

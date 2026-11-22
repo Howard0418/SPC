@@ -121,11 +121,28 @@ function rowOf(item) {
     issue: formulaMissing || limitsMissing || missingParameters.length > 0
   };
 }
+function compareChemicalMappings(a, b) {
+  const compareText = (left, right) => String(left ?? "").localeCompare(String(right ?? ""), "zh-TW", { numeric: true });
+  return (a.process?.sequenceNo ?? 0) - (b.process?.sequenceNo ?? 0)
+    || (a.machine?.sequenceNo ?? 0) - (b.machine?.sequenceNo ?? 0)
+    || compareText(a.process?.processName || a.machine?.machineName, b.process?.processName || b.machine?.machineName)
+    || compareText(a.machine?.machineCode || a.process?.processCode, b.machine?.machineCode || b.process?.processCode)
+    || (a.machineId ?? 0) - (b.machineId ?? 0)
+    || (a.tank?.sequenceNo ?? 0) - (b.tank?.sequenceNo ?? 0)
+    || compareText(a.tank?.tankName, b.tank?.tankName)
+    || compareText(a.tank?.tankCode, b.tank?.tankCode)
+    || (a.tankId ?? a.tank?.id ?? 0) - (b.tankId ?? b.tank?.id ?? 0)
+    || (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0)
+    || compareText(a.characteristic?.characteristicName, b.characteristic?.characteristicName)
+    || compareText(a.characteristic?.characteristicCode, b.characteristic?.characteristicCode)
+    || a.id - b.id;
+}
 const chemicalRows = computed(() => items.value
   .filter(x => String(x.controlScope || "").toUpperCase() === "CHEM")
+  .sort(compareChemicalMappings)
   .map(rowOf));
-const lines = computed(() => [...new Set(chemicalRows.value.map(x => x.line))].sort());
-const tanks = computed(() => [...new Set(chemicalRows.value.filter(x => !line.value || x.line === line.value).map(x => x.tank))].sort());
+const lines = computed(() => [...new Set(chemicalRows.value.map(x => x.line))]);
+const tanks = computed(() => [...new Set(chemicalRows.value.filter(x => !line.value || x.line === line.value).map(x => x.tank))]);
 const filtered = computed(() => chemicalRows.value.filter(x =>
   (!line.value || x.line === line.value) && (!tank.value || x.tank === tank.value) &&
   (status.value === "all" || status.value === "enabled" && x.enabled || status.value === "issues" && x.issue || status.value === "secondary" && !!x.secondary)

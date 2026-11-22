@@ -124,3 +124,24 @@ test('F table history filters and clears dates on mobile',async({page})=>{
  await page.route('**/api/v1/chemical-f-table/versions**',route=>{const u=new URL(route.request().url());seen.push(u);return route.fulfill({json:[]})});
  await page.setViewportSize({width:390,height:844});await page.goto('/chemical-f-table');await page.getByLabel('修改迄日').fill('2026-10-19');await page.getByRole('group',{name:'修改日期篩選'}).getByRole('button',{name:'查詢',exact:true}).click();await expect.poll(()=>seen.at(-1)?.searchParams.get('toDate')).toBe('2026-10-19');await expect(page.getByText('此修改日期區間沒有F表版本紀錄')).toBeVisible();await page.getByRole('button',{name:'清除',exact:true}).click();await expect(page.getByLabel('修改迄日')).toHaveValue('');
 });
+
+test('groups C1 tanks before ordering their analysis items', async ({ page }) => {
+ const row = (id: number, tankId: number, sequenceNo: number, characteristicName: string) => ({
+  id, controlScope: 'CHEM', machineId: 1, tankId, sequenceNo, isEnabled: true,
+  machine: { machineCode: 'C1' },
+  tank: { id: tankId, sequenceNo: 1, tankName: `鍍銅${tankId}` },
+  characteristic: { characteristicName },
+ });
+ const rows = [
+  row(4, 2, 2, '硫酸銅'), row(1, 1, 1, '硫酸'),
+  row(3, 2, 1, '硫酸'), row(2, 1, 2, '硫酸銅')
+ ];
+ await page.route('**/api/part-process-characteristics', route => route.fulfill({ json: rows }));
+ await page.goto('/chemical-analysis-overview');
+ const cells = page.locator('tbody tr');
+ await expect(cells).toHaveCount(4);
+ for (const [index, [tank, item]] of [['鍍銅1','硫酸'],['鍍銅1','硫酸銅'],['鍍銅2','硫酸'],['鍍銅2','硫酸銅']].entries()) {
+  await expect(cells.nth(index).locator('td').nth(1)).toContainText(tank);
+  await expect(cells.nth(index).locator('td').nth(2)).toHaveText(item);
+ }
+});
