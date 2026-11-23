@@ -3541,3 +3541,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 兩站主要資產與瀏覽器 API 連線通過；Portal 匿名 SSO 與錯誤紀錄回 401。登入後角色與三語流程待驗。[驗證](specs/20261123-production-feature-alignment/verification.md)
 - 真人品保 SSO 成功進入正式 SPC，正式稽核查回 HTTP 200。[驗證](specs/20261123-production-feature-alignment/verification.md)
 - 品保續發條件及錯誤紀錄權限共 10 項測試通過，正式三語資源各 734 鍵。[驗證](specs/20261123-production-feature-alignment/verification.md)
+- Portal 正式管理員選單與錯誤紀錄清單真人驗收通過。[驗證](specs/20261123-production-feature-alignment/verification.md)

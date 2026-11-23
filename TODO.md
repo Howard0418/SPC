@@ -894,7 +894,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-TEST-REFRESH-1123：已授權測試及後續正式啟用；欄位計畫與統計歷史隔離多表置換通過。待人員及其他特殊表、獨立執行身分與按鈕串接。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
-- [ ] SPC-PORTAL-PROD-ALIGN-1123：兩站技術複驗與真人品保 SSO 進站通過；待過期續發情境、管理員錯誤紀錄、三語及共用通知收件人。[驗證](specs/20261123-production-feature-alignment/verification.md)
+- [ ] SPC-PORTAL-PROD-ALIGN-1123：兩站技術複驗、品保 SSO 進站及管理員錯誤紀錄真人驗收通過；待過期續發情境、三語切換及共用通知收件人。[驗證](specs/20261123-production-feature-alignment/verification.md)
 
 - [x] SPC-PROD-SECURITY-AUDIT-1123：正式安全稽核旗標已啟用，Web 0.1.152／API 0.1.140；已指派 administrator 及 ihao_ting，個人敏感權限須由另一位管理者明示授權。[驗證](specs/20261123-production-security-audit/verification.md)
 
