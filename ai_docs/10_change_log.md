@@ -2119,3 +2119,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 
 ## [2026-11-23] SPC-CHEM-OVERVIEW-ORDER-1123 修改目的
 總覽依主檔線別、槽位及 PPC 排序，對齊批次輸入的槽內順序。
+
+## [2026-11-23] SPC-TREND-SUMMARY-1123 測試發布
+- 驗證既有摘要相容修正，遞增 Web 版本、備份測試站並核對實際前台與 API。
+- 結果：19 項本機測試、測試站焦點回歸及實站 Web／API 驗證通過，已發布測試 Web 0.1.178，API 0.1.163/test。[驗證](../specs/20261123-trend-summary-response/verification.md)

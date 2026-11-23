@@ -3452,3 +3452,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-23 SPC-CHEM-OVERVIEW-ORDER-1123 線別分析項目總覽排序
 
 - 按線別、槽位及分析項目主檔順序，避免同槽項目交錯。12 項 Chromium 回歸通過，測試 Web 0.1.177 已發布。[驗證](specs/20261123-chemical-overview-order/verification.md)
+
+## 2026-11-23 SPC 趨勢圖摘要回應相容
+
+- 既有摘要修正已發布測試 Web 0.1.177 → 0.1.178，API 0.1.163/test。19 項 Chromium 測試、測試站焦點回歸、前台版本、主資產及同源／8901 API 驗證通過。正式站未發布。[驗證](specs/20261123-trend-summary-response/verification.md)

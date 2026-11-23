@@ -8,3 +8,34 @@ for(const width of [1920,1366,1280,390])for(const locale of ['zh-TW','zh-CN','en
  if(width===390&&locale==='en-US')await page.screenshot({path:'../../.codex-tmp/i18n-task06c/mobile-en.png',fullPage:true});
 });
 for(const p of [0,.00001,.049999,.05,null])test(`trend p boundary ${p}`,async({page})=>{const {state,url}=await prepare(page,'/trend-chart',true);state.pValue=p;await page.goto(url);await expect(page.getByTestId('chemical-trend-chart').locator('canvas').first()).toBeVisible();await page.getByTestId('locale-select').selectOption('en-US');await expect(page.getByText(p===null?'Test unavailable':p>=.05?'Normality hypothesis not rejected':'Departs from normality',{exact:true})).toBeVisible()});
+
+test('trend summary accepts array envelopes and rejects malformed payloads', async ({ page }) => {
+  const { reads, state, summaryEnvelope } = await prepare(page, '/trend-chart', true);
+  const table = page.getByTestId('spc-summary-table');
+  const load = page.getByTestId('trend-loadSummary');
+  await page.getByTestId('trend-startDate').fill('2026-10-01');
+  await page.getByTestId('trend-endDate').fill('2026-10-26');
+
+  for (const key of [undefined, 'items', 'data', 'results'] as const) {
+    summaryEnvelope.key = key;
+    await load.click();
+    await expect(table.getByTestId('draw-chart-1')).toBeVisible();
+  }
+
+  await table.getByTestId('draw-chart-1').click();
+  await expect(page.getByTestId('chemical-trend-chart').locator('canvas').first()).toBeVisible();
+  const summaryRequests = () => reads.filter(url => url.pathname.endsWith('/spc/summary')).length;
+  const requestCount = summaryRequests();
+  await page.getByTestId('return-to-summary').click();
+  await expect(table.getByTestId('draw-chart-1')).toBeVisible();
+  expect(summaryRequests()).toBe(requestCount);
+
+  state.empty = true;
+  await load.click();
+  await expect(table.getByTestId('draw-chart-1')).toHaveCount(0);
+  await expect(table).toBeVisible();
+  summaryEnvelope.key = 'invalid';
+  await load.click();
+  await expect(page.getByText(/SPC摘要 API 回應格式不是陣列/)).toBeVisible();
+  await expect(table).toHaveCount(0);
+});

@@ -2,6 +2,7 @@ import {test,expect,Page} from '@playwright/test';
 export const raw='原名 <b>@:key {name}|data</b>';
 export const csv='量測值,日期\r\n0,2026-10-26\r\n';
 export async function prepare(page:Page,path='/spc',deep=false){
+ const summaryEnvelope: { key?: 'items' | 'data' | 'results' | 'invalid' } = {};
  await page.clock.install({time:new Date('2026-10-26T04:00:00Z')});await page.addInitScript(()=>{localStorage.setItem('mes_spc_token','mock-ui-only-token');localStorage.setItem('mes_spc_user',JSON.stringify({id:101,role:'Editor',username:'chart-query-fixture'}))});
  const reads:URL[]=[],writes:any[]=[];const state={failSummary:false,failChart:0,failExcluded:false,failDownload:false,empty:false,restored:false,failMappings:false,chartType:'I_MR',pValue:0.05,multi:false,violations:false,rejectWrites:false,pointIds:true,remarkExists:false,remarkText:'',notes:'',nameMode:''};
  const scopes=['PROCESS','CHEM','PRODUCT'];
@@ -48,7 +49,10 @@ export async function prepare(page:Page,path='/spc',deep=false){
    data.subgroupSizeNote='原子組備註';data.subgroupSizeNoteMessage={messageKey:known?'spc.api.chartAllSubgroupsExcluded':'common.actions.refresh',args:{}};
   }
   if(state.multi && u.pathname.endsWith('/spc/summary') && Array.isArray(data) && data.length)data=[3,1,2].map(n=>({...data[0],partProcessCharacteristicId:n,chartName:'Chart '+n,totalCount:n,oosCount:n,ppk:n/2}));
+  if (u.pathname.endsWith('/spc/summary') && summaryEnvelope.key) {
+   data = summaryEnvelope.key === 'invalid' ? { data: {} } : { [summaryEnvelope.key]: data };
+  }
   return route.fulfill({json:data});
  });
- const url=path+(deep?'?ppcId=1&uploadBatchId=00000000-0000-0000-0000-000000000001&startDate=2026-10-01&endDate=2026-10-26':'');await page.goto(url);if(path==='/trend-chart'){await expect(page.getByTestId('trend-startDate')).toBeVisible();if(deep)await expect(page.getByTestId('chemical-trend-chart').locator('canvas').first()).toBeVisible()}else{await expect(page.getByTestId('chart-query')).toBeVisible();if(!deep)await expect(page.getByTestId('chart-dimension-PROCESS')).toBeVisible();else await expect(page.getByTestId('chart-monitor')).toBeVisible()}return {reads,writes,state,url};
+ const url=path+(deep?'?ppcId=1&uploadBatchId=00000000-0000-0000-0000-000000000001&startDate=2026-10-01&endDate=2026-10-26':'');await page.goto(url);if(path==='/trend-chart'){await expect(page.getByTestId('trend-startDate')).toBeVisible();if(deep)await expect(page.getByTestId('chemical-trend-chart').locator('canvas').first()).toBeVisible()}else{await expect(page.getByTestId('chart-query')).toBeVisible();if(!deep)await expect(page.getByTestId('chart-dimension-PROCESS')).toBeVisible();else await expect(page.getByTestId('chart-monitor')).toBeVisible()}return {reads,writes,state,url,summaryEnvelope};
 }

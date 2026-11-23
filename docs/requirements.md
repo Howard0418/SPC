@@ -661,3 +661,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-22 [藥液調整兩式缺漏補正](../specs/20261122-chemical-missing-adjustment-formulas/spec.md)。目前設定空白另依來源公式、必要參數及受控版本補正。待測試庫備份驗證。
 
 - 2026-11-23 [線別分析項目總覽排序](../specs/20261123-chemical-overview-order/spec.md)。依線別、槽位及 PPC 順序排列，篩選、分頁及匯出沿用相同順序。
+
+- SPC 趨勢圖摘要相容原始陣列及 items／data／results 包裝，返回摘要沿用快取。[規格](../specs/20261123-trend-summary-response/spec.md)
