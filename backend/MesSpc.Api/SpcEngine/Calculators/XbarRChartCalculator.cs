@@ -86,6 +86,7 @@ public static class XbarRChartCalculator
 
         bool useMrMethod = false;
         bool useSigmaMethod = false;
+        bool useStandardRangeMethod = false;
         double mrMultiplier = 2.66;
         if (!string.IsNullOrWhiteSpace(formulaConfigJson))
         {
@@ -104,6 +105,10 @@ public static class XbarRChartCalculator
                              string.Equals(methodStr, "SAMPLE_STD_DEV", StringComparison.OrdinalIgnoreCase))
                     {
                         useSigmaMethod = true;
+                    }
+                    else if (string.Equals(methodStr, "STANDARD_RANGE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        useStandardRangeMethod = true;
                     }
                 }
                 if (doc.RootElement.TryGetProperty("MrMultiplier", out var mulProp) && mulProp.TryGetDouble(out var mulVal))
@@ -207,9 +212,16 @@ public static class XbarRChartCalculator
             var oos = (configuredLimits.USL.HasValue && xbar > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && xbar < configuredLimits.LSL.Value);
 
-            var activeUcl = x.UCL ?? configuredLimits.UCL ?? uclXbar;
-            var activeLcl = x.LCL ?? configuredLimits.LCL ?? lclXbar;
-            var activeCl = x.CL ?? configuredLimits.CL ?? meanOfXbar;
+            // An explicitly selected calculation method defines the statistical
+            // control lines shown on the chart.  Previously the persisted PPC or
+            // date-segment limits won here, so changing the method recalculated
+            // StatControlLimits but left the rendered point-wise lines unchanged.
+            var useSelectedMethodLimits = (useMrMethod || useSigmaMethod || useStandardRangeMethod)
+                && uclXbar.HasValue
+                && lclXbar.HasValue;
+            var activeUcl = useSelectedMethodLimits ? uclXbar : x.UCL ?? configuredLimits.UCL ?? uclXbar;
+            var activeLcl = useSelectedMethodLimits ? lclXbar : x.LCL ?? configuredLimits.LCL ?? lclXbar;
+            var activeCl = useSelectedMethodLimits ? meanOfXbar : x.CL ?? configuredLimits.CL ?? meanOfXbar;
 
             var oocConfigured = (activeUcl.HasValue && xbar > activeUcl.Value) || 
                                 (activeLcl.HasValue && xbar < activeLcl.Value);

@@ -37,6 +37,7 @@
       "ppcTankBeforeSlot": "Select a tank before selecting a slot.",
       "ppcSlotMismatch": "The slot does not belong to the selected tank.",
       "ppcFormulaInvalid": "The formula configuration format is invalid.",
+      "ppcStandardRangeSampleSizeUnsupported": "The standard range method supports subgroup sizes {min}–{max} only. The current size is {sampleSize}; choose another control-limit method.",
       "ppcChemicalFormulaInvalid": "The chemical analysis formula configuration format is invalid.",
       "ppcCharacteristicMissing": "The specified quality characteristic was not found.",
       "ppcProcessMissing": "The specified enabled process was not found.",

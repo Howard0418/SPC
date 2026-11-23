@@ -529,7 +529,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             }
             else if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, enabledRuleCodes) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
+                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, enabledRuleCodes, mapping.FormulaConfigJson) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
             }
             else // XBAR_R / XBAR_S
             {
@@ -570,7 +570,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
                 if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
                 {
-                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, enabledRuleCodes) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
+                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, enabledRuleCodes, mapping.FormulaConfigJson) with { RawDataPoints = rawPoints, SpecLimitSegments = specLimitSegments };
                 }
                 else
                 {
@@ -1595,7 +1595,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
             if (chartType.ChartTypeCode == "I_MR" || chartType.ChartTypeCode == "I-MR")
             {
-                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits);
+                chartResultVal = ImrChartCalculator.Calculate(rawPoints, limits, formulaConfigJson: mapping.FormulaConfigJson);
             }
             else // XBAR_R / XBAR_S
             {
@@ -1610,7 +1610,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
 
                 if (chartType.ChartTypeCode == "XBAR_S" || chartType.ChartTypeCode == "XBAR-S")
                 {
-                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal);
+                    chartResultVal = XbarSChartCalculator.Calculate(grouped, limits, expectedSampleSizeVal, formulaConfigJson: mapping.FormulaConfigJson);
                 }
                 else
                 {

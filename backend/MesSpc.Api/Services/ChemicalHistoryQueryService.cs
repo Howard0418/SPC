@@ -15,7 +15,8 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
     public async Task<Dictionary<long,ChemicalHistoryPresentation>> GetAsync(IReadOnlyList<VariableMeasurement> rows)
     {
         if(rows.Count==0)return [];
-        var savedSpecifications=await new ChemicalSavedSpecificationService(db).ReadAsync(rows);
+        var savedSpecificationEvidence=await new ChemicalSavedSpecificationService(db).ReadAsync(rows);
+        var savedSpecifications=savedSpecificationEvidence.Snapshots;
         var ids=rows.Select(x=>x.Id).ToList();
         var traces=await db.ChemicalCalculationTraces.AsNoTracking().Where(x=>ids.Contains(x.VariableMeasurementId))
             .GroupBy(x=>new{x.VariableMeasurementId,x.Phase}).Select(g=>g.OrderByDescending(x=>x.VersionNo).First()).ToListAsync();
@@ -74,6 +75,8 @@ public sealed class ChemicalHistoryQueryService(AppDbContext db)
                     : new(value,row.RecheckValue.HasValue,Normalize(initial?.Judgment),judgment,"SavedTrace",
                         rounded?"依保存的原始計算結果判定（顯示值已取位）":"");
             }
+            else if(savedSpecificationEvidence.InvalidEvidenceBatches.Contains(row.UploadBatchId))
+                output[row.Id]=ChemicalSavedSpecificationService.PresentInvalidEvidence(row);
             else if(savedSpecifications.TryGetValue(row.Id,out var specifications))
                 output[row.Id]=ChemicalSavedSpecificationService.Present(row,specifications);
             else if(saved.TryGetValue(row.Id,out var result) && result.StatisticValue==value && (result.LSL.HasValue || result.USL.HasValue))

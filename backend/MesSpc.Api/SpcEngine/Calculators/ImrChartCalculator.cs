@@ -12,7 +12,8 @@ public static class ImrChartCalculator
     public static ControlChartResult Calculate(
         List<SpcDataPoint> rawData,
         ControlLimits configuredLimits,
-        IReadOnlySet<string>? enabledRuleCodes = null)
+        IReadOnlySet<string>? enabledRuleCodes = null,
+        string? formulaConfigJson = null)
     {
         var validData = rawData.Where(x => !x.IsExcluded).ToList();
         var values = validData.Select(x => x.Value).ToList();
@@ -28,6 +29,47 @@ public static class ImrChartCalculator
         var sigma = (mrBar.HasValue && D2 > 0) ? (mrBar.Value / D2) : (double?)null;
         var iUclStat = (iBar.HasValue && sigma.HasValue) ? (iBar.Value + 3 * sigma.Value) : (double?)null;
         var iLclStat = (iBar.HasValue && sigma.HasValue) ? (iBar.Value - 3 * sigma.Value) : (double?)null;
+        var useSelectedMethodLimits = false;
+        object iControlLimitsStat = new { cl = iBar, ucl = iUclStat, lcl = iLclStat };
+
+        string? selectedMethod = null;
+        var multiplier = 3.0;
+        var mrMultiplier = 2.66;
+        if (!string.IsNullOrWhiteSpace(formulaConfigJson))
+        {
+            try
+            {
+                using var document = System.Text.Json.JsonDocument.Parse(formulaConfigJson);
+                if (document.RootElement.TryGetProperty("XbarCalculationMethod", out var methodProperty))
+                    selectedMethod = methodProperty.GetString()?.Trim().ToUpperInvariant();
+                if (document.RootElement.TryGetProperty("Multiplier", out var multiplierProperty)
+                    && multiplierProperty.TryGetDouble(out var parsedMultiplier) && parsedMultiplier > 0)
+                    multiplier = parsedMultiplier;
+                if (document.RootElement.TryGetProperty("MrMultiplier", out var mrMultiplierProperty)
+                    && mrMultiplierProperty.TryGetDouble(out var parsedMrMultiplier) && parsedMrMultiplier > 0)
+                    mrMultiplier = parsedMrMultiplier;
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                selectedMethod = null;
+            }
+        }
+
+        if (selectedMethod is "SIGMA_METHOD" or "SAMPLE_STD_DEV" && values.Count >= 2 && iBar.HasValue)
+        {
+            var sampleSigma = Math.Sqrt(values.Sum(value => Math.Pow(value - iBar.Value, 2)) / (values.Count - 1));
+            iUclStat = iBar.Value + multiplier * sampleSigma;
+            iLclStat = iBar.Value - multiplier * sampleSigma;
+            useSelectedMethodLimits = true;
+            iControlLimitsStat = new { cl = iBar, ucl = iUclStat, lcl = iLclStat, calculationMethod = "SIGMA_METHOD", sampleSigma, multiplier };
+        }
+        else if (selectedMethod is "MOVING_RANGE_OF_XBAR" or "MR_METHOD" && iBar.HasValue && mrBar.HasValue)
+        {
+            iUclStat = iBar.Value + mrMultiplier * mrBar.Value;
+            iLclStat = iBar.Value - mrMultiplier * mrBar.Value;
+            useSelectedMethodLimits = true;
+            iControlLimitsStat = new { cl = iBar, ucl = iUclStat, lcl = iLclStat, calculationMethod = "MR_METHOD", mrBar, mrMultiplier };
+        }
 
         var mrUclStat = mrBar.HasValue ? D4 * mrBar.Value : (double?)null;
         var mrLclStat = mrBar.HasValue ? D3 * mrBar.Value : (double?)null;
@@ -43,9 +85,9 @@ public static class ImrChartCalculator
             var v = p.Value;
             var oos = (configuredLimits.USL.HasValue && v > configuredLimits.USL.Value) || 
                       (configuredLimits.LSL.HasValue && v < configuredLimits.LSL.Value);
-            var activeUcl = p.UCL ?? configuredLimits.UCL;
-            var activeLcl = p.LCL ?? configuredLimits.LCL;
-            var activeCl = p.CL ?? configuredLimits.CL ?? iBar;
+            var activeUcl = useSelectedMethodLimits ? iUclStat : p.UCL ?? configuredLimits.UCL;
+            var activeLcl = useSelectedMethodLimits ? iLclStat : p.LCL ?? configuredLimits.LCL;
+            var activeCl = useSelectedMethodLimits ? iBar : p.CL ?? configuredLimits.CL ?? iBar;
 
             var oocConfigured = (activeUcl.HasValue && v > activeUcl.Value) || 
                                 (activeLcl.HasValue && v < activeLcl.Value);
@@ -99,7 +141,7 @@ public static class ImrChartCalculator
             Limits = configuredLimits,
             StatControlLimits = new
             {
-                iControlLimitsStat = new { cl = iBar, ucl = iUclStat, lcl = iLclStat },
+                iControlLimitsStat,
                 mrControlLimitsStat = new { cl = mrBar, ucl = mrUclStat, lcl = mrLclStat }
             },
             ChartData = new { points = iPoints },

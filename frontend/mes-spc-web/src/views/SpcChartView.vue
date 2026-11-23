@@ -173,10 +173,12 @@ const pointExclusionSaving = ref(false);
 const excludedPoints = ref([]);
 const excludedPointsLoading = ref(false);
 const pointRemarks = ref([]);
+const measurementEntryRemarks = ref([]);
 const pointRemarkSaving = ref(false);
 const pointRemarkModal = ref({
   visible: false,
   text: "",
+  exclusionReason: "",
   point: null,
   existing: null
 });
@@ -449,13 +451,55 @@ const findPointRemark = (point) => {
   if (!key) return null;
   return pointRemarks.value.find(row => getRemarkIdentityKey(row) === key) || null;
 };
+const pointRemarkText = (point) => {
+  const row = findPointRemark(point);
+  return String(point?.pointRemark ?? point?.PointRemark ?? (row ? readField(row, "remark", "Remark") : "") ?? "");
+};
+const measurementEntryRemarkReason = (point) => {
+  const row = findMeasurementEntryRemark(point);
+  return String(point?.exclusionReason ?? point?.ExclusionReason ?? (row ? readField(row, "reason", "Reason") : "") ?? "");
+};
+const formatTooltipRemark = (value, charactersPerLine = 20) => String(value || "")
+  .split(/\r?\n/)
+  .flatMap(line => {
+    const characters = Array.from(line);
+    if (characters.length === 0) return [""];
+    const chunks = [];
+    for (let index = 0; index < characters.length; index += charactersPerLine) {
+      chunks.push(characters.slice(index, index + charactersPerLine).join(""));
+    }
+    return chunks;
+  })
+  .map(escapeChartText)
+  .join("<br>");
+const findPointExclusion = (point) => {
+  const key = getPointIdentityKey(point);
+  if (!key) return null;
+  return excludedPoints.value.find(row => getRemarkIdentityKey(row) === key) || null;
+};
+const findMeasurementEntryRemark = (point) => {
+  const key = getPointIdentityKey(point);
+  if (!key) return null;
+  return measurementEntryRemarks.value.find(row => getRemarkIdentityKey(row) === key) || null;
+};
+const exclusionReasonLabel = (value) => ({
+  NO_OPEN_LINE_CURRENT_TANK: t('spc.chartActions.exclusionNoOpenCurrentTank'),
+  CLOSE_LINE: t('spc.chartActions.exclusionCloseLine'),
+  DETECTION_NO_OPEN_LINE: t('spc.chartActions.exclusionDetectionNoOpen')
+}[String(value || '')] || String(value || ''));
 function applyPointRemarksToChart() {
-  const points = chartResult.value?.rawDataPoints || [];
-  points.forEach(point => {
-    const row = findPointRemark(point);
-    point.pointRemarkId = row ? readField(row, "id", "Id") : null;
-    point.pointRemark = row ? readField(row, "remark", "Remark") : "";
-  });
+  const collections = [
+    chartResult.value?.rawDataPoints,
+    chartResult.value?.chartData?.points,
+    chartResult.value?.secondaryChartData?.points
+  ].filter(Array.isArray);
+  collections.forEach(points => points.forEach(point => {
+      const row = findPointRemark(point);
+      const entryRemark = findMeasurementEntryRemark(point);
+      point.pointRemarkId = row ? readField(row, "id", "Id") : null;
+      point.pointRemark = row ? readField(row, "remark", "Remark") : "";
+      point.exclusionReason = entryRemark ? readField(entryRemark, "reason", "Reason") || "" : "";
+    }));
 }
 const formatRuleCode = (value) => {
   const match = String(value || "").match(/^(?:Rule|Nelson)(\d+)/i);
@@ -799,6 +843,7 @@ async function loadUploadBatchChart() {
     });
     chartResult.value = res.data;
     await loadExcludedPoints(ppcId.value);
+    await loadMeasurementEntryRemarks(ppcId.value);
     await loadPointRemarks(ppcId.value);
     loading.value = false;
     await nextTick();
@@ -832,6 +877,7 @@ async function loadInteractiveChart() {
     });
     chartResult.value = res.data;
     await loadExcludedPoints(activePpcId);
+    await loadMeasurementEntryRemarks(activePpcId);
     await loadPointRemarks(activePpcId);
     loading.value = false;
     await nextTick();
@@ -868,6 +914,7 @@ async function loadExcludedPoints(activePpcId = activePpcIdValue.value) {
       params: { ppcId: Number(activePpcId) }
     });
     excludedPoints.value = res.data?.data || [];
+    applyPointRemarksToChart();
   } catch (e) {
     error.value = { key: 'spc.chartQuery.loadExcludedFailed', args: { error: getApiErrorDisplay(e) } };
     excludedPoints.value = [];
@@ -890,6 +937,23 @@ async function loadPointRemarks(activePpcId = activePpcIdValue.value) {
   } catch (e) {
     error.value = { key: 'spc.chartQuery.loadRemarksFailed', args: { error: getApiErrorDisplay(e) } };
     pointRemarks.value = [];
+  }
+}
+
+async function loadMeasurementEntryRemarks(activePpcId = activePpcIdValue.value) {
+  if (!activePpcId) {
+    measurementEntryRemarks.value = [];
+    return;
+  }
+  try {
+    const res = await api.get("/v1/spc/measurement-entry-remarks", {
+      params: { ppcId: Number(activePpcId) }
+    });
+    measurementEntryRemarks.value = res.data?.data || [];
+    applyPointRemarksToChart();
+  } catch (e) {
+    error.value = { key: 'spc.chartQuery.loadRemarksFailed', args: { error: getApiErrorDisplay(e) } };
+    measurementEntryRemarks.value = [];
   }
 }
 
@@ -952,6 +1016,7 @@ async function returnToSummary() {
   selectedPointIndex.value = -1;
   excludedPoints.value = [];
   pointRemarks.value = [];
+  measurementEntryRemarks.value = [];
   showExcludedPointsPanel.value = false;
   selectedSummaryRow.value = null;
   ppcId.value = "";
@@ -1032,9 +1097,11 @@ function openPointRemarkModal() {
     return;
   }
   const existing = findPointRemark(point);
+  const entryRemark = findMeasurementEntryRemark(point);
   pointRemarkModal.value = {
     visible: true,
     text: existing ? readField(existing, "remark", "Remark") || "" : "",
+    exclusionReason: entryRemark ? readField(entryRemark, "reason", "Reason") || "" : "",
     point,
     existing
   };
@@ -1042,7 +1109,26 @@ function openPointRemarkModal() {
 }
 
 function closePointRemarkModal() {
-  pointRemarkModal.value = { visible: false, text: "", point: null, existing: null };
+  pointRemarkModal.value = { visible: false, text: "", exclusionReason: "", point: null, existing: null };
+}
+
+async function refreshChartAfterPointRemarkChange(activePpcId) {
+  const refreshPpcId = Number(activePpcId);
+  if (!Number.isFinite(refreshPpcId) || refreshPpcId <= 0) return;
+  closePointRemarkModal();
+  hidePointContextMenu();
+  chartInstance?.dispatchAction({ type: "hideTip" });
+  trendChartInstance?.dispatchAction({ type: "hideTip" });
+  ppcId.value = String(refreshPpcId);
+  await loadPointRemarks(refreshPpcId);
+  if (uploadBatchId.value) {
+    await loadUploadBatchChart();
+  } else {
+    await loadInteractiveChart();
+  }
+  await nextTick();
+  chartInstance?.dispatchAction({ type: "hideTip" });
+  trendChartInstance?.dispatchAction({ type: "hideTip" });
 }
 
 async function savePointRemark() {
@@ -1051,9 +1137,7 @@ async function savePointRemark() {
   pointRemarkSaving.value = true;
   try {
     await api.put("/v1/spc/point-remarks", payload);
-    await loadPointRemarks(payload.partProcessCharacteristicId);
-    await loadActiveChart();
-    closePointRemarkModal();
+    await refreshChartAfterPointRemarkChange(payload.partProcessCharacteristicId);
   } catch (e) {
     alert(t('spc.chartActions.remarkFailed', { error: getApiErrorMessage(e) }));
   } finally {
@@ -1073,9 +1157,7 @@ async function clearPointRemark() {
     } else {
       await api.put("/v1/spc/point-remarks", payload);
     }
-    await loadPointRemarks(payload.partProcessCharacteristicId);
-    await loadActiveChart();
-    closePointRemarkModal();
+    await refreshChartAfterPointRemarkChange(payload.partProcessCharacteristicId);
   } catch (e) {
     alert(t('spc.chartActions.clearFailed', { error: getApiErrorMessage(e) }));
   } finally {
@@ -1655,17 +1737,21 @@ function renderECharts() {
       trigger: "axis",
       backgroundColor: "rgba(15, 23, 42, 0.95)",
       borderColor: "#334155",
-      textStyle: { color: "#fff", fontSize: 12 },
+      textStyle: { color: "#fff", fontSize: 14 },
+      extraCssText: "max-width:min(460px,calc(100vw - 32px));white-space:normal;overflow-wrap:anywhere;line-height:1.5;",
       formatter: (params) => {
         let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${escapeChartText(params[0].axisValue)}</div>`;
         const meta = params[0].data?.meta;
         if (meta) {
-          res += `<div class="text-[10px] text-slate-400 mb-2">`;
+          res += `<div class="text-slate-400 mb-2" style="font-size:14px;line-height:1.5">`;
           if (meta.lotNo) res += `<div>${htmlChartLabel("批號")}: <span class="text-slate-200">${escapeChartText(meta.lotNo)}</span></div>`;
           if (meta.sideCode && meta.sideCode !== "0") res += `<div>${htmlChartLabel("板面")}: <span class="text-blue-300 font-bold">${meta.sideCode === "1" ? "S1 (Top)" : "S2 (Bottom)"}</span></div>`;
           if (meta.lineId) res += `<div>${htmlChartLabel("產線")}: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>${htmlChartLabel("槽體")}: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
-          if (meta.pointRemark) res += `<div>${htmlChartLabel("備註")}: <span class="text-amber-200">${escapeChartText(meta.pointRemark)}</span></div>`;
+          const entryReason = measurementEntryRemarkReason(meta);
+          const freeRemark = pointRemarkText(meta);
+          if (entryReason) res += `<div>${htmlChartLabel("排除備註")}: <span class="text-orange-200">${formatTooltipRemark(exclusionReasonLabel(entryReason))}</span></div>`;
+          if (freeRemark) res += `<div>${htmlChartLabel("圖點備註")}: <span class="text-amber-200">${formatTooltipRemark(freeRemark)}</span></div>`;
           if (meta.slotId) res += `<div>${htmlChartLabel("槽位")}: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
           const phase = normalizeChemicalShift(meta.samplingPhase);
           const phaseColors = { OPEN: "text-blue-300", MIDDLE: "text-emerald-300", CLOSE: "text-orange-300" };
@@ -1873,16 +1959,20 @@ function renderTrendChart() {
       trigger: "axis",
       backgroundColor: "rgba(15, 23, 42, 0.95)",
       borderColor: "#334155",
-      textStyle: { color: "#fff", fontSize: 12 },
+      textStyle: { color: "#fff", fontSize: 14 },
+      extraCssText: "max-width:min(460px,calc(100vw - 32px));white-space:normal;overflow-wrap:anywhere;line-height:1.5;",
       formatter: (params) => {
         let res = `<div class="font-bold border-b border-slate-700 pb-1 mb-1">${escapeChartText(params[0].axisValue)}</div>`;
         const meta = params[0].data?.meta;
         if (meta) {
-          res += `<div class="text-[10px] text-slate-400 mb-2">`;
+          res += `<div class="text-slate-400 mb-2" style="font-size:14px;line-height:1.5">`;
           if (meta.lotNo) res += `<div>${htmlChartLabel("批號")}: <span class="text-slate-200">${escapeChartText(meta.lotNo)}</span></div>`;
           if (meta.serialNo) res += `<div>${htmlChartLabel("序號")}: <span class="text-slate-200">${escapeChartText(meta.serialNo)}</span></div>`;
           if (meta.operator) res += `<div>${htmlChartLabel("人員")}: <span class="text-slate-200">${escapeChartText(meta.operator)}</span></div>`;
-          if (meta.pointRemark) res += `<div>${htmlChartLabel("備註")}: <span class="text-amber-200">${escapeChartText(meta.pointRemark)}</span></div>`;
+          const entryReason = measurementEntryRemarkReason(meta);
+          const freeRemark = pointRemarkText(meta);
+          if (entryReason) res += `<div>${htmlChartLabel("排除備註")}: <span class="text-orange-200">${formatTooltipRemark(exclusionReasonLabel(entryReason))}</span></div>`;
+          if (freeRemark) res += `<div>${htmlChartLabel("圖點備註")}: <span class="text-amber-200">${formatTooltipRemark(freeRemark)}</span></div>`;
           if (meta.lineId) res += `<div>${htmlChartLabel("產線")}: <span class="text-emerald-400">ID ${meta.lineId}</span></div>`;
           if (meta.tankId) res += `<div>${htmlChartLabel("槽體")}: <span class="text-emerald-400">ID ${meta.tankId}</span></div>`;
           if (meta.slotId) res += `<div>${htmlChartLabel("槽位")}: <span class="text-emerald-400">ID ${meta.slotId}</span></div>`;
@@ -2514,6 +2604,12 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
         >
           <div data-testid="chart-remark-dialog" role="dialog" :aria-label="t('spc.chartActions.remark')" class="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-4">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 class="text-sm font-black text-slate-900 dark:text-white">{{ t('spc.chartActions.remark') }}</h3><LocalePicker /></div>
+            <div data-testid="chart-action-exclusionReason" class="mb-3 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 px-3 py-2">
+              <div class="text-xs font-bold text-orange-700 dark:text-orange-300">{{ t('spc.chartActions.savedExclusionReason') }}</div>
+              <div class="mt-1 text-sm text-slate-800 dark:text-slate-100">{{ pointRemarkModal.exclusionReason ? exclusionReasonLabel(pointRemarkModal.exclusionReason) : t('spc.chartActions.noExclusionReason') }}</div>
+              <div class="mt-1 text-[11px] text-slate-500">{{ t('spc.chartActions.exclusionReasonSeparated') }}</div>
+            </div>
+            <label class="mb-1 block text-xs font-bold text-slate-600 dark:text-slate-300">{{ t('spc.chartActions.customPointRemark') }}</label>
             <textarea
               data-testid="chart-action-pointRemarkModal.text" v-model="pointRemarkModal.text"
               maxlength="500"

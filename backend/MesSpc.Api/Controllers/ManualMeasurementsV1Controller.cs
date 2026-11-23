@@ -124,8 +124,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             var characteristicCode = mapping?.Characteristic?.CharacteristicCode;
             var tankCode = mapping?.Tank?.TankCode;
             var payload = detailPayloads.FirstOrDefault(x => x.UploadBatchId == row.UploadBatchId
-                && string.Equals(x.Payload!.GetValueOrDefault("CharacteristicCode"), characteristicCode, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(x.Payload!.GetValueOrDefault("TankCode"), tankCode, StringComparison.OrdinalIgnoreCase)).Payload;
+                && ChemicalPortalMeasurementService.MatchesEntryPayload(x.Payload!,row.PartProcessCharacteristicId,tankCode,characteristicCode)).Payload;
             latestTraces.TryGetValue((row.Id, "INITIAL"), out var initialTrace);
             latestTraces.TryGetValue((row.Id, "RECHECK"), out var recheckTrace);
             var initialReceiptId = initialTrace?.ReceiptId ?? row.ChemicalReceiptId;
@@ -156,7 +155,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 specificationVersionNo = judgment?.SpecificationVersionNo,
                 specificationVersionAt = judgment?.SpecificationVersionAt,
                 isExcluded = exclusion is not null,
-                exclusionReason = exclusion?.Reason
+                exclusionReason = payload?.GetValueOrDefault("ExclusionReason") ?? exclusion?.Reason
             };
         }).ToList();
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });

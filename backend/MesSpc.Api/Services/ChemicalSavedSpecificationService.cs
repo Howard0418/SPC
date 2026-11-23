@@ -8,6 +8,9 @@ namespace MesSpc.Api.Services;
 public sealed record PortalSavedSpecificationSnapshot(int Version, long MeasurementId, int PpcId, Guid BatchId,
     DateTime MeasuredAt, double InitialValue, double? RecheckValue, double? Lsl, double? Usl,
     bool RecordOnly, long? SegmentId);
+public sealed record PortalSavedSpecificationReadResult(
+    IReadOnlyDictionary<long, List<PortalSavedSpecificationSnapshot>> Snapshots,
+    IReadOnlySet<Guid> InvalidEvidenceBatches);
 
 /// <summary>Retains server-authored specification evidence independently of statistical chart configuration.</summary>
 public sealed class ChemicalSavedSpecificationService(AppDbContext db)
@@ -47,28 +50,53 @@ public sealed class ChemicalSavedSpecificationService(AppDbContext db)
     }
 
     /// <summary>Ordinary uploaded string dictionaries cannot impersonate the structured server audit record.</summary>
-    public async Task<Dictionary<long, List<PortalSavedSpecificationSnapshot>>> ReadAsync(IReadOnlyList<VariableMeasurement> rows)
+    public async Task<PortalSavedSpecificationReadResult> ReadAsync(IReadOnlyList<VariableMeasurement> rows)
     {
         var batches = rows.Select(x => x.UploadBatchId).Distinct().ToList();
         var audits = await db.UploadDetails.AsNoTracking().Where(x => batches.Contains(x.UploadBatchId) && !x.IsValid
                 && x.PayloadJson.Contains(Action))
             .Select(x => new { x.UploadBatchId, x.PayloadJson }).ToListAsync();
         var snapshots = new List<PortalSavedSpecificationSnapshot>();
+        var invalidEvidenceBatches = new HashSet<Guid>();
         foreach (var audit in audits)
         {
             try
             {
                 using var json = JsonDocument.Parse(audit.PayloadJson);
-                if (json.RootElement.ValueKind != JsonValueKind.Object
-                    || !json.RootElement.TryGetProperty("action", out var action) || action.ValueKind != JsonValueKind.String
-                    || action.GetString() != Action || !json.RootElement.TryGetProperty("details", out var details)
-                    || details.ValueKind != JsonValueKind.Array) continue;
-                var saved = details.Deserialize<List<PortalSavedSpecificationSnapshot>>();
-                if (saved is not null) snapshots.AddRange(saved.Where(x => x is not null && x.BatchId == audit.UploadBatchId));
+                if (json.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    invalidEvidenceBatches.Add(audit.UploadBatchId);
+                    continue;
+                }
+                if (!json.RootElement.TryGetProperty("action", out var action) || action.ValueKind != JsonValueKind.String
+                    || action.GetString() != Action)
+                    continue; // Another server audit may contain the client row as nested details; it is not saved-spec evidence.
+                if (!json.RootElement.TryGetProperty("details", out var details) || details.ValueKind != JsonValueKind.Array)
+                {
+                    invalidEvidenceBatches.Add(audit.UploadBatchId);
+                    continue;
+                }
+                var saved = details.Deserialize<List<PortalSavedSpecificationSnapshot?>>();
+                if (saved is null || saved.Count == 0 || saved.Any(x => x is null || x.BatchId != audit.UploadBatchId))
+                {
+                    invalidEvidenceBatches.Add(audit.UploadBatchId);
+                    continue;
+                }
+                snapshots.AddRange(saved.Select(x => x!));
             }
-            catch (JsonException) { /* Malformed historical audit JSON is not usable judgment evidence. */ }
+            catch (JsonException) { invalidEvidenceBatches.Add(audit.UploadBatchId); }
         }
-        return snapshots.GroupBy(x => x.MeasurementId).ToDictionary(x => x.Key, x => x.ToList());
+        return new(snapshots.GroupBy(x => x.MeasurementId).ToDictionary(x => x.Key, x => x.ToList()),
+            invalidEvidenceBatches);
+    }
+
+    public static ChemicalHistoryPresentation PresentInvalidEvidence(VariableMeasurement row)
+    {
+        var value = row.RecheckValue ?? row.MeasuredValue;
+        return new(value, row.RecheckValue.HasValue, "Unknown", "Unknown", "Unavailable",
+            "保存規格稽核內容破損、型別錯誤或批次不一致，不能作為歷史判定證據",
+            "SAVED_SPEC_EVIDENCE_INVALID", "EvidenceConflict",
+            "請查核該批次的保存規格稽核來源；不可套用目前或最近規格覆蓋歷史語意。");
     }
 
     public static ChemicalHistoryPresentation Present(VariableMeasurement row, IReadOnlyList<PortalSavedSpecificationSnapshot> snapshots)

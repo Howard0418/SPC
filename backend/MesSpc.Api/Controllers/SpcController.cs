@@ -15,6 +15,26 @@ namespace MesSpc.Api.Controllers;
 [Route("api/v1/spc")]
 public class SpcController(SpcService spcService, AppDbContext db) : ControllerBase
 {
+    [HttpGet("measurement-entry-remarks")]
+    public async Task<IActionResult> GetMeasurementEntryRemarks([FromQuery] int ppcId,CancellationToken ct)
+    {
+        var measurements=await db.VariableMeasurements.AsNoTracking()
+            .Where(x=>x.PartProcessCharacteristicId==ppcId)
+            .Select(x=>new{x.Id,x.UploadBatchId}).ToListAsync(ct);
+        var batchIds=measurements.Select(x=>x.UploadBatchId).Distinct().ToList();
+        var details=await db.UploadDetails.AsNoTracking().Where(x=>batchIds.Contains(x.UploadBatchId))
+            .Select(x=>new{x.UploadBatchId,x.PayloadJson}).ToListAsync(ct);
+        var measurementByBatch=measurements.GroupBy(x=>x.UploadBatchId).ToDictionary(x=>x.Key,x=>x.First().Id);
+        var data=details.Select(x=>new
+            {
+                VariableMeasurementId=measurementByBatch.GetValueOrDefault(x.UploadBatchId),
+                Reason=ChemicalPortalMeasurementService.ReadEntryRemarkPayload(x.PayloadJson,ppcId)
+            })
+            .Where(x=>x.VariableMeasurementId>0 && x.Reason is not null)
+            .GroupBy(x=>x.VariableMeasurementId).Select(x=>x.Last()).ToList();
+        return Ok(new{data});
+    }
+
     [HttpGet("chart")]
     public async Task<IActionResult> GetChart(
         [FromQuery] int ppcId,

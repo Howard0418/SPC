@@ -37,6 +37,7 @@
       "ppcTankBeforeSlot": "選擇槽位前必須先選擇槽體。",
       "ppcSlotMismatch": "槽位不屬於所選槽體。",
       "ppcFormulaInvalid": "公式配置格式不正確。",
+      "ppcStandardRangeSampleSizeUnsupported": "標準全距法僅支援子組大小 {min}～{max}；目前為 {sampleSize}，請改用其他管制線公式。",
       "ppcChemicalFormulaInvalid": "藥液分析公式配置格式不正確。",
       "ppcCharacteristicMissing": "找不到指定的品質特性。",
       "ppcProcessMissing": "找不到指定的啟用中工站製程。",

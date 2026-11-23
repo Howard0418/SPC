@@ -218,7 +218,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 x.AdjustAction,
                 x.AdjustAmount,
                 isExcluded = exclusions.ContainsKey(x.Id),
-                exclusionReason = exclusions.GetValueOrDefault(x.Id)?.Reason
+                exclusionReason = Detail(x,"ExclusionReason")
             })
             .ToList();
 
@@ -967,6 +967,17 @@ public class PartProcessCharacteristicsController(
                 return req.DisplayMode == "TREND_CHART"
                     ? ApiUiError.Create("PPC_TREND_TYPE_ONLY", "spc.api.ppcTrendTypeOnly")
                     : ApiUiError.Create("PPC_CONTROL_TYPE_ONLY", "spc.api.ppcControlTypeOnly");
+            if (string.Equals(GetXbarCalculationMethod(req.FormulaConfigJson), "STANDARD_RANGE", StringComparison.OrdinalIgnoreCase)
+                && !SpcConstants.TryGetFactors(req.SampleSize, out _, out _, out _))
+                return ApiUiError.Create(
+                    "PPC_STANDARD_RANGE_SAMPLE_SIZE_UNSUPPORTED",
+                    "spc.api.ppcStandardRangeSampleSizeUnsupported",
+                    new Dictionary<string, string>
+                    {
+                        ["sampleSize"] = req.SampleSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["min"] = "2",
+                        ["max"] = "25"
+                    });
         }
 
         return null;

@@ -9,7 +9,8 @@ public static class XbarSChartCalculator
         List<Subgroup> subgroups,
         ControlLimits configuredLimits,
         int expectedSampleSize,
-        IReadOnlySet<string>? enabledRuleCodes = null)
+        IReadOnlySet<string>? enabledRuleCodes = null,
+        string? formulaConfigJson = null)
     {
         if (subgroups.Count == 0)
         {
@@ -44,6 +45,58 @@ public static class XbarSChartCalculator
         var sBar = validSubgroups.Average(StandardDeviation);
         var uclXbar = xDoubleBar + a3 * sBar;
         var lclXbar = xDoubleBar - a3 * sBar;
+        var useSelectedMethodLimits = false;
+        object xbarControl = new { cl = xDoubleBar, ucl = uclXbar, lcl = lclXbar, n = nRef, a3, sBar, xDoubleBar };
+
+        string? selectedMethod = null;
+        var multiplier = 3.0;
+        var mrMultiplier = 2.66;
+        if (!string.IsNullOrWhiteSpace(formulaConfigJson))
+        {
+            try
+            {
+                using var document = System.Text.Json.JsonDocument.Parse(formulaConfigJson);
+                if (document.RootElement.TryGetProperty("XbarCalculationMethod", out var methodProperty))
+                    selectedMethod = methodProperty.GetString()?.Trim().ToUpperInvariant();
+                if (document.RootElement.TryGetProperty("Multiplier", out var multiplierProperty)
+                    && multiplierProperty.TryGetDouble(out var parsedMultiplier))
+                    multiplier = parsedMultiplier;
+                if (document.RootElement.TryGetProperty("MrMultiplier", out var mrMultiplierProperty)
+                    && mrMultiplierProperty.TryGetDouble(out var parsedMrMultiplier))
+                    mrMultiplier = parsedMrMultiplier;
+            }
+            catch
+            {
+                selectedMethod = null;
+            }
+        }
+
+        if (selectedMethod is "SIGMA_METHOD" or "SAMPLE_STD_DEV" && validSubgroups.Count >= 2)
+        {
+            var sXbar = Math.Sqrt(validSubgroups.Sum(group => Math.Pow(group.Mean - xDoubleBar, 2)) / (validSubgroups.Count - 1));
+            uclXbar = xDoubleBar + multiplier * sXbar;
+            lclXbar = xDoubleBar - multiplier * sXbar;
+            useSelectedMethodLimits = true;
+            xbarControl = new { cl = xDoubleBar, ucl = uclXbar, lcl = lclXbar, n = nRef, calculationMethod = "SIGMA_METHOD", sXbar, multiplier, xDoubleBar };
+        }
+        else if (selectedMethod is "MOVING_RANGE_OF_XBAR" or "MR_METHOD" && validSubgroups.Count >= 2)
+        {
+            var movingRanges = validSubgroups.Zip(validSubgroups.Skip(1), (current, next) => Math.Abs(next.Mean - current.Mean)).ToList();
+            var mrBarXbar = movingRanges.Average();
+            uclXbar = xDoubleBar + mrMultiplier * mrBarXbar;
+            lclXbar = xDoubleBar - mrMultiplier * mrBarXbar;
+            useSelectedMethodLimits = true;
+            xbarControl = new { cl = xDoubleBar, ucl = uclXbar, lcl = lclXbar, n = nRef, calculationMethod = "MR_METHOD", mrBarXbar, mrMultiplier, xDoubleBar };
+        }
+        else if (selectedMethod == "STANDARD_RANGE" && SpcConstants.TryGetFactors(nRef, out var a2, out _, out _))
+        {
+            var rBar = validSubgroups.Average(group => group.Range);
+            uclXbar = xDoubleBar + a2 * rBar;
+            lclXbar = xDoubleBar - a2 * rBar;
+            useSelectedMethodLimits = true;
+            xbarControl = new { cl = xDoubleBar, ucl = uclXbar, lcl = lclXbar, n = nRef, calculationMethod = "STANDARD_RANGE", a2, rBar, xDoubleBar };
+        }
+
         var uclS = b4 * sBar;
         var lclS = b3 * sBar;
 
@@ -76,9 +129,9 @@ public static class XbarSChartCalculator
             var oos = (configuredLimits.USL.HasValue && xbar > configuredLimits.USL.Value) ||
                       (configuredLimits.LSL.HasValue && xbar < configuredLimits.LSL.Value);
 
-            double? activeUcl = x.UCL ?? configuredLimits.UCL ?? uclXbar;
-            double? activeLcl = x.LCL ?? configuredLimits.LCL ?? lclXbar;
-            double? activeCl = x.CL ?? configuredLimits.CL ?? xDoubleBar;
+            double? activeUcl = useSelectedMethodLimits ? uclXbar : x.UCL ?? configuredLimits.UCL ?? uclXbar;
+            double? activeLcl = useSelectedMethodLimits ? lclXbar : x.LCL ?? configuredLimits.LCL ?? lclXbar;
+            double? activeCl = useSelectedMethodLimits ? xDoubleBar : x.CL ?? configuredLimits.CL ?? xDoubleBar;
 
             var oocConfigured = (activeUcl.HasValue && xbar > activeUcl.Value) || 
                                 (activeLcl.HasValue && xbar < activeLcl.Value);
@@ -127,7 +180,7 @@ public static class XbarSChartCalculator
             Limits = configuredLimits,
             StatControlLimits = new
             {
-                xbarControl = new { cl = xDoubleBar, ucl = uclXbar, lcl = lclXbar, n = nRef, a3, sBar, xDoubleBar },
+                xbarControl,
                 sControl = new { cl = sBar, ucl = uclS, lcl = lclS, n = nRef, b3, b4, sBar }
             },
             SubgroupSize = nRef,

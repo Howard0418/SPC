@@ -112,12 +112,8 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 row["MeasuredValue"]=value.Stored;row["RecheckValue"]=recheck is null?"":final.Stored;
                 row["AdjustAction"]=final.Adjustment;row["AdjustAmount"]=final.AdjustmentAmount;
 
-                var isExcluded=bool.TryParse(Get(row,"IsExcluded"),out var excluded) && excluded;
-                var exclusionReason=Get(row,"ExclusionReason")?.Trim();
-                if(isExcluded && (string.IsNullOrWhiteSpace(exclusionReason) || !ExclusionReasons.Contains(exclusionReason)))
-                    throw ApiUiException.Attach(new ArgumentException("勾選不列入計算及繪圖時，必須選擇有效備註。"), "spc.api.chemicalExclusionReasonRequired");
-                row["IsExcluded"]=isExcluded?"true":"false";
-                row["ExclusionReason"]=isExcluded?exclusionReason:"";
+                row["IsExcluded"]="false";
+                row["ExclusionReason"]=NormalizeEntryRemark(Get(row,"ExclusionReason"))??"";
 
             }
             foreach(var row in rows){row.Remove("ChemicalPreviewToken");row.Remove("ChemicalRecheckPreviewToken");}
@@ -140,7 +136,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
             batch.FileHash=hash;
             await uploads.ConfirmAsync(batch.UploadBatchId,ct:ct,chemicalEvidence:evidence,
                 deferVariableNotifications:true,trustedChemicalWorkflow:true);
-            await SyncPortalExclusionsAsync(batch.UploadBatchId,rows,actor,ct);
+            await ClearLegacyPortalExclusionsAsync(batch.UploadBatchId,rows,actor,ct);
             await new ChemicalSavedSpecificationService(db).CaptureAsync(batch.UploadBatchId,actor,ct);
             // The business audit filter stages its evidence before this service starts the transaction.
             // Save once more to guarantee that evidence participates in this atomic commit.
@@ -159,7 +155,35 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
         }
     }
 
-    private async Task SyncPortalExclusionsAsync(Guid uploadBatchId,List<Dictionary<string,string?>> rows,string actor,CancellationToken ct)
+    internal static string? NormalizeEntryRemark(string? value)
+    {
+        var reason=string.IsNullOrWhiteSpace(value)?null:value.Trim();
+        if(reason is null)return null;
+        if(!ExclusionReasons.Contains(reason))
+            throw ApiUiException.Attach(new ArgumentException("請選擇有效的固定備註。"), "spc.api.chemicalExclusionReasonRequired");
+        return reason;
+    }
+
+    internal static string? ReadEntryRemarkPayload(string payloadJson,int ppcId)
+    {
+        using var document=JsonDocument.Parse(payloadJson);
+        var root=document.RootElement;
+        static string? Read(JsonElement value,string name)=>value.EnumerateObject()
+            .FirstOrDefault(x=>string.Equals(x.Name,name,StringComparison.OrdinalIgnoreCase)).Value is var property
+                && property.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Null ? property.ToString() : null;
+        if(!int.TryParse(Read(root,"PpcId"),out var payloadPpcId) || payloadPpcId!=ppcId)return null;
+        try{return NormalizeEntryRemark(Read(root,"ExclusionReason"));}
+        catch(ArgumentException){return null;}
+    }
+
+    internal static bool MatchesEntryPayload(IReadOnlyDictionary<string,string?> payload,int ppcId,string? tankCode,string? characteristicCode)
+    {
+        if(string.Equals(payload.GetValueOrDefault("PpcId"),ppcId.ToString(System.Globalization.CultureInfo.InvariantCulture),StringComparison.Ordinal))return true;
+        return string.Equals(payload.GetValueOrDefault("TankCode"),tankCode,StringComparison.OrdinalIgnoreCase)
+            && string.Equals(payload.GetValueOrDefault("CharacteristicCode"),characteristicCode,StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task ClearLegacyPortalExclusionsAsync(Guid uploadBatchId,List<Dictionary<string,string?>> rows,string actor,CancellationToken ct)
     {
         var ppcIds=rows.Select(row=>int.Parse(row["PpcId"]!,System.Globalization.CultureInfo.InvariantCulture)).ToList();
         var measurements=await db.VariableMeasurements
@@ -172,21 +196,13 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
         {
             var ppcId=int.Parse(row["PpcId"]!,System.Globalization.CultureInfo.InvariantCulture);
             var measurement=measurements[ppcId];
-            var existing=await db.SpcPointExclusions.FirstOrDefaultAsync(x=>x.PartProcessCharacteristicId==ppcId
-                && x.VariableMeasurementId==measurement.Id && x.PointScope=="VariableMeasurement" && x.IsActive,ct);
-            var isExcluded=string.Equals(Get(row,"IsExcluded"),"true",StringComparison.OrdinalIgnoreCase);
-            if(!isExcluded)
+            var existing=await db.SpcPointExclusions.Where(x=>x.PartProcessCharacteristicId==ppcId
+                && x.VariableMeasurementId==measurement.Id && x.PointScope=="VariableMeasurement" && x.IsActive
+                && ExclusionReasons.Contains(x.Reason!)).ToListAsync(ct);
+            foreach(var exclusion in existing)
             {
-                if(existing is not null){existing.IsActive=false;existing.UpdatedBy=actor;existing.UpdatedAt=DateTime.UtcNow;}
-                continue;
+                exclusion.IsActive=false;exclusion.UpdatedBy=actor;exclusion.UpdatedAt=DateTime.UtcNow;
             }
-            existing ??= new SpcPointExclusion
-            {
-                PartProcessCharacteristicId=ppcId,PointScope="VariableMeasurement",VariableMeasurementId=measurement.Id,
-                State="ExcludedHidden",IsActive=true,CreatedBy=actor,CreatedAt=DateTime.UtcNow
-            };
-            if(existing.Id==0)db.SpcPointExclusions.Add(existing);
-            existing.State="ExcludedHidden";existing.Reason=Get(row,"ExclusionReason");existing.UpdatedBy=actor;existing.UpdatedAt=DateTime.UtcNow;
         }
     }
 
