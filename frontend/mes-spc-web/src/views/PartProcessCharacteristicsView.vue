@@ -707,7 +707,8 @@ watch(() => form.value.machineId, async (newMachineId, oldMachineId) => {
 
 const filteredRows = computed(() => {
   return rows.value.filter(row => {
-    const q = searchQuery.value.toLowerCase();
+    const q = searchQuery.value.trim().toLowerCase();
+    const ppcId = String(row.id ?? "");
     const pNo = row.part?.partNo || "";
     const pName = row.part?.partName || "";
     const prName = row.process?.processName || "";
@@ -720,7 +721,8 @@ const filteredRows = computed(() => {
     const tankCode = row.tank?.tankCode || "";
     const tankName = row.tank?.tankName || "";
 
-    const matchQuery = !q || 
+    const matchQuery = !q ||
+      ppcId.includes(q) ||
       pNo.toLowerCase().includes(q) || pName.toLowerCase().includes(q) ||
       prName.toLowerCase().includes(q) || prNameEn.toLowerCase().includes(q) ||
       chCode.toLowerCase().includes(q) || chName.toLowerCase().includes(q) || chNameEn.toLowerCase().includes(q) ||
@@ -1282,31 +1284,28 @@ const formatNumber = (value, digits = 4) => {
   return Number(value).toFixed(digits);
 };
 
-function viewChartOrTrend(item) {
+function chartOrTrendLocation(item) {
   if (item.displayMode === 'TREND_CHART') {
-    router.push({ path: '/trend-chart', query: { ppcId: item.id } });
-    return;
+    return { path: '/trend-chart', query: { ppcId: item.id } };
   }
   if (!item.chartTypeId) {
-    router.push({ path: '/spc', query: { ppcId: item.id } });
-    return;
+    return { path: '/spc', query: { ppcId: item.id } };
   }
   const ct = chartTypes.value.find(c => c.id === item.chartTypeId);
   if (!ct) {
-    router.push({ path: '/spc', query: { ppcId: item.id } });
-    return;
+    return { path: '/spc', query: { ppcId: item.id } };
   }
   const group = groups.value.find(g => g.id === ct.chartGroupId);
   if (!group) {
-    router.push({ path: '/spc', query: { ppcId: item.id } });
-    return;
+    return { path: '/spc', query: { ppcId: item.id } };
   }
-  
-  if (group.groupType === 'TREND_CHART') {
-    router.push({ path: '/trend-chart', query: { ppcId: item.id } });
-  } else {
-    router.push({ path: '/spc', query: { ppcId: item.id } });
-  }
+  return group.groupType === 'TREND_CHART'
+    ? { path: '/trend-chart', query: { ppcId: item.id } }
+    : { path: '/spc', query: { ppcId: item.id } };
+}
+
+function chartOrTrendHref(item) {
+  return router.resolve(chartOrTrendLocation(item)).href;
 }
 
 onMounted(async () => {
@@ -1638,14 +1637,16 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                 </span>
               </td>
               <td class="py-5 px-6 text-right space-x-2 whitespace-nowrap">
-                <button
-                  @click="viewChartOrTrend(item)"
-                  type="button"
+                <a
+                  :href="chartOrTrendHref(item)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="ppc-open-chart"
                   class="inline-flex items-center justify-center p-2 rounded-xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-600 dark:text-amber-400 transition-all border border-amber-200 dark:border-slate-700"
                   :title="item.displayMode === 'TREND_CHART' ? t('spc.ppc.viewTrendChart') : t('spc.ppc.viewSPCControlChart')"
                 >
                   <Activity class="w-4 h-4" />
-                </button>
+                </a>
                 <button
                   v-if="item.displayMode !== 'TREND_CHART'"
                   data-testid="ppc-segments" @click="openSegmentModal(item)"

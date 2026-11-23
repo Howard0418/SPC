@@ -19,6 +19,9 @@ const redirectGuardKey = "mes_spc_auth_redirecting_until";
 const ssoGraceUntilKey = "mes_spc_sso_grace_until";
 const redirectCooldownMs = 5000;
 const ssoGraceMs = 8000;
+const ssoUnauthorizedSettleMs = 250;
+let pendingUnauthorizedRedirect = null;
+let pendingUnauthorizedRequests = [];
 
 function nowMs() {
   return Date.now();
@@ -31,6 +34,49 @@ function readSessionTimestamp(key) {
 
 function isWithinSessionWindow(key) {
   return readSessionTimestamp(key) > nowMs();
+}
+
+function cancelPendingUnauthorizedRedirect() {
+  if (pendingUnauthorizedRedirect !== null) {
+    window.clearTimeout(pendingUnauthorizedRedirect);
+    pendingUnauthorizedRedirect = null;
+  }
+}
+
+function holdUnauthorizedRequest(error) {
+  return new Promise((resolve, reject) => {
+    pendingUnauthorizedRequests.push({ config: error.config, resolve, reject });
+  });
+}
+
+function retryPendingUnauthorizedRequests() {
+  const requests = pendingUnauthorizedRequests;
+  pendingUnauthorizedRequests = [];
+  for (const request of requests) {
+    api.request({ ...request.config, __spcAuthRetry: true })
+      .then(request.resolve, request.reject);
+  }
+}
+
+function createAuthRedirectGuardError() {
+  const error = new Error("Authentication navigation is in progress.");
+  error.code = "AUTH_REDIRECT_GUARD";
+  return error;
+}
+
+function holdUntilNavigation() {
+  return new Promise(() => {});
+}
+
+function redirectExpiredSession() {
+  cancelPendingUnauthorizedRedirect();
+  sessionStorage.removeItem(ssoGraceUntilKey);
+  sessionStorage.setItem(redirectGuardKey, String(nowMs() + redirectCooldownMs));
+  clearAuthSession();
+  if (!window.location.pathname.includes("/login")) {
+    const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    window.location.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
+  }
 }
 
 api.interceptors.request.use((config) => {
@@ -50,17 +96,30 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (r) => { recordSuccessfulRead(r); return r; },
+  (r) => {
+    const shouldRetryUnauthorizedRequests = pendingUnauthorizedRequests.length > 0;
+    cancelPendingUnauthorizedRedirect();
+    if (shouldRetryUnauthorizedRequests) retryPendingUnauthorizedRequests();
+    recordSuccessfulRead(r);
+    return r;
+  },
   (err) => {
     if (err?.response?.status === 401 && typeof window !== "undefined") {
-      if (isWithinSessionWindow(ssoGraceUntilKey) || isWithinSessionWindow(redirectGuardKey)) {
-        return Promise.reject(err);
+      if (isWithinSessionWindow(redirectGuardKey)) {
+        return Promise.reject(createAuthRedirectGuardError());
       }
-      sessionStorage.setItem(redirectGuardKey, String(nowMs() + redirectCooldownMs));
-      clearAuthSession();
-      if (!window.location.pathname.includes("/login")) {
-        const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-        window.location.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
+      if (err.config?.__spcAuthRetry) {
+        redirectExpiredSession();
+        return holdUntilNavigation();
+      }
+      if (isWithinSessionWindow(ssoGraceUntilKey)) {
+        if (pendingUnauthorizedRedirect === null) {
+          pendingUnauthorizedRedirect = window.setTimeout(redirectExpiredSession, ssoUnauthorizedSettleMs);
+        }
+        return holdUnauthorizedRequest(err);
+      } else {
+        redirectExpiredSession();
+        return holdUntilNavigation();
       }
     }
     return Promise.reject(err);
@@ -104,6 +163,7 @@ export function getApiErrorDisplay(err) {
   const msg = err?.message || "";
   const code = err?.code || "";
   const translate = (key,args = {}) => snapshotApiDisplay({key,args});
+  if (code === "AUTH_REDIRECT_GUARD") return translate('spc.api.unauthorized');
   if (code === "ENVIRONMENT_MISMATCH") return translate('spc.api.environmentMismatch',{webEnvironment,apiEnvironment});
   const knownMessage = captureApiErrorDisplay(err?.response?.data,apiMessageSource);
   if (knownMessage !== null) return knownMessage;
