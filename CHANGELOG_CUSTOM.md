@@ -1,5 +1,7 @@
 ## 2026-11-23 線別分析項目總覽測試資料同步正式
 
+- 收尾完成，PPC 2518 調整公式改為未設定，PPC 2594 稀釋門檻沿用 20 g/L 並同步調整量公式。正式庫 2 筆、3 欄，已備份與查回。[驗證](specs/20261123-chemical-overview-production-followup/verification.md)
+
 - 正式庫更新 103 筆、194 欄，已驗證備份、寫入及稽核。兩個公式欄位因測試空白與正式參數缺漏保留原值。純資料同步，正式網站版本維持，沿用測試區人工驗收。[驗證](specs/20261123-chemical-overview-production-data/verification.md)
 
 ## 2026-11-20 藥液公式／F一致性父工作驗收完成

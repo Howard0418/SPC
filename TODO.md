@@ -1,6 +1,7 @@
 ## 2026-11-23 線別分析項目總覽資料同步
 
 - [x] `SPC-CHEM-OVERVIEW-PROD-1123`（SPC）測試區已驗收配置同步正式，完成備份、寫入及查回驗證，兩個欄位保留正式值。[驗證](specs/20261123-chemical-overview-production-data/verification.md)
+- [x] `SPC-CHEM-OVERVIEW-FOLLOW-1123`（SPC）依確認完成兩個保留公式的正式收尾。[驗證](specs/20261123-chemical-overview-production-followup/verification.md)
 
 ## 2026-11-20 使用者業務按鈕安全稽核（測試站完成，待人工驗收）
 
