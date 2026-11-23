@@ -95,6 +95,13 @@ const showExcludedPointsPanel = ref(false);
 const tableSummaryData = ref(null);
 const cachedSummaryData = ref(null);
 const selectedSummaryRow = ref(null);
+function normalizeSummaryResponse(data) {
+  if (Array.isArray(data)) return data;
+  for (const key of ["items", "data", "results"]) {
+    if (Array.isArray(data?.[key])) return data[key];
+  }
+  throw new Error("SPC摘要 API 回應格式不是陣列");
+}
 // ─── Dimension helpers ───────────────────────────────────────
 const getDimensionForMapping = (m) => {
   return m.controlScope || "";
@@ -343,8 +350,8 @@ async function loadChart() {
           endDate: endDate.value || undefined
         }
       });
-      tableSummaryData.value = res.data;
-      cachedSummaryData.value = res.data;
+      tableSummaryData.value = normalizeSummaryResponse(res.data);
+      cachedSummaryData.value = tableSummaryData.value;
     } catch (e) {
       error.value = { key: 'spc.trend.loadSummaryFailed', args: { error: getApiErrorDisplay(e) } };
       tableSummaryData.value = null;
