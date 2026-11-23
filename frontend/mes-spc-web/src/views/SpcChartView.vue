@@ -20,6 +20,7 @@ import { subscribeControlChartRefresh } from "../utils/controlChartRefresh";
 import { buildHistogramGeometry, renderHistogramBar, resolveHistogram } from "../utils/histogramPresentation";
 import {
   useSingleChemicalLine,
+  useChemicalStageLabels,
   stageLabel,
   normalizeChemicalShift,
   isRecordedChemicalShift,
@@ -90,6 +91,7 @@ const uploadBatchId = ref("");
 const loading = ref(false);
 const rawDataDownloading = ref(false);
 const error = ref("");
+const overallSummaryRef = ref(null);
 let unsubscribeControlChartRefresh = () => {};
 
 // Initialize dates: defaults to today and 3 months ago
@@ -646,6 +648,7 @@ onMounted(() => {
     loadMappings();
   }
   window.addEventListener("resize", handleResize);
+  nextTick(() => overallSummaryRef.value?.load());
 });
 
 watch(batchId, () => {
@@ -732,6 +735,8 @@ async function loadActiveChart() {
       return;
     }
   }
+
+  if (route.path === "/spc") overallSummaryRef.value?.load();
 
   if (!ppcId.value && (selectedDimension.value === "PRODUCT" || selectedProcessId.value)) {
     loading.value = true;
@@ -1373,7 +1378,7 @@ function renderECharts() {
   }
 
   // Control limits (Static, for Variables)
-  const singleChemicalLine = useSingleChemicalLine(mapping);
+  const singleChemicalLine = useChemicalStageLabels(mapping, rawTopPoints);
   const pairedPhaseMode = rawTopPoints.some(p => isRecordedChemicalShift(p.samplingPhase));
   const hasDynamicLimits = !pairedPhaseMode && rawTopPoints.some(p => p.uclStat != null || p.lclStat != null);
   const dynamicLimitPointCount = rawTopPoints.filter(p => p.uclStat != null || p.clStat != null || p.lclStat != null).length;
@@ -1451,8 +1456,8 @@ function renderECharts() {
       CLOSE: { color: "#f97316", borderColor: "#c2410c", symbol: "rect" }
     };
     const phaseStyle = phase ? phaseStyles[phase] : null;
-    let color = phaseStyle?.color || (isErr ? "#ef4444" : "#3b82f6");
-    let borderColor = phaseStyle?.borderColor || (isErr ? "#991b1b" : "#2563eb");
+    let color = isErr ? "#ef4444" : (phaseStyle?.color || "#3b82f6");
+    let borderColor = isErr ? "#991b1b" : (phaseStyle?.borderColor || "#2563eb");
     let symbol = phaseStyle?.symbol || "circle";
     let symbolSize = isErr ? 12 : 8;
     if (isExcluded) {
@@ -1477,8 +1482,8 @@ function renderECharts() {
     
     const phase = pairedPhaseMode ? normalizeChemicalShift(p.samplingPhase) : null;
     const phaseStyles = { OPEN: ["#3b82f6", "#2563eb", "circle"], MIDDLE: ["#10b981", "#047857", "diamond"], CLOSE: ["#f97316", "#c2410c", "rect"] };
-    let color = phaseStyles[phase]?.[0] || (isErr ? "#ef4444" : "#3b82f6");
-    let borderColor = phaseStyles[phase]?.[1] || (isErr ? "#991b1b" : "#2563eb");
+    let color = isErr ? "#ef4444" : (phaseStyles[phase]?.[0] || "#3b82f6");
+    let borderColor = isErr ? "#991b1b" : (phaseStyles[phase]?.[1] || "#2563eb");
     let symbol = phaseStyles[phase]?.[2] || "circle";
     let symbolSize = isErr ? 12 : 8;
     
@@ -2121,7 +2126,7 @@ const ocapOptionLabel = value => ocapOptionKeys[value] ? t("spc.chartActions." +
       </button>
     </div>
 
-    <OverallSummary v-if="route.path === '/spc'" />
+    <OverallSummary v-if="route.path === '/spc'" ref="overallSummaryRef" :start-date="startDate" :end-date="endDate" />
 
     <!-- 🌟 三大類管制項目維度選擇器 -->
     <div v-if="isMonthlyChartPage" class="flex flex-wrap items-center gap-3">

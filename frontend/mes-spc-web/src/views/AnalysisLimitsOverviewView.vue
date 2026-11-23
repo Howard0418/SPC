@@ -166,7 +166,7 @@ onMounted(load);
     </div>
 
     <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-      <table class="min-w-[1380px] text-sm">
+      <table class="w-full min-w-[1380px] text-sm">
         <thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900"><tr><th>{{ t('spc.analysisLimits.scope') }}</th><th>{{ t('spc.analysisLimits.processLine') }}</th><th>{{ t('spc.analysisLimits.slotTank') }}</th><th>{{ t('spc.analysisLimits.item') }}</th><th>{{ t('spc.analysisLimits.unit') }}</th><th>LSL</th><th>Target</th><th>USL</th><th>LCL</th><th>CL</th><th>UCL</th><th>{{ t('spc.analysisLimits.mode') }}</th><th></th></tr></thead>
         <tbody>
           <tr v-for="item in paged" :key="item.id" :data-testid="`limits-row-${item.id}`" class="border-t dark:border-slate-700" :class="dirtyIds.has(item.id) ? 'bg-amber-50/70 dark:bg-amber-950/20' : ''">

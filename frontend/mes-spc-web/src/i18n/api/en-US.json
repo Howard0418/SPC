@@ -163,6 +163,7 @@
       "chemicalDailyOnly": "This entry supports only chemical daily reports.",
       "chemicalShiftRequired": "Select the early or middle shift.",
       "chemicalBatchRequired": "Provide a unique requestId and 1 to 200 daily report records.",
+      "chemicalExclusionReasonRequired": "Select a valid reason when excluding a record from calculation and charts.",
       "chemicalRowIdRequired": "Each record requires a valid PpcId.",
       "chemicalBatchDuplicate": "Each control item can have only one daily report in a batch.",
       "chemicalRequestUsed": "requestId has been used for different content or status. Check the data again.",

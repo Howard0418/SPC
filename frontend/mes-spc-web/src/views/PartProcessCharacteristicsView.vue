@@ -82,11 +82,12 @@ const originalDisplayMode = ref("CONTROL_CHART");
 const isHydratingForm = ref(false);
 const advancedMode = ref(localStorage.getItem("ppcAdvancedMode") === "true");
 const formMode = ref("quick"); // 'quick', 'advanced'
+const showChemicalFormulaTab = false;
 const formTabs = computed(() => [
   { id: 1, label: t("spc.ppc.basicInformation") },
   { id: 2, label: t("spc.ppc.specificationsAndSampling") },
   { id: 3, label: t("spc.ppc.chartSettings") },
-  ...(form.value.controlScope === CONTROL_SCOPE.CHEM ? [{ id: 4, label: t("spc.ppc.chemicalFormulas") }] : []),
+  ...(showChemicalFormulaTab && form.value.controlScope === CONTROL_SCOPE.CHEM ? [{ id: 4, label: t("spc.ppc.chemicalFormulas") }] : []),
   { id: 5, label: t("spc.ppc.advancedSettings") }
 ]);
 const formulaVersionReason = ref("");
@@ -792,15 +793,17 @@ function validateStep(step) {
 }
 
 function nextStep() {
-  if (validateStep(currentStep.value)) {
-    currentStep.value += 1;
+  const index = formTabs.value.findIndex(tab => tab.id === currentStep.value);
+  if (index >= 0 && index < formTabs.value.length - 1 && validateStep(currentStep.value)) {
+    currentStep.value = formTabs.value[index + 1].id;
     scrollToModalTop();
   }
 }
 
 function prevStep() {
-  if (currentStep.value > 1) {
-    currentStep.value -= 1;
+  const index = formTabs.value.findIndex(tab => tab.id === currentStep.value);
+  if (index > 0) {
+    currentStep.value = formTabs.value[index - 1].id;
     scrollToModalTop();
   }
 }
@@ -2050,8 +2053,8 @@ const formulaOptionKeys = {"系統標準公式": "spc.ppc.standardSystemFormulas
                 </div>
 
                 <!-- Formula Config -->
-                <ChemicalFormulaSchedule v-if="currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM && modalMode === 'edit'" :key="currentId" :ppc-id="currentId" />
-                <div v-if="currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 space-y-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/70">
+                <ChemicalFormulaSchedule v-if="showChemicalFormulaTab && currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM && modalMode === 'edit'" :key="currentId" :ppc-id="currentId" />
+                <div v-if="showChemicalFormulaTab && currentStep === 4 && form.controlScope === CONTROL_SCOPE.CHEM" class="p-4 space-y-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/70">
                   <div class="flex items-center justify-between gap-3">
                     <div><h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">{{ t('spc.ppc.chemicalAnalysisFormulas') }}</h4><p class="mt-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">{{ t('spc.ppc.appliesOnlyToThisLineTankAndAnalysisItemAvailableVariablesPrimarySecondaryLSLUSLTargetConcentration') }}</p></div>
                     <div class="flex items-center gap-2">

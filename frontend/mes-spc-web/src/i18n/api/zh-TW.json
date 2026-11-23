@@ -163,6 +163,7 @@
       "chemicalDailyOnly": "此入口只支援藥液日報。",
       "chemicalShiftRequired": "請選早班或中班。",
       "chemicalBatchRequired": "請提供唯一requestId及1至200筆日報。",
+      "chemicalExclusionReasonRequired": "勾選不列入計算及繪圖時，必須選擇有效備註。",
       "chemicalRowIdRequired": "每筆須有有效PpcId。",
       "chemicalBatchDuplicate": "同批每個管制項目只可有一筆日報。",
       "chemicalRequestUsed": "requestId已用於其他內容或狀態，請重新確認資料。",
