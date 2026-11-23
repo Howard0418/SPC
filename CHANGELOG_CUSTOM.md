@@ -3462,3 +3462,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - SPC Web 0.1.143 → 0.1.146／API 0.1.137 → 0.1.139，Portal Web 1.0.285 → 1.0.287／API 1.0.260 → 1.0.262。正式 Web、資產、實際瀏覽器 API 與版本核對通過。C 批製程通知與稽核啟用有待辦。[驗證](specs/20261123-spc-production-three-batches/verification.md)
 
 - 2026-11-23 正式已指派 ihao_ting 製程角色，原角色保留。正式稽核 SQL 啟動預檢未通過，稽核開關及收件設定維持。[驗證](specs/20261123-spc-production-three-batches/activation.md)
+
+- 2026-11-23 SPC 正式切換專用受限 SQL 執行帳號並啟用稽核。Web 0.1.146 → 0.1.147，API 0.1.139/production。實際瀏覽器連線、匿名拒絕與稽核入庫通過，待真人正向驗收。[驗證](specs/20261123-spc-production-three-batches/activation.md)

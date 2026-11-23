@@ -18,3 +18,5 @@
 - 回復根目錄為各正式主機 C:/ProgramData/PMR-Releases/Production，依上表 release ID 使用原備份。完成正式業務與登入驗收前保留未完成狀態。
 
 - 同日續作：製程角色及指定帳號關聯已建立。稽核啟用因正式執行身分未通過啟動預檢，仍待處理。[驗證](activation.md)
+
+- 正式 SPC 稽核已啟用，Web 0.1.147／API 0.1.139。TCP/TLS、前台資產及正式匿名登入拒絕稽核已驗證；真人正向流程仍待驗。[續作](activation.md)
