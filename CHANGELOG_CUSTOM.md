@@ -3544,3 +3544,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - Portal 正式管理員選單與錯誤紀錄清單真人驗收通過。[驗證](specs/20261123-production-feature-alignment/verification.md)
 - Portal 正式錯誤紀錄頁內容三語切換通過，共用系統維護按鈕仍有翻譯差異。[驗證](specs/20261123-production-feature-alignment/verification.md)
 - 共用系統維護按鈕三語已補發布正式並完成資產驗證。[驗證](specs/20261123-production-feature-alignment/verification.md)
+
+## 2026-11-23 測試庫刷新外送與附件阻擋
+
+- 隔離置換交易在刪除前停止含待送 MES、可重試通知或證書索引的來源，目標原資料保留。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

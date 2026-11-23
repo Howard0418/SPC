@@ -42,6 +42,9 @@ CREATE TABLE dbo.Operations(Id int NOT NULL PRIMARY KEY, Label nvarchar(40) NOT 
 CREATE TABLE dbo.EnvironmentSettings(Id int NOT NULL PRIMARY KEY, Mode nvarchar(10) NOT NULL);
 CREATE TABLE dbo.BatchHeader(Id int IDENTITY NOT NULL PRIMARY KEY);
 CREATE TABLE dbo.BatchDetail(Id int NOT NULL PRIMARY KEY, HeaderId int NOT NULL REFERENCES dbo.BatchHeader(Id), Label nvarchar(40) NOT NULL);
+CREATE TABLE dbo.MesSyncMessages(Id int NOT NULL PRIMARY KEY, SyncStatus nvarchar(20) NOT NULL);
+CREATE TABLE dbo.CalibrationNotifications(Id int NOT NULL PRIMARY KEY, State nvarchar(20) NOT NULL, NextAttemptAt datetime2 NULL);
+CREATE TABLE dbo.CalibrationCertificates(Id int NOT NULL PRIMARY KEY);
 INSERT dbo.BatchHeader DEFAULT VALUES;
 INSERT dbo.BatchDetail VALUES(1,1,N'Baseline');
 CREATE TABLE dbo.ChemicalStatisticsJobs(
@@ -82,6 +85,9 @@ INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
     $null = Invoke-Sql @"
 USE [$source];
 UPDATE dbo.Operations SET Label='Source';
+INSERT dbo.MesSyncMessages VALUES(1,N'Pending');
+INSERT dbo.CalibrationNotifications VALUES(1,N'Failed',DATEADD(day,1,SYSUTCDATETIME()));
+INSERT dbo.CalibrationCertificates VALUES(1);
 DELETE dbo.BatchDetail;
 DELETE dbo.BatchHeader;
 INSERT dbo.BatchHeader DEFAULT VALUES;
@@ -280,6 +286,26 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
         if ($_.Exception.Message -notlike '*Exclusive refresh lock required*') { throw }
     }
     Invoke-WithRefreshOperationLock -Connection $connection -Operation {
+        $guards = @{
+            MesSyncMessages = @('Id','SyncStatus')
+            CalibrationNotifications = @('Id','State','NextAttemptAt')
+            CalibrationCertificates = @('Id')
+        }
+        foreach ($table in $guards.Keys) {
+            try {
+                $orderWithGuard = $order + @($table)
+                $columnsWithGuard = $columns + @{ $table = $guards[$table] }
+                Invoke-IsolatedReplacement $connection $snapshot $orderWithGuard $columnsWithGuard -IdentityTables @('BatchHeader')
+                throw 'Expected unisolated source work to stop replacement.'
+            }
+            catch {
+                if ($_.Exception.Message -notlike "*Unisolated source work: $table*") { throw }
+            }
+            if ((Invoke-Sql 'SELECT Id FROM dbo.BatchHeader;') -ne 1 -or
+                (Invoke-Sql 'SELECT Label FROM dbo.BatchDetail;') -cne 'Baseline') {
+                throw 'Unisolated source work changed the target.'
+            }
+        }
         $null = Invoke-Sql @"
 INSERT dbo.ChemicalStatisticsJobs VALUES(NEWID(),99,NEWID(),N'Pending',0,SYSUTCDATETIME(),NULL,NULL);
 ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource CHECK (Label <> N'Source');

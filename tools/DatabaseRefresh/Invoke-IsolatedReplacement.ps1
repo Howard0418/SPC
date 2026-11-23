@@ -29,6 +29,16 @@ function Invoke-IsolatedReplacement {
     foreach ($table in $IdentityTables) {
         if (!$ordered.Contains($table)) { throw 'An identity table is outside the rehearsal plan.' }
     }
+    $dispatchGuards = @{
+        MesSyncMessages = "WHERE SyncStatus = N'Pending'"
+        CalibrationNotifications = "WHERE State = N'Pending' OR (State = N'Failed' AND NextAttemptAt IS NOT NULL)"
+        CalibrationCertificates = ''
+    }
+    foreach ($table in $dispatchGuards.Keys | Sort-Object) {
+        if ($ordered.Contains($table)) {
+            $sql.Add("IF EXISTS(SELECT 1 FROM [$Snapshot].dbo.[$table] $($dispatchGuards[$table])) THROW 51023,'Unisolated source work: $table',1;")
+        }
+    }
     for ($index = $InsertOrder.Count - 1; $index -ge 0; $index--) {
         $sql.Add("DELETE FROM dbo.[$($InsertOrder[$index])];")
     }
