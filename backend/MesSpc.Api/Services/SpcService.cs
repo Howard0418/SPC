@@ -473,6 +473,8 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
             var measurementIds = measurements.Select(x => x.Id).ToList();
             var excludedMeasurementIds = await GetActiveVariablePointExclusionIdsAsync(partProcessCharacteristicId, measurementIds, ct);
+            var hiddenMeasurementIds = await GetActiveVariablePointExclusionIdsAsync(partProcessCharacteristicId, measurementIds, ct, "ExcludedHidden");
+            var chartMeasurements = measurements.Where(x => !hiddenMeasurementIds.Contains(x.Id)).ToList();
             var alerts = await db.AlertEvents.AsNoTracking()
                 .Where(a => a.VariableMeasurementId.HasValue && measurementIds.Contains(a.VariableMeasurementId.Value))
                 .ToListAsync(ct);
@@ -480,7 +482,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
                 .GroupBy(a => a.VariableMeasurementId!.Value)
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.OccurredAt).First());
 
-            var rawPoints = measurements.Select(x =>
+            var rawPoints = chartMeasurements.Select(x =>
             {
                 alertLookup.TryGetValue(x.Id, out var alert);
                 var activeSegment = segments.LastOrDefault(s => s.StartDate <= x.MeasuredAt && (s.EndDate == null || s.EndDate >= x.MeasuredAt));
@@ -532,7 +534,7 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             else // XBAR_R / XBAR_S
             {
                 var expectedSampleSizeVal = mapping.SampleSize > 0 ? mapping.SampleSize : (chartType.RequiredSampleSize ?? 0) > 0 ? chartType.RequiredSampleSize!.Value : 5;
-                var grouped = measurements.GroupBy(x => x.MeasuredAt).Select(g =>
+                var grouped = chartMeasurements.GroupBy(x => x.MeasuredAt).Select(g =>
                 {
                     var first = g.First();
                     var activeSegment = segments.LastOrDefault(s => s.StartDate <= g.Key && (s.EndDate == null || s.EndDate >= g.Key));
@@ -603,8 +605,9 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
             var excludedUploadBatchIds = await GetExcludedUploadBatchIdsAsync(measurements.Select(x => x.UploadBatchId), ct);
             var measurementIds = measurements.Select(x => x.Id).ToList();
             var excludedMeasurementIds = await GetActiveAttributePointExclusionIdsAsync(partProcessCharacteristicId, measurementIds, ct);
+            var hiddenMeasurementIds = await GetActiveAttributePointExclusionIdsAsync(partProcessCharacteristicId, measurementIds, ct, "ExcludedHidden");
 
-            var points = measurements.Select(x => 
+            var points = measurements.Where(x => !hiddenMeasurementIds.Contains(x.Id)).Select(x => 
             {
                 var activeSegment = segments.LastOrDefault(s => s.StartDate <= x.MeasuredAt && (s.EndDate == null || s.EndDate >= x.MeasuredAt));
                 return new AttributeDataPoint
@@ -690,17 +693,20 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
     private async Task<HashSet<long>> GetActiveVariablePointExclusionIdsAsync(
         int partProcessCharacteristicId,
         IEnumerable<long> variableMeasurementIds,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? state = null)
     {
         var ids = variableMeasurementIds.Distinct().ToList();
         if (ids.Count == 0) return [];
 
-        return await db.SpcPointExclusions.AsNoTracking()
+        var query = db.SpcPointExclusions.AsNoTracking()
             .Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId
                      && x.IsActive
                      && x.PointScope == "VariableMeasurement"
                      && x.VariableMeasurementId.HasValue
-                     && ids.Contains(x.VariableMeasurementId.Value))
+                     && ids.Contains(x.VariableMeasurementId.Value));
+        if (!string.IsNullOrWhiteSpace(state)) query = query.Where(x => x.State == state);
+        return await query
             .Select(x => x.VariableMeasurementId!.Value)
             .ToHashSetAsync(ct);
     }
@@ -708,17 +714,20 @@ public class SpcService(AppDbContext db, IEmailNotificationService emailService,
     private async Task<HashSet<long>> GetActiveAttributePointExclusionIdsAsync(
         int partProcessCharacteristicId,
         IEnumerable<long> attributeMeasurementIds,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? state = null)
     {
         var ids = attributeMeasurementIds.Distinct().ToList();
         if (ids.Count == 0) return [];
 
-        return await db.SpcPointExclusions.AsNoTracking()
+        var query = db.SpcPointExclusions.AsNoTracking()
             .Where(x => x.PartProcessCharacteristicId == partProcessCharacteristicId
                      && x.IsActive
                      && x.PointScope == "AttributeMeasurement"
                      && x.AttributeMeasurementId.HasValue
-                     && ids.Contains(x.AttributeMeasurementId.Value))
+                     && ids.Contains(x.AttributeMeasurementId.Value));
+        if (!string.IsNullOrWhiteSpace(state)) query = query.Where(x => x.State == state);
+        return await query
             .Select(x => x.AttributeMeasurementId!.Value)
             .ToHashSetAsync(ct);
     }

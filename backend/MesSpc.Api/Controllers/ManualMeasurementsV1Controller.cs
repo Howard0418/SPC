@@ -113,6 +113,10 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             .Where(x => receiptIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, x => x.PayloadJson, ct);
         var judgments = await new ChemicalHistoryQueryService(db).GetAsync(rows);
+        var exclusions = await db.SpcPointExclusions.AsNoTracking()
+            .Where(x => rowIds.Contains(x.VariableMeasurementId ?? 0) && x.PointScope == "VariableMeasurement" && x.IsActive)
+            .GroupBy(x => x.VariableMeasurementId!.Value)
+            .ToDictionaryAsync(x => x.Key, x => x.OrderByDescending(item => item.UpdatedAt ?? item.CreatedAt).First(), ct);
 
         var result = rows.Select(row =>
         {
@@ -128,6 +132,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             var initialInput = ReadOriginalInput(initialReceiptId.HasValue && receipts.TryGetValue(initialReceiptId.Value, out var initialJson) ? initialJson : null);
             var recheckInput = ReadOriginalInput(recheckTrace is not null && receipts.TryGetValue(recheckTrace.ReceiptId, out var recheckJson) ? recheckJson : null);
             judgments.TryGetValue(row.Id, out var judgment);
+            exclusions.TryGetValue(row.Id, out var exclusion);
             return new
             {
                 row.Id,
@@ -149,7 +154,9 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 judgmentReason = judgment?.PrecisionNote ?? "缺少相符的歷史判定或規格紀錄，無法判定",
                 judgmentReasonCode = judgment?.JudgmentReasonCode ?? "HISTORICAL_EVIDENCE_MISSING",
                 specificationVersionNo = judgment?.SpecificationVersionNo,
-                specificationVersionAt = judgment?.SpecificationVersionAt
+                specificationVersionAt = judgment?.SpecificationVersionAt,
+                isExcluded = exclusion is not null,
+                exclusionReason = exclusion?.Reason
             };
         }).ToList();
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });
@@ -508,7 +515,8 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             ? User.Identity?.Name ?? row.Operator
             : operatorName.Trim();
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var ownsTransaction = db.Database.IsRelational() && db.Database.CurrentTransaction is null;
+        await using var tx = ownsTransaction ? await db.Database.BeginTransactionAsync(ct) : null;
         var calculations = await db.SpcCalculationResults
             .Where(x => x.VariableMeasurementId == id).ToListAsync(ct);
         var alerts = await db.AlertEvents
@@ -545,9 +553,13 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 }
             })
         });
-        db.VariableMeasurements.Remove(row);
+        // Formula receipts and traces are immutable evidence. Logical deletion keeps that
+        // evidence intact while removing the measurement from every normal query.
+        row.IsDeleted = true;
+        row.UpdatedAt = DateTime.UtcNow;
+        row.UpdatedBy = actor;
         await db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
+        if (tx is not null) await tx.CommitAsync(ct);
 
         return Ok(new { id, deleted = true });
     }

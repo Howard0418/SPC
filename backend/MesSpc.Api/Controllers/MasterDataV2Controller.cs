@@ -5,6 +5,7 @@ using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace MesSpc.Api.Controllers;
 
@@ -75,7 +76,8 @@ public class ProcessesController(AppDbContext db) : ControllerBase
     /// <summary>依製程與包含端點的日期範圍查詢量測；skip/take 穩定分頁，total 為篩選後總數。</summary>
     [HttpGet("{id:int}/measurements")]
     public async Task<IActionResult> GetMeasurements(int id, [FromQuery] string type = "variable", [FromQuery] int take = 200,
-        [FromQuery] int skip = 0, [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null)
+        [FromQuery] int skip = 0, [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null,
+        [FromQuery] string? controlScope = null)
     {
         if (skip < 0 || (start.HasValue && end.HasValue && start > end))
             return ApiUiError.WithLegacyMessage(BadRequest("分頁起點不可為負數，開始日期不可晚於結束日期。"), HttpContext, "spc.api.masterPageRangeInvalid");
@@ -119,6 +121,12 @@ public class ProcessesController(AppDbContext db) : ControllerBase
         }
 
         var variableQuery = db.VariableMeasurements.AsNoTracking().Where(x => x.ProcessId == id);
+        if (!string.IsNullOrWhiteSpace(controlScope) && !string.Equals(controlScope, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            var normalizedScope = ControlScopeCodes.Normalize(controlScope);
+            variableQuery = variableQuery.Where(x => db.PartProcessCharacteristics
+                .Any(ppc => ppc.Id == x.PartProcessCharacteristicId && ppc.ControlScope == normalizedScope));
+        }
         if (start.HasValue) variableQuery = variableQuery.Where(x => x.MeasuredAt >= start.Value);
         if (end.HasValue) variableQuery = variableQuery.Where(x => x.MeasuredAt <= end.Value);
         var page = await variableQuery
@@ -128,6 +136,49 @@ public class ProcessesController(AppDbContext db) : ControllerBase
             .Take(take)
             .ToListAsync();
         var presentation = await new ChemicalHistoryQueryService(db).GetAsync(page);
+        var ids=page.Select(x=>x.Id).ToList();
+        var activeExclusions=await db.SpcPointExclusions.AsNoTracking()
+            .Where(x=>x.IsActive && x.PointScope=="VariableMeasurement" && x.VariableMeasurementId.HasValue && ids.Contains(x.VariableMeasurementId.Value))
+            .ToListAsync();
+        var exclusions=activeExclusions.GroupBy(x=>x.VariableMeasurementId!.Value)
+            .ToDictionary(g=>g.Key,g=>g.OrderByDescending(x=>x.UpdatedAt??x.CreatedAt).First());
+        var traceInputs=await (from trace in db.ChemicalCalculationTraces.AsNoTracking()
+                               join receipt in db.ChemicalCalculationReceipts.AsNoTracking() on trace.ReceiptId equals receipt.Id
+                               where ids.Contains(trace.VariableMeasurementId)
+                               select new { trace.VariableMeasurementId,trace.Phase,trace.VersionNo,receipt.PayloadJson }).ToListAsync();
+        var batchIds=page.Select(x=>x.UploadBatchId).Distinct().ToList();
+        var mappings=await db.PartProcessCharacteristics.AsNoTracking().Include(x=>x.Tank).Include(x=>x.Characteristic).Where(x=>page.Select(row=>row.PartProcessCharacteristicId).Contains(x.Id)).ToDictionaryAsync(x=>x.Id);
+        var details=await db.UploadDetails.AsNoTracking().Where(x=>batchIds.Contains(x.UploadBatchId)&&x.IsValid).ToListAsync();
+        var detailInputs=details.Select(x=>{try{return (x.UploadBatchId,Payload:JsonSerializer.Deserialize<Dictionary<string,string?>>(x.PayloadJson));}catch{return (x.UploadBatchId,Payload:(Dictionary<string,string?>?)null);}}).Where(x=>x.Payload is not null).ToList();
+        string? Input(long id,string phase)
+        {
+            var payload=traceInputs.Where(x=>x.VariableMeasurementId==id && string.Equals(x.Phase,phase,StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(x=>x.VersionNo).FirstOrDefault()?.PayloadJson;
+            if(string.IsNullOrWhiteSpace(payload)) return null;
+            try
+            {
+                using var json=JsonDocument.Parse(payload);
+                if(!json.RootElement.TryGetProperty("originalInput",out var input) || input.ValueKind!=JsonValueKind.Object) return null;
+                if(!input.TryGetProperty("Primary",out var primary) && !input.TryGetProperty("primary",out primary)) return null;
+                return primary.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined ? null
+                    : primary.ValueKind==JsonValueKind.String ? primary.GetString() : primary.GetRawText();
+            }
+            catch(JsonException){return null;}
+        }
+        string? Detail(VariableMeasurement row,string key)
+        {
+            mappings.TryGetValue(row.PartProcessCharacteristicId,out var mapping);
+            foreach(var candidate in detailInputs.Where(x=>x.UploadBatchId==row.UploadBatchId))
+            {
+                var payload=candidate.Payload;
+                if(payload is null) continue;
+                var samePpc=string.Equals(payload.GetValueOrDefault("PpcId"),row.PartProcessCharacteristicId.ToString(),StringComparison.Ordinal);
+                var sameTankAndCharacteristic=string.Equals(payload.GetValueOrDefault("ResolvedTankCode")??payload.GetValueOrDefault("TankCode"),mapping?.Tank?.TankCode,StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(payload.GetValueOrDefault("ResolvedCharacteristicCode")??payload.GetValueOrDefault("CharacteristicCode"),mapping?.Characteristic?.CharacteristicCode,StringComparison.OrdinalIgnoreCase);
+                if(samePpc||sameTankAndCharacteristic) return payload.GetValueOrDefault(key);
+            }
+            return null;
+        }
         var variableRows = page.Select(x => new
             {
                 dataType = "Variable",
@@ -153,6 +204,8 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 x.SourceType,
                 x.Operator,
                 x.RecheckValue,
+                titrationValue = Input(x.Id,"Initial") ?? Detail(x,"TitrationValue"),
+                recheckTitrationValue = Input(x.Id,"Recheck") ?? Detail(x,"RecheckTitrationValue"),
                 effectiveValue = presentation[x.Id].EffectiveValue,
                 hasRecheck = presentation[x.Id].HasRecheck,
                 initialJudgment = presentation[x.Id].InitialJudgment,
@@ -163,7 +216,9 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 repairEligibility = presentation[x.Id].RepairEligibility,
                 repairSuggestion = presentation[x.Id].RepairSuggestion,
                 x.AdjustAction,
-                x.AdjustAmount
+                x.AdjustAmount,
+                isExcluded = exclusions.ContainsKey(x.Id),
+                exclusionReason = exclusions.GetValueOrDefault(x.Id)?.Reason
             })
             .ToList();
 
@@ -585,7 +640,8 @@ public class PartProcessCharacteristicsController(
         x.RuleGroupId = null;
 
         var useTransaction = !string.Equals(db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
-        await using var transaction = useTransaction ? await db.Database.BeginTransactionAsync() : null;
+        var ownsTransaction = useTransaction && db.Database.CurrentTransaction is null;
+        await using var transaction = ownsTransaction ? await db.Database.BeginTransactionAsync() : null;
         if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase) || formulaConfigChanged)
         {
             var staleResults = await db.SpcCalculationResults

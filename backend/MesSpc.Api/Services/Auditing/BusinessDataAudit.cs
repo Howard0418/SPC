@@ -52,6 +52,10 @@ public static class BusinessDataAuditPolicy
     public static bool HasWriteIntent(ControllerActionDescriptor descriptor, IDictionary<string, object?> arguments)
         => descriptor.ControllerTypeInfo.AsType() != typeof(ChemicalFTableController) || descriptor.ActionName != "Apply" ||
            arguments.TryGetValue("req", out var request) && request is ChemicalFTableController.ChemicalFTableApplyRequest { Apply: true };
+
+    public static bool ActionOwnsTransaction(Type controller, string action, string method)
+        => controller == typeof(ChemicalPortalMeasurementsController) && action == "Confirm" &&
+           string.Equals(method, "POST", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>Fails closed for approved business writes when audit collection is enabled, committing data and evidence together.</summary>
@@ -80,11 +84,21 @@ public sealed class BusinessDataAuditFilter(AppDbContext db, AuditEventWriter wr
             || !db.Database.IsRelational()) { await next(); return; }
 
         var http = context.HttpContext;
-        await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, http.RequestAborted);
+        // Portal chemical confirmation already owns the complete Serializable transaction so it can
+        // dispatch notifications only after commit. Its SaveChanges calls persist the staged evidence
+        // in that same transaction; wrapping it here would create an unsupported nested transaction.
+        var actionOwnsTransaction = BusinessDataAuditPolicy.ActionOwnsTransaction(context.Controller.GetType(), descriptor.ActionName, http.Request.Method);
+        await using IDbContextTransaction? transaction = actionOwnsTransaction
+            ? null
+            : await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, http.RequestAborted);
         try
         {
             var actor = await permissions.CurrentAsync(http.User, http.RequestAborted);
-            if (actor is null) { await transaction.RollbackAsync(http.RequestAborted); context.Result = Unavailable(); return; }
+            if (actor is null)
+            {
+                if (transaction is not null) await transaction.RollbackAsync(http.RequestAborted);
+                context.Result = Unavailable(); return;
+            }
             // Stage evidence before the controller SaveChanges call so EF sends
             // the business row and its audit row in the same unit of work. This
             // keeps fail-closed atomicity without a second SaveChanges roundtrip.
@@ -104,7 +118,7 @@ public sealed class BusinessDataAuditFilter(AppDbContext db, AuditEventWriter wr
             var status = Status(executed.Result);
             if (status is < 200 or >= 300)
             {
-                await transaction.RollbackAsync(http.RequestAborted);
+                if (transaction is not null) await transaction.RollbackAsync(http.RequestAborted);
                 return;
             }
             if (evidence.HttpStatus != status)
@@ -112,13 +126,22 @@ public sealed class BusinessDataAuditFilter(AppDbContext db, AuditEventWriter wr
                 evidence.HttpStatus = status;
                 db.Entry(evidence).Property(x => x.HttpStatus).IsModified = true;
             }
-            if (db.Entry(evidence).State is EntityState.Added or EntityState.Modified)
-                await db.SaveChangesAsync(http.RequestAborted);
-            await transaction.CommitAsync(http.RequestAborted);
+            if (actionOwnsTransaction)
+            {
+                if (db.Entry(evidence).State is EntityState.Added or EntityState.Modified)
+                    throw new InvalidOperationException("BUSINESS_AUDIT_NOT_COMMITTED_BY_ACTION");
+            }
+            else
+            {
+                if (db.Entry(evidence).State is EntityState.Added or EntityState.Modified)
+                    await db.SaveChangesAsync(http.RequestAborted);
+                await transaction!.CommitAsync(http.RequestAborted);
+            }
         }
         catch (Exception ex) when (ex is AuditEventValidationException or DbUpdateException or InvalidOperationException)
         {
-            await transaction.RollbackAsync(http.RequestAborted);
+            if (transaction is not null) await transaction.RollbackAsync(http.RequestAborted);
+            else if (db.Database.CurrentTransaction is { } active) await active.RollbackAsync(CancellationToken.None);
             logger.LogError(ex, "BUSINESS_AUDIT_TRANSACTION_FAILED; action {Action}; trace {TraceId}", descriptor.ActionName, http.TraceIdentifier);
             context.Result = Unavailable();
         }
