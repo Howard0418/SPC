@@ -3464,3 +3464,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-23 正式已指派 ihao_ting 製程角色，原角色保留。正式稽核 SQL 啟動預檢未通過，稽核開關及收件設定維持。[驗證](specs/20261123-spc-production-three-batches/activation.md)
 
 - 2026-11-23 SPC 正式切換專用受限 SQL 執行帳號並啟用稽核。Web 0.1.146 → 0.1.147，API 0.1.139/production。實際瀏覽器連線、匿名拒絕與稽核入庫通過，待真人正向驗收。[驗證](specs/20261123-spc-production-three-batches/activation.md)
+
+- 2026-11-23 確認正式 SPC 測試庫刷新按鈕範圍，完成來源、目標及設定參照唯讀預檢。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

@@ -886,3 +886,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-TREND-SUMMARY-1123-TASK-001：SPC Web 趨勢圖摘要相容，19 項 Chromium 測試通過；測試 Web 0.1.178／API 0.1.163/test 已核對。[驗證](specs/20261123-trend-summary-response/verification.md)
 
 - [ ] SPC-PROD-1123：正式站 A／B 已部署，C 程式及 SPC 稽核約束已部署。Portal 製程角色已指派 ihao_ting。正式稽核已啟用，Web 0.1.147／API 0.1.139。通知收件與真人正向驗收待處理。[規格](specs/20261123-spc-production-three-batches/spec.md)
+
+- [ ] SPC-TEST-REFRESH-1123：正式作業人員維護頁加入測試庫刷新按鈕；範圍及唯讀預檢已完成，待執行身分、實作與隔離演練。[規格](specs/20261123-production-test-database-refresh-button/spec.md)
