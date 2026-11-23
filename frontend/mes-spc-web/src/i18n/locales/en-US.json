@@ -2026,6 +2026,8 @@
       "loadingSettings": "Loading settings...",
       "noDepartmentEmails": "No users in this department have an email address",
       "comparePortal": "Compare Portal quality personnel",
+      "refreshTestDatabase": "Copy production data to test",
+      "refreshTestDatabaseUnavailable": "Data copying is unavailable. Both databases remain unchanged.",
       "operatorsTitle": "Operator and permission management",
       "operatorsDescription": "Manage measurement personnel, employee IDs, departments and notification email addresses",
       "createOperator": "Add operator",
