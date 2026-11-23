@@ -4,7 +4,8 @@ function Invoke-IsolatedReplacement {
         [Parameter(Mandatory)][System.Data.SqlClient.SqlConnection]$Connection,
         [Parameter(Mandatory)][string]$Snapshot,
         [Parameter(Mandatory)][string[]]$InsertOrder,
-        [Parameter(Mandatory)][hashtable]$Columns
+        [Parameter(Mandatory)][hashtable]$Columns,
+        [string[]]$IdentityTables = @()
     )
 
     if ($Connection.DataSource -cne 'localhost' -or
@@ -25,6 +26,9 @@ function Invoke-IsolatedReplacement {
         }
     }
     if ($ordered.Count -ne $Columns.Count) { throw 'The rehearsal plan includes unordered tables.' }
+    foreach ($table in $IdentityTables) {
+        if (!$ordered.Contains($table)) { throw 'An identity table is outside the rehearsal plan.' }
+    }
     for ($index = $InsertOrder.Count - 1; $index -ge 0; $index--) {
         $sql.Add("DELETE FROM dbo.[$($InsertOrder[$index])];")
     }
@@ -32,7 +36,21 @@ function Invoke-IsolatedReplacement {
         $list = ($Columns[$table] | ForEach-Object { "[$_]" }) -join ','
         $from = "[$Snapshot].dbo.[$table]"
         $to = "dbo.[$table]"
-        $sql.Add("INSERT INTO $to ($list) SELECT $list FROM $from;")
+        if ($table -in $IdentityTables) {
+            $sql.Add(@"
+SET IDENTITY_INSERT $to ON;
+BEGIN TRY
+    INSERT INTO $to ($list) SELECT $list FROM $from;
+END TRY
+BEGIN CATCH
+    SET IDENTITY_INSERT $to OFF;
+    THROW;
+END CATCH;
+SET IDENTITY_INSERT $to OFF;
+"@)
+        } else {
+            $sql.Add("INSERT INTO $to ($list) SELECT $list FROM $from;")
+        }
         $sql.Add(@"
 IF (SELECT COUNT_BIG(*) FROM $from) <> (SELECT COUNT_BIG(*) FROM $to)
    OR EXISTS(SELECT $list FROM $from EXCEPT SELECT $list FROM $to)

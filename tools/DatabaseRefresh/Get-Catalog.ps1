@@ -74,6 +74,16 @@ JOIN sys.tables t ON t.object_id = tr.parent_id
 LEFT JOIN sys.sql_modules m ON m.object_id = tr.object_id
 WHERE t.schema_id = SCHEMA_ID('dbo')
 ORDER BY t.name,tr.name;
+
+SELECT t.name,c.name,c.is_identity,
+       CONVERT(bit,CASE WHEN c.is_computed=1 OR c.is_hidden=1 OR c.generated_always_type<>0 OR c.system_type_id=189 THEN 0 ELSE 1 END),
+       CONVERT(bit,CASE WHEN c.system_type_id IN (34,35,99,240,241) THEN 0 ELSE 1 END),
+       COALESCE(pk.key_ordinal,0)
+FROM sys.tables t JOIN sys.columns c ON c.object_id=t.object_id
+LEFT JOIN sys.indexes i ON i.object_id=t.object_id AND i.is_primary_key=1
+LEFT JOIN sys.index_columns pk ON pk.object_id=i.object_id AND pk.index_id=i.index_id AND pk.column_id=c.column_id
+WHERE t.schema_id=SCHEMA_ID('dbo') AND t.is_ms_shipped=0
+ORDER BY t.name,c.column_id;
 '@
         $reader = $cmd.ExecuteReader()
         if (!$reader.Read()) { throw 'Database metadata is missing.' }
@@ -104,12 +114,20 @@ ORDER BY t.name,tr.name;
                 Signature = if ($reader.IsDBNull(3)) { $null } else { $reader.GetString(3) }
             }
         })
+        if (!$reader.NextResult()) { throw 'Column catalogue is missing.' }
+        $columns = @(while ($reader.Read()) {
+            [pscustomobject]@{
+                Table = $reader.GetString(0); Name = $reader.GetString(1); Identity = $reader.GetBoolean(2)
+                Writable = $reader.GetBoolean(3); Comparable = $reader.GetBoolean(4); KeyOrdinal = [int]$reader.GetValue(5)
+            }
+        })
         [pscustomobject]@{
             Database = $database; Server = $server; Collation = $collation
             SnapshotIsolation = $snapshot; ReadCommittedSnapshot = $rcsi
             Migrations = $migrations; Tables = $tables
             ForeignKeys = $foreignKeys
             Triggers = $triggers
+            Columns = $columns
         }
     }
     catch [System.UnauthorizedAccessException] { throw "Incomplete catalogue visibility for $ExpectedDatabase. Database VIEW DEFINITION is required." }

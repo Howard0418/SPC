@@ -9,12 +9,19 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'Compare-Catalog.ps1')
 . (Join-Path $PSScriptRoot 'Operator-Mapping.ps1')
 . (Join-Path $PSScriptRoot 'Get-TransferOrder.ps1')
+. (Join-Path $PSScriptRoot 'Get-ColumnPlan.ps1')
 
 $source = Get-RefreshCatalog -ConfigurationPath $SourceConfigurationPath -ExpectedDatabase PMR_SPC_2026
 $target = Get-RefreshCatalog -ConfigurationPath $TargetConfigurationPath -ExpectedDatabase PMR_SPC_TEST
 $policies = Import-PowerShellDataFile (Join-Path $PSScriptRoot 'Table-Policies.psd1')
 $comparison = Compare-RefreshCatalog -Source $source -Target $target -TablePolicies $policies
 $transferOrder = Get-RefreshTransferOrder -Policies $policies -ForeignKeys $target.ForeignKeys
+$sourceColumns = @(Get-RefreshColumnPlan -Tables $transferOrder.InsertOrder -Columns $source.Columns)
+$targetColumns = @(Get-RefreshColumnPlan -Tables $transferOrder.InsertOrder -Columns $target.Columns)
+if ((ConvertTo-Json -InputObject $sourceColumns -Compress) -cne
+    (ConvertTo-Json -InputObject $targetColumns -Compress)) {
+    throw 'Source and target replacement column plans differ.'
+}
 $triggerDifferences = @(if ($source.Triggers.Count -and $target.Triggers.Count) {
     Compare-Object -ReferenceObject $source.Triggers -DifferenceObject $target.Triggers -Property Table, Name, Disabled, Signature
 } else {
@@ -103,6 +110,9 @@ $operatorMapping = @(Get-RefreshOperatorMapping $sourceOperators $targetOperator
     RetainedTestOperatorMappings = @($operatorMapping | Where-Object { !$_.RetainTestOnly }).Count
     RetainedTestOnlyOperators = @($operatorMapping | Where-Object RetainTestOnly).Count
     OrderedReplacementTables = $transferOrder.InsertOrder.Count
+    VerifiedColumnPlans = $targetColumns.Count
+    TablesWithIdentity = @($targetColumns | Where-Object { $_.IdentityColumns.Count }).Count
+    TablesWithGeneratedColumns = @($targetColumns | Where-Object { $_.GeneratedColumns.Count }).Count
     ForeignKeyCycleBlockedTables = $transferOrder.BlockedByCycle
     SelfReferences = $transferOrder.SelfReferences
     RetainedReferences = $transferOrder.RetainedReferences

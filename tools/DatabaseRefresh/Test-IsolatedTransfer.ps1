@@ -40,9 +40,9 @@ try {
 USE [$db];
 CREATE TABLE dbo.Operations(Id int NOT NULL PRIMARY KEY, Label nvarchar(40) NOT NULL);
 CREATE TABLE dbo.EnvironmentSettings(Id int NOT NULL PRIMARY KEY, Mode nvarchar(10) NOT NULL);
-CREATE TABLE dbo.BatchHeader(Id int NOT NULL PRIMARY KEY);
+CREATE TABLE dbo.BatchHeader(Id int IDENTITY NOT NULL PRIMARY KEY);
 CREATE TABLE dbo.BatchDetail(Id int NOT NULL PRIMARY KEY, HeaderId int NOT NULL REFERENCES dbo.BatchHeader(Id), Label nvarchar(40) NOT NULL);
-INSERT dbo.BatchHeader VALUES(1);
+INSERT dbo.BatchHeader DEFAULT VALUES;
 INSERT dbo.BatchDetail VALUES(1,1,N'Baseline');
 CREATE TABLE dbo.ChemicalStatisticsJobs(
     Id uniqueidentifier NOT NULL, VariableMeasurementId bigint NOT NULL, ReceiptId uniqueidentifier NOT NULL,
@@ -84,7 +84,7 @@ USE [$source];
 UPDATE dbo.Operations SET Label='Source';
 DELETE dbo.BatchDetail;
 DELETE dbo.BatchHeader;
-INSERT dbo.BatchHeader VALUES(2);
+INSERT dbo.BatchHeader DEFAULT VALUES;
 INSERT dbo.BatchDetail VALUES(2,2,N'Source');
 INSERT INTO dbo.ChemicalStatisticsJobs VALUES
     (NEWID(),1,NEWID(),N'Failed',3,SYSUTCDATETIME(),NULL,N'original error'),
@@ -268,7 +268,7 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
     $columns = @{ BatchHeader = @('Id'); BatchDetail = @('Id','HeaderId','Label') }
     $order = @('BatchHeader','BatchDetail')
     try {
-        Invoke-IsolatedReplacement $connection $snapshot $order $columns
+        Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
         throw 'Expected replacement to reject an unlocked session.'
     }
     catch {
@@ -277,7 +277,7 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
     Invoke-WithRefreshOperationLock -Connection $connection -Operation {
         $null = Invoke-Sql "ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource CHECK (Label <> N'Source');"
         try {
-            Invoke-IsolatedReplacement $connection $snapshot $order $columns
+            Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
             throw 'Expected multi-table replacement failure.'
         }
         catch {
@@ -288,7 +288,7 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
             throw 'Multi-table rollback did not preserve both original rows.'
         }
         $null = Invoke-Sql 'ALTER TABLE dbo.BatchDetail DROP CONSTRAINT CK_RehearsalRejectSource;'
-        Invoke-IsolatedReplacement $connection $snapshot $order $columns
+        Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
         if ((Invoke-Sql 'SELECT HeaderId FROM dbo.BatchDetail;') -ne 2 -or
             (Invoke-Sql 'SELECT Mode FROM dbo.EnvironmentSettings;') -cne 'test') {
             throw 'Multi-table replacement or retained settings verification failed.'
