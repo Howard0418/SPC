@@ -2150,3 +2150,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## [2026-11-23] SPC-TEST-REFRESH-1123 先行顯示按鈕
 - 目的：提供停用入口與三語狀態，不建立資料庫操作路徑。
 - 結果：測試與正式停用入口已部署，驗證未發送寫入請求。[驗證](../specs/20261123-production-test-database-refresh-button/verification.md)
+
+## [2026-11-23] SPC 正式安全稽核啟用
+- 目的：依授權啟用獨立安全稽核旗標與刷新正式前台版號。
+- 結果：正式安全稽核已啟用，前台版號、主資產及 API 驗證通過。[驗證](../specs/20261123-production-security-audit/verification.md)
