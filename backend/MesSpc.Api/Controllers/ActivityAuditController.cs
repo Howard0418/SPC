@@ -9,7 +9,7 @@ namespace MesSpc.Api.Controllers;
 [Route("api/v1/audit/activity")]
 public sealed class ActivityAuditController(NavigationReadAudit audit, ILogger<ActivityAuditController> logger) : ControllerBase
 {
-    /// <summary>Appends a constrained best-effort navigation or read summary for the current authenticated user.</summary>
+    /// <summary>Appends a constrained best-effort navigation, read or allowlisted business-action summary for the current authenticated user.</summary>
     [HttpPost]
     public async Task<IActionResult> Record([FromBody] ActivityAuditRequest request, CancellationToken ct)
     {

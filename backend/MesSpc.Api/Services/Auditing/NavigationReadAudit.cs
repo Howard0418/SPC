@@ -57,6 +57,23 @@ public sealed class NavigationReadAudit(AuditEventWriter writer, AuthenticationA
                 details["ResultCount"] = request.ResultCount ?? 0;
                 AddDates(details, request);
                 return Common(code, request, canonicalPage, details, null);
+            case "BusinessAction":
+                var actionId = request.ClientEventId.GetValueOrDefault();
+                var actionKey = request.ActionKey;
+                AuditEventContract.Require(actionId != Guid.Empty);
+                AuditEventContract.Require(request.NavigationKind is null && request.FilterFields is null && request.ResultCount is null
+                    && request.ExportFormat is null && request.DateFromUtc is null && request.DateToUtc is null);
+                AuditEventContract.Require(actionKey is not null
+                    && AuditEventContract.BusinessActions.TryGetValue(actionKey, out var pages) && pages.Contains(canonicalPage));
+                AuditEventContract.Require(request.Outcome is "Succeeded" or "Failed");
+                AuditEventContract.Require(request.RequestMethod is "POST" or "PUT" or "PATCH" or "DELETE");
+                AuditEventContract.Require(request.HttpStatus is >= 100 and <= 599);
+                details["ActionKey"] = actionKey!;
+                return new("interaction.business_action", request.Outcome!)
+                {
+                    PageKey = canonicalPage, ClientEventId = actionId, HttpMethod = request.RequestMethod,
+                    HttpStatus = request.HttpStatus, CorrelationId = request.CorrelationId, Details = details
+                };
             default: throw new AuditEventValidationException();
         }
     }
@@ -89,4 +106,5 @@ public sealed class NavigationReadAudit(AuditEventWriter writer, AuthenticationA
 /// <summary>Constrained browser activity input. It intentionally has no actor, environment, URL or arbitrary details fields.</summary>
 public sealed record ActivityAuditRequest(string? Activity, string? PageKey, Guid? ClientEventId = null,
     string? NavigationKind = null, string[]? FilterFields = null, DateTime? DateFromUtc = null,
-    DateTime? DateToUtc = null, int? ResultCount = null, string? ExportFormat = null, string? CorrelationId = null);
+    DateTime? DateToUtc = null, int? ResultCount = null, string? ExportFormat = null, string? CorrelationId = null,
+    string? ActionKey = null, string? Outcome = null, string? RequestMethod = null, int? HttpStatus = null);

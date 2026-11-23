@@ -6,6 +6,7 @@ using MesSpc.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace MesSpc.Api.Controllers;
 
@@ -651,7 +652,7 @@ public class PartProcessCharacteristicsController(
         }
         await db.SaveChangesAsync();
         var formulaVersionService = chemicalFormulaVersions ?? new ChemicalAnalysisFormulaVersionService(db);
-        await formulaVersionService.RecordChangeAsync(
+        var formulaVersion = await formulaVersionService.RecordChangeAsync(
             x.Id,
             previousChemicalAnalysisConfigJson,
             x.ChemicalAnalysisConfigJson,
@@ -662,7 +663,92 @@ public class PartProcessCharacteristicsController(
         {
             await transaction.CommitAsync();
         }
+        ChemicalFormulaNotice.AfterResponse(ControllerContext.HttpContext, formulaVersion.Version?.Id);
         return Ok(x);
+    }
+
+    [HttpPut("{id:int}/chemical-adjustment-parameters")]
+    public async Task<IActionResult> UpdateChemicalAdjustmentParameters(
+        int id, ChemicalAdjustmentParametersRequest req, CancellationToken ct)
+    {
+        if (new[] { req.TankCapacityLiters, req.AdditionControlValue, req.DilutionControlValue }
+            .Any(value => value.HasValue && value.Value <= 0))
+            return BadRequest(new { code = "CHEM_PARAMETER_POSITIVE", message = "槽容與管制值必須大於 0，空白表示未設定。" });
+        var chemicalName = string.IsNullOrWhiteSpace(req.ChemicalName) ? null : req.ChemicalName.Trim();
+        if (chemicalName?.Length > 100)
+            return BadRequest(new { code = "CHEM_NAME_TOO_LONG", message = "藥液不可超過 100 字。" });
+        var remark = string.IsNullOrWhiteSpace(req.AdjustmentRemark) ? null : req.AdjustmentRemark.Trim();
+        if (remark?.Length > 500)
+            return BadRequest(new { code = "CHEM_REMARK_TOO_LONG", message = "備註不可超過 500 字。" });
+
+        var item = await db.PartProcessCharacteristics.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (item is null) return NotFound();
+        if (!string.Equals(NormalizeScope(item.ControlScope), "CHEM", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { code = "CHEM_PARAMETER_SCOPE", message = "僅能維護藥液分析項目的調整參數。" });
+
+        var previous = item.ChemicalAnalysisConfigJson;
+        JsonObject config;
+        try { config = string.IsNullOrWhiteSpace(previous) ? new JsonObject() : JsonNode.Parse(previous)!.AsObject(); }
+        catch (JsonException) { return BadRequest(new { code = "CHEM_CONFIG_INVALID", message = "既有藥液設定格式錯誤，未儲存任何資料。" }); }
+
+        var previousAddition = GetDecimal(config, "additionControlValue");
+        var previousDilution = GetDecimal(config, "dilutionControlValue");
+        if (chemicalName is null) config.Remove("chemicalName");
+        else config["chemicalName"] = chemicalName;
+        SetDecimal(config, "tankCapacityLiters", req.TankCapacityLiters);
+        SetDecimal(config, "additionControlValue", req.AdditionControlValue);
+        SetDecimal(config, "dilutionControlValue", req.DilutionControlValue);
+        if (remark is null) config.Remove("adjustmentRemark");
+        else config["adjustmentRemark"] = remark;
+        item.ChemicalAnalysisConfigJson = config.ToJsonString();
+        item.UpdatedAt = DateTime.UtcNow;
+        item.UpdatedBy = User?.Identity?.Name;
+
+        await db.SaveChangesAsync(ct);
+        var versionService = chemicalFormulaVersions ?? new ChemicalAnalysisFormulaVersionService(db);
+        await versionService.RecordChangeAsync(id, previous, item.ChemicalAnalysisConfigJson,
+            User?.Identity?.Name, "藥液調整參數維護", ct);
+        var processName = await db.Processes.Where(x => x.Id == item.ProcessId).Select(x => x.ProcessName).FirstOrDefaultAsync(ct);
+        var tankName = item.TankId.HasValue
+            ? await db.Tanks.Where(x => x.Id == item.TankId.Value).Select(x => x.TankName).FirstOrDefaultAsync(ct)
+            : null;
+        var characteristicName = await db.QualityCharacteristics.Where(x => x.Id == item.CharacteristicId)
+            .Select(x => x.CharacteristicName).FirstOrDefaultAsync(ct);
+        return Ok(new
+        {
+            item.Id,
+            item.ChemicalAnalysisConfigJson,
+            ProcessName = processName,
+            TankName = tankName,
+            CharacteristicName = characteristicName,
+            AdjustmentChanges = new
+            {
+                AdditionControlValue = new
+                {
+                    Previous = previousAddition,
+                    Current = req.AdditionControlValue,
+                    Changed = previousAddition != req.AdditionControlValue
+                },
+                DilutionControlValue = new
+                {
+                    Previous = previousDilution,
+                    Current = req.DilutionControlValue,
+                    Changed = previousDilution != req.DilutionControlValue
+                }
+            }
+        });
+    }
+
+    private static void SetDecimal(JsonObject config, string name, decimal? value)
+    {
+        if (value.HasValue) config[name] = value.Value;
+        else config.Remove(name);
+    }
+
+    private static decimal? GetDecimal(JsonObject config, string name)
+    {
+        if (!config.TryGetPropertyValue(name, out var node) || node is null) return null;
+        return node is JsonValue jsonValue && jsonValue.TryGetValue<decimal>(out var value) ? value : null;
     }
 
     [HttpGet("{id:int}/rules")]
@@ -1030,6 +1116,13 @@ public class PartProcessCharacteristicsController(
     public sealed record ItemRulesResponse(int PartProcessCharacteristicId, int? RuleGroupId, List<ItemRuleOption> Rules);
     public sealed record ItemRulesUpdateRequest(List<string>? SelectedRuleCodes);
 }
+
+public sealed record ChemicalAdjustmentParametersRequest(
+    string? ChemicalName,
+    decimal? TankCapacityLiters,
+    decimal? AdditionControlValue,
+    decimal? DilutionControlValue,
+    string? AdjustmentRemark);
 
 [ApiController]
 [Route("api/control-chart-groups")]

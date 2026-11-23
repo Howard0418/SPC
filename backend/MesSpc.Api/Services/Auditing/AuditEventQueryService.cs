@@ -21,7 +21,7 @@ public sealed record AuditEventListItem(long Id, Guid EventId, DateTime Occurred
 
 public sealed record AuditEventSafeSummary(string[] ChangedFields, string[] PermissionCodes,
     string? PreviousStatus, string? NewStatus, long? RecordCount, long? SucceededCount,
-    long? SkippedCount, long? FailedCount, long? Revision, long? VersionId);
+    long? SkippedCount, long? FailedCount, long? Revision, long? VersionId, string? ActionKey);
 
 public sealed record AuditEventPage(IReadOnlyList<AuditEventListItem> Items, string? NextCursor,
     DateTime FromUtc, DateTime ToUtc, int PageSize);
@@ -125,9 +125,10 @@ public sealed class AuditEventQueryService(AppDbContext db, TimeProvider clock)
             string? Text(string name) => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString()!.Length <= 64 ? value.GetString() : null;
             long? Number(string name) => root.TryGetProperty(name, out var value) && value.TryGetInt64(out var number) && number >= 0 ? number : null;
             var result = new AuditEventSafeSummary(Strings("ChangedFields"), Strings("PermissionCodes"), Text("PreviousStatus"), Text("NewStatus"),
-                Number("RecordCount"), Number("SucceededCount"), Number("SkippedCount"), Number("FailedCount"), Number("Revision"), Number("VersionId"));
+                Number("RecordCount"), Number("SucceededCount"), Number("SkippedCount"), Number("FailedCount"), Number("Revision"), Number("VersionId"), Text("ActionKey"));
             return result.ChangedFields.Length == 0 && result.PermissionCodes.Length == 0 && result.PreviousStatus is null && result.NewStatus is null
-                && result.RecordCount is null && result.SucceededCount is null && result.SkippedCount is null && result.FailedCount is null && result.Revision is null && result.VersionId is null ? null : result;
+                && result.RecordCount is null && result.SucceededCount is null && result.SkippedCount is null && result.FailedCount is null && result.Revision is null && result.VersionId is null
+                && result.ActionKey is null ? null : result;
         }
         catch (JsonException) { return null; }
     }
@@ -140,6 +141,7 @@ public sealed class AuditEventQueryService(AppDbContext db, TimeProvider clock)
         if (value.PermissionCodes.Length > 0) parts.Add("權限設為：" + string.Join("、", value.PermissionCodes));
         if (value.PreviousStatus is not null || value.NewStatus is not null) parts.Add($"狀態：{value.PreviousStatus ?? "-"} → {value.NewStatus ?? "-"}");
         if (value.RecordCount is not null) parts.Add("筆數：" + value.RecordCount);
+        if (value.ActionKey is not null) parts.Add("操作：" + value.ActionKey);
         return string.Join("；", parts);
     }
 

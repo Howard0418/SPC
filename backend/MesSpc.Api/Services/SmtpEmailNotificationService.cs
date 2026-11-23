@@ -10,7 +10,7 @@ public class SmtpEmailNotificationService(IConfiguration config, ILogger<SmtpEma
 {
     public async Task<bool> SendAlertEmailAsync(AlertEvent alert, string recipientEmail, string recipientName, SmtpSettingsOverride? overrideSettings = null, string? uiLocale = null)
     {
-        var content = SpcMailContent.Alert(alert, recipientName, uiLocale);
+        var content = SpcMailContent.Alert(alert, recipientName, uiLocale, config["AppEnvironment"]);
         return await SendEmailInternalAsync(recipientEmail, recipientName, content.Subject, content.HtmlBody, overrideSettings, uiLocale, content.LegacyFileSubject);
     }
 

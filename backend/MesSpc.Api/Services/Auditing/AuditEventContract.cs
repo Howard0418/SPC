@@ -56,6 +56,7 @@ internal static partial class AuditEventContract
         Add("Authentication", "auth.sso.exchange auth.logout.request auth.local_login.request");
         Add("Security", "security.access.check security.operator.create security.operator.update security.operator.change_status security.operator.change_role security.operator.change_permissions security.setting.prepare security.setting.change");
         Add("Navigation", "navigation.page.enter");
+        Add("Interaction", "interaction.business_action");
         Add("Read", "read.query.execute read.filter.apply read.export.generate read.download.authorize");
         Add("Measurement", "measurement.record.create measurement.record.update measurement.record.delete measurement.record.recheck measurement.batch.exclude");
         Add("Import", "import.batch.preview import.batch.confirm import.batch.delete");
@@ -80,6 +81,7 @@ internal static partial class AuditEventContract
             "Authentication" => "FlowVersion ProvisioningResult LegacyAssertion",
             "Security" => "ChangedFields PermissionCodes PreviousStatus NewStatus",
             "Navigation" => "NavigationKind PreviousPageKey",
+            "Interaction" => "ActionKey",
             "Read" when draft.EventCode is "read.export.generate" or "read.download.authorize" => "ExportFormat ResultCount DateFromUtc DateToUtc",
             "Read" => "FilterFields DateFromUtc DateToUtc ResultCount",
             "Measurement" => "ChangedFields Revision Recheck RecordCount",
@@ -125,6 +127,7 @@ internal static partial class AuditEventContract
                         "ProvisioningResult" => new[] { "Existing", "Created", "Denied", "Failed", "NotRequired" }.Contains(text),
                         "FlowVersion" => text is "1" or "2" or "v1" or "v2",
                         "SourceType" => new[] { "Excel", "Csv", "TransFiles", "Portal", "Api" }.Contains(text),
+                        "ActionKey" => BusinessActions.ContainsKey(text),
                         _ => false
                     };
                     Require(permitted); values[key] = text; break;
@@ -136,4 +139,25 @@ internal static partial class AuditEventContract
         Require(Encoding.UTF8.GetByteCount(json) <= 4096);
         return json;
     }
+
+    internal static readonly IReadOnlyDictionary<string, IReadOnlySet<string>> BusinessActions =
+        new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal)
+        {
+            ["record.save"] = new HashSet<string>(["master.parts", "master.processes", "master.characteristics", "master.ppc", "spc.control_chart.groups", "spc.rule.groups", "measurement.entry", "traceability.master"], StringComparer.Ordinal),
+            ["record.delete"] = new HashSet<string>(["master.parts", "master.processes", "master.characteristics", "master.ppc", "spc.control_chart.groups", "spc.rule.groups", "measurement.entry", "traceability.master"], StringComparer.Ordinal),
+            ["import.preview"] = new HashSet<string>(["data.upload"], StringComparer.Ordinal),
+            ["import.confirm"] = new HashSet<string>(["data.upload", "data.upload.preview"], StringComparer.Ordinal),
+            ["import.delete"] = new HashSet<string>(["data.upload", "data.upload.preview"], StringComparer.Ordinal),
+            ["formula.save"] = new HashSet<string>(["chemical.analysis.overview", "master.ppc"], StringComparer.Ordinal),
+            ["formula.restore"] = new HashSet<string>(["chemical.analysis.overview", "master.ppc"], StringComparer.Ordinal),
+            ["ftable.apply"] = new HashSet<string>(["chemical.ftable"], StringComparer.Ordinal),
+            ["ftable.restore"] = new HashSet<string>(["chemical.ftable"], StringComparer.Ordinal),
+            ["operator.save"] = new HashSet<string>(["admin.operators"], StringComparer.Ordinal),
+            ["operator.delete"] = new HashSet<string>(["admin.operators"], StringComparer.Ordinal),
+            ["alert.acknowledge"] = new HashSet<string>(["alert.overview", "alert.workflow"], StringComparer.Ordinal),
+            ["alert.disposition.save"] = new HashSet<string>(["alert.overview", "alert.workflow"], StringComparer.Ordinal),
+            ["settings.save"] = new HashSet<string>(["settings.smtp", "settings.spc_reports"], StringComparer.Ordinal),
+            ["notification.test"] = new HashSet<string>(["settings.smtp"], StringComparer.Ordinal),
+            ["report.send"] = new HashSet<string>(["settings.spc_reports"], StringComparer.Ordinal)
+        };
 }

@@ -29,24 +29,22 @@ const departments = ref([]);
 const successMsg = ref("");
 const errorMsg = ref("");
 const testResult = ref(null);
+const recipientSelection = ref(null);
+const recipientColumns = ['outOfSpec', 'outOfControl', 'adjustmentFormula', 'concentrationFormula'];
 
 const filteredOperators = computed(() => operators.value.filter(user =>
   !form.value.recipientDepartment || user.department === form.value.recipientDepartment));
-const selectedRecipientCount = computed(() => form.value.recipientOperatorIds.length);
 
-function toggleRecipient(id) {
-  const ids = new Set(form.value.recipientOperatorIds);
-  if (ids.has(id)) ids.delete(id);
-  else ids.add(id);
-  form.value.recipientOperatorIds = Array.from(ids);
+function validRecipient(user) {
+  return /^[^\s@<>]+@[^\s@<>]+$/.test(user.email?.trim() || '');
 }
 
-function selectAllRecipients() {
-  form.value.recipientOperatorIds = filteredOperators.value.map(x => x.id);
-}
-
-function clearRecipients() {
-  form.value.recipientOperatorIds = [];
+function setVisibleRecipients(column, checked) {
+  const visible = new Set(filteredOperators.value.map(user => user.id));
+  const retained = recipientSelection.value[column].filter(id => !visible.has(id));
+  recipientSelection.value[column] = checked
+    ? [...retained, ...filteredOperators.value.filter(validRecipient).map(user => user.id)]
+    : retained;
 }
 
 function buildTestSettings() {
@@ -67,6 +65,10 @@ async function loadSettings() {
   try {
     const res = await api.get("/settings/smtp");
     form.value = { ...res.data.smtp, password: "", recipientOperatorIds: res.data.recipientOperatorIds || [], recipientDepartment: "" };
+    recipientSelection.value = res.data.recipientSelection || {
+      outOfSpec: [...form.value.recipientOperatorIds], outOfControl: [...form.value.recipientOperatorIds],
+      adjustmentFormula: [], concentrationFormula: []
+    };
     operators.value = res.data.operators || [];
     departments.value = res.data.departments || [];
     if (form.value.defaultRecipientEmail) {
@@ -103,7 +105,8 @@ async function saveSettings() {
       enableSsl: form.value.enableSsl,
       saveToLocalDisk: form.value.saveToLocalDisk,
       localDiskFolder: form.value.localDiskFolder,
-      recipientOperatorIds: form.value.recipientOperatorIds
+      recipientOperatorIds: form.value.recipientOperatorIds,
+      recipientSelection: recipientSelection.value
     };
     const res = await api.post("/settings/smtp", payload);
     successMsg.value = getApiMessageDisplay(res.data, res.data?.message) || {key:'spc.settings.smtpSaved'};
@@ -224,22 +227,41 @@ onMounted(() => {
             <div class="flex items-center justify-between gap-3">
               <div>
                 <h3 class="text-sm font-bold text-slate-800 dark:text-white">{{ t('spc.settings.alertRecipients') }}</h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ t('spc.settings.selectedPrefix') }} {{ selectedRecipientCount }} {{ t('spc.settings.recipientFallback') }}</p>
-              </div>
-              <div class="flex gap-2">
-                <button type="button" data-testid="settings-selectAllRecipients" @click="selectAllRecipients" class="text-xs font-bold text-indigo-600 dark:text-indigo-300">{{ t('spc.settings.selectAll') }}</button>
-                <button type="button" data-testid="settings-clearRecipients" @click="clearRecipients" class="text-xs font-bold text-slate-500">{{ t('spc.settings.clear') }}</button>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ t('spc.settings.recipientType.fallback') }}</p>
               </div>
             </div>
             <select data-testid="settings-form.recipientDepartment" v-model="form.recipientDepartment" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm">
               <option value="">{{ t('spc.settings.allDepartments') }}</option>
               <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
             </select>
-            <div class="max-h-48 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <label v-for="user in filteredOperators" :key="user.id" class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white dark:hover:bg-slate-800 text-xs cursor-pointer">
-                <input type="checkbox" :checked="form.recipientOperatorIds.includes(user.id)" @change="toggleRecipient(user.id)" class="w-4 h-4 accent-indigo-600" />
-                <span class="truncate text-slate-700 dark:text-slate-200">{{ user.operatorName }} ({{ user.operatorCode }})</span>
-              </label>
+            <div v-if="recipientSelection" class="max-h-72 overflow-auto">
+              <table class="w-full text-left text-xs">
+                <thead><tr>
+                  <th scope="col" class="p-2">{{ t('spc.settings.alertRecipients') }}</th>
+                  <th v-for="column in recipientColumns" :key="column" scope="col" class="p-2 text-center">
+                    {{ t(`spc.settings.recipientType.${column}`) }} ({{ recipientSelection[column].length }})
+                    <span class="flex justify-center gap-2 whitespace-nowrap font-normal">
+                      <button type="button" class="text-indigo-600 dark:text-indigo-300" @click="setVisibleRecipients(column, true)">{{ t('spc.settings.selectAll') }}</button>
+                      <button type="button" class="text-slate-600 dark:text-slate-300" @click="setVisibleRecipients(column, false)">{{ t('spc.settings.clear') }}</button>
+                    </span>
+                  </th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="user in filteredOperators" :key="user.id">
+                    <th scope="row" class="p-2 font-medium">
+                      {{ user.operatorName }} ({{ user.operatorCode }})
+                      <span class="block text-slate-500">{{ user.department }} {{ user.email }}</span>
+                      <span v-if="!validRecipient(user)" class="block text-rose-600">{{ t('spc.settings.recipientType.invalidEmail') }}</span>
+                    </th>
+                    <td v-for="column in recipientColumns" :key="column" class="p-2 text-center">
+                      <input v-model="recipientSelection[column]" type="checkbox" :value="user.id"
+                        :disabled="!validRecipient(user) && !recipientSelection[column].includes(user.id)"
+                        :aria-label="`${user.operatorName} ${t(`spc.settings.recipientType.${column}`)}`"
+                        class="h-4 w-4 accent-indigo-600" />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
             <p v-if="filteredOperators.length === 0" class="text-xs text-slate-500">{{ t('spc.settings.noActiveEmails') }}</p>
           </div>

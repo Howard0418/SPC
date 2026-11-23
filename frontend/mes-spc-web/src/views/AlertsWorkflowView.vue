@@ -5,7 +5,8 @@ import { useI18n } from "vue-i18n";
 import { displayUiMessage } from "../i18n/uiMessage";
 import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
-import { onMounted, ref, computed } from "vue";
+import { ref, computed, nextTick, watch } from "vue";
+import { useRoute } from "vue-router";
 import { api, getApiErrorDisplay } from "../api/client";
 import { 
   ShieldAlert, 
@@ -23,10 +24,13 @@ import {
 } from "lucide-vue-next";
 
 const { t, locale } = useI18n({ useScope: "global" });
+const route = useRoute();
 const rows = ref([]);
 const loading = ref(false);
 const err = ref("");
 const successMsg = ref("");
+const linkedAlert = computed(() => route.query.alertId !== undefined);
+const focusedAlertId = ref(null);
 
 // Filter state
 const statusFilter = ref("Open"); // "Open", "InProgress", "Closed", "All"
@@ -53,9 +57,37 @@ function normalizeStatus(row) {
 async function load() {
   err.value = "";
   loading.value = true;
+  focusedAlertId.value = null;
   try {
     const { data } = await api.get("/v1/alerts");
     rows.value = data || [];
+
+    if (linkedAlert.value) {
+      const id = route.query.alertId;
+      if (typeof id !== "string" || !/^[1-9]\d{0,9}$/.test(id) || Number(id) > 2147483647) {
+        err.value = { key: "spc.alerts.linkedAlertMissing" };
+        return;
+      }
+
+      try {
+        const { data: target } = await api.get(`/v1/alerts/${id}`);
+        if (route.query.alertId !== id) return;
+
+        const targetId = Number(id);
+        const existingIndex = rows.value.findIndex(row => row.id === targetId);
+        if (existingIndex >= 0) rows.value.splice(existingIndex, 1, target);
+        else rows.value.push(target);
+
+        searchQuery.value = "";
+        statusFilter.value = normalizeStatus(target);
+        focusedAlertId.value = targetId;
+        await nextTick();
+        document.getElementById(`alert-row-${targetId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (e) {
+        err.value = e.response?.status === 404
+          ? { key: "spc.alerts.linkedAlertMissing" } : getApiErrorDisplay(e);
+      }
+    }
   } catch (e) {
     err.value = getApiErrorDisplay(e);
   } finally {
@@ -136,7 +168,11 @@ async function submitWorkflow() {
   }
 }
 
-onMounted(load);
+watch(() => route.query.alertId, () => {
+  showModal.value = false;
+  currentAlert.value = null;
+  load();
+}, { immediate: true });
 </script>
 
 <template>
@@ -204,6 +240,7 @@ onMounted(load);
       <!-- Status Badges / Filters -->
       <div class="flex items-center gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
         <button
+          data-testid="alerts-all-filter"
           @click="statusFilter = 'All'"
           :class="statusFilter === 'All' ? 'bg-slate-800 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
           class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap"
@@ -273,7 +310,11 @@ onMounted(load);
             <tr
               v-for="r in filteredRows"
               :key="r.id"
-              class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+              :id="`alert-row-${r.id}`"
+              :data-testid="`alert-row-${r.id}`"
+              :aria-current="focusedAlertId === r.id ? 'true' : undefined"
+              :class="focusedAlertId === r.id ? 'bg-sky-50 ring-2 ring-inset ring-sky-400 dark:bg-sky-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'"
+              class="transition-colors scroll-mt-6"
             >
               <!-- ID & Time -->
               <td class="py-4 px-5">

@@ -69,6 +69,8 @@ public sealed class ChemicalAnalysisFormulaVersionsController(
                 req.Reason,
                 ct);
 
+            ChemicalFormulaNotice.AfterResponse(ControllerContext.HttpContext, result.Version?.Id);
+
             return Ok(new
             {
                 restored = result.Restored,

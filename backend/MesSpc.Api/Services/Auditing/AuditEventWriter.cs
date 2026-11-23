@@ -86,8 +86,10 @@ public sealed class AuditEventWriter(AppDbContext db, DbContextOptions<AppDbCont
         AuditEventContract.Require(draft.PageKey is null || AuditEventContract.Pages.ContainsKey(draft.PageKey));
         if (category == "Navigation")
             AuditEventContract.Require(draft.PageKey is not null && draft.Outcome == "Succeeded" && actor.Type == "User");
+        if (category == "Interaction")
+            AuditEventContract.Require(draft.PageKey is not null && (draft.Outcome is "Succeeded" or "Failed") && actor.Type == "User");
         if (draft.ClientEventId is not null)
-            AuditEventContract.Require(draft.ClientEventId != Guid.Empty && category == "Navigation" && actor.OperatorId > 0 && actor.SessionIdHash is not null);
+            AuditEventContract.Require(draft.ClientEventId != Guid.Empty && (category is "Navigation" or "Interaction") && actor.OperatorId > 0 && actor.SessionIdHash is not null);
         var now = clock.GetUtcNow().UtcDateTime;
         var entry = new AuditEvent
         {
@@ -98,7 +100,7 @@ public sealed class AuditEventWriter(AppDbContext db, DbContextOptions<AppDbCont
             CorrelationId = draft.CorrelationId, TraceId = draft.TraceId, PageKey = draft.PageKey,
             RouteTemplate = draft.PageKey is null ? null : AuditEventContract.Pages[draft.PageKey],
             TargetType = draft.TargetType, TargetId = draft.TargetId, HttpMethod = draft.HttpMethod, HttpStatus = draft.HttpStatus,
-            Source = category == "Navigation" ? "WebRouter" : actor.Type == "Service" ? "BackgroundJob" : draft.EventCode == "auth.sso.exchange" ? "PortalSso" : "Api",
+            Source = category is "Navigation" or "Interaction" ? "WebRouter" : actor.Type == "Service" ? "BackgroundJob" : draft.EventCode == "auth.sso.exchange" ? "PortalSso" : "Api",
             DetailsJson = AuditEventContract.SerializeDetails(category, draft)
         };
         if (actor.Type == "User")

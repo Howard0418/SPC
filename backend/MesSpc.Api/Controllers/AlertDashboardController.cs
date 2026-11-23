@@ -3,6 +3,8 @@ using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Domain.Enums;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
+using MesSpc.Api.Services.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +25,27 @@ public class AlertsController(AppDbContext db, IEmailNotificationService emailSe
         if (to.HasValue) query = query.Where(x => x.OccurredAt <= to.Value);
         var alerts = await query.OrderByDescending(x => x.OccurredAt).Take(500).ToListAsync();
         return Ok(await AlertDtoMapper.EnrichAlertsAsync(db, alerts));
+    }
+
+    [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin," + UserRoles.Editor)]
+    public async Task<IActionResult> GetById(int id, CancellationToken ct)
+    {
+        var alert = await db.AlertEvents.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (alert is null) return NotFound();
+
+        var variable = alert.VariableMeasurementId is long variableId
+            ? await db.VariableMeasurements.Where(x => x.Id == variableId)
+                .Select(x => new { x.PartProcessCharacteristicId, x.MeasuredAt }).SingleOrDefaultAsync(ct)
+            : null;
+        var attribute = alert.AttributeMeasurementId is long attributeId
+            ? await db.AttributeMeasurements.Where(x => x.Id == attributeId)
+                .Select(x => new { x.PartProcessCharacteristicId, x.MeasuredAt }).SingleOrDefaultAsync(ct)
+            : null;
+        var measurement = variable ?? attribute;
+        var chartDate = DateOnly.FromDateTime((measurement?.MeasuredAt ?? alert.OccurredAt).AddHours(8));
+        var enriched = await AlertDtoMapper.EnrichAlertsAsync(db, [alert], measurement?.PartProcessCharacteristicId, chartDate);
+        return Ok(enriched[0]);
     }
 
     [HttpPost("{id:int}/ack")]
@@ -247,7 +270,7 @@ public class DashboardController(AppDbContext db) : ControllerBase
 
 internal static class AlertDtoMapper
 {
-    public static async Task<List<object>> EnrichAlertsAsync(AppDbContext db, List<AlertEvent> alerts)
+    public static async Task<List<object>> EnrichAlertsAsync(AppDbContext db, List<AlertEvent> alerts, int? exactPpcId = null, DateOnly? chartDate = null)
     {
         var keys = alerts
             .Select(x => new { x.PartId, x.ProcessId, x.CharacteristicId })
@@ -263,15 +286,17 @@ internal static class AlertDtoMapper
             .Include(x => x.Part)
             .Include(x => x.Process)
             .Include(x => x.Characteristic)
-            .Where(x => processIds.Contains(x.ProcessId) && characteristicIds.Contains(x.CharacteristicId))
+            .Where(x => x.Id == exactPpcId || (processIds.Contains(x.ProcessId) && characteristicIds.Contains(x.CharacteristicId)))
             .ToListAsync();
 
         return alerts.Select(a =>
         {
-            var ppc = ppcs.FirstOrDefault(x =>
+            var matches = ppcs.Where(x =>
                 (x.PartId ?? 0) == a.PartId &&
                 x.ProcessId == a.ProcessId &&
                 x.CharacteristicId == a.CharacteristicId);
+            var ppc = exactPpcId.HasValue ? ppcs.FirstOrDefault(x => x.Id == exactPpcId)
+                : chartDate.HasValue && matches.Skip(1).Any() ? null : matches.FirstOrDefault();
 
             return new
             {
@@ -281,6 +306,7 @@ internal static class AlertDtoMapper
                 a.ProcessId,
                 a.CharacteristicId,
                 PpcId = ppc?.Id,
+                ChartDate = chartDate,
                 PartNo = ppc?.Part?.PartNo,
                 PartName = ppc?.Part?.PartName,
                 ProcessCode = ppc?.Process?.ProcessCode,

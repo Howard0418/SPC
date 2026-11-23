@@ -37,9 +37,35 @@ const formulaKeys = [
   "adjustmentAmountFormula",
   "decimalPlaces"
 ];
+const adjustmentParameters = [
+  { key: "tankCapacityLiters", variable: "TANK_CAPACITY_LITERS", labelKey: "spc.chemicalOverview.tankCapacityLiters", exportLabel: "槽容(L)" },
+  { key: "additionControlValue", variable: "ADDITION_CONTROL_VALUE", labelKey: "spc.chemicalOverview.additionControlValue", exportLabel: "添加管制值" },
+  { key: "dilutionControlValue", variable: "DILUTION_CONTROL_VALUE", labelKey: "spc.chemicalOverview.dilutionControlValue", exportLabel: "稀釋管制值" }
+];
 
 function configOf(item) {
   try { return JSON.parse(item.chemicalAnalysisConfigJson || "{}"); } catch { return {}; }
+}
+function configValue(config, key) {
+  const actualKey = Object.keys(config).find(candidate => candidate.toLowerCase() === key.toLowerCase());
+  const value = actualKey ? config[actualKey] : null;
+  return value === "" || value == null ? null : value;
+}
+function referencesVariable(formulas, variable) {
+  const escaped = variable.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^A-Z0-9_])${escaped}([^A-Z0-9_]|$)`, "i").test(formulas);
+}
+function missingAdjustmentParameters(config, draft) {
+  const formulas = [draft.concentrationFormula, draft.adjustmentFormula, draft.adjustmentAmountFormula].join("\n");
+  return adjustmentParameters.filter(parameter => referencesVariable(formulas, parameter.variable) && configValue(config, parameter.key) == null);
+}
+function displayParameter(value) { return value == null ? "—" : String(value); }
+function exportConfiguration(row) {
+  const warnings = [];
+  if (row.formulaMissing) warnings.push("缺濃度公式");
+  if (row.limitsMissing) warnings.push("缺規格");
+  warnings.push(...row.missingParameters.map(parameter => `${parameter.exportLabel}未設定`));
+  return warnings.join("；") || "完整";
 }
 function draftOfConfig(config) {
   return {
@@ -70,6 +96,8 @@ function rowOf(item) {
   const normalizedDraft = normalizeDraft(draft);
   const formulaMissing = !config.enabled || !normalizedDraft.concentrationFormula;
   const limitsMissing = item.lsl == null && item.usl == null && item.targetValue == null;
+  const parameters = Object.fromEntries(adjustmentParameters.map(parameter => [parameter.key, configValue(config, parameter.key)]));
+  const missingParameters = missingAdjustmentParameters(config, normalizedDraft);
   return {
     id: item.id,
     raw: item,
@@ -85,17 +113,36 @@ function rowOf(item) {
     formula: normalizedDraft.concentrationFormula,
     adjustmentFormula: normalizedDraft.adjustmentFormula,
     adjustmentAmountFormula: normalizedDraft.adjustmentAmountFormula,
+    ...parameters,
+    missingParameters,
     decimalPlaces: normalizedDraft.decimalPlaces,
     dirty: hasDraftChange(item),
     saveResult: saveResults.value[item.id] || null,
-    issue: formulaMissing || limitsMissing
+    issue: formulaMissing || limitsMissing || missingParameters.length > 0
   };
+}
+function compareChemicalMappings(a, b) {
+  const compareText = (left, right) => String(left ?? "").localeCompare(String(right ?? ""), "zh-TW", { numeric: true });
+  return (a.process?.sequenceNo ?? 0) - (b.process?.sequenceNo ?? 0)
+    || (a.machine?.sequenceNo ?? 0) - (b.machine?.sequenceNo ?? 0)
+    || compareText(a.process?.processName || a.machine?.machineName, b.process?.processName || b.machine?.machineName)
+    || compareText(a.machine?.machineCode || a.process?.processCode, b.machine?.machineCode || b.process?.processCode)
+    || (a.machineId ?? 0) - (b.machineId ?? 0)
+    || (a.tank?.sequenceNo ?? 0) - (b.tank?.sequenceNo ?? 0)
+    || compareText(a.tank?.tankName, b.tank?.tankName)
+    || compareText(a.tank?.tankCode, b.tank?.tankCode)
+    || (a.tankId ?? a.tank?.id ?? 0) - (b.tankId ?? b.tank?.id ?? 0)
+    || (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0)
+    || compareText(a.characteristic?.characteristicName, b.characteristic?.characteristicName)
+    || compareText(a.characteristic?.characteristicCode, b.characteristic?.characteristicCode)
+    || a.id - b.id;
 }
 const chemicalRows = computed(() => items.value
   .filter(x => String(x.controlScope || "").toUpperCase() === "CHEM")
+  .sort(compareChemicalMappings)
   .map(rowOf));
-const lines = computed(() => [...new Set(chemicalRows.value.map(x => x.line))].sort());
-const tanks = computed(() => [...new Set(chemicalRows.value.filter(x => !line.value || x.line === line.value).map(x => x.tank))].sort());
+const lines = computed(() => [...new Set(chemicalRows.value.map(x => x.line))]);
+const tanks = computed(() => [...new Set(chemicalRows.value.filter(x => !line.value || x.line === line.value).map(x => x.tank))]);
 const filtered = computed(() => chemicalRows.value.filter(x =>
   (!line.value || x.line === line.value) && (!tank.value || x.tank === tank.value) &&
   (status.value === "all" || status.value === "enabled" && x.enabled || status.value === "issues" && x.issue || status.value === "secondary" && !!x.secondary)
@@ -213,7 +260,7 @@ async function saveChanges() {
   saving.value = false;
 }
 function exportExcel() {
-  const rows = filtered.value.map(x => ({ 線別: x.line, 槽體: x.tank, 槽體代碼: x.tankCode, 分析項目: x.chemical, 狀態: x.enabled ? "啟用" : "停用", 滴定值2: x.secondary || "無", 濃度公式: x.formula || "未設定", 調整公式: x.adjustmentFormula || "", 調整量公式: x.adjustmentAmountFormula || "", 小數位: x.decimalPlaces, 是否變更: x.dirty ? "已變更" : "未變更", 設定警示: x.formulaMissing ? "缺濃度公式" : x.limitsMissing ? "缺規格" : "完整" }));
+  const rows = filtered.value.map(x => ({ 線別: x.line, 槽體: x.tank, 槽體代碼: x.tankCode, 分析項目: x.chemical, 狀態: x.enabled ? "啟用" : "停用", 滴定值2: x.secondary || "無", "槽容(L)": x.tankCapacityLiters ?? "", 添加管制值: x.additionControlValue ?? "", 稀釋管制值: x.dilutionControlValue ?? "", 濃度公式: x.formula || "未設定", 調整公式: x.adjustmentFormula || "", 調整量公式: x.adjustmentAmountFormula || "", 小數位: x.decimalPlaces, 是否變更: x.dirty ? "已變更" : "未變更", 設定警示: exportConfiguration(x) }));
   const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(rows), "藥液分析項目");
   XLSX.writeFile(book, `SPC_藥液分析項目總覽_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
@@ -230,7 +277,37 @@ onMounted(load);
     <div v-if="message" class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{{ messageText(message) }}</div>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4"><button v-for="item in summaries" :key="item.line" @click="showLine(item.line)" class="rounded-2xl border bg-white p-4 text-left shadow-sm hover:border-emerald-400 dark:bg-slate-800 dark:border-slate-700"><div class="flex justify-between"><strong>{{ item.line }}</strong><span class="text-xs text-slate-500">{{ t('spc.chemicalOverview.tankCount', { count: item.tanks }) }}</span></div><div class="mt-3 text-3xl font-black text-emerald-600">{{ item.enabled }}<span class="ml-1 text-sm text-slate-500">{{ t('spc.chemicalOverview.enabledItems') }}</span></div><div class="mt-2 text-xs text-slate-500">{{ t('spc.chemicalOverview.titrationLabel') }}{{ item.secondary }}　{{ t('spc.chemicalOverview.disabledLabel') }}{{ item.disabled }}　<span :class="item.issues ? 'text-amber-600 font-bold' : ''">{{ t('spc.chemicalOverview.issuesLabel') }}{{ item.issues }}</span></div></button></div>
     <div class="rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-800 dark:border-slate-700"><div class="grid gap-3 md:grid-cols-5"><select data-testid="overview-line" v-model="line" @change="tank=''; resetPage()" class="field"><option value="">{{ t('spc.chemicalOverview.allLines') }}</option><option v-for="value in lines" :key="value">{{ value }}</option></select><select data-testid="overview-tank" v-model="tank" @change="resetPage" class="field"><option value="">{{ t('spc.chemicalOverview.allTanks') }}</option><option v-for="value in tanks" :key="value">{{ value }}</option></select><select data-testid="overview-status" v-model="status" @change="resetPage" class="field"><option value="all">{{ t('spc.chemicalOverview.allStatuses') }}</option><option value="enabled">{{ t('spc.chemicalOverview.onlyEnabled') }}</option><option value="secondary">{{ t('spc.chemicalOverview.onlySecondary') }}</option><option value="issues">{{ t('spc.chemicalOverview.onlyIssues') }}</option></select><select data-testid="overview-pageSize" v-model.number="pageSize" @change="resetPage" class="field"><option :value="5">{{ t('spc.chemicalOverview.pageSize', { count: 5 }) }}</option><option :value="10">{{ t('spc.chemicalOverview.pageSize', { count: 10 }) }}</option><option :value="20">{{ t('spc.chemicalOverview.pageSize', { count: 20 }) }}</option></select><div class="flex items-center text-sm text-slate-500"><Search class="mr-2 w-4 h-4" />{{ t('spc.chemicalOverview.itemCount', { count: filtered.length }) }}</div></div><div class="mt-3"><label class="text-sm font-bold">{{ t('spc.chemicalOverview.reasonField') }}<input :aria-label="t('spc.chemicalOverview.reasonLabel')" :disabled="saving" data-testid="overview-formulaVersionReason" v-model="formulaVersionReason" class="field w-full" maxlength="500" :placeholder="t('spc.chemicalOverview.reasonExample')" /></label></div></div>
-    <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700"><table class="min-w-[1260px] text-sm"><thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900"><tr><th>{{ t('spc.chemicalOverview.line') }}</th><th>{{ t('spc.chemicalOverview.tank') }}</th><th>{{ t('spc.chemicalOverview.item') }}</th><th>{{ t('common.columns.status') }}</th><th>{{ t('spc.chemicalOverview.concentration') }}</th><th>{{ t('spc.chemicalOverview.adjustment') }}</th><th>{{ t('spc.chemicalOverview.adjustmentAmount') }}</th><th>{{ t('spc.chemicalOverview.decimals') }}</th><th>{{ t('spc.chemicalOverview.configuration') }}</th><th>{{ t('spc.chemicalOverview.saveResult') }}</th><th></th></tr></thead><tbody><tr v-for="item in pagedRows" :key="item.id" :data-testid="`overview-row-${item.id}`" class="border-t dark:border-slate-700" :class="item.saveResult?.status === 'failed' ? 'bg-red-50/70 dark:bg-red-950/20' : item.dirty ? 'bg-amber-50/70 dark:bg-amber-950/20' : ''"><td>{{ item.line }}</td><td><div>{{ item.tank }}</div><small class="text-slate-400">{{ item.tankCode }}</small></td><td class="font-bold"><div data-testid="overview-characteristic-name">{{ item.chemical }}</div><small v-if="item.secondary" class="text-slate-400">{{ t('spc.chemicalOverview.titrationLabel') }}{{ item.secondary }}</small></td><td><span :class="item.enabled ? 'badge-green' : 'badge-gray'">{{ item.enabled ? t('common.status.on') : t('common.status.off') }}</span><span v-if="item.dirty" class="ml-2 badge-amber">{{ t('spc.chemicalOverview.changed') }}</span></td><td><textarea v-if="isEditing(item)" data-testid="overview-concentrationFormula" v-model="item.draft.concentrationFormula" rows="5" class="formula-field" :placeholder="t('spc.chemicalOverview.concentration')"></textarea><pre v-else class="formula-preview">{{ item.formula || t('spc.chemicalOverview.notSet') }}</pre></td><td><textarea v-if="isEditing(item)" data-testid="overview-adjustmentFormula" v-model="item.draft.adjustmentFormula" rows="5" class="formula-field" :placeholder="t('spc.chemicalOverview.adjustment')"></textarea><pre v-else class="formula-preview">{{ item.adjustmentFormula || t('spc.chemicalOverview.notSet') }}</pre></td><td><textarea v-if="isEditing(item)" data-testid="overview-adjustmentAmountFormula" v-model="item.draft.adjustmentAmountFormula" rows="5" class="formula-field" :placeholder="t('spc.chemicalOverview.adjustmentAmount')"></textarea><pre v-else class="formula-preview">{{ item.adjustmentAmountFormula || t('spc.chemicalOverview.notSet') }}</pre></td><td><input data-testid="overview-decimalPlaces" v-model.number="item.draft.decimalPlaces" type="number" min="0" max="8" class="field w-20" /></td><td><span :class="item.issue ? 'text-amber-600 font-bold' : 'text-emerald-600'">{{ item.formulaMissing ? t('spc.chemicalOverview.missingFormula') : item.limitsMissing ? t('spc.chemicalOverview.missingLimits') : t('spc.chemicalOverview.complete') }}</span></td><td class="max-w-56"><span v-if="item.saveResult?.status === 'saved'" class="badge-green">{{ t('spc.chemicalOverview.saved') }}</span><span v-else-if="item.saveResult?.status === 'failed'" class="text-xs font-bold text-red-600">{{ displayUiMessage(t, item.saveResult.message) }}</span><span v-else class="text-slate-400">—</span></td><td><div class="flex flex-col gap-2"><button :disabled="saving" data-testid="overview-history" @click="selectedHistory = { id: item.id, title: `${item.line} / ${item.tank} / ${item.chemical}` }" class="text-emerald-700 hover:underline dark:text-emerald-400">{{ t('spc.chemicalOverview.history') }}</button><button :disabled="saving" data-testid="overview-edit" @click="edit(item)" class="text-blue-600 hover:underline"><Settings2 class="inline w-4 h-4" /> {{ isEditing(item) ? t('spc.chemicalOverview.done') : t('spc.chemicalOverview.edit') }}</button><button v-if="item.dirty" data-testid="overview-reset" @click="resetRow(item)" class="text-slate-500 hover:underline">{{ t('spc.chemicalOverview.reset') }}</button></div></td></tr><tr v-if="!loading && !filtered.length"><td colspan="11" class="p-8 text-center text-slate-500">{{ t('spc.chemicalOverview.empty') }}</td></tr></tbody></table></div>
+    <div class="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <table class="min-w-[1600px] text-sm">
+        <thead class="bg-slate-50 text-left text-xs text-slate-500 dark:bg-slate-900">
+          <tr>
+            <th>{{ t('spc.chemicalOverview.line') }}</th><th>{{ t('spc.chemicalOverview.tank') }}</th><th>{{ t('spc.chemicalOverview.item') }}</th><th>{{ t('common.columns.status') }}</th>
+            <th>{{ t('spc.chemicalOverview.tankCapacityLiters') }}</th><th>{{ t('spc.chemicalOverview.additionControlValue') }}</th><th>{{ t('spc.chemicalOverview.dilutionControlValue') }}</th>
+            <th>{{ t('spc.chemicalOverview.concentration') }}</th><th>{{ t('spc.chemicalOverview.adjustment') }}</th><th>{{ t('spc.chemicalOverview.adjustmentAmount') }}</th><th>{{ t('spc.chemicalOverview.decimals') }}</th><th>{{ t('spc.chemicalOverview.configuration') }}</th><th>{{ t('spc.chemicalOverview.saveResult') }}</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in pagedRows" :key="item.id" :data-testid="`overview-row-${item.id}`" class="border-t dark:border-slate-700" :class="item.saveResult?.status === 'failed' ? 'bg-red-50/70 dark:bg-red-950/20' : item.dirty ? 'bg-amber-50/70 dark:bg-amber-950/20' : ''">
+            <td>{{ item.line }}</td><td><div>{{ item.tank }}</div><small class="text-slate-400">{{ item.tankCode }}</small></td><td class="font-bold"><div data-testid="overview-characteristic-name">{{ item.chemical }}</div><small v-if="item.secondary" class="text-slate-400">{{ t('spc.chemicalOverview.titrationLabel') }}{{ item.secondary }}</small></td><td><span :class="item.enabled ? 'badge-green' : 'badge-gray'">{{ item.enabled ? t('common.status.on') : t('common.status.off') }}</span><span v-if="item.dirty" class="ml-2 badge-amber">{{ t('spc.chemicalOverview.changed') }}</span></td>
+            <td><span data-testid="overview-tankCapacityLiters" data-readonly="true" class="font-mono">{{ displayParameter(item.tankCapacityLiters) }}</span></td>
+            <td><span data-testid="overview-additionControlValue" data-readonly="true" class="font-mono">{{ displayParameter(item.additionControlValue) }}</span></td>
+            <td><span data-testid="overview-dilutionControlValue" data-readonly="true" class="font-mono">{{ displayParameter(item.dilutionControlValue) }}</span></td>
+            <td><textarea v-if="isEditing(item)" data-testid="overview-concentrationFormula" v-model="item.draft.concentrationFormula" rows="5" class="formula-field" :placeholder="t('spc.chemicalOverview.concentration')"></textarea><pre v-else class="formula-preview">{{ item.formula || t('spc.chemicalOverview.notSet') }}</pre></td>
+            <td><textarea v-if="isEditing(item)" data-testid="overview-adjustmentFormula" v-model="item.draft.adjustmentFormula" rows="5" class="formula-field" :placeholder="t('spc.chemicalOverview.adjustment')"></textarea><pre v-else class="formula-preview">{{ item.adjustmentFormula || t('spc.chemicalOverview.notSet') }}</pre></td>
+            <td><textarea v-if="isEditing(item)" data-testid="overview-adjustmentAmountFormula" v-model="item.draft.adjustmentAmountFormula" rows="5" class="formula-field" :placeholder="t('spc.chemicalOverview.adjustmentAmount')"></textarea><pre v-else class="formula-preview">{{ item.adjustmentAmountFormula || t('spc.chemicalOverview.notSet') }}</pre></td>
+            <td><input data-testid="overview-decimalPlaces" v-model.number="item.draft.decimalPlaces" type="number" min="0" max="8" class="field w-20" /></td>
+            <td :class="item.issue ? 'text-amber-600 font-bold' : 'text-emerald-600'">
+              <div v-if="item.formulaMissing">{{ t('spc.chemicalOverview.missingFormula') }}</div><div v-if="item.limitsMissing">{{ t('spc.chemicalOverview.missingLimits') }}</div>
+              <div v-for="parameter in item.missingParameters" :key="parameter.key" data-testid="overview-parameterWarning">{{ t('spc.chemicalOverview.missingParameter', { parameter: t(parameter.labelKey) }) }}</div>
+              <div v-if="!item.issue">{{ t('spc.chemicalOverview.complete') }}</div>
+            </td>
+            <td class="max-w-56"><span v-if="item.saveResult?.status === 'saved'" class="badge-green">{{ t('spc.chemicalOverview.saved') }}</span><span v-else-if="item.saveResult?.status === 'failed'" class="text-xs font-bold text-red-600">{{ displayUiMessage(t, item.saveResult.message) }}</span><span v-else class="text-slate-400">—</span></td>
+            <td><div class="flex flex-col gap-2"><button :disabled="saving" data-testid="overview-history" @click="selectedHistory = { id: item.id, title: `${item.line} / ${item.tank} / ${item.chemical}` }" class="text-emerald-700 hover:underline dark:text-emerald-400">{{ t('spc.chemicalOverview.history') }}</button><button :disabled="saving" data-testid="overview-edit" @click="edit(item)" class="text-blue-600 hover:underline"><Settings2 class="inline w-4 h-4" /> {{ isEditing(item) ? t('spc.chemicalOverview.done') : t('spc.chemicalOverview.edit') }}</button><button v-if="item.dirty" data-testid="overview-reset" @click="resetRow(item)" class="text-slate-500 hover:underline">{{ t('spc.chemicalOverview.reset') }}</button></div></td>
+          </tr>
+          <tr v-if="!loading && !filtered.length"><td colspan="14" class="p-8 text-center text-slate-500">{{ t('spc.chemicalOverview.empty') }}</td></tr>
+        </tbody>
+      </table>
+    </div>
     <div v-if="filtered.length" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-3 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"><div>{{ t('spc.chemicalOverview.pagination', { page: safePage, pages: totalPages, from: (safePage - 1) * pageSize + 1, to: Math.min(safePage * pageSize, filtered.length), total: filtered.length }) }}</div><div class="flex gap-2"><button class="btn-outline" :disabled="safePage <= 1" :class="{ 'opacity-50': safePage <= 1 }" data-testid="overview-previous" @click="changePage(safePage - 1)">{{ t('spc.chemicalOverview.previous') }}</button><button class="btn-outline" :disabled="safePage >= totalPages" :class="{ 'opacity-50': safePage >= totalPages }" data-testid="overview-next" @click="changePage(safePage + 1)">{{ t('spc.chemicalOverview.next') }}</button></div></div>
     <div v-if="selectedHistory" class="space-y-2"><button type="button" data-testid="overview-history" @click="selectedHistory = null" class="btn-outline">{{ t('spc.chemicalOverview.closeHistory') }}</button><ChemicalFormulaHistory :key="`${selectedHistory.id}-${historyRevision}`" :ppc-id="selectedHistory.id" :title="historyTitle" /></div>
   </section>
@@ -238,9 +315,7 @@ onMounted(load);
 
 <style scoped>
 @media screen {
-  table { width: 100%; min-width: 960px; }
-  th:nth-child(6), td:nth-child(6),
-  th:nth-child(7), td:nth-child(7) { display: none !important; }
+  table { width: 100%; min-width: max(1600px, 100%); border-collapse: collapse; }
 }
 th,td{padding:.8rem 1rem;vertical-align:top}.field,.formula-field{width:100%;border:1px solid #cbd5e1;border-radius:.65rem;padding:.55rem .7rem;background:transparent}.formula-field,.formula-preview{min-width:16rem;line-height:1.45;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.82rem;white-space:pre-wrap;overflow-wrap:anywhere}.formula-field{min-height:8.5rem;resize:vertical}.formula-preview{margin:0;border:1px solid #e2e8f0;border-radius:.65rem;background:#f8fafc;padding:.65rem .75rem;color:#0f172a}.dark .formula-preview{border-color:#334155;background:#0f172a;color:#e2e8f0}.btn-primary,.btn-outline{display:inline-flex;align-items:center;gap:.4rem;border-radius:.7rem;padding:.55rem .8rem;font-size:.875rem;font-weight:700}.btn-primary{background:#059669;color:white}.btn-outline{border:1px solid #94a3b8}.badge-green,.badge-gray,.badge-amber{border-radius:9999px;padding:.2rem .55rem;font-size:.75rem;font-weight:700;white-space:nowrap}.badge-green{background:#d1fae5;color:#047857}.badge-gray{background:#e2e8f0;color:#475569}.badge-amber{background:#fef3c7;color:#b45309}
 </style>

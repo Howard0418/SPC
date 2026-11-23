@@ -430,6 +430,7 @@
       "particleValidationErrors": "此批次包含驗證錯誤，未完成匯入。",
       "particleDuplicateMeasurement": "此批次包含重複量測，未覆寫既有資料。",
       "mailAlertSubject": "【品質異常警報 {type}】料號/站別 {part}-{process} 數值異常",
+      "mailAlertWorkflowLink": "查看管制圖與填寫異常處置",
       "mailTestSubject": "【MES+SPC 測試通知】自動化預警與電子郵件通報測試 ({host}:{port})",
       "mailAlertHeading": "工業品質即時警報通報",
       "mailOos": "規格違規 (OOS)",

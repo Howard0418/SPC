@@ -9,6 +9,7 @@ const dictionaries = {
   events: {
     "navigation.page.enter": "pageEnter", "read.query.execute": "queryExecute",
     "read.filter.apply": "filterApply", "read.export.generate": "exportGenerate",
+    "interaction.business_action": "businessAction",
     "auth.sso.exchange": "ssoExchange", "auth.logout.request": "logoutRequest",
     "security.operator.change_permissions": "changePermissions",
     "audit.events.query": "auditQuery", "audit.events.export": "auditExport"
