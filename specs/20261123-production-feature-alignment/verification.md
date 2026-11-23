@@ -13,3 +13,4 @@
 - Chromium 實測 Portal 正式登入頁、app-version 1.0.290.0、主要 CSS／JS MIME 及瀏覽器 8443 API health，資料庫健康及 production 標籤正常。匿名品保 SSO launch 和錯誤紀錄查詢皆返回 401。
 - 此次沒有執行品保權杖續發、管理員錯誤紀錄查閱及登入後三語驗收。通知收件人仍待指定。無新部署或業務資料異動。
 - 後續真人操作從 Portal 正式品保專區開啟 SPC。確認正式 SPC `/spc` 顯示已登入編輯者、Web 0.1.152、API 0.1.140。正式庫查回同帳號近期 `auth.sso.exchange` 為 `Succeeded`、`PortalSso`、HTTP 200。正向進站通過；刻意使權杖過期再續發的情境未執行。
+- 補跑 Portal 品保續發條件測試 6 項、錯誤紀錄角色規則測試 4 項，全部通過。正式 `/i18n/portal-layout.json` 回 HTTP 200 與 JSON MIME，繁體中文、簡體中文、英文各 734 鍵。續發測試驗證觸發條件，正式過期後實際交換、管理員畫面及切換仍待驗。
