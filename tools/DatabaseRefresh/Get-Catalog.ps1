@@ -21,7 +21,8 @@ function Get-RefreshCatalog {
         $cmd.CommandText = @'
 SELECT DB_NAME(), CAST(SERVERPROPERTY('ServerName') AS nvarchar(128)),
        CAST(DATABASEPROPERTYEX(DB_NAME(),'Collation') AS nvarchar(128)),
-       snapshot_isolation_state_desc, is_read_committed_snapshot_on
+       snapshot_isolation_state_desc, is_read_committed_snapshot_on,
+       CONVERT(bit, COALESCE(HAS_PERMS_BY_NAME(DB_NAME(),'DATABASE','VIEW DEFINITION'),0))
 FROM sys.databases WHERE database_id = DB_ID();
 
 SELECT MigrationId FROM dbo.__EFMigrationsHistory ORDER BY MigrationId;
@@ -65,6 +66,9 @@ WHERE s.name='dbo' AND t.is_ms_shipped=0 ORDER BY t.name;
         $collation = $reader.GetString(2)
         $snapshot = $reader.GetString(3)
         $rcsi = $reader.GetBoolean(4)
+        if (!$reader.GetBoolean(5)) {
+            throw [System.UnauthorizedAccessException]::new('Complete catalogue visibility requires database VIEW DEFINITION.')
+        }
         [void]$reader.NextResult()
         $migrations = @(while ($reader.Read()) { $reader.GetString(0) })
         [void]$reader.NextResult()
@@ -77,6 +81,7 @@ WHERE s.name='dbo' AND t.is_ms_shipped=0 ORDER BY t.name;
             Migrations = $migrations; Tables = $tables
         }
     }
+    catch [System.UnauthorizedAccessException] { throw "Incomplete catalogue visibility for $ExpectedDatabase. Database VIEW DEFINITION is required." }
     catch { throw "Read-only catalogue query failed for $ExpectedDatabase. Connection details withheld." }
     finally { $sql.Dispose() }
 }

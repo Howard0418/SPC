@@ -892,7 +892,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-PROD-1123：正式站 A／B 已部署，C 程式及 SPC 稽核約束已部署。Portal 製程角色已指派 ihao_ting。正式稽核已啟用，Web 0.1.147／API 0.1.139。通知收件與真人正向驗收待處理。[規格](specs/20261123-spc-production-three-batches/spec.md)
 
-- [ ] SPC-TEST-REFRESH-1123：停用按鈕已發布，本機一致性快照、分離執行權限與失敗回復演練通過；待部署身分、實機權限驗證與刷新引擎。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+- [ ] SPC-TEST-REFRESH-1123：測試與後續正式啟用已授權；本機快照、分離權限與回復通過，實機預檢待具完整目錄可見性的獨立身分及刷新引擎。按鈕停用。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - [ ] SPC-PORTAL-PROD-ALIGN-1123：SPC 日期／備註／重試、Portal 品保 SSO／管理員錯誤紀錄／主管退役／三語已發布；通知收件與真人驗收待辦。[規格](specs/20261123-production-feature-alignment/spec.md)
 
