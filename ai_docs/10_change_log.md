@@ -2158,3 +2158,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## [2026-11-23] SPC 正式安全管理者指派
 - 目的：依使用者選擇設定 administrator，保留明示授權與禁止自授權規則。
 - 結果：正式 administrator 名單、前端與 API 核對完成。[驗證](../specs/20261123-production-security-audit/verification.md)
+
+## [2026-11-23] SPC 正式第二位安全管理者
+- 目的：依使用者指定加入 ihao_ting 並保留 administrator，維持禁止自授權規則。
+- 結果：正式兩位安全管理者設定已核對，無個人權限異動。[驗證](../specs/20261123-production-security-audit/verification.md)

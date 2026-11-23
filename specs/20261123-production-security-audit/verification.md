@@ -11,3 +11,9 @@
 - 正式唯讀核對 administrator 為唯一有效 Editor，內部 ID 1078。本次只新增既有白名單設定中的該 ID，安全稽核保持，未修改人員主檔及個人稽核權限。
 - 權限回歸 13 項通過，含敏感授權禁止自行增加；正式 Web 0.1.150 → 0.1.151／API 0.1.140/production 保持。建置、三語、首頁、主資產 MIME、版本及瀏覽器實際 8443 health/version 通過。已核對正式啟用設定雜湊。
 - 前台隔離來源 e5d5ad34，回復點 SPC-PROD-1123-SECURITY-ADMIN-WEB151。實際授權須由 administrator 登入並明示替他人儲存。
+
+## ihao_ting 指派
+
+- 正式唯讀核對 administrator（1078）與 ihao_ting（27）為兩位有效 Editor。正式設定只追加 27，已查回兩筆且雜湊符合候選；未對資料庫或個人權限寫入。
+- 權限回歸 13 項通過，正式 Web 0.1.151 → 0.1.152，API 0.1.140/production 維持。build、三語、Chromium 首頁、版號、主 JS／CSS 與實際 8443 health/version 通過。
+- 隔離來源 ae0d0214。回復點 SPC-PROD-1123-SECURITY-ADMIN-WEB152。由 ihao_ting 實際登入替 administrator 明示授權仍待操作，禁止自行授權規則維持。
