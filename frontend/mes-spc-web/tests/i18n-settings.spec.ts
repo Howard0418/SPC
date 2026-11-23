@@ -345,6 +345,29 @@ for (const locale of ["zh-TW", "zh-CN", "en-US"])
     expect(writes[1]).toEqual(writes[0]);
     expect(errors).toEqual([]);
   });
+test("database refresh entry stays disabled in every locale", async ({ page }) => {
+  const { reads, writes, errors } = await prepare(page, "/operators");
+  const button = page.getByTestId("settings-refreshTestDatabase");
+  const labels = {
+    "zh-TW": "複製正式資料到測試區",
+    "zh-CN": "复制正式数据到测试区",
+    "en-US": "Copy production data to test",
+  };
+
+  for (const [locale, label] of Object.entries(labels)) {
+    await page.getByTestId("locale-select").selectOption(locale);
+    await expect(button).toHaveAccessibleName(label);
+    await expect(button).toBeDisabled();
+    await expect(page.locator("#database-refresh-status")).toBeVisible();
+  }
+
+  const requestCount = reads.length;
+  await button.dispatchEvent("click");
+  expect(reads).toHaveLength(requestCount);
+  expect(writes).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
 test("operator list shows resolved page permission names", async ({ page }) => {
   const { errors } = await prepare(page, "/operators");
   const permissions = page.getByTestId("settings-pagePermissions-1");

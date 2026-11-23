@@ -2146,3 +2146,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## [2026-11-23] SPC／Portal 正式對齊
 - 目的：依使用者授權，隔離整合已盤點差異與正式驗證。
 - 結果：SPC 與 Portal 分批發布，備份與回復點已核對。[驗證](../specs/20261123-production-feature-alignment/verification.md)
+
+## [2026-11-23] SPC-TEST-REFRESH-1123 先行顯示按鈕
+- 目的：提供停用入口與三語狀態，不建立資料庫操作路徑。
+- 結果：測試與正式停用入口已部署，驗證未發送寫入請求。[驗證](../specs/20261123-production-test-database-refresh-button/verification.md)

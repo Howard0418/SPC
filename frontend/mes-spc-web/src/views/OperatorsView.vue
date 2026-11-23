@@ -254,6 +254,22 @@ onMounted(load);
       </div>
     </div>
 
+    <div class="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        disabled
+        data-testid="settings-refreshTestDatabase"
+        aria-describedby="database-refresh-status"
+        class="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+      >
+        <RefreshCw class="h-4 w-4" aria-hidden="true" />
+        {{ t('spc.settings.refreshTestDatabase') }}
+      </button>
+      <p id="database-refresh-status" class="text-sm text-slate-600 dark:text-slate-400">
+        {{ t('spc.settings.refreshTestDatabaseUnavailable') }}
+      </p>
+    </div>
+
     <!-- Guide / Wizard Tip -->
     <ModuleGuide :title="t('spc.settings.operatorsGuide')">
       <p class="text-xs text-blue-700 dark:text-blue-400/80 mt-1.5 leading-relaxed">

@@ -2026,6 +2026,8 @@
       "loadingSettings": "载入设定中...",
       "noDepartmentEmails": "此部门没有可寄送 Email 的使用者",
       "comparePortal": "比对 Portal 品保人员",
+      "refreshTestDatabase": "复制正式数据到测试区",
+      "refreshTestDatabaseUnavailable": "数据复制尚未开放，正式库与测试库维持现状。",
       "operatorsTitle": "作业人员与权限主档维护",
       "operatorsDescription": "管理全厂产线量测作业工程师、工号、所属部门及电子邮件通知设定",
       "createOperator": "新增人员",
