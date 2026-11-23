@@ -1,5 +1,7 @@
 ## 2026-11-23 測試庫刷新一致性快照演練
 
+- 本機隔離多表置換通過持鎖、父子表順序、逐表比對及中途失敗整批回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
 - SQL 解析確認兩庫 15 個觸發器中 14 個詞彙一致，識別測試端需保留的量測封存例外。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - 預檢列出 13 個觸發器本文簽章差異，隔離驗證不可變歷史表維護後恢復保護與交易回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

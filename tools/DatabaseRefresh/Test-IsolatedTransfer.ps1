@@ -3,6 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'Refresh-Lock.ps1')
+. (Join-Path $PSScriptRoot 'Invoke-IsolatedReplacement.ps1')
 $connection = [System.Data.SqlClient.SqlConnection]::new(
     'Server=localhost;Database=master;Integrated Security=true;TrustServerCertificate=true;Connect Timeout=5')
 $suffix = [guid]::NewGuid().ToString('N')
@@ -39,6 +40,10 @@ try {
 USE [$db];
 CREATE TABLE dbo.Operations(Id int NOT NULL PRIMARY KEY, Label nvarchar(40) NOT NULL);
 CREATE TABLE dbo.EnvironmentSettings(Id int NOT NULL PRIMARY KEY, Mode nvarchar(10) NOT NULL);
+CREATE TABLE dbo.BatchHeader(Id int NOT NULL PRIMARY KEY);
+CREATE TABLE dbo.BatchDetail(Id int NOT NULL PRIMARY KEY, HeaderId int NOT NULL REFERENCES dbo.BatchHeader(Id), Label nvarchar(40) NOT NULL);
+INSERT dbo.BatchHeader VALUES(1);
+INSERT dbo.BatchDetail VALUES(1,1,N'Baseline');
 CREATE TABLE dbo.ChemicalStatisticsJobs(
     Id uniqueidentifier NOT NULL, VariableMeasurementId bigint NOT NULL, ReceiptId uniqueidentifier NOT NULL,
     Status nvarchar(20) NOT NULL, Attempts int NOT NULL, CreatedAtUtc datetime2 NOT NULL,
@@ -77,6 +82,10 @@ INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
     $null = Invoke-Sql @"
 USE [$source];
 UPDATE dbo.Operations SET Label='Source';
+DELETE dbo.BatchDetail;
+DELETE dbo.BatchHeader;
+INSERT dbo.BatchHeader VALUES(2);
+INSERT dbo.BatchDetail VALUES(2,2,N'Source');
 INSERT INTO dbo.ChemicalStatisticsJobs VALUES
     (NEWID(),1,NEWID(),N'Failed',3,SYSUTCDATETIME(),NULL,N'original error'),
     (NEWID(),2,NEWID(),N'Pending',0,SYSUTCDATETIME(),SYSUTCDATETIME(),NULL),
@@ -256,7 +265,36 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
     THROW 51011,'History replacement failed',1;
 "@
     }
-    Write-Output 'Isolated SQL rehearsal passed: snapshot, separated grants, exclusive transfer, locked verification and rollback, and lock release.'
+    $columns = @{ BatchHeader = @('Id'); BatchDetail = @('Id','HeaderId','Label') }
+    $order = @('BatchHeader','BatchDetail')
+    try {
+        Invoke-IsolatedReplacement $connection $snapshot $order $columns
+        throw 'Expected replacement to reject an unlocked session.'
+    }
+    catch {
+        if ($_.Exception.Message -notlike '*Exclusive refresh lock required*') { throw }
+    }
+    Invoke-WithRefreshOperationLock -Connection $connection -Operation {
+        $null = Invoke-Sql "ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource CHECK (Label <> N'Source');"
+        try {
+            Invoke-IsolatedReplacement $connection $snapshot $order $columns
+            throw 'Expected multi-table replacement failure.'
+        }
+        catch {
+            if ($_.Exception.Message -notlike '*CK_RehearsalRejectSource*') { throw }
+        }
+        if ((Invoke-Sql 'SELECT Id FROM dbo.BatchHeader;') -ne 1 -or
+            (Invoke-Sql 'SELECT Label FROM dbo.BatchDetail;') -cne 'Baseline') {
+            throw 'Multi-table rollback did not preserve both original rows.'
+        }
+        $null = Invoke-Sql 'ALTER TABLE dbo.BatchDetail DROP CONSTRAINT CK_RehearsalRejectSource;'
+        Invoke-IsolatedReplacement $connection $snapshot $order $columns
+        if ((Invoke-Sql 'SELECT HeaderId FROM dbo.BatchDetail;') -ne 2 -or
+            (Invoke-Sql 'SELECT Mode FROM dbo.EnvironmentSettings;') -cne 'test') {
+            throw 'Multi-table replacement or retained settings verification failed.'
+        }
+    }
+    Write-Output 'Isolated SQL rehearsal passed: snapshot, separated grants, locked multi-table replacement and rollback, retained settings, and trigger restoration.'
 }
 finally {
     try {
