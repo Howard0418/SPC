@@ -3466,3 +3466,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-23 SPC 正式切換專用受限 SQL 執行帳號並啟用稽核。Web 0.1.146 → 0.1.147，API 0.1.139/production。實際瀏覽器連線、匿名拒絕與稽核入庫通過，待真人正向驗收。[驗證](specs/20261123-spc-production-three-batches/activation.md)
 
 - 2026-11-23 確認正式 SPC 測試庫刷新按鈕範圍，完成來源、目標及設定參照唯讀預檢。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
+- 2026-11-23 SPC-TEST-REFRESH-1123 完成 SQL 目錄逐表比較與本機隔離單向交易／回復演練。正式與測試業務庫無寫入，未發布網站。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
