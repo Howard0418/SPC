@@ -1,5 +1,7 @@
 ## 2026-11-23 測試庫刷新一致性快照演練
 
+- 置換順序預檢已按實機外鍵排列 69 表，無跨表循環，列帳 4 個自我參照供置換驗證。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
 - P22077 測試專用保留規則與兩筆一般人員對應通過實機唯讀預檢。兩庫無寫入。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - 部署前檢查新增測試登入與設定人員映射，五項案例通過；實機因 P22077 無正式對應阻擋，兩庫無寫入。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

@@ -8,11 +8,13 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'Get-Catalog.ps1')
 . (Join-Path $PSScriptRoot 'Compare-Catalog.ps1')
 . (Join-Path $PSScriptRoot 'Operator-Mapping.ps1')
+. (Join-Path $PSScriptRoot 'Get-TransferOrder.ps1')
 
 $source = Get-RefreshCatalog -ConfigurationPath $SourceConfigurationPath -ExpectedDatabase PMR_SPC_2026
 $target = Get-RefreshCatalog -ConfigurationPath $TargetConfigurationPath -ExpectedDatabase PMR_SPC_TEST
 $policies = Import-PowerShellDataFile (Join-Path $PSScriptRoot 'Table-Policies.psd1')
 $comparison = Compare-RefreshCatalog -Source $source -Target $target -TablePolicies $policies
+$transferOrder = Get-RefreshTransferOrder -Policies $policies -ForeignKeys $target.ForeignKeys
 
 $config = Get-Content -LiteralPath $SourceConfigurationPath -Raw | ConvertFrom-Json
 $builder = [System.Data.SqlClient.SqlConnectionStringBuilder]::new(
@@ -93,5 +95,9 @@ $operatorMapping = @(Get-RefreshOperatorMapping $sourceOperators $targetOperator
     SourceWorkInventory = [pscustomobject]$inventory
     RetainedTestOperatorMappings = @($operatorMapping | Where-Object { !$_.RetainTestOnly }).Count
     RetainedTestOnlyOperators = @($operatorMapping | Where-Object RetainTestOnly).Count
+    OrderedReplacementTables = $transferOrder.InsertOrder.Count
+    ForeignKeyCycleBlockedTables = $transferOrder.BlockedByCycle
+    SelfReferences = $transferOrder.SelfReferences
+    RetainedReferences = $transferOrder.RetainedReferences
     RequiresDispatchOrAttachmentIsolation = @($inventory.Values | Where-Object { $_ -gt 0 }).Count -gt 0
 }

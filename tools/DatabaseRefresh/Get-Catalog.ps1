@@ -58,6 +58,13 @@ SELECT t.name,
        COALESCE((SELECT SUM(CONVERT(bigint,p.rows)) FROM sys.partitions p WHERE p.object_id=t.object_id AND p.index_id<2),0)
 FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id
 WHERE s.name='dbo' AND t.is_ms_shipped=0 ORDER BY t.name;
+
+SELECT fk.name, child.name, parent.name
+FROM sys.foreign_keys fk
+JOIN sys.tables child ON child.object_id = fk.parent_object_id
+JOIN sys.tables parent ON parent.object_id = fk.referenced_object_id
+WHERE child.schema_id = SCHEMA_ID('dbo') OR parent.schema_id = SCHEMA_ID('dbo')
+ORDER BY fk.name;
 '@
         $reader = $cmd.ExecuteReader()
         if (!$reader.Read()) { throw 'Database metadata is missing.' }
@@ -75,10 +82,15 @@ WHERE s.name='dbo' AND t.is_ms_shipped=0 ORDER BY t.name;
         $tables = @(while ($reader.Read()) {
             [pscustomobject]@{ Name = $reader.GetString(0); Signature = $reader.GetString(1); Rows = $reader.GetInt64(2) }
         })
+        if (!$reader.NextResult()) { throw 'Foreign key catalogue is missing.' }
+        $foreignKeys = @(while ($reader.Read()) {
+            [pscustomobject]@{ Name = $reader.GetString(0); Child = $reader.GetString(1); Parent = $reader.GetString(2) }
+        })
         [pscustomobject]@{
             Database = $database; Server = $server; Collation = $collation
             SnapshotIsolation = $snapshot; ReadCommittedSnapshot = $rcsi
             Migrations = $migrations; Tables = $tables
+            ForeignKeys = $foreignKeys
         }
     }
     catch [System.UnauthorizedAccessException] { throw "Incomplete catalogue visibility for $ExpectedDatabase. Database VIEW DEFINITION is required." }
