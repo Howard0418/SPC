@@ -7,12 +7,14 @@ $connection = [System.Data.SqlClient.SqlConnection]::new(
 $suffix = [guid]::NewGuid().ToString('N')
 $source = "SPC_Refresh_Rehearsal_Source_$suffix"
 $target = "SPC_Refresh_Rehearsal_Target_$suffix"
+$snapshot = "SPC_Refresh_Rehearsal_Snapshot_$suffix"
 $created = [System.Collections.Generic.List[string]]::new()
+$backupFile = $null
 
 function Invoke-Sql([string]$Text) {
     $command = $connection.CreateCommand()
     try {
-        $command.CommandTimeout = 20
+        $command.CommandTimeout = 60
         $command.CommandText = $Text
         $command.ExecuteScalar()
     }
@@ -54,6 +56,27 @@ REVERT;
 USE [$target];
 GRANT INSERT, DELETE ON dbo.Operations TO RefreshRehearsalRole;
 "@
+    $backupRoot = Invoke-Sql "SELECT CONVERT(nvarchar(4000),SERVERPROPERTY('InstanceDefaultBackupPath'));"
+    $dataRoot = Invoke-Sql "SELECT CONVERT(nvarchar(4000),SERVERPROPERTY('InstanceDefaultDataPath'));"
+    $logRoot = Invoke-Sql "SELECT CONVERT(nvarchar(4000),SERVERPROPERTY('InstanceDefaultLogPath'));"
+    $backupFile = Join-Path $backupRoot "$snapshot.bak"
+    $dataFile = Join-Path $dataRoot "$snapshot.mdf"
+    $logFile = Join-Path $logRoot "$snapshot.ldf"
+    $backupSql = $backupFile.Replace("'", "''")
+    $dataSql = $dataFile.Replace("'", "''")
+    $logSql = $logFile.Replace("'", "''")
+    $null = Invoke-Sql @"
+USE master;
+BACKUP DATABASE [$source] TO DISK=N'$backupSql' WITH COPY_ONLY, CHECKSUM;
+RESTORE VERIFYONLY FROM DISK=N'$backupSql' WITH CHECKSUM;
+"@
+    $null = Invoke-Sql "UPDATE [$source].dbo.Operations SET Label='Source after backup';"
+    $created.Add($snapshot)
+    $null = Invoke-Sql @"
+RESTORE DATABASE [$snapshot] FROM DISK=N'$backupSql'
+WITH CHECKSUM, MOVE N'$source' TO N'$dataSql', MOVE N'${source}_log' TO N'$logSql';
+ALTER DATABASE [$snapshot] SET READ_ONLY;
+"@
     $run = @"
 USE [$target];
 IF DB_NAME() <> '$target' THROW 51001, 'Target guard failed', 1;
@@ -61,7 +84,7 @@ SET XACT_ABORT ON;
 BEGIN TRY
     BEGIN TRANSACTION;
     DELETE FROM dbo.Operations;
-    INSERT INTO dbo.Operations(Id,Label) SELECT Id,Label FROM [$source].dbo.Operations;
+    INSERT INTO dbo.Operations(Id,Label) SELECT Id,Label FROM [$snapshot].dbo.Operations;
     IF NOT EXISTS(SELECT 1 FROM dbo.EnvironmentSettings WHERE Id=1 AND Mode='test')
         THROW 51002, 'Test settings changed', 1;
     {0}
@@ -84,21 +107,26 @@ END CATCH;
 
     $null = Invoke-Sql ($run -f '')
     $after = Invoke-Sql @"
-SELECT CASE WHEN (SELECT Label FROM [$source].dbo.Operations WHERE Id=1)='Source'
+SELECT CASE WHEN (SELECT Label FROM [$source].dbo.Operations WHERE Id=1)='Source after backup'
+            AND (SELECT Label FROM [$snapshot].dbo.Operations WHERE Id=1)='Source'
+            AND DATABASEPROPERTYEX('$snapshot','Updateability')='READ_ONLY'
             AND (SELECT Label FROM [$target].dbo.Operations WHERE Id=1)='Source'
             AND (SELECT Mode FROM [$target].dbo.EnvironmentSettings WHERE Id=1)='test'
        THEN 1 ELSE 0 END;
 "@
     if ($after -ne 1) { throw 'Final source, target, or test-settings verification failed.' }
-    Write-Output 'Isolated SQL rehearsal passed: source grants, one-way transfer, retained test settings, and rollback.'
+    Write-Output 'Isolated SQL rehearsal passed: verified copy-only snapshot, point-in-time restore, source grants, one-way transfer, retained test settings, and rollback.'
 }
 finally {
     try {
         foreach ($db in $created) {
-            if ($db -notmatch '^SPC_Refresh_Rehearsal_(Source|Target)_[a-f0-9]{32}$') {
+            if ($db -notmatch '^SPC_Refresh_Rehearsal_(Source|Target|Snapshot)_[a-f0-9]{32}$') {
                 throw 'Unsafe rehearsal cleanup target.'
             }
-            $null = Invoke-Sql "USE master; DROP DATABASE [$db];"
+            $null = Invoke-Sql "USE master; DROP DATABASE IF EXISTS [$db];"
+        }
+        if ($backupFile -and (Test-Path -LiteralPath $backupFile)) {
+            Remove-Item -LiteralPath $backupFile
         }
     }
     finally { $connection.Dispose() }
