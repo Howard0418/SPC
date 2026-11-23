@@ -3535,3 +3535,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-23 SPC 正式三批正向稽核查回
 
 - 正式 SPC 0.1.152／0.1.140 連線通過，唯讀確認已有成功 SSO、頁面、按鈕、查詢及權限異動稽核。通知名單待指定。[驗證](specs/20261123-spc-production-three-batches/verification.md)
+
+## 2026-11-23 SPC／Portal 正式功能對齊複驗
+
+- 兩站主要資產與瀏覽器 API 連線通過；Portal 匿名 SSO 與錯誤紀錄回 401。登入後角色與三語流程待驗。[驗證](specs/20261123-production-feature-alignment/verification.md)
