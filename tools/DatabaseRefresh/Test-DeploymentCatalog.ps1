@@ -15,6 +15,13 @@ $target = Get-RefreshCatalog -ConfigurationPath $TargetConfigurationPath -Expect
 $policies = Import-PowerShellDataFile (Join-Path $PSScriptRoot 'Table-Policies.psd1')
 $comparison = Compare-RefreshCatalog -Source $source -Target $target -TablePolicies $policies
 $transferOrder = Get-RefreshTransferOrder -Policies $policies -ForeignKeys $target.ForeignKeys
+$triggerDifferences = @(if ($source.Triggers.Count -and $target.Triggers.Count) {
+    Compare-Object -ReferenceObject $source.Triggers -DifferenceObject $target.Triggers -Property Table, Name, Disabled, Signature
+} else {
+    $source.Triggers
+    $target.Triggers
+})
+$unreadableTriggers = @($source.Triggers + $target.Triggers | Where-Object { !$_.Signature })
 
 $config = Get-Content -LiteralPath $SourceConfigurationPath -Raw | ConvertFrom-Json
 $builder = [System.Data.SqlClient.SqlConnectionStringBuilder]::new(
@@ -99,5 +106,10 @@ $operatorMapping = @(Get-RefreshOperatorMapping $sourceOperators $targetOperator
     ForeignKeyCycleBlockedTables = $transferOrder.BlockedByCycle
     SelfReferences = $transferOrder.SelfReferences
     RetainedReferences = $transferOrder.RetainedReferences
+    TriggerDefinitionsMatch = !$triggerDifferences.Count -and !$unreadableTriggers.Count
+    DifferentTriggerDefinitions = @($triggerDifferences | Select-Object -ExpandProperty Name -Unique)
+    EnabledTriggersOnReplacementTables = @($target.Triggers | Where-Object {
+        !$_.Disabled -and $_.Table -in $transferOrder.InsertOrder
+    } | Select-Object Table, Name)
     RequiresDispatchOrAttachmentIsolation = @($inventory.Values | Where-Object { $_ -gt 0 }).Count -gt 0
 }

@@ -224,6 +224,38 @@ SELECT CASE WHEN (SELECT Label FROM [$source].dbo.Operations WHERE Id=1)='Source
         }
     }
     if ((Invoke-Sql $lockMode) -cne 'NoLock') { throw 'Successful operation did not release the lock.' }
+
+    Invoke-WithRefreshOperationLock -Connection $connection -Operation {
+        $null = Invoke-Sql @"
+CREATE TABLE dbo.ImmutableHistory(Id int NOT NULL PRIMARY KEY);
+INSERT dbo.ImmutableHistory VALUES(1);
+EXEC(N'CREATE TRIGGER dbo.RefreshRehearsalHistoryGuard ON dbo.ImmutableHistory INSTEAD OF DELETE AS THROW 51008, ''Immutable history'', 1;');
+BEGIN TRANSACTION;
+DISABLE TRIGGER dbo.RefreshRehearsalHistoryGuard ON dbo.ImmutableHistory;
+DELETE dbo.ImmutableHistory;
+INSERT dbo.ImmutableHistory VALUES(2);
+ROLLBACK TRANSACTION;
+IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=1)
+    OR EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
+    OR EXISTS(SELECT 1 FROM sys.triggers WHERE object_id=OBJECT_ID(N'dbo.RefreshRehearsalHistoryGuard') AND is_disabled=1)
+    THROW 51009,'History or trigger rollback failed',1;
+BEGIN TRANSACTION;
+DISABLE TRIGGER dbo.RefreshRehearsalHistoryGuard ON dbo.ImmutableHistory;
+DELETE dbo.ImmutableHistory;
+INSERT dbo.ImmutableHistory VALUES(2);
+ENABLE TRIGGER dbo.RefreshRehearsalHistoryGuard ON dbo.ImmutableHistory;
+COMMIT TRANSACTION;
+BEGIN TRY
+    DELETE dbo.ImmutableHistory;
+    THROW 51010,'Committed maintenance failed to restore history guard',1;
+END TRY
+BEGIN CATCH
+    IF ERROR_NUMBER() <> 51008 THROW;
+END CATCH;
+IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
+    THROW 51011,'History replacement failed',1;
+"@
+    }
     Write-Output 'Isolated SQL rehearsal passed: snapshot, separated grants, exclusive transfer, locked verification and rollback, and lock release.'
 }
 finally {

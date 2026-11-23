@@ -65,6 +65,15 @@ JOIN sys.tables child ON child.object_id = fk.parent_object_id
 JOIN sys.tables parent ON parent.object_id = fk.referenced_object_id
 WHERE child.schema_id = SCHEMA_ID('dbo') OR parent.schema_id = SCHEMA_ID('dbo')
 ORDER BY fk.name;
+
+SELECT t.name, tr.name, tr.is_disabled,
+       CONVERT(varchar(64),HASHBYTES('SHA2_256',
+           REPLACE(REPLACE(m.definition,NCHAR(13)+NCHAR(10),NCHAR(10)),NCHAR(13),NCHAR(10))),2)
+FROM sys.triggers tr
+JOIN sys.tables t ON t.object_id = tr.parent_id
+LEFT JOIN sys.sql_modules m ON m.object_id = tr.object_id
+WHERE t.schema_id = SCHEMA_ID('dbo')
+ORDER BY t.name,tr.name;
 '@
         $reader = $cmd.ExecuteReader()
         if (!$reader.Read()) { throw 'Database metadata is missing.' }
@@ -86,11 +95,21 @@ ORDER BY fk.name;
         $foreignKeys = @(while ($reader.Read()) {
             [pscustomobject]@{ Name = $reader.GetString(0); Child = $reader.GetString(1); Parent = $reader.GetString(2) }
         })
+        if (!$reader.NextResult()) { throw 'Trigger catalogue is missing.' }
+        $triggers = @(while ($reader.Read()) {
+            [pscustomobject]@{
+                Table = $reader.GetString(0)
+                Name = $reader.GetString(1)
+                Disabled = $reader.GetBoolean(2)
+                Signature = if ($reader.IsDBNull(3)) { $null } else { $reader.GetString(3) }
+            }
+        })
         [pscustomobject]@{
             Database = $database; Server = $server; Collation = $collation
             SnapshotIsolation = $snapshot; ReadCommittedSnapshot = $rcsi
             Migrations = $migrations; Tables = $tables
             ForeignKeys = $foreignKeys
+            Triggers = $triggers
         }
     }
     catch [System.UnauthorizedAccessException] { throw "Incomplete catalogue visibility for $ExpectedDatabase. Database VIEW DEFINITION is required." }
