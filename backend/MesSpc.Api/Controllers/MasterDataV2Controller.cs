@@ -128,10 +128,10 @@ public class ProcessesController(AppDbContext db) : ControllerBase
             variableQuery = variableQuery.Where(x => db.PartProcessCharacteristics
                 .Any(ppc => ppc.Id == x.PartProcessCharacteristicId && ppc.ControlScope == normalizedScope));
         }
-        if (start.HasValue) variableQuery = variableQuery.Where(x => x.MeasuredAt >= start.Value);
-        if (end.HasValue) variableQuery = variableQuery.Where(x => x.MeasuredAt <= end.Value);
+        if (start.HasValue) variableQuery = variableQuery.Where(x => (x.PortalDailyDate ?? x.MeasuredAt) >= start.Value);
+        if (end.HasValue) variableQuery = variableQuery.Where(x => (x.PortalDailyDate ?? x.MeasuredAt) <= end.Value);
         var page = await variableQuery
-            .OrderByDescending(x => x.MeasuredAt)
+            .OrderByDescending(x => x.PortalDailyDate ?? x.MeasuredAt)
             .ThenByDescending(x => x.Id)
             .Skip(skip)
             .Take(take)
@@ -200,6 +200,7 @@ public class ProcessesController(AppDbContext db) : ControllerBase
                 unitCount = (int?)null,
                 x.MeasuredAt,
                 x.PortalDailyDate,
+                historyDate = x.PortalDailyDate ?? x.MeasuredAt,
                 x.SamplingPhase,
                 x.SamplingStage,
                 x.SourceType,

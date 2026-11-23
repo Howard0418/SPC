@@ -153,9 +153,9 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 judgmentReason = judgment?.PrecisionNote ?? "缺少相符的歷史判定或規格紀錄，無法判定",
                 judgmentReasonCode = judgment?.JudgmentReasonCode ?? "HISTORICAL_EVIDENCE_MISSING",
                 specificationVersionNo = judgment?.SpecificationVersionNo,
-                specificationVersionAt = judgment?.SpecificationVersionAt,
-                isExcluded = exclusion is not null,
-                exclusionReason = payload?.GetValueOrDefault("ExclusionReason") ?? exclusion?.Reason
+                specificationVersionAt = judgment?.SpecificationVersionAt
+                ,isExcluded = exclusion is not null
+                ,exclusionReason = payload?.GetValueOrDefault("ExclusionReason")
             };
         }).ToList();
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });
