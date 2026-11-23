@@ -11,11 +11,15 @@ $snapshot = "SPC_Refresh_Rehearsal_Snapshot_$suffix"
 $created = [System.Collections.Generic.List[string]]::new()
 $backupFile = $null
 
-function Invoke-Sql([string]$Text) {
+function Invoke-Sql([string]$Text, [string]$Label) {
     $command = $connection.CreateCommand()
     try {
         $command.CommandTimeout = 60
         $command.CommandText = $Text
+        if ($PSBoundParameters.ContainsKey('Label')) {
+            $parameter = $command.Parameters.Add('@label', [System.Data.SqlDbType]::NVarChar, 40)
+            $parameter.Value = $Label
+        }
         $command.ExecuteScalar()
     }
     finally { $command.Dispose() }
@@ -34,10 +38,6 @@ try {
 USE [$db];
 CREATE TABLE dbo.Operations(Id int NOT NULL PRIMARY KEY, Label nvarchar(40) NOT NULL);
 CREATE TABLE dbo.EnvironmentSettings(Id int NOT NULL PRIMARY KEY, Mode nvarchar(10) NOT NULL);
-CREATE ROLE RefreshRehearsalRole;
-CREATE USER RefreshRehearsalUser WITHOUT LOGIN;
-ALTER ROLE RefreshRehearsalRole ADD MEMBER RefreshRehearsalUser;
-GRANT SELECT ON dbo.Operations TO RefreshRehearsalRole;
 INSERT INTO dbo.Operations VALUES(1, 'Baseline');
 INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
 "@
@@ -46,15 +46,28 @@ INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
     $null = Invoke-Sql @"
 USE [$source];
 UPDATE dbo.Operations SET Label='Source';
-EXECUTE AS USER='RefreshRehearsalUser';
-IF HAS_PERMS_BY_NAME('dbo.Operations','OBJECT','UPDATE')<>0
+CREATE USER RefreshSource WITHOUT LOGIN;
+GRANT SELECT ON dbo.Operations TO RefreshSource;
+GRANT BACKUP DATABASE TO RefreshSource;
+EXECUTE AS USER='RefreshSource';
+DECLARE @sourceWrite int = HAS_PERMS_BY_NAME('dbo.Operations','OBJECT','UPDATE');
+IF @sourceWrite <> 0
 BEGIN
     REVERT;
     THROW 51000, 'Source principal has write permission', 1;
 END;
 REVERT;
 USE [$target];
-GRANT INSERT, DELETE ON dbo.Operations TO RefreshRehearsalRole;
+CREATE USER RefreshTarget WITHOUT LOGIN;
+GRANT SELECT, INSERT, DELETE ON dbo.Operations TO RefreshTarget;
+GRANT SELECT ON dbo.EnvironmentSettings TO RefreshTarget;
+EXECUTE AS USER='RefreshTarget';
+DECLARE @allowed int = HAS_PERMS_BY_NAME('dbo.EnvironmentSettings','OBJECT','UPDATE')
+    + HAS_PERMS_BY_NAME('dbo.EnvironmentSettings','OBJECT','INSERT')
+    + HAS_PERMS_BY_NAME('dbo.EnvironmentSettings','OBJECT','DELETE')
+    + HAS_PERMS_BY_NAME(DB_NAME(),'DATABASE','ALTER');
+REVERT;
+IF @allowed <> 0 THROW 51004, 'Target principal can modify protected settings or schema', 1;
 "@
     $backupRoot = Invoke-Sql "SELECT CONVERT(nvarchar(4000),SERVERPROPERTY('InstanceDefaultBackupPath'));"
     $dataRoot = Invoke-Sql "SELECT CONVERT(nvarchar(4000),SERVERPROPERTY('InstanceDefaultDataPath'));"
@@ -66,8 +79,17 @@ GRANT INSERT, DELETE ON dbo.Operations TO RefreshRehearsalRole;
     $dataSql = $dataFile.Replace("'", "''")
     $logSql = $logFile.Replace("'", "''")
     $null = Invoke-Sql @"
+USE [$source];
+EXECUTE AS USER='RefreshSource';
+BEGIN TRY
+    BACKUP DATABASE [$source] TO DISK=N'$backupSql' WITH COPY_ONLY, CHECKSUM;
+END TRY
+BEGIN CATCH
+    REVERT;
+    THROW;
+END CATCH;
+REVERT;
 USE master;
-BACKUP DATABASE [$source] TO DISK=N'$backupSql' WITH COPY_ONLY, CHECKSUM;
 RESTORE VERIFYONLY FROM DISK=N'$backupSql' WITH CHECKSUM;
 "@
     $null = Invoke-Sql "UPDATE [$source].dbo.Operations SET Label='Source after backup';"
@@ -77,14 +99,28 @@ RESTORE DATABASE [$snapshot] FROM DISK=N'$backupSql'
 WITH CHECKSUM, MOVE N'$source' TO N'$dataSql', MOVE N'${source}_log' TO N'$logSql';
 ALTER DATABASE [$snapshot] SET READ_ONLY;
 "@
+    $snapshotLabel = Invoke-Sql @"
+USE [$snapshot];
+EXECUTE AS USER='RefreshSource';
+BEGIN TRY
+    SELECT Label FROM dbo.Operations WHERE Id=1;
+END TRY
+BEGIN CATCH
+    REVERT;
+    THROW;
+END CATCH;
+REVERT;
+"@
+    if ($snapshotLabel -cne 'Source') { throw 'Restricted snapshot read returned unexpected data.' }
     $run = @"
 USE [$target];
 IF DB_NAME() <> '$target' THROW 51001, 'Target guard failed', 1;
 SET XACT_ABORT ON;
+EXECUTE AS USER='RefreshTarget';
 BEGIN TRY
     BEGIN TRANSACTION;
     DELETE FROM dbo.Operations;
-    INSERT INTO dbo.Operations(Id,Label) SELECT Id,Label FROM [$snapshot].dbo.Operations;
+    INSERT INTO dbo.Operations(Id,Label) VALUES(1,@label);
     IF NOT EXISTS(SELECT 1 FROM dbo.EnvironmentSettings WHERE Id=1 AND Mode='test')
         THROW 51002, 'Test settings changed', 1;
     {0}
@@ -92,11 +128,13 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
     IF XACT_STATE() <> 0 ROLLBACK;
+    REVERT;
     THROW;
 END CATCH;
+REVERT;
 "@
     try {
-        $null = Invoke-Sql ($run -f "THROW 51003, 'Injected failure', 1;")
+        $null = Invoke-Sql ($run -f "THROW 51003, 'Injected failure', 1;") -Label $snapshotLabel
         throw 'Expected rollback did not run.'
     }
     catch {
@@ -105,7 +143,7 @@ END CATCH;
     $preserved = Invoke-Sql "SELECT Label FROM [$target].dbo.Operations WHERE Id=1;"
     if ($preserved -cne 'Baseline') { throw 'Failed transfer changed the target.' }
 
-    $null = Invoke-Sql ($run -f '')
+    $null = Invoke-Sql ($run -f '') -Label $snapshotLabel
     $after = Invoke-Sql @"
 SELECT CASE WHEN (SELECT Label FROM [$source].dbo.Operations WHERE Id=1)='Source after backup'
             AND (SELECT Label FROM [$snapshot].dbo.Operations WHERE Id=1)='Source'

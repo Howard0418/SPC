@@ -1,5 +1,7 @@
 ## 2026-11-23 測試庫刷新一致性快照演練
 
+- 本機 SQL 使用分離模擬身分執行來源備份、快照讀取及目標置換，通過測試設定權限與失敗回復驗證。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
 - 本機合成來源 COPY_ONLY 備份、查驗及唯讀還原通過。備份後更新來源仍可用固定副本刷新合成目標，保留測試設定，注入失敗時交易可回復。兩站與實際資料庫無異動。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 ## 2026-11-23 正式總覽排序驗證結案
