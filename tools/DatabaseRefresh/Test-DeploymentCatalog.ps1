@@ -80,7 +80,9 @@ SELECT CONVERT(int,j.value) FROM dbo.SpcAlertNotificationSettings CROSS APPLY OP
     $requiredIds = @(while ($reader.Read()) { $reader.GetInt32(0) })
 }
 finally { $connection.Dispose() }
-$operatorMapping = @(Get-RefreshOperatorMapping $sourceOperators $targetOperators $requiredIds)
+$testOnlyOperators = @{ 18 = 'P22077' }
+$requiredIds = @($requiredIds + @($testOnlyOperators.Keys))
+$operatorMapping = @(Get-RefreshOperatorMapping $sourceOperators $targetOperators $requiredIds -TestOnlyOperators $testOnlyOperators)
 
 [pscustomobject]@{
     SourceDatabase = $comparison.SourceDatabase
@@ -89,6 +91,7 @@ $operatorMapping = @(Get-RefreshOperatorMapping $sourceOperators $targetOperator
     TableCount = $comparison.Tables.Count
     Policies = @($comparison.Tables | Group-Object Policy | Select-Object Name, Count)
     SourceWorkInventory = [pscustomobject]$inventory
-    RetainedTestOperatorMappings = $operatorMapping.Count
+    RetainedTestOperatorMappings = @($operatorMapping | Where-Object { !$_.RetainTestOnly }).Count
+    RetainedTestOnlyOperators = @($operatorMapping | Where-Object RetainTestOnly).Count
     RequiresDispatchOrAttachmentIsolation = @($inventory.Values | Where-Object { $_ -gt 0 }).Count -gt 0
 }
