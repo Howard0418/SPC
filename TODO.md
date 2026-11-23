@@ -884,7 +884,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] SPC-SIDEBAR-1122 SPC 左側導覽字級 16 px，測試 Web 0.1.176 已發布，2026-11-22 使用者確認驗收。[規格](specs/20261122-spc-sidebar-16px/spec.md)
 
-- [ ] SPC-CHEM-MISSING-ADJUST-1122 測試庫已補入的 10 筆／16 欄獲使用者驗收，僅待 PPC 2565、2568、2571 稀釋規則確認。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
+- [x] SPC-CHEM-MISSING-ADJUST-1122 測試庫補入的 10 筆／16 欄已驗收；PPC 2565、2568、2571 確認維持空白，唯讀查回一致。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
 
 - [x] SPC-CHEM-OVERVIEW-ORDER-1123 線別分析項目總覽排序，正式 Web 0.1.152 已包含修正，正式資產瀏覽器排序與正式 API 技術驗證通過。[驗證](specs/20261123-chemical-overview-order/verification.md)
 

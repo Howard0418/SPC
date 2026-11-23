@@ -3530,3 +3530,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 查回已補的 10 筆／16 欄及實際測試站資產的模擬登入顯示均通過。三筆稀釋規則待確認，兩庫與網站無異動。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
 - 使用者確認驗收已補入的 10 筆／16 欄。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
+- PPC 2565、2568、2571 經確認稀釋規則留白，測試庫查回一致，藥液調整公式缺漏工作結案。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
