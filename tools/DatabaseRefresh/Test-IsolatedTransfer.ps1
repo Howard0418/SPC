@@ -39,6 +39,10 @@ try {
 USE [$db];
 CREATE TABLE dbo.Operations(Id int NOT NULL PRIMARY KEY, Label nvarchar(40) NOT NULL);
 CREATE TABLE dbo.EnvironmentSettings(Id int NOT NULL PRIMARY KEY, Mode nvarchar(10) NOT NULL);
+CREATE TABLE dbo.ChemicalStatisticsJobs(
+    Id uniqueidentifier NOT NULL, VariableMeasurementId bigint NOT NULL, ReceiptId uniqueidentifier NOT NULL,
+    Status nvarchar(20) NOT NULL, Attempts int NOT NULL, CreatedAtUtc datetime2 NOT NULL,
+    NextAttemptAtUtc datetime2 NULL, LastError nvarchar(100) NULL);
 INSERT INTO dbo.Operations VALUES(1, 'Baseline');
 INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
 "@
@@ -73,6 +77,10 @@ INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
     $null = Invoke-Sql @"
 USE [$source];
 UPDATE dbo.Operations SET Label='Source';
+INSERT INTO dbo.ChemicalStatisticsJobs VALUES
+    (NEWID(),1,NEWID(),N'Failed',3,SYSUTCDATETIME(),NULL,N'original error'),
+    (NEWID(),2,NEWID(),N'Pending',0,SYSUTCDATETIME(),SYSUTCDATETIME(),NULL),
+    (NEWID(),3,NEWID(),N'Completed',1,SYSUTCDATETIME(),NULL,NULL);
 CREATE USER RefreshSource WITHOUT LOGIN;
 GRANT SELECT ON dbo.Operations TO RefreshSource;
 GRANT BACKUP DATABASE TO RefreshSource;
@@ -139,6 +147,22 @@ END CATCH;
 REVERT;
 "@
     if ($snapshotLabel -cne 'Source') { throw 'Restricted snapshot read returned unexpected data.' }
+    $projection = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ChemicalStatisticsHistory.sql') -Raw
+    $null = Invoke-Sql @"
+USE [$snapshot];
+SELECT TOP(0) * INTO #StatisticsHistory FROM dbo.ChemicalStatisticsJobs;
+INSERT INTO #StatisticsHistory
+$projection
+IF EXISTS (SELECT 1 FROM #StatisticsHistory WHERE Status<>N'Completed'
+    AND (NextAttemptAtUtc IS NULL OR NextAttemptAtUtc<=SYSUTCDATETIME()))
+    THROW 51006,'Copied history could be selected by the worker',1;
+IF NOT EXISTS (SELECT 1 FROM #StatisticsHistory WHERE Status=N'Failed' AND Attempts=3 AND LastError=N'original error')
+    OR NOT EXISTS (SELECT 1 FROM #StatisticsHistory WHERE Status=N'Completed' AND NextAttemptAtUtc IS NULL)
+    OR (SELECT COUNT(*) FROM #StatisticsHistory) <> 3
+    OR NOT EXISTS (SELECT 1 FROM dbo.ChemicalStatisticsJobs WHERE Status=N'Failed' AND NextAttemptAtUtc IS NULL)
+    THROW 51007,'Statistics history or original retry timestamp changed unexpectedly',1;
+DROP TABLE #StatisticsHistory;
+"@
     $run = @"
 USE [$target];
 IF DB_NAME() <> '$target' THROW 51001, 'Target guard failed', 1;
