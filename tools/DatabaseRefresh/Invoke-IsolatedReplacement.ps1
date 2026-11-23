@@ -5,7 +5,8 @@ function Invoke-IsolatedReplacement {
         [Parameter(Mandatory)][string]$Snapshot,
         [Parameter(Mandatory)][string[]]$InsertOrder,
         [Parameter(Mandatory)][hashtable]$Columns,
-        [string[]]$IdentityTables = @()
+        [string[]]$IdentityTables = @(),
+        [object[]]$OperatorMapping = @()
     )
 
     if ($Connection.DataSource -cne 'localhost' -or
@@ -39,6 +40,26 @@ function Invoke-IsolatedReplacement {
             $sql.Add("IF EXISTS(SELECT 1 FROM [$Snapshot].dbo.[$table] $($dispatchGuards[$table])) THROW 51023,'Unisolated source work: $table',1;")
         }
     }
+    if ($ordered.Contains('Operators')) {
+        if ('PasswordHash' -notin $Columns.Operators -or 'Id' -notin $Columns.Operators) {
+            throw 'Operator replacement requires the ID and credential columns.'
+        }
+        $sql.Add(@"
+SELECT TargetId, SourceId, RetainTestOnly INTO #OperatorMapping
+FROM OPENJSON(@operatorMapping) WITH (TargetId int, SourceId int, RetainTestOnly bit);
+IF EXISTS(SELECT TargetId FROM #OperatorMapping GROUP BY TargetId HAVING COUNT(*)<>1)
+   OR EXISTS(SELECT SourceId FROM #OperatorMapping WHERE SourceId IS NOT NULL GROUP BY SourceId HAVING COUNT(*)<>1)
+   OR EXISTS(SELECT 1 FROM #OperatorMapping m LEFT JOIN dbo.Operators t ON m.TargetId=t.Id
+       LEFT JOIN [$Snapshot].dbo.Operators s ON s.Id=COALESCE(m.SourceId,m.TargetId)
+       WHERE t.Id IS NULL OR m.RetainTestOnly IS NULL
+          OR (m.RetainTestOnly=1 AND (m.SourceId IS NOT NULL OR s.Id IS NOT NULL))
+          OR (m.RetainTestOnly=0 AND (m.SourceId IS NULL OR s.Id IS NULL)))
+   OR EXISTS(SELECT 1 FROM dbo.Operators t WHERE NULLIF(LTRIM(RTRIM(t.PasswordHash)),N'') IS NOT NULL
+       AND NOT EXISTS(SELECT 1 FROM #OperatorMapping m WHERE m.TargetId=t.Id))
+    THROW 51024,'Invalid or incomplete operator mapping',1;
+SELECT t.* INTO #TestOperators FROM dbo.Operators t JOIN #OperatorMapping m ON m.TargetId=t.Id;
+"@)
+    }
     for ($index = $InsertOrder.Count - 1; $index -ge 0; $index--) {
         $sql.Add("DELETE FROM dbo.[$($InsertOrder[$index])];")
     }
@@ -49,6 +70,18 @@ function Invoke-IsolatedReplacement {
         if ($table -eq 'ChemicalStatisticsJobs') {
             $projection = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ChemicalStatisticsHistory.sql') -Raw).Trim().TrimEnd(';')
             $from = '(' + $projection.Replace('{{StatisticsTable}}', $from) + ') AS expected'
+        }
+        if ($table -eq 'Operators') {
+            $operatorColumns = ($Columns.Operators | ForEach-Object {
+                if ($_ -eq 'PasswordHash') { 't.[PasswordHash]' } else { "s.[$_]" }
+            }) -join ','
+            $from = @"
+(SELECT $operatorColumns FROM $from s
+ LEFT JOIN #OperatorMapping m ON m.SourceId=s.Id AND m.RetainTestOnly=0
+ LEFT JOIN #TestOperators t ON t.Id=m.TargetId
+ UNION ALL SELECT $list FROM #TestOperators t
+ WHERE EXISTS(SELECT 1 FROM #OperatorMapping m WHERE m.TargetId=t.Id AND m.RetainTestOnly=1)) AS expected
+"@
         }
         if ($table -in $IdentityTables) {
             $sql.Add(@"
@@ -72,11 +105,16 @@ IF (SELECT COUNT_BIG(*) FROM $from) <> (SELECT COUNT_BIG(*) FROM $to)
    THROW 51022,'Rehearsal comparison failed: $table',1;
 "@)
     }
+    if ($ordered.Contains('Operators')) { $sql.Add('DROP TABLE #TestOperators, #OperatorMapping;') }
     $sql.Add('COMMIT; END TRY BEGIN CATCH IF XACT_STATE() <> 0 ROLLBACK; THROW; END CATCH;')
     $command = $Connection.CreateCommand()
     try {
         $command.CommandTimeout = 60
         $command.CommandText = $sql -join [Environment]::NewLine
+        if ($ordered.Contains('Operators')) {
+            $parameter = $command.Parameters.Add('@operatorMapping', [System.Data.SqlDbType]::NVarChar, -1)
+            $parameter.Value = ConvertTo-Json -InputObject $OperatorMapping -Compress
+        }
         $null = $command.ExecuteNonQuery()
     }
     finally { $command.Dispose() }

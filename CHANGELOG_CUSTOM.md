@@ -3548,3 +3548,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-23 測試庫刷新外送與附件阻擋
 
 - 隔離置換交易在刪除前停止含待送 MES、可重試通知或證書索引的來源，目標原資料保留。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
+## 2026-11-23 測試庫刷新人員保留
+
+- 隔離交易已驗證測試登入及 P22077 原 ID 保留，正式密碼雜湊不帶入，失敗時整批回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

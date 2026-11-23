@@ -45,6 +45,7 @@ CREATE TABLE dbo.BatchDetail(Id int NOT NULL PRIMARY KEY, HeaderId int NOT NULL 
 CREATE TABLE dbo.MesSyncMessages(Id int NOT NULL PRIMARY KEY, SyncStatus nvarchar(20) NOT NULL);
 CREATE TABLE dbo.CalibrationNotifications(Id int NOT NULL PRIMARY KEY, State nvarchar(20) NOT NULL, NextAttemptAt datetime2 NULL);
 CREATE TABLE dbo.CalibrationCertificates(Id int NOT NULL PRIMARY KEY);
+CREATE TABLE dbo.Operators(Id int NOT NULL PRIMARY KEY, OperatorCode nvarchar(20) NOT NULL, Username nvarchar(20) NULL, PasswordHash nvarchar(40) NULL);
 INSERT dbo.BatchHeader DEFAULT VALUES;
 INSERT dbo.BatchDetail VALUES(1,1,N'Baseline');
 CREATE TABLE dbo.ChemicalStatisticsJobs(
@@ -88,6 +89,8 @@ UPDATE dbo.Operations SET Label='Source';
 INSERT dbo.MesSyncMessages VALUES(1,N'Pending');
 INSERT dbo.CalibrationNotifications VALUES(1,N'Failed',DATEADD(day,1,SYSUTCDATETIME()));
 INSERT dbo.CalibrationCertificates VALUES(1);
+INSERT dbo.Operators VALUES(100,N'P001',N'alpha',N'synthetic-formal-hash'),
+    (200,N'P002',N'bravo',N'another-formal-hash');
 DELETE dbo.BatchDetail;
 DELETE dbo.BatchHeader;
 INSERT dbo.BatchHeader DEFAULT VALUES;
@@ -276,8 +279,13 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
         BatchHeader = @('Id')
         BatchDetail = @('Id','HeaderId','Label')
         ChemicalStatisticsJobs = @('Id','VariableMeasurementId','ReceiptId','Status','Attempts','CreatedAtUtc','NextAttemptAtUtc','LastError')
+        Operators = @('Id','OperatorCode','Username','PasswordHash')
     }
-    $order = @('BatchHeader','ChemicalStatisticsJobs','BatchDetail')
+    $order = @('BatchHeader','ChemicalStatisticsJobs','Operators','BatchDetail')
+    $mapping = @(
+        @{TargetId=1;SourceId=100;RetainTestOnly=$false},
+        @{TargetId=18;SourceId=$null;RetainTestOnly=$true}
+    )
     try {
         Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
         throw 'Expected replacement to reject an unlocked session.'
@@ -307,11 +315,19 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
             }
         }
         $null = Invoke-Sql @"
+INSERT dbo.Operators VALUES(1,N'P001',N'alpha',N'synthetic-test-hash'),(18,N'P22077',N'P22077',N'synthetic-test-only');
 INSERT dbo.ChemicalStatisticsJobs VALUES(NEWID(),99,NEWID(),N'Pending',0,SYSUTCDATETIME(),NULL,NULL);
 ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource CHECK (Label <> N'Source');
 "@
         try {
-            Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
+            Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping @($mapping[1])
+            throw 'Expected unmapped test credential to stop replacement.'
+        }
+        catch {
+            if ($_.Exception.Message -notlike '*Invalid or incomplete operator mapping*') { throw }
+        }
+        try {
+            Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping
             throw 'Expected multi-table replacement failure.'
         }
         catch {
@@ -319,11 +335,12 @@ ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource C
         }
         if ((Invoke-Sql 'SELECT Id FROM dbo.BatchHeader;') -ne 1 -or
             (Invoke-Sql 'SELECT Label FROM dbo.BatchDetail;') -cne 'Baseline' -or
-            (Invoke-Sql 'SELECT VariableMeasurementId FROM dbo.ChemicalStatisticsJobs;') -ne 99) {
+            (Invoke-Sql 'SELECT VariableMeasurementId FROM dbo.ChemicalStatisticsJobs;') -ne 99 -or
+            (Invoke-Sql 'SELECT COUNT(*) FROM dbo.Operators WHERE Id IN (1,18);') -ne 2) {
             throw 'Multi-table rollback did not preserve all original rows.'
         }
         $null = Invoke-Sql 'ALTER TABLE dbo.BatchDetail DROP CONSTRAINT CK_RehearsalRejectSource;'
-        Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
+        Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping
         if ((Invoke-Sql 'SELECT HeaderId FROM dbo.BatchDetail;') -ne 2 -or
             (Invoke-Sql 'SELECT Mode FROM dbo.EnvironmentSettings;') -cne 'test') {
             throw 'Multi-table replacement or retained settings verification failed.'
@@ -333,6 +350,14 @@ ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource C
             (Invoke-Sql "SELECT COUNT(*) FROM dbo.ChemicalStatisticsJobs WHERE Status=N'Failed' AND Attempts=3 AND LastError=N'original error';") -ne 1) {
             throw 'Multi-table load did not retain and isolate statistics history.'
         }
+        $preservedOperators = Invoke-Sql @"
+SELECT CASE WHEN (SELECT COUNT(*) FROM dbo.Operators)=3
+ AND EXISTS (SELECT 1 FROM dbo.Operators WHERE Id=100 AND PasswordHash=N'synthetic-test-hash')
+ AND EXISTS (SELECT 1 FROM dbo.Operators WHERE Id=18 AND PasswordHash=N'synthetic-test-only')
+ AND EXISTS (SELECT 1 FROM dbo.Operators WHERE Id=200 AND PasswordHash IS NULL)
+ THEN 1 ELSE 0 END;
+"@
+        if ($preservedOperators -ne 1) { throw 'Test credentials or test-only operator were not preserved.' }
     }
     Write-Output 'Isolated SQL rehearsal passed: snapshot, separated grants, locked multi-table replacement and rollback, retained settings, and trigger restoration.'
 }

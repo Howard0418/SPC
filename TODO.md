@@ -892,7 +892,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-PROD-1123：三批已發布，正式 SPC Web 0.1.152／API 0.1.140，正向 SSO 與業務操作稽核已有正式紀錄；待指定通知收件人與驗證投遞。[驗證](specs/20261123-spc-production-three-batches/verification.md)
 
-- [ ] SPC-TEST-REFRESH-1123：已授權測試及後續正式啟用；多表置換已驗證統計重試隔離及外送／附件阻擋。待人員保留、獨立執行身分及按鈕串接。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+- [ ] SPC-TEST-REFRESH-1123：已授權測試及後續正式啟用；人員及測試憑證的隔離置換通過，待保留設定參照、獨立執行身分及按鈕串接。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - [ ] SPC-PORTAL-PROD-ALIGN-1123：兩站技術複驗、品保 SSO 進站、錯誤紀錄與頁內三語真人驗收通過；共用系統維護翻譯已正式發布。待過期續發情境及通知收件人。[驗證](specs/20261123-production-feature-alignment/verification.md)
 
