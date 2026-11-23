@@ -3526,3 +3526,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-23 正式 SPC 安全管理者加入 ihao_ting 並保留 administrator。Web 0.1.152，API 0.1.140；安全授權測試及正式連線通過。[驗證](specs/20261123-production-security-audit/verification.md)
 
 - 2026-11-23 SPC-CHEM-ADJUST-PROD-1123 將測試已核整的藥液調整頁五欄同步正式，共 48 筆／173 欄。備份驗證、逐筆回查及重送 NoChange 通過，未重新發布網站。[驗證](specs/20261123-chemical-adjustment-parameters-production/verification.md)
+## 2026-11-23 藥液調整缺漏測試站驗證
+
+- 查回已補的 10 筆／16 欄及實際測試站資產的模擬登入顯示均通過。三筆稀釋規則待確認，兩庫與網站無異動。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
