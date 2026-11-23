@@ -3456,3 +3456,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-23 SPC 趨勢圖摘要回應相容
 
 - 既有摘要修正已發布測試 Web 0.1.177 → 0.1.178，API 0.1.163/test。19 項 Chromium 測試、測試站焦點回歸、前台版本、主資產及同源／8901 API 驗證通過。正式站未發布。[驗證](specs/20261123-trend-summary-response/verification.md)
+
+## 2026-11-23 SPC 正式站三批更新
+
+- SPC Web 0.1.143 → 0.1.146／API 0.1.137 → 0.1.139，Portal Web 1.0.285 → 1.0.287／API 1.0.260 → 1.0.262。正式 Web、資產、實際瀏覽器 API 與版本核對通過。C 批製程通知與稽核啟用有待辦。[驗證](specs/20261123-spc-production-three-batches/verification.md)

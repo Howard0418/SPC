@@ -884,3 +884,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] SPC-CHEM-OVERVIEW-ORDER-1123 線別分析項目總覽排序，隔離驗證通過，測試 Web 0.1.177 已發布，待真人驗收。[規格](specs/20261123-chemical-overview-order/spec.md)
 
 - [x] SPC-TREND-SUMMARY-1123-TASK-001：SPC Web 趨勢圖摘要相容，19 項 Chromium 測試通過；測試 Web 0.1.178／API 0.1.163/test 已核對。[驗證](specs/20261123-trend-summary-response/verification.md)
+
+- [ ] SPC-PROD-1123：正式站 A／B 已部署，C 程式及 SPC 稽核約束已部署。正式 Portal 製程通知、稽核啟用、分類收件設定及真人驗收待確認。[規格](specs/20261123-spc-production-three-batches/spec.md)

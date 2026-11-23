@@ -2123,3 +2123,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## [2026-11-23] SPC-TREND-SUMMARY-1123 測試發布
 - 驗證既有摘要相容修正，遞增 Web 版本、備份測試站並核對實際前台與 API。
 - 結果：19 項本機測試、測試站焦點回歸及實站 Web／API 驗證通過，已發布測試 Web 0.1.178，API 0.1.163/test。[驗證](../specs/20261123-trend-summary-response/verification.md)
+
+## [2026-11-23] SPC-PROD-1123 正式更新
+- 目的：依使用者確認準備 A、B、C 三批正式站更新，先驗證來源及目標。
+- 正式 A／B 及 C 程式與 SPC 約束已發布，保留正式採樣基準與每批回復點。[驗證](../specs/20261123-spc-production-three-batches/verification.md)
