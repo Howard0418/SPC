@@ -1,5 +1,7 @@
 ## 2026-11-23 測試庫刷新一致性快照演練
 
+- 統計歷史加入隔離多表置換，背景重試隔離、雙向比對與同批失敗回復通過。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
 - 69 表可寫欄位與主鍵計畫核對一致，隔離多表交易通過 identity 原值載入及回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - 本機隔離多表置換通過持鎖、父子表順序、逐表比對及中途失敗整批回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

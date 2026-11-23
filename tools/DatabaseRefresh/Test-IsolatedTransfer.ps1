@@ -157,6 +157,7 @@ REVERT;
 "@
     if ($snapshotLabel -cne 'Source') { throw 'Restricted snapshot read returned unexpected data.' }
     $projection = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ChemicalStatisticsHistory.sql') -Raw
+    $projection = $projection.Replace('{{StatisticsTable}}','dbo.ChemicalStatisticsJobs')
     $null = Invoke-Sql @"
 USE [$snapshot];
 SELECT TOP(0) * INTO #StatisticsHistory FROM dbo.ChemicalStatisticsJobs;
@@ -265,8 +266,12 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
     THROW 51011,'History replacement failed',1;
 "@
     }
-    $columns = @{ BatchHeader = @('Id'); BatchDetail = @('Id','HeaderId','Label') }
-    $order = @('BatchHeader','BatchDetail')
+    $columns = @{
+        BatchHeader = @('Id')
+        BatchDetail = @('Id','HeaderId','Label')
+        ChemicalStatisticsJobs = @('Id','VariableMeasurementId','ReceiptId','Status','Attempts','CreatedAtUtc','NextAttemptAtUtc','LastError')
+    }
+    $order = @('BatchHeader','ChemicalStatisticsJobs','BatchDetail')
     try {
         Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
         throw 'Expected replacement to reject an unlocked session.'
@@ -275,7 +280,10 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
         if ($_.Exception.Message -notlike '*Exclusive refresh lock required*') { throw }
     }
     Invoke-WithRefreshOperationLock -Connection $connection -Operation {
-        $null = Invoke-Sql "ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource CHECK (Label <> N'Source');"
+        $null = Invoke-Sql @"
+INSERT dbo.ChemicalStatisticsJobs VALUES(NEWID(),99,NEWID(),N'Pending',0,SYSUTCDATETIME(),NULL,NULL);
+ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource CHECK (Label <> N'Source');
+"@
         try {
             Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
             throw 'Expected multi-table replacement failure.'
@@ -284,14 +292,20 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
             if ($_.Exception.Message -notlike '*CK_RehearsalRejectSource*') { throw }
         }
         if ((Invoke-Sql 'SELECT Id FROM dbo.BatchHeader;') -ne 1 -or
-            (Invoke-Sql 'SELECT Label FROM dbo.BatchDetail;') -cne 'Baseline') {
-            throw 'Multi-table rollback did not preserve both original rows.'
+            (Invoke-Sql 'SELECT Label FROM dbo.BatchDetail;') -cne 'Baseline' -or
+            (Invoke-Sql 'SELECT VariableMeasurementId FROM dbo.ChemicalStatisticsJobs;') -ne 99) {
+            throw 'Multi-table rollback did not preserve all original rows.'
         }
         $null = Invoke-Sql 'ALTER TABLE dbo.BatchDetail DROP CONSTRAINT CK_RehearsalRejectSource;'
         Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader')
         if ((Invoke-Sql 'SELECT HeaderId FROM dbo.BatchDetail;') -ne 2 -or
             (Invoke-Sql 'SELECT Mode FROM dbo.EnvironmentSettings;') -cne 'test') {
             throw 'Multi-table replacement or retained settings verification failed.'
+        }
+        if ((Invoke-Sql "SELECT COUNT(*) FROM dbo.ChemicalStatisticsJobs;") -ne 3 -or
+            (Invoke-Sql "SELECT COUNT(*) FROM dbo.ChemicalStatisticsJobs WHERE Status<>N'Completed' AND (NextAttemptAtUtc IS NULL OR NextAttemptAtUtc<=SYSUTCDATETIME());") -ne 0 -or
+            (Invoke-Sql "SELECT COUNT(*) FROM dbo.ChemicalStatisticsJobs WHERE Status=N'Failed' AND Attempts=3 AND LastError=N'original error';") -ne 1) {
+            throw 'Multi-table load did not retain and isolate statistics history.'
         }
     }
     Write-Output 'Isolated SQL rehearsal passed: snapshot, separated grants, locked multi-table replacement and rollback, retained settings, and trigger restoration.'

@@ -36,6 +36,10 @@ function Invoke-IsolatedReplacement {
         $list = ($Columns[$table] | ForEach-Object { "[$_]" }) -join ','
         $from = "[$Snapshot].dbo.[$table]"
         $to = "dbo.[$table]"
+        if ($table -eq 'ChemicalStatisticsJobs') {
+            $projection = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ChemicalStatisticsHistory.sql') -Raw).Trim().TrimEnd(';')
+            $from = '(' + $projection.Replace('{{StatisticsTable}}', $from) + ') AS expected'
+        }
         if ($table -in $IdentityTables) {
             $sql.Add(@"
 SET IDENTITY_INSERT $to ON;
