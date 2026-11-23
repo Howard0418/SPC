@@ -16,3 +16,5 @@
 - 最終 Chromium 核對 SPC 首頁、Web/API 前台版號、主 JS/CSS MIME、正式來源實際跨來源 8443 health/version；Portal 登入頁、app-version、site CSS/JS MIME、8443 health 與 production 均通過。Portal API 1.0.262 以部署 DLL 驗證。
 - C 待辦：正式 Portal 缺製程角色，管制值異動的品保／製程通知未切換。SPC 分類收件功能已發布，正式未配置分類名單、未增改生效收件人或寄測試信。正式業務按鈕稽核程式及約束已上線，登入／瀏覽稽核開關未啟用且缺登入嘗試 HMAC 金鑰，故正式業務按鈕稽核尚未運作。
 - 回復根目錄為各正式主機 C:/ProgramData/PMR-Releases/Production，依上表 release ID 使用原備份。完成正式業務與登入驗收前保留未完成狀態。
+
+- 同日續作：製程角色及指定帳號關聯已建立。稽核啟用因正式執行身分未通過啟動預檢，仍待處理。[驗證](activation.md)
