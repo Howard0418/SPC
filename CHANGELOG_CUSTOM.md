@@ -3529,3 +3529,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-23 藥液調整缺漏測試站驗證
 
 - 查回已補的 10 筆／16 欄及實際測試站資產的模擬登入顯示均通過。三筆稀釋規則待確認，兩庫與網站無異動。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
+- 使用者確認驗收已補入的 10 筆／16 欄。[驗證](specs/20261122-chemical-missing-adjustment-formulas/verification.md)
