@@ -3468,3 +3468,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-23 確認正式 SPC 測試庫刷新按鈕範圍，完成來源、目標及設定參照唯讀預檢。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - 2026-11-23 SPC-TEST-REFRESH-1123 完成 SQL 目錄逐表比較與本機隔離單向交易／回復演練。正式與測試業務庫無寫入，未發布網站。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
+## 2026-11-23 SPC／Portal 正式功能對齊
+
+- SPC Web 0.1.148／API 0.1.140，Portal Web 1.0.290／API 1.0.265 正式發布，瀏覽器實際 API 與主資產核對通過。通知及刷新按鈕仍待辦。[驗證](specs/20261123-production-feature-alignment/verification.md)

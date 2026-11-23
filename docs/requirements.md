@@ -667,3 +667,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-23 SPC／Portal 正式三批更新與啟用狀態。[驗證](../specs/20261123-spc-production-three-batches/verification.md)
 
 - 正式 SPC 維護頁提供受控測試庫刷新，取代測試資料並保留測試環境設定。[規格](../specs/20261123-production-test-database-refresh-button/spec.md)
+
+- SPC 歷史查詢與 Portal SSO、角色、三語正式對齊。[驗證](../specs/20261123-production-feature-alignment/verification.md)
