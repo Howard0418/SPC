@@ -12,3 +12,4 @@
 - Chromium 實測 SPC 正式 Web 0.1.152、主 JS／CSS、總覽資產及瀏覽器使用的 8443 API health/version，結果為 `0.1.140/production`。以攔截回應驗證總覽排序，未重新登入操作業務資料。
 - Chromium 實測 Portal 正式登入頁、app-version 1.0.290.0、主要 CSS／JS MIME 及瀏覽器 8443 API health，資料庫健康及 production 標籤正常。匿名品保 SSO launch 和錯誤紀錄查詢皆返回 401。
 - 此次沒有執行品保權杖續發、管理員錯誤紀錄查閱及登入後三語驗收。通知收件人仍待指定。無新部署或業務資料異動。
+- 後續真人操作從 Portal 正式品保專區開啟 SPC。確認正式 SPC `/spc` 顯示已登入編輯者、Web 0.1.152、API 0.1.140。正式庫查回同帳號近期 `auth.sso.exchange` 為 `Succeeded`、`PortalSso`、HTTP 200。正向進站通過；刻意使權杖過期再續發的情境未執行。

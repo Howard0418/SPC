@@ -3539,3 +3539,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-23 SPC／Portal 正式功能對齊複驗
 
 - 兩站主要資產與瀏覽器 API 連線通過；Portal 匿名 SSO 與錯誤紀錄回 401。登入後角色與三語流程待驗。[驗證](specs/20261123-production-feature-alignment/verification.md)
+- 真人品保 SSO 成功進入正式 SPC，正式稽核查回 HTTP 200。[驗證](specs/20261123-production-feature-alignment/verification.md)
