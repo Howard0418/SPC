@@ -1,5 +1,7 @@
 ## 2026-11-23 測試庫刷新一致性快照演練
 
+- 排他鎖已接入本機隔離置換。成功查回與失敗回復均實測持鎖，結束後釋放。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
 - 已驗證兩條連線競爭刷新鎖時第二條即時拒絕，釋放後可再取得。待接入執行器。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - 依授權補測試 API 的測試庫目錄讀取權限，重驗 75 表與 63 筆 migration 一致。無網站發布。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

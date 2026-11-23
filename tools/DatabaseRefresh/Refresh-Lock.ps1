@@ -24,3 +24,19 @@ function Set-RefreshOperationLock {
     }
     finally { $command.Dispose() }
 }
+
+function Invoke-WithRefreshOperationLock {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][System.Data.SqlClient.SqlConnection]$Connection,
+        [Parameter(Mandatory)][scriptblock]$Operation
+    )
+
+    Set-RefreshOperationLock -Connection $Connection -Action Acquire
+    try { & $Operation }
+    finally {
+        if ($Connection.State -eq [System.Data.ConnectionState]::Open) {
+            Set-RefreshOperationLock -Connection $Connection -Action Release
+        }
+    }
+}

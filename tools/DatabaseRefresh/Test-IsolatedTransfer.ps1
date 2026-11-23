@@ -142,6 +142,8 @@ REVERT;
     $run = @"
 USE [$target];
 IF DB_NAME() <> '$target' THROW 51001, 'Target guard failed', 1;
+IF APPLOCK_MODE('public',N'SPC.DatabaseRefresh','Session') <> N'Exclusive'
+    THROW 51005, 'Refresh transaction requires an exclusive lock', 1;
 SET XACT_ABORT ON;
 EXECUTE AS USER='RefreshTarget';
 BEGIN TRY
@@ -160,18 +162,32 @@ BEGIN CATCH
 END CATCH;
 REVERT;
 "@
+    $connection.ChangeDatabase($target)
+    $lockMode = "SELECT APPLOCK_MODE('public',N'SPC.DatabaseRefresh','Session');"
     try {
-        $null = Invoke-Sql ($run -f "THROW 51003, 'Injected failure', 1;") -Label $snapshotLabel
-        throw 'Expected rollback did not run.'
+        Invoke-WithRefreshOperationLock -Connection $connection -Operation {
+            try {
+                $null = Invoke-Sql ($run -f "THROW 51003, 'Injected failure', 1;") -Label $snapshotLabel
+            }
+            catch {
+                if ($_.Exception.Message -notlike '*Injected failure*') { throw }
+                if ((Invoke-Sql $lockMode) -cne 'Exclusive' -or
+                    (Invoke-Sql 'SELECT Label FROM dbo.Operations WHERE Id=1;') -cne 'Baseline') {
+                    throw 'Rollback verification failed or lost the lock.'
+                }
+                throw
+            }
+            throw 'Expected rollback did not run.'
+        }
     }
     catch {
         if ($_.Exception.Message -notlike '*Injected failure*') { throw }
     }
-    $preserved = Invoke-Sql "SELECT Label FROM [$target].dbo.Operations WHERE Id=1;"
-    if ($preserved -cne 'Baseline') { throw 'Failed transfer changed the target.' }
+    if ((Invoke-Sql $lockMode) -cne 'NoLock') { throw 'Failed operation did not release the lock.' }
 
-    $null = Invoke-Sql ($run -f '') -Label $snapshotLabel
-    $after = Invoke-Sql @"
+    Invoke-WithRefreshOperationLock -Connection $connection -Operation {
+        $null = Invoke-Sql ($run -f '') -Label $snapshotLabel
+        $after = Invoke-Sql @"
 SELECT CASE WHEN (SELECT Label FROM [$source].dbo.Operations WHERE Id=1)='Source after backup'
             AND (SELECT Label FROM [$snapshot].dbo.Operations WHERE Id=1)='Source'
             AND DATABASEPROPERTYEX('$snapshot','Updateability')='READ_ONLY'
@@ -179,8 +195,12 @@ SELECT CASE WHEN (SELECT Label FROM [$source].dbo.Operations WHERE Id=1)='Source
             AND (SELECT Mode FROM [$target].dbo.EnvironmentSettings WHERE Id=1)='test'
        THEN 1 ELSE 0 END;
 "@
-    if ($after -ne 1) { throw 'Final source, target, or test-settings verification failed.' }
-    Write-Output 'Isolated SQL rehearsal passed: verified copy-only snapshot, point-in-time restore, source grants, one-way transfer, retained test settings, and rollback.'
+        if ($after -ne 1 -or (Invoke-Sql $lockMode) -cne 'Exclusive') {
+            throw 'Final source, target, settings, or lock verification failed.'
+        }
+    }
+    if ((Invoke-Sql $lockMode) -cne 'NoLock') { throw 'Successful operation did not release the lock.' }
+    Write-Output 'Isolated SQL rehearsal passed: snapshot, separated grants, exclusive transfer, locked verification and rollback, and lock release.'
 }
 finally {
     try {
