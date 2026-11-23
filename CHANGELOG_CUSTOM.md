@@ -3476,3 +3476,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-23 SPC-TEST-REFRESH-1123 作業人員頁先行發布停用按鈕。正式 Web 0.1.149／API 0.1.140，測試 Web 0.1.179／API 0.1.163。兩站瀏覽器與資產驗證通過，無資料庫異動。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - 2026-11-23 SPC 正式安全稽核已啟用，Web 0.1.149 → 0.1.150／API 維持 0.1.140。正式版號、資產及實際 API 驗證通過，安全管理者未指派。[驗證](specs/20261123-production-security-audit/verification.md)
+
+- 2026-11-23 依使用者指定，正式 SPC 安全管理者加入 administrator，Web 0.1.151／API 0.1.140。正式連線與版號通過，個人稽核權限保持。[驗證](specs/20261123-production-security-audit/verification.md)

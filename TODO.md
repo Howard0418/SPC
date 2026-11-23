@@ -891,4 +891,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-PORTAL-PROD-ALIGN-1123：SPC 日期／備註／重試、Portal 品保 SSO／管理員錯誤紀錄／主管退役／三語已發布；通知收件與真人驗收待辦。[規格](specs/20261123-production-feature-alignment/spec.md)
 
-- [x] SPC-PROD-SECURITY-AUDIT-1123：正式安全稽核旗標已啟用，Web 0.1.150／API 0.1.140；安全管理者未指派。[驗證](specs/20261123-production-security-audit/verification.md)
+- [x] SPC-PROD-SECURITY-AUDIT-1123：正式安全稽核旗標已啟用，Web 0.1.151／API 0.1.140；已指派 administrator，個人敏感權限須明示授權。[驗證](specs/20261123-production-security-audit/verification.md)
