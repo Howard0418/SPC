@@ -3552,3 +3552,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-23 測試庫刷新人員保留
 
 - 隔離交易已驗證測試登入及 P22077 原 ID 保留，正式密碼雜湊不帶入，失敗時整批回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+- 同批驗證保留報表及告警收件人重新對應、未映射阻擋及失敗回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

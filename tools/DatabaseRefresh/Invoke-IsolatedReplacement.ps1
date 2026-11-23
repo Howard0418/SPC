@@ -59,6 +59,26 @@ IF EXISTS(SELECT TargetId FROM #OperatorMapping GROUP BY TargetId HAVING COUNT(*
     THROW 51024,'Invalid or incomplete operator mapping',1;
 SELECT t.* INTO #TestOperators FROM dbo.Operators t JOIN #OperatorMapping m ON m.TargetId=t.Id;
 "@)
+        foreach ($settings in 'SpcReportSchedules', 'SpcAlertNotificationSettings') {
+            if ($ordered.Contains($settings)) { throw 'Preserved notification settings cannot be replaced.' }
+            $sql.Add(@"
+IF EXISTS (SELECT 1 FROM dbo.[$settings]
+    WHERE COALESCE(ISJSON(RecipientOperatorIdsJson, ARRAY),0) <> 1)
+    THROW 51025,'Invalid recipient array in $settings',1;
+IF EXISTS (SELECT 1 FROM dbo.[$settings] s CROSS APPLY OPENJSON(s.RecipientOperatorIdsJson) j
+    LEFT JOIN #OperatorMapping m ON m.TargetId=TRY_CONVERT(int,j.value)
+    WHERE j.type<>2 OR m.TargetId IS NULL)
+    THROW 51026,'Invalid or unmapped recipient in $settings',1;
+UPDATE s SET RecipientOperatorIdsJson=r.Recipients
+FROM dbo.[$settings] s CROSS APPLY (
+    SELECT N'['+STRING_AGG(CONVERT(nvarchar(max),COALESCE(m.SourceId,m.TargetId)),N',')
+        WITHIN GROUP (ORDER BY CONVERT(int,j.[key]))+N']' AS Recipients,
+        MAX(CASE WHEN m.SourceId<>m.TargetId THEN 1 ELSE 0 END) AS Changed
+    FROM OPENJSON(s.RecipientOperatorIdsJson) j
+    JOIN #OperatorMapping m ON m.TargetId=CONVERT(int,j.value)
+) r WHERE r.Changed=1;
+"@)
+        }
     }
     for ($index = $InsertOrder.Count - 1; $index -ge 0; $index--) {
         $sql.Add("DELETE FROM dbo.[$($InsertOrder[$index])];")

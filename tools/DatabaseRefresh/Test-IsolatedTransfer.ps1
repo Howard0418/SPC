@@ -46,6 +46,8 @@ CREATE TABLE dbo.MesSyncMessages(Id int NOT NULL PRIMARY KEY, SyncStatus nvarcha
 CREATE TABLE dbo.CalibrationNotifications(Id int NOT NULL PRIMARY KEY, State nvarchar(20) NOT NULL, NextAttemptAt datetime2 NULL);
 CREATE TABLE dbo.CalibrationCertificates(Id int NOT NULL PRIMARY KEY);
 CREATE TABLE dbo.Operators(Id int NOT NULL PRIMARY KEY, OperatorCode nvarchar(20) NOT NULL, Username nvarchar(20) NULL, PasswordHash nvarchar(40) NULL);
+CREATE TABLE dbo.SpcReportSchedules(Id int NOT NULL PRIMARY KEY, RecipientOperatorIdsJson nvarchar(max) NOT NULL, Mode nvarchar(10) NOT NULL);
+CREATE TABLE dbo.SpcAlertNotificationSettings(Id int NOT NULL PRIMARY KEY, RecipientOperatorIdsJson nvarchar(max) NOT NULL);
 INSERT dbo.BatchHeader DEFAULT VALUES;
 INSERT dbo.BatchDetail VALUES(1,1,N'Baseline');
 CREATE TABLE dbo.ChemicalStatisticsJobs(
@@ -316,9 +318,23 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
         }
         $null = Invoke-Sql @"
 INSERT dbo.Operators VALUES(1,N'P001',N'alpha',N'synthetic-test-hash'),(18,N'P22077',N'P22077',N'synthetic-test-only');
+INSERT dbo.SpcReportSchedules VALUES(1,N'[18, 1]',N'test');
+INSERT dbo.SpcAlertNotificationSettings VALUES(1,N'[18 ]'),(2,N'[]');
 INSERT dbo.ChemicalStatisticsJobs VALUES(NEWID(),99,NEWID(),N'Pending',0,SYSUTCDATETIME(),NULL,NULL);
 ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource CHECK (Label <> N'Source');
 "@
+        $null = Invoke-Sql "INSERT dbo.SpcAlertNotificationSettings VALUES(3,N'[999]');"
+        try {
+            Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping
+            throw 'Expected missing recipient mapping to stop replacement.'
+        }
+        catch {
+            if ($_.Exception.Message -notlike '*Invalid or unmapped recipient*') { throw }
+        }
+        if ((Invoke-Sql 'SELECT RecipientOperatorIdsJson FROM dbo.SpcReportSchedules WHERE Id=1;') -cne '[18, 1]') {
+            throw 'Recipient validation failure changed report settings.'
+        }
+        $null = Invoke-Sql 'DELETE dbo.SpcAlertNotificationSettings WHERE Id=3;'
         try {
             Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping @($mapping[1])
             throw 'Expected unmapped test credential to stop replacement.'
@@ -336,7 +352,8 @@ ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource C
         if ((Invoke-Sql 'SELECT Id FROM dbo.BatchHeader;') -ne 1 -or
             (Invoke-Sql 'SELECT Label FROM dbo.BatchDetail;') -cne 'Baseline' -or
             (Invoke-Sql 'SELECT VariableMeasurementId FROM dbo.ChemicalStatisticsJobs;') -ne 99 -or
-            (Invoke-Sql 'SELECT COUNT(*) FROM dbo.Operators WHERE Id IN (1,18);') -ne 2) {
+            (Invoke-Sql 'SELECT COUNT(*) FROM dbo.Operators WHERE Id IN (1,18);') -ne 2 -or
+            (Invoke-Sql 'SELECT RecipientOperatorIdsJson FROM dbo.SpcReportSchedules WHERE Id=1;') -cne '[18, 1]') {
             throw 'Multi-table rollback did not preserve all original rows.'
         }
         $null = Invoke-Sql 'ALTER TABLE dbo.BatchDetail DROP CONSTRAINT CK_RehearsalRejectSource;'
@@ -358,6 +375,11 @@ SELECT CASE WHEN (SELECT COUNT(*) FROM dbo.Operators)=3
  THEN 1 ELSE 0 END;
 "@
         if ($preservedOperators -ne 1) { throw 'Test credentials or test-only operator were not preserved.' }
+        if ((Invoke-Sql "SELECT COUNT(*) FROM dbo.SpcReportSchedules WHERE Id=1 AND RecipientOperatorIdsJson=N'[18,100]' AND Mode=N'test';") -ne 1 -or
+            (Invoke-Sql "SELECT RecipientOperatorIdsJson FROM dbo.SpcAlertNotificationSettings WHERE Id=1;") -cne '[18 ]' -or
+            (Invoke-Sql "SELECT RecipientOperatorIdsJson FROM dbo.SpcAlertNotificationSettings WHERE Id=2;") -cne '[]') {
+            throw 'Retained notification settings did not preserve recipients and ordering.'
+        }
     }
     Write-Output 'Isolated SQL rehearsal passed: snapshot, separated grants, locked multi-table replacement and rollback, retained settings, and trigger restoration.'
 }
