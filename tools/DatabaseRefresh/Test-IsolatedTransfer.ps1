@@ -2,6 +2,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'Refresh-Lock.ps1')
 $connection = [System.Data.SqlClient.SqlConnection]::new(
     'Server=localhost;Database=master;Integrated Security=true;TrustServerCertificate=true;Connect Timeout=5')
 $suffix = [guid]::NewGuid().ToString('N')
@@ -41,6 +42,32 @@ CREATE TABLE dbo.EnvironmentSettings(Id int NOT NULL PRIMARY KEY, Mode nvarchar(
 INSERT INTO dbo.Operations VALUES(1, 'Baseline');
 INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
 "@
+    }
+
+    $connection.ChangeDatabase($target)
+    $competitorConfig = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($connection.ConnectionString)
+    $competitorConfig['Initial Catalog'] = $target
+    $competitorConfig['Pooling'] = $false
+    $competitor = [System.Data.SqlClient.SqlConnection]::new($competitorConfig.ConnectionString)
+    try {
+        $competitor.Open()
+        Set-RefreshOperationLock -Connection $connection -Action Acquire
+        try {
+            try {
+                Set-RefreshOperationLock -Connection $competitor -Action Acquire
+                throw 'A competing connection unexpectedly obtained the operation lock.'
+            }
+            catch {
+                if ($_.Exception.Message -cne 'A refresh operation already holds the test database lock.') { throw }
+            }
+        }
+        finally { Set-RefreshOperationLock -Connection $connection -Action Release }
+        Set-RefreshOperationLock -Connection $competitor -Action Acquire
+        Set-RefreshOperationLock -Connection $competitor -Action Release
+    }
+    finally {
+        $competitor.Dispose()
+        $connection.ChangeDatabase('master')
     }
 
     $null = Invoke-Sql @"
