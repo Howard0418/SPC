@@ -892,3 +892,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] SPC-PORTAL-PROD-ALIGN-1123：SPC 日期／備註／重試、Portal 品保 SSO／管理員錯誤紀錄／主管退役／三語已發布；通知收件與真人驗收待辦。[規格](specs/20261123-production-feature-alignment/spec.md)
 
 - [x] SPC-PROD-SECURITY-AUDIT-1123：正式安全稽核旗標已啟用，Web 0.1.152／API 0.1.140；已指派 administrator 及 ihao_ting，個人敏感權限須由另一位管理者明示授權。[驗證](specs/20261123-production-security-audit/verification.md)
+
+- [x] SPC-CHEM-ADJUST-PROD-1123：藥液量測調整公式頁五欄同步正式 48 筆／173 欄，正式回查與重送通過。[驗證](specs/20261123-chemical-adjustment-parameters-production/verification.md)

@@ -2162,3 +2162,7 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 ## [2026-11-23] SPC 正式第二位安全管理者
 - 目的：依使用者指定加入 ihao_ting 並保留 administrator，維持禁止自授權規則。
 - 結果：正式兩位安全管理者設定已核對，無個人權限異動。[驗證](../specs/20261123-production-security-audit/verification.md)
+
+## [2026-11-23] SPC 藥液調整參數正式受控同步
+- 目的：依使用者授權將已核整的五個頁面欄位同步正式，保護其他資料。
+- 結果：正式同步 48 筆／173 欄及設定版本、稽核，保護指紋與重送通過。[驗證](../specs/20261123-chemical-adjustment-parameters-production/verification.md)
