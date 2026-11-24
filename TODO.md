@@ -890,11 +890,11 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] SPC-TREND-SUMMARY-1123-TASK-001：SPC Web 趨勢圖摘要相容，19 項 Chromium 測試通過；測試 Web 0.1.178／API 0.1.163/test 已核對。[驗證](specs/20261123-trend-summary-response/verification.md)
 
-- [ ] SPC-PROD-1123：三批已發布，正向稽核已驗證；SPC 四類收件人已設 ihao_ting，待共用通知投遞與 Portal Email 補正。[驗證](specs/20261124-production-notification-recipient/verification.md)
+- [ ] SPC-PROD-1123：三批已發布，正向稽核與 SPC 正式測試信到信已驗證；待 Portal Email 補正與投遞驗證。[驗證](specs/20261124-production-notification-recipient/verification.md)
 
 - [ ] SPC-TEST-REFRESH-1123：已授權測試及後續正式啟用；人員、憑證及收件人參照隔離置換通過，待獨立執行身分與按鈕串接。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
-- [ ] SPC-PORTAL-PROD-ALIGN-1123：兩站功能驗收已完成；SPC 四類收件人已設定 ihao_ting，待共用通知投遞與 Portal Email 補正。[驗證](specs/20261123-production-feature-alignment/verification.md)
+- [ ] SPC-PORTAL-PROD-ALIGN-1123：兩站功能驗收完成，SPC 正式測試信已到信；待 Portal Email 補正與投遞驗證。[驗證](specs/20261123-production-feature-alignment/verification.md)
 
 - [x] SPC-PROD-SECURITY-AUDIT-1123：正式安全稽核旗標已啟用，Web 0.1.152／API 0.1.140；已指派 administrator 及 ihao_ting，個人敏感權限須由另一位管理者明示授權。[驗證](specs/20261123-production-security-audit/verification.md)
 

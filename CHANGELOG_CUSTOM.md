@@ -3548,6 +3548,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-24 Portal 品保 SSO 正式過期續發
 
 - SPC 四類正式通知已設定 ihao_ting，Web 0.1.153／API 0.1.140 已驗證。Portal 郵件補正與投遞待處理。[驗證](specs/20261124-production-notification-recipient/verification.md)
+- 使用者確認收到 SPC 正式測試信，SMTP 寄送及到信驗收通過。[驗證](specs/20261124-production-notification-recipient/verification.md)
 
 - 維持原 Portal 登入，距上一筆交換超過 60 分鐘重新開啟 SPC。正式稽核查回新交換成功（HTTP 200），過期續發驗收通過。[驗證](specs/20261123-production-feature-alignment/verification.md)
 
