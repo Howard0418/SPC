@@ -3548,6 +3548,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 ## 2026-11-24 測試庫刷新啟用前權限核對
 
 - 已使用兩站實際 API 身分確認來源備份與目標置換需獨立執行權限。按鈕尚未啟用。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+- 不可變歷史觸發器已接到隔離置換交易，提交前恢復與失敗時一併回復均通過。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 ## 2026-11-24 Portal 品保 SSO 正式過期續發
 

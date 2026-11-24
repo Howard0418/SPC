@@ -6,7 +6,8 @@ function Invoke-IsolatedReplacement {
         [Parameter(Mandatory)][string[]]$InsertOrder,
         [Parameter(Mandatory)][hashtable]$Columns,
         [string[]]$IdentityTables = @(),
-        [object[]]$OperatorMapping = @()
+        [object[]]$OperatorMapping = @(),
+        [hashtable]$MaintenanceTriggers = @{}
     )
 
     if ($Connection.DataSource -cne 'localhost' -or
@@ -80,6 +81,16 @@ FROM dbo.[$settings] s CROSS APPLY (
 "@)
         }
     }
+    $restoreTriggers = [System.Collections.Generic.List[string]]::new()
+    foreach ($table in $MaintenanceTriggers.Keys | Sort-Object) {
+        if (!$ordered.Contains($table)) { throw 'A maintenance trigger table is outside the rehearsal plan.' }
+        foreach ($trigger in $MaintenanceTriggers[$table]) {
+            if ($trigger -cnotmatch '^[A-Za-z_][A-Za-z0-9_]*$') { throw 'Invalid maintenance trigger name.' }
+            $sql.Add("IF NOT EXISTS(SELECT 1 FROM sys.triggers WHERE object_id=OBJECT_ID(N'dbo.[$trigger]') AND parent_id=OBJECT_ID(N'dbo.[$table]') AND is_disabled=0) THROW 51027,'Unexpected trigger state or table',1;")
+            $sql.Add("DISABLE TRIGGER dbo.[$trigger] ON dbo.[$table];")
+            $restoreTriggers.Add("ENABLE TRIGGER dbo.[$trigger] ON dbo.[$table];")
+        }
+    }
     for ($index = $InsertOrder.Count - 1; $index -ge 0; $index--) {
         $sql.Add("DELETE FROM dbo.[$($InsertOrder[$index])];")
     }
@@ -125,6 +136,7 @@ IF (SELECT COUNT_BIG(*) FROM $from) <> (SELECT COUNT_BIG(*) FROM $to)
    THROW 51022,'Rehearsal comparison failed: $table',1;
 "@)
     }
+    $sql.AddRange($restoreTriggers)
     if ($ordered.Contains('Operators')) { $sql.Add('DROP TABLE #TestOperators, #OperatorMapping;') }
     $sql.Add('COMMIT; END TRY BEGIN CATCH IF XACT_STATE() <> 0 ROLLBACK; THROW; END CATCH;')
     $command = $Connection.CreateCommand()

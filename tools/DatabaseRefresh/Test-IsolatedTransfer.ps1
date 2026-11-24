@@ -45,6 +45,8 @@ CREATE TABLE dbo.BatchDetail(Id int NOT NULL PRIMARY KEY, HeaderId int NOT NULL 
 CREATE TABLE dbo.MesSyncMessages(Id int NOT NULL PRIMARY KEY, SyncStatus nvarchar(20) NOT NULL);
 CREATE TABLE dbo.CalibrationNotifications(Id int NOT NULL PRIMARY KEY, State nvarchar(20) NOT NULL, NextAttemptAt datetime2 NULL);
 CREATE TABLE dbo.CalibrationCertificates(Id int NOT NULL PRIMARY KEY);
+CREATE TABLE dbo.ReplacementHistory(Id int NOT NULL PRIMARY KEY);
+INSERT dbo.ReplacementHistory VALUES(1);
 CREATE TABLE dbo.Operators(Id int NOT NULL PRIMARY KEY, OperatorCode nvarchar(20) NOT NULL, Username nvarchar(20) NULL, PasswordHash nvarchar(40) NULL);
 CREATE TABLE dbo.SpcReportSchedules(Id int NOT NULL PRIMARY KEY, RecipientOperatorIdsJson nvarchar(max) NOT NULL, Mode nvarchar(10) NOT NULL);
 CREATE TABLE dbo.SpcAlertNotificationSettings(Id int NOT NULL PRIMARY KEY, RecipientOperatorIdsJson nvarchar(max) NOT NULL);
@@ -88,6 +90,7 @@ INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
     $null = Invoke-Sql @"
 USE [$source];
 UPDATE dbo.Operations SET Label='Source';
+UPDATE dbo.ReplacementHistory SET Id=2;
 INSERT dbo.MesSyncMessages VALUES(1,N'Pending');
 INSERT dbo.CalibrationNotifications VALUES(1,N'Failed',DATEADD(day,1,SYSUTCDATETIME()));
 INSERT dbo.CalibrationCertificates VALUES(1);
@@ -280,10 +283,12 @@ IF NOT EXISTS(SELECT 1 FROM dbo.ImmutableHistory WHERE Id=2)
     $columns = @{
         BatchHeader = @('Id')
         BatchDetail = @('Id','HeaderId','Label')
+        ReplacementHistory = @('Id')
         ChemicalStatisticsJobs = @('Id','VariableMeasurementId','ReceiptId','Status','Attempts','CreatedAtUtc','NextAttemptAtUtc','LastError')
         Operators = @('Id','OperatorCode','Username','PasswordHash')
     }
-    $order = @('BatchHeader','ChemicalStatisticsJobs','Operators','BatchDetail')
+    $order = @('BatchHeader','ChemicalStatisticsJobs','Operators','ReplacementHistory','BatchDetail')
+    $maintenanceTriggers = @{ ReplacementHistory = @('ReplacementHistoryDeleteGuard') }
     $mapping = @(
         @{TargetId=1;SourceId=100;RetainTestOnly=$false},
         @{TargetId=18;SourceId=$null;RetainTestOnly=$true}
@@ -321,6 +326,7 @@ INSERT dbo.Operators VALUES(1,N'P001',N'alpha',N'synthetic-test-hash'),(18,N'P22
 INSERT dbo.SpcReportSchedules VALUES(1,N'[18, 1]',N'test');
 INSERT dbo.SpcAlertNotificationSettings VALUES(1,N'[18 ]'),(2,N'[]');
 INSERT dbo.ChemicalStatisticsJobs VALUES(NEWID(),99,NEWID(),N'Pending',0,SYSUTCDATETIME(),NULL,NULL);
+EXEC(N'CREATE TRIGGER dbo.ReplacementHistoryDeleteGuard ON dbo.ReplacementHistory INSTEAD OF DELETE AS THROW 51030, ''History delete refused'', 1;');
 ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource CHECK (Label <> N'Source');
 "@
         $null = Invoke-Sql "INSERT dbo.SpcAlertNotificationSettings VALUES(3,N'[999]');"
@@ -343,7 +349,7 @@ ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource C
             if ($_.Exception.Message -notlike '*Invalid or incomplete operator mapping*') { throw }
         }
         try {
-            Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping
+            Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping -MaintenanceTriggers $maintenanceTriggers
             throw 'Expected multi-table replacement failure.'
         }
         catch {
@@ -353,11 +359,17 @@ ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource C
             (Invoke-Sql 'SELECT Label FROM dbo.BatchDetail;') -cne 'Baseline' -or
             (Invoke-Sql 'SELECT VariableMeasurementId FROM dbo.ChemicalStatisticsJobs;') -ne 99 -or
             (Invoke-Sql 'SELECT COUNT(*) FROM dbo.Operators WHERE Id IN (1,18);') -ne 2 -or
-            (Invoke-Sql 'SELECT RecipientOperatorIdsJson FROM dbo.SpcReportSchedules WHERE Id=1;') -cne '[18, 1]') {
+            (Invoke-Sql 'SELECT RecipientOperatorIdsJson FROM dbo.SpcReportSchedules WHERE Id=1;') -cne '[18, 1]' -or
+            (Invoke-Sql 'SELECT Id FROM dbo.ReplacementHistory;') -ne 1 -or
+            (Invoke-Sql "SELECT CONVERT(int,is_disabled) FROM sys.triggers WHERE object_id=OBJECT_ID(N'dbo.ReplacementHistoryDeleteGuard');") -ne 0) {
             throw 'Multi-table rollback did not preserve all original rows.'
         }
         $null = Invoke-Sql 'ALTER TABLE dbo.BatchDetail DROP CONSTRAINT CK_RehearsalRejectSource;'
-        Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping
+        Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping -MaintenanceTriggers $maintenanceTriggers
+        if ((Invoke-Sql 'SELECT Id FROM dbo.ReplacementHistory;') -ne 2 -or
+            (Invoke-Sql "SELECT CONVERT(int,is_disabled) FROM sys.triggers WHERE object_id=OBJECT_ID(N'dbo.ReplacementHistoryDeleteGuard');") -ne 0) {
+            throw 'Replacement history or its protection did not persist.'
+        }
         if ((Invoke-Sql 'SELECT HeaderId FROM dbo.BatchDetail;') -ne 2 -or
             (Invoke-Sql 'SELECT Mode FROM dbo.EnvironmentSettings;') -cne 'test') {
             throw 'Multi-table replacement or retained settings verification failed.'
