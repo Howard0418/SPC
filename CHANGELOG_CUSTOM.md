@@ -3550,6 +3550,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 已使用兩站實際 API 身分確認來源備份與目標置換需獨立執行權限。按鈕尚未啟用。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 - 不可變歷史觸發器已接到隔離置換交易，提交前恢復與失敗時一併回復均通過。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 - 已設定指定執行身分的測試庫備份權並查回，正式庫無異動。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+- 指定身分的測試備份及既有維護身分的正式來源備份，皆通過 COPY_ONLY、CHECKSUM 與 VERIFYONLY。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 ## 2026-11-24 Portal 品保 SSO 正式過期續發
 

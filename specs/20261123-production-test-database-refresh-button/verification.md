@@ -149,3 +149,9 @@
 - 透過 Windows 整合 SQL 連線確認 `PMR\ihao_ting` 可連兩庫，非 sysadmin、非 db_owner。依使用者指定只在 `PMR_SPC_TEST` 加入 BACKUP DATABASE，實際重新連線查回生效。
 - 正式庫同帳號沒有備份或人員更新權，未變更任何正式庫權限。測試目標完整置換、來源備份交接、獨立驗證及 API／按鈕串接仍待完成。
 - 測試權限回復是在 `PMR_SPC_TEST` 對同一帳號撤銷 BACKUP DATABASE。本次未實際備份或刷新，按鈕仍未啟用。
+
+## 2026-11-24 實機來源與目標備份交接
+
+- `PMR\ihao_ting` 以整合登入建立 `PMR_SPC_TEST-REFRESH-IDENTITY-1124-525f04e2a13e4ec5b7b6525819ff7e66.bak`。維護身分查到同檔由指定帳號建立，COPY_ONLY、CHECKSUM 與 RESTORE VERIFYONLY 均通過。
+- 正式 `PMR_SPC_2026` 由既有維護身分建立 `PMR_SPC_2026-REFRESH-SOURCE-1124-96ecf17bb6b145309d2142519f1aa7d4.bak`，COPY_ONLY、CHECKSUM、來源識別及 VERIFYONLY 均通過。未變更正式權限。
+- 本次為實機備份與驗證，尚未還原正式副本、置換現行測試庫或部署網站。實際刷新仍須以該次作業的新備份執行。
