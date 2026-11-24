@@ -3615,3 +3615,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 依授權完成 C5 正式 11/25 生效排程 640，SPC 正式 Web 0.1.154／API 0.1.141 及 Portal 正式 Web 1.0.293／API 1.0.268 已驗證。[排程](specs/20261124-c5-adjustment-effectivity/verification.md)與[網站](specs/20261124-chemical-adjustment-immediate/verification.md)。
 
 - 使用者確認正式 Portal C5 清潔硫酸 10/21 錄入試算與 Excel 一致。
+
+- 依授權補正式 C5 清潔硫酸 11/23 單日排程，修訂 642。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
