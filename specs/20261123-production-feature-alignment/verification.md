@@ -19,3 +19,4 @@
 - 共用「系統維護」翻譯已補發布正式 Portal Web 1.0.292／API 1.0.267。已用正式站腳本與詞庫在隔離頁面驗證三種按鈕文案。
 - 2026-11-24 使用者依驗收步驟保持原 Portal 登入工作階段，由品保專區重新開啟 SPC。正式稽核查回上一筆成功交換為 11-23 22:53:55，新成功交換為 11-24 00:02:53 與 00:02:59（台灣時間），皆為 PortalSso、HTTP 200。首次新交換距上一筆 68 分 58 秒，超過 60 分鐘效期，正式過期續發驗收通過。
 - SPC 四類通知設定 ihao_ting 已查回。Portal 同帳號缺 Email，投遞待驗。[共用通知驗證](../20261124-production-notification-recipient/verification.md)
+- Portal Email 已補正，角色與收件條件查回通過，使用者確認收到正式 SMTP 測試信。兩站功能對齊結案。[共用通知驗證](../20261124-production-notification-recipient/verification.md)
