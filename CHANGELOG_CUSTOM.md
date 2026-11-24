@@ -3607,3 +3607,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 另補 C5 10/21 單日測試排程 1754，10/21 的 Excel 結果可重現，其他區間維持。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
 
 - 已在 Portal 測試站登入核對 C5 10/21 單日排程試算結果。
+
+- 正式 C5 10/21 單日排程預演因 7 組既有歷史憑證差異受阻，正式排程 539 保持。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
