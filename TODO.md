@@ -892,7 +892,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] SPC-PROD-1123：三批已發布，正向稽核已驗證，兩站正式通知收件設定與 SMTP 到信驗收完成。[驗證](specs/20261124-production-notification-recipient/verification.md)
 
-- [ ] SPC-TEST-REFRESH-1123：啟用已授權；隔離多表置換含歷史觸發器回復驗證通過，待獨立身分、實機置換與按鈕串接。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+- [ ] SPC-TEST-REFRESH-1123：啟用已授權，指定 PMR\ihao_ting 並完成測試備份授權；待來源備份交接、實機置換及按鈕串接。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - [x] SPC-PORTAL-PROD-ALIGN-1123：兩站功能及共用通知收件設定、SMTP 到信驗收完成。[驗證](specs/20261123-production-feature-alignment/verification.md)
 
