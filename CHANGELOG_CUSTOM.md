@@ -3623,3 +3623,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 移除 Portal 錄入量測時間欄與跨日試算，撤回測試補排程端點。SPC 測試 0.1.185／0.1.169、Portal 測試 1.0.362／1.0.323。[驗證](specs/20261124-chemical-entry-remove-comparison/verification.md)
 
 - Portal 新試算及儲存依 SPC 現行調整與調整量公式；濃度仍依日期排程。測試 SPC 0.1.186／0.1.170、Portal 1.0.363／1.0.324。[驗證](specs/20261124-chemical-current-adjustment-source/verification.md)
+
+- 複驗第二滴定值留白以 C3 真實測試資料驗證確認憑證成功，交易回復，整份實機儲存仍待驗收。
