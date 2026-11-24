@@ -50,9 +50,14 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
         var at=ChemicalFormulaCalculation.ParseMeasuredAt(request.MeasuredAt);
         if(request.SamplingPhase is not ("OPEN" or "MIDDLE"))throw ApiUiException.Attach(new ArgumentException("請選早班或中班。"), "spc.api.chemicalShiftRequired");
         if(!ChemicalSamplingStage.TryNormalize(mapping.Machine?.MachineCode,request.SamplingStage,out var stage))throw ApiUiException.Attach(new ArgumentException(ChemicalSamplingStage.Error), "spc.api.chemicalSamplingStageInvalid");
-        var secondary=string.IsNullOrWhiteSpace(request.Secondary)?null:request.Secondary;
+        var secondary=NormalizeSecondary(request.Secondary);
         return new(request.MeasuredAt,request.Primary,secondary,$"PortalDaily|{request.PpcId}|{at.AddHours(8):yyyyMMdd}|{request.SamplingPhase}|{stage}",request.Phase);
     }
+
+    private static string? NormalizeSecondary(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+
+    internal static ChemicalPreviewInput CreateRecheckInput(ChemicalPreviewInput initial, string primary, string? secondary) =>
+        initial with { Primary = primary, Secondary = NormalizeSecondary(secondary), Phase = "Recheck" };
 
     /// <summary>Dates and original decimal strings are resolved by SPC; no custom expression from the browser is trusted.</summary>
     public async Task<ChemicalPreviewResult> PreviewAsync(ChemicalPortalPreviewRequest request,string actor,CancellationToken ct)
@@ -105,7 +110,8 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 if(hasRecheck)
                 {
                     if(string.IsNullOrWhiteSpace(Get(row,"ChemicalRecheckPreviewToken")))throw ApiUiException.Attach(new ChemicalPreviewConflictException("複驗尚未預覽，請重新計算。"), "spc.api.chemicalRecheckPreviewRequired");
-                    recheck=await schedule.PrepareAsync(id,new(input with{Primary=Get(row,"RecheckTitrationValue")!,Secondary=Get(row,"RecheckSecondaryTitrationValue"),Phase="Recheck"},Get(row,"ChemicalRecheckPreviewToken")!),actor,ct);
+                    var recheckInput = CreateRecheckInput(input, Get(row,"RecheckTitrationValue")!, Get(row,"RecheckSecondaryTitrationValue"));
+                    recheck=await schedule.PrepareAsync(id,new(recheckInput,Get(row,"ChemicalRecheckPreviewToken")!),actor,ct);
                 }
                 evidence[id]=new(initial,recheck);
                 var value=Result(initial);var final=recheck is null?value:Result(recheck);
