@@ -3609,3 +3609,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 已在 Portal 測試站登入核對 C5 10/21 單日排程試算結果。
 
 - 正式 C5 10/21 單日排程預演因 7 組既有歷史憑證差異受阻，正式排程 539 保持。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
+
+- 正式 C5 清潔硫酸 10/21 單日排程完成，七日依既有憑證對齊，正式修訂 638。提交後試算各 -385 L，未更新網站。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
