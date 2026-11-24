@@ -3545,6 +3545,10 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - Portal 正式錯誤紀錄頁內容三語切換通過，共用系統維護按鈕仍有翻譯差異。[驗證](specs/20261123-production-feature-alignment/verification.md)
 - 共用系統維護按鈕三語已補發布正式並完成資產驗證。[驗證](specs/20261123-production-feature-alignment/verification.md)
 
+## 2026-11-24 測試庫刷新啟用前權限核對
+
+- 已使用兩站實際 API 身分確認來源備份與目標置換需獨立執行權限。按鈕尚未啟用。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
 ## 2026-11-24 Portal 品保 SSO 正式過期續發
 
 - SPC 四類正式通知已設定 ihao_ting，Web 0.1.153／API 0.1.140 已驗證。Portal 郵件補正與投遞待處理。[驗證](specs/20261124-production-notification-recipient/verification.md)
