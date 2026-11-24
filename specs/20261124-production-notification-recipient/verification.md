@@ -5,3 +5,4 @@
 - 正式回復點 `SPC-PROD-RECIPIENT-1124-WEB153-R3`。還原前版設定與前台入口並重新啟動 API。
 - Portal 正式 ihao_ting 啟用，但 Email 欄空白。Portal 通知規則與人員資料未改，待確認是否沿用 SPC 帳號的信箱補正。未寄驗證信，投遞仍待驗。
 - 使用者後續確認已操作 SPC 正式測試發送並收到測試信。SMTP 寄送及到信驗收通過；四類設定已查回，未以正式業務事件逐類觸發。Portal 待 Email 補正與獨立投遞驗證。
+- 使用者在 Portal 正式權限管理補入 Email。唯讀查回 ihao_ting 具有效 Email、啟用且未封存，並具品保及製程角色，符合管制值異動通知收件條件；通知以 Email 去重。Portal 實際投遞仍待驗證。
