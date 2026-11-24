@@ -4,3 +4,5 @@
 - Portal Chromium 的排程變更、原時點保留、送出與預覽時間一致三項通過。開啟中的前景未儲存列會在檢測新修訂後重新預覽，測試未發出儲存請求。
 
 - 測試發布：SPC Web 0.1.182 → 0.1.183、API 0.1.166 → 0.1.167；Portal Web 1.0.358 → 1.0.359、API 1.0.319 → 1.0.320。測試環境的資產、前台版本、API 連線與版本均通過。回復點 release/backups/chemical-immediate-1124 與 D:/PmrPortal_Backups/chemical-immediate-1124-web359。正式未發布，待登入驗收。
+
+- 登入 Portal 測試站確認 C5 清潔硫酸的 11/23 早班日報仍為各 209 L；同頁選 11/25 試算顯示第 27 版各 -385 L。此步驟未改動公式或日報，前景草稿自動重算由 Chromium 自動化驗證。

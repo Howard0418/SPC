@@ -907,4 +907,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] SPC-CHEM-ADJUST-10MIN-1124：測試完成，正式發布由立即生效需求取代。[原規格](specs/20261124-chemical-adjustment-ten-minute/spec.md)
 
-- [ ] SPC-CHEM-ADJUST-NOW-1124：調整量公式立即生效及前景錄入重新試算已發布測試，待登入驗收與正式授權。[規格](specs/20261124-chemical-adjustment-immediate/spec.md)
+- [ ] SPC-CHEM-ADJUST-NOW-1124：調整量公式立即生效及前景錄入重新試算已發布測試，C5 登入試算已核對，待正式發布授權。[規格](specs/20261124-chemical-adjustment-immediate/spec.md)
