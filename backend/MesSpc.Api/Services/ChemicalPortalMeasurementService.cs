@@ -116,7 +116,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 evidence[id]=new(initial,recheck);
                 var value=Result(initial);var final=recheck is null?value:Result(recheck);
                 row["MeasuredValue"]=value.Stored;row["RecheckValue"]=recheck is null?"":final.Stored;
-                row["AdjustAction"]=final.Adjustment;row["AdjustAmount"]=final.AdjustmentAmount;
+                row["AdjustAction"]=value.Adjustment;row["AdjustAmount"]=value.AdjustmentAmount;
 
                 row["IsExcluded"]="false";
                 row["ExclusionReason"]=NormalizeEntryRemark(Get(row,"ExclusionReason"))??"";

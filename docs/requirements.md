@@ -673,3 +673,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 正式 SPC 已啟用安全稽核，敏感授權須有正式安全管理者。[驗證](../specs/20261123-production-security-audit/verification.md)
 
 - 藥液量測調整公式頁五欄已由已核整測試資料同步正式。[驗證](../specs/20261123-chemical-adjustment-parameters-production/verification.md)
+
+- 2026-11-24 [日報載入初驗調整](../specs/20261124-chemical-load-initial-adjustment/spec.md)。複驗儲存及重新載入日報需保留初驗調整和調整量。

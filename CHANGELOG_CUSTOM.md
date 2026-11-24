@@ -3577,3 +3577,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 隔離交易已驗證測試登入及 P22077 原 ID 保留，正式密碼雜湊不帶入，失敗時整批回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 - 同批驗證保留報表及告警收件人重新對應、未映射阻擋及失敗回復。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
+## 2026-11-24 日報載入初驗調整
+
+- 複驗儲存保留初驗的調整與調整量。既有值確實與複驗憑證相符時，日報依初驗憑證帶回兩欄。測試 Web 0.1.180 → 0.1.181、API 0.1.164 → 0.1.165，正式未發布。[驗證](specs/20261124-chemical-load-initial-adjustment/verification.md)

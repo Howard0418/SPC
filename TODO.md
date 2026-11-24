@@ -900,3 +900,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] SPC-CHEM-ADJUST-PROD-1123：藥液量測調整公式頁五欄同步正式 48 筆／173 欄，正式回查與重送通過。[驗證](specs/20261123-chemical-adjustment-parameters-production/verification.md)
 - [ ] SPC-CHEM-RECHECK-SECONDARY-1124：空白第二滴定值修正已發布測試 Web 0.1.180／API 0.1.164，待實際儲存驗收及正式授權。[驗證](specs/20261124-chemical-recheck-empty-secondary/verification.md)
+
+- [ ] SPC-CHEM-LOAD-INITIAL-ADJUST-1124：日報初驗調整已修正，測試 Web 0.1.181／API 0.1.165，待 Portal 畫面及儲存驗收與正式授權。[驗證](specs/20261124-chemical-load-initial-adjustment/verification.md)
