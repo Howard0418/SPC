@@ -61,7 +61,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
 
     /// <summary>Dates and original decimal strings are resolved by SPC; no custom expression from the browser is trusted.</summary>
     public async Task<ChemicalPreviewResult> PreviewAsync(ChemicalPortalPreviewRequest request,string actor,CancellationToken ct)
-        => await schedule.PreviewAsync(request.PpcId,await InputAsync(request,ct),actor,ct);
+        => await schedule.PreviewAsync(request.PpcId,await InputAsync(request,ct),actor,ct,currentAdjustment:true);
 
     /// <summary>All rows, receipts, initial/recheck traces and statistics commit together; a request ID provides safe retry.</summary>
     public async Task<ChemicalPortalConfirmed> ConfirmAsync(ChemicalPortalConfirmRequest request,string actor,CancellationToken ct)
@@ -103,7 +103,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 if(policy?.ActiveScheduleRevisionId is null)continue;
                 if(Get(row,"SampleNo") is not (null or "" or "1"))throw ApiUiException.Attach(new ArgumentException("公式日報只支援單筆樣本。"), "spc.api.chemicalSingleSampleOnly");
                 if(string.IsNullOrWhiteSpace(Get(row,"ChemicalPreviewToken")))throw ApiUiException.Attach(new ChemicalPreviewConflictException("初驗尚未依量測日期預覽，請重新計算。"), "spc.api.chemicalInitialPreviewRequired");
-                var initial=await schedule.PrepareAsync(id,new(input,Get(row,"ChemicalPreviewToken")!),actor,ct);
+                var initial=await schedule.PrepareAsync(id,new(input,Get(row,"ChemicalPreviewToken")!),actor,ct,currentAdjustment:true);
                 ChemicalCalculationReceipt? recheck=null;
                 var hasRecheck=!string.IsNullOrWhiteSpace(Get(row,"RecheckTitrationValue"));
                 if(!hasRecheck && !string.IsNullOrWhiteSpace(Get(row,"RecheckValue")))throw ApiUiException.Attach(new ArgumentException("日期公式複驗須提供原始滴定值，不可只填濃度。"), "spc.api.chemicalRecheckInputRequired");
@@ -111,7 +111,7 @@ public sealed class ChemicalPortalMeasurementService(AppDbContext db,ChemicalFor
                 {
                     if(string.IsNullOrWhiteSpace(Get(row,"ChemicalRecheckPreviewToken")))throw ApiUiException.Attach(new ChemicalPreviewConflictException("複驗尚未預覽，請重新計算。"), "spc.api.chemicalRecheckPreviewRequired");
                     var recheckInput = CreateRecheckInput(input, Get(row,"RecheckTitrationValue")!, Get(row,"RecheckSecondaryTitrationValue"));
-                    recheck=await schedule.PrepareAsync(id,new(recheckInput,Get(row,"ChemicalRecheckPreviewToken")!),actor,ct);
+                    recheck=await schedule.PrepareAsync(id,new(recheckInput,Get(row,"ChemicalRecheckPreviewToken")!),actor,ct,currentAdjustment:true);
                 }
                 evidence[id]=new(initial,recheck);
                 var value=Result(initial);var final=recheck is null?value:Result(recheck);

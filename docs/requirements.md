@@ -683,3 +683,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-24 [缺排程可選參考日](../specs/20261124-chemical-gap-date-choice/spec.md)。有權限者確認補原量測日期一天後以原時點重新試算及儲存。
 
 - 2026-11-24 [錄入頁移除公式比對介面](../specs/20261124-chemical-entry-remove-comparison/spec.md)。取代測試補排程介面，量測日期照常操作，今日首次試算的台北時點由系統記錄。
+
+- 2026-11-24 [SPC 現行調整公式](../specs/20261124-chemical-current-adjustment-source/spec.md)。Portal 新預覽與儲存的調整、調整量及參數取 SPC 現行設定，取代調整公式的日期排程切換。濃度沿用原排程與 F。

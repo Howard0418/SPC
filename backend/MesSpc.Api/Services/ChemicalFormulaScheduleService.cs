@@ -129,33 +129,7 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         return revision.Id;
     }
 
-    internal async Task<DateTime?> ScheduleAdjustmentChangeAsync(
-        int id, long formulaVersionId, string actor, CancellationToken ct)
-    {
-        await using var transaction = await LockAsync(id, ct);
-        var policy = await db.ChemicalFormulaPolicies.AsNoTracking().SingleOrDefaultAsync(
-            x => x.PartProcessCharacteristicId == id, ct);
-        if (policy?.ActiveScheduleRevisionId is not long revisionId)
-            return null;
-
-        var existing = await db.ChemicalFormulaEffectivities.AsNoTracking()
-            .Where(x => x.PartProcessCharacteristicId == id && x.ScheduleRevisionId == revisionId)
-            .OrderBy(x => x.EffectiveFromUtc)
-            .Select(x => new ChemicalUtcPeriod(x.FormulaVersionId, x.FTableHistoryId,
-                x.EffectiveFromUtc, x.EffectiveUntilUtcExclusive)).ToListAsync(ct);
-
-        var savedAt = Now;
-        var updated = ChemicalFormulaCalculation.ScheduleAdjustmentChange(existing, formulaVersionId, savedAt);
-        static string FormatUtc(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("O");
-        var periods = updated.Select(x => new ChemicalSchedulePeriod(x.FormulaVersionId, x.FTableHistoryId,
-            FormatUtc(x.FromUtc), x.UntilUtc is DateTime until ? FormatUtc(until) : null)).ToList();
-        await PublishAsync(id, new(revisionId, "調整量公式儲存後立即生效", periods), actor, ct);
-        if (transaction is not null)
-            await transaction.CommitAsync(ct);
-        return savedAt;
-    }
-
-    private async Task<ChemicalResolvedCalculation> ResolveAsync(int id, ChemicalPreviewInput input, CancellationToken ct)
+    private async Task<ChemicalResolvedCalculation> ResolveAsync(int id, ChemicalPreviewInput input, CancellationToken ct, bool currentAdjustment)
     {
         if (input is null) throw ApiUiException.Attach(new ArgumentException("請提供原始輸入。"), "spc.api.chemicalInputRequired");
         var mapping = await MappingAsync(id, ct);
@@ -186,7 +160,8 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         var segment=segments.FirstOrDefault();
         decimal? ConvertLimit(double? value) => value.HasValue ? Convert.ToDecimal(value.Value, System.Globalization.CultureInfo.InvariantCulture) : null;
         var lsl=ConvertLimit(segment?.LSL ?? mapping.LSL); var usl=ConvertLimit(segment?.USL ?? mapping.USL); var target=ConvertLimit(segment?.TargetValue ?? mapping.TargetValue);
-        var result=ChemicalFormulaCalculation.Calculate(formula.ConfigJson,input.Primary,input.Secondary,f?.CellsJson ?? "[]",lsl,usl,target,input.Phase??"Initial");
+        var adjustment = currentAdjustment ? ChemicalFormulaCalculation.ReadCurrentAdjustment(mapping.ChemicalAnalysisConfigJson) : null;
+        var result=ChemicalFormulaCalculation.Calculate(formula.ConfigJson,input.Primary,input.Secondary,f?.CellsJson ?? "[]",lsl,usl,target,input.Phase??"Initial",adjustment);
         var payload=JsonSerializer.Serialize(new { ppcId=id, revisionId, effectivityId=period.Id, formulaVersionId=formula.Id, formulaVersionNo=formula.VersionNo,
             formulaConfigJson=formula.ConfigJson, fTableHistoryId=f?.Id, fCellsJson=f?.CellsJson, measuredAtUtc=at, originalInput=input,
             primaryCanonical=ChemicalFormulaCalculation.Canonical(ChemicalFormulaCalculation.ReadDecimal(input.Primary,"Primary")),
@@ -195,14 +170,20 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
             calculationSecondaryCanonical=string.IsNullOrWhiteSpace(input.Secondary)?null:ChemicalFormulaCalculation.Canonical(ChemicalFormulaCalculation.NormalizeInput(input.Secondary,"Secondary")),
             sourceKeyHash=Hash(input.SourceKey), unit=mapping.Unit, segmentId=segment?.Id, lsl,usl,target,result,
             engineVersion=ChemicalFormulaCalculation.EngineVersion, precisionPolicy=ChemicalFormulaCalculation.PrecisionPolicy });
+        if (adjustment is not null)
+        {
+            var evidence = System.Text.Json.Nodes.JsonNode.Parse(payload)!.AsObject();
+            evidence["currentAdjustment"] = JsonSerializer.SerializeToNode(adjustment);
+            payload = evidence.ToJsonString();
+        }
         return new(revisionId,period,formula,at,result,payload);
     }
 
     /// <summary>Pure preview: no business data or receipt is persisted.</summary>
-    public async Task<ChemicalPreviewResult> PreviewAsync(int id, ChemicalPreviewInput input, string actor, CancellationToken ct)
+    public async Task<ChemicalPreviewResult> PreviewAsync(int id, ChemicalPreviewInput input, string actor, CancellationToken ct, bool currentAdjustment = false)
     {
         if (string.IsNullOrWhiteSpace(actor) || actor.Length > 100) throw ApiUiException.Attach(new ArgumentException("缺少有效操作者。"), "spc.api.actorRequired");
-        var value=await ResolveAsync(id,input,ct); var expires=Now.AddMinutes(10);
+        var value=await ResolveAsync(id,input,ct,currentAdjustment); var expires=Now.AddMinutes(10);
         var token=protector.Protect(JsonSerializer.Serialize(new ChemicalPreviewTicket(id,actor,Hash(value.PayloadJson),expires)));
         var decimalPlaces=ChemicalFormulaCalculation.OutputDecimalPlaces;
         return new(value.RevisionId,value.Formula.Id,value.Formula.VersionNo,value.Period.FTableHistoryId,value.MeasuredAtUtc,value.Result,decimalPlaces,
@@ -210,7 +191,7 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
     }
 
     /// <summary>Checks protected preview against current input/schedule under lock; prepares immutable evidence only.</summary>
-    public async Task<ChemicalCalculationReceipt> PrepareAsync(int id, ChemicalPrepareRequest request, string actor, CancellationToken ct)
+    public async Task<ChemicalCalculationReceipt> PrepareAsync(int id, ChemicalPrepareRequest request, string actor, CancellationToken ct, bool currentAdjustment = false)
     {
         if (string.IsNullOrWhiteSpace(request.Token) || request.Token.Length > 20000) throw ApiUiException.Attach(new ChemicalPreviewConflictException("請重新預覽。"), "spc.api.chemicalPreviewRequired");
         ChemicalPreviewTicket ticket;
@@ -220,7 +201,7 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         if (ticket.PpcId!=id || ticket.Actor!=actor || ticket.ExpiresAtUtc<=Now)
             throw ApiUiException.Attach(new ChemicalPreviewConflictException("預覽已過期或操作者不同，請重新預覽。"), "spc.api.chemicalPreviewExpired");
         await using var tx=await LockAsync(id,ct);
-        var value=await ResolveAsync(id,request.Input,ct);
+        var value=await ResolveAsync(id,request.Input,ct,currentAdjustment);
         if (ticket.ExpiresAtUtc<=Now || ticket.PayloadHash!=Hash(value.PayloadJson)) throw ApiUiException.Attach(new ChemicalPreviewConflictException("輸入、規格或公式排程已變更，請重新預覽。"), "spc.api.chemicalPreviewChanged");
         var receipt=new ChemicalCalculationReceipt { Id=Guid.NewGuid(),PartProcessCharacteristicId=id,EffectivityId=value.Period.Id,
             MeasuredAtUtc=value.MeasuredAtUtc,CreatedAtUtc=Now,ExpiresAtUtc=Now.AddMinutes(10),Actor=actor,InputHash=Hash(value.PayloadJson),

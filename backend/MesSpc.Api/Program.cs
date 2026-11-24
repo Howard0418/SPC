@@ -148,8 +148,7 @@ builder.Services.AddSingleton<ICalibrationChatSender>(services =>
 builder.Services.AddHostedService<MesSpc.Api.Services.Calibration.CalibrationNotificationSchedulerService>();
 builder.Services.AddCors(opt =>
 {
-    opt.AddPolicy("dev", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin()
-        .WithExposedHeaders("X-Chemical-Adjustment-Effective-At"));
+    opt.AddPolicy("dev", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 });
 
 var app = builder.Build();

@@ -663,40 +663,12 @@ public class PartProcessCharacteristicsController(
             User?.Identity?.Name,
             req.ChemicalAnalysisFormulaVersionReason,
             HttpContext?.RequestAborted ?? CancellationToken.None);
-        DateTime? effectiveAt = null;
-        if (formulaVersion.Version is { } savedFormula && chemicalFormulaSchedule is not null &&
-            string.Equals(x.ControlScope, "CHEM", StringComparison.OrdinalIgnoreCase) &&
-            x.IsEnabled && AdjustmentAmountChanged(previousChemicalAnalysisConfigJson, savedFormula.ConfigJson))
-        {
-            try
-            {
-                effectiveAt = await chemicalFormulaSchedule.ScheduleAdjustmentChangeAsync(
-                    id, savedFormula.Id, User?.Identity?.Name ?? "system", HttpContext?.RequestAborted ?? CancellationToken.None);
-            }
-            catch (ArgumentException error)
-            {
-                return Conflict(new { code = "CHEM_AUTO_SCHEDULE_CONFLICT", message = error.Message });
-            }
-        }
-        if (effectiveAt.HasValue)
-            Response.Headers["X-Chemical-Adjustment-Effective-At"] = effectiveAt.Value.ToString("O");
-
         if (transaction is not null)
         {
             await transaction.CommitAsync();
         }
         ChemicalFormulaNotice.AfterResponse(ControllerContext.HttpContext, formulaVersion.Version?.Id);
         return Ok(x);
-    }
-
-    private static bool AdjustmentAmountChanged(string? before, string after)
-    {
-        if (string.IsNullOrWhiteSpace(before))
-            return false;
-        var previous = JsonNode.Parse(before) as JsonObject;
-        var current = JsonNode.Parse(after) as JsonObject;
-        return previous is not null && current is not null &&
-            !JsonNode.DeepEquals(previous["adjustmentAmountFormula"], current["adjustmentAmountFormula"]);
     }
 
     [HttpPut("{id:int}/chemical-adjustment-parameters")]

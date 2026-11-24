@@ -20,20 +20,21 @@ public sealed class ChemicalTimedScheduleTests
     }
 
     [Fact]
-    public void AdjustmentChangeSplitsCurrentIntervalAtSave()
+    public void PortalUsesCurrentAdjustmentsAndHistoricalConcentration()
     {
-        var saved = new DateTime(2026, 11, 25, 2, 20, 0, DateTimeKind.Utc);
-        var start = saved.Date;
-        var next = start.AddDays(1);
-        var periods = ChemicalFormulaCalculation.ScheduleAdjustmentChange([
-            new(291, 247, start, next),
-            new(300, 248, next, null)
-        ], 1544, saved);
-
-        var cutover = saved;
-        Assert.Equal(new ChemicalUtcPeriod(291, 247, start, cutover), periods[0]);
-        Assert.Equal(new ChemicalUtcPeriod(1544, 247, cutover, next), periods[1]);
-        Assert.Equal(new ChemicalUtcPeriod(300, 248, next, null), periods[2]);
+        const string historical = """{"enabled":true,"concentrationFormula":"Primary*2","adjustmentFormula":"\"舊\"","adjustmentAmountFormula":"\"舊值\"","tankCapacityLiters":20}""";
+        const string current = """{"enabled":true,"concentrationFormula":"Primary*3","adjustmentFormula":"\"稀釋\"","adjustmentAmountFormula":"TANK_CAPACITY_LITERS-Concentration","tankCapacityLiters":100}""";
+        var legacy = ChemicalFormulaCalculation.Calculate(historical,"8",null,"[]",null,null,null);
+        var portal = ChemicalFormulaCalculation.Calculate(historical,"8",null,"[]",null,null,null,
+            adjustmentSettings: ChemicalFormulaCalculation.ReadCurrentAdjustment(current));
+        Assert.Equal("16", portal.Stored);
+        Assert.Equal("稀釋", portal.Adjustment);
+        Assert.Equal("84", portal.AdjustmentAmount);
+        Assert.Equal("舊值", legacy.AdjustmentAmount);
+        var blank = ChemicalFormulaCalculation.Calculate(historical,"8",null,"[]",null,null,null,
+            adjustmentSettings: ChemicalFormulaCalculation.ReadCurrentAdjustment(null));
+        Assert.Empty(blank.Adjustment);
+        Assert.Empty(blank.AdjustmentAmount);
     }
 
     [Theory]

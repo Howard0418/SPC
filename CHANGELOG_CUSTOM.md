@@ -3621,3 +3621,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 缺公式排程時可選參考日試算，有排程權限者可確認補單日，保留量測日期與其他排程。SPC 0.1.184／0.1.168、Portal 1.0.361／1.0.322 已發布測試。[驗證](specs/20261124-chemical-gap-date-choice/verification.md)
 
 - 移除 Portal 錄入量測時間欄與跨日試算，撤回測試補排程端點。SPC 測試 0.1.185／0.1.169、Portal 測試 1.0.362／1.0.323。[驗證](specs/20261124-chemical-entry-remove-comparison/verification.md)
+
+- Portal 新試算及儲存依 SPC 現行調整與調整量公式；濃度仍依日期排程。測試 SPC 0.1.186／0.1.170、Portal 1.0.363／1.0.324。[驗證](specs/20261124-chemical-current-adjustment-source/verification.md)

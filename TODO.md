@@ -912,3 +912,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-CHEM-FORMULA-GAP-1124：試行功能依使用者指示撤回，正式未發布。[原規格](specs/20261124-chemical-gap-date-choice/spec.md)
 
 - [ ] SPC-CHEM-ENTRY-CLEANUP-1124：移除量測時間欄及跨日試算已發布測試，待正式發布授權。[規格](specs/20261124-chemical-entry-remove-comparison/spec.md)
+
+- [ ] SPC-CHEM-CURRENT-ADJUST-1124：Portal 依 SPC 現行調整及調整量設定，已發布測試，待登入驗收及正式授權。[規格](specs/20261124-chemical-current-adjustment-source/spec.md)

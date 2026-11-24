@@ -63,25 +63,18 @@ public static class ChemicalFormulaCalculation
         return result;
     }
 
-    internal static List<ChemicalUtcPeriod> ScheduleAdjustmentChange(
-        IReadOnlyList<ChemicalUtcPeriod> periods, long formulaVersionId, DateTime savedAtUtc)
+    internal static ChemicalAdjustmentSettings ReadCurrentAdjustment(string? json)
     {
-        var cutover = savedAtUtc;
-        var current = periods.SingleOrDefault(p => p.FromUtc <= cutover &&
-            (p.UntilUtc == null || cutover < p.UntilUtc));
-        if (current is null)
-            throw new ArgumentException("儲存時沒有有效的公式排程。");
-
-        var result = periods.ToList();
-        var index = result.IndexOf(current);
-        result[index] = current with { FormulaVersionId = formulaVersionId, FromUtc = cutover };
-        if (current.FromUtc < cutover)
-            result.Insert(index, current with { UntilUtc = cutover });
-        return result;
+        var config = string.IsNullOrWhiteSpace(json) ? null :
+            JsonSerializer.Deserialize<ChemicalCalculationConfig>(json, JsonOptions);
+        return config is { Enabled: true }
+            ? new(config.AdjustmentFormula, config.AdjustmentAmountFormula, config.TankCapacityLiters,
+                config.AdditionControlValue, config.DilutionControlValue)
+            : new(null, null, null, null, null);
     }
 
     public static ChemicalCalculatedValue Calculate(string configJson, string primary, string? secondary, string fCellsJson,
-        decimal? lsl, decimal? usl, decimal? target, string phase = "Initial")
+        decimal? lsl, decimal? usl, decimal? target, string phase = "Initial", ChemicalAdjustmentSettings? adjustmentSettings = null)
     {
         if (phase is not ("Initial" or "Recheck"))
             throw new ArgumentException("量測階段須為 Initial 或 Recheck。", nameof(phase));
@@ -127,8 +120,17 @@ public static class ChemicalFormulaCalculation
                 ? config.RecheckConcentrationFormula : config.ConcentrationFormula;
             raw = ReadDecimal(Evaluate(concentrationFormula, true), "計算結果");
             cells["CONCENTRATION"] = raw.Value;
-            var adjustment = Evaluate(config.AdjustmentFormula, false);
-            var amount = Evaluate(config.AdjustmentAmountFormula, false);
+            if (adjustmentSettings is not null)
+            {
+                cells.Remove("TANK_CAPACITY_LITERS");
+                cells.Remove("ADDITION_CONTROL_VALUE");
+                cells.Remove("DILUTION_CONTROL_VALUE");
+                AddAdjustmentParameter("TANK_CAPACITY_LITERS", adjustmentSettings.TankCapacityLiters);
+                AddAdjustmentParameter("ADDITION_CONTROL_VALUE", adjustmentSettings.AdditionControlValue);
+                AddAdjustmentParameter("DILUTION_CONTROL_VALUE", adjustmentSettings.DilutionControlValue);
+            }
+            var adjustment = Evaluate(adjustmentSettings is null ? config.AdjustmentFormula : adjustmentSettings.Action, false);
+            var amount = Evaluate(adjustmentSettings is null ? config.AdjustmentAmountFormula : adjustmentSettings.Amount, false);
             var judgment = lsl.HasValue && raw < lsl || usl.HasValue && raw > usl ? "NG" : lsl.HasValue || usl.HasValue ? "OK" : "Unknown";
             return new(Canonical(raw.Value), Canonical(decimal.Round(raw.Value, OutputDecimalPlaces, MidpointRounding.AwayFromZero)), adjustment, amount, judgment);
         }
@@ -161,3 +163,6 @@ public static class ChemicalFormulaCalculation
 public sealed record ChemicalCalculationConfig(bool Enabled = false, string ConcentrationFormula = "", string? AdjustmentFormula = null,
     string? AdjustmentAmountFormula = null, int DecimalPlaces = 2, string? RecheckConcentrationFormula = null,
     decimal? TankCapacityLiters = null, decimal? AdditionControlValue = null, decimal? DilutionControlValue = null);
+
+public sealed record ChemicalAdjustmentSettings(string? Action, string? Amount, decimal? TankCapacityLiters,
+    decimal? AdditionControlValue, decimal? DilutionControlValue);
