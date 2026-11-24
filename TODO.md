@@ -899,4 +899,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-PROD-SECURITY-AUDIT-1123：正式安全稽核旗標已啟用，Web 0.1.152／API 0.1.140；已指派 administrator 及 ihao_ting，個人敏感權限須由另一位管理者明示授權。[驗證](specs/20261123-production-security-audit/verification.md)
 
 - [x] SPC-CHEM-ADJUST-PROD-1123：藥液量測調整公式頁五欄同步正式 48 筆／173 欄，正式回查與重送通過。[驗證](specs/20261123-chemical-adjustment-parameters-production/verification.md)
-- [ ] SPC-CHEM-RECHECK-SECONDARY-1124：空白第二滴定值預覽／確認契約已修正，待站台驗證與正式發布狀態確認。[規格](specs/20261124-chemical-recheck-empty-secondary/spec.md)
+- [ ] SPC-CHEM-RECHECK-SECONDARY-1124：空白第二滴定值修正已發布測試 Web 0.1.180／API 0.1.164，待實際儲存驗收及正式授權。[驗證](specs/20261124-chemical-recheck-empty-secondary/verification.md)
