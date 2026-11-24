@@ -677,3 +677,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-24 [日報載入初驗調整](../specs/20261124-chemical-load-initial-adjustment/spec.md)。複驗儲存及重新載入日報需保留初驗調整和調整量。
 
 - 2026-11-24 [調整量公式延遲生效](../specs/20261124-chemical-adjustment-ten-minute/spec.md)。已排程項目儲存調整量公式後十分鐘生效，Portal 依實際量測時間選版。
+
+- 2026-11-24 [調整量公式立即生效](../specs/20261124-chemical-adjustment-immediate/spec.md)。取代十分鐘切換需求，Portal 前景草稿切換後依量測時間重新試算。

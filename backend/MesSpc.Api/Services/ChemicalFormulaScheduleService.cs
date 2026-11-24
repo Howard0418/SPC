@@ -149,10 +149,10 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         static string FormatUtc(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("O");
         var periods = updated.Select(x => new ChemicalSchedulePeriod(x.FormulaVersionId, x.FTableHistoryId,
             FormatUtc(x.FromUtc), x.UntilUtc is DateTime until ? FormatUtc(until) : null)).ToList();
-        await PublishAsync(id, new(revisionId, "調整量公式儲存後十分鐘生效", periods), actor, ct);
+        await PublishAsync(id, new(revisionId, "調整量公式儲存後立即生效", periods), actor, ct);
         if (transaction is not null)
             await transaction.CommitAsync(ct);
-        return savedAt.AddMinutes(10);
+        return savedAt;
     }
 
     private async Task<ChemicalResolvedCalculation> ResolveAsync(int id, ChemicalPreviewInput input, CancellationToken ct)

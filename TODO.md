@@ -905,4 +905,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-CHEM-C5-EFFECTIVITY-1124：19 個歷史日期排程已對齊憑證；測試排程 1751 已發布，新版自 11/25 生效。Portal 歷史試算已發布測試 Web 1.0.357／API 1.0.318，使用者已確認測試驗收，待正式發布授權。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
 
-- [ ] SPC-CHEM-ADJUST-10MIN-1124：調整量公式儲存後十分鐘自動生效，SPC 0.1.182／0.1.166 及 Portal 1.0.358／1.0.319 已發布測試並核對切點，已完成 Portal 時間欄和 C5 試算實機驗證，待正式發布授權。[規格](specs/20261124-chemical-adjustment-ten-minute/spec.md)
+- [x] SPC-CHEM-ADJUST-10MIN-1124：測試完成，正式發布由立即生效需求取代。[原規格](specs/20261124-chemical-adjustment-ten-minute/spec.md)
+
+- [ ] SPC-CHEM-ADJUST-NOW-1124：調整量公式立即生效及前景錄入重新試算已發布測試，待登入驗收與正式授權。[規格](specs/20261124-chemical-adjustment-immediate/spec.md)

@@ -3597,3 +3597,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 已排程藥液項目由儲存時間起十分鐘切換，維持歷史憑證與下一個原定排程。Portal 預覽與送出共用實際量測時間。測試已發布，正式待授權。[驗證](specs/20261124-chemical-adjustment-ten-minute/verification.md)
 
 - Portal 測試站登入後已核對秒級量測時間，C5 舊日報保存值與新版公式試算並列正確。
+
+## 2026-11-24 調整量公式立即生效
+
+- 已排程項目由儲存時間起切換，Portal 前景未儲存列偵測新版後按其量測時間試算。已發布測試，正式待授權。[驗證](specs/20261124-chemical-adjustment-immediate/verification.md)

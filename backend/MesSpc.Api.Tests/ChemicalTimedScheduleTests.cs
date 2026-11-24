@@ -20,7 +20,7 @@ public sealed class ChemicalTimedScheduleTests
     }
 
     [Fact]
-    public void AdjustmentChangeSplitsCurrentIntervalTenMinutesAfterSave()
+    public void AdjustmentChangeSplitsCurrentIntervalAtSave()
     {
         var saved = new DateTime(2026, 11, 25, 2, 20, 0, DateTimeKind.Utc);
         var start = saved.Date;
@@ -30,7 +30,7 @@ public sealed class ChemicalTimedScheduleTests
             new(300, 248, next, null)
         ], 1544, saved);
 
-        var cutover = saved.AddMinutes(10);
+        var cutover = saved;
         Assert.Equal(new ChemicalUtcPeriod(291, 247, start, cutover), periods[0]);
         Assert.Equal(new ChemicalUtcPeriod(1544, 247, cutover, next), periods[1]);
         Assert.Equal(new ChemicalUtcPeriod(300, 248, next, null), periods[2]);

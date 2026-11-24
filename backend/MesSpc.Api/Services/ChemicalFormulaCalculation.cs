@@ -66,11 +66,11 @@ public static class ChemicalFormulaCalculation
     internal static List<ChemicalUtcPeriod> ScheduleAdjustmentChange(
         IReadOnlyList<ChemicalUtcPeriod> periods, long formulaVersionId, DateTime savedAtUtc)
     {
-        var cutover = savedAtUtc.AddMinutes(10);
+        var cutover = savedAtUtc;
         var current = periods.SingleOrDefault(p => p.FromUtc <= cutover &&
             (p.UntilUtc == null || cutover < p.UntilUtc));
         if (current is null)
-            throw new ArgumentException("十分鐘後沒有有效的公式排程。");
+            throw new ArgumentException("儲存時沒有有效的公式排程。");
 
         var result = periods.ToList();
         var index = result.IndexOf(current);
