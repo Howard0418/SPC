@@ -6,3 +6,5 @@
 - 測試發布：SPC Web 0.1.182 → 0.1.183、API 0.1.166 → 0.1.167；Portal Web 1.0.358 → 1.0.359、API 1.0.319 → 1.0.320。測試環境的資產、前台版本、API 連線與版本均通過。回復點 release/backups/chemical-immediate-1124 與 D:/PmrPortal_Backups/chemical-immediate-1124-web359。正式未發布，待登入驗收。
 
 - 登入 Portal 測試站確認 C5 清潔硫酸的 11/23 早班日報仍為各 209 L；同頁選 11/25 試算顯示第 27 版各 -385 L。此步驟未改動公式或日報，前景草稿自動重算由 Chromium 自動化驗證。
+
+- 正式發布完成：SPC Web 0.1.153 → 0.1.154、API 0.1.140 → 0.1.141，候選 d42466c9；Portal Web 1.0.292 → 1.0.293、API 1.0.267 → 1.0.268，候選 01cfa9a。無 schema migration。SPC 候選 5 項及 Portal 候選 4 項通過，Chrome 正式前台版本、JS/CSS MIME、Portal 同源登入檢查及兩站 8443 API 健康/環境通過。尚未做正式登入後另存業務資料。SPC 首套發布在備份前置階段停止，原版維持，重試使用已驗證的獨立維護備份。回復點 SPC-PROD-C5-1124-W154-R3 及 PORTAL-PROD-C5-1124-W293。
