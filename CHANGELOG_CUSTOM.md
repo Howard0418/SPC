@@ -3617,3 +3617,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 使用者確認正式 Portal C5 清潔硫酸 10/21 錄入試算與 Excel 一致。
 
 - 依授權補正式 C5 清潔硫酸 11/23 單日排程，修訂 642。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
+
+- 缺公式排程時可選參考日試算，有排程權限者可確認補單日，保留量測日期與其他排程。SPC 0.1.184／0.1.168、Portal 1.0.361／1.0.322 已發布測試。[驗證](specs/20261124-chemical-gap-date-choice/verification.md)

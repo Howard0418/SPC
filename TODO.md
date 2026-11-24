@@ -908,3 +908,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-CHEM-ADJUST-10MIN-1124：測試完成，正式發布由立即生效需求取代。[原規格](specs/20261124-chemical-adjustment-ten-minute/spec.md)
 
 - [x] SPC-CHEM-ADJUST-NOW-1124：SPC 正式 Web 0.1.154／API 0.1.141、Portal 正式 Web 1.0.293／API 1.0.268 已發布及連線驗證。[驗證](specs/20261124-chemical-adjustment-immediate/verification.md)
+
+- [ ] SPC-CHEM-FORMULA-GAP-1124：缺排程選日試算及由有權限者確認補單日已發布測試；待登入驗收和正式授權。[規格](specs/20261124-chemical-gap-date-choice/spec.md)

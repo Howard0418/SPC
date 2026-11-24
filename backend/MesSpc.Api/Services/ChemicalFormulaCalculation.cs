@@ -63,6 +63,21 @@ public static class ChemicalFormulaCalculation
         return result;
     }
 
+    internal static List<ChemicalUtcPeriod> FillScheduleDay(IReadOnlyList<ChemicalUtcPeriod> periods,
+        string date, string referenceTime, long formulaId, long? snapshotId)
+    {
+        var range = VersionHistoryDateRange.Parse(date, date);
+        if (range.FromUtc is not DateTime from || range.UntilUtc is not DateTime until)
+            throw new ArgumentException("請提供原量測日期。");
+        if (periods.Any(p => p.FromUtc < until && (p.UntilUtc == null || p.UntilUtc > from)))
+            throw new ArgumentException("原量測日期已有公式區間，無法補單日排程。");
+        var reference = ParseMeasuredAt(referenceTime);
+        var period = periods.SingleOrDefault(p => p.FromUtc <= reference && (p.UntilUtc == null || p.UntilUtc > reference));
+        if (period == null || period.FormulaVersionId != formulaId || period.FTableHistoryId != snapshotId)
+            throw new ChemicalPreviewConflictException("參考日公式或 F 表快照已變更，請重新試算。");
+        return [.. periods, new(formulaId, snapshotId, from, until)];
+    }
+
     internal static List<ChemicalUtcPeriod> ScheduleAdjustmentChange(
         IReadOnlyList<ChemicalUtcPeriod> periods, long formulaVersionId, DateTime savedAtUtc)
     {

@@ -27,6 +27,11 @@ public sealed class ChemicalFormulaScheduleController(ChemicalFormulaScheduleSer
         (object)new { revisionId=await service.PublishAsync(ppcId,request,Actor,ct) });
 
     /// <summary>Preview a measurement using explicit-offset date and raw decimal strings. Does not import.</summary>
+    [HttpPost("fill-day")]
+    [Authorize(Roles="Admin," + UserRoles.Editor)]
+    public Task<IActionResult> FillDay(int ppcId, ChemicalFillScheduleDay request, CancellationToken ct) => Execute(async () =>
+        (object)new { revisionId = await service.FillDayAsync(ppcId,request,Actor,ct) });
+
     [HttpPost("preview")]
     public Task<IActionResult> Preview(int ppcId, ChemicalPreviewInput request, CancellationToken ct) => Execute(async () =>
         (object)await service.PreviewAsync(ppcId,request,Actor,ct));
