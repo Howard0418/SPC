@@ -3553,6 +3553,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 指定身分的測試備份及既有維護身分的正式來源備份，皆通過 COPY_ONLY、CHECKSUM 與 VERIFYONLY。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 - 已驗證正式來源備份可還原為存取受限的唯讀演練庫，75 表、63 筆 migration，副本已清理。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 - 正式唯讀與測試可寫副本成對還原通過，核對測試專用帳號後已清理兩副本。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+- 實機成對隔離副本完成 69 表交易置換、列數與雙向比對。保留設定與觸發器指紋一致，兩副本已清理。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 ## 2026-11-24 Portal 品保 SSO 正式過期續發
 

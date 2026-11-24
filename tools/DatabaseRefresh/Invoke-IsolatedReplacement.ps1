@@ -10,14 +10,21 @@ function Invoke-IsolatedReplacement {
         [hashtable]$MaintenanceTriggers = @{}
     )
 
-    if ($Connection.DataSource -cne 'localhost' -or
-        $Connection.Database -cnotmatch '^SPC_Refresh_Rehearsal_Target_([a-f0-9]{32})$' -or
+    $isLocal = $Connection.DataSource -ceq 'localhost'
+    $isRehearsalServer = $Connection.DataSource -cmatch '^(tcp:)?172\.16\.110\.16(,1433)?$'
+    $target = $Connection.Database
+    if ((!$isLocal -and !$isRehearsalServer) -or
+        $target -cnotmatch '^SPC_Refresh_Rehearsal_Target_([a-f0-9]{32})$' -or
         $Snapshot -cne ('SPC_Refresh_Rehearsal_Snapshot_' + $Matches[1])) {
-        throw 'Isolated replacement requires the matching local rehearsal databases.'
+        throw 'Isolated replacement requires matching rehearsal databases on a known SQL endpoint.'
     }
     $sql = [System.Collections.Generic.List[string]]::new()
+    $sql.Add("IF DB_NAME() <> N'$target' THROW 51028,'Rehearsal target changed',1;")
     $sql.Add("IF APPLOCK_MODE('public',N'SPC.DatabaseRefresh','Session') <> N'Exclusive' THROW 51020,'Exclusive refresh lock required',1;")
     $sql.Add("IF COALESCE(CONVERT(nvarchar(20),DATABASEPROPERTYEX(N'$Snapshot','Updateability')),N'') <> N'READ_ONLY' THROW 51021,'Read-only source snapshot required',1;")
+    if ($isRehearsalServer) {
+        $sql.Add("IF (SELECT COUNT(*) FROM sys.databases WHERE user_access_desc=N'RESTRICTED_USER' AND ((name=N'$Snapshot' AND is_read_only=1) OR (name=N'$target' AND is_read_only=0)))<>2 THROW 51029,'Restricted rehearsal pair required',1;")
+    }
     $sql.Add('SET XACT_ABORT ON; BEGIN TRY BEGIN TRANSACTION;')
     $ordered = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($table in $InsertOrder) {
