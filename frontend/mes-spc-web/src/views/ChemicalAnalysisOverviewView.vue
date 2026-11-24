@@ -243,8 +243,10 @@ async function saveChanges() {
   const results = {};
   for (const row of rows) {
     try {
-      await api.put(`/part-process-characteristics/${row.id}`, payloads.get(row.id));
-      results[row.id] = { status: "saved", message: "已儲存" };
+      const { headers } = await api.put(`/part-process-characteristics/${row.id}`, payloads.get(row.id));
+      const effectiveAt = headers?.['x-chemical-adjustment-effective-at'];
+      const taipeiTime = effectiveAt && new Date(effectiveAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
+      results[row.id] = { status: "saved", message: taipeiTime ? "調整量公式生效時間：" + taipeiTime : "已儲存" };
     } catch (e) {
       results[row.id] = { status: "failed", message: getApiErrorDisplay(e) };
     }

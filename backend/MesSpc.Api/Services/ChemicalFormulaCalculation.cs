@@ -46,12 +46,37 @@ public static class ChemicalFormulaCalculation
         if (periods.Count is < 1 or > 200) throw ApiUiException.Attach(new ArgumentException("排程須有1至200個期間。"), "spc.api.schedulePeriodCount");
         var result = periods.Select(p => {
             if (string.IsNullOrWhiteSpace(p.FromDate) || p.FormulaVersionId <= 0) throw ApiUiException.Attach(new ArgumentException("每個期間須選公式版本與起日。"), "spc.api.schedulePeriodFieldsRequired");
+            if (p.FromDate.Contains('T') || p.ToDate?.Contains('T') == true)
+            {
+                var from = ParseMeasuredAt(p.FromDate);
+                DateTime? until = string.IsNullOrWhiteSpace(p.ToDate) ? null : ParseMeasuredAt(p.ToDate);
+                if (until.HasValue && until.Value <= from)
+                    throw new ArgumentException("排程起始時間須早於結束時間。");
+                return new ChemicalUtcPeriod(p.FormulaVersionId, p.FTableHistoryId, from, until);
+            }
             var range = VersionHistoryDateRange.Parse(p.FromDate, p.ToDate);
             return new ChemicalUtcPeriod(p.FormulaVersionId, p.FTableHistoryId, range.FromUtc!.Value, range.UntilUtc);
         }).OrderBy(p => p.FromUtc).ToList();
         for (var i = 1; i < result.Count; i++)
             if (!result[i-1].UntilUtc.HasValue || result[i].FromUtc < result[i-1].UntilUtc)
                 throw ApiUiException.Attach(new ArgumentException("生效日期區間重疊，請調整起迄日；迄日包含當天。"), "spc.api.schedulePeriodOverlap");
+        return result;
+    }
+
+    internal static List<ChemicalUtcPeriod> ScheduleAdjustmentChange(
+        IReadOnlyList<ChemicalUtcPeriod> periods, long formulaVersionId, DateTime savedAtUtc)
+    {
+        var cutover = savedAtUtc;
+        var current = periods.SingleOrDefault(p => p.FromUtc <= cutover &&
+            (p.UntilUtc == null || cutover < p.UntilUtc));
+        if (current is null)
+            throw new ArgumentException("儲存時沒有有效的公式排程。");
+
+        var result = periods.ToList();
+        var index = result.IndexOf(current);
+        result[index] = current with { FormulaVersionId = formulaVersionId, FromUtc = cutover };
+        if (current.FromUtc < cutover)
+            result.Insert(index, current with { UntilUtc = cutover });
         return result;
     }
 

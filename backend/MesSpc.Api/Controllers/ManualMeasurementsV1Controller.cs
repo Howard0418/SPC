@@ -128,8 +128,11 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
             latestTraces.TryGetValue((row.Id, "INITIAL"), out var initialTrace);
             latestTraces.TryGetValue((row.Id, "RECHECK"), out var recheckTrace);
             var initialReceiptId = initialTrace?.ReceiptId ?? row.ChemicalReceiptId;
-            var initialInput = ReadOriginalInput(initialReceiptId.HasValue && receipts.TryGetValue(initialReceiptId.Value, out var initialJson) ? initialJson : null);
-            var recheckInput = ReadOriginalInput(recheckTrace is not null && receipts.TryGetValue(recheckTrace.ReceiptId, out var recheckJson) ? recheckJson : null);
+            var initialPayload = initialReceiptId is Guid initialId ? receipts.GetValueOrDefault(initialId) : null;
+            var recheckPayload = recheckTrace is not null ? receipts.GetValueOrDefault(recheckTrace.ReceiptId) : null;
+            var initialInput = ReadOriginalInput(initialPayload);
+            var recheckInput = ReadOriginalInput(recheckPayload);
+            var adjustment = ResolveDailyAdjustment(row.AdjustAction, row.AdjustAmount, initialPayload, recheckPayload);
             judgments.TryGetValue(row.Id, out var judgment);
             exclusions.TryGetValue(row.Id, out var exclusion);
             return new
@@ -139,9 +142,10 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 row.UploadBatchId,
                 row.MeasuredValue,
                 row.RecheckValue,
-                row.AdjustAction,
-                row.AdjustAmount,
+                adjustAction = adjustment.Action,
+                adjustAmount = adjustment.Amount,
                 row.MeasuredAt,
+                originalMeasuredAt = initialInput.MeasuredAt,
                 operatorName = row.Operator,
                 titrationValue = initialInput.HasPrimary ? initialInput.Primary : payload?.GetValueOrDefault("TitrationValue"),
                 secondaryTitrationValue = initialInput.HasSecondary ? initialInput.Secondary : payload?.GetValueOrDefault("SecondaryTitrationValue"),
@@ -161,21 +165,56 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         return Ok(new { date, machineId, samplingPhase, samplingStage, exists = true, rows = result });
     }
 
-    private static (bool HasPrimary, string? Primary, bool HasSecondary, string? Secondary) ReadOriginalInput(string? payloadJson)
+    internal static (string? Action, string? Amount) ResolveDailyAdjustment(
+        string? savedAction, string? savedAmount, string? initialPayload, string? recheckPayload)
     {
-        if (string.IsNullOrWhiteSpace(payloadJson)) return (false, null, false, null);
+        var recheck = ReadReceiptAdjustment(recheckPayload);
+        if (recheck is not { } recorded ||
+            (savedAction?.Trim() ?? "") != (recorded.Action?.Trim() ?? "") ||
+            (savedAmount?.Trim() ?? "") != (recorded.Amount?.Trim() ?? ""))
+            return (savedAction, savedAmount);
+
+        return ReadReceiptAdjustment(initialPayload) ?? (savedAction, savedAmount);
+    }
+
+    private static (string? Action, string? Amount)? ReadReceiptAdjustment(string? payload)
+    {
+        if (string.IsNullOrWhiteSpace(payload)) return null;
+        try
+        {
+            using var document = JsonDocument.Parse(payload);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("result", out var result) ||
+                result.ValueKind != JsonValueKind.Object ||
+                !result.TryGetProperty("Adjustment", out var action) ||
+                action.ValueKind is not (JsonValueKind.String or JsonValueKind.Null) ||
+                !result.TryGetProperty("AdjustmentAmount", out var amount) ||
+                amount.ValueKind is not (JsonValueKind.String or JsonValueKind.Null))
+                return null;
+
+            return (action.GetString(), amount.GetString());
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static (bool HasPrimary, string? Primary, bool HasSecondary, string? Secondary, string? MeasuredAt) ReadOriginalInput(string? payloadJson)
+    {
+        if (string.IsNullOrWhiteSpace(payloadJson)) return (false, null, false, null, null);
         try
         {
             using var document = JsonDocument.Parse(payloadJson);
             if (!document.RootElement.TryGetProperty("originalInput", out var input) || input.ValueKind != JsonValueKind.Object)
-                return (false, null, false, null);
+                return (false, null, false, null, null);
             var primary = ReadReceiptValue(input, "Primary");
             var secondary = ReadReceiptValue(input, "Secondary");
-            return (primary.Present, primary.Value, secondary.Present, secondary.Value);
+            return (primary.Present, primary.Value, secondary.Present, secondary.Value, ReadReceiptValue(input, "MeasuredAt").Value);
         }
         catch (JsonException)
         {
-            return (false, null, false, null);
+            return (false, null, false, null, null);
         }
     }
 
