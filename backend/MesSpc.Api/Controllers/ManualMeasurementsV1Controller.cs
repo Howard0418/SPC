@@ -145,6 +145,7 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
                 adjustAction = adjustment.Action,
                 adjustAmount = adjustment.Amount,
                 row.MeasuredAt,
+                originalMeasuredAt = initialInput.MeasuredAt,
                 operatorName = row.Operator,
                 titrationValue = initialInput.HasPrimary ? initialInput.Primary : payload?.GetValueOrDefault("TitrationValue"),
                 secondaryTitrationValue = initialInput.HasSecondary ? initialInput.Secondary : payload?.GetValueOrDefault("SecondaryTitrationValue"),
@@ -199,21 +200,21 @@ public class ManualMeasurementsV1Controller(AppDbContext db, SpcService spcServi
         }
     }
 
-    private static (bool HasPrimary, string? Primary, bool HasSecondary, string? Secondary) ReadOriginalInput(string? payloadJson)
+    private static (bool HasPrimary, string? Primary, bool HasSecondary, string? Secondary, string? MeasuredAt) ReadOriginalInput(string? payloadJson)
     {
-        if (string.IsNullOrWhiteSpace(payloadJson)) return (false, null, false, null);
+        if (string.IsNullOrWhiteSpace(payloadJson)) return (false, null, false, null, null);
         try
         {
             using var document = JsonDocument.Parse(payloadJson);
             if (!document.RootElement.TryGetProperty("originalInput", out var input) || input.ValueKind != JsonValueKind.Object)
-                return (false, null, false, null);
+                return (false, null, false, null, null);
             var primary = ReadReceiptValue(input, "Primary");
             var secondary = ReadReceiptValue(input, "Secondary");
-            return (primary.Present, primary.Value, secondary.Present, secondary.Value);
+            return (primary.Present, primary.Value, secondary.Present, secondary.Value, ReadReceiptValue(input, "MeasuredAt").Value);
         }
         catch (JsonException)
         {
-            return (false, null, false, null);
+            return (false, null, false, null, null);
         }
     }
 

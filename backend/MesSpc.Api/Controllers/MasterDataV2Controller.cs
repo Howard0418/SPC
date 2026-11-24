@@ -510,7 +510,8 @@ public class QualityCharacteristicsController(AppDbContext db) : ControllerBase
 [Route("api/v1/part-process-characteristics")]
 public class PartProcessCharacteristicsController(
     AppDbContext db,
-    ChemicalAnalysisFormulaVersionService? chemicalFormulaVersions = null) : ControllerBase
+    ChemicalAnalysisFormulaVersionService? chemicalFormulaVersions = null,
+    ChemicalFormulaScheduleService? chemicalFormulaSchedule = null) : ControllerBase
 {
     private const string ItemRuleGroupCodePrefix = "PPC_RULES_";
     private const string ChartTypeRuleGroupCodePrefix = "CT_RULES_";
@@ -615,6 +616,11 @@ public class PartProcessCharacteristicsController(
     {
         if (ChemicalAnalysisFormulaVersionService.ValidateReason(req.ChemicalAnalysisFormulaVersionReason) is { } reasonError)
             return BadRequest(ApiUiError.Create("PPC_REASON_TOO_LONG", "spc.api.ppcReasonTooLong"));
+        var useTransaction = !string.Equals(db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
+        var ownsTransaction = useTransaction && db.Database.CurrentTransaction is null;
+        await using var transaction = ownsTransaction ? await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable) : null;
+        if (chemicalFormulaSchedule is not null && string.Equals(NormalizeScope(req.ControlScope), "CHEM", StringComparison.OrdinalIgnoreCase))
+            await chemicalFormulaSchedule.LockAsync(id, HttpContext?.RequestAborted ?? CancellationToken.None);
         var x = await db.PartProcessCharacteristics.FindAsync(id); if (x is null) return NotFound();
         var previousDisplayMode = x.DisplayMode;
         var previousFormulaConfigJson = x.FormulaConfigJson;
@@ -641,9 +647,6 @@ public class PartProcessCharacteristicsController(
         x.SampleSize = req.SampleSize; x.DisplayMode = req.DisplayMode; x.ChartTypeId = req.ChartTypeId; x.FormulaConfigJson = req.FormulaConfigJson; x.ChemicalAnalysisConfigJson = req.ChemicalAnalysisConfigJson; x.IsRequired = req.IsRequired; x.IsEnabled = req.IsEnabled;
         x.RuleGroupId = null;
 
-        var useTransaction = !string.Equals(db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
-        var ownsTransaction = useTransaction && db.Database.CurrentTransaction is null;
-        await using var transaction = ownsTransaction ? await db.Database.BeginTransactionAsync() : null;
         if (!string.Equals(previousDisplayMode, req.DisplayMode, StringComparison.OrdinalIgnoreCase) || formulaConfigChanged)
         {
             var staleResults = await db.SpcCalculationResults
@@ -660,12 +663,40 @@ public class PartProcessCharacteristicsController(
             User?.Identity?.Name,
             req.ChemicalAnalysisFormulaVersionReason,
             HttpContext?.RequestAborted ?? CancellationToken.None);
+        DateTime? effectiveAt = null;
+        if (formulaVersion.Version is { } savedFormula && chemicalFormulaSchedule is not null &&
+            string.Equals(x.ControlScope, "CHEM", StringComparison.OrdinalIgnoreCase) &&
+            x.IsEnabled && AdjustmentAmountChanged(previousChemicalAnalysisConfigJson, savedFormula.ConfigJson))
+        {
+            try
+            {
+                effectiveAt = await chemicalFormulaSchedule.ScheduleAdjustmentChangeAsync(
+                    id, savedFormula.Id, User?.Identity?.Name ?? "system", HttpContext?.RequestAborted ?? CancellationToken.None);
+            }
+            catch (ArgumentException error)
+            {
+                return Conflict(new { code = "CHEM_AUTO_SCHEDULE_CONFLICT", message = error.Message });
+            }
+        }
+        if (effectiveAt.HasValue)
+            Response.Headers["X-Chemical-Adjustment-Effective-At"] = effectiveAt.Value.ToString("O");
+
         if (transaction is not null)
         {
             await transaction.CommitAsync();
         }
         ChemicalFormulaNotice.AfterResponse(ControllerContext.HttpContext, formulaVersion.Version?.Id);
         return Ok(x);
+    }
+
+    private static bool AdjustmentAmountChanged(string? before, string after)
+    {
+        if (string.IsNullOrWhiteSpace(before))
+            return false;
+        var previous = JsonNode.Parse(before) as JsonObject;
+        var current = JsonNode.Parse(after) as JsonObject;
+        return previous is not null && current is not null &&
+            !JsonNode.DeepEquals(previous["adjustmentAmountFormula"], current["adjustmentAmountFormula"]);
     }
 
     [HttpPut("{id:int}/chemical-adjustment-parameters")]

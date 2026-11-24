@@ -31,7 +31,7 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
     private static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
     /// <summary>Serializable PPC lock is shared by schedule publication and receipt preparation.</summary>
-    private async Task<IDbContextTransaction?> LockAsync(int ppcId, CancellationToken ct)
+    internal async Task<IDbContextTransaction?> LockAsync(int ppcId, CancellationToken ct)
     {
         if (!db.Database.IsRelational()) return null; // Test-only InMemory provider; SQL concurrency is tested separately.
         var ownsTransaction = db.Database.CurrentTransaction is null;
@@ -127,6 +127,32 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         if (tx is not null) await tx.CommitAsync(ct);
         logger.LogInformation("Published chemical schedule PPC {PpcId} revision {RevisionId}", id, revision.Id);
         return revision.Id;
+    }
+
+    internal async Task<DateTime?> ScheduleAdjustmentChangeAsync(
+        int id, long formulaVersionId, string actor, CancellationToken ct)
+    {
+        await using var transaction = await LockAsync(id, ct);
+        var policy = await db.ChemicalFormulaPolicies.AsNoTracking().SingleOrDefaultAsync(
+            x => x.PartProcessCharacteristicId == id, ct);
+        if (policy?.ActiveScheduleRevisionId is not long revisionId)
+            return null;
+
+        var existing = await db.ChemicalFormulaEffectivities.AsNoTracking()
+            .Where(x => x.PartProcessCharacteristicId == id && x.ScheduleRevisionId == revisionId)
+            .OrderBy(x => x.EffectiveFromUtc)
+            .Select(x => new ChemicalUtcPeriod(x.FormulaVersionId, x.FTableHistoryId,
+                x.EffectiveFromUtc, x.EffectiveUntilUtcExclusive)).ToListAsync(ct);
+
+        var savedAt = Now;
+        var updated = ChemicalFormulaCalculation.ScheduleAdjustmentChange(existing, formulaVersionId, savedAt);
+        static string FormatUtc(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("O");
+        var periods = updated.Select(x => new ChemicalSchedulePeriod(x.FormulaVersionId, x.FTableHistoryId,
+            FormatUtc(x.FromUtc), x.UntilUtc is DateTime until ? FormatUtc(until) : null)).ToList();
+        await PublishAsync(id, new(revisionId, "調整量公式儲存後十分鐘生效", periods), actor, ct);
+        if (transaction is not null)
+            await transaction.CommitAsync(ct);
+        return savedAt.AddMinutes(10);
     }
 
     private async Task<ChemicalResolvedCalculation> ResolveAsync(int id, ChemicalPreviewInput input, CancellationToken ct)

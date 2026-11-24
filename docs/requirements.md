@@ -675,3 +675,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 藥液量測調整公式頁五欄已由已核整測試資料同步正式。[驗證](../specs/20261123-chemical-adjustment-parameters-production/verification.md)
 
 - 2026-11-24 [日報載入初驗調整](../specs/20261124-chemical-load-initial-adjustment/spec.md)。複驗儲存及重新載入日報需保留初驗調整和調整量。
+
+- 2026-11-24 [調整量公式延遲生效](../specs/20261124-chemical-adjustment-ten-minute/spec.md)。已排程項目儲存調整量公式後十分鐘生效，Portal 依實際量測時間選版。

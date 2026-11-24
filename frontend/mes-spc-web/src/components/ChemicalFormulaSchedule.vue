@@ -28,7 +28,17 @@ async function load() {
     const [schedule, formulas, f] = responses.map(r => r.value.data);
     const data = schedule.data;
     revision.value = data.revisionId; message.value = getApiMessageDisplay(data, data.message); gaps.value = data.gaps || [];
-    periods.value = (data.periods || []).map(p => ({ formulaVersionId: p.formulaVersionId, fTableHistoryId: p.fTableHistoryId, fromDate: taipeiDay(p.effectiveFromUtc), toDate: taipeiDay(p.effectiveUntilUtcExclusive, true) }));
+    periods.value = (data.periods || []).map(p => {
+      const timed = [p.effectiveFromUtc, p.effectiveUntilUtcExclusive]
+        .some(value => value && (new Date(value).getTime() + 8 * 3600000) % 86400000 !== 0);
+      return {
+        formulaVersionId: p.formulaVersionId,
+        fTableHistoryId: p.fTableHistoryId,
+        timed,
+        fromDate: timed ? p.effectiveFromUtc : taipeiDay(p.effectiveFromUtc),
+        toDate: timed ? p.effectiveUntilUtcExclusive || '' : taipeiDay(p.effectiveUntilUtcExclusive, true),
+      };
+    });
     versions.value = formulas.data || []; fVersions.value = f || []; reason.value = ''; loaded.value = true;
   } catch (e) { if (request === generation) error.value = getApiErrorDisplay(e); }
   finally { if (request === generation) busy.value = false; }
@@ -38,10 +48,10 @@ watch([measuredAt, primary, secondary], () => result.value = null);
 function add() { periods.value.push({ formulaVersionId: versions.value[0]?.id || null, fTableHistoryId: null, fromDate: '', toDate: '' }); }
 async function publish() {
   if (!periods.value.length || !reason.value.trim()) { error.value = { key: "spc.schedule.addAnEffectivePeriodAndEnterAPublicationReason" }; return; }
-  if (periods.value.some(p => !p.fromDate || !p.formulaVersionId || (p.toDate && p.fromDate > p.toDate))) { error.value = { key: "spc.schedule.selectAVersionAndEffectiveDatesStartDateMustNotBeLaterThanEndDate" }; return; }
+  if (periods.value.some(p => !p.fromDate || !p.formulaVersionId || (p.toDate && (p.timed ? Date.parse(p.fromDate) >= Date.parse(p.toDate) : p.fromDate > p.toDate)))) { error.value = { key: "spc.schedule.selectAVersionAndEffectiveDatesStartDateMustNotBeLaterThanEndDate" }; return; }
   busy.value = true; error.value = ''; result.value = null; const request = generation;
   try {
-    await api.post(url(), { baseRevisionId: revision.value, reason: reason.value, periods: periods.value.map(p => ({ ...p, toDate: p.toDate || null })) });
+    await api.post(url(), { baseRevisionId: revision.value, reason: reason.value, periods: periods.value.map(({ timed, ...period }) => ({ ...period, toDate: period.toDate || null })) });
     if (request === generation) { await load(); message.value = { key: "spc.schedule.schedulePublishedExistingMeasurementWritesHaveNotBeenSwitched" }; }
   } catch (e) { if (request === generation) error.value = getApiErrorDisplay(e); }
   finally { if (request === generation) busy.value = false; }
@@ -80,8 +90,8 @@ async function preview() {
             <option v-for="f in fVersions" :key="f.id" :value="f.id">{{ f.versionCode }} · {{ t('spc.schedule.historyVersion', { version: f.versionNo }) }}</option>
           </select>
         </label>
-        <label>{{ t('spc.schedule.effectiveStartDate') }}<input data-testid="schedule-p.fromDate" v-model="p.fromDate" type="date" :aria-label="t('spc.schedule.fromAria', { index: index + 1 })" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
-        <label>{{ t('spc.schedule.effectiveEndDateInclusive') }}<input data-testid="schedule-p.toDate" v-model="p.toDate" type="date" :aria-label="t('spc.schedule.toAria', { index: index + 1 })" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
+        <label>{{ t('spc.schedule.effectiveStartDate') }}<input data-testid="schedule-p.fromDate" v-model="p.fromDate" :type="p.timed ? 'text' : 'date'" :aria-label="t('spc.schedule.fromAria', { index: index + 1 })" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
+        <label>{{ p.timed ? t('spc.schedule.measurementTimeWithTimeZone') : t('spc.schedule.effectiveEndDateInclusive') }}<input data-testid="schedule-p.toDate" v-model="p.toDate" :type="p.timed ? 'text' : 'date'" :aria-label="t('spc.schedule.toAria', { index: index + 1 })" class="block w-full rounded border p-1 dark:bg-slate-900 dark:border-slate-600"></label>
         <button v-if="canPublish" type="button" @click="periods.splice(index, 1)" class="text-red-600 dark:text-red-300">{{ t('spc.schedule.removePeriod', { index: index + 1 }) }}</button>
       </fieldset>
       <p v-if="!periods.length">{{ t('spc.schedule.noEffectivePeriodsNoVersionIsAvailableForAnyDate') }}</p>
