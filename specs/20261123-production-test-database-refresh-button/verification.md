@@ -155,3 +155,4 @@
 - `PMR\ihao_ting` 以整合登入建立 `PMR_SPC_TEST-REFRESH-IDENTITY-1124-525f04e2a13e4ec5b7b6525819ff7e66.bak`。維護身分查到同檔由指定帳號建立，COPY_ONLY、CHECKSUM 與 RESTORE VERIFYONLY 均通過。
 - 正式 `PMR_SPC_2026` 由既有維護身分建立 `PMR_SPC_2026-REFRESH-SOURCE-1124-96ecf17bb6b145309d2142519f1aa7d4.bak`，COPY_ONLY、CHECKSUM、來源識別及 VERIFYONLY 均通過。未變更正式權限。
 - 本次為實機備份與驗證，尚未還原正式副本、置換現行測試庫或部署網站。實際刷新仍須以該次作業的新備份執行。
+- 實機使用已驗證正式備份還原至新的隨機命名演練庫，採 RESTRICTED_USER 並設 READ_ONLY。查回 75 張表及 63 筆 migration，演練副本已清理。正式來源及現行測試庫資料維持原狀。
