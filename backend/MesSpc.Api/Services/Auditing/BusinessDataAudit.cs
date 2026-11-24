@@ -29,7 +29,7 @@ public static class BusinessDataAuditPolicy
         (var c, "UpdateItem", "PUT") when c == typeof(ManualMeasurementsV1Controller) => new("measurement.record.update", "measurement.entry", "ChemicalMeasurement", "Update"),
         (var c, "DeleteItem", "DELETE") when c == typeof(ManualMeasurementsV1Controller) => new("measurement.record.delete", "measurement.entry", "ChemicalMeasurement", "Delete"),
         (var c, "Confirm", "POST") when c == typeof(ChemicalPortalMeasurementsController) => new("measurement.record.create", "measurement.entry", "ChemicalDailyBatch", "Confirm"),
-        (var c, "Publish" or "FillDay", "POST") when c == typeof(ChemicalFormulaScheduleController) => new("configuration.formula.update", "chemical.analysis.overview", "ChemicalFormulaSchedule", "Publish"),
+        (var c, "Publish", "POST") when c == typeof(ChemicalFormulaScheduleController) => new("configuration.formula.update", "chemical.analysis.overview", "ChemicalFormulaSchedule", "Publish"),
         (var c, "Apply", "POST") when c == typeof(ChemicalFTableController) => new("configuration.ftable.apply", "chemical.ftable", "ChemicalFTable", "Apply"),
         (var c, "RestoreVersion", "POST") when c == typeof(ChemicalFTableController) => new("configuration.ftable.restore", "chemical.ftable", "ChemicalFTableVersion", "Restore"),
         (var c, "Confirm", "POST") when c == typeof(UploadsController) => new("import.batch.confirm", "data.upload", "UploadBatch", "Confirm"),

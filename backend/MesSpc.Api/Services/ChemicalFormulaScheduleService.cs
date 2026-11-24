@@ -14,7 +14,6 @@ namespace MesSpc.Api.Services;
 
 public sealed record ChemicalPublishSchedule(long? BaseRevisionId, string Reason, IReadOnlyList<ChemicalSchedulePeriod> Periods);
 public sealed record ChemicalPreviewInput(string MeasuredAt, string Primary, string? Secondary, string SourceKey, string? Phase = null);
-public sealed record ChemicalFillScheduleDay(string Date, string ReferenceTime, long RevisionId, long FormulaVersionId, long? FTableHistoryId);
 public sealed record ChemicalPrepareRequest(ChemicalPreviewInput Input, string Token);
 public sealed record ChemicalPreviewResult(long RevisionId, long FormulaVersionId, int FormulaVersionNo, long? FTableHistoryId,
     DateTime MeasuredAtUtc, ChemicalCalculatedValue Result, int DecimalPlaces, string EngineVersion, string PrecisionPolicy, string Token, DateTime ExpiresAtUtc);
@@ -128,36 +127,6 @@ public sealed class ChemicalFormulaScheduleService(AppDbContext db, IDataProtect
         if (tx is not null) await tx.CommitAsync(ct);
         logger.LogInformation("Published chemical schedule PPC {PpcId} revision {RevisionId}", id, revision.Id);
         return revision.Id;
-    }
-
-    public async Task<long> FillDayAsync(int id, ChemicalFillScheduleDay request, string actor, CancellationToken ct)
-    {
-        await using var transaction = await LockAsync(id, ct);
-        var policy = await db.ChemicalFormulaPolicies.AsNoTracking().SingleOrDefaultAsync(x => x.PartProcessCharacteristicId == id, ct);
-        if (policy?.ActiveScheduleRevisionId != request.RevisionId)
-            throw new ChemicalPreviewConflictException("排程已變更，請重新載入及試算。");
-
-        var existing = await db.ChemicalFormulaEffectivities.AsNoTracking()
-            .Where(x => x.PartProcessCharacteristicId == id && x.ScheduleRevisionId == request.RevisionId)
-            .Select(x => new ChemicalUtcPeriod(x.FormulaVersionId, x.FTableHistoryId, x.EffectiveFromUtc, x.EffectiveUntilUtcExclusive))
-            .ToListAsync(ct);
-        var completed = ChemicalFormulaCalculation.FillScheduleDay(existing, request.Date, request.ReferenceTime,
-            request.FormulaVersionId, request.FTableHistoryId);
-        var added = completed[^1];
-        if (await db.ChemicalCalculationReceipts.AnyAsync(x => x.PartProcessCharacteristicId == id &&
-                x.MeasuredAtUtc >= added.FromUtc && x.MeasuredAtUtc < added.UntilUtc, ct) ||
-            await db.VariableMeasurements.AnyAsync(x => x.PartProcessCharacteristicId == id &&
-                x.MeasuredAt >= added.FromUtc && x.MeasuredAt < added.UntilUtc, ct))
-            throw new ArgumentException("原量測日期已有資料或憑證，請由排程維護人員處理。");
-
-        static string FormatUtc(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("O");
-        var candidate = completed.Select(x => new ChemicalSchedulePeriod(x.FormulaVersionId, x.FTableHistoryId,
-            FormatUtc(x.FromUtc), x.UntilUtc is DateTime until ? FormatUtc(until) : null)).ToList();
-        var revision = await PublishAsync(id, new(request.RevisionId,
-            $"Portal 補 {request.Date} 單日排程，參考 {request.ReferenceTime}", candidate), actor, ct);
-        if (transaction is not null)
-            await transaction.CommitAsync(ct);
-        return revision;
     }
 
     internal async Task<DateTime?> ScheduleAdjustmentChangeAsync(

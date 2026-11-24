@@ -36,22 +36,6 @@ public sealed class ChemicalTimedScheduleTests
         Assert.Equal(new ChemicalUtcPeriod(300, 248, next, null), periods[2]);
     }
 
-    [Fact]
-    public void GapFillUsesReferenceSnapshotAndLeavesExistingIntervalsUntouched()
-    {
-        var existing = new ChemicalUtcPeriod(291, 247, new DateTime(2026, 11, 24, 16, 0, 0, DateTimeKind.Utc), null);
-        var result = ChemicalFormulaCalculation.FillScheduleDay([existing], "2026-11-23",
-            "2026-11-25T12:00:00+08:00", 291, 247);
-
-        Assert.Equal(existing, result[0]);
-        Assert.Equal(new ChemicalUtcPeriod(291, 247, new DateTime(2026, 11, 22, 16, 0, 0, DateTimeKind.Utc),
-            new DateTime(2026, 11, 23, 16, 0, 0, DateTimeKind.Utc)), result[1]);
-        Assert.Throws<ArgumentException>(() => ChemicalFormulaCalculation.FillScheduleDay([existing], "2026-11-25",
-            "2026-11-25T12:00:00+08:00", 291, 247));
-        Assert.Throws<ChemicalPreviewConflictException>(() => ChemicalFormulaCalculation.FillScheduleDay([existing], "2026-11-23",
-            "2026-11-25T12:00:00+08:00", 291, 248));
-    }
-
     [Theory]
     [InlineData("2026-11-25", "2026-11-25T10:30:00+08:00")]
     [InlineData("2026-11-25T10:30:00", null)]
