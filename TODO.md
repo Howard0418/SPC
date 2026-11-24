@@ -903,7 +903,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-CHEM-LOAD-INITIAL-ADJUST-1124：日報初驗調整已修正，測試 Web 0.1.181／API 0.1.165，待 Portal 畫面及儲存驗收與正式授權。[驗證](specs/20261124-chemical-load-initial-adjustment/verification.md)
 
-- [ ] SPC-CHEM-C5-EFFECTIVITY-1124：19 個歷史日期排程已對齊憑證；測試排程 1751 已發布，新版自 11/25 生效。Portal 歷史試算已發布測試 Web 1.0.357／API 1.0.318，使用者已確認測試驗收，待正式發布授權。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
+- [ ] SPC-CHEM-C5-EFFECTIVITY-1124：19 個歷史日期排程已對齊憑證；測試排程 1751 已發布，新版自 11/25 生效，測試排程 1754 另補 10/21 單日並回查。Portal 歷史試算已發布測試 Web 1.0.357／API 1.0.318，使用者已確認測試驗收，待正式發布授權。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
 
 - [x] SPC-CHEM-ADJUST-10MIN-1124：測試完成，正式發布由立即生效需求取代。[原規格](specs/20261124-chemical-adjustment-ten-minute/spec.md)
 

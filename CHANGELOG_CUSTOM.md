@@ -3603,3 +3603,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 已排程項目由儲存時間起切換，Portal 前景未儲存列偵測新版後按其量測時間試算。已發布測試，正式待授權。[驗證](specs/20261124-chemical-adjustment-immediate/verification.md)
 
 - 已登入 Portal 測試站核對 C5 舊日報原值與新版試算。正式發布待授權。
+
+- 另補 C5 10/21 單日測試排程 1754，10/21 的 Excel 結果可重現，其他區間維持。[驗證](specs/20261124-c5-adjustment-effectivity/verification.md)
