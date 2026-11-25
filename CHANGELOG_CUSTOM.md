@@ -1,3 +1,7 @@
+## 2026-11-25 SPC 與 Portal 品保系統說明初稿
+
+- 依正式發布紀錄及頁面用字整理日報錄入、查回、圖表、公式維護與交接。四頁 Word 初稿已核對並保存在本機，待確認入口及試走流程。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
+
 ## 2026-11-25 SPC 結案報告補充費用及後續規劃
 
 - 本機 Word 確認稿補入費用方案比較、正式區現行功能及下一階段監控重點。十三頁及原甘特圖已核對，待審閱。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
