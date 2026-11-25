@@ -1,3 +1,7 @@
+## 2026-11-25 正式維護頁刷新測試庫驗收
+
+- 正式維護頁提交後，由受控維護程序完成固定測試庫 69 表置換，正式頁查回同一作業成功。測試庫復寫、保留設定及兩個測試站連線驗證通過，正式庫只作為來源讀取。本次無網站發布。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+
 ## 2026-11-23 測試庫刷新一致性快照演練
 
 - 統計歷史加入隔離多表置換，背景重試隔離、雙向比對與同批失敗回復通過。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)

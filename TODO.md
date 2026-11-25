@@ -892,7 +892,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] SPC-PROD-1123：三批已發布，正向稽核已驗證，兩站正式通知收件設定與 SMTP 到信驗收完成。[驗證](specs/20261124-production-notification-recipient/verification.md)
 
-- [ ] SPC-TEST-REFRESH-1123：啟用已授權，實機隔離置換與 API 確認票通過；待執行器交接、API 端點及按鈕串接。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
+- [x] SPC-TEST-REFRESH-1123：正式 Web 0.1.188／API 0.1.172 已發布。2026-11-25 由正式維護頁提交，獨立維護程序完成測試庫 69 表置換，正式頁查回同一作業「刷新成功」。測試庫復寫、回復備份與 SPC／Portal 測試站連線驗證通過。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
 
 - [x] SPC-PORTAL-PROD-ALIGN-1123：兩站功能及共用通知收件設定、SMTP 到信驗收完成。[驗證](specs/20261123-production-feature-alignment/verification.md)
 
