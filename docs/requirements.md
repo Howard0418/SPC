@@ -1,3 +1,5 @@
+- 2026-11-25 [SPC 專案結案報告](../specs/20261124-spc-project-closeout-report/spec.md)：原定五項技術驗收完成，送簽版備妥，實際結案日由主管簽核確認。
+
 - 2026-11-20 [藥液歷史破損稽核證據安全判定](../specs/20261120-chemical-malformed-audit-judgment-regression/spec.md)：宣稱為保存規格但payload非物件、JSON破損或`details`錯誤／空白時，歷史判定固定為`Unknown`、`SAVED_SPEC_EVIDENCE_INVALID`及`EvidenceConflict`，不得改套目前／最近規格；真正無證據與合法證據既有契約保持。測試API `0.1.162`已發布，無schema或資料回填，正式未發布。[驗證](../specs/20261120-chemical-malformed-audit-judgment-regression/verification.md)
 
 - 2026-11-20 [PPC ID搜尋](../specs/20261120-ppc-id-search/spec.md)：「SPC 管制項目設定與規格維護」搜尋欄支援以PPC ID十進位文字比對（例如`2587`），並保留原有料號、製程、機台／槽位、特性與組合篩選行為。測試Web `0.1.173`已發布；API、資料與權限不變，正式未發布。

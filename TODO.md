@@ -914,3 +914,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] SPC-CHEM-ENTRY-CLEANUP-1124：移除量測時間欄及跨日試算已發布測試，待正式發布授權。[規格](specs/20261124-chemical-entry-remove-comparison/spec.md)
 
 - [ ] SPC-CHEM-CURRENT-ADJUST-1124：Portal 依 SPC 現行調整及調整量設定，已發布測試，待登入驗收及正式授權。[規格](specs/20261124-chemical-current-adjustment-source/spec.md)
+
+- [ ] SPC-REPORT-CLOSEOUT-1124：原定 5 項技術驗收完成，結案報告及甘特圖送簽版已在本機備妥。待主管簽核、確認實際結案日及維運承接。[規格](specs/20261124-spc-project-closeout-report/spec.md) [驗證](specs/20261124-spc-project-closeout-report/verification.md)

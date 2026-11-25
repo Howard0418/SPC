@@ -1,3 +1,7 @@
+## 2026-11-25 SPC 專案結案報告送簽版
+
+- 本機完成結案報告送簽版及歷程甘特圖。已核對原定五項技術驗收及分頁，待主管簽核與實際結案日確認。報告及參考檔案留在本機。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
+
 ## 2026-11-25 藥液歷史刷新現行版覆核
 
 - SPC-ADJUST-1028-TASK-008 前次正式發布已完成。此次覆核 Portal 現行來源、測試站歷史查詢、13 項刷新及 18 項代理測試，已校正 Portal 舊待辦，無站台重發。[驗證](specs/20261028-chemical-history-refresh/verification.md)
