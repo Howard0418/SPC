@@ -1,3 +1,7 @@
+## 2026-11-25 SPC 結案報告改列專案成果
+
+- 依使用者指示從 Word 及甘特圖移除小工作驗收，依整體交付、效益及維運移交整理。十三頁核對通過，確認檔與圖留本機。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
+
 ## 2026-11-25 SPC 結案報告補列 9 月里程碑
 
 - 將 9/17–9/30 歸納為藥液日報整合與 F 表導入，已更新本機 Word 附件及甘特圖。十三頁核對通過，待審閱。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
