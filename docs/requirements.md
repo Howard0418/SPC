@@ -298,6 +298,8 @@
 # Particle Monitoring
 - [落塵／Particle 粒子監控 Long Format](../specs/20260930-particle-monitoring/spec.md)：R1-R9、0.5/1/5/10 µm Long Format，支援 preview/confirm、查詢、位置比較及 C/U-chart；測試站已發布，正式站未發布。
 
+- 2026-11-25 [選單權限一致、咬蝕與落塵格線貼上](../specs/20261125-spc-navigation-etch-particle-improvements/spec.md)：規劃三件小工作，先對齊 SPC 選單／頁面權限／路由，再加入 Portal 咬蝕量日報矩形貼上及 SPC 落塵 R1～R12 雙層表頭貼上、preview／confirm；本輪不實作、不寫入、不發布。
+
 
 ## 2026-10-09 KM 教育訓練需求盤點同步
 
