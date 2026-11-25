@@ -942,5 +942,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-DOC-EDITOR-QUICK-EN-SCREENSHOT-1125：第二批完成；編輯者英文快速指南八張圖已改為正式英文模式介面或有明確標示的文件用英文視圖，並完成去識別與九頁逐頁驗證。[規格](specs/20261125-spc-editor-quick-english-screenshot/spec.md)｜[驗證](specs/20261125-spc-editor-quick-english-screenshot/verification.md)
 - [x] SPC-DOC-VIEWER-QUICK-EN-SCREENSHOT-1125：第三批完成；檢視者英文快速指南七張圖已改為正式 SPC 英文模式畫面，保留唯讀角色界線，並完成去識別與八頁逐頁驗證。[規格](specs/20261125-spc-viewer-quick-english-screenshot/spec.md)｜[驗證](specs/20261125-spc-viewer-quick-english-screenshot/verification.md)
 - [x] SPC-DOC-ADMIN-QUICK-EN-1125：已完成九頁 SPC 管理者快速操作指南英文版；含九張英文模式／文件用英文視圖，並保留權限、通知、排程、稽核及正式轉測試的安全界線。[驗證](specs/20261125-spc-admin-quick-guide-english/verification.md)
-- [ ] SPC-DOC-EDITOR-MANUAL-EN-1125：製作 SPC 編輯者完整操作手冊英文版；所有系統截圖使用英文介面，保留原中文檔及正式區去識別畫面。
+- [x] SPC-DOC-EDITOR-MANUAL-EN-1125：已完成 SPC 編輯者完整操作手冊英文版；沿用 11 頁中文格式，12 張畫面均使用正式英文模式或明示的文件用英文視圖，並完成逐頁與機敏資訊驗證。
 - [ ] SPC-DOC-CLOSEOUT-EN-1125：製作 SPC 第一階段專案結案報告英文版，保留核准格式、成本比較與甘特圖，不帶入範本人名。
