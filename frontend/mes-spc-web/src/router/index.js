@@ -32,15 +32,9 @@ import GenealogyView from "../views/GenealogyView.vue";
 import TraceabilityMasterView from "../views/TraceabilityMasterView.vue";
 import { getCurrentUser } from "../utils/auth";
 import { recordPageEnter } from "../utils/activityAudit";
+import { firstAccessiblePath, permissionForPath } from "../navigation/pageRegistry";
 
 const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
-const pagePermissionByPath = {
-  "/etch-analysis": "analysis.etch", "/spc": "analysis.spc", "/process-analysis/capability": "analysis.capability",
-  "/trend-chart": "analysis.trend", "/process-analysis/violations": "analysis.violations", "/monthly-control-chart": "analysis.reports",
-  "/measurements": "data.measurements", "/uploads": "data.upload", "/operators": "admin.operators",
-  "/calibration-instruments": "calibration.manage"
-  , "/particle-monitoring": "analysis.spc", "/audit-events": "admin.audit.read"
-};
 
 const routes = [
   { path: "/login", component: LoginView },
@@ -89,7 +83,7 @@ const routes = [
   { path: "/settings/smtp", component: SmtpSettingsView, meta: { editorOnly: true } },
   { path: "/settings/spc-reports", component: SpcReportSettingsView, meta: { editorOnly: true } },
   { path: "/operators", component: OperatorsView, meta: { editorOnly: true } },
-  { path: "/audit-events", component: AuditEventsView, meta: { explicitPermission: "admin.audit.read" } },
+  { path: "/audit-events", component: AuditEventsView },
   { path: "/chemicals", redirect: "/spc" },
   { path: "/genealogy", component: GenealogyView, meta: { editorOnly: true } },
   { path: "/traceability-master", component: TraceabilityMasterView, meta: { editorOnly: true } },
@@ -108,13 +102,14 @@ router.beforeEach((to) => {
     return { path: "/login", query: { redirect: to.fullPath } };
   }
   const user = getCurrentUser();
-  if (to.meta.explicitPermission && !user?.permissions?.includes(to.meta.explicitPermission))
-    return { path: "/", query: { access: "audit" } };
-  const requiredPermission = pagePermissionByPath[to.path];
-  if (requiredPermission && Array.isArray(user?.permissions) && user.permissions.length && !user.permissions.includes(requiredPermission))
-    return { path: "/", query: { access: "page" } };
   if (to.meta.editorOnly && user?.role !== "Editor") {
-    return { path: "/", query: { access: "viewer" } };
+    const fallback = firstAccessiblePath(user);
+    return fallback ? { path: fallback, query: { access: "viewer" } } : { path: "/login", query: { access: "viewer" } };
+  }
+  const requiredPermission = permissionForPath(to.path);
+  if (requiredPermission && !user?.permissions?.includes(requiredPermission)) {
+    const fallback = firstAccessiblePath(user);
+    return fallback ? { path: fallback, query: { access: "page" } } : { path: "/login", query: { access: "page" } };
   }
   return true;
 });

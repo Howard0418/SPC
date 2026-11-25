@@ -1233,7 +1233,7 @@ public class OperatorsController(
             IsActive = req.IsActive,
             PasswordHash = null
         };
-        user.PagePermissionsJson = req.PagePermissions is null ? null : System.Text.Json.JsonSerializer.Serialize(req.PagePermissions.Distinct());
+        user.PagePermissionsJson = req.PagePermissions is null ? null : MesSpc.Api.Services.Security.SpcPagePermissions.NormalizeForStorage(req.PagePermissions);
         db.Operators.Add(user);
         await db.SaveChangesAsync();
         return Ok(ToResponse(user));
@@ -1255,7 +1255,7 @@ public class OperatorsController(
         x.Username = NullIfWhiteSpace(req.Username);
         x.Role = MesSpc.Api.Services.Security.UserRoles.Normalize(req.Role);
         x.IsActive = req.IsActive;
-        x.PagePermissionsJson = req.PagePermissions is null ? x.PagePermissionsJson : System.Text.Json.JsonSerializer.Serialize(req.PagePermissions.Distinct());
+        x.PagePermissionsJson = req.PagePermissions is null ? x.PagePermissionsJson : MesSpc.Api.Services.Security.SpcPagePermissions.NormalizeForStorage(req.PagePermissions);
         x.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         return Ok(ToResponse(x));

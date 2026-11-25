@@ -3807,3 +3807,10 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 以已核對的第一階段甘特圖重新產生中文結案報告附件一，更新為 3～11 月、36 週、11 項主要里程碑及資料截點說明；現有結案報告保持不變。
 - Word 來源與輸出頁數一致，全文逐頁渲染、DOCX 封裝、可見槽位與保留套件比對通過；僅新增本機文件，網站及資料庫發布不適用。[驗證](specs/20261125-spc-closeout-report-gantt-refresh/verification.md)
+
+## 2026-11-25 SPC 選單與頁面權限一致化
+
+- 建立 30 個可點頁面的前端登錄表並與 API 權限目錄契約比對，左側選單、直接路由守門及作業人員權限名稱改用同一權限碼與三語 key。
+- `Particle Monitoring` 從 `analysis.spc` 拆為 `analysis.particles`；舊權限依原有效行為相容，下一次正常儲存後轉為精確 v2 清單，無批次資料庫更新。
+- 稽核 read／export／evidence 仍為明示授權且不可自我加權。焦點 API 39 項、前端契約 4 項、Chromium 2 項、三語及 build 通過。
+- 測試 Web `0.1.191 → 0.1.193`、API `0.1.175 → 0.1.177` 已發布；首頁、主資產、同源與 8901 直連、前台版本及瀏覽器實際 API 基底驗證通過。正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)

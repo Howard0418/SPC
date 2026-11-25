@@ -32,6 +32,7 @@ import { createLogoutHandler } from "./utils/logout";
 import { api, setApiEnvironment } from "./api/client";
 import { useI18n } from "vue-i18n";
 import { readLocale, saveLocale, supportedLocales } from "./i18n/preferences";
+import { pageRegistry } from "./navigation/pageRegistry";
 import pkg from "../package.json";
 
 const { t, locale } = useI18n({ useScope: "global" });
@@ -134,71 +135,25 @@ onMounted(() => {
     });
 });
 
-const viewerMenuCategories = [
-  {
-    title: "spc.navigation.processAnalysis",
-    items: [
-      { to: "/spc", text: "spc.navigation.spcAnalysis", icon: LineChart },
-      { to: "/particle-monitoring", text: "spc.navigation.particleMonitoring", icon: Wind },
-      { to: "/trend-chart", text: "spc.navigation.measurementTrends", icon: TrendingUp },
-      { to: "/monthly-control-chart", text: "spc.navigation.periodReports", icon: CalendarClock }
-    ]
-  },
-];
-
-const editorMenuCategories = [
-  ...viewerMenuCategories,
-  {
-    title: "spc.navigation.importSampling",
-    items: [
-      { to: "/uploads", text: "spc.navigation.importBatches", icon: UploadCloud }
-    ]
-  },
-  {
-    title: "spc.navigation.qualityMaster",
-    items: [
-      { to: "/part-process-characteristics", text: "spc.navigation.controlItems", icon: FolderTree },
-      { to: "/analysis-limit-overview", text: "spc.navigation.analysisLimits", icon: Sliders },
-      { to: "/chemical-analysis-overview", text: "spc.navigation.lineAnalysis", icon: FlaskConical },
-      { to: "/chemical-f-table", text: "spc.navigation.chemicalTables", icon: FlaskConical },
-      { to: "/chemical-adjustment-parameters", text: "spc.navigation.chemicalAdjustmentParameters", icon: FlaskConical },
-      { to: "/processes", text: "spc.navigation.processes", icon: Layers },
-      { to: "/parts", text: "spc.navigation.parts", icon: Package },
-      { to: "/characteristics", text: "spc.navigation.characteristics", icon: Sliders },
-      { to: "/traceability-master", text: "spc.navigation.linesTanks", icon: Layers },
-      { to: "/control-chart-groups", text: "spc.navigation.chartCategories", icon: Layers },
-      { to: "/spc-rule-groups", text: "spc.navigation.alertRules", icon: Activity },
-    ]
-  },
-  {
-    title: "spc.navigation.alertsTraceability",
-    items: [
-      { to: "/alerts", text: "spc.navigation.alerts", icon: AlertTriangle },
-      { to: "/alerts-workflow", text: "spc.navigation.alertWorkflow", icon: Activity },
-      { to: "/genealogy", text: "spc.navigation.genealogy", icon: FolderTree },
-      { to: "/spc/query", text: "spc.navigation.qualityHistory", icon: Search }
-    ]
-  },
-  {
-    title: "spc.navigation.administration",
-    items: [
-      { to: "/guide", text: "spc.navigation.guide", icon: BookOpen },
-      { to: "/calibration-instruments", text: "spc.navigation.calibration", icon: CalendarClock },
-      { to: "/settings/smtp", text: "spc.navigation.smtp", icon: Sliders },
-      { to: "/settings/spc-reports", text: "spc.navigation.reportSettings", icon: CalendarClock },
-      { to: "/operators", text: "spc.navigation.users", icon: Users },
-      { to: "/audit-events", text: "spc.navigation.auditEvents", icon: ShieldCheck, permission: "admin.audit.read" }
-    ]
-  }
-];
-
-const auditMenuItem = { to: "/audit-events", text: "spc.navigation.auditEvents", icon: ShieldCheck, permission: "admin.audit.read" };
+const iconByName = {
+  Activity, AlertTriangle, BookOpen, CalendarClock, FlaskConical, FolderTree, Layers,
+  LineChart, Package, PlusCircle, Search, ShieldCheck, Sliders, TrendingUp, UploadCloud, Users, Wind
+};
 const menuCategories = computed(() => {
-  const base = canEdit.value ? editorMenuCategories : currentUser.value?.permissions?.includes("admin.audit.read")
-    ? [...viewerMenuCategories, { title: "spc.navigation.administration", items: [auditMenuItem] }]
-    : viewerMenuCategories;
-  return base.map(category => ({ ...category, items: category.items.filter(item => !item.permission || currentUser.value?.permissions?.includes(item.permission)) }))
-    .filter(category => category.items.length);
+  const permissions = new Set(currentUser.value?.permissions || []);
+  const categories = new globalThis.Map();
+  for (const page of pageRegistry) {
+    if (page.editorOnly && !canEdit.value) continue;
+    if (page.explicitOnly ? !permissions.has(page.permission) : authOn && !permissions.has(page.permission)) continue;
+    if (!categories.has(page.categoryKey)) categories.set(page.categoryKey, []);
+    categories.get(page.categoryKey).push({
+      to: page.path,
+      text: page.labelKey,
+      icon: iconByName[page.icon],
+      permission: page.permission
+    });
+  }
+  return [...categories].map(([title, items]) => ({ title, items }));
 });
 
 const logout = createLogoutHandler({

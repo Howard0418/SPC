@@ -51,7 +51,6 @@ const permissionCatalog = ref([]);
 
 const searchQuery = ref("");
 const statusFilter = ref("all");
-const removedEquipmentPermissions = new Set(["equipment.status", "equipment.points", "equipment.monitor"]);
 
 const showModal = ref(false);
 const modalMode = ref("create");
@@ -67,12 +66,14 @@ const form = ref({
   ,pagePermissions: []
 });
 const formErr = ref("");
-const visiblePermissionCatalog = computed(() => permissionCatalog.value.filter(permission => !removedEquipmentPermissions.has(permission.code)));
-const permissionNameByCode = computed(() => new Map(permissionCatalog.value.map(permission => [permission.code, permission.name || permission.label || permission.code])));
+const permissionLabel = permission => permission.nameKey ? t(permission.nameKey) : (permission.name || permission.label || permission.code);
+const visiblePermissionCatalog = computed(() => permissionCatalog.value.filter(permission => permission.showInPermissionEditor !== false));
+const visiblePermissionCodes = computed(() => new Set(visiblePermissionCatalog.value.map(permission => permission.code)));
+const permissionNameByCode = computed(() => new Map(permissionCatalog.value.map(permission => [permission.code, permissionLabel(permission)])));
 
 function displayedPermissions(item) {
   return [...new Set(item.pagePermissions || [])]
-    .filter(code => !removedEquipmentPermissions.has(code))
+    .filter(code => visiblePermissionCodes.value.has(code))
     .map(code => ({ code, name: permissionNameByCode.value.get(code) || code }));
 }
 
@@ -557,7 +558,7 @@ onMounted(load);
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <label v-for="permission in visiblePermissionCatalog" :key="permission.code" class="flex items-center gap-2 text-xs">
                 <input data-testid="settings-form.pagePermissions" v-model="form.pagePermissions" type="checkbox" :value="permission.code" class="h-4 w-4" />
-                <span>{{ permission.name }}</span>
+                <span>{{ permissionLabel(permission) }}</span>
               </label>
             </div>
             <p class="text-xs text-slate-500">{{ t('spc.settings.permissionHelp') }}</p>

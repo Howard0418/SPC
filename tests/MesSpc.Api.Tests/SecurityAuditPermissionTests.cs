@@ -105,6 +105,38 @@ public sealed class SecurityAuditPermissionTests
             Assert.DoesNotContain(SpcPagePermissions.Resolve(role, null), code => explicitCodes.Contains(code));
         Assert.All(explicitCodes, code => Assert.Contains(SpcPagePermissions.Catalog, item => item.Code == code));
         Assert.Contains("admin.operators", SpcPagePermissions.Resolve("Editor", null));
-        Assert.Equal(explicitCodes, SpcPagePermissions.Resolve("Editor", JsonSerializer.Serialize(explicitCodes)));
+        Assert.Equal(explicitCodes, SpcPagePermissions.Resolve("Editor", SpcPagePermissions.NormalizeForStorage(explicitCodes)));
+    }
+
+    [Fact]
+    public void NavigableCatalogHasUniqueCodesRoutesAndTranslationKeys()
+    {
+        var pages = SpcPagePermissions.Catalog.Where(x => x.ShowInNavigation).ToArray();
+        Assert.NotEmpty(pages);
+        Assert.Equal(pages.Length, pages.Select(x => x.Code).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(pages.Length, pages.Select(x => x.Route).Distinct(StringComparer.Ordinal).Count());
+        Assert.All(pages, page => Assert.StartsWith("spc.navigation.", page.NameKey));
+        Assert.All(pages, page => Assert.False(string.IsNullOrWhiteSpace(page.MenuGroup)));
+    }
+
+    [Fact]
+    public void LegacyExplicitEditorKeepsPreviouslyUnguardedPagesAndParticleAccess()
+    {
+        var resolved = SpcPagePermissions.Resolve("Editor", JsonSerializer.Serialize(new[] { "analysis.spc" }));
+        Assert.Contains("analysis.spc", resolved);
+        Assert.Contains("analysis.particles", resolved);
+        Assert.Contains("master.spc", resolved);
+        Assert.Contains("master.chemical_f", resolved);
+        Assert.Contains("alerts.workflow", resolved);
+        Assert.Contains("admin.smtp", resolved);
+        Assert.DoesNotContain(resolved, code => code.StartsWith("admin.audit.", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void MarkedExplicitPermissionsRemainExactSoUncheckedPagesStayRevoked()
+    {
+        var stored = SpcPagePermissions.NormalizeForStorage(new[] { "analysis.spc", "analysis.spc" });
+        Assert.Equal(new[] { "analysis.spc" }, SpcPagePermissions.Resolve("Editor", stored));
+        Assert.Contains(SpcPagePermissions.RegistryVersionMarker, stored);
     }
 }

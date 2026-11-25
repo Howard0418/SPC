@@ -1,7 +1,7 @@
 # 技術計畫
 
 - 功能 ID：`20261125-spc-navigation-etch-particle-improvements`
-- 規格版本：1
+- 規格版本：2
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響檔案
@@ -25,7 +25,7 @@
 
 1. 建立一份頁面登錄表：權限碼、route、三語 i18n key、群組、Viewer／Editor 預設、是否明示授權。
 2. 左側選單、權限清單及 router guard 以同一登錄表或可自動比對的契約產生，消除 `/particle-monitoring` 借用 `analysis.spc` 等一碼多頁情況。
-3. 以測試庫備份現有 `PagePermissionsJson`，計算調整前有效頁面快照；只補入使用者原本已能進入的新權限碼，不刪除、不額外擴大。
+3. 對未帶新版標記的既有 `PagePermissionsJson` 套用舊版有效頁面相容解析；下一次保存時加入內部版本標記並改採精確清單，不做批次資料庫更新。
 4. 稽核 read／export／evidence 維持 explicit-only，增加不得自我加權及前後有效權限測試。
 5. 先完成此工作，後續落塵輸入才使用已對齊的 `data.particles` 權限。
 

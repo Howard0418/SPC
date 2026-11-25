@@ -943,6 +943,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-DOC-VIEWER-QUICK-EN-SCREENSHOT-1125：第三批完成；檢視者英文快速指南七張圖已改為正式 SPC 英文模式畫面，保留唯讀角色界線，並完成去識別與八頁逐頁驗證。[規格](specs/20261125-spc-viewer-quick-english-screenshot/spec.md)｜[驗證](specs/20261125-spc-viewer-quick-english-screenshot/verification.md)
 - [x] SPC-DOC-ADMIN-QUICK-EN-1125：已完成九頁 SPC 管理者快速操作指南英文版；含九張英文模式／文件用英文視圖，並保留權限、通知、排程、稽核及正式轉測試的安全界線。[驗證](specs/20261125-spc-admin-quick-guide-english/verification.md)
 - [x] SPC-DOC-EDITOR-MANUAL-EN-1125：已完成 SPC 編輯者完整操作手冊英文版；沿用 11 頁中文格式，12 張畫面均使用正式英文模式或明示的文件用英文視圖，並完成逐頁與機敏資訊驗證。
-- [ ] P0｜SPC-PERM-NAV-ALIGN-1125｜主系統 SPC｜相依：作業人員／頁面權限｜資料庫：受控相容補值、無 schema｜發布：SPC Web/API 測試站｜回復：還原程式與 PagePermissionsJson 快照。統一左側可點頁面、權限目錄、路由與三語名稱，保持既有有效存取並禁止稽核自行加權。[規格](specs/20261125-spc-navigation-etch-particle-improvements/spec.md)
+- [x] P0｜SPC-PERM-NAV-ALIGN-1125｜SPC 左側 30 個可點頁面、權限目錄、路由守門與三語名稱已對齊；舊權限執行期相容、保存時轉精確 v2，稽核仍明示授權且不可自加權。測試 Web `0.1.193`／API `0.1.177` 已發布及連線驗證；正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
 - [ ] P1｜PORTAL-ETCH-PASTE-1125｜主系統 Portal｜相依：SPC 咬蝕同步契約不變｜資料庫：無 schema、貼上不直接寫入｜發布：Portal Web 測試站｜回復：還原前版 Web。咬蝕量日報 A/B side 支援 Excel 矩形貼上、整次驗證及錯誤座標。[規格](specs/20261125-spc-navigation-etch-particle-improvements/spec.md)
 - [ ] P1｜SPC-PARTICLE-PASTE-ENTRY-1125｜主系統 SPC｜相依：SPC-PERM-NAV-ALIGN-1125、既有 Particle preview/confirm｜資料庫：沿用 Upload/Particle 表、無預定 schema｜發布：SPC Web/API 測試站｜回復：還原前版程式，驗收批次另案處理。新增 R1～R12 雙層表頭落塵貼上、預覽與確認頁。[規格](specs/20261125-spc-navigation-etch-particle-improvements/spec.md)
