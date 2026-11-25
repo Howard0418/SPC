@@ -924,7 +924,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-CHEM-CURRENT-ADJUST-1124：Portal 依 SPC 現行調整及調整量設定，已發布測試，待登入驗收及正式授權。[規格](specs/20261124-chemical-current-adjustment-source/spec.md)
 
-- [x] SPC-REPORT-CLOSEOUT-1124：統計版送簽 Word 定稿及獨立甘特圖已交付本機。2026/11/30 實際結案待主管簽核。[規格](specs/20261124-spc-project-closeout-report/spec.md) [驗證](specs/20261124-spc-project-closeout-report/verification.md)
+- [x] SPC-REPORT-CLOSEOUT-1124：送簽修訂稿已補 2026/12/01 起持續資料核對與功能修正，保留第一階段甘特圖。第一階段實際結案仍待主管簽核。[規格](specs/20261124-spc-project-closeout-report/spec.md) [驗證](specs/20261124-spc-project-closeout-report/verification.md)
 
 - [x] SPC-DOC-GUIDE-1125：正式區編輯者手冊 V1.0 本機交付。四個站台入口已核對，文件含問題分流與角色交接。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
 
