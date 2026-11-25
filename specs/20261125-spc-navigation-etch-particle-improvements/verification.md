@@ -1,4 +1,4 @@
-# 驗證紀錄：SPC 選單與頁面權限一致化
+# 驗證紀錄：SPC 選單權限與 Portal 咬蝕格線貼上
 
 - 工作代號：`SPC-PERM-NAV-ALIGN-1125`
 - 日期：2026-11-25（台灣時間）
@@ -36,3 +36,21 @@
 - 完成版回復備份：`D:\SPC\release\backups\spc-perm-nav-align-1125-20261125-220107`，包含 Web／API；可在停止測試 API 集區後覆回，再核對 `0.1.191`／`0.1.175`。
 - 無 schema migration、無批次更新 `PagePermissionsJson`、無正式資料異動。舊權限採執行期相容；只有管理者日後正常儲存該人員權限時，才寫入 v2 精確標記。
 - 未發布至 `D:\Sites\PmrPortal`，Portal 與正式 SPC 均未異動。
+
+## `PORTAL-ETCH-PASTE-1125` 驗證結果
+
+| 驗收 | 方法 | 結果 |
+| --- | --- | --- |
+| AC-003 | Node 純函式測試、Razor 串接契約及咬蝕回歸 | PT1 五 OP 完整 5 × 10、PT2 二十欄、部分矩形、CRLF／LF、0 與空白均通過。貼上只更新當前 A／B side 草稿並呼叫原計算，不自動儲存。 |
+| AC-004 | 原子套用、錯誤格定位與邊界測試 | 非數字、負數、非矩形、列／欄超界及 `BEFORE < AFTER` 全部整次拒絕，不回傳部分 updates；錯誤可對應 side／組次／OP／欄位。 |
+| AC-008 | 焦點、咬蝕回歸、Release build、測試站 HTTP 與 Chromium 連線驗證 | Node 7 項、Razor 契約 2 項、既有咬蝕 12 項通過；Web Release build 0 警告／0 錯誤。測試 Web `1.0.364`、API `1.0.325/test`，新 JS、主 JS／CSS、同源 API 均通過。 |
+
+### 發布、連線與回復
+
+- 發布前 Web `1.0.363`／API `1.0.324`；使用乾淨隔離工作樹只帶入本工作，再從該專案根目錄執行標準 `scripts/publish-all.ps1`，避免夾帶使用者未提交的其他 Portal 修改。
+- 發布後 `https://portaltest.pmr.com.tw/app-version` 為 `1.0.364.0`；已發布 Web／API DLL 分別為 `1.0.364.0`／`1.0.325.0`。API `http://172.16.110.27:8091/health` 為 `ok/test`。
+- Login、`/js/etch-amount-paste.js`、`/js/site.js`、`/css/site.css` 皆 HTTP 200 且 MIME 正確；新 JS 與已驗證來源雜湊一致。Chromium 實際同源讀取版本與新 JS 成功，`/api/auth/me` 回 401，證明瀏覽器使用的 API 代理路徑可達且保持匿名拒絕。
+- Web／API `appsettings.json` 發布前後 SHA-256 分別保持 `16C553C34A75BADDD6324E41BD18D89443DC84D6A192633DCD8D4900860FADD9`／`F8FCB2FC2200C66CD75EB9EDDCA895AAE14CAF53D4AF4EC4B52BA59429843279`。
+- 回復備份：`D:\PmrPortal\.etch-paste-1125\backup-20261125-221836`；可透過 `app_offline.htm` 停用窗口覆回 Web `1.0.363`／API `1.0.324`，並保留現行設定。無 schema、權限或資料庫異動。
+- Web 全套為 54 通過、3 失敗；3 項位於未修改的品保導覽／藥液公式契約，目前 `HEAD` 即不符測試，本件不宣稱全套全綠。焦點與咬蝕回歸全數通過。
+- 原生電腦控制通道當下不可用；本件已由真實 Chromium 無頭模式完成公開測試站及實際 API 基底驗證，沒有使用個人帳密或寫入日報。

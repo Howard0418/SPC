@@ -3814,3 +3814,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - `Particle Monitoring` 從 `analysis.spc` 拆為 `analysis.particles`；舊權限依原有效行為相容，下一次正常儲存後轉為精確 v2 清單，無批次資料庫更新。
 - 稽核 read／export／evidence 仍為明示授權且不可自我加權。焦點 API 39 項、前端契約 4 項、Chromium 2 項、三語及 build 通過。
 - 測試 Web `0.1.191 → 0.1.193`、API `0.1.175 → 0.1.177` 已發布；首頁、主資產、同源與 8901 直連、前台版本及瀏覽器實際 API 基底驗證通過。正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+
+## 2026-11-25 Portal 咬蝕量 Excel 矩形貼上
+
+- 咬蝕量日報 A／B side 新增從目前 BEFORE／AFTER 格開始的 Excel Tab／換行矩形貼上；貼上只改草稿並立即重算，不自動儲存。
+- 非數字、負數、非矩形、列／欄超界或 `BEFORE < AFTER` 均整次拒絕並顯示錯誤格；原 COM、Enter、日報 payload 與 SPC 同步契約不變。
+- Node 7 項、Razor 契約 2 項、咬蝕回歸 12 項及 Release build 通過。Portal 測試 Web `1.0.364`／API `1.0.325/test` 已發布，首頁、新／主 JS、CSS、同源 API 與設定保留驗證通過；正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)

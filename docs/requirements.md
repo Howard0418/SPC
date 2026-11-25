@@ -719,3 +719,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - 2026-11-25 [SPC 中文結案報告甘特圖附件更新](../specs/20261125-spc-closeout-report-gantt-refresh/spec.md)：以已核對活頁簿第一階段甘特圖重新產生附件一，保留現有報告與正文，另存 3～11 月、36 週及 11 項里程碑的更新版。
 - 2026-11-25 [SPC 選單與頁面權限一致化](../specs/20261125-spc-navigation-etch-particle-improvements/verification.md)：30 個可點頁面使用唯一權限碼、路由與三語名稱；左側顯示及直接網址守門一致。舊明示權限維持原有效頁面，重新儲存後改採精確 v2 清單；稽核權限維持明示授予且不可自行加權。測試 Web 0.1.193／API 0.1.177 已發布，正式未發布。
+- 2026-11-25 [Portal 咬蝕量 Excel 矩形貼上](../specs/20261125-spc-navigation-etch-particle-improvements/spec.md)：A／B side 可從目前 BEFORE／AFTER 格貼上 Tab／換行矩形，非數字、負數、超界或 `BEFORE < AFTER` 整次拒絕；貼上不儲存，原 COM、日報 API 及 SPC 同步不變。測試 Web `1.0.364`／API `1.0.325` 已發布，正式未發布。

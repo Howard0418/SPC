@@ -1,7 +1,7 @@
 # 技術計畫
 
 - 功能 ID：`20261125-spc-navigation-etch-particle-improvements`
-- 規格版本：2
+- 規格版本：3
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響檔案
@@ -31,7 +31,7 @@
 
 ### 小工作 2：`PORTAL-ETCH-PASTE-1125`（P1）
 
-1. 針對目前 side 的可輸入格監聽 `paste`；依目前游標格與 clipboard Tab／換行矩形填入草稿。
+1. 先建立可由 Node 直接驗證的純 JavaScript parser／planner，針對目前 side 的可輸入格監聽 `paste`；依目前游標格與 clipboard Tab／換行矩形填入草稿。
 2. 貼上只呼叫現有 `calculate()`，不直接呼叫儲存或 SPC 同步。
 3. 先完整解析與驗證，再一次套用；任何超界或無效內容時整次不套用，顯示 side／組次／OP／BEFORE-AFTER。
 4. 保留 COM、逐格輸入、Enter 移動、切換 side、日期／線別重載與原儲存 payload。
