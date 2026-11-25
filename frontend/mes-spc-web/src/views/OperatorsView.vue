@@ -4,8 +4,24 @@ import {displayUiMessage} from "../i18n/uiMessage";
 const {t}=useI18n({useScope:"global"});
 import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, defineAsyncComponent } from "vue";
 import { api, getApiErrorDisplay } from "../api/client";
+import DatabaseRefreshLive from "../components/DatabaseRefreshLive.vue";
+const DatabaseRefreshRehearsal = import.meta.env.DEV ? defineAsyncComponent(() => import("../components/DatabaseRefreshRehearsal.vue")) : null;
+
+const showRefreshRehearsal = import.meta.env.DEV &&
+  import.meta.env.VITE_DATABASE_REFRESH_REHEARSAL === "true" &&
+  ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+const showLiveRefresh = ref(false);
+onMounted(async () => {
+  if (import.meta.env.VITE_APP_ENV !== "production") return;
+  try {
+    const { data } = await api.get("/database-refresh/availability");
+    showLiveRefresh.value = data?.available === true;
+  } catch {
+    showLiveRefresh.value = false;
+  }
+});
 import {
   Users,
   Plus,
@@ -254,7 +270,9 @@ onMounted(load);
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3">
+    <DatabaseRefreshRehearsal v-if="showRefreshRehearsal" />
+    <DatabaseRefreshLive v-else-if="showLiveRefresh" />
+    <div v-else class="flex flex-wrap items-center gap-3">
       <button
         type="button"
         disabled

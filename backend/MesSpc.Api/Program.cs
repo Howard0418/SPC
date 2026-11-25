@@ -221,6 +221,9 @@ app.MapGet("/api/health", (IConfiguration configuration) => Results.Ok(new
     environment = configuration["AppEnvironment"] ?? "unknown"
 })).AllowAnonymous();
 
+app.MapDatabaseRefreshRehearsal(authEnabled);
+app.MapDatabaseRefreshLive(authEnabled);
+
 var controllers = app.MapControllers();
 if (authEnabled)
 {
