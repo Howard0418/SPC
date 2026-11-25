@@ -81,6 +81,12 @@ async function confirm(duplicateMode = 'reject') {
 }
 
 const cellValue = (row, locationIndex, sizeIndex) => row.counts[locationIndex * 4 + sizeIndex] ?? '';
+function measurementTimeParts(value) {
+  const match = String(value ?? '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  return match
+    ? { date: `${match[1]}/${match[2]}/${match[3]}`, time: `${match[4]}:${match[5]}` }
+    : { date: String(value ?? ''), time: '' };
+}
 const errorKey = { EMPTY: 'empty', NON_RECTANGULAR: 'nonRectangular', HEADER_MISMATCH: 'headerMismatch', COLUMN_COUNT: 'columnCount', TIME_INVALID: 'timeInvalid', COUNT_INVALID: 'countInvalid' };
 const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || 'countInvalid'}`, { row: item.row, column: item.column, expected: item.expected, actual: item.actual });
 </script>
@@ -102,10 +108,56 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
     </section>
 
     <section data-testid="particle-paste-section" class="rounded-xl border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-      <label class="text-sm font-bold" for="particle-paste">{{ t('spc.particleEntry.pasteLabel') }}</label>
-      <textarea id="particle-paste" v-model="clipboardText" data-testid="particle-paste" rows="4"
-        class="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs dark:border-slate-700 dark:bg-slate-950"
-        :placeholder="t('spc.particleEntry.pastePlaceholder')" @paste="onPaste" />
+      <div class="flex flex-wrap items-end justify-between gap-2">
+        <label id="particle-paste-label" class="text-sm font-bold">{{ t('spc.particleEntry.pasteLabel') }}</label>
+        <p class="text-xs text-slate-500">{{ t('spc.particleEntry.pastePlaceholder') }}</p>
+      </div>
+      <div class="mt-2 overflow-x-auto rounded-lg border-2 border-slate-900 dark:border-slate-300">
+        <table
+          data-testid="particle-paste-grid"
+          tabindex="0"
+          role="grid"
+          aria-labelledby="particle-paste-label"
+          class="min-w-[2450px] border-collapse text-center text-xs outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-700"
+          @paste="onPaste"
+        >
+          <thead class="bg-yellow-300 text-slate-950">
+            <tr>
+              <th rowspan="2" class="sticky left-0 z-20 w-40 min-w-40 border border-black bg-yellow-300 px-2 py-2 font-black">
+                {{ t('spc.particleEntry.measurementTime') }}\{{ t('spc.particles.location') }}
+              </th>
+              <th v-for="location in particleLocations" :key="location" colspan="4" class="border border-black bg-yellow-300 px-2 py-1 font-black">{{ location }}</th>
+            </tr>
+            <tr>
+              <template v-for="location in particleLocations" :key="`${location}-paste-sizes`">
+                <th v-for="size in particleSizes" :key="`${location}-${size}-paste`" class="min-w-12 border border-black bg-yellow-300 px-2 py-1 font-semibold">
+                  {{ size }}<span v-if="size === '0.5'"> µm</span>
+                </th>
+              </template>
+            </tr>
+          </thead>
+          <tbody class="bg-white text-slate-950">
+            <tr v-if="!parsed.dataRows.length" data-testid="particle-grid-empty">
+              <td class="sticky left-0 border border-slate-500 bg-white px-2 py-4 font-semibold">—</td>
+              <td colspan="48" class="border border-slate-500 px-4 py-4 text-left text-slate-500">{{ t('spc.particleEntry.pastePlaceholder') }}</td>
+            </tr>
+            <tr v-for="(row, rowIndex) in parsed.dataRows" :key="row.sourceRow">
+              <td :data-testid="`particle-time-${rowIndex}`" class="sticky left-0 z-10 border border-slate-500 bg-white px-2 py-2 font-mono font-semibold">
+                <div>{{ measurementTimeParts(row.measurementTime).date }}</div>
+                <div>{{ measurementTimeParts(row.measurementTime).time }}</div>
+              </td>
+              <template v-for="(_, locationIndex) in particleLocations" :key="`${row.sourceRow}-${locationIndex}`">
+                <td
+                  v-for="(_, sizeIndex) in particleSizes"
+                  :key="`${row.sourceRow}-${locationIndex}-${sizeIndex}`"
+                  :data-testid="`particle-cell-${rowIndex}-${locationIndex * 4 + sizeIndex}`"
+                  class="border border-slate-500 px-2 py-2 font-mono"
+                >{{ cellValue(row, locationIndex, sizeIndex) }}</td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="mt-3 flex flex-wrap gap-2">
         <button type="button" data-testid="particle-parse" class="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold" :disabled="busy" @click="applyPaste"><ClipboardPaste class="h-4 w-4" />{{ t('spc.particleEntry.parse') }}</button>
         <button type="button" data-testid="particle-preview" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50" :disabled="busy || !clipboardText" @click="createPreview"><Eye class="h-4 w-4" />{{ t('spc.particleEntry.preview') }}</button>
@@ -126,15 +178,6 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
         <span>{{ t('spc.particleEntry.validValues', { count: expandedRows.length }) }}</span>
         <span>{{ t('spc.particleEntry.missingValues', { count: parsed.missingCount }) }}</span>
         <span v-if="preview">{{ t('spc.particleEntry.duplicates', { count: preview.duplicateRows }) }}</span>
-      </div>
-      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-        <table class="min-w-[2450px] border-collapse text-center text-xs">
-          <thead class="sticky top-0 bg-slate-100 dark:bg-slate-900">
-            <tr><th rowspan="2" class="border p-2">{{ t('spc.particleEntry.measurementTime') }}</th><th v-for="location in particleLocations" :key="location" colspan="4" class="border p-2 font-black">{{ location }}</th></tr>
-            <tr><template v-for="location in particleLocations" :key="`${location}-sizes`"><th v-for="size in particleSizes" :key="`${location}-${size}`" class="border p-2">{{ size }} µm</th></template></tr>
-          </thead>
-          <tbody><tr v-for="row in parsed.dataRows" :key="row.sourceRow"><td class="whitespace-nowrap border p-2 font-mono">{{ row.measurementTime }}</td><template v-for="(_, locationIndex) in particleLocations" :key="locationIndex"><td v-for="(_, sizeIndex) in particleSizes" :key="sizeIndex" class="border p-2 font-mono">{{ cellValue(row, locationIndex, sizeIndex) }}</td></template></tr></tbody>
-        </table>
       </div>
     </section>
 

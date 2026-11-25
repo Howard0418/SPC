@@ -1,3 +1,8 @@
+## 2026-11-25 落塵監控 Excel 固定貼上格線
+
+- Excel 貼上區由大文字框改為黃色雙層 49 欄格線，固定顯示日期時間／位置與 R1～R12 各 0.5／1／5／10 µm；點選格線即可貼上，合法資料直接顯示於對應格，preview 前不呼叫 API。
+- Chromium 3 項、Particle 語系 3 項、三語目錄與 testhost build 通過。測試 Web 依序 `0.1.195 → 0.1.196 → 0.1.197`，末版補齊「日期時間」欄名；API 維持 `0.1.178/test`。首頁、主 JS/CSS、同源／直連及 Chromium API 驗證通過，正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+
 ## 2026-11-25 落塵監控輸入頁配置圖與框線
 
 - 落塵監控資料輸入頁先顯示有框線的 R1～R12 量測位置配置圖，再顯示有框線的 Excel 貼上區；圖片等比例顯示，原貼上、預覽與確認功能不變。

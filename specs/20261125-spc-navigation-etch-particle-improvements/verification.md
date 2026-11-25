@@ -94,3 +94,24 @@
 - 專案的 `verify:built-api` 本機預設需另行啟動 5196 preview；以實站網址執行時因實站登入守門無法看到模擬 Token 頁面而逾時。本次不把該案例列為通過，改以專案 Chromium 直接驗證實際同源 API 基底；其餘焦點測試與建置均通過。
 - 回復備份：`D:\SPC\release\backups\spc-particle-entry-layout-1125-20261125-230231\frontend`。回復時覆回該目錄後，應重新驗證 Web `0.1.194`、API `0.1.178/test`、首頁與主資產；新圖片即使殘留也不會被舊 `index.html`／JS 引用。
 - 無 schema、資料、權限或 API 異動；正式 SPC、Portal 與 `D:\Sites\PmrPortal` 均未修改或發布。
+
+## `SPC-PARTICLE-ENTRY-GRID-1125` 驗證結果
+
+| 驗收 | 方法 | 結果 |
+| --- | --- | --- |
+| AC-010 | 先紅後綠 Chromium 測試；檢查雙層表頭、欄數、黃色底、貼上對位、清除及 preview 前 API 次數 | 修改前無格線而失敗；修改後第一列表頭 13 格、第二列 48 格，R1～R12 及四粒徑完整。單列 49 欄貼上後第一格為 R1/0.5=`0`、末格為 R12/10=`47`，preview API 仍 0 次，清除後恢復空白列。 |
+| AC-008 | 原配置圖與完整貼上／preview／confirm Chromium 回歸、Particle 語系、三語目錄與 testhost build | Chromium 3/3、Particle 語系 3/3、三語 2,952 keys × 3、build 成功；原配置圖、preview 及 confirm 均未回歸。 |
+
+### 畫面與操作檢查
+
+- 可見文字框已移除；貼上區固定顯示 61 個表頭儲存格（第一列 13、第二列 48）及一列空白提示。
+- 1,628 px 視窗下格線捲動內容寬 2,465 px、可視寬 1,286 px，可水平捲動查看 R1～R12；第一欄固定在左側。
+- 格線聚焦後直接接收 Excel Tab／換行文字；貼上仍沿用既有 `parseParticlePaste`，不新增保存途徑。
+
+### 發布、連線與回復
+
+- 第一次發布：Web `0.1.195 → 0.1.196`，完成固定格線；視覺比對後再將第一欄由「量測時間」校正為來源畫面的「日期時間」，依版本規則以第二次發布 `0.1.196 → 0.1.197` 完成，不覆蓋原版號。API 全程維持 `0.1.178/test`。
+- 首頁 HTTP 200；最終主 JavaScript `index-w5TIFwu3.js` 與主 CSS `index-CFY9CxIm.css` 均 HTTP 200 且 MIME 正確，實際主資產含 `particle-paste-grid` 與 Web `0.1.197`。
+- 同源與 8901 直連 `/api/health`、`/api/version` 均為 `0.1.178/test`；Chromium 實際載入同源 version／health 均回 200。未登入首頁依既有流程轉往 `portaltest.pmr.com.tw/Login`，無 API 離線或環境錯置。
+- 第一階段回復備份：`D:\SPC\release\backups\spc-particle-entry-grid-1125-20261125-232051\frontend`（Web `0.1.195`）；最終發布回復備份：`D:\SPC\release\backups\spc-particle-entry-grid-1125-20261125-232439\frontend`（Web `0.1.196`）。覆回後須重新驗證對應 Web、API `0.1.178/test`、首頁及主資產。
+- 無 schema、資料、權限、API 或正式環境異動；未發布至 `D:\Sites\PmrPortal`。

@@ -947,3 +947,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] P1｜PORTAL-ETCH-PASTE-1125｜Portal 咬蝕量日報 A/B side 已支援 Excel 矩形貼上、整次驗證及錯誤座標；貼上不直接儲存，原 SPC 同步契約不變。測試 Web `1.0.364`／API `1.0.325` 已發布與連線驗證，正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
 - [x] P1｜SPC-PARTICLE-PASTE-ENTRY-1125｜SPC 落塵監控資料輸入已新增 R1～R12 雙層表頭、49 欄貼上、Long Format 預覽／確認、重複保護及獨立 `data.particles` 權限。測試 Web `0.1.194`／API `0.1.178` 已發布與連線驗證；無 schema／量測／權限資料異動，正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
 - [x] P2｜SPC-PARTICLE-ENTRY-LAYOUT-1125｜落塵監控資料輸入頁已先放有框線的 R1～R12 量測位置配置圖，再放有框線的 Excel 貼上區；測試 Web `0.1.195` 已發布，API 維持 `0.1.178/test`，正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+- [x] P1｜SPC-PARTICLE-ENTRY-GRID-1125｜落塵監控 Excel 貼上區已改為黃色雙層 49 欄格線，格線直接接收貼上並顯示對應資料；測試 Web 最終 `0.1.197` 已發布，API 維持 `0.1.178/test`，正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)

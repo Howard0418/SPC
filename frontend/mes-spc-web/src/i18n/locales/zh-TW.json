@@ -1770,7 +1770,7 @@
       "validValues": "有效值 {count} 筆",
       "missingValues": "空白缺值 {count} 格",
       "duplicates": "重複 {count} 筆",
-      "measurementTime": "量測時間",
+      "measurementTime": "日期時間",
       "previewResult": "伺服器預覽結果",
       "previewSummary": "有效 {valid}／錯誤 {errors}／重複 {duplicates}",
       "confirm": "確認寫入",

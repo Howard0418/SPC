@@ -1770,7 +1770,7 @@
       "validValues": "{count} valid values",
       "missingValues": "{count} blank cells",
       "duplicates": "{count} duplicates",
-      "measurementTime": "Measurement time",
+      "measurementTime": "Date/time",
       "previewResult": "Server preview",
       "previewSummary": "Valid {valid} / errors {errors} / duplicates {duplicates}",
       "confirm": "Confirm import",
