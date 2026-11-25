@@ -1,3 +1,7 @@
+## 2026-11-25 藥液歷史刷新現行版覆核
+
+- SPC-ADJUST-1028-TASK-008 前次正式發布已完成。此次覆核 Portal 現行來源、測試站歷史查詢、13 項刷新及 18 項代理測試，已校正 Portal 舊待辦，無站台重發。[驗證](specs/20261028-chemical-history-refresh/verification.md)
+
 ## 2026-11-25 正式維護頁刷新測試庫驗收
 
 - 正式維護頁提交後，由受控維護程序完成固定測試庫 69 表置換，正式頁查回同一作業成功。測試庫復寫、保留設定及兩個測試站連線驗證通過，正式庫只作為來源讀取。本次無網站發布。[驗證](specs/20261123-production-test-database-refresh-button/verification.md)
