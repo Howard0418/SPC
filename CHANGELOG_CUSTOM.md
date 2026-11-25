@@ -1,3 +1,7 @@
+## 2026-11-25 SPC 結案報告補列 9 月里程碑
+
+- 將 9/17–9/30 歸納為藥液日報整合與 F 表導入，已更新本機 Word 附件及甘特圖。十三頁核對通過，待審閱。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
+
 ## 2026-11-25 SPC 結案報告補充功能設置理由
 
 - 沿用現行 Word 確認版，補入版本歷史、藥液量測調整公式及 F 表維護的用途與設置理由。十三頁及甘特圖已核對。修訂檔留本機，待審閱。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
