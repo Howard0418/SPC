@@ -946,4 +946,3 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [ ] P0｜SPC-PERM-NAV-ALIGN-1125｜主系統 SPC｜相依：作業人員／頁面權限｜資料庫：受控相容補值、無 schema｜發布：SPC Web/API 測試站｜回復：還原程式與 PagePermissionsJson 快照。統一左側可點頁面、權限目錄、路由與三語名稱，保持既有有效存取並禁止稽核自行加權。[規格](specs/20261125-spc-navigation-etch-particle-improvements/spec.md)
 - [ ] P1｜PORTAL-ETCH-PASTE-1125｜主系統 Portal｜相依：SPC 咬蝕同步契約不變｜資料庫：無 schema、貼上不直接寫入｜發布：Portal Web 測試站｜回復：還原前版 Web。咬蝕量日報 A/B side 支援 Excel 矩形貼上、整次驗證及錯誤座標。[規格](specs/20261125-spc-navigation-etch-particle-improvements/spec.md)
 - [ ] P1｜SPC-PARTICLE-PASTE-ENTRY-1125｜主系統 SPC｜相依：SPC-PERM-NAV-ALIGN-1125、既有 Particle preview/confirm｜資料庫：沿用 Upload/Particle 表、無預定 schema｜發布：SPC Web/API 測試站｜回復：還原前版程式，驗收批次另案處理。新增 R1～R12 雙層表頭落塵貼上、預覽與確認頁。[規格](specs/20261125-spc-navigation-etch-particle-improvements/spec.md)
-- [ ] SPC-DOC-CLOSEOUT-EN-1125：製作 SPC 第一階段專案結案報告英文版，保留核准格式、成本比較與甘特圖，不帶入範本人名。
