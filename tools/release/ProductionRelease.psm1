@@ -67,6 +67,13 @@ function Test-ReleaseManifest($Manifest,[string]$Bundle,[string]$MachineName,[Va
     if($m.system -cnotin @('SPC','Portal')){throw 'Unsupported system'}
     if($m.schemaVersion -ne 1 -or $m.environment -cne $p.Environment -or $m.releaseId -notmatch '^[A-Za-z0-9][A-Za-z0-9_-]{2,79}$' -or $m.sourceCommit -notmatch '^[a-fA-F0-9]{40}$'){throw 'Invalid manifest identity'}
     if($m.host -ine $p.HostName -or $MachineName -inotmatch ('^'+[regex]::Escape($p.Machine)+'(\.pmr\.com\.tw)?$') -or $m.database.name -cne $p.Database){throw 'Production host/database mismatch'}
+    $maintenanceBackup = $m.database.PSObject.Properties['maintenanceBackupId']
+    if ($maintenanceBackup -and ($m.system -cne 'SPC' -or $Environment -cne 'Production' -or
+        @($m.database.migrationIds).Count -or $m.database.migrationFile -or
+        [string]$maintenanceBackup.Value -cnotmatch '^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$' -or
+        [guid]$maintenanceBackup.Value -eq [guid]::Empty)) {
+        throw 'Maintenance backup handoff requires a nonempty UUID for an SPC production release without migrations.'
+    }
     if(@($m.packages).Count -ne 2 -or @($m.packages.path|Select-Object -Unique).Count -ne 2){throw 'Exactly two distinct target paths required'}
     $bundleRoot=[IO.Path]::GetFullPath($Bundle).TrimEnd('\','/')
     Assert-NoReleaseReparse $bundleRoot

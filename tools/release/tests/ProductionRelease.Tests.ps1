@@ -17,6 +17,16 @@ $m=[pscustomobject]@{schemaVersion=1;releaseId='TEST-001';sourceCommit=('a'*40);
 foreach($p in $profile.Targets){$m.packages+= [pscustomobject]@{site=$p.Site;pool=$p.Pool;path=$p.Path;archive='api.zip';sha256=(Get-FileHash (Join-Path $bundle 'api.zip')).Hash;version='1.0.0';files=@([pscustomobject]@{path='app.dll';sha256=$fileHash})}}
 $m | Add-Member -NotePropertyName rollbackSmoke -NotePropertyValue $m.smoke
 Check 'valid production plan' {Test-ProductionManifest $m $bundle $profile.HostName|Out-Null}
+Check 'SPC maintenance backup handoff validates UUID and mode' {
+    $candidate = $m | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+    $candidate.database | Add-Member -NotePropertyName maintenanceBackupId -NotePropertyValue ([guid]::NewGuid().ToString())
+    Test-ProductionManifest $candidate $bundle $profile.HostName | Out-Null
+    $candidate.database.migrationFile = 'migration.sql'
+    Reject {Test-ProductionManifest $candidate $bundle $profile.HostName}
+    $candidate.database.migrationFile = ''
+    $candidate.database.maintenanceBackupId = [guid]::Empty.ToString()
+    Reject {Test-ProductionManifest $candidate $bundle $profile.HostName}
+}
 Check 'wrong host blocked' {Reject {Test-ProductionManifest $m $bundle 'OTHER'}}
 Check 'forbidden target blocked' {$old=$m.packages[0].path;$m.packages[0].path='D:\Sites\PmrPortal';try{Reject {Test-ProductionManifest $m $bundle $profile.HostName}}finally{$m.packages[0].path=$old}}
 Check 'tampered archive blocked' {$old=$m.packages[0].sha256;$m.packages[0].sha256='0'*64;try{Reject {Test-ProductionManifest $m $bundle $profile.HostName}}finally{$m.packages[0].sha256=$old}}

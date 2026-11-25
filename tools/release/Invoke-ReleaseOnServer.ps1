@@ -139,6 +139,45 @@ try{
             Write-ReleaseJson @{backupName=$p.releaseId;system=$p.system} (Join-Path $r 'iis.json')
         }
         BackupDatabase={param($p,$r)
+            $handoff = $p.database.PSObject.Properties['maintenanceBackupId']
+            if ($handoff) {
+                $maintenanceConfig = 'C:\ProgramData\PMR-Releases\Production\SPC-PROD-1123-AUDIT-WEB147\appsettings.original.json'
+                Assert-NoReleaseReparse $maintenanceConfig
+                $settings = Get-Content -LiteralPath $maintenanceConfig -Raw -Encoding UTF8 | ConvertFrom-Json
+                $builder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder(
+                    (Convert-ReleaseSqlConnectionString $settings.ConnectionStrings.SqlServer))
+                if ($builder.DataSource -cne '172.16.110.16' -or $builder.InitialCatalog -cne 'PMR_SPC_2026') {
+                    throw 'Unexpected SPC maintenance database connection.'
+                }
+                $c = New-Object System.Data.SqlClient.SqlConnection($builder.ConnectionString)
+                try {
+                    $c.Open()
+                    $cmd = $c.CreateCommand()
+                    $cmd.CommandTimeout = 600
+                    [void]$cmd.Parameters.AddWithValue('@id', [guid]$handoff.Value)
+                    [void]$cmd.Parameters.AddWithValue('@name', ('PMR_SPC_2026-' + $p.releaseId + '-maintenance.bak'))
+                    $cmd.CommandText = @'
+IF DB_NAME()<>N'PMR_SPC_2026' THROW 51000,'Unexpected SPC maintenance database',1;
+DECLARE @root nvarchar(4000)=CONVERT(nvarchar(4000),SERVERPROPERTY('InstanceDefaultBackupPath'));
+DECLARE @path nvarchar(4000)=@root+CASE WHEN RIGHT(@root,1) IN (N'\',N'/') THEN N'' ELSE N'\' END+@name;
+IF @path IS NULL OR NOT EXISTS (
+  SELECT 1 FROM msdb.dbo.backupset b JOIN msdb.dbo.backupmediafamily f ON b.media_set_id=f.media_set_id
+  WHERE b.backup_set_uuid=@id AND b.database_name=DB_NAME() AND b.type='D'
+    AND b.is_copy_only=1 AND b.has_backup_checksums=1
+    AND b.backup_finish_date BETWEEN DATEADD(minute,-60,GETDATE()) AND GETDATE()
+    AND b.position=1 AND f.physical_device_name=@path
+    AND (SELECT COUNT(*) FROM msdb.dbo.backupmediafamily x WHERE x.media_set_id=b.media_set_id)=1
+) THROW 51001,'Backup handoff identity, provenance or freshness failed',1;
+RESTORE VERIFYONLY FROM DISK=@path WITH FILE=1,CHECKSUM;
+SELECT @path;
+'@
+                    $path = [string]$cmd.ExecuteScalar()
+                    if (!$path) { throw 'No verified maintenance backup path.' }
+                    Write-ReleaseJson @{database=$p.database.name;path=$path;backupId=$handoff.Value;verified=$true;source='maintenance'} (Join-Path $r 'database.json')
+                }
+                finally { $c.Dispose() }
+                return
+            }
             $c=Open-ReleaseDatabase $p
             try{
                 $cmd=$c.CreateCommand();$cmd.CommandTimeout=600
