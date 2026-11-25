@@ -934,3 +934,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-DOC-ADMIN-QUICK-1125：管理者快速操作指南 V1.0 已完成；九頁、九張去識別正式畫面，涵蓋人員與權限、管制項目、藥液公式與 F 表、通知、報表排程、稽核、正式轉測試及回復交班。[規格與驗證](specs/20261125-spc-admin-quick-guide/verification.md)
 
 - [x] SPC-OPERATORS-DIRECTORY-1125：SPC API 主責，Portal 品保名單為上游。測試 Web 0.1.189／API 0.1.173；正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者唯讀比對成功。[規格與驗證](specs/20261125-operator-directory-connection/spec.md)
+
+- [x] SPC-DOC-GUIDE-EN-1125：已完成二十六頁英文版 SPC 全功能操作教學手冊，保留三十二張正式區去識別截圖，逐頁渲染與敏感資訊檢查通過。[驗證](specs/20261125-spc-english-user-manual/verification.md)
