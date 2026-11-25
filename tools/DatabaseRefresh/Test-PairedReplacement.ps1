@@ -4,7 +4,8 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^PMR_SPC_TEST-REFRESH-IDENTITY-[0-9]{4}-[a-f0-9]{32}\.bak$')][string]$TargetBackup,
     [switch]$VerifyRecovery,
     [switch]$ValidateLivePrerequisites,
-    [ValidateSet('PMR_SPC_TEST')][string]$LiveTargetConfirmation
+    [ValidateSet('PMR_SPC_TEST')][string]$LiveTargetConfirmation,
+    [guid]$ExpectedSourceBackupId
 )
 
 $ErrorActionPreference = 'Stop'
@@ -68,6 +69,7 @@ $engine = @{
     VerifyRecovery = [bool]$VerifyRecovery
     ValidateLivePrerequisites = [bool]$ValidateLivePrerequisites
     ApplyLive = $LiveTargetConfirmation -ceq 'PMR_SPC_TEST'
+    ExpectedSourceBackupId = $ExpectedSourceBackupId
     LiveMaintenance = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Invoke-LiveTestRefreshMaintenance.ps1') -Raw
     Readiness = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Assert-LiveRefreshReadiness.ps1') -Raw
     Policies = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Table-Policies.psd1') -Raw
@@ -320,10 +322,15 @@ FROM dbo.VariableMeasurements;
             . (Join-Path $work 'Invoke-LiveTestRefreshMaintenance.ps1')
             $connection.ChangeDatabase('master')
             $backupId = Read-Rows @"
-SELECT TOP (1) b.backup_set_uuid AS BackupId
+SELECT TOP (1) b.backup_set_uuid AS BackupId,
+       DATEADD(minute,-DATEPART(TZOFFSET,SYSDATETIMEOFFSET()),b.backup_finish_date) AS SnapshotUtc
 FROM msdb.dbo.restorehistory r JOIN msdb.dbo.backupset b ON b.backup_set_id=r.backup_set_id
 WHERE r.destination_database_name=N'$source' ORDER BY r.restore_history_id DESC;
 "@
+            if ($engine.ExpectedSourceBackupId -and $engine.ExpectedSourceBackupId -ne [guid]::Empty -and
+                $backupId.BackupId -ne $engine.ExpectedSourceBackupId) {
+                throw 'Restored backup differs from the approved preflight.'
+            }
             $plan = @{
                 InsertOrder = $engine.Order
                 Columns = $columns
@@ -335,6 +342,16 @@ WHERE r.destination_database_name=N'$source' ORDER BY r.restore_history_id DESC;
             if ($engine.ApplyLive) {
                 Test-WriterAccess $true 'PMR_SPC_TEST'
                 'Live fixed-target refresh completed: PMR_SPC_TEST.'
+            }
+            else {
+                $counts = Read-Rows "SELECT COUNT_BIG(*) AS MeasurementRows FROM [$source].dbo.VariableMeasurements;"
+                [pscustomobject]@{
+                    Kind = 'ValidatedRefreshProof'
+                    BackupId = [guid]$backupId.BackupId
+                    SnapshotUtc = [datetime]::SpecifyKind($backupId.SnapshotUtc,[DateTimeKind]::Utc).ToString('O')
+                    ReplacementTables = $engine.Order.Count
+                    MeasurementRows = [long]$counts.MeasurementRows
+                }
             }
         }
     }
