@@ -1,3 +1,7 @@
+## 2026-11-25 正式 SPC 重複帳號整理規劃入池
+
+- SPC-OPERATORS-MERGE-1125 排為 P1，先核實兩筆身分及授權，再擬定保留主檔、歷史追溯與回復。若確認造成登入或授權事故則升 P0。正式資料與發布未執行。[規格](specs/20261125-production-operator-account-merge/spec.md)
+
 ## 2026-11-25 SPC 與 Portal 品保編輯者手冊定稿
 
 - V1.0 補四個已核對的站台入口，按職務說明交接與問題回報。九頁 Word 及九張既有去識別截圖均驗證，另存本機。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)

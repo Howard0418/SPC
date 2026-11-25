@@ -1,3 +1,7 @@
+## 2026-11-25 正式 SPC 重複登入帳號
+
+- [ ] SPC-OPERATORS-MERGE-1125：P1／SPC 主責，Portal／AD 為唯讀身分來源。正式同一組帳號待排程；先唯讀確認身分、權限與引用，確認影響登入、身分或授權時升 P0。正式資料整理另行核准。本次僅規劃入池，未啟動。[規格](specs/20261125-production-operator-account-merge/spec.md) [計畫](specs/20261125-production-operator-account-merge/plan.md)
+
 ## 2026-11-23 線別分析項目總覽資料同步
 
 - [x] `SPC-CHEM-OVERVIEW-PROD-1123`（SPC）測試區已驗收配置同步正式，完成備份、寫入及查回驗證，兩個欄位保留正式值。[驗證](specs/20261123-chemical-overview-production-data/verification.md)

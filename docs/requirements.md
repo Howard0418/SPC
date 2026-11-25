@@ -1,3 +1,5 @@
+- 2026-11-25 [正式 SPC 重複登入帳號整理](../specs/20261125-production-operator-account-merge/spec.md)：個案已規劃入池，待唯讀確認正式身分與權限差異，尚未執行。
+
 - 2026-11-25 [SPC Portal 人員比對連線修正](../specs/20261125-operator-directory-connection/spec.md)：正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者以唯讀比對取得 Portal 品保名單。測試 Web 0.1.189／API 0.1.173。
 
 - 2026-11-25 [SPC 與 Portal 品保系統說明](../specs/20261125-spc-portal-system-guide/spec.md)：V1.0 正式區編輯者手冊已交付，含已驗證的正式及測試入口、權限及日報操作、唯讀人員比對與問題分流。
