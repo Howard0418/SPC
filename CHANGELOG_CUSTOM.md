@@ -1,3 +1,7 @@
+## 2026-11-25 SPC 與 Portal 品保編輯者手冊定稿
+
+- V1.0 補四個已核對的站台入口，按職務說明交接與問題回報。九頁 Word 及九張既有去識別截圖均驗證，另存本機。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
+
 ## 2026-11-25 SPC 第一階段結案報告送簽定稿
 
 - 核對正式版本及統計基準。依指定 Word 版型另存十三頁送簽定稿及獨立甘特圖。2026/11/30 提報結案，待主管簽核。[驗證](specs/20261124-spc-project-closeout-report/verification.md)

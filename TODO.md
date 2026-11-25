@@ -917,6 +917,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] SPC-REPORT-CLOSEOUT-1124：統計版送簽 Word 定稿及獨立甘特圖已交付本機。2026/11/30 實際結案待主管簽核。[規格](specs/20261124-spc-project-closeout-report/spec.md) [驗證](specs/20261124-spc-project-closeout-report/verification.md)
 
-- [ ] SPC-DOC-GUIDE-1125：SPC 主責，Portal 品保相依。V0.5 已更新正式版本、實際唯讀比對及排錯步驟。待確認入口與交接窗口後定稿。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
+- [x] SPC-DOC-GUIDE-1125：正式區編輯者手冊 V1.0 本機交付。四個站台入口已核對，文件含問題分流與角色交接。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
 
 - [x] SPC-OPERATORS-DIRECTORY-1125：SPC API 主責，Portal 品保名單為上游。測試 Web 0.1.189／API 0.1.173；正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者唯讀比對成功。[規格與驗證](specs/20261125-operator-directory-connection/spec.md)
