@@ -937,7 +937,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [x] SPC-DOC-GUIDE-EN-1125：已完成二十六頁英文版 SPC 全功能操作教學手冊，保留三十二張正式區去識別截圖，逐頁渲染與敏感資訊檢查通過。[驗證](specs/20261125-spc-english-user-manual/verification.md)
 - [x] SPC-DOC-EDITOR-QUICK-EN-1125：SPC 編輯者快速操作指南英文版已完成；九頁、八張正式區去識別截圖，逐頁渲染及機敏資訊檢查通過。[規格與驗證](specs/20261125-spc-editor-quick-guide-english/verification.md)
-- [ ] SPC-DOC-VIEWER-QUICK-EN-1125：製作 SPC 檢視者快速操作指南英文版，保留唯讀角色界線與正式區去識別截圖。
+- [x] SPC-DOC-VIEWER-QUICK-EN-1125：SPC 檢視者快速操作指南英文版已完成；八頁、七張正式區去識別截圖，唯讀角色界線、逐頁渲染及機敏資訊檢查通過。[規格與驗證](specs/20261125-spc-viewer-quick-guide-english/verification.md)
 - [ ] SPC-DOC-ADMIN-QUICK-EN-1125：製作 SPC 管理者快速操作指南英文版，保留權限、通知、排程、稽核及正式轉測試的安全界線。
 - [ ] SPC-DOC-EDITOR-MANUAL-EN-1125：製作 SPC 編輯者完整操作手冊英文版，保留原中文檔及正式區去識別畫面。
 - [ ] SPC-DOC-CLOSEOUT-EN-1125：製作 SPC 第一階段專案結案報告英文版，保留核准格式、成本比較與甘特圖，不帶入範本人名。
