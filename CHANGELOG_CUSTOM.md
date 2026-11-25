@@ -1,3 +1,7 @@
+## 2026-11-25 SPC 結案報告補充功能設置理由
+
+- 沿用現行 Word 確認版，補入版本歷史、藥液量測調整公式及 F 表維護的用途與設置理由。十三頁及甘特圖已核對。修訂檔留本機，待審閱。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
+
 ## 2026-11-25 SPC 第一階段結案報告確認稿
 
 - 依使用者指定的 Word 版型重編確認稿，保留十二章藍色標題、表格欄位、頁碼與簽核位置。補入專案現況與甘特圖，原檔及交付檔案留本機。待使用者確認。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
