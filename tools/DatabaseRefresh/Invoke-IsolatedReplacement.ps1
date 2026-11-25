@@ -1,26 +1,43 @@
 function Invoke-IsolatedReplacement {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='Rehearsal')]
     param(
-        [Parameter(Mandatory)][System.Data.SqlClient.SqlConnection]$Connection,
-        [Parameter(Mandatory)][string]$Snapshot,
-        [Parameter(Mandatory)][string[]]$InsertOrder,
-        [Parameter(Mandatory)][hashtable]$Columns,
+        [Parameter(Mandatory,Position=0)][System.Data.SqlClient.SqlConnection]$Connection,
+        [Parameter(Mandatory,ParameterSetName='Rehearsal',Position=1)][string]$Snapshot,
+        [Parameter(Mandatory,ParameterSetName='LiveTest')][guid]$OperationId,
+        [Parameter(Mandatory,ParameterSetName='LiveTest')][guid]$SourceBackupId,
+        [Parameter(Mandatory,ParameterSetName='LiveTest')][string]$RecoveryBackupPath,
+        [Parameter(Mandatory,ParameterSetName='LiveTest')][datetime]$MaintenanceStartedAtSql,
+        [Parameter(Mandatory,Position=2)][string[]]$InsertOrder,
+        [Parameter(Mandatory,Position=3)][hashtable]$Columns,
         [string[]]$IdentityTables = @(),
         [object[]]$OperatorMapping = @(),
-        [hashtable]$MaintenanceTriggers = @{}
+        [hashtable]$MaintenanceTriggers = @{},
+        [object[]]$RetainedTables = @()
     )
 
     $isLocal = $Connection.DataSource -ceq 'localhost'
     $isRehearsalServer = $Connection.DataSource -cmatch '^(tcp:)?172\.16\.110\.16(,1433)?$'
     $target = $Connection.Database
-    if ((!$isLocal -and !$isRehearsalServer) -or
+    if ($PSCmdlet.ParameterSetName -eq 'LiveTest') {
+        . (Join-Path $PSScriptRoot 'Assert-LiveRefreshReadiness.ps1')
+        $Snapshot = Assert-LiveRefreshReadiness $Connection $OperationId $SourceBackupId $RecoveryBackupPath $MaintenanceStartedAtSql
+
+        $policies = Import-PowerShellDataFile (Join-Path $PSScriptRoot 'Table-Policies.psd1')
+        $keep = @($policies.Keys | Where-Object { $policies[$_] -in 'KeepTestSettings','KeepMigrationHistory' })
+        $replace = @($policies.Keys | Where-Object { $policies[$_] -notin 'KeepTestSettings','KeepMigrationHistory' })
+        if ($InsertOrder.Count -ne 69 -or @(Compare-Object $replace $InsertOrder -CaseSensitive).Count -or
+            !$RetainedTables.Count -or @(Compare-Object $keep @($RetainedTables.Table) -CaseSensitive).Count) {
+            throw 'Live test refresh does not match the complete server table policy.'
+        }
+    }
+    elseif ((!$isLocal -and !$isRehearsalServer) -or
         $target -cnotmatch '^SPC_Refresh_Rehearsal_Target_([a-f0-9]{32})$' -or
         $Snapshot -cne ('SPC_Refresh_Rehearsal_Snapshot_' + $Matches[1])) {
         throw 'Isolated replacement requires matching rehearsal databases on a known SQL endpoint.'
     }
     $sql = [System.Collections.Generic.List[string]]::new()
     $sql.Add("IF DB_NAME() <> N'$target' THROW 51028,'Rehearsal target changed',1;")
-    $sql.Add("IF APPLOCK_MODE('public',N'SPC.DatabaseRefresh','Session') <> N'Exclusive' THROW 51020,'Exclusive refresh lock required',1;")
+    $sql.Add("IF COALESCE(APPLOCK_MODE('public',N'SPC.DatabaseRefresh','Session'),N'NoLock') <> N'Exclusive' THROW 51020,'Exclusive refresh lock required',1;")
     $sql.Add("IF COALESCE(CONVERT(nvarchar(20),DATABASEPROPERTYEX(N'$Snapshot','Updateability')),N'') <> N'READ_ONLY' THROW 51021,'Read-only source snapshot required',1;")
     if ($isRehearsalServer) {
         $sql.Add("IF (SELECT COUNT(*) FROM sys.databases WHERE user_access_desc=N'RESTRICTED_USER' AND ((name=N'$Snapshot' AND is_read_only=1) OR (name=N'$target' AND is_read_only=0)))<>2 THROW 51029,'Restricted rehearsal pair required',1;")
@@ -37,6 +54,22 @@ function Invoke-IsolatedReplacement {
     if ($ordered.Count -ne $Columns.Count) { throw 'The rehearsal plan includes unordered tables.' }
     foreach ($table in $IdentityTables) {
         if (!$ordered.Contains($table)) { throw 'An identity table is outside the rehearsal plan.' }
+    }
+    $signatureQueries = [System.Collections.Generic.List[string]]::new()
+    foreach ($item in $RetainedTables) {
+        if ($item.Table -cnotmatch '^[A-Za-z_][A-Za-z0-9_]*$' -or
+            $ordered.Contains($item.Table) -or !$item.Names.Count -or !$item.Keys.Count -or
+            @(@($item.Names) + @($item.Keys) | Where-Object { $_ -cnotmatch '^[A-Za-z_][A-Za-z0-9_]*$' }).Count) {
+            throw 'Invalid retained table fingerprint plan.'
+        }
+        $names = ($item.Names | ForEach-Object { "[$_]" }) -join ','
+        $keys = ($item.Keys | ForEach-Object { "[$_]" }) -join ','
+        $signatureQueries.Add("SELECT $names FROM dbo.[$($item.Table)] ORDER BY $keys FOR JSON PATH, INCLUDE_NULL_VALUES")
+    }
+    $signatureQueries.Add('SELECT name, is_disabled, OBJECT_DEFINITION(object_id) AS body FROM sys.triggers WHERE parent_class=1 ORDER BY object_id FOR JSON PATH, INCLUDE_NULL_VALUES')
+    for ($index = 0; $index -lt $signatureQueries.Count; $index++) {
+        $query = $signatureQueries[$index]
+        $sql.Add("DECLARE @refreshSignature$index varbinary(32) = HASHBYTES('SHA2_256',COALESCE(($query),N'[]'));")
     }
     $dispatchGuards = @{
         MesSyncMessages = "WHERE SyncStatus = N'Pending'"
@@ -143,7 +176,23 @@ IF (SELECT COUNT_BIG(*) FROM $from) <> (SELECT COUNT_BIG(*) FROM $to)
    THROW 51022,'Rehearsal comparison failed: $table',1;
 "@)
     }
+    if ($ordered.Contains('ChemicalStatisticsJobs')) {
+        $sql.Add(@"
+IF (SELECT COUNT_BIG(*) FROM [$Snapshot].dbo.ChemicalStatisticsJobs WHERE Status <> N'Completed')
+   <> (SELECT COUNT_BIG(*) FROM dbo.ChemicalStatisticsJobs WHERE Status <> N'Completed')
+   OR EXISTS (
+       SELECT 1 FROM dbo.ChemicalStatisticsJobs
+       WHERE Status <> N'Completed' AND
+           (NextAttemptAtUtc IS NULL OR NextAttemptAtUtc <> CONVERT(datetime2(7), '9999-12-31T23:59:59.9999999', 126))
+   )
+   THROW 51030,'Statistics jobs are not fully isolated',1;
+"@)
+    }
     $sql.AddRange($restoreTriggers)
+    for ($index = 0; $index -lt $signatureQueries.Count; $index++) {
+        $query = $signatureQueries[$index]
+        $sql.Add("IF @refreshSignature$index <> HASHBYTES('SHA2_256',COALESCE(($query),N'[]')) THROW 51031,'Retained settings or trigger fingerprint mismatch',1;")
+    }
     if ($ordered.Contains('Operators')) { $sql.Add('DROP TABLE #TestOperators, #OperatorMapping;') }
     $sql.Add('COMMIT; END TRY BEGIN CATCH IF XACT_STATE() <> 0 ROLLBACK; THROW; END CATCH;')
     $command = $Connection.CreateCommand()

@@ -61,6 +61,55 @@ INSERT INTO dbo.EnvironmentSettings VALUES(1, 'test');
 "@
     }
 
+    $writer = "SPC_Refresh_Rehearsal_Writer_$suffix"
+    $password = 'Rehearsal!' + [guid]::NewGuid().ToString('N')
+    $null = Invoke-Sql "USE master; CREATE LOGIN [$writer] WITH PASSWORD=N'$password';"
+    try {
+        $null = Invoke-Sql "USE [$target]; CREATE USER [$writer] FOR LOGIN [$writer]; GRANT INSERT ON dbo.Operations TO [$writer];"
+        function Write-AsRehearsalOperator([int]$Id) {
+            $null = Invoke-Sql @"
+USE master;
+EXECUTE AS LOGIN=N'$writer';
+BEGIN TRY
+    INSERT INTO [$target].dbo.Operations VALUES($Id,N'Writer');
+    REVERT;
+END TRY
+BEGIN CATCH
+    REVERT;
+    THROW;
+END CATCH;
+"@
+        }
+        foreach ($failMaintenance in @($false,$true)) {
+            try {
+                $null = Invoke-Sql "USE master; ALTER DATABASE [$target] SET RESTRICTED_USER WITH ROLLBACK IMMEDIATE;"
+                try {
+                    Write-AsRehearsalOperator 41
+                    throw 'Routine writer unexpectedly accessed the restricted database.'
+                }
+                catch {
+                    if ($_.Exception.InnerException.Number -ne 923) { throw }
+                }
+                $connection.ChangeDatabase($target)
+                if ((Invoke-Sql 'SELECT COUNT(*) FROM dbo.Operations WHERE Id=41;') -ne 0) {
+                    throw 'A routine write reached the restricted database.'
+                }
+                if ($failMaintenance) { throw 'Expected simulated maintenance failure.' }
+            }
+            catch {
+                if (!$failMaintenance -or $_.Exception.Message -cne 'Expected simulated maintenance failure.') { throw }
+            }
+            finally {
+                $null = Invoke-Sql "USE master; ALTER DATABASE [$target] SET MULTI_USER;"
+            }
+            Write-AsRehearsalOperator 42
+            $null = Invoke-Sql "DELETE FROM [$target].dbo.Operations WHERE Id=42;"
+        }
+    }
+    finally {
+        $null = Invoke-Sql "USE master; DROP LOGIN [$writer];"
+    }
+
     $connection.ChangeDatabase($target)
     $competitorConfig = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($connection.ConnectionString)
     $competitorConfig['Initial Catalog'] = $target
@@ -365,7 +414,21 @@ ALTER TABLE dbo.BatchDetail WITH CHECK ADD CONSTRAINT CK_RehearsalRejectSource C
             throw 'Multi-table rollback did not preserve all original rows.'
         }
         $null = Invoke-Sql 'ALTER TABLE dbo.BatchDetail DROP CONSTRAINT CK_RehearsalRejectSource;'
-        Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping -MaintenanceTriggers $maintenanceTriggers
+        $retained = @(@{ Table='EnvironmentSettings'; Names=@('Id','Mode'); Keys=@('Id') })
+        $null = Invoke-Sql "CREATE TRIGGER dbo.RehearsalChangeSettings ON dbo.BatchDetail AFTER INSERT AS UPDATE dbo.EnvironmentSettings SET Mode=N'changed';"
+        try {
+            Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping -MaintenanceTriggers $maintenanceTriggers -RetainedTables $retained
+            throw 'Expected retained-settings fingerprint failure.'
+        }
+        catch {
+            if ($_.Exception.Message -notlike '*Retained settings or trigger fingerprint mismatch*') { throw }
+        }
+        if ((Invoke-Sql 'SELECT Id FROM dbo.BatchHeader;') -ne 1 -or
+            (Invoke-Sql 'SELECT Mode FROM dbo.EnvironmentSettings;') -cne 'test') {
+            throw 'Fingerprint failure did not roll back data and settings.'
+        }
+        $null = Invoke-Sql 'DROP TRIGGER dbo.RehearsalChangeSettings;'
+        Invoke-IsolatedReplacement $connection $snapshot $order $columns -IdentityTables @('BatchHeader') -OperatorMapping $mapping -MaintenanceTriggers $maintenanceTriggers -RetainedTables $retained
         if ((Invoke-Sql 'SELECT Id FROM dbo.ReplacementHistory;') -ne 2 -or
             (Invoke-Sql "SELECT CONVERT(int,is_disabled) FROM sys.triggers WHERE object_id=OBJECT_ID(N'dbo.ReplacementHistoryDeleteGuard');") -ne 0) {
             throw 'Replacement history or its protection did not persist.'

@@ -1,10 +1,16 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidatePattern('^PMR_SPC_2026-REFRESH-SOURCE-1124-[a-f0-9]{32}\.bak$')][string]$SourceBackup,
-    [Parameter(Mandatory)][ValidatePattern('^PMR_SPC_TEST-REFRESH-IDENTITY-1124-[a-f0-9]{32}\.bak$')][string]$TargetBackup
+    [Parameter(Mandatory)][ValidatePattern('^PMR_SPC_2026-REFRESH-SOURCE-[0-9]{4}-[a-f0-9]{32}\.bak$')][string]$SourceBackup,
+    [Parameter(Mandatory)][ValidatePattern('^PMR_SPC_TEST-REFRESH-IDENTITY-[0-9]{4}-[a-f0-9]{32}\.bak$')][string]$TargetBackup,
+    [switch]$VerifyRecovery,
+    [switch]$ValidateLivePrerequisites,
+    [ValidateSet('PMR_SPC_TEST')][string]$LiveTargetConfirmation
 )
 
 $ErrorActionPreference = 'Stop'
+if ($LiveTargetConfirmation -and ($VerifyRecovery -or $ValidateLivePrerequisites)) {
+    throw 'Live cutover and rehearsal-only options cannot be combined.'
+}
 . (Join-Path $PSScriptRoot 'Get-Catalog.ps1')
 . (Join-Path $PSScriptRoot 'Compare-Catalog.ps1')
 . (Join-Path $PSScriptRoot 'Get-ColumnPlan.ps1')
@@ -19,8 +25,27 @@ if ($order.BlockedByCycle.Count -or $order.RetainedReferences.Count -or $order.I
 }
 $columns = @(Get-RefreshColumnPlan $order.InsertOrder $target.Columns)
 $projection = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ChemicalStatisticsHistory.sql') -Raw
+$testConfig = Get-Content -LiteralPath 'D:/SPC/release/test/backend/appsettings.json' -Raw | ConvertFrom-Json
+$testBuilder = [System.Data.SqlClient.SqlConnectionStringBuilder]::new(
+    ($testConfig.ConnectionStrings.SqlServer -replace '(?i)trust\s+server\s+certificate','TrustServerCertificate'))
+if ($testBuilder.InitialCatalog -cne 'PMR_SPC_TEST' -or $testBuilder.DataSource -notmatch '^(tcp:)?172\.16\.110\.16(,1433)?$') {
+    throw 'Unexpected test API endpoint.'
+}
+$testConnection = [System.Data.SqlClient.SqlConnection]::new($testBuilder.ConnectionString)
+try {
+    $testConnection.Open()
+    $probe = $testConnection.CreateCommand()
+    try {
+        $probe.CommandText = 'SELECT ORIGINAL_LOGIN();'
+        $testWriter = [string]$probe.ExecuteScalar()
+    }
+    finally { $probe.Dispose() }
+}
+finally { $testConnection.Dispose() }
 $engine = @{
+    TestWriter = $testWriter
     Replacement = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Invoke-IsolatedReplacement.ps1') -Raw
+    Lifecycle = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Invoke-RefreshLifecycle.ps1') -Raw
     Lock = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Refresh-Lock.ps1') -Raw
     Mapping = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Operator-Mapping.ps1') -Raw
     Projection = $projection
@@ -40,6 +65,12 @@ $engine = @{
     })
     SourceBackup = $SourceBackup
     TargetBackup = $TargetBackup
+    VerifyRecovery = [bool]$VerifyRecovery
+    ValidateLivePrerequisites = [bool]$ValidateLivePrerequisites
+    ApplyLive = $LiveTargetConfirmation -ceq 'PMR_SPC_TEST'
+    LiveMaintenance = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Invoke-LiveTestRefreshMaintenance.ps1') -Raw
+    Readiness = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Assert-LiveRefreshReadiness.ps1') -Raw
+    Policies = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Table-Policies.psd1') -Raw
 }
 
 Invoke-Command -ComputerName PMR-SPC-SRV.pmr.com.tw -Authentication Kerberos -ArgumentList $engine -ScriptBlock {
@@ -53,6 +84,7 @@ Invoke-Command -ComputerName PMR-SPC-SRV.pmr.com.tw -Authentication Kerberos -Ar
     }
     . (Join-Path $work 'Invoke-IsolatedReplacement.ps1')
     . ([scriptblock]::Create($engine.Lock))
+    . ([scriptblock]::Create($engine.Lifecycle))
     . ([scriptblock]::Create($engine.Mapping))
     $config = Get-Content 'C:/ProgramData/PMR-Releases/Production/SPC-PROD-1123-AUDIT-WEB147/appsettings.original.json' -Raw | ConvertFrom-Json
     $builder = [System.Data.SqlClient.SqlConnectionStringBuilder]::new($config.ConnectionStrings.SqlServer)
@@ -75,6 +107,39 @@ Invoke-Command -ComputerName PMR-SPC-SRV.pmr.com.tw -Authentication Kerberos -Ar
             $data.Rows
         }
         finally { $command.Dispose() }
+    }
+
+    function Test-WriterAccess([bool]$ExpectedAllowed, [string]$WriterTarget = $target) {
+        if ($WriterTarget -cne $target -and $WriterTarget -cne 'PMR_SPC_TEST') {
+            throw 'Unexpected database for test writer probe.'
+        }
+        $probe = $connection.CreateCommand()
+        try {
+            $null = $probe.Parameters.AddWithValue('@writer', [string]$engine.TestWriter)
+            $probe.CommandText = @"
+USE master;
+EXECUTE AS LOGIN = @writer;
+BEGIN TRY
+    BEGIN TRANSACTION;
+    UPDATE [$WriterTarget].dbo.Operators SET OperatorCode = OperatorCode WHERE 1=0;
+    ROLLBACK;
+    REVERT;
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() <> 0 ROLLBACK;
+    REVERT;
+    THROW;
+END CATCH;
+"@
+            try {
+                $null = $probe.ExecuteNonQuery()
+                if (!$ExpectedAllowed) { throw 'Test API writer was not blocked.' }
+            }
+            catch {
+                if ($ExpectedAllowed -or $_.Exception.InnerException.Number -ne 923) { throw }
+            }
+        }
+        finally { $probe.Dispose() }
     }
 
     try {
@@ -127,7 +192,14 @@ RESTORE FILELISTONLY FROM DISK=@path;
             $null = $command.ExecuteNonQuery()
         }
         $command.Parameters.Clear()
+        Test-WriterAccess $false
         $connection.ChangeDatabase($target)
+            $baseline = Read-Rows @"
+SELECT COUNT_BIG(*) AS MeasurementCount,
+       CONVERT(varchar(64),HASHBYTES('SHA2_256',COALESCE(
+           (SELECT Id FROM dbo.VariableMeasurements ORDER BY Id FOR JSON PATH),N'[]')),2) AS MeasurementIds
+FROM dbo.VariableMeasurements;
+"@
         $sourcePeople = @(Read-Rows "SELECT Id,OperatorCode,Username FROM [$source].dbo.Operators;")
         $targetPeople = @(Read-Rows 'SELECT Id,OperatorCode,Username FROM dbo.Operators;')
         $requiredIds = @(Read-Rows @'
@@ -144,6 +216,7 @@ UNION SELECT 18;
         }
         $triggers = @{}
         foreach ($trigger in $engine.Triggers) { $triggers[$trigger.Table] = @($triggers[$trigger.Table] | Where-Object { $_ }) + @($trigger.Name) }
+        $replaceData = {
         Invoke-WithRefreshOperationLock -Connection $connection -Operation {
             $fingerprints = foreach ($item in $engine.Retained) {
                 $names = ($item.Names | ForEach-Object { "[$_]" }) -join ','
@@ -155,7 +228,7 @@ UNION SELECT 18;
             )
             $check = $fingerprints -join ' UNION ALL '
             $before = @(Read-Rows $check | Select-Object -ExpandProperty Signature)
-            Invoke-IsolatedReplacement $connection $source $engine.Order $columns -IdentityTables @($identity) -OperatorMapping $mapping -MaintenanceTriggers $triggers
+            Invoke-IsolatedReplacement $connection $source $engine.Order $columns -IdentityTables @($identity) -OperatorMapping $mapping -MaintenanceTriggers $triggers -RetainedTables $engine.Retained
             $after = @(Read-Rows $check | Select-Object -ExpandProperty Signature)
             if ($before.Count -ne $fingerprints.Count -or ($before -join '|') -cne ($after -join '|')) {
                 throw 'Retained settings or trigger fingerprint mismatch.'
@@ -169,7 +242,101 @@ SELECT (SELECT COUNT(*) FROM sys.triggers WHERE parent_class=1 AND is_disabled=0
         if ($proof.EnabledTriggers -ne $engine.Triggers.Count -or $proof.RetainedOperator -ne 1 -or $proof.EligibleStatistics -ne 0) {
             throw 'Post-replacement evidence mismatch.'
         }
+        }
+        $restoreData = {
+            $backup = $restores | Where-Object Name -CEQ $target
+            if ($target -cnotmatch '^SPC_Refresh_Rehearsal_Target_[a-f0-9]{32}$' -or
+                $created -cnotcontains $target -or !$backup -or $backup.ReadOnly) {
+                throw 'Recovery requires the original rehearsal target backup.'
+            }
+            $connection.ChangeDatabase('master')
+            $command.Parameters.Clear()
+            $null = $command.Parameters.AddWithValue('@path', $backup.Path)
+            $command.CommandText = "RESTORE VERIFYONLY FROM DISK=@path WITH CHECKSUM; RESTORE DATABASE [$target] FROM DISK=@path WITH REPLACE, CHECKSUM, RESTRICTED_USER, $($backup.Moves);"
+            $null = $command.ExecuteNonQuery()
+            Test-WriterAccess $false
+            $connection.ChangeDatabase($target)
+            $restored = Read-Rows @"
+SELECT COUNT_BIG(*) AS MeasurementCount,
+       CONVERT(varchar(64),HASHBYTES('SHA2_256',COALESCE(
+           (SELECT Id FROM dbo.VariableMeasurements ORDER BY Id FOR JSON PATH),N'[]')),2) AS MeasurementIds
+FROM dbo.VariableMeasurements;
+"@
+            if ($restored.MeasurementCount -ne $baseline.MeasurementCount -or
+                $restored.MeasurementIds -cne $baseline.MeasurementIds) {
+                throw 'Restored target did not match the original measurement baseline.'
+            }
+            'Post-replacement backup recovery matched the original measurement baseline.'
+        }
+        try {
+            Invoke-RefreshLifecycle -EnterMaintenance {
+                Test-WriterAccess $false
+                $connection.ChangeDatabase($target)
+                $target
+            } -CreateRecoveryBackup {
+                param($maintenanceTarget)
+                $backup = $restores | Where-Object Name -CEQ $maintenanceTarget
+                if (!$backup -or $backup.ReadOnly) { throw 'Missing rehearsal recovery backup.' }
+                $connection.ChangeDatabase('master')
+                $verify = $connection.CreateCommand()
+                try {
+                    $verify.CommandTimeout = 600
+                    $null = $verify.Parameters.AddWithValue('@path', $backup.Path)
+                    $verify.CommandText = 'RESTORE VERIFYONLY FROM DISK=@path WITH CHECKSUM;'
+                    $null = $verify.ExecuteNonQuery()
+                }
+                finally { $verify.Dispose() }
+                $connection.ChangeDatabase($target)
+                $backup
+            } -VerifyReadiness {
+                param($maintenanceTarget, $recoveryBackup)
+                if ($maintenanceTarget -cne $target -or $recoveryBackup.Name -cne $target) {
+                    throw 'Rehearsal lifecycle target mismatch.'
+                }
+            } -ReplaceData $replaceData -VerifyReplacement {
+                if ($engine.VerifyRecovery) { throw 'Simulated failure after committed replacement.' }
+            } -RestoreAndVerify $restoreData -ExitMaintenance {
+                $null = Read-Rows "USE master; ALTER DATABASE [$target] SET MULTI_USER;"
+                Test-WriterAccess $true
+            }
+        }
+        catch {
+            if (!$engine.VerifyRecovery -or $_.Exception.Message -cne 'Simulated failure after committed replacement.') { throw }
+            'Simulated post-commit failure recovered before test writes were reopened.'
+        }
+        "Test API writer blocked during maintenance and recovered afterward."
         "Replacement and row verification completed for $($engine.Order.Count) tables; retained settings and trigger signatures match."
+        if ($engine.ValidateLivePrerequisites -or $engine.ApplyLive) {
+            foreach ($item in @{
+                'Invoke-LiveTestRefreshMaintenance.ps1' = $engine.LiveMaintenance
+                'Invoke-RefreshLifecycle.ps1' = $engine.Lifecycle
+                'Refresh-Lock.ps1' = $engine.Lock
+                'Operator-Mapping.ps1' = $engine.Mapping
+                'Assert-LiveRefreshReadiness.ps1' = $engine.Readiness
+                'Table-Policies.psd1' = $engine.Policies
+            }.GetEnumerator()) {
+                [IO.File]::WriteAllText((Join-Path $work $item.Key), $item.Value, [Text.UTF8Encoding]::new($true))
+            }
+            . (Join-Path $work 'Invoke-LiveTestRefreshMaintenance.ps1')
+            $connection.ChangeDatabase('master')
+            $backupId = Read-Rows @"
+SELECT TOP (1) b.backup_set_uuid AS BackupId
+FROM msdb.dbo.restorehistory r JOIN msdb.dbo.backupset b ON b.backup_set_id=r.backup_set_id
+WHERE r.destination_database_name=N'$source' ORDER BY r.restore_history_id DESC;
+"@
+            $plan = @{
+                InsertOrder = $engine.Order
+                Columns = $columns
+                IdentityTables = @($identity)
+                MaintenanceTriggers = $triggers
+                RetainedTables = $engine.Retained
+            }
+            Invoke-LiveTestRefreshMaintenance $connection ([guid]::ParseExact($suffix,'N')) $backupId.BackupId $plan -ValidateOnly:(!$engine.ApplyLive)
+            if ($engine.ApplyLive) {
+                Test-WriterAccess $true 'PMR_SPC_TEST'
+                'Live fixed-target refresh completed: PMR_SPC_TEST.'
+            }
+        }
     }
     finally {
         try {
