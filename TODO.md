@@ -939,7 +939,7 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-DOC-EDITOR-QUICK-EN-1125：SPC 編輯者快速操作指南英文版已完成；九頁、八張正式區去識別截圖，逐頁渲染及機敏資訊檢查通過。[規格與驗證](specs/20261125-spc-editor-quick-guide-english/verification.md)
 - [x] SPC-DOC-VIEWER-QUICK-EN-1125：SPC 檢視者快速操作指南英文版已完成；八頁、七張正式區去識別截圖，唯讀角色界線、逐頁渲染及機敏資訊檢查通過。[規格與驗證](specs/20261125-spc-viewer-quick-guide-english/verification.md)
 - [x] SPC-DOC-GUIDE-EN-SCREENSHOT-1125：第一批完成；英文全功能手冊三十二張圖已改為正式英文介面或有明確標示的文件用英文視圖，並完成去識別與逐頁驗證。[規格](specs/20261125-spc-english-screenshot-replacement/spec.md)｜[驗證](specs/20261125-spc-english-screenshot-replacement/verification.md)
-- [ ] SPC-DOC-EDITOR-QUICK-EN-SCREENSHOT-1125：第二批，將編輯者英文快速指南八張截圖全部改為正式區英文介面並去識別。
+- [x] SPC-DOC-EDITOR-QUICK-EN-SCREENSHOT-1125：第二批完成；編輯者英文快速指南八張圖已改為正式英文模式介面或有明確標示的文件用英文視圖，並完成去識別與九頁逐頁驗證。[規格](specs/20261125-spc-editor-quick-english-screenshot/spec.md)｜[驗證](specs/20261125-spc-editor-quick-english-screenshot/verification.md)
 - [ ] SPC-DOC-VIEWER-QUICK-EN-SCREENSHOT-1125：第三批，將檢視者英文快速指南七張截圖全部改為正式區英文介面並去識別。
 - [ ] SPC-DOC-ADMIN-QUICK-EN-1125：製作 SPC 管理者快速操作指南英文版；所有系統截圖使用英文介面，並保留權限、通知、排程、稽核及正式轉測試的安全界線。
 - [ ] SPC-DOC-EDITOR-MANUAL-EN-1125：製作 SPC 編輯者完整操作手冊英文版；所有系統截圖使用英文介面，保留原中文檔及正式區去識別畫面。
