@@ -1,6 +1,6 @@
 - 2026-11-25 [SPC 與 Portal 品保系統說明](../specs/20261125-spc-portal-system-guide/spec.md)：四頁本機審閱稿已涵蓋現行功能、操作及維運交接，待定稿走查。
 
-- 2026-11-25 [SPC 專案結案報告](../specs/20261124-spc-project-closeout-report/spec.md)：指定 Word 版型的專案成果確認稿及甘特圖已統一格式與用字，涵蓋 SPC／Portal 交付、成效、功能設置理由、9 月里程碑、維運移交、費用比較、現行功能及下一階段規劃，待內容確認及主管簽核。
+- 2026-11-25 [SPC 專案結案報告](../specs/20261124-spc-project-closeout-report/spec.md)：指定 Word 版型的專案成果確認稿及甘特圖已統一格式與用字，涵蓋 SPC／Portal 交付、成效、功能設置理由、9 月里程碑、維運移交、費用比較、現行網站功能與正式資料統計及下一階段規劃，待審閱。
 
 - 2026-11-20 [藥液歷史破損稽核證據安全判定](../specs/20261120-chemical-malformed-audit-judgment-regression/spec.md)：宣稱為保存規格但payload非物件、JSON破損或`details`錯誤／空白時，歷史判定固定為`Unknown`、`SAVED_SPEC_EVIDENCE_INVALID`及`EvidenceConflict`，不得改套目前／最近規格；真正無證據與合法證據既有契約保持。測試API `0.1.162`已發布，無schema或資料回填，正式未發布。[驗證](../specs/20261120-chemical-malformed-audit-judgment-regression/verification.md)
 
