@@ -1,4 +1,4 @@
-- 2026-11-25 [正式 SPC 重複登入帳號整理](../specs/20261125-production-operator-account-merge/spec.md)：個案已規劃入池，待唯讀確認正式身分與權限差異，尚未執行。
+- 2026-11-25 [正式 SPC 同名主檔整理](../specs/20261125-production-operator-account-merge/spec.md)：正式唯讀查出三組同名候選，使用者已指定本案。為避免影響正式匯入，[匯入與登入身分分離](../specs/20261125-import-operator-identity-separation/spec.md)須先行。
 
 - 2026-11-25 [SPC Portal 人員比對連線修正](../specs/20261125-operator-directory-connection/spec.md)：正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者以唯讀比對取得 Portal 品保名單。測試 Web 0.1.189／API 0.1.173。
 

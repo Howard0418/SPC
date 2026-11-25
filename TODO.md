@@ -1,6 +1,7 @@
-## 2026-11-25 正式 SPC 重複登入帳號
+## 2026-11-25 正式 SPC 同名主檔與匯入防重
 
-- [ ] SPC-OPERATORS-MERGE-1125：P1／SPC 主責，Portal／AD 為唯讀身分來源。正式同一組帳號待排程；先唯讀確認身分、權限與引用，確認影響登入、身分或授權時升 P0。正式資料整理另行核准。本次僅規劃入池，未啟動。[規格](specs/20261125-production-operator-account-merge/spec.md) [計畫](specs/20261125-production-operator-account-merge/plan.md)
+- [ ] SPC-OPERATORS-IMPORT-IDENTITY-1125：P1／SPC API，依相依優先。量測匯入保留人員文字，避免建立登入帳號及隱藏工號引發的匯入衝突。僅規劃入池。[規格](specs/20261125-import-operator-identity-separation/spec.md)
+- [ ] SPC-OPERATORS-MERGE-1125：P1／SPC。正式唯讀核對及目標指定已完成，待匯入防重及正式核准再退役。[驗證](specs/20261125-production-operator-account-merge/verification.md)
 
 ## 2026-11-23 線別分析項目總覽資料同步
 

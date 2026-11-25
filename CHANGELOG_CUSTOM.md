@@ -1,3 +1,8 @@
+## 2026-11-25 正式 SPC 同名主檔唯讀盤點
+
+- SPC-OPERATORS-MERGE-1125：正式候選、Portal／AD 及權限引用已唯讀核對，使用者已指定一組，維持 P1。正式資料未異動。[驗證](specs/20261125-production-operator-account-merge/verification.md)
+- SPC-OPERATORS-IMPORT-IDENTITY-1125：本機模型重現隱藏舊列後的匯入工號衝突。先排匯入防重，再安排指定組正式退役；兩項皆未部署。[規格](specs/20261125-import-operator-identity-separation/spec.md)
+
 ## 2026-11-25 正式 SPC 重複帳號整理規劃入池
 
 - SPC-OPERATORS-MERGE-1125 排為 P1，先核實兩筆身分及授權，再擬定保留主檔、歷史追溯與回復。若確認造成登入或授權事故則升 P0。正式資料與發布未執行。[規格](specs/20261125-production-operator-account-merge/spec.md)
