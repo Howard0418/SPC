@@ -1,3 +1,7 @@
+## 2026-11-25 SPC 結案報告統一格式與用字
+
+- 統一 Word 章節、正文、表格、日期、中文頁碼及用字，並同步甘特圖。十三頁已核對，確認稿與甘特圖另存本機，待審閱。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
+
 ## 2026-11-25 SPC 結案報告改列專案成果
 
 - 依使用者指示從 Word 及甘特圖移除小工作驗收，依整體交付、效益及維運移交整理。十三頁核對通過，確認檔與圖留本機。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
