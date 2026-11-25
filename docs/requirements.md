@@ -1,6 +1,6 @@
-- 2026-11-25 [SPC Portal 人員比對連線修正](../specs/20261125-operator-directory-connection/spec.md)：測試 Web 0.1.189／API 0.1.173 已發布。正式比對錯誤為 Portal 上游 TLS 連線中斷，已唯讀核對可用正式 API 來源，設定變更待正式發布授權。
+- 2026-11-25 [SPC Portal 人員比對連線修正](../specs/20261125-operator-directory-connection/spec.md)：正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者以唯讀比對取得 Portal 品保名單。測試 Web 0.1.189／API 0.1.173。
 
-- 2026-11-25 [SPC 與 Portal 品保系統說明](../specs/20261125-spc-portal-system-guide/spec.md)：V0.4 本機審閱稿已補正式編輯者角色、頁面授權、Portal 名單比對及現行日報表單。
+- 2026-11-25 [SPC 與 Portal 品保系統說明](../specs/20261125-spc-portal-system-guide/spec.md)：V0.5 本機審閱稿含編輯者角色與頁面授權、正式唯讀人員比對與排錯、現行日報表單。
 
 - 2026-11-25 [SPC 專案結案報告](../specs/20261124-spc-project-closeout-report/spec.md)：指定 Word 版型的專案成果確認稿及甘特圖已統一格式與用字，涵蓋 SPC／Portal 交付、成效、功能設置理由、9 月里程碑、維運移交、費用比較、現行網站功能與正式資料統計及下一階段規劃，待審閱。
 

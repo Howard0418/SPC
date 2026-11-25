@@ -1,3 +1,8 @@
+## 2026-11-25 正式 SPC 的 Portal 品保人員比對恢復
+
+- 正式 Web 0.1.188 → 0.1.190、API 0.1.172 → 0.1.174。更新 SPC 的 Portal 名單 API 位址，正式編輯者唯讀比對回傳 Portal 品保 24 人、SPC 33 人。首頁、主資產及瀏覽器 API 基底驗證通過。前兩次發布已回復原版，最終批保留設定檔原有 IIS 讀取權限。[發布與回復紀錄](specs/20261125-operator-directory-connection/spec.md)
+- 本機 Word V0.5 更新正式比對摘要與排錯步驟，保留九張去識別截圖。[教學](specs/20261125-spc-portal-system-guide/spec.md)
+
 ## 2026-11-25 SPC 編輯者教學與 Portal 人員比對連線修正
 
 - Word V0.4 加入編輯者角色、頁面授權、Portal 人員比對與排錯，補現行日報表單。九頁與九張圖已核對，文件留本機。[教學](specs/20261125-spc-portal-system-guide/spec.md)

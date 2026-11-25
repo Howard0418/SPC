@@ -917,6 +917,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-REPORT-CLOSEOUT-1124：本機確認稿及甘特圖已整理整體專案交付、效益、9 月里程碑及維運移交，並統一格式及用字。已補費用比較、現行功能及下一階段規劃。依要求再補網站功能數與正式資料規模，統計版待審閱。[規格](specs/20261124-spc-project-closeout-report/spec.md) [驗證](specs/20261124-spc-project-closeout-report/verification.md)
 
-- [ ] SPC-DOC-GUIDE-1125：SPC 主責，Portal 品保相依。V0.4 已補編輯者角色、頁面授權、Portal 人員比對及現行日報表單。待確認入口與交接窗口後定稿。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
+- [ ] SPC-DOC-GUIDE-1125：SPC 主責，Portal 品保相依。V0.5 已更新正式版本、實際唯讀比對及排錯步驟。待確認入口與交接窗口後定稿。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
 
-- [ ] SPC-OPERATORS-DIRECTORY-1125：SPC API 主責，Portal 品保名單為上游。連線錯誤處理已發布測試 Web 0.1.189／API 0.1.173。正式 Portal API 來源已驗證，待正式設定調整與發布授權。[規格與驗證](specs/20261125-operator-directory-connection/spec.md)
+- [x] SPC-OPERATORS-DIRECTORY-1125：SPC API 主責，Portal 品保名單為上游。測試 Web 0.1.189／API 0.1.173；正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者唯讀比對成功。[規格與驗證](specs/20261125-operator-directory-connection/spec.md)
