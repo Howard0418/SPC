@@ -1,5 +1,4 @@
 using FluentAssertions;
-using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Services.Security;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
@@ -27,19 +26,6 @@ public class UserAccessTests
         hash.Should().NotContain("SafePassword123!");
         hasher.Verify("SafePassword123!", hash).Should().BeTrue();
         hasher.Verify("wrong-password", hash).Should().BeFalse();
-    }
-
-    [Fact]
-    public void Imported_Operator_Should_Default_To_Editor_Without_Login_Password()
-    {
-        var user = ImportedOperatorFactory.Create("OP-7788");
-
-        user.OperatorCode.Should().Be("OP-7788");
-        user.OperatorName.Should().Be("OP-7788");
-        user.Username.Should().Be("OP-7788");
-        user.Role.Should().Be(UserRoles.Editor);
-        user.PasswordHash.Should().BeNull();
-        user.IsActive.Should().BeTrue();
     }
 
     [Fact]

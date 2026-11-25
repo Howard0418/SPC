@@ -5,7 +5,6 @@ using MesSpc.Api.Domain;
 using MesSpc.Api.Domain.Entities;
 using MesSpc.Api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using MesSpc.Api.Services.Security;
 
 namespace MesSpc.Api.Services;
 
@@ -546,8 +545,6 @@ public class UploadService(AppDbContext db, SpcService spcService)
 
         var validDetails = batchDetails.Where(x => x.IsValid).ToList();
 
-        await EnsureImportedOperatorsAsync(validDetails, ct);
-
         var alreadyImported = batch.UploadType == "Variable"
             ? await db.VariableMeasurements.CountAsync(x => x.UploadBatchId == uploadBatchId, ct)
             : await db.AttributeMeasurements.CountAsync(x => x.UploadBatchId == uploadBatchId, ct);
@@ -849,28 +846,6 @@ public class UploadService(AppDbContext db, SpcService spcService)
         var utc = value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
         var taipei = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(utc, "Taipei Standard Time");
         return DateTime.SpecifyKind(taipei.Date, DateTimeKind.Unspecified);
-    }
-
-    private async Task EnsureImportedOperatorsAsync(IEnumerable<UploadDetail> validDetails, CancellationToken ct)
-    {
-        var operatorCodes = validDetails
-            .Select(x => JsonSerializer.Deserialize<Dictionary<string, string?>>(x.PayloadJson) ?? [])
-            .Select(x => Get(x, "Operator")?.Trim())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        foreach (var operatorCode in operatorCodes)
-        {
-            var code = operatorCode!;
-            var exists = await db.Operators.AnyAsync(x => x.OperatorCode == code, ct);
-            if (exists) continue;
-
-            var user = ImportedOperatorFactory.Create(code);
-            if (await db.Operators.AnyAsync(x => x.Username == code, ct)) user.Username = null;
-            db.Operators.Add(user);
-            await db.SaveChangesAsync(ct);
-        }
     }
 
     public async Task<bool> DeleteBatchAsync(Guid uploadBatchId, CancellationToken ct = default)

@@ -1,7 +1,7 @@
 ## 2026-11-25 正式 SPC 同名主檔與匯入防重
 
-- [ ] SPC-OPERATORS-IMPORT-IDENTITY-1125：P1／SPC API，依相依優先。量測匯入保留人員文字，避免建立登入帳號及隱藏工號引發的匯入衝突。僅規劃入池。[規格](specs/20261125-import-operator-identity-separation/spec.md)
-- [ ] SPC-OPERATORS-MERGE-1125：P1／SPC。正式唯讀核對及目標指定已完成，待匯入防重及正式核准再退役。[驗證](specs/20261125-production-operator-account-merge/verification.md)
+- [x] SPC-OPERATORS-IMPORT-IDENTITY-1125：SPC 測試 Web 0.1.191／API 0.1.175 已發布。計量／計數匯入保留人員文字，不建登入主檔。正式發布納入同名主檔整理的前置工作。[驗證](specs/20261125-import-operator-identity-separation/verification.md)
+- [ ] SPC-OPERATORS-MERGE-1125：P1／SPC。指定組正式唯讀已核對，匯入防重已在測試站發布及驗證。待正式防重發布與指定帳號整理授權，正式資料未變更。[驗證](specs/20261125-production-operator-account-merge/verification.md)
 
 ## 2026-11-23 線別分析項目總覽資料同步
 

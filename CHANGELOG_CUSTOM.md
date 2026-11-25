@@ -1,3 +1,8 @@
+## 2026-11-25 SPC 量測匯入與登入主檔分離
+
+- 通用計量與計數匯入保存原作業人員文字，移除從匯入建立已啟用編輯者的行為。已隱藏工號可匯入，原批次重送維持既有行為。
+- SPC 測試 Web 0.1.191／API 0.1.175 已發布，瀏覽器實際同源及 8901 直連驗證通過。焦點與回歸 89 項通過；兩項藥液排除舊失敗已在原基準核實，另 1 項隔離 SQL 略過。正式未發布。[驗證](specs/20261125-import-operator-identity-separation/verification.md)
+
 ## 2026-11-25 正式 SPC 同名主檔唯讀盤點
 
 - SPC-OPERATORS-MERGE-1125：正式候選、Portal／AD 及權限引用已唯讀核對，使用者已指定一組，維持 P1。正式資料未異動。[驗證](specs/20261125-production-operator-account-merge/verification.md)
