@@ -11,7 +11,7 @@ test('Particle Monitoring supports C/U selection and linked views', async ({ pag
     ]
   }}));
   await page.route('**/api/v1/particles/location-comparison*', route => route.fulfill({ json: {
-    isAmbiguous: false, candidates: [], items: Array.from({ length: 9 }, (_, index) => ({
+    isAmbiguous: false, candidates: [], items: Array.from({ length: 12 }, (_, index) => ({
       location: `R${index + 1}`, count: index + 10, measurementId: index + 1, isMissing: false
     }))
   }}));
@@ -20,7 +20,7 @@ test('Particle Monitoring supports C/U selection and linked views', async ({ pag
   }}));
 
   await page.goto('/particle-monitoring');
-  await expect(page.getByRole('heading', { name: 'Particle Monitoring' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '粒子監控' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'C-chart' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '查詢' }).click();
   await expect(page.locator('canvas')).toHaveCount(2);

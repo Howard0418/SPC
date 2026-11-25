@@ -1,7 +1,7 @@
 # 技術計畫
 
 - 功能 ID：`20261125-spc-navigation-etch-particle-improvements`
-- 規格版本：3
+- 規格版本：6
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響檔案

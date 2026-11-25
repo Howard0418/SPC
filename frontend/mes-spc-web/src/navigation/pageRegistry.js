@@ -8,6 +8,7 @@ export const pageRegistry = Object.freeze([
   { permission: 'analysis.reports', path: '/monthly-control-chart', labelKey: 'spc.navigation.periodReports', categoryKey: 'spc.navigation.processAnalysis', icon: 'CalendarClock', viewerDefault: true },
 
   { permission: 'data.measurements', path: '/measurements', labelKey: 'spc.navigation.measurementEntry', categoryKey: 'spc.navigation.importSampling', icon: 'PlusCircle', editorOnly: true },
+  { permission: 'data.particles', path: '/particle-monitoring/entry', labelKey: 'spc.navigation.particleEntry', categoryKey: 'spc.navigation.importSampling', icon: 'UploadCloud', editorOnly: true },
   { permission: 'data.upload', path: '/uploads', labelKey: 'spc.navigation.importBatches', categoryKey: 'spc.navigation.importSampling', icon: 'UploadCloud', editorOnly: true },
 
   { permission: 'master.spc', path: '/part-process-characteristics', labelKey: 'spc.navigation.controlItems', categoryKey: 'spc.navigation.qualityMaster', icon: 'FolderTree', editorOnly: true },

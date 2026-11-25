@@ -2334,3 +2334,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：讓 Portal 咬蝕量日報 A／B side 可從 Excel 的 Tab／換行矩形貼上 BEFORE／AFTER，保留原 COM、計算、儲存與 SPC 同步契約。
 - 安全邊界：貼上只更新未儲存草稿；先整批驗證非數字、負數、超界及 BEFORE／AFTER，通過後才一次套用，不新增 API 或 schema。
 - 結果：純 JavaScript planner、Razor 串接與錯誤座標完成，測試 Web `1.0.364`／API `1.0.325` 已發布；焦點、咬蝕回歸、建置、HTTP／MIME、同源 API 與設定保留均通過。
+
+# 2026-11-25 SPC-PARTICLE-PASTE-ENTRY-1125 落塵監控格線貼上
+
+- 目的：新增有獨立輸入權限的落塵資料貼上頁，將固定 49 欄 Excel 格線轉為 R1～R12 Long Format，先預覽再確認寫入。
+- 安全邊界：網站貼上批次使用 `data.particles`；預覽只寫 staging，確認才寫量測；重複預設拒絕且不提供覆蓋。既有 TransFiles 契約、R1～R9 歷史與 C/U 統計公式不變。
+- 結果：完成 R1～R12 雙層表頭、49 欄原子解析、Long Format preview／confirm、分析比較擴充與獨立權限。39 項 API、10 項前端邏輯／語系／登錄及 2 項 Chromium 通過；測試 Web `0.1.194`／API `0.1.178` 已發布並驗證，正式未發布。

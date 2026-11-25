@@ -71,11 +71,14 @@ internal sealed record ParticleStagedRow(
 
 public sealed class ParticleUploadService(AppDbContext db, ILogger<ParticleUploadService> logger)
 {
-    private static readonly HashSet<string> Locations = Enumerable.Range(1, 9).Select(number => $"R{number}").ToHashSet();
+    private static readonly HashSet<string> Locations = Enumerable.Range(1, 12).Select(number => $"R{number}").ToHashSet();
     private static readonly HashSet<decimal> ParticleSizes = [0.5m, 1m, 5m, 10m];
 
     public async Task<bool> IsParticleBatchAsync(Guid uploadBatchId, CancellationToken ct = default) =>
         await db.UploadBatches.AsNoTracking().AnyAsync(batch => batch.UploadBatchId == uploadBatchId && batch.UploadType == "Particle", ct);
+
+    public async Task<bool> IsWebPasteBatchAsync(Guid uploadBatchId, CancellationToken ct = default) =>
+        await db.UploadBatches.AsNoTracking().AnyAsync(batch => batch.UploadBatchId == uploadBatchId && batch.UploadType == "Particle" && batch.SourceType == "WebPaste", ct);
 
     public async Task<ParticlePreviewResult> CreatePreviewAsync(ParticlePreviewRequest request, string? createdBy, CancellationToken ct = default)
     {
@@ -228,7 +231,7 @@ public sealed class ParticleUploadService(AppDbContext db, ILogger<ParticleUploa
         var sourceColumn = input.SourceColumn?.Trim().ToUpperInvariant() ?? string.Empty;
         if (!DateTimeOffset.TryParse(input.MeasurementTime, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var measuredAt))
             errors.Add(("measurementTime", "MEASUREMENT_TIME_INVALID", "Measurement time must be ISO 8601 with an offset."));
-        if (!Locations.Contains(location)) errors.Add(("location", "LOCATION_UNSUPPORTED", "Location must be R1 through R9."));
+        if (!Locations.Contains(location)) errors.Add(("location", "LOCATION_UNSUPPORTED", "Location must be R1 through R12."));
         if (!decimal.TryParse(input.ParticleSize, NumberStyles.Number, CultureInfo.InvariantCulture, out var particleSize) || !ParticleSizes.Contains(particleSize))
             errors.Add(("particleSize", "PARTICLE_SIZE_UNSUPPORTED", "Particle size must be 0.5, 1, 5, or 10 micrometers."));
         if (!long.TryParse(input.Count, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count))

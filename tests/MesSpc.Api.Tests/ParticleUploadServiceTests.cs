@@ -17,7 +17,7 @@ public class ParticleUploadServiceTests
         var service = new ParticleUploadService(db, NullLogger<ParticleUploadService>.Instance);
         var request = Request(
             Row("2026-09-01T08:00:00+08:00", "R1", "0.5", "12", 26, "C"),
-            Row("bad-time", "R10", "2", "-1", 26, "D"),
+            Row("bad-time", "R13", "2", "-1", 26, "D"),
             Row("2026-09-01T08:00:00+08:00", "R2", "1", "8", 26, "C"));
 
         var result = await service.CreatePreviewAsync(request, "tester");
@@ -37,6 +37,23 @@ public class ParticleUploadServiceTests
         history.GetProperty("batches")[0].GetProperty("firstErrorDescriptor").GetProperty("messageKey").GetString().Should().StartWith("spc.api.");
         (await db.UploadErrors.OrderBy(x=>x.Id).Select(x=>new { x.Id,x.FieldName,x.ErrorCode,x.ErrorMessage }).ToListAsync()).Should().Equal(originalErrors);
         (await db.UploadDetails.OrderBy(x=>x.Id).Select(x=>x.PayloadJson).ToListAsync()).Should().Equal(payloads);
+    }
+
+    [Fact]
+    public async Task Preview_ShouldAcceptR10ThroughR12WithoutChangingExistingLocations()
+    {
+        await using var db = CreateContext();
+        var service = new ParticleUploadService(db, NullLogger<ParticleUploadService>.Instance);
+        var request = Request(
+            Row("2026-11-25T08:00:00+08:00", "R9", "0.5", "9", 3, "AJ"),
+            Row("2026-11-25T08:00:00+08:00", "R10", "1", "10", 3, "AO"),
+            Row("2026-11-25T08:00:00+08:00", "R11", "5", "11", 3, "AT"),
+            Row("2026-11-25T08:00:00+08:00", "R12", "10", "12", 3, "AW"));
+
+        var result = await service.CreatePreviewAsync(request, "tester");
+
+        result.ValidRows.Should().Be(4);
+        result.ErrorRows.Should().Be(0);
     }
 
     [Fact]

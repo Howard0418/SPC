@@ -8,7 +8,7 @@ import * as echarts from 'echarts';
 import { Search, RefreshCw, AlertTriangle, Database } from 'lucide-vue-next';
 import { api, getApiErrorDisplay } from '../api/client';
 
-const locations = Array.from({ length: 9 }, (_, index) => `R${index + 1}`);
+const locations = Array.from({ length: 12 }, (_, index) => `R${index + 1}`);
 const sizes = ['0.5', '1', '5', '10'];
 const today = new Date();
 const prior = new Date(today); prior.setDate(today.getDate() - 30);
@@ -124,7 +124,7 @@ onBeforeUnmount(() => { window.removeEventListener('resize', resizeCharts); char
 
     <div class="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
       <section><h3 class="mb-2 text-sm font-black text-slate-700 dark:text-slate-200">{{ t('spc.particles.trend') }}</h3><div ref="chartEl" data-testid="particles-chart" class="h-[390px] w-full border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"></div></section>
-      <section><h3 class="mb-2 text-sm font-black text-slate-700 dark:text-slate-200">{{ t('spc.particles.comparison') }}</h3><div ref="comparisonEl" data-testid="particles-comparison" class="h-[390px] w-full border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"></div></section>
+      <section><h3 class="mb-2 text-sm font-black text-slate-700 dark:text-slate-200">{{ t('spc.particles.comparisonR12') }}</h3><div ref="comparisonEl" data-testid="particles-comparison" class="h-[390px] w-full border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"></div></section>
     </div>
 
     <section class="overflow-hidden border border-slate-200 dark:border-slate-800"><div class="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800"><h3 class="text-sm font-black">{{ t('spc.particles.measurements') }}</h3><span class="text-xs text-slate-500">{{ t('spc.particles.recent') }}</span></div><div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm"><thead class="bg-slate-100 text-xs text-slate-500 dark:bg-slate-900"><tr><th class="px-4 py-2">{{ t('spc.particles.time') }}</th><th>{{ t('spc.particles.location') }}</th><th>{{ t('spc.particles.size') }}</th><th>{{ t('spc.particles.count') }}</th><th>{{ t('spc.particles.samplingVolume') }}</th><th>{{ t('spc.particles.instrument') }}</th><th>{{ t('spc.particles.source') }}</th></tr></thead><tbody><tr v-for="row in measurements.items" :key="row.id" class="border-t border-slate-100 dark:border-slate-800"><td class="px-4 py-2">{{ formatTime(row.measurementTime) }}</td><td class="font-bold">{{ row.location }}</td><td>{{ row.particleSize }} µm</td><td class="font-mono font-bold">{{ row.count }}</td><td>{{ row.samplingVolume == null ? '-' : `${row.samplingVolume} ${row.samplingVolumeUnit || ''}` }}</td><td>{{ row.deviceCode || '-' }}</td><td>{{ row.sourceSheet }} / {{ row.sourceColumn }}{{ row.sourceRow }}</td></tr><tr v-if="!measurements.items?.length"><td colspan="7" class="px-4 py-10 text-center text-slate-400">{{ t('spc.particles.empty') }}</td></tr></tbody></table></div></section>

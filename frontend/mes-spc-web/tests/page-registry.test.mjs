@@ -30,6 +30,7 @@ test('dynamic child routes inherit their registered page permission', () => {
   assert.equal(permissionForPath('/spc/trend/2587'), 'analysis.trend');
   assert.equal(permissionForPath('/uploads/ABC/preview'), 'data.upload');
   assert.equal(permissionForPath('/particle-monitoring'), 'analysis.particles');
+  assert.equal(permissionForPath('/particle-monitoring/entry'), 'data.particles');
 });
 
 test('fallback selects only a page explicitly granted to the current role', () => {

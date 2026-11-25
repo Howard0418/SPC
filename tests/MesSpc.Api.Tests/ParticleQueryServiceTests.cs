@@ -14,7 +14,7 @@ public class ParticleQueryServiceTests
         await using var db = CreateContext();
         var batch = AddBatch(db);
         var stored = new DateTime(2026, 9, 29, 0, 8, 0, DateTimeKind.Unspecified);
-        for (var location = 1; location <= 9; location++)
+        for (var location = 1; location <= 12; location++)
         {
             Add(db, batch, $"R{location}", 0.5m, location * 10, 749, $"C{location}");
         }
@@ -36,8 +36,8 @@ public class ParticleQueryServiceTests
         var timestamp = document.RootElement.GetProperty("points")[0].GetProperty("time").GetString()!;
         timestamp.Should().EndWith("Z");
         var comparison = await service.GetLocationComparisonAsync(DateTimeOffset.Parse(timestamp).UtcDateTime, 0.5m, null, batch.UploadBatchId, "Sheet1", 749);
-        comparison.Items.Should().HaveCount(9).And.OnlyContain(item => !item.IsMissing && item.Count.HasValue);
-        comparison.Items.Select(item => item.Count).Should().Equal(Enumerable.Range(1, 9).Select(value => (long?)(value * 10)));
+        comparison.Items.Should().HaveCount(12).And.OnlyContain(item => !item.IsMissing && item.Count.HasValue);
+        comparison.Items.Select(item => item.Count).Should().Equal(Enumerable.Range(1, 12).Select(value => (long?)(value * 10)));
     }
 
     [Fact]
@@ -74,9 +74,10 @@ public class ParticleQueryServiceTests
 
         var selected = await service.GetLocationComparisonAsync(Start, 0.5m, null, first.UploadBatchId, "Sheet1", 26);
         selected.IsAmbiguous.Should().BeFalse();
-        selected.Items.Should().HaveCount(9);
+        selected.Items.Should().HaveCount(12);
         selected.Items.Single(item => item.Location == "R1").Count.Should().Be(10);
         selected.Items.Single(item => item.Location == "R9").Count.Should().BeNull();
+        selected.Items.Single(item => item.Location == "R12").Count.Should().BeNull();
     }
 
     [Fact]

@@ -40,4 +40,12 @@ public sealed class AuthorizationAccess(AppDbContext db)
         return access is { IsAuthenticated: true, IsActive: true }
             && CalibrationRules.CanManage(access.Role, access.PagePermissionsJson);
     }
+
+    public async Task<bool> CanAccessPageAsync(ClaimsPrincipal user, string permissionCode, CancellationToken ct = default)
+    {
+        var access = await ResolveAsync(user, ct);
+        return access is { IsAuthenticated: true, IsActive: true }
+            && access.Role == UserRoles.Editor
+            && SpcPagePermissions.Resolve(access.Role, access.PagePermissionsJson).Contains(permissionCode, StringComparer.Ordinal);
+    }
 }

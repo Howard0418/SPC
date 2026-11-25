@@ -29,6 +29,7 @@ public static class SpcPagePermissions
         Page("analysis.reports", "SPC 週月報表", "periodReports", "/monthly-control-chart", "processAnalysis", viewer: true),
 
         Page("data.measurements", "量測資料輸入", "measurementEntry", "/measurements", "importSampling", editor: true),
+        Page("data.particles", "落塵監控資料輸入", "particleEntry", "/particle-monitoring/entry", "importSampling", editor: true),
         Page("data.upload", "匯入批次查詢", "importBatches", "/uploads", "importSampling", editor: true),
         Page("master.spc", "SPC 管制項目設定", "controlItems", "/part-process-characteristics", "qualityMaster", editor: true),
         Page("master.analysis_limits", "分析項目界限總覽", "analysisLimits", "/analysis-limit-overview", "qualityMaster", editor: true),

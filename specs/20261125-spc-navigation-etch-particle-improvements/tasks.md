@@ -1,9 +1,9 @@
 # 任務
 
 - 功能 ID：`20261125-spc-navigation-etch-particle-improvements`
-- 規格版本：4
+- 規格版本：6
 - [規格](spec.md)｜[計畫](plan.md)
-- 目前狀態：P0 權限一致化與 Portal 咬蝕貼上完成；落塵貼上保留待辦。
+- 目前狀態：三項小工作均完成測試、自動化與測試站發布；正式站未授權、未發布。
 
 ## P0：安全與權限一致
 
@@ -13,11 +13,11 @@
 
 - [x] `PORTAL-ETCH-PASTE-1125`：Portal 咬蝕量日報 A/B side 厚度格線支援 Excel 矩形貼上、整次驗證與錯誤座標，保留現有 COM、計算、儲存及 SPC 同步契約。（R-003、R-004；AC-003、AC-004）
 
-- [ ] `SPC-PARTICLE-PASTE-ENTRY-1125`：新增落塵監控資料輸入頁與獨立權限，支援雙層表頭、第三列起貼上、R1～R12 Long Format preview／confirm、重複保護及既有 C/U 分析回歸。（R-005～R-008；AC-005～AC-008；依賴 `SPC-PERM-NAV-ALIGN-1125`）
+- [x] `SPC-PARTICLE-PASTE-ENTRY-1125`：新增落塵監控資料輸入頁與獨立權限，支援雙層表頭、第三列起貼上、R1～R12 Long Format preview／confirm、重複保護及既有 C/U 分析回歸。（R-005～R-008；AC-005～AC-008；依賴 `SPC-PERM-NAV-ALIGN-1125`）
 
 ## 每件共同收尾
 
 - [x] P0 已完成自動化、建置、Web `0.1.193`／API `0.1.177` 測試站發布、連線驗證、文件同步與回復備份。
 - [x] Portal 咬蝕貼上已完成自動化、建置、Web `1.0.364`／API `1.0.325` 測試站發布及連線驗證；正式未授權。
-- [ ] 落塵貼上完成對應自動化、建置、測試站 Web/API 版本遞增及連線驗證；正式發布另行授權。
-- [ ] 更新 spec／verification、`docs/requirements.md`、`TODO.md`、`CHANGELOG_CUSTOM.md`，只提交該小工作必要檔案並推送目前分支。
+- [x] 落塵貼上完成對應自動化、建置、測試站 Web `0.1.194`／API `0.1.178` 版本遞增及連線驗證；正式發布另行授權。
+- [x] 更新 spec／verification、`docs/requirements.md`、`TODO.md`、`CHANGELOG_CUSTOM.md`，只提交該小工作必要檔案並推送目前分支。

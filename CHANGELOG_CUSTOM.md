@@ -3820,3 +3820,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 咬蝕量日報 A／B side 新增從目前 BEFORE／AFTER 格開始的 Excel Tab／換行矩形貼上；貼上只改草稿並立即重算，不自動儲存。
 - 非數字、負數、非矩形、列／欄超界或 `BEFORE < AFTER` 均整次拒絕並顯示錯誤格；原 COM、Enter、日報 payload 與 SPC 同步契約不變。
 - Node 7 項、Razor 契約 2 項、咬蝕回歸 12 項及 Release build 通過。Portal 測試 Web `1.0.364`／API `1.0.325/test` 已發布，首頁、新／主 JS、CSS、同源 API 與設定保留驗證通過；正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+- 2026-11-25｜`SPC-PARTICLE-PASTE-ENTRY-1125`：新增落塵監控資料輸入頁與 `data.particles` 權限，支援時間＋R1～R12 四粒徑共 49 欄 Excel 貼上、原子驗證、Long Format preview／confirm、重複 reject／skip；分析與比較擴充 R1～R12，C/U 公式與 TransFiles 契約不變。測試 Web `0.1.194`／API `0.1.178` 已發布及連線驗證，正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)

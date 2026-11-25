@@ -26,6 +26,7 @@ import ChemicalAdjustmentParametersView from "../views/ChemicalAdjustmentParamet
 import EtchAnalysisView from "../views/EtchAnalysisView.vue";
 import InstrumentCalibrationsView from "../views/InstrumentCalibrationsView.vue";
 import ParticleMonitoringView from "../views/ParticleMonitoringView.vue";
+import ParticleEntryView from "../views/ParticleEntryView.vue";
 import AuditEventsView from "../views/AuditEventsView.vue";
 
 import GenealogyView from "../views/GenealogyView.vue";
@@ -48,6 +49,7 @@ const routes = [
   { path: "/csv-import", redirect: "/uploads" },
   { path: "/spc", component: SpcChartView },
   { path: "/particle-monitoring", component: ParticleMonitoringView },
+  { path: "/particle-monitoring/entry", component: ParticleEntryView, meta: { editorOnly: true } },
   { path: "/etch-analysis", component: EtchAnalysisView },
   { path: "/process-analysis/capability", component: SpcChartView },
   { path: "/process-analysis/violations", component: SpcChartView },

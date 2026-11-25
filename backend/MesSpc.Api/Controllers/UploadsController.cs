@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using CsvHelper;
 using MesSpc.Api.Infrastructure.Data;
 using MesSpc.Api.Services;
+using MesSpc.Api.Services.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
@@ -12,7 +13,7 @@ namespace MesSpc.Api.Controllers;
 [ApiController]
 [Route("api/uploads")]
 [Route("api/v1/uploads")]
-public class UploadsController(UploadService uploadService, ParticleUploadService particleUploadService)
+public class UploadsController(UploadService uploadService, ParticleUploadService particleUploadService, AuthorizationAccess? authorizationAccess = null)
     : ControllerBase
 {
     [HttpPost("variable")]
@@ -55,6 +56,9 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
     [HttpPost("particle/preview")]
     public async Task<IActionResult> UploadParticlePreview([FromBody] ParticlePreviewRequest request, CancellationToken ct)
     {
+        if (string.Equals(request.SourceType?.Trim(), "WebPaste", StringComparison.OrdinalIgnoreCase)
+            && (authorizationAccess is null || !await authorizationAccess.CanAccessPageAsync(User, "data.particles", ct)))
+            return Forbid();
         try
         {
             var result = await particleUploadService.CreatePreviewAsync(request, User.Identity?.Name ?? "api-user", ct);
@@ -116,13 +120,16 @@ public class UploadsController(UploadService uploadService, ParticleUploadServic
     }
 
     [HttpPost("{uploadBatchId:guid}/confirm")]
-    public async Task<IActionResult> Confirm(Guid uploadBatchId, [FromQuery] string mode = "upsert", [FromQuery] string duplicateMode = "reject")
+    public async Task<IActionResult> Confirm(Guid uploadBatchId, [FromQuery] string mode = "upsert", [FromQuery] string duplicateMode = "reject", CancellationToken ct = default)
     {
-        if (await particleUploadService.IsParticleBatchAsync(uploadBatchId))
+        if (await particleUploadService.IsParticleBatchAsync(uploadBatchId, ct))
         {
+            if (await particleUploadService.IsWebPasteBatchAsync(uploadBatchId, ct)
+                && (authorizationAccess is null || !await authorizationAccess.CanAccessPageAsync(User, "data.particles", ct)))
+                return Forbid();
             if (duplicateMode is not ("reject" or "skip"))
                 return BadRequest(new { message = "duplicateMode 僅支援 reject 或 skip。", code="UPLOAD_DUPLICATE_MODE_INVALID", messageKey="spc.api.uploadDuplicateModeInvalid", args=ApiUiMessageCatalog.EmptyArguments });
-            var particleResult = await particleUploadService.ConfirmAsync(uploadBatchId, duplicateMode);
+            var particleResult = await particleUploadService.ConfirmAsync(uploadBatchId, duplicateMode, ct);
             if (particleResult is null) return NotFound();
             if (particleResult.ConflictCode is not null) return Conflict(particleResult);
             return Ok(particleResult);

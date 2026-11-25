@@ -54,3 +54,21 @@
 - 回復備份：`D:\PmrPortal\.etch-paste-1125\backup-20261125-221836`；可透過 `app_offline.htm` 停用窗口覆回 Web `1.0.363`／API `1.0.324`，並保留現行設定。無 schema、權限或資料庫異動。
 - Web 全套為 54 通過、3 失敗；3 項位於未修改的品保導覽／藥液公式契約，目前 `HEAD` 即不符測試，本件不宣稱全套全綠。焦點與咬蝕回歸全數通過。
 - 原生電腦控制通道當下不可用；本件已由真實 Chromium 無頭模式完成公開測試站及實際 API 基底驗證，沒有使用個人帳密或寫入日報。
+
+## `SPC-PARTICLE-PASTE-ENTRY-1125` 驗證結果
+
+| 驗收 | 方法 | 結果 |
+| --- | --- | --- |
+| AC-005 | 前後端頁面登錄契約、`AuthorizationAccess` 權限測試、router guard | 新增 `data.particles`／`/particle-monitoring/entry`／三語「落塵監控資料輸入」；只有啟用 Editor 且明示取得此權限可由網站建立／確認 WebPaste 批次。只有 `analysis.particles` 不具寫入權。 |
+| AC-006 | Node parser、Chromium preview／confirm 流程、既有 Particle preview／confirm API 回歸 | 49 欄可展開 48 筆 Long Format；空白略過、0 保留，表頭錯誤、非矩形、欄數、時間、負值／小數整批阻擋。貼上不寫入，preview 後才可 confirm；重複仍採 reject／明示 skip，無 overwrite。 |
+| AC-007 | `ParticleUploadServiceTests`、`ParticleQueryServiceTests`、分析頁 Chromium 回歸 | API 白名單、分析篩選及 Location comparison 擴充 R1～R12；R10～R12 可預覽，R1～R9 既有查詢行為保持，C/U 計算器未修改。 |
+| AC-008 | Release build、焦點自動化、測試站 HTTP／MIME／版本／環境及 Chromium API 連線 | API 粒子／權限／安全 39 項、前端純邏輯／語系／登錄 10 項、Chromium 2 項通過；Web `0.1.194`、API `0.1.178/test` 已發布。 |
+
+### 發布、連線與回復
+
+- 發布前 Web `0.1.193`／API `0.1.177`；發布後 Web `0.1.194`／API `0.1.178`，前台建置資產含同步版本。
+- 首頁 HTTP 200；主 JS `index-DWptEWM4.js` 為 `application/javascript`，主 CSS `index-DFGwgE86.css` 為 `text/css`。
+- 同源 `/api/health`、`/api/version` 與 `:8901` 直連均為 `0.1.178/test`、`ok`。真實 Chromium 導覽同源 API 兩端點均回 200／JSON，未繞過 Portal 登入。
+- 回復備份：`D:\SPC\release\backups\spc-particle-paste-entry-1125-20261125-224026`；可停止 `SpcApiTest` 後覆回 Web `0.1.193`／API `0.1.177` 並重驗連線。
+- 無 schema migration、無既有量測或權限資料更新、未建立驗收量測；TransFiles 原路由及 Bearer 契約保持。正式 SPC／Portal 與 `D:\Sites\PmrPortal` 均未異動。
+- 原生桌面瀏覽器控制管線不可用；改由專案既有 Chromium 執行器完成真實測試站唯讀 API 驗證。登入後的人工畫面操作可由取得 `data.particles` 的測試帳號再確認，但不影響本次技術發布結果。

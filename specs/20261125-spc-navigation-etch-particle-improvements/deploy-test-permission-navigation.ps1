@@ -5,8 +5,8 @@ $apiTarget = Join-Path $testRoot 'backend'
 $webTarget = Join-Path $testRoot 'frontend'
 $webSource = Join-Path $root 'frontend\mes-spc-web\dist'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$stage = Join-Path $root ".release-staging\spc-perm-nav-align-1125-$stamp\backend"
-$backupRoot = Join-Path $root "release\backups\spc-perm-nav-align-1125-$stamp"
+$stage = Join-Path $root ".release-staging\spc-particle-paste-entry-1125-$stamp\backend"
+$backupRoot = Join-Path $root "release\backups\spc-particle-paste-entry-1125-$stamp"
 $appcmd = Join-Path $env:windir 'system32\inetsrv\appcmd.exe'
 $apiAppPool = 'SpcApiTest'
 
@@ -24,7 +24,7 @@ if ($settings.AppEnvironment -ne 'test' -or $settings.ConnectionStrings.SqlServe
 }
 $beforeVersion = Invoke-RestMethod 'https://spctest.pmr.com.tw/api/version' -TimeoutSec 20
 $beforeDirect = Invoke-RestMethod 'https://spctest.pmr.com.tw:8901/api/version' -TimeoutSec 20
-if ($beforeVersion.version -ne '0.1.175' -or $beforeDirect.version -ne '0.1.175' -or
+if ($beforeVersion.version -ne '0.1.177' -or $beforeDirect.version -ne '0.1.177' -or
     $beforeVersion.environment -ne 'test' -or $beforeDirect.environment -ne 'test') {
     throw 'SPC test API changed after preflight; deployment stopped.'
 }
@@ -32,12 +32,12 @@ if ($beforeVersion.version -ne '0.1.175' -or $beforeDirect.version -ne '0.1.175'
 dotnet publish (Join-Path $root 'backend\MesSpc.Api\MesSpc.Api.csproj') -c Release -o $stage --no-restore
 if ($LASTEXITCODE -ne 0) { throw 'API publish failed.' }
 $stageVersion = (Get-Item (Join-Path $stage 'MesSpc.Api.dll')).VersionInfo.ProductVersion
-if ($stageVersion -notlike '0.1.177*') { throw "Unexpected staged API version: $stageVersion" }
+if ($stageVersion -notlike '0.1.178*') { throw "Unexpected staged API version: $stageVersion" }
 if (!(Test-Path (Join-Path $webSource 'index.html'))) { throw 'Web test build is missing.' }
 $stageIndex = Get-Content (Join-Path $webSource 'index.html') -Raw
 $stageScriptPath = [regex]::Match($stageIndex, 'src="([^"]+\.js)"').Groups[1].Value.TrimStart('/')
 $stageScript = Get-Content (Join-Path $webSource $stageScriptPath) -Raw
-if (!$stageScript.Contains('0.1.193')) { throw 'Unexpected staged Web version.' }
+if (!$stageScript.Contains('0.1.194')) { throw 'Unexpected staged Web version.' }
 
 New-Item -ItemType Directory -Path $backupRoot | Out-Null
 Copy-Item -LiteralPath $apiTarget -Destination (Join-Path $backupRoot 'backend') -Recurse
@@ -91,11 +91,11 @@ $ready = $false
 for ($i = 0; $i -lt 30; $i++) {
     try {
         $version = Invoke-RestMethod 'https://spctest.pmr.com.tw/api/version' -TimeoutSec 10
-        if ($version.version -eq '0.1.177' -and $version.environment -eq 'test') { $ready = $true; break }
+        if ($version.version -eq '0.1.178' -and $version.environment -eq 'test') { $ready = $true; break }
     } catch {}
     Start-Sleep -Seconds 1
 }
-if (!$ready) { throw 'SPC test API did not become ready as 0.1.177/test.' }
+if (!$ready) { throw 'SPC test API did not become ready as 0.1.178/test.' }
 
 $directVersion = Invoke-RestMethod 'https://spctest.pmr.com.tw:8901/api/version' -TimeoutSec 20
 $health = Invoke-RestMethod 'https://spctest.pmr.com.tw/api/health' -TimeoutSec 20
@@ -110,15 +110,15 @@ $assets = foreach ($assetPath in $assetPaths) {
 $mainScript = $assets | Where-Object Uri -Like '*.js' | Select-Object -First 1
 $mainContent = (Invoke-WebRequest $mainScript.Uri -UseBasicParsing -TimeoutSec 20).Content
 if ($webResponse.StatusCode -ne 200 -or $health.status -notin @('ok', 'Healthy') -or $directHealth.status -notin @('ok', 'Healthy') -or
-    $version.version -ne '0.1.177' -or $version.environment -ne 'test' -or
-    $directVersion.version -ne '0.1.177' -or $directVersion.environment -ne 'test' -or
-    !$mainContent.Contains('0.1.193') -or $assets.Count -lt 2 -or
+    $version.version -ne '0.1.178' -or $version.environment -ne 'test' -or
+    $directVersion.version -ne '0.1.178' -or $directVersion.environment -ne 'test' -or
+    !$mainContent.Contains('0.1.194') -or $assets.Count -lt 2 -or
     $assets.Where({ $_.Status -ne 200 -or ($_.Uri -like '*.js' -and $_.ContentType -notmatch 'javascript') -or ($_.Uri -like '*.css' -and $_.ContentType -notmatch 'css') }).Count) {
     throw 'SPC test Web/API/version/environment verification failed.'
 }
 
 [pscustomobject]@{
-    BeforeWeb = '0.1.191'; AfterWeb = '0.1.193'; BeforeApi = $beforeVersion.version; AfterApi = $version.version;
+    BeforeWeb = '0.1.193'; AfterWeb = '0.1.194'; BeforeApi = $beforeVersion.version; AfterApi = $version.version;
     DirectApi = $directVersion.version; Environment = $version.environment; Health = $health.status;
     DirectHealth = $directHealth.status; Home = $webResponse.StatusCode; Assets = $assets; Backup = $backupRoot
 } | ConvertTo-Json -Depth 5

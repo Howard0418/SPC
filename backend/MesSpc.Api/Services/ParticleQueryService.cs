@@ -64,7 +64,7 @@ public sealed class ParticleQueryService(AppDbContext db)
             return new(true, candidates, []);
         }
         var selected = groups.SingleOrDefault()?.ToDictionary(item => item.Location, item => item);
-        var items = Enumerable.Range(1, 9).Select(number =>
+        var items = Enumerable.Range(1, 12).Select(number =>
         {
             var location = $"R{number}";
             var found = selected?.GetValueOrDefault(location);

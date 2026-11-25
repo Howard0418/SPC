@@ -97,6 +97,20 @@ public class AuthorizationAccessTests
         Assert.False(await access.CanManageCalibrationAsync(CreateUser("unknown", UserRoles.Editor)));
     }
 
+    [Fact]
+    public async Task CanAccessPageAsync_ShouldRequireActiveEditorAndExplicitParticleEntryPermission()
+    {
+        await using var db = CreateDbContext();
+        db.Operators.AddRange(
+            new Operator { OperatorCode = "OP-005", OperatorName = "Particle Editor", Username = "particle-editor", Role = UserRoles.Editor, IsActive = true, PagePermissionsJson = """["system.page-permissions.v2","data.particles"]""" },
+            new Operator { OperatorCode = "OP-006", OperatorName = "Analysis Editor", Username = "analysis-editor", Role = UserRoles.Editor, IsActive = true, PagePermissionsJson = """["system.page-permissions.v2","analysis.particles"]""" });
+        await db.SaveChangesAsync();
+        var access = new AuthorizationAccess(db);
+
+        Assert.True(await access.CanAccessPageAsync(CreateUser("particle-editor", UserRoles.Editor), "data.particles"));
+        Assert.False(await access.CanAccessPageAsync(CreateUser("analysis-editor", UserRoles.Editor), "data.particles"));
+    }
+
     private static AppDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
