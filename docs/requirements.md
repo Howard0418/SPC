@@ -695,3 +695,5 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 2026-11-24 [錄入頁移除公式比對介面](../specs/20261124-chemical-entry-remove-comparison/spec.md)。取代測試補排程介面，量測日期照常操作，今日首次試算的台北時點由系統記錄。
 
 - 2026-11-24 [SPC 現行調整公式](../specs/20261124-chemical-current-adjustment-source/spec.md)。Portal 新預覽與儲存的調整、調整量及參數取 SPC 現行設定，取代調整公式的日期排程切換。濃度沿用原排程與 F。
+
+- 2026-11-25 [SPC 端到端操作教學手冊 V2.0](../specs/20261125-spc-portal-system-guide/spec.md)。以正式區去識別畫面說明 Portal 藥液量測錄入、SPC 管制項目設定、管制圖繪製，以及作業人員角色與頁面權限設定；文件採證只讀，不變更正式資料。

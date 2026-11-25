@@ -927,5 +927,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-REPORT-CLOSEOUT-1124：送簽修訂稿已補 2026/12/01 起持續資料核對與功能修正，保留第一階段甘特圖。第一階段實際結案仍待主管簽核。[規格](specs/20261124-spc-project-closeout-report/spec.md) [驗證](specs/20261124-spc-project-closeout-report/verification.md)
 
 - [x] SPC-DOC-GUIDE-1125：正式區編輯者手冊 V1.0 本機交付。四個站台入口已核對，文件含問題分流與角色交接。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
+- [x] SPC-DOC-GUIDE-1125-V2：正式區 SPC 端到端操作手冊 V2.0 已完成，含藥液錄入、管制項目設定、管制圖與作業人員／頁面權限；十一頁、十二張去識別正式畫面已逐頁驗證。[規格與驗證](specs/20261125-spc-portal-system-guide/verification.md)
 
 - [x] SPC-OPERATORS-DIRECTORY-1125：SPC API 主責，Portal 品保名單為上游。測試 Web 0.1.189／API 0.1.173；正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者唯讀比對成功。[規格與驗證](specs/20261125-operator-directory-connection/spec.md)
