@@ -1,7 +1,7 @@
 # 量測匯入與登入主檔分離驗證
 - 功能 ID：SPC-OPERATORS-IMPORT-IDENTITY-1125
 - 日期：2026-11-25，台灣時間
-- 狀態：測試發布及驗證完成，正式尚未發布。
+- 狀態：測試與正式發布及驗證完成，分段列示。
 
 | 驗收 | 環境 | 方式及結果 |
 | --- | --- | --- |
@@ -13,4 +13,8 @@
 - 兩個既有 Portal 量測點排除測試，在本次及基準提交 f85a847c 都以相同錯誤失敗。既有失敗獨立重驗，不納入 89 個通過。
 - API Release 與 Web testhost 建置成功，三語目錄 2,919 鍵。Chromium 確認目前入口顯示 Web 0.1.191、API 0.1.175；畫面從同源 API 取得測試站的實際版本回應，正常驗證 TLS。匿名匯入確認與人員比對均回 401。
 - 保留測試站 appsettings 及 IIS 配置，SHA-256 一致。備份位於 release/backups/operator-import-identity-1125，可回復 Web／API 及發布紀錄，再核對原本兩版。無 schema 或共享測試資料寫入。
-- 正式站發布與正式人員整理仍需授權。依[正式個案](../20261125-production-operator-account-merge/verification.md)依序辦理。
+- 正式發布與人員整理依[正式個案](../20261125-production-operator-account-merge/verification.md)依序辦理。
+
+## 2026-11-25 正式發布
+
+以目前正式基準移植同一份測試修正，正式 Web 0.1.190 → 0.1.192、API 0.1.174 → 0.1.176。正式候選 77 項焦點與身分回歸通過，另 1 項既有隔離 SQL 測試略過，未套用資料庫結構異動。實際首頁、主資產、8443 API 健康、版本、production、跨網域及正式登入查驗均通過。[正式發布與回復紀錄](../20261125-production-operator-account-merge/verification.md)
