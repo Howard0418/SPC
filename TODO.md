@@ -1,3 +1,7 @@
+## 2026-11-25 正式 SPC 剩餘兩組同名主檔
+
+- [x] SPC-OPERATORS-FOLLOWUP-1125：P1／SPC。正式兩組各留一筆 AD 主檔，舊列停用、隱藏及解除登入。清單 30 筆，重複登入與同名群組皆為 0；兩筆異動均稽核。[驗證](specs/20261125-production-operator-same-name-followup/verification.md)
+
 ## 2026-11-25 正式 SPC 同名主檔與匯入防重
 
 - [x] SPC-OPERATORS-IMPORT-IDENTITY-1125：測試 Web 0.1.191／API 0.1.175，正式 Web 0.1.192／API 0.1.176 均發布並核對。量測匯入保留人員文字，不建立登入身分。[驗證](specs/20261125-import-operator-identity-separation/verification.md)

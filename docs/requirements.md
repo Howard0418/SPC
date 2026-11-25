@@ -1,3 +1,5 @@
+- 2026-11-25 [正式 SPC 剩餘兩組同名主檔](../specs/20261125-production-operator-same-name-followup/spec.md)：兩組均已受控整理，清單查回各一筆 AD 主檔並保留原權限與紀錄。
+
 - 2026-11-25 [量測匯入與登入主檔分離](../specs/20261125-import-operator-identity-separation/spec.md)：正式 Web 0.1.192／API 0.1.176 已發布。量測作業人員文字獨立於登入；[指定正式同名主檔](../specs/20261125-production-operator-account-merge/spec.md)已整理並通過單一登入與頁面查回。
 
 - 2026-11-25 [SPC Portal 人員比對連線修正](../specs/20261125-operator-directory-connection/spec.md)：正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者以唯讀比對取得 Portal 品保名單。測試 Web 0.1.189／API 0.1.173。
