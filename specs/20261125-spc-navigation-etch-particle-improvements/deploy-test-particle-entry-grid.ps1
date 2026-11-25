@@ -4,7 +4,7 @@ $root = 'D:\SPC'
 $webTarget = 'D:\SPC\release\test\frontend'
 $webSource = 'D:\SPC\frontend\mes-spc-web\dist'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$backupRoot = Join-Path $root "release\backups\spc-particle-entry-grid-1125-$stamp"
+$backupRoot = Join-Path $root "release\backups\spc-particle-excel-form-grid-1125-$stamp"
 $appcmd = Join-Path $env:windir 'system32\inetsrv\appcmd.exe'
 $webBase = [Uri]'https://spctest.pmr.com.tw/'
 $directApiBase = [Uri]'https://spctest.pmr.com.tw:8901/'
@@ -26,14 +26,14 @@ if ($beforeVersion.version -ne '0.1.178' -or $beforeDirect.version -ne '0.1.178'
 $beforeLanding = Invoke-WebRequest $webBase.AbsoluteUri -UseBasicParsing -TimeoutSec 20
 $beforeScriptPath = [regex]::Match($beforeLanding.Content, 'src="([^"]+\.js)"').Groups[1].Value
 $beforeScript = (Invoke-WebRequest ([Uri]::new($webBase, $beforeScriptPath)).AbsoluteUri -UseBasicParsing -TimeoutSec 20).Content
-if (!$beforeScript.Contains('0.1.196')) { throw 'Unexpected current SPC test Web version.' }
+if (!$beforeScript.Contains('0.1.197')) { throw 'Unexpected current SPC test Web version.' }
 
 $stageIndexPath = Join-Path $webSource 'index.html'
 if (!(Test-Path $stageIndexPath)) { throw 'SPC test Web build is missing.' }
 $stageIndex = Get-Content $stageIndexPath -Raw
 $stageScriptPath = [regex]::Match($stageIndex, 'src="([^"]+\.js)"').Groups[1].Value.TrimStart('/')
 $stageScript = Get-Content (Join-Path $webSource $stageScriptPath) -Raw
-if (!$stageScript.Contains('0.1.197') -or !$stageScript.Contains('particle-paste-grid')) {
+if (!$stageScript.Contains('0.1.198') -or !$stageScript.Contains('particle-paste-grid') -or !$stageScript.Contains('particle-remark')) {
     throw 'Unexpected staged SPC Web version or missing particle grid.'
 }
 
@@ -80,7 +80,7 @@ $afterDirect = Invoke-RestMethod ([Uri]::new($directApiBase, 'api/version')) -Ti
 $health = Invoke-RestMethod ([Uri]::new($webBase, 'api/health')) -TimeoutSec 20
 $directHealth = Invoke-RestMethod ([Uri]::new($directApiBase, 'api/health')) -TimeoutSec 20
 
-if ($afterLanding.StatusCode -ne 200 -or !$mainContent.Contains('0.1.197') -or !$mainContent.Contains('particle-paste-grid') -or
+if ($afterLanding.StatusCode -ne 200 -or !$mainContent.Contains('0.1.198') -or !$mainContent.Contains('particle-paste-grid') -or !$mainContent.Contains('particle-remark') -or
     $floorPlan.StatusCode -ne 200 -or $floorPlan.Headers.'Content-Type' -notmatch '^image/png' -or
     $afterVersion.version -ne '0.1.178' -or $afterVersion.environment -ne 'test' -or
     $afterDirect.version -ne '0.1.178' -or $afterDirect.environment -ne 'test' -or
@@ -91,8 +91,8 @@ if ($afterLanding.StatusCode -ne 200 -or !$mainContent.Contains('0.1.197') -or !
 }
 
 [pscustomobject]@{
-    BeforeWeb = '0.1.196'
-    AfterWeb = '0.1.197'
+    BeforeWeb = '0.1.197'
+    AfterWeb = '0.1.198'
     BeforeApi = $beforeVersion.version
     AfterApi = $afterVersion.version
     Environment = $afterVersion.environment
@@ -100,6 +100,7 @@ if ($afterLanding.StatusCode -ne 200 -or !$mainContent.Contains('0.1.197') -or !
     DirectHealth = $directHealth.status
     Home = $afterLanding.StatusCode
     GridAsset = $mainContent.Contains('particle-paste-grid')
+    RemarkAsset = $mainContent.Contains('particle-remark')
     Assets = $assets
     Backup = $backupRoot
 } | ConvertTo-Json -Depth 5

@@ -4,11 +4,12 @@ import { AlertTriangle, CheckCircle2, ClipboardPaste, Eraser, Eye, Save } from '
 import { useI18n } from 'vue-i18n';
 import { api, getApiErrorDisplay } from '../api/client';
 import { displayUiMessage } from '../i18n/uiMessage';
-import { buildParticlePreviewRows, parseParticlePaste, particleLocations, particleSizes, sha256Hex } from '../particle/particlePaste';
+import { buildParticlePreviewRows, parseParticlePaste, particleLocations, particleSizes, serializeParticleRows, sha256Hex } from '../particle/particlePaste';
 
 const { t } = useI18n({ useScope: 'global' });
 const clipboardText = ref('');
 const parsed = ref({ dataRows: [], missingCount: 0, errors: [] });
+const draftRows = ref([]);
 const preview = ref(null);
 const previewErrors = ref([]);
 const result = ref(null);
@@ -16,15 +17,41 @@ const error = ref('');
 const busy = ref(false);
 
 const expandedRows = computed(() => buildParticlePreviewRows(parsed.value.dataRows));
-const hasDraft = computed(() => clipboardText.value.length > 0 || parsed.value.dataRows.length > 0 || preview.value);
+const hasDraft = computed(() => clipboardText.value.length > 0 || draftRows.value.length > 0 || preview.value);
 const canConfirm = computed(() => preview.value && preview.value.errorRows === 0 && !result.value);
 
 function applyPaste() {
+  const next = parseParticlePaste(clipboardText.value);
+  parsed.value = next;
+  draftRows.value = next.errors.length ? [] : next.dataRows.map(row => ({ ...row, counts: [...row.counts] }));
+  preview.value = null;
+  previewErrors.value = [];
+  result.value = null;
+  error.value = '';
+}
+
+function revalidateDraft() {
+  clipboardText.value = serializeParticleRows(draftRows.value);
   parsed.value = parseParticlePaste(clipboardText.value);
   preview.value = null;
   previewErrors.value = [];
   result.value = null;
   error.value = '';
+}
+
+function updateTime(rowIndex, value) {
+  draftRows.value[rowIndex].rawMeasurementTime = value;
+  revalidateDraft();
+}
+
+function updateCount(rowIndex, countIndex, value) {
+  draftRows.value[rowIndex].counts[countIndex] = value === '' ? null : value;
+  revalidateDraft();
+}
+
+function updateRemark(rowIndex, value) {
+  draftRows.value[rowIndex].remark = value === '' ? null : value;
+  revalidateDraft();
 }
 
 function onPaste(event) {
@@ -38,6 +65,7 @@ function onPaste(event) {
 function clearDraft() {
   clipboardText.value = '';
   parsed.value = { dataRows: [], missingCount: 0, errors: [] };
+  draftRows.value = [];
   preview.value = null;
   previewErrors.value = [];
   result.value = null;
@@ -45,7 +73,7 @@ function clearDraft() {
 }
 
 async function createPreview() {
-  applyPaste();
+  revalidateDraft();
   if (parsed.value.errors.length || !expandedRows.value.length) return;
   busy.value = true;
   try {
@@ -80,14 +108,7 @@ async function confirm(duplicateMode = 'reject') {
   } finally { busy.value = false; }
 }
 
-const cellValue = (row, locationIndex, sizeIndex) => row.counts[locationIndex * 4 + sizeIndex] ?? '';
-function measurementTimeParts(value) {
-  const match = String(value ?? '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-  return match
-    ? { date: `${match[1]}/${match[2]}/${match[3]}`, time: `${match[4]}:${match[5]}` }
-    : { date: String(value ?? ''), time: '' };
-}
-const errorKey = { EMPTY: 'empty', NON_RECTANGULAR: 'nonRectangular', HEADER_MISMATCH: 'headerMismatch', COLUMN_COUNT: 'columnCount', TIME_INVALID: 'timeInvalid', COUNT_INVALID: 'countInvalid' };
+const errorKey = { EMPTY: 'empty', NON_RECTANGULAR: 'nonRectangular', HEADER_MISMATCH: 'headerMismatch', COLUMN_COUNT: 'columnCount', TIME_INVALID: 'timeInvalid', COUNT_INVALID: 'countInvalid', REMARK_TOO_LONG: 'remarkTooLong' };
 const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || 'countInvalid'}`, { row: item.row, column: item.column, expected: item.expected, actual: item.actual });
 </script>
 
@@ -118,7 +139,7 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
           tabindex="0"
           role="grid"
           aria-labelledby="particle-paste-label"
-          class="min-w-[2450px] border-collapse text-center text-xs outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-700"
+          class="min-w-[2700px] border-collapse text-center text-xs outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-700"
           @paste="onPaste"
         >
           <thead class="bg-yellow-300 text-slate-950">
@@ -127,6 +148,7 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
                 {{ t('spc.particleEntry.measurementTime') }}\{{ t('spc.particles.location') }}
               </th>
               <th v-for="location in particleLocations" :key="location" colspan="4" class="border border-black bg-yellow-300 px-2 py-1 font-black">{{ location }}</th>
+              <th rowspan="2" class="min-w-48 border border-black bg-rose-200 px-2 py-2 font-black">{{ t('spc.particleEntry.remark') }}</th>
             </tr>
             <tr>
               <template v-for="location in particleLocations" :key="`${location}-paste-sizes`">
@@ -139,21 +161,48 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
           <tbody class="bg-white text-slate-950">
             <tr v-if="!parsed.dataRows.length" data-testid="particle-grid-empty">
               <td class="sticky left-0 border border-slate-500 bg-white px-2 py-4 font-semibold">—</td>
-              <td colspan="48" class="border border-slate-500 px-4 py-4 text-left text-slate-500">{{ t('spc.particleEntry.pastePlaceholder') }}</td>
+              <td colspan="49" class="border border-slate-500 px-4 py-4 text-left text-slate-500">{{ t('spc.particleEntry.pastePlaceholder') }}</td>
             </tr>
-            <tr v-for="(row, rowIndex) in parsed.dataRows" :key="row.sourceRow">
-              <td :data-testid="`particle-time-${rowIndex}`" class="sticky left-0 z-10 border border-slate-500 bg-white px-2 py-2 font-mono font-semibold">
-                <div>{{ measurementTimeParts(row.measurementTime).date }}</div>
-                <div>{{ measurementTimeParts(row.measurementTime).time }}</div>
+            <tr v-for="(row, rowIndex) in draftRows" :key="row.sourceRow">
+              <td :data-testid="`particle-time-${rowIndex}`" class="sticky left-0 z-10 border border-slate-500 bg-white p-0 font-mono font-semibold">
+                <textarea
+                  :data-testid="`particle-time-input-${rowIndex}`"
+                  :value="row.rawMeasurementTime"
+                  rows="2"
+                  class="block h-14 w-full resize-none bg-transparent px-2 py-1 text-center font-mono outline-none focus:bg-blue-50"
+                  :aria-label="t('spc.particleEntry.measurementTime')"
+                  @paste.stop
+                  @input="updateTime(rowIndex, $event.target.value)"
+                />
               </td>
               <template v-for="(_, locationIndex) in particleLocations" :key="`${row.sourceRow}-${locationIndex}`">
                 <td
                   v-for="(_, sizeIndex) in particleSizes"
                   :key="`${row.sourceRow}-${locationIndex}-${sizeIndex}`"
-                  :data-testid="`particle-cell-${rowIndex}-${locationIndex * 4 + sizeIndex}`"
-                  class="border border-slate-500 px-2 py-2 font-mono"
-                >{{ cellValue(row, locationIndex, sizeIndex) }}</td>
+                  class="border border-slate-500 p-0 font-mono"
+                >
+                  <input
+                    :data-testid="`particle-cell-${rowIndex}-${locationIndex * 4 + sizeIndex}`"
+                    :value="row.counts[locationIndex * 4 + sizeIndex] ?? ''"
+                    inputmode="numeric"
+                    class="h-10 w-full min-w-12 bg-transparent px-1 text-center font-mono outline-none focus:bg-blue-50"
+                    :aria-label="`${particleLocations[locationIndex]} ${particleSizes[sizeIndex]}`"
+                    @paste.stop
+                    @input="updateCount(rowIndex, locationIndex * 4 + sizeIndex, $event.target.value)"
+                  >
+                </td>
               </template>
+              <td class="border border-slate-500 p-0">
+                <input
+                  :data-testid="`particle-remark-${rowIndex}`"
+                  :value="row.remark ?? ''"
+                  maxlength="500"
+                  class="h-10 w-full min-w-48 bg-transparent px-2 text-left outline-none focus:bg-blue-50"
+                  :aria-label="t('spc.particleEntry.remark')"
+                  @paste.stop
+                  @input="updateRemark(rowIndex, $event.target.value)"
+                >
+              </td>
             </tr>
           </tbody>
         </table>

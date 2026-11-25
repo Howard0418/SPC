@@ -1759,9 +1759,9 @@
     },
     "particleEntry": {
       "title": "落塵監控資料輸入",
-      "description": "貼上量測時間與 R1～R12 四種粒徑資料；先預覽，確認後才寫入。",
+      "description": "依製造部落塵監控表單貼上日期時間、R1～R12 四種粒徑與備註；可在格內修正，先預覽，確認後才寫入。",
       "pasteLabel": "Excel 貼上區",
-      "pastePlaceholder": "每列 49 欄：量測時間 + R1～R12 × 0.5／1／5／10 µm。可包含固定兩列表頭。",
+      "pastePlaceholder": "每列為日期時間 + R1～R12 × 0.5／1／5／10 µm + 備註；可直接貼上指定 Excel 表單的兩列表頭與資料。",
       "parse": "解析貼上資料",
       "preview": "建立預覽",
       "clear": "清除未確認草稿",
@@ -1771,6 +1771,7 @@
       "missingValues": "空白缺值 {count} 格",
       "duplicates": "重複 {count} 筆",
       "measurementTime": "日期時間",
+      "remark": "備註",
       "previewResult": "伺服器預覽結果",
       "previewSummary": "有效 {valid}／錯誤 {errors}／重複 {duplicates}",
       "confirm": "確認寫入",
@@ -1783,7 +1784,8 @@
         "headerMismatch": "兩列表頭與固定 R1～R12／粒徑順序不符。",
         "columnCount": "第 {row} 列應有 {expected} 欄，實際為 {actual} 欄。",
         "timeInvalid": "第 {row} 列 A 欄不是有效的量測時間。",
-        "countInvalid": "第 {row} 列 {column} 欄須為大於等於 0 的整數。"
+        "countInvalid": "第 {row} 列 {column} 欄須為大於等於 0 的整數。",
+        "remarkTooLong": "第 {row} 列備註不得超過 500 字。"
       }
     },
     "calibration": {

@@ -58,6 +58,14 @@
 3. 貼上只建立前端草稿，不呼叫 API；原「解析貼上資料／建立預覽／清除未確認草稿」及 confirm 契約保持。
 4. 先新增 Chromium 驗證表頭、欄數、貼上對位、清除及 preview 前零 API 寫入，再遞增 SPC Web 版本並發布測試站；API 版本維持。
 
+### 小工作 6：`SPC-PARTICLE-EXCEL-FORM-GRID-1125`（P1，依賴小工作 5）
+
+1. 以指定 Excel 工作表的 B24:BB 為唯讀格式基準，將格線補為「日期時間／位置 + R1～R12 × 四粒徑 + 備註」50 個邏輯欄位。
+2. parser 同時接受既有 49 欄、網站 50 欄及原 Excel 合併備註展開後的 53 欄；支援 Excel quoted TSV 與日期／時間同格換行，任何不相容列仍整批拒絕。
+3. 貼上後的日期、48 個數值與備註可在格內修正；每次修正使舊 preview 失效，避免以舊預覽確認新畫面資料。
+4. 備註沿用既有 API `Remark`，投影至同一來源列的所有非空白量測；仍須先建立預覽，再按確認寫入，不提供直接繞過預覽的儲存。
+5. 先建立 parser 與 Chromium 回歸測試，再遞增 SPC Web 版本、發布測試站並驗證 Web／API／瀏覽器實際 API 基底；API 與資料庫不變。
+
 ## API、檔案格式及資料模型
 
 - 咬蝕：不新增 API；clipboard 僅轉成現有 `points[{side,repeatNo,opNo,beforeValue,afterValue}]` 草稿。
@@ -82,6 +90,7 @@
 - AC-008：SPC API／Web 與 Portal API／Web 的焦點測試、必要完整回歸、Release build；測試站首頁、主 JS/CSS、health/version、瀏覽器實際 API 基底及登入後操作驗收。
 - AC-009：Chromium 驗證配置圖 HTTP 200、圖片等比例顯示、配置圖區在貼上區上方且兩區框線非 0；重跑原落塵貼上預覽／確認案例。
 - AC-010：Chromium 驗證雙層黃色表頭、12 組位置、48 個粒徑欄與一個日期時間欄；合法一列貼上後 R1/0.5 及 R12/10 對位，preview 前 API 未呼叫，清除後恢復空白列。
+- AC-011：以指定 Excel 表頭與資料列 fixture 驗證 53→50 正規化、quoted newline 日期、備註傳遞、格內修正、舊 preview 失效及 preview／confirm 寫入順序；既有 49 欄貼上保持相容。
 - 使用者原始截圖只作需求佐證，不提交到 Git；經校正且實際由網站使用的配置圖資納入版本控制。驗收截圖去識別後保存於本機證據目錄，不納入版本控制。
 
 ## 發布、備份及回復

@@ -3831,3 +3831,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 非數字、負數、非矩形、列／欄超界或 `BEFORE < AFTER` 均整次拒絕並顯示錯誤格；原 COM、Enter、日報 payload 與 SPC 同步契約不變。
 - Node 7 項、Razor 契約 2 項、咬蝕回歸 12 項及 Release build 通過。Portal 測試 Web `1.0.364`／API `1.0.325/test` 已發布，首頁、新／主 JS、CSS、同源 API 與設定保留驗證通過；正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
 - 2026-11-25｜`SPC-PARTICLE-PASTE-ENTRY-1125`：新增落塵監控資料輸入頁與 `data.particles` 權限，支援時間＋R1～R12 四粒徑共 49 欄 Excel 貼上、原子驗證、Long Format preview／confirm、重複 reject／skip；分析與比較擴充 R1～R12，C/U 公式與 TransFiles 契約不變。測試 Web `0.1.194`／API `0.1.178` 已發布及連線驗證，正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+
+## 2026-11-25 落塵指定 Excel 表單格線與儲存
+
+- 依 `PD-3-257-04A (0.51.0 5 10)` 工作表 B24:BB 校正輸入格線：新增備註欄，支援舊 49 欄、網站 50 欄、原表 53 欄、Excel quoted newline 與同格日期時間。
+- 貼入的日期、48 個數值與備註可直接在格內修正；任何異動都使舊 preview 失效，仍須重新預覽後才可確認寫入。備註沿用既有 `ParticleMeasurements.Remark`，無 schema／API／權限異動。
+- parser 5 項、Particle 語系 3 項、Chromium 4 項、三語 2,954 keys × 3、testhost build 及指定實檔解析通過。測試 Web `0.1.198` 已發布，API 維持 `0.1.178/test`；HTTP／MIME、同源／直連 API 與 Chromium 實際 API 基底通過，正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)

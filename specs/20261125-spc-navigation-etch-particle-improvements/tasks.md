@@ -1,9 +1,9 @@
 # 任務
 
 - 功能 ID：`20261125-spc-navigation-etch-particle-improvements`
-- 規格版本：8
+- 規格版本：9
 - [規格](spec.md)｜[計畫](plan.md)
-- 目前狀態：五項小工作均完成測試、自動化與測試站發布；正式站未授權、未發布。
+- 目前狀態：六項小工作均完成測試、自動化與測試站發布；正式站未授權、未發布。
 
 ## P0：安全與權限一致
 
@@ -21,6 +21,8 @@
 
 - [x] `SPC-PARTICLE-ENTRY-GRID-1125`：將 Excel 貼上區改為黃色雙層 49 欄格線，可在格線直接貼上並顯示對應資料；保留原 preview／confirm 行為。（R-010；AC-010；依賴 `SPC-PARTICLE-PASTE-ENTRY-1125`）
 
+- [x] `SPC-PARTICLE-EXCEL-FORM-GRID-1125`：依指定 Excel 工作表 B24:BB 更新為 50 個邏輯欄位，支援 49／50／53 欄貼上、日期同格換行、備註、格內修正與 preview 後確認寫入。（R-011；AC-011；依賴 `SPC-PARTICLE-ENTRY-GRID-1125`）
+
 ## 每件共同收尾
 
 - [x] P0 已完成自動化、建置、Web `0.1.193`／API `0.1.177` 測試站發布、連線驗證、文件同步與回復備份。
@@ -29,3 +31,4 @@
 - [x] 更新 spec／verification、`docs/requirements.md`、`TODO.md`、`CHANGELOG_CUSTOM.md`，只提交該小工作必要檔案並推送目前分支。
 - [x] 配置圖版面完成 Chromium／三語／建置、SPC 測試站 Web `0.1.195` 版本遞增、靜態圖片與 Web／API 連線驗證；API 維持 `0.1.178/test`，正式發布另行授權。
 - [x] 貼上格線完成 Chromium／三語／建置、SPC 測試站 Web 最終 `0.1.197` 版本遞增及 Web／API 連線驗證；API 維持 `0.1.178/test`，正式發布另行授權。
+- [x] 指定 Excel 表單格線完成 parser 5 項、Particle 語系 3 項、Chromium 4 項、三語及 build；SPC 測試站 Web `0.1.198` 已發布，API 維持 `0.1.178/test`，正式發布另行授權。

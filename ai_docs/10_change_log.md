@@ -2352,3 +2352,10 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：依使用者提供的 Excel 欄位畫面，把空白大文字貼上框改為日期時間／位置與 R1～R12 四粒徑的固定雙層格線，讓貼上欄位可直接目視對照。
 - 範圍：只修改 SPC Web 落塵輸入頁與 Chromium 測試；沿用既有 49 欄 parser、preview／confirm、API、權限及資料模型。
 - 結果：黃色雙層 49 欄格線、格線貼上、資料對位及清除完成，第一欄依來源畫面顯示「日期時間＼位置」。Chromium 3 項、Particle 語系 3 項、三語 2,952 keys × 3 與 testhost build 通過；測試 Web 最終 `0.1.197` 已發布，API 維持 `0.1.178/test`，正式未發布。
+
+# 2026-11-25 SPC-PARTICLE-EXCEL-FORM-GRID-1125 指定表單格線與儲存
+
+- 目的：依 `PD-3-257-04A (0.51.0 5 10)` 工作表的實際格式，讓落塵頁完整接收日期時間、R1～R12 四粒徑及備註，並可在格內修正後受控寫入。
+- 範圍：SPC Web parser、落塵輸入格線、三語文字及測試；沿用既有 preview／confirm、`ParticleMeasurements.Remark`、權限、重複保護與資料表，不新增 schema 或直接寫入捷徑。
+- 風險控制：先以 49／50／53 欄、Excel quoted newline、備註傳遞與格內修正測試保護；任何畫面異動使舊 preview 失效，只有重新預覽後才能確認。
+- 結果：指定活頁簿 B24:BB26 實檔解析通過；parser 5、Particle 語系 3、Chromium 4、三語 2,954 keys × 3 與 testhost build 通過。測試 Web `0.1.198` 已發布，API 維持 `0.1.178/test`；首頁、主資產、同源／直連 API 與 Chromium 實際 API 基底通過，正式未發布。

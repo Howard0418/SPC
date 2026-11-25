@@ -1759,9 +1759,9 @@
     },
     "particleEntry": {
       "title": "落尘监控数据输入",
-      "description": "粘贴测量时间与 R1～R12 四种粒径数据；先预览，确认后才写入。",
+      "description": "依制造部落尘监控表单粘贴日期时间、R1～R12 四种粒径与备注；可在格内修正，先预览，确认后才写入。",
       "pasteLabel": "Excel 粘贴区",
-      "pastePlaceholder": "每行 49 列：测量时间 + R1～R12 × 0.5／1／5／10 µm。可包含固定两行表头。",
+      "pastePlaceholder": "每行为日期时间 + R1～R12 × 0.5／1／5／10 µm + 备注；可直接粘贴指定 Excel 表单的两行表头与数据。",
       "parse": "解析粘贴数据",
       "preview": "建立预览",
       "clear": "清除未确认草稿",
@@ -1771,6 +1771,7 @@
       "missingValues": "空白缺值 {count} 格",
       "duplicates": "重复 {count} 笔",
       "measurementTime": "日期时间",
+      "remark": "备注",
       "previewResult": "服务器预览结果",
       "previewSummary": "有效 {valid}／错误 {errors}／重复 {duplicates}",
       "confirm": "确认写入",
@@ -1783,7 +1784,8 @@
         "headerMismatch": "两行表头与固定 R1～R12／粒径顺序不符。",
         "columnCount": "第 {row} 行应有 {expected} 列，实际为 {actual} 列。",
         "timeInvalid": "第 {row} 行 A 列不是有效的测量时间。",
-        "countInvalid": "第 {row} 行 {column} 列须为大于等于 0 的整数。"
+        "countInvalid": "第 {row} 行 {column} 列须为大于等于 0 的整数。",
+        "remarkTooLong": "第 {row} 行备注不得超过 500 字。"
       }
     },
     "calibration": {

@@ -34,7 +34,7 @@ test('particle entry shows the bordered floor plan before the bordered paste are
   expect(pasteBorder).not.toBe('0px');
 });
 
-test('particle entry shows the fixed yellow 49-column grid and maps pasted values before preview', async ({ page }) => {
+test('particle entry shows the referenced Excel grid and maps pasted values before preview', async ({ page }) => {
   let previewRequests = 0;
   await page.route('**/api/version', route => route.fulfill({ json: { version: '0.1.test', environment: 'unknown' } }));
   await page.route('**/api/v1/uploads/particle/preview', route => {
@@ -47,21 +47,21 @@ test('particle entry shows the fixed yellow 49-column grid and maps pasted value
   const grid = page.getByTestId('particle-paste-grid');
   await expect(grid).toBeVisible();
   await expect(page.locator('#particle-paste')).toHaveCount(0);
-  await expect(grid.locator('thead tr').first().getByRole('columnheader')).toHaveCount(13);
+  await expect(grid.locator('thead tr').first().getByRole('columnheader')).toHaveCount(14);
   await expect(grid.locator('thead tr').nth(1).getByRole('columnheader')).toHaveCount(48);
   await expect(grid.getByRole('columnheader', { name: 'R1', exact: true })).toBeVisible();
   await expect(grid.getByRole('columnheader', { name: 'R12', exact: true })).toBeVisible();
   await expect(grid.getByRole('columnheader', { name: /日期時間.*位置/ })).toBeVisible();
+  await expect(grid.getByRole('columnheader', { name: '備註', exact: true })).toBeVisible();
   const headerColor = await grid.getByRole('columnheader', { name: 'R1', exact: true }).evaluate(element => getComputedStyle(element).backgroundColor);
   expect(headerColor).not.toBe('rgba(0, 0, 0, 0)');
 
   const values = Array.from({ length: 48 }, (_, index) => String(index));
   await pasteIntoGrid(page, `2026/11/25 08:30\t${values.join('\t')}`);
 
-  await expect(page.getByTestId('particle-time-0')).toContainText('2026/11/25');
-  await expect(page.getByTestId('particle-time-0')).toContainText('08:30');
-  await expect(page.getByTestId('particle-cell-0-0')).toHaveText('0');
-  await expect(page.getByTestId('particle-cell-0-47')).toHaveText('47');
+  await expect(page.getByTestId('particle-time-input-0')).toHaveValue('2026/11/25 08:30');
+  await expect(page.getByTestId('particle-cell-0-0')).toHaveValue('0');
+  await expect(page.getByTestId('particle-cell-0-47')).toHaveValue('47');
   expect(previewRequests).toBe(0);
 
   await page.getByRole('button', { name: '清除未確認草稿' }).click();
@@ -97,4 +97,33 @@ test('particle entry pastes R1-R12, previews, and confirms without writing durin
   await page.getByTestId('particle-confirm').click();
   await expect(page.getByText('已確認寫入 48 筆，略過 0 筆。')).toBeVisible();
   expect(confirmed).toBe(true);
+});
+
+test('particle entry accepts the referenced 53-column Excel row, allows editing, and saves the latest remark', async ({ page }) => {
+  let previewPayload: any = null;
+  await page.route('**/api/version', route => route.fulfill({ json: { version: '0.1.test', environment: 'unknown' } }));
+  await page.route('**/api/v1/uploads/particle/preview', async route => {
+    previewPayload = await route.request().postDataJSON();
+    await route.fulfill({ json: { uploadBatchId: '33333333-3333-3333-3333-333333333333', importStatus: 'PreviewReady', totalRows: 48, validRows: 48, errorRows: 0, duplicateRows: 0 } });
+  });
+  await page.route('**/api/v1/uploads/33333333-3333-3333-3333-333333333333/confirm*', route => route.fulfill({ json: { uploadBatchId: '33333333-3333-3333-3333-333333333333', insertedRows: 48, skippedRows: 0, errorRows: 0 } }));
+
+  await page.goto('/particle-monitoring/entry');
+  const header1 = ['日期\\時間\\位置', ...Array.from({ length: 12 }, (_, index) => [`R${index + 1}`, '', '', '']).flat(), '備註', '', '', ''].join('\t');
+  const header2 = ['', ...Array.from({ length: 12 }, () => ['0.5 um', '1', '5', '10']).flat(), '', '', '', ''].join('\t');
+  const values = Array.from({ length: 48 }, (_, index) => String(index));
+  const row = ['"2026/11/25\n08:30"', ...values, '作業前', '', '', ''].join('\t');
+  await pasteIntoGrid(page, `${header1}\r\n${header2}\r\n${row}`);
+
+  await expect(page.getByTestId('particle-time-input-0')).toHaveValue('2026/11/25\n08:30');
+  await expect(page.getByTestId('particle-remark-0')).toHaveValue('作業前');
+  await page.getByTestId('particle-cell-0-0').fill('99');
+  await page.getByTestId('particle-remark-0').fill('作業前／已複核');
+  await page.getByTestId('particle-preview').click();
+
+  await expect.poll(() => previewPayload).not.toBeNull();
+  expect(previewPayload.rows[0]).toMatchObject({ count: '99', remark: '作業前／已複核' });
+  expect(previewPayload.rows[47]).toMatchObject({ count: '47', remark: '作業前／已複核' });
+  await page.getByTestId('particle-confirm').click();
+  await expect(page.getByText('已確認寫入 48 筆，略過 0 筆。')).toBeVisible();
 });

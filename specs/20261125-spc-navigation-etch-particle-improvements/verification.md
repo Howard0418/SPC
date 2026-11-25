@@ -115,3 +115,26 @@
 - 同源與 8901 直連 `/api/health`、`/api/version` 均為 `0.1.178/test`；Chromium 實際載入同源 version／health 均回 200。未登入首頁依既有流程轉往 `portaltest.pmr.com.tw/Login`，無 API 離線或環境錯置。
 - 第一階段回復備份：`D:\SPC\release\backups\spc-particle-entry-grid-1125-20261125-232051\frontend`（Web `0.1.195`）；最終發布回復備份：`D:\SPC\release\backups\spc-particle-entry-grid-1125-20261125-232439\frontend`（Web `0.1.196`）。覆回後須重新驗證對應 Web、API `0.1.178/test`、首頁及主資產。
 - 無 schema、資料、權限、API 或正式環境異動；未發布至 `D:\Sites\PmrPortal`。
+
+## `SPC-PARTICLE-EXCEL-FORM-GRID-1125` 驗證結果
+
+| 驗收 | 方法 | 結果 |
+| --- | --- | --- |
+| AC-011 格式 | 唯讀解析指定活頁簿 `PD-3-257-04A (0.51.0 5 10)` 的 B24:BB26，並以相同 TSV 輸入正式 parser | 指定兩列表頭、53 個實體欄位、同格日期換行、R1～R12 共 48 筆及「作業前」備註正確轉為 50 個邏輯欄位與 48 筆 Long Format。來源 XLSX SHA-256：`0D4D8A316354BDD27426CC6660BB2BB01050DD505FEDFA936D8DA36147F8B46B`，原檔未修改。 |
+| AC-011 操作 | 先紅後綠 Node parser 與 Chromium 格線測試 | parser 5/5；既有 49 欄、網站 50 欄、原表 53 欄、quoted newline、備註合併均通過。Chromium 4/4：50 欄格線、貼上、格內修正、最新值 preview、confirm 及 preview 前零寫入均通過。 |
+| AC-008 回歸 | Particle 語系、三語目錄及 testhost build | Particle 語系 3/3、三語 2,954 keys × 3、build 成功；API／schema／權限／C-U 計算與 TransFiles 未修改。 |
+
+### 畫面、保存與相容性
+
+- 格線第一列表頭為日期時間／位置、R1～R12 與備註共 14 個表頭儲存格；第二列為 48 個粒徑格。備註表頭使用與來源表單一致的獨立色塊，資料列各欄保留清楚框線。
+- 貼上後日期時間、48 個量測值與備註均可在格內修正；任一修正會清除舊 preview，必須以畫面最新值重新預覽後才能確認寫入。
+- 備註沿用既有 `ParticleMeasurements.Remark`，同一來源列的所有非空白量測帶相同備註；空白量測仍不補 0、不建立資料。確認 API 仍採重複 reject／明示 skip，沒有 overwrite。
+- 本次未建立測試量測；保存路徑由 Chromium 驗證 payload、preview 與 confirm 呼叫順序，後端既有 Remark／confirm 寫入契約不變。
+
+### 發布、連線與回復
+
+- 發布前 Web `0.1.197`／API `0.1.178/test`；發布後 Web `0.1.198`，API 維持 `0.1.178/test`。本次只有 Web 更新，版本分列如實記錄。
+- 首頁、主 JavaScript `index-DrJ-dj2W.js`、主 CSS `index-CHrcaSVp.css` 均 HTTP 200；MIME 分別為 HTML、`application/javascript`、`text/css`，主資產含 `particle-paste-grid`、`particle-remark` 與 Web `0.1.198`。
+- 同源及 `https://spctest.pmr.com.tw:8901` 的 `/api/health`、`/api/version` 均回 `0.1.178/test`、`ok`。真實 Chromium 載入 SPC 首頁時實際呼叫同源 `/api/version` 200／JSON，之後依既有流程導向 Portal 測試登入；另由 Chromium 直接載入同源 version／health 均 200，未出現 API 離線或環境錯置。
+- 回復備份：`D:\SPC\release\backups\spc-particle-excel-form-grid-1125-20261125-235834\frontend`（Web `0.1.197`）。覆回後須重驗 Web `0.1.197`、API `0.1.178/test`、首頁與主資產。
+- 無 schema、資料、權限、API、正式 SPC、Portal 或 `D:\Sites\PmrPortal` 異動。

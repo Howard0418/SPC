@@ -6,6 +6,8 @@ const locations = Array.from({ length: 12 }, (_, index) => `R${index + 1}`);
 const sizes = ['0.5', '1', '5', '10'];
 const header1 = ['量測時間', ...locations.flatMap(location => [location, location, location, location])].join('\t');
 const header2 = ['', ...locations.flatMap(() => ['0.5 µm', '1 µm', '5 µm', '10 µm'])].join('\t');
+const excelHeader1 = ['日期\\時間\\位置', ...locations.flatMap(location => [location, '', '', '']), '備註', '', '', ''].join('\t');
+const excelHeader2 = ['', ...locations.flatMap(() => ['0.5 um', '1', '5', '10']), '', '', '', ''].join('\t');
 
 test('parses optional two-row header and expands 49 columns to long format', () => {
   const values = Array.from({ length: 48 }, (_, index) => index === 1 ? '' : String(index));
@@ -38,4 +40,29 @@ test('rejects non-rectangular or non-49-column input and preserves blank as miss
   const parsed = parseParticlePaste(`2026-11-25 09:00\t0\t\n2026-11-25 10:00\t1`);
   assert.ok(parsed.errors.some(error => ['COLUMN_COUNT', 'NON_RECTANGULAR'].includes(error.code)));
   assert.equal(parsed.dataRows.length, 0);
+});
+
+test('parses the referenced Excel 53-column form with quoted date newline and merged remark cells', () => {
+  const values = Array.from({ length: 48 }, (_, index) => String(index));
+  const excelRow = ['"2026/11/25\n08:30"', ...values, '作業前', '', '請品保校驗儀器', ''].join('\t');
+  const parsed = parseParticlePaste(`${excelHeader1}\r\n${excelHeader2}\r\n${excelRow}`);
+
+  assert.equal(parsed.errors.length, 0);
+  assert.equal(parsed.dataRows.length, 1);
+  assert.equal(parsed.dataRows[0].rawMeasurementTime, '2026/11/25\n08:30');
+  assert.equal(parsed.dataRows[0].remark, '作業前 / 請品保校驗儀器');
+  const rows = buildParticlePreviewRows(parsed.dataRows);
+  assert.equal(rows.length, 48);
+  assert.ok(rows.every(row => row.remark === '作業前 / 請品保校驗儀器'));
+});
+
+test('accepts the website 50-column format and keeps the legacy 49-column format compatible', () => {
+  const values = Array.from({ length: 48 }, () => '0');
+  const withRemark = parseParticlePaste(['2026/11/25 09:00', ...values, '作業前'].join('\t'));
+  const withoutRemark = parseParticlePaste(['2026/11/25 09:00', ...values].join('\t'));
+
+  assert.equal(withRemark.errors.length, 0);
+  assert.equal(withRemark.dataRows[0].remark, '作業前');
+  assert.equal(withoutRemark.errors.length, 0);
+  assert.equal(withoutRemark.dataRows[0].remark, null);
 });

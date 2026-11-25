@@ -1759,9 +1759,9 @@
     },
     "particleEntry": {
       "title": "Particle monitoring data entry",
-      "description": "Paste measurement time and four particle sizes for R1–R12. Data is written only after preview and confirmation.",
+      "description": "Paste date/time, four particle sizes for R1–R12, and a remark from the manufacturing form; edit in-grid, preview, then confirm to write.",
       "pasteLabel": "Excel paste area",
-      "pastePlaceholder": "49 columns per row: time + R1–R12 × 0.5/1/5/10 µm. The fixed two-row header is optional.",
+      "pastePlaceholder": "Each row contains date/time + R1–R12 × 0.5/1/5/10 µm + remark. You may paste the two headers and data directly from the referenced Excel form.",
       "parse": "Parse pasted data",
       "preview": "Create preview",
       "clear": "Clear unconfirmed draft",
@@ -1771,6 +1771,7 @@
       "missingValues": "{count} blank cells",
       "duplicates": "{count} duplicates",
       "measurementTime": "Date/time",
+      "remark": "Remark",
       "previewResult": "Server preview",
       "previewSummary": "Valid {valid} / errors {errors} / duplicates {duplicates}",
       "confirm": "Confirm import",
@@ -1783,7 +1784,8 @@
         "headerMismatch": "The two header rows do not match the fixed R1–R12 and particle-size order.",
         "columnCount": "Row {row} must have {expected} columns; it has {actual}.",
         "timeInvalid": "Column A on row {row} is not a valid measurement time.",
-        "countInvalid": "Cell {column}{row} must be a non-negative integer."
+        "countInvalid": "Cell {column}{row} must be a non-negative integer.",
+        "remarkTooLong": "The remark on row {row} must not exceed 500 characters."
       }
     },
     "calibration": {
