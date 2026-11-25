@@ -917,4 +917,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 
 - [ ] SPC-REPORT-CLOSEOUT-1124：本機確認稿及甘特圖已整理整體專案交付、效益、9 月里程碑及維運移交，並統一格式及用字。已補費用比較、現行功能及下一階段規劃。依要求再補網站功能數與正式資料規模，統計版待審閱。[規格](specs/20261124-spc-project-closeout-report/spec.md) [驗證](specs/20261124-spc-project-closeout-report/verification.md)
 
-- [ ] SPC-DOC-GUIDE-1125：SPC 主責，Portal 品保相依。Word 初稿已核對並交付本機。待確認入口、交接窗口與試走流程後定稿。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)
+- [ ] SPC-DOC-GUIDE-1125：SPC 主責，Portal 品保相依。六頁角色操作審閱稿已核對並交付本機。待補正式檢視者及現行日報表單截圖，確認入口與交接窗口後定稿。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)

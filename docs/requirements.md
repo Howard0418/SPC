@@ -1,4 +1,4 @@
-- 2026-11-25 [SPC 與 Portal 品保系統說明](../specs/20261125-spc-portal-system-guide/spec.md)：四頁本機審閱稿已涵蓋現行功能、操作及維運交接，待定稿走查。
+- 2026-11-25 [SPC 與 Portal 品保系統說明](../specs/20261125-spc-portal-system-guide/spec.md)：本機審閱稿依編輯者與檢視者說明正式案例，附脫敏畫面，待補角色及現行日報截圖後定稿。
 
 - 2026-11-25 [SPC 專案結案報告](../specs/20261124-spc-project-closeout-report/spec.md)：指定 Word 版型的專案成果確認稿及甘特圖已統一格式與用字，涵蓋 SPC／Portal 交付、成效、功能設置理由、9 月里程碑、維運移交、費用比較、現行網站功能與正式資料統計及下一階段規劃，待審閱。
 
