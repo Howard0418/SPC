@@ -92,7 +92,16 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
       <p class="mt-1 text-sm text-slate-500">{{ t('spc.particleEntry.description') }}</p>
     </header>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+    <section data-testid="particle-floor-plan-section" class="overflow-hidden rounded-xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+      <img
+        data-testid="particle-floor-plan"
+        src="/assets/particle-floor-plan.png"
+        :alt="t('spc.particleEntry.title')"
+        class="mx-auto block h-auto max-h-[720px] w-full object-contain"
+      >
+    </section>
+
+    <section data-testid="particle-paste-section" class="rounded-xl border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
       <label class="text-sm font-bold" for="particle-paste">{{ t('spc.particleEntry.pasteLabel') }}</label>
       <textarea id="particle-paste" v-model="clipboardText" data-testid="particle-paste" rows="4"
         class="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-xs dark:border-slate-700 dark:bg-slate-950"

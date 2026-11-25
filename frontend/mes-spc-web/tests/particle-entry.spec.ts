@@ -1,5 +1,31 @@
 import { test, expect } from '@playwright/test';
 
+test('particle entry shows the bordered floor plan before the bordered paste area', async ({ page }) => {
+  await page.route('**/api/version', route => route.fulfill({ json: { version: '0.1.test', environment: 'unknown' } }));
+
+  await page.goto('/particle-monitoring/entry');
+
+  const floorPlanSection = page.getByTestId('particle-floor-plan-section');
+  const floorPlan = page.getByTestId('particle-floor-plan');
+  const pasteSection = page.getByTestId('particle-paste-section');
+
+  await expect(floorPlanSection).toBeVisible();
+  await expect(floorPlan).toBeVisible();
+  await expect(floorPlan).toHaveAttribute('src', '/assets/particle-floor-plan.png');
+  await expect.poll(() => floorPlan.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+
+  const floorPlanBox = await floorPlanSection.boundingBox();
+  const pasteBox = await pasteSection.boundingBox();
+  expect(floorPlanBox).not.toBeNull();
+  expect(pasteBox).not.toBeNull();
+  expect(floorPlanBox!.y + floorPlanBox!.height).toBeLessThanOrEqual(pasteBox!.y);
+
+  const floorPlanBorder = await floorPlanSection.evaluate(element => getComputedStyle(element).borderTopWidth);
+  const pasteBorder = await pasteSection.evaluate(element => getComputedStyle(element).borderTopWidth);
+  expect(floorPlanBorder).not.toBe('0px');
+  expect(pasteBorder).not.toBe('0px');
+});
+
 test('particle entry pastes R1-R12, previews, and confirms without writing during paste', async ({ page }) => {
   let previewPayload: any = null;
   let confirmed = false;

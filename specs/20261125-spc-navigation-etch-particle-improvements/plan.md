@@ -1,7 +1,7 @@
 # 技術計畫
 
 - 功能 ID：`20261125-spc-navigation-etch-particle-improvements`
-- 規格版本：6
+- 規格版本：7
 - 規格：[spec.md](spec.md)
 
 ## 系統責任與受影響檔案
@@ -44,6 +44,13 @@
 4. 沿用 `POST /api/v1/uploads/particle/preview` 與 confirm；新增／調整 API 權限，預覽只寫 staging，確認才寫 `ParticleMeasurements`。
 5. 白名單擴充到 R12，既有 R1～R9 資料與圖表測試作回歸；預設重複整批拒絕，可明示略過，不提供覆蓋。
 
+### 小工作 4：`SPC-PARTICLE-ENTRY-LAYOUT-1125`（P2，依賴小工作 3）
+
+1. 將使用者提供的 R1～R12 量測位置配置圖保存為 Web 靜態 PNG，不改圖內位置、編號或文字。
+2. 在落塵輸入頁標題下新增有框線的配置圖區，圖片採等比例 `object-contain` 顯示；其下才是既有有框線的 Excel 貼上區。
+3. 先新增 Chromium 版面測試，驗證圖片可載入、配置圖區位於貼上區上方、兩區框線存在；既有貼上、預覽及確認測試持續通過。
+4. 本工作只遞增 SPC Web 版本；API 程式、資料庫、權限碼及匯入契約不變，測試站 API 版本保持並照常驗證。
+
 ## API、檔案格式及資料模型
 
 - 咬蝕：不新增 API；clipboard 僅轉成現有 `points[{side,repeatNo,opNo,beforeValue,afterValue}]` 草稿。
@@ -66,7 +73,8 @@
 - AC-003／004：PT1／PT2／QE1／QE2，A/B side 全矩形及部分矩形貼上；CRLF/LF、空白、非數字、超界、負數、BEFORE<AFTER；原 COM／逐格／儲存／同步回歸。
 - AC-005～007：含／不含兩列表頭、49 欄、部分空白、0、非整數、負值、錯誤時間、R10～R12、重複 reject／skip、preview 未確認不產生量測、confirm 冪等與失敗 rollback。
 - AC-008：SPC API／Web 與 Portal API／Web 的焦點測試、必要完整回歸、Release build；測試站首頁、主 JS/CSS、health/version、瀏覽器實際 API 基底及登入後操作驗收。
-- 使用者截圖只作需求佐證，不提交到 Git；驗收截圖去識別後保存於本機證據目錄，不納入版本控制。
+- AC-009：Chromium 驗證配置圖 HTTP 200、圖片等比例顯示、配置圖區在貼上區上方且兩區框線非 0；重跑原落塵貼上預覽／確認案例。
+- 使用者原始截圖只作需求佐證，不提交到 Git；經校正且實際由網站使用的配置圖資納入版本控制。驗收截圖去識別後保存於本機證據目錄，不納入版本控制。
 
 ## 發布、備份及回復
 

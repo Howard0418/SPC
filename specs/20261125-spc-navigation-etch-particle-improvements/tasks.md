@@ -1,9 +1,9 @@
 # 任務
 
 - 功能 ID：`20261125-spc-navigation-etch-particle-improvements`
-- 規格版本：6
+- 規格版本：7
 - [規格](spec.md)｜[計畫](plan.md)
-- 目前狀態：三項小工作均完成測試、自動化與測試站發布；正式站未授權、未發布。
+- 目前狀態：四項小工作均完成測試、自動化與測試站發布；正式站未授權、未發布。
 
 ## P0：安全與權限一致
 
@@ -15,9 +15,14 @@
 
 - [x] `SPC-PARTICLE-PASTE-ENTRY-1125`：新增落塵監控資料輸入頁與獨立權限，支援雙層表頭、第三列起貼上、R1～R12 Long Format preview／confirm、重複保護及既有 C/U 分析回歸。（R-005～R-008；AC-005～AC-008；依賴 `SPC-PERM-NAV-ALIGN-1125`）
 
+## P2：輸入頁版面辨識
+
+- [x] `SPC-PARTICLE-ENTRY-LAYOUT-1125`：在落塵監控資料輸入頁先顯示有框線的 R1～R12 量測位置配置圖，再顯示有框線的 Excel 貼上區；保留原貼上／預覽／確認行為。（R-009；AC-009；依賴 `SPC-PARTICLE-PASTE-ENTRY-1125`）
+
 ## 每件共同收尾
 
 - [x] P0 已完成自動化、建置、Web `0.1.193`／API `0.1.177` 測試站發布、連線驗證、文件同步與回復備份。
 - [x] Portal 咬蝕貼上已完成自動化、建置、Web `1.0.364`／API `1.0.325` 測試站發布及連線驗證；正式未授權。
 - [x] 落塵貼上完成對應自動化、建置、測試站 Web `0.1.194`／API `0.1.178` 版本遞增及連線驗證；正式發布另行授權。
 - [x] 更新 spec／verification、`docs/requirements.md`、`TODO.md`、`CHANGELOG_CUSTOM.md`，只提交該小工作必要檔案並推送目前分支。
+- [x] 配置圖版面完成 Chromium／三語／建置、SPC 測試站 Web `0.1.195` 版本遞增、靜態圖片與 Web／API 連線驗證；API 維持 `0.1.178/test`，正式發布另行授權。

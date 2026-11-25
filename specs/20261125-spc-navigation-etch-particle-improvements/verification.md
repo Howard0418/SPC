@@ -72,3 +72,25 @@
 - 回復備份：`D:\SPC\release\backups\spc-particle-paste-entry-1125-20261125-224026`；可停止 `SpcApiTest` 後覆回 Web `0.1.193`／API `0.1.177` 並重驗連線。
 - 無 schema migration、無既有量測或權限資料更新、未建立驗收量測；TransFiles 原路由及 Bearer 契約保持。正式 SPC／Portal 與 `D:\Sites\PmrPortal` 均未異動。
 - 原生桌面瀏覽器控制管線不可用；改由專案既有 Chromium 執行器完成真實測試站唯讀 API 驗證。登入後的人工畫面操作可由取得 `data.particles` 的測試帳號再確認，但不影響本次技術發布結果。
+
+## `SPC-PARTICLE-ENTRY-LAYOUT-1125` 驗證結果
+
+| 驗收 | 方法 | 結果 |
+| --- | --- | --- |
+| AC-009 | 先紅後綠的 Chromium 版面測試，檢查圖片載入、區塊順序與框線；重跑原貼上、preview 與 confirm 案例 | 修改前找不到配置圖區；修改後配置圖自然寬度大於 0、配置圖區位於貼上區上方且兩區框線非 0，原 49 欄預覽／確認仍通過。2/2 通過。 |
+| AC-008 | Particle 語系、三語目錄、testhost build、測試站 HTTP／MIME／版本／環境與 Chromium API 驗證 | Particle 語系 3/3；三語 2,952 keys × 3；build 成功。測試 Web `0.1.195`、API `0.1.178/test`，首頁、主資產、圖片、同源與 8901 直連均成功。 |
+
+### 圖資與版面
+
+- 網站圖資：`frontend/mes-spc-web/public/assets/particle-floor-plan.png`，1,536 × 1,024 PNG，頁面以 `object-contain` 等比例顯示。
+- 圖片外框使用 `border-slate-300`；貼上區另有獨立同層級框線，DOM 與畫面順序均為配置圖在前、貼上區在後。
+- 影像生成初稿因中文字與原需求不一致未採用；最終圖資經再次校正並人工檢查主要機台標示與 R1～R12 編號後才納入網站。
+
+### 發布、連線與回復
+
+- 發布前：Web `0.1.194`、API `0.1.178/test`；發布後：Web `0.1.195`、API 仍為 `0.1.178/test`。本次無 API 程式變更，版本分列如實記錄。
+- `https://spctest.pmr.com.tw/`、主 JavaScript `index-CW0G_6Mx.js`、主 CSS `index-BFh8airl.css` 及 `/assets/particle-floor-plan.png` 均 HTTP 200；MIME 分別為 JavaScript、CSS 及 `image/png`。
+- 同源 `/api/health`、`/api/version` 與 `https://spctest.pmr.com.tw:8901` 直連均為 `0.1.178/test`；Chromium 直接載入同源 version／health／圖片均回 200。
+- 專案的 `verify:built-api` 本機預設需另行啟動 5196 preview；以實站網址執行時因實站登入守門無法看到模擬 Token 頁面而逾時。本次不把該案例列為通過，改以專案 Chromium 直接驗證實際同源 API 基底；其餘焦點測試與建置均通過。
+- 回復備份：`D:\SPC\release\backups\spc-particle-entry-layout-1125-20261125-230231\frontend`。回復時覆回該目錄後，應重新驗證 Web `0.1.194`、API `0.1.178/test`、首頁與主資產；新圖片即使殘留也不會被舊 `index.html`／JS 引用。
+- 無 schema、資料、權限或 API 異動；正式 SPC、Portal 與 `D:\Sites\PmrPortal` 均未修改或發布。

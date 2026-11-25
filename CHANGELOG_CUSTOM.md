@@ -1,3 +1,8 @@
+## 2026-11-25 落塵監控輸入頁配置圖與框線
+
+- 落塵監控資料輸入頁先顯示有框線的 R1～R12 量測位置配置圖，再顯示有框線的 Excel 貼上區；圖片等比例顯示，原貼上、預覽與確認功能不變。
+- Chromium 2 項、Particle 語系 3 項、三語目錄與 testhost build 通過。測試 Web `0.1.194 → 0.1.195` 已發布，API 維持 `0.1.178/test`；首頁、主 JS/CSS、圖片 MIME、同源／直連及 Chromium API 驗證均通過。正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+
 ## 2026-11-25 SPC 結案報告補列第二階段
 
 - 送簽修訂稿已於後續追蹤計畫及專案結論補列第二階段自 2026/12/01 開始、持續核對資料並修正功能。保留原版型及第一階段甘特圖，十三頁已驗證並另存本機。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
