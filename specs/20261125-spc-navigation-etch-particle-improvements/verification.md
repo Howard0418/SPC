@@ -138,3 +138,19 @@
 - 同源及 `https://spctest.pmr.com.tw:8901` 的 `/api/health`、`/api/version` 均回 `0.1.178/test`、`ok`。真實 Chromium 載入 SPC 首頁時實際呼叫同源 `/api/version` 200／JSON，之後依既有流程導向 Portal 測試登入；另由 Chromium 直接載入同源 version／health 均 200，未出現 API 離線或環境錯置。
 - 回復備份：`D:\SPC\release\backups\spc-particle-excel-form-grid-1125-20261125-235834\frontend`（Web `0.1.197`）。覆回後須重驗 Web `0.1.197`、API `0.1.178/test`、首頁與主資產。
 - 無 schema、資料、權限、API、正式 SPC、Portal 或 `D:\Sites\PmrPortal` 異動。
+
+## `SPC-PARTICLE-GRID-PASTE-FOCUS-1126` 驗證結果
+
+| 驗收 | 方法 | 結果 |
+| --- | --- | --- |
+| AC-012 根因重現 | Chromium 先紅測試檢查空白列獨立格數及 activeElement | 修改前空白 tbody 只有 2 個 `td`（日期格加 `colspan=49` 提示格），點擊後無法保證 table 取得焦點，測試如預期失敗。 |
+| AC-012 格線／貼上 | Chromium 模擬使用者點第 18 個空白格，再由 `document.activeElement` 派送 Excel paste | 空白列 50 個獨立格線；點任一格後 table 成為 activeElement，49 欄 Excel 資料正確填入。已有草稿時在數值 input 貼上含 Tab 的 50 欄資料，可整批換成新日期、48 值與備註。 |
+| AC-008 回歸 | Particle／parser Node、完整 Particle Entry Chromium、三語及 testhost build | Node 8/8、Chromium 4/4、三語 2,954 keys × 3、build 成功；preview／confirm、備註、配置圖、API 與資料模型均未回歸。 |
+
+### 發布、連線與回復
+
+- 發布前 Web `0.1.198`／API `0.1.178/test`；發布後 Web `0.1.199`，API 維持 `0.1.178/test`。
+- 首頁、主 JavaScript `index-q3o42KEa.js`、主 CSS `index-2mLLFPbs.css` 均 HTTP 200 且 MIME 正確；主資產含 `particle-paste-grid`、`particle-grid-empty-cell` 與 Web `0.1.199`。
+- 首頁 Cache-Control 為 `no-store, must-revalidate, no-cache`。同源與 `:8901` 直連 health／version 均回 `0.1.178/test`、`ok`；Chromium 載入首頁時實際同源 `/api/version` 200，version／health 直接載入亦為 200／JSON。
+- 回復備份：`D:\SPC\release\backups\spc-particle-grid-paste-focus-1126-20261126-001215\frontend`（Web `0.1.198`）。覆回後須重驗 Web、API、首頁與主資產。
+- 無 schema、量測資料、權限、API、正式 SPC、Portal 或 `D:\Sites\PmrPortal` 異動。

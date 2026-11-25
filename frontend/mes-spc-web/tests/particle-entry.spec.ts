@@ -8,6 +8,16 @@ async function pasteIntoGrid(page, text: string) {
   }, text);
 }
 
+async function pasteIntoFocusedElement(page, text: string) {
+  await page.evaluate(value => {
+    const target = document.activeElement;
+    if (!target) throw new Error('No focused element');
+    const clipboardData = new DataTransfer();
+    clipboardData.setData('text/plain', value);
+    target.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData }));
+  }, text);
+}
+
 test('particle entry shows the bordered floor plan before the bordered paste area', async ({ page }) => {
   await page.route('**/api/version', route => route.fulfill({ json: { version: '0.1.test', environment: 'unknown' } }));
 
@@ -57,12 +67,24 @@ test('particle entry shows the referenced Excel grid and maps pasted values befo
   expect(headerColor).not.toBe('rgba(0, 0, 0, 0)');
 
   const values = Array.from({ length: 48 }, (_, index) => String(index));
-  await pasteIntoGrid(page, `2026/11/25 08:30\t${values.join('\t')}`);
+  const emptyRow = page.getByTestId('particle-grid-empty');
+  await expect(emptyRow.locator('td')).toHaveCount(50);
+  await page.getByTestId('particle-grid-empty-cell-17').click();
+  await expect(grid).toBeFocused();
+  await pasteIntoFocusedElement(page, `2026/11/25 08:30\t${values.join('\t')}`);
 
   await expect(page.getByTestId('particle-time-input-0')).toHaveValue('2026/11/25 08:30');
   await expect(page.getByTestId('particle-cell-0-0')).toHaveValue('0');
   await expect(page.getByTestId('particle-cell-0-47')).toHaveValue('47');
   expect(previewRequests).toBe(0);
+
+  const replacement = Array.from({ length: 48 }, (_, index) => String(index + 100));
+  await page.getByTestId('particle-cell-0-0').click();
+  await pasteIntoFocusedElement(page, `2026/11/26 09:15\t${replacement.join('\t')}\t複測`);
+  await expect(page.getByTestId('particle-time-input-0')).toHaveValue('2026/11/26 09:15');
+  await expect(page.getByTestId('particle-cell-0-0')).toHaveValue('100');
+  await expect(page.getByTestId('particle-cell-0-47')).toHaveValue('147');
+  await expect(page.getByTestId('particle-remark-0')).toHaveValue('複測');
 
   await page.getByRole('button', { name: '清除未確認草稿' }).click();
   await expect(page.getByTestId('particle-grid-empty')).toBeVisible();

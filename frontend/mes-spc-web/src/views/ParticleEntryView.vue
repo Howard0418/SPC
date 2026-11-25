@@ -8,6 +8,7 @@ import { buildParticlePreviewRows, parseParticlePaste, particleLocations, partic
 
 const { t } = useI18n({ useScope: 'global' });
 const clipboardText = ref('');
+const pasteGrid = ref(null);
 const parsed = ref({ dataRows: [], missingCount: 0, errors: [] });
 const draftRows = ref([]);
 const preview = ref(null);
@@ -60,6 +61,16 @@ function onPaste(event) {
   event.preventDefault();
   clipboardText.value = value;
   applyPaste();
+}
+
+function onEditablePaste(event) {
+  const value = event.clipboardData?.getData('text/plain');
+  if (typeof value === 'string' && value.includes('\t')) onPaste(event);
+  else event.stopPropagation();
+}
+
+function focusPasteGrid() {
+  pasteGrid.value?.focus({ preventScroll: true });
 }
 
 function clearDraft() {
@@ -135,6 +146,7 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
       </div>
       <div class="mt-2 overflow-x-auto rounded-lg border-2 border-slate-900 dark:border-slate-300">
         <table
+          ref="pasteGrid"
           data-testid="particle-paste-grid"
           tabindex="0"
           role="grid"
@@ -159,9 +171,12 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
             </tr>
           </thead>
           <tbody class="bg-white text-slate-950">
-            <tr v-if="!parsed.dataRows.length" data-testid="particle-grid-empty">
-              <td class="sticky left-0 border border-slate-500 bg-white px-2 py-4 font-semibold">—</td>
-              <td colspan="49" class="border border-slate-500 px-4 py-4 text-left text-slate-500">{{ t('spc.particleEntry.pastePlaceholder') }}</td>
+            <tr v-if="!draftRows.length" data-testid="particle-grid-empty" class="cursor-text" @click="focusPasteGrid">
+              <td data-testid="particle-grid-empty-cell-0" class="sticky left-0 h-12 border border-slate-500 bg-white px-2 py-2 font-semibold">—</td>
+              <template v-for="index in 48" :key="`particle-grid-empty-${index}`">
+                <td :data-testid="`particle-grid-empty-cell-${index}`" class="h-12 min-w-12 border border-slate-500 bg-white">&nbsp;</td>
+              </template>
+              <td data-testid="particle-grid-empty-cell-49" class="h-12 min-w-48 border border-slate-500 bg-white">&nbsp;</td>
             </tr>
             <tr v-for="(row, rowIndex) in draftRows" :key="row.sourceRow">
               <td :data-testid="`particle-time-${rowIndex}`" class="sticky left-0 z-10 border border-slate-500 bg-white p-0 font-mono font-semibold">
@@ -171,7 +186,7 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
                   rows="2"
                   class="block h-14 w-full resize-none bg-transparent px-2 py-1 text-center font-mono outline-none focus:bg-blue-50"
                   :aria-label="t('spc.particleEntry.measurementTime')"
-                  @paste.stop
+                  @paste="onEditablePaste"
                   @input="updateTime(rowIndex, $event.target.value)"
                 />
               </td>
@@ -187,7 +202,7 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
                     inputmode="numeric"
                     class="h-10 w-full min-w-12 bg-transparent px-1 text-center font-mono outline-none focus:bg-blue-50"
                     :aria-label="`${particleLocations[locationIndex]} ${particleSizes[sizeIndex]}`"
-                    @paste.stop
+                    @paste="onEditablePaste"
                     @input="updateCount(rowIndex, locationIndex * 4 + sizeIndex, $event.target.value)"
                   >
                 </td>
@@ -199,7 +214,7 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
                   maxlength="500"
                   class="h-10 w-full min-w-48 bg-transparent px-2 text-left outline-none focus:bg-blue-50"
                   :aria-label="t('spc.particleEntry.remark')"
-                  @paste.stop
+                  @paste="onEditablePaste"
                   @input="updateRemark(rowIndex, $event.target.value)"
                 >
               </td>

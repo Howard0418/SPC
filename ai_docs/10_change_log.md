@@ -2359,3 +2359,10 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 範圍：SPC Web parser、落塵輸入格線、三語文字及測試；沿用既有 preview／confirm、`ParticleMeasurements.Remark`、權限、重複保護與資料表，不新增 schema 或直接寫入捷徑。
 - 風險控制：先以 49／50／53 欄、Excel quoted newline、備註傳遞與格內修正測試保護；任何畫面異動使舊 preview 失效，只有重新預覽後才能確認。
 - 結果：指定活頁簿 B24:BB26 實檔解析通過；parser 5、Particle 語系 3、Chromium 4、三語 2,954 keys × 3 與 testhost build 通過。測試 Web `0.1.198` 已發布，API 維持 `0.1.178/test`；首頁、主資產、同源／直連 API 與 Chromium 實際 API 基底通過，正式未發布。
+
+# 2026-11-26 SPC-PARTICLE-GRID-PASTE-FOCUS-1126 空白格線與貼上焦點
+
+- 目的：修正使用者從 Excel 複製後無法貼入，以及無資料時合併提示格讓畫面看起來沒有資料格線的問題。
+- 根因：空白 tbody 使用一個 `colspan=49` 提示格，未呈現 49 個獨立資料框線；先前 Chromium 測試直接向 table 派送 paste，未涵蓋使用者滑鼠點合併格後 table 未取得 activeElement 的真實路徑。
+- 範圍：SPC Web 空白列 DOM、焦點／paste 事件及 Chromium 測試；parser、preview／confirm、API、資料庫、權限及正式站不變。
+- 結果：空白列 50 格、點任一格 table 取得 activeElement、從 activeElement 貼上及已有草稿多欄重貼均通過。Node 8、Chromium 4、三語 2,954 keys × 3 與 testhost build 通過；測試 Web `0.1.199` 已發布，API 維持 `0.1.178/test`，正式未發布。

@@ -3837,3 +3837,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 依 `PD-3-257-04A (0.51.0 5 10)` 工作表 B24:BB 校正輸入格線：新增備註欄，支援舊 49 欄、網站 50 欄、原表 53 欄、Excel quoted newline 與同格日期時間。
 - 貼入的日期、48 個數值與備註可直接在格內修正；任何異動都使舊 preview 失效，仍須重新預覽後才可確認寫入。備註沿用既有 `ParticleMeasurements.Remark`，無 schema／API／權限異動。
 - parser 5 項、Particle 語系 3 項、Chromium 4 項、三語 2,954 keys × 3、testhost build 及指定實檔解析通過。測試 Web `0.1.198` 已發布，API 維持 `0.1.178/test`；HTTP／MIME、同源／直連 API 與 Chromium 實際 API 基底通過，正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+
+## 2026-11-26 落塵空白格線與 Excel 貼上焦點修正
+
+- 根因為無資料時使用一個 `colspan=49` 提示格，畫面沒有 49 個獨立資料框線；先前測試直接向 table 派送 paste，未涵蓋使用者點格線後 table 未取得 activeElement 的路徑。
+- 空白列已改為日期、48 個量測及備註共 50 格；點任一空白格後 table 取得焦點，從 activeElement 貼上 Excel 可對位。已有草稿時，在欄位貼上含 Tab 的多欄資料改走整批 parser，單格文字仍維持格內編輯。
+- Node 8 項、Chromium 4 項、三語 2,954 keys × 3、testhost build 與實站連線通過。測試 Web `0.1.199` 已發布，API 維持 `0.1.178/test`；正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
