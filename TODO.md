@@ -930,5 +930,6 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] SPC-DOC-GUIDE-1125-V2：正式區 SPC 端到端操作手冊 V2.0 已完成，含藥液錄入、管制項目設定、管制圖與作業人員／頁面權限；十一頁、十二張去識別正式畫面已逐頁驗證。[規格與驗證](specs/20261125-spc-portal-system-guide/verification.md)
 - [x] SPC-DOC-GUIDE-1125-V3：正式區編輯者／檢視者全功能操作手冊 V3.0 已完成；二十六頁、三十二張去識別畫面，含通知設定、管制圖、趨勢圖、週月報與匯出詳細步驟，已逐頁及封裝驗證。[規格與驗證](specs/20261125-spc-portal-system-guide/verification.md)
 - [x] SPC-DOC-EDITOR-QUICK-1125：編輯者快速操作指南 V1.0 已完成；九頁、八張去識別正式畫面，涵蓋 Portal 錄入、管制圖、趨勢圖、週月報匯出、OOS／OOC 與交班檢查。[規格與驗證](specs/20261125-spc-editor-quick-guide/verification.md)
+- [x] SPC-DOC-VIEWER-QUICK-1125：檢視者快速操作指南 V1.0 已完成；八頁、七張去識別正式畫面，涵蓋角色確認、管制圖、趨勢圖、週月報與品質資料匯出、OOS／OOC 查閱及唯讀權限界線。[規格與驗證](specs/20261125-spc-viewer-quick-guide/verification.md)
 
 - [x] SPC-OPERATORS-DIRECTORY-1125：SPC API 主責，Portal 品保名單為上游。測試 Web 0.1.189／API 0.1.173；正式 Web 0.1.190／API 0.1.174 已發布，正式編輯者唯讀比對成功。[規格與驗證](specs/20261125-operator-directory-connection/spec.md)
