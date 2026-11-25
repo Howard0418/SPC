@@ -45,24 +45,78 @@ public sealed class OperatorDirectoryComparisonResponseTests
         Assert.Equal("DIRECTORY_RESPONSE_INVALID", json.GetProperty("code").GetString());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetReturnsLocalizedBadGatewayWhenPortalConnectionFails(bool timeout)
+    {
+        Exception failure = timeout
+            ? new TaskCanceledException("Portal request timed out")
+            : new HttpRequestException("TLS handshake failed");
+        await using var fixture = await Fixture.Create(new FailingHandler(failure));
+
+        AssertConnectionError(await fixture.Controller.Get(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task SyncReturnsConnectionErrorBeforeChangingPersonnel()
+    {
+        await using var fixture = await Fixture.Create(new FailingHandler(new HttpRequestException("TLS handshake failed")));
+        var request = new OperatorDirectoryComparisonController.SyncRequest(
+            [new OperatorDirectoryComparisonController.SyncItem(20)]);
+
+        AssertConnectionError(await fixture.Controller.Sync(request, CancellationToken.None));
+        Assert.Equal(0, await fixture.CountOperatorsAsync());
+    }
+
+    [Fact]
+    public async Task GetPreservesCallerCancellation()
+    {
+        await using var fixture = await Fixture.Create(new FailingHandler(new TaskCanceledException()));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fixture.Controller.Get(cancellation.Token));
+    }
+
+    private static void AssertConnectionError(IActionResult action)
+    {
+        var result = Assert.IsType<ObjectResult>(action);
+        Assert.Equal(502, result.StatusCode);
+        var json = JsonSerializer.SerializeToElement(result.Value, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.Equal("DIRECTORY_CONNECTION_FAILED", json.GetProperty("code").GetString());
+        Assert.Equal("spc.api.directoryConnectionFailed", json.GetProperty("messageKey").GetString());
+        Assert.DoesNotContain("TLS handshake failed", json.GetRawText());
+    }
+
     private sealed class StaticHandler(HttpContent content) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
     }
 
+    private sealed class FailingHandler(Exception failure) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromException<HttpResponseMessage>(failure);
+    }
+
     private sealed class Fixture(SqliteConnection connection, AppDbContext db, HttpClient client) : IAsyncDisposable
     {
         public OperatorDirectoryComparisonController Controller { get; } = CreateController(db, client);
 
-        public static async Task<Fixture> Create(HttpContent content)
+        public static Task<Fixture> Create(HttpContent content) => Create(new StaticHandler(content));
+
+        public static async Task<Fixture> Create(HttpMessageHandler handler)
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
             var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options);
             await db.Database.EnsureCreatedAsync();
-            return new Fixture(connection, db, new HttpClient(new StaticHandler(content)));
+            return new Fixture(connection, db, new HttpClient(handler));
         }
+
+        public Task<int> CountOperatorsAsync() => db.Operators.CountAsync();
 
         private static OperatorDirectoryComparisonController CreateController(AppDbContext db, HttpClient client)
         {

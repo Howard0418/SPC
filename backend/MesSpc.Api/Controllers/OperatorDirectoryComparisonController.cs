@@ -16,18 +16,7 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var baseUrl = configuration["PortalDirectory:ApiBaseUrl"]?.TrimEnd('/');
-        var key = configuration["Auth:PortalSsoKey"];
-        if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(key))
-            return StatusCode(503, new { message = "Portal 人員比對服務尚未設定。", code="DIRECTORY_NOT_CONFIGURED", messageKey="spc.api.directoryNotConfigured", args=ApiUiMessageCatalog.EmptyArguments });
-
-        var client = clients.CreateClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/spc-directory/quality-users");
-        request.Headers.TryAddWithoutValidation("X-SPC-Sync-Key", key);
-        using var response = await client.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            return StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。", messageKey = "spc.api.directoryRequestFailed", args = new Dictionary<string,string> { ["status"] = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture) } });
-        var portalResult = await ReadPortalUsers(response, cancellationToken);
+        var portalResult = await LoadPortalUsers(cancellationToken);
         if (portalResult.Error is not null) return portalResult.Error;
         var portalUsers = portalResult.Users!;
         var operators = await db.Operators.AsNoTracking().OrderBy(x => x.Id).ToListAsync(cancellationToken);
@@ -124,10 +113,25 @@ public class OperatorDirectoryComparisonController(AppDbContext db, IHttpClientF
         var client = clients.CreateClient();
         using var message = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/spc-directory/quality-users");
         message.Headers.TryAddWithoutValidation("X-SPC-Sync-Key", key);
-        using var response = await client.SendAsync(message, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            return (null, StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。", messageKey = "spc.api.directoryRequestFailed", args = new Dictionary<string,string> { ["status"] = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture) } }));
-        return await ReadPortalUsers(response, cancellationToken);
+        try
+        {
+            using var response = await client.SendAsync(message, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return (null, StatusCode(502, new { message = $"Portal 人員比對服務回應失敗（{(int)response.StatusCode}）。", messageKey = "spc.api.directoryRequestFailed", args = new Dictionary<string,string> { ["status"] = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture) } }));
+            return await ReadPortalUsers(response, cancellationToken);
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested
+            && exception is (HttpRequestException or OperationCanceledException))
+        {
+            logger.LogWarning(exception, "Could not reach the Portal personnel directory.");
+            return (null, StatusCode(502, new
+            {
+                message = "無法連線至 Portal 人員比對服務，請通知資訊窗口檢查 Portal API 連線設定。",
+                code = "DIRECTORY_CONNECTION_FAILED",
+                messageKey = "spc.api.directoryConnectionFailed",
+                args = ApiUiMessageCatalog.EmptyArguments
+            }));
+        }
     }
 
     private async Task<(List<PortalUser>? Users, IActionResult? Error)> ReadPortalUsers(

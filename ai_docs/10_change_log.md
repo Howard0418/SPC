@@ -1,3 +1,7 @@
+## 2026-11-25 SPC-OPERATORS-DIRECTORY-1125
+
+- 目的：處理人員比對上游 HTTPS 連線失敗造成的未預期錯誤，讓編輯者可辨別服務連線與資料差異。
+
 ## [2026-11-20] SPC-AUDIT-BUSINESS-ACTIONS-1120-TASK-001 修改目的
 - 目的：依使用者核准，以固定白名單補上「已送出哪一類業務按鈕」的安全稽核摘要。
 - 範圍：只記ActionKey、頁面、成功／失敗、HTTP狀態及可信actor；不記逐字輸入、每次點擊、request body、query值或敏感原文。先建後端與前端紅燈測試，沿用既有AuditEvents，通過後遞增Web／API版本並只發布測試站。

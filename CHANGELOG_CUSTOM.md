@@ -1,3 +1,8 @@
+## 2026-11-25 SPC 編輯者教學與 Portal 人員比對連線修正
+
+- Word V0.4 加入編輯者角色、頁面授權、Portal 人員比對與排錯，補現行日報表單。九頁與九張圖已核對，文件留本機。[教學](specs/20261125-spc-portal-system-guide/spec.md)
+- 比對上游連線中斷改回可辨識的 502，回歸 44 通過、1 既有略過。測試 Web 0.1.189／API 0.1.173 已發布並核對。正式 Portal 來源已查明，正式站設定變更待授權。[修正](specs/20261125-operator-directory-connection/spec.md)
+
 ## 2026-11-25 SPC 品保教學校正正式示範角色
 
 - V0.3 以已核對的正式編輯者工作階段呈現查詢、日報及主檔操作。六頁與五張既有去識別截圖已核對，審閱稿留本機。[規格與驗證](specs/20261125-spc-portal-system-guide/spec.md)

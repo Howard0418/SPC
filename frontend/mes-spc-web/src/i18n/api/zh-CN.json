@@ -305,6 +305,7 @@
       "settingsUpdateFailed": "更新设置失败，请联系系统管理员。",
       "settingsDownloadMissing": "找不到指定的文件。",
       "directoryRequestFailed": "Portal 人员比对服务响应失败（{status}）。",
+      "directoryConnectionFailed": "无法连接到 Portal 人员比对服务，请通知信息部门检查 Portal API 连接设置。",
       "directoryResponseInvalid": "Portal 人员比对服务返回格式不正确，请确认 Portal API 连接设置。",
       "certificatePathInvalid": "无效附件路径。",
       "calibrationRecordMissing": "校正记录不存在。",
