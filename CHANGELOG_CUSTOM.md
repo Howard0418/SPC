@@ -1,3 +1,7 @@
+## 2026-11-25 SPC 第一階段結案報告送簽定稿
+
+- 核對正式版本及統計基準。依指定 Word 版型另存十三頁送簽定稿及獨立甘特圖。2026/11/30 提報結案，待主管簽核。[驗證](specs/20261124-spc-project-closeout-report/verification.md)
+
 ## 2026-11-25 正式 SPC 的 Portal 品保人員比對恢復
 
 - 正式 Web 0.1.188 → 0.1.190、API 0.1.172 → 0.1.174。更新 SPC 的 Portal 名單 API 位址，正式編輯者唯讀比對回傳 Portal 品保 24 人、SPC 33 人。首頁、主資產及瀏覽器 API 基底驗證通過。前兩次發布已回復原版，最終批保留設定檔原有 IIS 讀取權限。[發布與回復紀錄](specs/20261125-operator-directory-connection/spec.md)
