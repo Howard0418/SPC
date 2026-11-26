@@ -4,7 +4,7 @@ $root = 'D:\SPC'
 $webTarget = 'D:\SPC\release\test\frontend'
 $webSource = 'D:\SPC\frontend\mes-spc-web\dist'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$backupRoot = Join-Path $root "release\backups\spc-particle-grid-paste-focus-1126-$stamp"
+$backupRoot = Join-Path $root "release\backups\spc-particle-empty-input-align-1126-$stamp"
 $appcmd = Join-Path $env:windir 'system32\inetsrv\appcmd.exe'
 $webBase = [Uri]'https://spctest.pmr.com.tw/'
 $directApiBase = [Uri]'https://spctest.pmr.com.tw:8901/'
@@ -26,14 +26,14 @@ if ($beforeVersion.version -ne '0.1.178' -or $beforeDirect.version -ne '0.1.178'
 $beforeLanding = Invoke-WebRequest $webBase.AbsoluteUri -UseBasicParsing -TimeoutSec 20
 $beforeScriptPath = [regex]::Match($beforeLanding.Content, 'src="([^"]+\.js)"').Groups[1].Value
 $beforeScript = (Invoke-WebRequest ([Uri]::new($webBase, $beforeScriptPath)).AbsoluteUri -UseBasicParsing -TimeoutSec 20).Content
-if (!$beforeScript.Contains('0.1.198')) { throw 'Unexpected current SPC test Web version.' }
+if (!$beforeScript.Contains('0.1.199')) { throw 'Unexpected current SPC test Web version.' }
 
 $stageIndexPath = Join-Path $webSource 'index.html'
 if (!(Test-Path $stageIndexPath)) { throw 'SPC test Web build is missing.' }
 $stageIndex = Get-Content $stageIndexPath -Raw
 $stageScriptPath = [regex]::Match($stageIndex, 'src="([^"]+\.js)"').Groups[1].Value.TrimStart('/')
 $stageScript = Get-Content (Join-Path $webSource $stageScriptPath) -Raw
-if (!$stageScript.Contains('0.1.199') -or !$stageScript.Contains('particle-paste-grid') -or !$stageScript.Contains('particle-grid-empty-cell')) {
+if (!$stageScript.Contains('0.1.200') -or !$stageScript.Contains('particle-paste-grid') -or !$stageScript.Contains('particle-grid-empty-input')) {
     throw 'Unexpected staged SPC Web version or missing particle grid.'
 }
 
@@ -80,7 +80,7 @@ $afterDirect = Invoke-RestMethod ([Uri]::new($directApiBase, 'api/version')) -Ti
 $health = Invoke-RestMethod ([Uri]::new($webBase, 'api/health')) -TimeoutSec 20
 $directHealth = Invoke-RestMethod ([Uri]::new($directApiBase, 'api/health')) -TimeoutSec 20
 
-if ($afterLanding.StatusCode -ne 200 -or !$mainContent.Contains('0.1.199') -or !$mainContent.Contains('particle-paste-grid') -or !$mainContent.Contains('particle-grid-empty-cell') -or
+if ($afterLanding.StatusCode -ne 200 -or !$mainContent.Contains('0.1.200') -or !$mainContent.Contains('particle-paste-grid') -or !$mainContent.Contains('particle-grid-empty-input') -or
     $floorPlan.StatusCode -ne 200 -or $floorPlan.Headers.'Content-Type' -notmatch '^image/png' -or
     $afterVersion.version -ne '0.1.178' -or $afterVersion.environment -ne 'test' -or
     $afterDirect.version -ne '0.1.178' -or $afterDirect.environment -ne 'test' -or
@@ -91,8 +91,8 @@ if ($afterLanding.StatusCode -ne 200 -or !$mainContent.Contains('0.1.199') -or !
 }
 
 [pscustomobject]@{
-    BeforeWeb = '0.1.198'
-    AfterWeb = '0.1.199'
+    BeforeWeb = '0.1.199'
+    AfterWeb = '0.1.200'
     BeforeApi = $beforeVersion.version
     AfterApi = $afterVersion.version
     Environment = $afterVersion.environment
@@ -100,7 +100,7 @@ if ($afterLanding.StatusCode -ne 200 -or !$mainContent.Contains('0.1.199') -or !
     DirectHealth = $directHealth.status
     Home = $afterLanding.StatusCode
     GridAsset = $mainContent.Contains('particle-paste-grid')
-    EmptyGridAsset = $mainContent.Contains('particle-grid-empty-cell')
+    EmptyInputAsset = $mainContent.Contains('particle-grid-empty-input')
     Assets = $assets
     Backup = $backupRoot
 } | ConvertTo-Json -Depth 5

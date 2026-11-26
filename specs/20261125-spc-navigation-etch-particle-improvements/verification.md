@@ -154,3 +154,19 @@
 - 首頁 Cache-Control 為 `no-store, must-revalidate, no-cache`。同源與 `:8901` 直連 health／version 均回 `0.1.178/test`、`ok`；Chromium 載入首頁時實際同源 `/api/version` 200，version／health 直接載入亦為 200／JSON。
 - 回復備份：`D:\SPC\release\backups\spc-particle-grid-paste-focus-1126-20261126-001215\frontend`（Web `0.1.198`）。覆回後須重驗 Web、API、首頁與主資產。
 - 無 schema、量測資料、權限、API、正式 SPC、Portal 或 `D:\Sites\PmrPortal` 異動。
+
+## `SPC-PARTICLE-EMPTY-INPUT-ALIGN-1126` 驗證結果
+
+| 驗收 | 方法 | 結果 |
+| --- | --- | --- |
+| AC-013 空白欄位 | Chromium 檢查空白列 input 數量、背景、邊框與尺寸 | 空白列含 50 個 input；背景為白色、邊框非 0。48 個數值欄寬度一致，日期與備註欄寬於數值欄，與上方表頭垂直對齊。 |
+| AC-012 貼上回歸 | 點空白資料格、由 activeElement 派送 Excel paste；已有草稿多欄重貼 | 空白框採 pointer-events none，點擊仍由父資料格將焦點交給 table；整列貼上與已有草稿重貼均正確，preview 前不寫入。 |
+| AC-008 回歸 | Particle／parser Node、完整 Particle Entry Chromium、三語及 testhost build | Node 8/8、Chromium 4/4、三語 2,954 keys × 3、build 成功；配置圖、備註、preview／confirm 與重複保護未回歸。 |
+
+### 發布、連線與回復
+
+- 發布前 Web `0.1.199`／API `0.1.178/test`；發布後 Web `0.1.200`，API 維持 `0.1.178/test`。
+- 首頁、主 JavaScript `index-Du0ths4a.js`、主 CSS `index-Cw-SpluJ.css` 均 HTTP 200 且 MIME 正確；主資產含 `particle-paste-grid`、`particle-grid-empty-input` 與 Web `0.1.200`。
+- 同源及 `:8901` 直連 health／version 均回 `0.1.178/test`、`ok`；Chromium 直接載入同源 version／health 均為 200／JSON。
+- 回復備份：`D:\SPC\release\backups\spc-particle-empty-input-align-1126-20261126-080241\frontend`（Web `0.1.199`）。覆回後須重驗 Web、API、首頁與主資產。
+- 無 schema、量測資料、權限、API、正式 SPC、Portal 或 `D:\Sites\PmrPortal` 異動。

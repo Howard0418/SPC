@@ -69,6 +69,24 @@ test('particle entry shows the referenced Excel grid and maps pasted values befo
   const values = Array.from({ length: 48 }, (_, index) => String(index));
   const emptyRow = page.getByTestId('particle-grid-empty');
   await expect(emptyRow.locator('td')).toHaveCount(50);
+  await expect(emptyRow.locator('input')).toHaveCount(50);
+  const emptyDateInput = page.getByTestId('particle-grid-empty-input-0');
+  const emptyCountInput = page.getByTestId('particle-grid-empty-input-1');
+  const emptySecondCountInput = page.getByTestId('particle-grid-empty-input-2');
+  const emptyRemarkInput = page.getByTestId('particle-grid-empty-input-49');
+  const emptyInputStyle = await emptyCountInput.evaluate(element => ({
+    backgroundColor: getComputedStyle(element).backgroundColor,
+    borderWidth: getComputedStyle(element).borderTopWidth
+  }));
+  expect(emptyInputStyle.backgroundColor).toBe('rgb(255, 255, 255)');
+  expect(emptyInputStyle.borderWidth).not.toBe('0px');
+  const dateBox = await emptyDateInput.boundingBox();
+  const countBox = await emptyCountInput.boundingBox();
+  const secondCountBox = await emptySecondCountInput.boundingBox();
+  const remarkBox = await emptyRemarkInput.boundingBox();
+  expect(dateBox!.width).toBeGreaterThan(countBox!.width);
+  expect(remarkBox!.width).toBeGreaterThan(countBox!.width);
+  expect(secondCountBox!.width).toBe(countBox!.width);
   await page.getByTestId('particle-grid-empty-cell-17').click();
   await expect(grid).toBeFocused();
   await pasteIntoFocusedElement(page, `2026/11/25 08:30\t${values.join('\t')}`);

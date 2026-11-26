@@ -3843,3 +3843,9 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 根因為無資料時使用一個 `colspan=49` 提示格，畫面沒有 49 個獨立資料框線；先前測試直接向 table 派送 paste，未涵蓋使用者點格線後 table 未取得 activeElement 的路徑。
 - 空白列已改為日期、48 個量測及備註共 50 格；點任一空白格後 table 取得焦點，從 activeElement 貼上 Excel 可對位。已有草稿時，在欄位貼上含 Tab 的多欄資料改走整批 parser，單格文字仍維持格內編輯。
 - Node 8 項、Chromium 4 項、三語 2,954 keys × 3、testhost build 與實站連線通過。測試 Web `0.1.199` 已發布，API 維持 `0.1.178/test`；正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+
+## 2026-11-26 落塵空白輸入框對齊
+
+- 空白列日期、48 個量測及備註格內加入白底、灰框、圓角與內距的欄位外觀；日期／備註較寬，48 個數值欄同寬，方便與 R1～R12 雙層表頭對齊。
+- 空白欄位只作視覺及貼上焦點提示，不建立資料；點擊仍聚焦 table，整列 Excel 貼上、已有草稿多欄重貼、preview／confirm 與重複過濾保持。
+- Node 8 項、Chromium 4 項、三語 2,954 keys × 3、testhost build 及實站連線通過。測試 Web `0.1.200` 已發布，API 維持 `0.1.178/test`；正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)

@@ -172,11 +172,17 @@ const errorText = item => t(`spc.particleEntry.errors.${errorKey[item.code] || '
           </thead>
           <tbody class="bg-white text-slate-950">
             <tr v-if="!draftRows.length" data-testid="particle-grid-empty" class="cursor-text" @click="focusPasteGrid">
-              <td data-testid="particle-grid-empty-cell-0" class="sticky left-0 h-12 border border-slate-500 bg-white px-2 py-2 font-semibold">—</td>
+              <td data-testid="particle-grid-empty-cell-0" class="sticky left-0 h-12 border border-slate-500 bg-white p-1">
+                <input data-testid="particle-grid-empty-input-0" type="text" readonly tabindex="-1" aria-hidden="true" class="pointer-events-none h-9 w-full rounded-md border border-slate-300 bg-white px-2 outline-none">
+              </td>
               <template v-for="index in 48" :key="`particle-grid-empty-${index}`">
-                <td :data-testid="`particle-grid-empty-cell-${index}`" class="h-12 min-w-12 border border-slate-500 bg-white">&nbsp;</td>
+                <td :data-testid="`particle-grid-empty-cell-${index}`" class="h-12 min-w-12 border border-slate-500 bg-white p-1">
+                  <input :data-testid="`particle-grid-empty-input-${index}`" type="number" readonly tabindex="-1" aria-hidden="true" class="pointer-events-none h-9 w-full min-w-10 rounded-md border border-slate-300 bg-white px-1 text-center outline-none">
+                </td>
               </template>
-              <td data-testid="particle-grid-empty-cell-49" class="h-12 min-w-48 border border-slate-500 bg-white">&nbsp;</td>
+              <td data-testid="particle-grid-empty-cell-49" class="h-12 min-w-48 border border-slate-500 bg-white p-1">
+                <input data-testid="particle-grid-empty-input-49" type="text" readonly tabindex="-1" aria-hidden="true" class="pointer-events-none h-9 w-full rounded-md border border-slate-300 bg-white px-2 outline-none">
+              </td>
             </tr>
             <tr v-for="(row, rowIndex) in draftRows" :key="row.sourceRow">
               <td :data-testid="`particle-time-${rowIndex}`" class="sticky left-0 z-10 border border-slate-500 bg-white p-0 font-mono font-semibold">

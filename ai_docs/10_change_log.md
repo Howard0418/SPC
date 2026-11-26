@@ -2366,3 +2366,9 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 根因：空白 tbody 使用一個 `colspan=49` 提示格，未呈現 49 個獨立資料框線；先前 Chromium 測試直接向 table 派送 paste，未涵蓋使用者滑鼠點合併格後 table 未取得 activeElement 的真實路徑。
 - 範圍：SPC Web 空白列 DOM、焦點／paste 事件及 Chromium 測試；parser、preview／confirm、API、資料庫、權限及正式站不變。
 - 結果：空白列 50 格、點任一格 table 取得 activeElement、從 activeElement 貼上及已有草稿多欄重貼均通過。Node 8、Chromium 4、三語 2,954 keys × 3 與 testhost build 通過；測試 Web `0.1.199` 已發布，API 維持 `0.1.178/test`，正式未發布。
+
+# 2026-11-26 SPC-PARTICLE-EMPTY-INPUT-ALIGN-1126 空白輸入框對齊
+
+- 目的：依使用者提供的白色欄位示意，在落塵空白資料列每格加入內縮輸入框外觀，讓 R1～R12 與粒徑位置更容易垂直對齊。
+- 範圍：SPC Web 空白列 presentation 與 Chromium 測試；空白框不建立資料，parser、preview／confirm、重複過濾、API、資料庫及權限不變。
+- 結果：空白列 50 個白底灰框欄位、48 個數值欄同寬及日期／備註較寬驗證通過；Node 8、Chromium 4、三語 2,954 keys × 3 與 testhost build 通過。測試 Web `0.1.200` 已發布，API 維持 `0.1.178/test`，正式未發布。

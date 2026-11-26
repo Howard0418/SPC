@@ -1,9 +1,9 @@
 # 任務
 
 - 功能 ID：`20261125-spc-navigation-etch-particle-improvements`
-- 規格版本：10
+- 規格版本：11
 - [規格](spec.md)｜[計畫](plan.md)
-- 目前狀態：七項小工作均完成測試、自動化與測試站發布；正式站未授權、未發布。
+- 目前狀態：八項小工作均完成測試、自動化與測試站發布；正式站未授權、未發布。
 
 ## P0：安全與權限一致
 
@@ -25,6 +25,8 @@
 
 - [x] `SPC-PARTICLE-GRID-PASTE-FOCUS-1126`：空白狀態顯示 50 個獨立格線；點任一空白格後格線取得焦點，Ctrl+V 可由 activeElement 進入既有 parser；已有草稿的多欄貼上亦可整批重貼。（R-012；AC-012；依賴 `SPC-PARTICLE-EXCEL-FORM-GRID-1125`）
 
+- [x] `SPC-PARTICLE-EMPTY-INPUT-ALIGN-1126`：空白列 50 格各加入內縮白底輸入框外觀，方便對照日期、R1～R12 四粒徑及備註位置；保留整列貼上與既有儲存流程。（R-013；AC-013；依賴 `SPC-PARTICLE-GRID-PASTE-FOCUS-1126`）
+
 ## 每件共同收尾
 
 - [x] P0 已完成自動化、建置、Web `0.1.193`／API `0.1.177` 測試站發布、連線驗證、文件同步與回復備份。
@@ -35,3 +37,4 @@
 - [x] 貼上格線完成 Chromium／三語／建置、SPC 測試站 Web 最終 `0.1.197` 版本遞增及 Web／API 連線驗證；API 維持 `0.1.178/test`，正式發布另行授權。
 - [x] 指定 Excel 表單格線完成 parser 5 項、Particle 語系 3 項、Chromium 4 項、三語及 build；SPC 測試站 Web `0.1.198` 已發布，API 維持 `0.1.178/test`，正式發布另行授權。
 - [x] 空白格線與真實貼上焦點完成 Chromium 4 項、Particle／parser 8 項、三語及 build；SPC 測試站 Web `0.1.199` 已發布，API 維持 `0.1.178/test`，正式發布另行授權。
+- [x] 空白輸入框對齊完成 Chromium 4 項、Particle／parser 8 項、三語及 build；SPC 測試站 Web `0.1.200` 已發布，API 維持 `0.1.178/test`，正式發布另行授權。
