@@ -3849,3 +3849,8 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - 空白列日期、48 個量測及備註格內加入白底、灰框、圓角與內距的欄位外觀；日期／備註較寬，48 個數值欄同寬，方便與 R1～R12 雙層表頭對齊。
 - 空白欄位只作視覺及貼上焦點提示，不建立資料；點擊仍聚焦 table，整列 Excel 貼上、已有草稿多欄重貼、preview／confirm 與重複過濾保持。
 - Node 8 項、Chromium 4 項、三語 2,954 keys × 3、testhost build 及實站連線通過。測試 Web `0.1.200` 已發布，API 維持 `0.1.178/test`；正式未發布。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+
+## 2026-11-26 作業人員權限免登出更新
+
+- 本人權限儲存成功後目前畫面立即同步選單，其他使用者切頁或重整後取得資料庫目前權限。API 依目前角色與身分驗證，原登入期限保留。
+- API／稽核／導覽／登入回歸及實站連線通過。測試 Web `0.1.200 → 0.1.201`、API `0.1.178 → 0.1.179/test`，正式未發布。[驗證](specs/20261126-operator-permission-session-refresh/verification.md)

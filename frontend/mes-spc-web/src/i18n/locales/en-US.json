@@ -2190,6 +2190,7 @@
       "syncComplete": "Sync complete: {count} succeeded.",
       "operatorCreated": "Operator created: {name}",
       "operatorUpdated": "Operator updated: {name}",
+      "permissionSyncPending": "Changes saved. Your permissions could not be synced. Switch pages or reload to try again.",
       "operatorDeleted": "Operator deleted: {name}",
       "confirmDelete": "Delete operator \"{code} ({name})\"?",
       "allPeople": "All personnel",
@@ -2417,6 +2418,7 @@
       "signingIn": "Signing in to SPC",
       "verifying": "Please wait while PmrPortal sign-in information is verified…",
       "goLogin": "Go to SPC sign-in",
+      "noAccessiblePage": "Your account has no accessible SPC pages. Contact your administrator and reload after access is granted.",
       "missingToken": "SPC single sign-in information is missing.",
       "invalidToken": "SPC single sign-in information is invalid. Open SPC through PmrPortal again."
     }

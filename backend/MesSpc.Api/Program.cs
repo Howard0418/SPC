@@ -43,6 +43,19 @@ if (jwtConfigured)
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.FromMinutes(2)
             };
+            if (authEnabled)
+            {
+                o.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var sessions = context.HttpContext.RequestServices.GetRequiredService<CurrentOperatorSession>();
+                        var current = await sessions.ResolveAsync(context.Principal!, context.HttpContext.RequestAborted);
+                        if (current is null) context.Fail("SPC identity is no longer active or bound to this account.");
+                        else context.Principal = current;
+                    }
+                };
+            }
         });
 }
 builder.Services.AddAuthorization();
@@ -111,6 +124,7 @@ builder.Services.AddScoped<ISpcOverviewReportBuilder>(sp => sp.GetRequiredServic
 builder.Services.AddScoped<SpcReportScheduleProcessor>();
 builder.Services.AddScoped<MesSyncMessageBatchProcessor>();
 builder.Services.AddScoped<AuthorizationAccess>();
+builder.Services.AddScoped<CurrentOperatorSession>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuditEventWriter>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuthenticationAudit>();
 builder.Services.AddScoped<MesSpc.Api.Services.Auditing.AuthenticationAuditResultFilter>();

@@ -33,7 +33,8 @@ import GenealogyView from "../views/GenealogyView.vue";
 import TraceabilityMasterView from "../views/TraceabilityMasterView.vue";
 import { getCurrentUser } from "../utils/auth";
 import { recordPageEnter } from "../utils/activityAudit";
-import { firstAccessiblePath, permissionForPath } from "../navigation/pageRegistry";
+import { firstAccessiblePath, pageAccessRedirect } from "../navigation/pageRegistry";
+import { syncCurrentSession } from "../api/currentSession";
 
 const authRequired = import.meta.env.VITE_AUTH_ENABLED === "true";
 
@@ -97,23 +98,24 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   if (!authRequired) return true;
-  if (to.path === "/login" || to.path === "/portal-sso") return true;
+  if (to.path === "/portal-sso") return true;
+  if (to.path === "/login" && (!localStorage.getItem("mes_spc_token") || !to.query.access)) return true;
   if (!localStorage.getItem("mes_spc_token")) {
     return { path: "/login", query: { redirect: to.fullPath } };
   }
+  if (to.path !== router.currentRoute.value.path) {
+    try {
+      await syncCurrentSession();
+    } catch (error) {
+      if (error?.code === "AUTH_REDIRECT_GUARD") return false;
+      // A temporary API outage may prevent updating the menu. API authorization remains server-side.
+    }
+  }
   const user = getCurrentUser();
-  if (to.meta.editorOnly && user?.role !== "Editor") {
-    const fallback = firstAccessiblePath(user);
-    return fallback ? { path: fallback, query: { access: "viewer" } } : { path: "/login", query: { access: "viewer" } };
-  }
-  const requiredPermission = permissionForPath(to.path);
-  if (requiredPermission && !user?.permissions?.includes(requiredPermission)) {
-    const fallback = firstAccessiblePath(user);
-    return fallback ? { path: fallback, query: { access: "page" } } : { path: "/login", query: { access: "page" } };
-  }
-  return true;
+  if (to.path === "/login") return firstAccessiblePath(user) ?? true;
+  return pageAccessRedirect(to, user) ?? true;
 });
 
 router.afterEach((to, from, failure) => recordPageEnter(to, from, failure));

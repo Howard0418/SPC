@@ -1,5 +1,6 @@
 const tokenKey = "mes_spc_token";
 const userKey = "mes_spc_user";
+export const authUserChanged = "spc-auth-user-changed";
 
 export function getCurrentUser() {
   try {
@@ -11,12 +12,20 @@ export function getCurrentUser() {
 
 export function setAuthSession(token, user) {
   localStorage.setItem(tokenKey, token);
-  localStorage.setItem(userKey, JSON.stringify(user || null));
+  setCurrentUser(user);
+}
+
+export function setCurrentUser(user) {
+  const json = JSON.stringify(user || null);
+  if (localStorage.getItem(userKey) === json) return;
+  localStorage.setItem(userKey, json);
+  window.dispatchEvent(new Event(authUserChanged));
 }
 
 export function clearAuthSession() {
   localStorage.removeItem(tokenKey);
   localStorage.removeItem(userKey);
+  window.dispatchEvent(new Event(authUserChanged));
 }
 
 export function isEditor() {

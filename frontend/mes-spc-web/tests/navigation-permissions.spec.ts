@@ -43,3 +43,72 @@ test('viewer cannot enter editor pages and particle access is independent from S
   await page.goto('/parts');
   await expect(page).toHaveURL(/\/particle-monitoring\?access=viewer$/);
 });
+
+test('saving own page permission updates the menu without navigation or sign-in', async ({ page }) => {
+  const operator = { id: 101, operatorCode: 'P101', operatorName: 'Fixture', username: 'fixture', role: 'Editor', isActive: true,
+    pagePermissions: ['admin.operators', 'analysis.spc'] };
+  await prepare(page, operator.role, operator.pagePermissions);
+  const order: string[] = [];
+  await page.route('**/api/**', async route => {
+    const { pathname } = new URL(route.request().url());
+    const method = route.request().method();
+    if (pathname.endsWith('/auth/session')) {
+      order.push('session');
+      expect(route.request().headers().authorization).toBe('Bearer navigation-permission-fixture');
+      return route.fulfill({ json: { user: { id: operator.id, username: operator.username, role: operator.role,
+        permissions: operator.pagePermissions } } });
+    }
+    if (pathname.endsWith('/permissions-catalog')) return route.fulfill({ json: [
+      { code: 'admin.operators', name: 'User settings' }, { code: 'data.particles', name: 'Particle entry' }
+    ] });
+    if (pathname === '/api/operators') return route.fulfill({ json: [operator] });
+    if (method === 'PUT' && pathname === '/api/operators/101') {
+      order.push('save');
+      operator.pagePermissions = route.request().postDataJSON().pagePermissions;
+      return route.fulfill({ json: operator });
+    }
+    return route.fallback();
+  });
+  await page.goto('/operators');
+  const grantedLink = page.locator('aside a[href="/particle-monitoring/entry"]');
+  await expect(grantedLink).toHaveCount(0);
+  await page.getByTestId('settings-openEditModal').click();
+  const dialog = page.getByTestId('settings-operator-dialog');
+  await dialog.locator('input[value="data.particles"]').check();
+  await dialog.locator('button[type="submit"]').click();
+  await expect(grantedLink).toBeVisible();
+  await expect(page).toHaveURL(/\/operators$/);
+  expect(order).toEqual(['session', 'save', 'session']);
+});
+
+test('an already signed-in user picks up a grant on navigation and a revocation on reload', async ({ page }) => {
+  const start = ['analysis.spc', 'master.parts'];
+  await prepare(page, 'Editor', start);
+  let permissions = start;
+  await page.route('**/api/v1/auth/session', route => route.fulfill({ json: { user: {
+    id: 101, username: 'fixture', role: 'Editor', permissions
+  } } }));
+  await page.goto('/parts');
+  await expect(page.locator('aside a[href="/parts"]')).toBeVisible();
+  permissions = [...start, 'analysis.trend'];
+  await page.locator('aside a[href="/spc"]').click();
+  await expect(page.locator('aside a[href="/trend-chart"]')).toBeVisible();
+  permissions = ['analysis.trend'];
+  await page.reload();
+  await expect(page).toHaveURL(/\/trend-chart\?access=page$/);
+  await expect(page.locator('aside a[href="/parts"]')).toHaveCount(0);
+});
+
+test('with no remaining access the user can recover by reloading after a grant', async ({ page }) => {
+  await prepare(page, 'Editor', ['admin.operators']);
+  let permissions: string[] = [];
+  await page.route('**/api/v1/auth/session', route => route.fulfill({ json: { user: {
+    id: 101, username: 'fixture', role: 'Editor', permissions
+  } } }));
+  await page.goto('/operators');
+  await expect(page).toHaveURL(/\/login\?access=page$/);
+  await expect(page.getByRole('alert')).toBeVisible();
+  permissions = ['master.parts'];
+  await page.reload();
+  await expect(page).toHaveURL(/\/parts$/);
+});

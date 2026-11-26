@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch, provide } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch, provide } from "vue";
 import LocalePicker from "./components/LocalePicker.vue";
 import { localeControlKey } from "./i18n/context";
 import { useRoute } from "vue-router";
@@ -27,7 +27,7 @@ import {
   CalendarClock
   ,FlaskConical, Wind, ShieldCheck
 } from "lucide-vue-next";
-import { clearAuthSession, getCurrentUser } from "./utils/auth";
+import { authUserChanged, clearAuthSession, getCurrentUser } from "./utils/auth";
 import { createLogoutHandler } from "./utils/logout";
 import { api, setApiEnvironment } from "./api/client";
 import { useI18n } from "vue-i18n";
@@ -72,8 +72,13 @@ const stackedMobileNav = computed(() => [
   '/monthly-control-chart', '/process-analysis/capability', '/process-analysis/violations',
 ].includes(route.path) || route.path === '/uploads' || /^\/uploads\/[^/]+\/preview$/.test(route.path));
 const showNav = computed(() => !authOn || route.path !== "/login");
+const sessionRevision = ref(0);
+const updateSessionRevision = () => { sessionRevision.value++; };
+onMounted(() => window.addEventListener(authUserChanged, updateSessionRevision));
+onUnmounted(() => window.removeEventListener(authUserChanged, updateSessionRevision));
 const currentUser = computed(() => {
   route.fullPath;
+  sessionRevision.value;
   return getCurrentUser();
 });
 const canEdit = computed(() => !authOn || currentUser.value?.role === "Editor");

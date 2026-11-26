@@ -51,3 +51,13 @@ export function firstAccessiblePath(user) {
   const isEditor = user?.role === 'Editor';
   return pageRegistry.find(page => (!page.editorOnly || isEditor) && permissions.has(page.permission))?.path ?? null;
 }
+
+export function pageAccessRedirect(route, user) {
+  const required = permissionForPath(route.path);
+  const reason = route.meta.editorOnly && user?.role !== 'Editor' ? 'viewer'
+    : required && !user?.permissions?.includes(required) ? 'page' : null;
+  if (!reason) return null;
+  const fallback = firstAccessiblePath(user);
+  return fallback ? { path: fallback, query: { access: reason } }
+    : { path: '/login', query: { access: reason } };
+}

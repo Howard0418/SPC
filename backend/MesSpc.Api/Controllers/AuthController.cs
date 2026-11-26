@@ -41,7 +41,7 @@ public class AuthController(
             || req.Username.Length > 256 || req.Timestamp < now - 60 || req.Timestamp > now + 60)
             return await RejectAsync(401, "AUTH_SSO_EXPIRED", "spc.api.ssoExpired", req.Username);
 
-        var normalizedUsername = NormalizeAccount(req.Username);
+        var normalizedUsername = CurrentOperatorSession.NormalizeAccount(req.Username);
         if (req.DisplayName?.Length > 200 || req.OperatorCode?.Length > 100 || req.Department?.Length > 500
             || req.Email?.Length > 500 || req.Signature?.Length > 512)
             return await RejectAsync(400, "AUTH_REQUEST_INVALID", "spc.api.validationFailed", req.Username);
@@ -117,7 +117,7 @@ public class AuthController(
                     {
                         if (systemUser is not null && systemUser.Id != codeOwner.Id)
                             return await RejectAsync(409, "AUTH_IDENTITY_CONFLICT", "spc.api.identityConflict", username);
-                        var storedAccount = string.IsNullOrWhiteSpace(codeOwner.Username) ? null : NormalizeAccount(codeOwner.Username);
+                        var storedAccount = string.IsNullOrWhiteSpace(codeOwner.Username) ? null : CurrentOperatorSession.NormalizeAccount(codeOwner.Username);
                         var isEmployeeAlias = operatorCode is not null && NormalizeOperatorCode(username) == normalizedCode;
                         var storedIsEmployeeAlias = storedAccount is not null && NormalizeOperatorCode(storedAccount) == normalizedCode;
                         if (storedAccount is not null && storedAccount != username && !isEmployeeAlias && !storedIsEmployeeAlias)
@@ -198,6 +198,30 @@ public class AuthController(
         return NoContent();
     }
 
+    /// <summary>Returns the authenticated operator's current role and page permissions for this session.</summary>
+    /// <response code="200">The current operator and resolved page permission codes.</response>
+    /// <response code="401">The bearer token or the associated operator is no longer valid.</response>
+    [HttpGet("session"), Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public IActionResult Session()
+    {
+        if (!config.GetValue<bool>("Auth:Enabled")
+            || !int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) || id <= 0)
+            return Unauthorized();
+
+        return Ok(new { user = new
+        {
+            id,
+            username = User.Identity?.Name,
+            operatorCode = User.FindFirstValue("operatorCode"),
+            displayName = User.FindFirstValue("displayName"),
+            role = User.FindFirstValue(ClaimTypes.Role),
+            permissions = User.FindAll("permission").Select(x => x.Value).ToArray()
+        } });
+    }
+
     private async Task<IActionResult> RejectAsync(int status, string code, string key, string? account, int? operatorId = null)
     {
         if (audit?.Enabled == true)
@@ -246,16 +270,6 @@ public class AuthController(
             expiresAt = expires,
             user = new { id = userId, username = normalizedUsername, operatorCode, displayName, role, permissions }
         });
-    }
-
-    private static string NormalizeAccount(string account)
-    {
-        var value = account.Trim();
-        var slash = value.LastIndexOf('\\');
-        if (slash >= 0 && slash < value.Length - 1) value = value[(slash + 1)..];
-        var at = value.IndexOf('@');
-        if (at > 0) value = value[..at];
-        return value.ToLowerInvariant();
     }
 
     public record PortalSsoRequest(string Username, string? DisplayName, long Timestamp, string Nonce, string Signature, string? OperatorCode = null, string? Department = null, string? Email = null);

@@ -951,3 +951,4 @@ PPT工作副本第2頁已更新十月十階段進度截圖、截至日及測試�
 - [x] P1｜SPC-PARTICLE-EXCEL-FORM-GRID-1125｜依指定 Excel 工作表 B24:BB 完成 50 個邏輯欄位、原表 53 欄／網站 50 欄／舊 49 欄貼上、日期同格換行、備註、格內修正及 preview 後確認寫入。測試 Web `0.1.198` 已發布，API 維持 `0.1.178/test`；正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
 - [x] P0｜SPC-PARTICLE-GRID-PASTE-FOCUS-1126｜空白狀態已改為 50 個獨立格線，點任一格後表格取得焦點；從 activeElement 貼上 Excel 與已有草稿時多欄重貼均通過。測試 Web `0.1.199` 已發布，API 維持 `0.1.178/test`；正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
 - [x] P2｜SPC-PARTICLE-EMPTY-INPUT-ALIGN-1126｜落塵空白列 50 格已加入內縮白色輸入框外觀，日期／備註較寬、48 個數值欄同寬，整列貼上與儲存流程保持。測試 Web `0.1.200` 已發布，API 維持 `0.1.178/test`；正式未授權。[驗證](specs/20261125-spc-navigation-etch-particle-improvements/verification.md)
+- [x] P1｜SPC-OPERATOR-PERMISSION-SESSION-REFRESH-1126｜本人儲存權限後立即同步選單，其他使用者切頁或重整同步。測試 Web `0.1.201`／API `0.1.179/test` 已驗證發布，正式未發布。[驗證](specs/20261126-operator-permission-session-refresh/verification.md)

@@ -6,7 +6,12 @@ import LocalePicker from "../components/LocalePicker.vue";
 import ModuleGuide from "../components/ModuleGuide.vue";
 import { onMounted, ref, computed, defineAsyncComponent } from "vue";
 import { api, getApiErrorDisplay } from "../api/client";
+import { syncCurrentSession } from "../api/currentSession";
+import { getCurrentUser } from "../utils/auth";
+import { pageAccessRedirect } from "../navigation/pageRegistry";
+import { useRouter } from "vue-router";
 import DatabaseRefreshLive from "../components/DatabaseRefreshLive.vue";
+const router = useRouter();
 const DatabaseRefreshRehearsal = import.meta.env.DEV ? defineAsyncComponent(() => import("../components/DatabaseRefreshRehearsal.vue")) : null;
 
 const showRefreshRehearsal = import.meta.env.DEV &&
@@ -185,7 +190,9 @@ async function save() {
     return;
   }
   formErr.value = "";
+  err.value = "";
   loading.value = true;
+  let savedOwnProfile = false;
 
   try {
     const payload = { ...form.value };
@@ -199,13 +206,28 @@ async function save() {
       const idx = rows.value.findIndex(x => x.id === currentId.value);
       if (idx !== -1) rows.value[idx] = data;
       successAlert({key:"spc.settings.operatorUpdated",args:{name:data.operatorName}});
+      savedOwnProfile = import.meta.env.VITE_AUTH_ENABLED === "true" && currentId.value === getCurrentUser()?.id;
     }
     showModal.value = false;
+    if (savedOwnProfile) await syncSavedPermissions();
   } catch (e) {
     formErr.value = getApiErrorDisplay(e);
   } finally {
     loading.value = false;
   }
+}
+
+async function syncSavedPermissions() {
+  try {
+    if (await syncCurrentSession()) {
+      const redirect = pageAccessRedirect(router.currentRoute.value, getCurrentUser());
+      if (redirect) await router.replace(redirect);
+      return;
+    }
+  } catch (error) {
+    if (error?.code === "AUTH_REDIRECT_GUARD") return;
+  }
+  err.value = {key:"spc.settings.permissionSyncPending"};
 }
 
 async function confirmDelete(item) {

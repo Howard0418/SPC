@@ -2372,3 +2372,10 @@ SMTP／報表／使用者173鍵三語，原角色權限／DTO／收件ID／排�
 - 目的：依使用者提供的白色欄位示意，在落塵空白資料列每格加入內縮輸入框外觀，讓 R1～R12 與粒徑位置更容易垂直對齊。
 - 範圍：SPC Web 空白列 presentation 與 Chromium 測試；空白框不建立資料，parser、preview／confirm、重複過濾、API、資料庫及權限不變。
 - 結果：空白列 50 個白底灰框欄位、48 個數值欄同寬及日期／備註較寬驗證通過；Node 8、Chromium 4、三語 2,954 keys × 3 與 testhost build 通過。測試 Web `0.1.200` 已發布，API 維持 `0.1.178/test`，正式未發布。
+
+# 2026-11-26 SPC-OPERATOR-PERMISSION-SESSION-REFRESH-1126 權限免登出更新
+
+- 目的：作業人員權限儲存後，不再要求使用者登出再登入；本人立即更新，其他使用者在下一次切頁或重新整理時同步。
+- 範圍：受 JWT 保護的 session refresh、Web 登入階段事件、路由同步及本人儲存後刷新；不改權限目錄、資料庫 schema 或正式環境。
+- 安全限制：沿用安全管理者明示授權及不可替自己新增稽核權限；refresh 只讀取本人最新權限，不提供權限寫入能力。
+- 結果：API 使用已驗證的本人憑證讀取目前權限及角色，保留原有效期。本人儲存即同步選單，其他使用者切頁或重整時同步。測試 Web `0.1.201`／API `0.1.179/test` 已發布。[驗證](../specs/20261126-operator-permission-session-refresh/verification.md)

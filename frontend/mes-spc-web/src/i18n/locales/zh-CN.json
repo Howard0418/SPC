@@ -2190,6 +2190,7 @@
       "syncComplete": "同步完成：{count} 位成功。",
       "operatorCreated": "成功建立新作业人员：{name}",
       "operatorUpdated": "成功更新作业人员：{name}",
+      "permissionSyncPending": "资料已保存，暂时无法同步当前登录的权限。切换页面或刷新即可重试。",
       "operatorDeleted": "成功删除作业人员：{name}",
       "confirmDelete": "确定要删除作业人员「{code} ({name})」吗？",
       "allPeople": "全部人员",
@@ -2417,6 +2418,7 @@
       "signingIn": "正在登入 SPC",
       "verifying": "请稍候，正在验证 PmrPortal 登入资讯…",
       "goLogin": "前往 SPC 登入页",
+      "noAccessiblePage": "当前账号没有可浏览的 SPC 页面。请联系管理员，获得权限后刷新。",
       "missingToken": "缺少 SPC 单一登入资讯。",
       "invalidToken": "SPC 单一登入资讯无效，请重新由 PmrPortal 进入。"
     }
